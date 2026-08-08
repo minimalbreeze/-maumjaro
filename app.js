@@ -120,6 +120,47 @@
   };
   let lastHealingMessage = null;
 
+  // ---------- motion-based injection ("찌르기" gesture via accelerometer) ----------
+  const MOTION_THRESHOLD = 28; // m/s^2 of jerk to count as a "stab"
+  const MOTION_COOLDOWN_MS = 1500;
+  let motionListenerAttached = false;
+  let lastMotionTriggerTime = 0;
+
+  function motionMagnitude(x, y, z) {
+    return Math.sqrt((x || 0) ** 2 + (y || 0) ** 2 + (z || 0) ** 2);
+  }
+
+  function handleDeviceMotion(e) {
+    if (state !== 'ready') return;
+    const acc = (e.acceleration && e.acceleration.x !== null) ? e.acceleration : e.accelerationIncludingGravity;
+    if (!acc || acc.x === null || acc.x === undefined) return;
+    const mag = motionMagnitude(acc.x, acc.y, acc.z);
+    const now = performance.now();
+    if (mag > MOTION_THRESHOLD && now - lastMotionTriggerTime > MOTION_COOLDOWN_MS) {
+      lastMotionTriggerTime = now;
+      if (navigator.vibrate) navigator.vibrate(40);
+      startInject();
+    }
+  }
+
+  function enableMotionListener() {
+    if (motionListenerAttached) return;
+    motionListenerAttached = true;
+    window.addEventListener('devicemotion', handleDeviceMotion);
+  }
+
+  function requestMotionPermission() {
+    const DME = window.DeviceMotionEvent;
+    if (!DME) return;
+    if (typeof DME.requestPermission === 'function') {
+      DME.requestPermission().then((result) => {
+        if (result === 'granted') enableMotionListener();
+      }).catch(() => {});
+    } else {
+      enableMotionListener();
+    }
+  }
+
   function pickHealingMessage(symptomKey) {
     const pool = (SYMPTOMS[symptomKey] && SYMPTOMS[symptomKey].messages) || [];
     if (pool.length === 0) return '오늘도 스스로를 잘 돌봤어요';
@@ -337,7 +378,7 @@
       actionBtn.disabled = false;
       actionBtn.textContent = '주사하기';
       actionBtn.classList.add('ready-state');
-      statusText.textContent = '준비되었어요. 마음에 놓아줄까요?';
+      statusText.textContent = '준비되었어요. 폰을 콕 찌르듯 움직이거나 눌러주세요';
       armTarget.hidden = false;
       playReadyChime();
     });
@@ -480,6 +521,7 @@
 
   symptomConfirmBtn.addEventListener('click', () => {
     if (!pendingSymptom) return;
+    requestMotionPermission();
     selectedSymptom = pendingSymptom;
     const symptom = SYMPTOMS[selectedSymptom];
     doseTagMg.textContent = symptom.mg;
