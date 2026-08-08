@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#241b45"/>
+      <stop offset="100%" stop-color="#120d26"/>
+    </linearGradient>
+    <linearGradient id="liq" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#8b7cf6"/>
+      <stop offset="100%" stop-color="#f6a8d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g transform="translate(196,90) rotate(0)">
+    <rect x="-24" y="0" width="120" height="26" rx="8" fill="#cfd3e6"/>
+    <rect x="24" y="26" width="24" height="90" fill="#cfd3e6"/>
+    <rect x="8" y="116" width="56" height="18" rx="3" fill="#b7bcd6"/>
+    <rect x="-4" y="110" width="80" height="220" rx="10" fill="rgba(255,255,255,0.06)" stroke="#c7cbe6" stroke-width="5"/>
+    <rect x="4" y="230" width="64" height="96" fill="url(#liq)"/>
+    <path d="M4 330 L68 330 L52 350 L20 350 Z" fill="#c7cbe6"/>
+    <rect x="28" y="350" width="8" height="90" fill="#d9dcef"/>
+    <path d="M28 440 L36 440 L32 460 Z" fill="#d9dcef"/>
+  </g>
+</svg>

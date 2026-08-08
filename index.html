@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<title>맘운자로</title>
+<meta name="theme-color" content="#ff9166" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="맘운자로" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <button id="settings-btn" class="settings-btn" aria-label="설정">⚙️</button>
+    <h1>맘운자로</h1>
+    <p class="tagline" id="tagline">마음에 놓는 오늘의 처방</p>
+  </header>
+
+  <main id="view-home" class="view">
+    <div class="syringe-stage">
+      <div class="ready-glow" id="ready-glow"></div>
+      <span class="sparkle sparkle-1">✦</span>
+      <span class="sparkle sparkle-2">✦</span>
+      <span class="sparkle sparkle-3">✦</span>
+      <span class="sparkle sparkle-4">✦</span>
+      <div class="dose-tag" id="dose-tag" hidden>
+        <span class="dose-tag-mg" id="dose-tag-mg">5.5mg</span>
+        <span class="dose-tag-label" id="dose-tag-label">불안 처방</span>
+      </div>
+      <svg id="syringe-svg" viewBox="0 0 160 380" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="liquidGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ff9166" />
+            <stop offset="100%" stop-color="#ffc66b" />
+          </linearGradient>
+          <linearGradient id="glassGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.05)" />
+            <stop offset="50%" stop-color="rgba(255,255,255,0.4)" />
+            <stop offset="100%" stop-color="rgba(255,255,255,0.05)" />
+          </linearGradient>
+          <pattern id="rodStripes" patternUnits="userSpaceOnUse" width="12" height="18">
+            <rect x="0" y="0" width="12" height="18" fill="#fdfbf6" />
+            <rect x="0" y="0" width="12" height="9" fill="#5fb3a3" />
+          </pattern>
+        </defs>
+
+        <!-- flange (fixed, cute grip with notches) -->
+        <g>
+          <rect x="36" y="334" width="88" height="18" rx="8" fill="#fdfbf6" stroke="#1f5c50" stroke-width="5" />
+          <line x1="54" y1="338" x2="54" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <line x1="80" y1="338" x2="80" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <line x1="106" y1="338" x2="106" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+        </g>
+
+        <!-- plunger rod (candy-stripe like reference) -->
+        <rect id="plunger-rod" x="73" y="116" width="14" height="220" rx="3" fill="url(#rodStripes)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+
+        <!-- barrel outline -->
+        <rect x="52" y="104" width="56" height="168" rx="16" fill="#fdfbf6" stroke="#1f5c50" stroke-width="5.5" />
+        <!-- measurement ticks -->
+        <g id="ticks" stroke="#1f5c50" stroke-width="2" opacity="0.3" stroke-linecap="round">
+          <line x1="52" y1="132" x2="63" y2="132" />
+          <line x1="52" y1="162" x2="63" y2="162" />
+          <line x1="52" y1="192" x2="63" y2="192" />
+          <line x1="52" y1="222" x2="63" y2="222" />
+          <line x1="52" y1="252" x2="63" y2="252" />
+        </g>
+        <!-- liquid -->
+        <rect id="liquid" x="58" y="106" width="44" height="0" rx="6" fill="url(#liquidGradient)" />
+        <!-- plunger head (cute, red block with white ridges + bevel highlight) -->
+        <g id="plunger-head-group">
+          <rect id="plunger-head" x="55" y="104" width="50" height="18" rx="6" fill="#ef6a54" stroke="#1f5c50" stroke-width="4.5" />
+          <rect x="60" y="107" width="40" height="4" rx="2" fill="rgba(255,255,255,0.4)" />
+          <line x1="63" y1="112" x2="63" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
+          <line x1="72" y1="112" x2="72" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
+          <line x1="81" y1="112" x2="81" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
+          <line x1="90" y1="112" x2="90" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
+          <line x1="97" y1="112" x2="97" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
+        </g>
+        <!-- glass shine -->
+        <rect x="52" y="104" width="56" height="168" rx="16" fill="url(#glassGradient)" />
+
+        <!-- needle hub (teal cap) -->
+        <path d="M59 104 L101 104 L83 81 L77 81 Z" fill="#5fb3a3" stroke="#1f5c50" stroke-width="4.5" stroke-linejoin="round" />
+        <!-- needle -->
+        <rect id="needle" x="76" y="28" width="8" height="53" fill="#eef1f5" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+        <path id="needle-tip" d="M76 28 L84 28 L80 8 Z" fill="#eef1f5" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+        <!-- droplet -->
+        <circle id="droplet" cx="80" cy="14" r="0" fill="url(#liquidGradient)" />
+      </svg>
+
+      <button class="arm-target" id="arm-target" type="button" hidden aria-label="팔에 콕 찔러서 주사 놓기">
+        <svg viewBox="0 0 140 70" class="arm-svg" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="70" cy="40" rx="62" ry="25" fill="#ffd9b8" stroke="#1f5c50" stroke-width="4" />
+          <ellipse cx="45" cy="30" rx="14" ry="7" fill="rgba(255,255,255,0.4)" />
+          <circle cx="70" cy="36" r="9" class="arm-site-ring" />
+          <circle cx="70" cy="36" r="3.5" fill="#ef6a54" />
+        </svg>
+        <span class="arm-hint">콕! 찔러서 놓기</span>
+      </button>
+    </div>
+
+    <div class="dose-caption" id="dose-caption" hidden></div>
+
+    <p class="status-text" id="status-text">오늘 마음 주사를 맞기 전이에요</p>
+
+    <button id="action-btn" class="action-btn">준비하기</button>
+
+    <div class="today-summary">
+      오늘 <strong id="today-count">0</strong>번 · 이번 달 <strong id="month-count">0</strong>번
+    </div>
+  </main>
+
+  <main id="view-history" class="view" hidden>
+    <div class="segmented" id="segmented">
+      <button class="seg-btn active" data-period="day">일</button>
+      <button class="seg-btn" data-period="month">월</button>
+      <button class="seg-btn" data-period="year">년</button>
+    </div>
+    <div id="history-content"></div>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab-btn active" data-view="home">
+      <span class="tab-icon">💉</span><span>홈</span>
+    </button>
+    <button class="tab-btn" data-view="history">
+      <span class="tab-icon">📋</span><span>기록</span>
+    </button>
+  </nav>
+
+</div>
+
+<div id="healing-overlay" class="healing-overlay">
+  <div class="healing-glow"></div>
+  <div class="healing-particles" id="healing-particles"></div>
+  <p class="healing-text" id="healing-text">마음에&nbsp;평온이&nbsp;스며듭니다</p>
+</div>
+
+<div id="settings-overlay" class="settings-overlay">
+  <div class="settings-card">
+    <h2>설정</h2>
+    <label class="settings-label" for="name-input">이름</label>
+    <div class="name-row">
+      <input id="name-input" type="text" maxlength="12" placeholder="이름을 입력해주세요" />
+      <button id="name-save-btn">저장</button>
+    </div>
+    <div class="sound-row">
+      <span>사운드</span>
+      <button id="sound-toggle" class="toggle-btn" aria-pressed="true">🔊 켜짐</button>
+    </div>
+    <button id="settings-close-btn" class="settings-close">닫기</button>
+  </div>
+</div>
+
+<div id="symptom-overlay" class="settings-overlay">
+  <div class="settings-card symptom-card">
+    <h2>오늘, 마음 어디가 아프세요?</h2>
+    <p class="symptom-sub">가장 마음에 걸리는 걸 하나 골라주세요</p>
+    <div class="symptom-grid" id="symptom-grid">
+      <button class="symptom-chip" data-symptom="stress"><span class="symptom-emoji">😣</span>스트레스</button>
+      <button class="symptom-chip" data-symptom="anxiety"><span class="symptom-emoji">😰</span>불안</button>
+      <button class="symptom-chip" data-symptom="depression"><span class="symptom-emoji">😔</span>우울</button>
+      <button class="symptom-chip" data-symptom="lethargy"><span class="symptom-emoji">😪</span>무기력</button>
+      <button class="symptom-chip" data-symptom="loneliness"><span class="symptom-emoji">🥺</span>외로움</button>
+      <button class="symptom-chip" data-symptom="anger"><span class="symptom-emoji">😤</span>분노</button>
+    </div>
+    <div class="dose-preview" id="dose-preview" hidden>
+      <div class="dose-preview-badge" id="dose-preview-badge">3mg</div>
+      <p class="dose-preview-caption" id="dose-preview-caption"></p>
+    </div>
+    <button id="symptom-confirm-btn" class="action-btn symptom-confirm-btn" disabled>처방받고 준비하기</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
