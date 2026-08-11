@@ -1126,6 +1126,24 @@ body {
   width: 100%;
 }
 
+.rx-random-spin {
+  text-align: center;
+  padding: 60px 10px;
+}
+.rx-random-spin-emoji {
+  font-size: 44px;
+  animation: rx-spin-bounce 0.6s ease-in-out infinite;
+}
+@keyframes rx-spin-bounce {
+  0%, 100% { transform: rotate(-12deg) scale(1); }
+  50% { transform: rotate(12deg) scale(1.1); }
+}
+.rx-random-spin-text {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
 .dose-tag {

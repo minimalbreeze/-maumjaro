@@ -143,7 +143,10 @@
       showSlipScreen(p, ts);
     };
     rxCtaFriend.onclick = () => Core.showToast('친구에게 처방하기는 곧 추가돼요 💌');
-    rxCtaAnother.onclick = () => Core.showToast('다른 처방 뽑기는 곧 추가돼요 🎰');
+    rxCtaAnother.onclick = () => {
+      closeResultScreen();
+      runRandomPrescription();
+    };
   }
   function closeResultScreen() {
     rxResultOverlay.classList.remove('show');
@@ -398,6 +401,14 @@
 
   function renderRxGrid() {
     const tiles = RX_CATEGORIES.map((c) => {
+      if (c.id === 'random') {
+        return `
+          <div class="rx-category-tile" data-cat="random">
+            <span class="rx-category-emoji">${c.emoji}</span>
+            <span class="rx-category-label">${c.label}</span>
+            <span class="rx-category-count">탭해서 뽑기</span>
+          </div>`;
+      }
       const count = rxCategoryCount(c.id);
       return `
         <div class="rx-category-tile${count === 0 ? ' empty' : ''}" data-cat="${c.id}">
@@ -415,6 +426,10 @@
     rxCenterContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {
         const catId = tile.dataset.cat;
+        if (catId === 'random') {
+          runRandomPrescription();
+          return;
+        }
         if (rxCategoryCount(catId) === 0) {
           Core.showToast('이 카테고리는 곧 추가돼요 🚧');
           return;
@@ -451,9 +466,10 @@
     });
   }
 
-  function renderRxDetail(prescriptionId, fromCatId) {
+  function renderRxDetail(prescriptionId, fromCatId, opts) {
     const p = ALL_PRESCRIPTIONS.find((x) => x.id === prescriptionId);
     if (!p) { renderRxGrid(); return; }
+    const fromRandom = !!(opts && opts.fromRandom);
     rxCenterContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="rx-detail-back" type="button">‹</button>
@@ -467,10 +483,49 @@
         <button class="action-btn rx-detail-action-btn" id="rx-detail-action-btn" type="button">처방받기</button>
       </div>`;
 
-    document.getElementById('rx-detail-back').addEventListener('click', () => renderRxList(fromCatId));
+    document.getElementById('rx-detail-back').addEventListener('click', () => {
+      if (fromRandom) renderRxGrid();
+      else renderRxList(fromCatId);
+    });
     const detailBtn = document.getElementById('rx-detail-action-btn');
     wireGenericTrigger(detailBtn, p);
     syncOtherTriggerButtons();
+  }
+
+  // ---------- 랜덤 처방 (슬롯머신) ----------
+  function renderRxRandomSpin() {
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="rx-random-back" type="button">‹</button>
+        <span class="rx-nav-title">🎰 오늘의 랜덤 처방</span>
+      </div>
+      <div class="rx-random-spin">
+        <div class="rx-random-spin-emoji">🎲</div>
+        <p class="rx-random-spin-text">오늘 당신에게 필요한 것은...</p>
+      </div>`;
+    document.getElementById('rx-random-back').addEventListener('click', renderRxGrid);
+  }
+
+  let lastRandomAttemptTs = 0;
+  function runRandomPrescription() {
+    const now = performance.now();
+    if (now - lastRandomAttemptTs < 1500) return; // 연타 방지
+    lastRandomAttemptTs = now;
+    if (!ALL_PRESCRIPTIONS.length) {
+      Core.showToast('처방 데이터를 불러오지 못했어요');
+      return;
+    }
+
+    const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
+    if (rxTabBtn) rxTabBtn.click();
+    renderRxRandomSpin();
+
+    setTimeout(() => {
+      const idx = Math.floor(Math.random() * ALL_PRESCRIPTIONS.length);
+      const p = ALL_PRESCRIPTIONS[idx];
+      if (!p) return;
+      renderRxDetail(p.id, p.category, { fromRandom: true });
+    }, 1100);
   }
 
   // ---------- 탭 전환 시 처방센터 뷰 노출 (app.js의 기존 탭 리스너는 무변경, 별도 리스너 추가) ----------
