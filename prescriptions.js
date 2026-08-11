@@ -44,6 +44,13 @@
   const rxSlipSaveBtn = document.getElementById('rx-slip-save');
   const rxSlipCloseBtn = document.getElementById('rx-slip-close');
 
+  const rxFriendOverlay = document.getElementById('rx-friend-overlay');
+  const rxFriendGrid = document.getElementById('rx-friend-grid');
+  const rxFriendResult = document.getElementById('rx-friend-result');
+  const rxFriendShareText = document.getElementById('rx-friend-share-text');
+  const rxFriendLink = document.getElementById('rx-friend-link');
+  const rxFriendCloseBtn = document.getElementById('rx-friend-close');
+
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
   if (!localStorage.getItem(RX_SCHEMA_KEY)) localStorage.setItem(RX_SCHEMA_KEY, '1');
@@ -142,7 +149,10 @@
       closeResultScreen();
       showSlipScreen(p, ts);
     };
-    rxCtaFriend.onclick = () => Core.showToast('친구에게 처방하기는 곧 추가돼요 💌');
+    rxCtaFriend.onclick = () => {
+      closeResultScreen();
+      openFriendPicker();
+    };
     rxCtaAnother.onclick = () => {
       closeResultScreen();
       runRandomPrescription();
@@ -202,6 +212,42 @@
     });
   }
   rxSlipSaveBtn.addEventListener('click', saveSlipAsImage);
+
+  // ---------- 친구에게 처방하기 ----------
+  function buildShareUrl(prescriptionId) {
+    return `${location.origin}${location.pathname}?rx=${encodeURIComponent(prescriptionId)}`;
+  }
+  function pickRandomFromCategory(catId) {
+    const pool = catId === 'random' ? ALL_PRESCRIPTIONS : ALL_PRESCRIPTIONS.filter((p) => p.category === catId);
+    if (!pool.length) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  function openFriendPicker() {
+    rxFriendResult.hidden = true;
+    const chipCats = RX_CATEGORIES.filter((c) => c.id === 'random' || rxCategoryCount(c.id) > 0);
+    rxFriendGrid.innerHTML = chipCats.map((c) => `
+      <button class="rx-friend-chip" type="button" data-cat="${c.id}">
+        <span class="emoji">${c.emoji}</span>
+        <span>${c.label}</span>
+      </button>`).join('');
+    rxFriendGrid.querySelectorAll('.rx-friend-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const p = pickRandomFromCategory(chip.dataset.cat);
+        if (!p) { Core.showToast('처방을 찾지 못했어요'); return; }
+        rxFriendShareText.textContent = p.shareText;
+        rxFriendLink.textContent = buildShareUrl(p.id);
+        rxFriendResult.hidden = false;
+      });
+    });
+    rxFriendOverlay.classList.add('show');
+  }
+  function closeFriendPicker() {
+    rxFriendOverlay.classList.remove('show');
+  }
+  rxFriendOverlay.addEventListener('click', (e) => {
+    if (e.target === rxFriendOverlay) closeFriendPicker();
+  });
+  rxFriendCloseBtn.addEventListener('click', closeFriendPicker);
 
   // ---------- 오늘의 처방: 날짜 시드 결정론적 선택 ----------
   function todayKey() {
@@ -536,4 +582,20 @@
       if (view === 'rx') renderRxGrid();
     });
   });
+
+  // ---------- 공유 딥링크 진입 처리 (?rx=<id>) ----------
+  // 잘못되었거나 없는 id는 조용히 무시하고 평소처럼 홈이 보인다. 실행 기록은 남기지 않는다.
+  try {
+    const sharedId = new URLSearchParams(location.search).get('rx');
+    if (sharedId) {
+      const shared = ALL_PRESCRIPTIONS.find((p) => p.id === sharedId);
+      if (shared) {
+        const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
+        if (rxTabBtn) rxTabBtn.click();
+        renderRxDetail(shared.id, shared.category, { fromRandom: true });
+      }
+    }
+  } catch (e) {
+    // 잘못된 URL 형식이어도 앱은 정상적으로 계속 동작해야 한다.
+  }
 })();

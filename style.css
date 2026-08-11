@@ -1144,6 +1144,69 @@ body {
   color: var(--text-dim);
 }
 
+/* ---------- 친구에게 처방하기 ---------- */
+
+.rx-friend-card {
+  max-width: 340px;
+}
+.rx-friend-sub {
+  margin: -8px 0 14px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.rx-friend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.rx-friend-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 4px;
+  border-radius: 14px;
+  border: 1.5px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rx-friend-chip:active {
+  transform: scale(0.95);
+}
+.rx-friend-chip .emoji {
+  font-size: 20px;
+}
+.rx-friend-result {
+  margin: 14px 0 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+.rx-friend-result[hidden] { display: none; }
+.rx-friend-share-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0 0 8px;
+  white-space: pre-wrap;
+}
+.rx-friend-link {
+  font-size: 11.5px;
+  color: #3b82c4;
+  word-break: break-all;
+  margin: 0 0 6px;
+}
+.rx-friend-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
 .dose-tag {
