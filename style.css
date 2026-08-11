@@ -809,6 +809,95 @@ body {
   cursor: pointer;
 }
 
+/* ---------- Prescription result screen ---------- */
+
+.rx-result-card {
+  max-width: 340px;
+  text-align: center;
+}
+.rx-result-emoji {
+  font-size: 36px;
+  margin-bottom: 4px;
+}
+.rx-result-card h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  text-align: center;
+}
+.rx-result-diagnosis {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.rx-stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.rx-stat-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.rx-stat-bar {
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.rx-stat-fill {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  transition: width 0.9s cubic-bezier(.2,.9,.3,1);
+}
+.rx-stat-value {
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+}
+.rx-result-sideeffect {
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  margin: 0 0 18px;
+}
+.rx-result-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rx-cta-btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+}
+.rx-cta-btn:active {
+  transform: scale(0.98);
+}
+.rx-cta-btn:first-child {
+  color: #fff;
+  border: none;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+}
+
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
 .dose-tag {
