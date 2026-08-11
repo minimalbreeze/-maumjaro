@@ -493,8 +493,11 @@
     rxCenterContent.innerHTML = `
       <div class="rx-nav-header">
         <span class="rx-nav-title">🏥 처방센터</span>
+        <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 친구에게</button>
       </div>
       <div class="rx-category-grid">${tiles}</div>`;
+
+    document.getElementById('rx-friend-quick-btn').addEventListener('click', openFriendPicker);
 
     rxCenterContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {

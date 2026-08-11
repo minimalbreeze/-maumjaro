@@ -999,6 +999,21 @@ body {
 .rx-nav-title {
   font-size: 16px;
   font-weight: 700;
+  flex: 1;
+}
+.rx-friend-quick-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rx-friend-quick-btn:active {
+  transform: scale(0.96);
 }
 
 .rx-category-grid {
