@@ -50,6 +50,7 @@
   const rxFriendShareText = document.getElementById('rx-friend-share-text');
   const rxFriendLink = document.getElementById('rx-friend-link');
   const rxFriendCloseBtn = document.getElementById('rx-friend-close');
+  const rxFriendShareBtn = document.getElementById('rx-friend-share-btn');
 
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
@@ -222,6 +223,30 @@
     if (!pool.length) return null;
     return pool[Math.floor(Math.random() * pool.length)];
   }
+
+  // ---------- 공유(Web Share API 우선, 실패 시 클립보드 폴백) ----------
+  let pickedShareText = '';
+  let pickedShareUrl = '';
+  async function shareOrCopy(text, url) {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text, url });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // 사용자가 공유 시트를 취소함
+        // 그 외 실패는 클립보드 폴백으로 계속 진행
+      }
+    }
+    const fullText = `${text}\n${url}`;
+    try {
+      await navigator.clipboard.writeText(fullText);
+      Core.showToast('링크를 복사했어요 📋');
+    } catch (e) {
+      Core.showToast('복사에 실패했어요. 직접 선택해서 복사해주세요');
+    }
+  }
+  rxFriendShareBtn.addEventListener('click', () => shareOrCopy(pickedShareText, pickedShareUrl));
+
   function openFriendPicker() {
     rxFriendResult.hidden = true;
     const chipCats = RX_CATEGORIES.filter((c) => c.id === 'random' || rxCategoryCount(c.id) > 0);
@@ -234,8 +259,10 @@
       chip.addEventListener('click', () => {
         const p = pickRandomFromCategory(chip.dataset.cat);
         if (!p) { Core.showToast('처방을 찾지 못했어요'); return; }
-        rxFriendShareText.textContent = p.shareText;
-        rxFriendLink.textContent = buildShareUrl(p.id);
+        pickedShareText = p.shareText;
+        pickedShareUrl = buildShareUrl(p.id);
+        rxFriendShareText.textContent = pickedShareText;
+        rxFriendLink.textContent = pickedShareUrl;
         rxFriendResult.hidden = false;
       });
     });

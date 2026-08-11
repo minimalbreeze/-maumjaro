@@ -1206,6 +1206,13 @@ body {
   color: var(--text-dim);
   margin: 0;
 }
+.rx-friend-share-btn {
+  display: block;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 10px 0;
+  font-size: 13.5px;
+}
 
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
