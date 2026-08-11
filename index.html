@@ -24,6 +24,16 @@
   </header>
 
   <main id="view-home" class="view">
+    <div id="today-rx-card" class="today-rx-card" hidden>
+      <div class="today-rx-emoji" id="today-rx-emoji">💉</div>
+      <div class="today-rx-body">
+        <div class="today-rx-eyebrow">오늘의 처방</div>
+        <div class="today-rx-title" id="today-rx-title"></div>
+        <div class="today-rx-diagnosis" id="today-rx-diagnosis"></div>
+      </div>
+      <button class="today-rx-btn" id="today-rx-btn" type="button">처방받기</button>
+    </div>
+
     <div class="syringe-stage">
       <div class="ready-glow" id="ready-glow"></div>
       <span class="sparkle sparkle-1">✦</span>
@@ -184,5 +194,6 @@
 
 <script src="prescriptions-data.js"></script>
 <script src="app.js"></script>
+<script src="prescriptions.js"></script>
 </body>
 </html>

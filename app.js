@@ -420,6 +420,7 @@
   function completeInjection() {
     const now = Date.now();
     saveRecord(now);
+    document.dispatchEvent(new CustomEvent('maumjaro:emotion-injected', { detail: { key: selectedSymptom, ts: now } }));
 
     const symptom = SYMPTOMS[selectedSymptom];
     const msg = pickHealingMessage(selectedSymptom);
@@ -811,4 +812,24 @@
   updateGreeting();
   updateSoundToggleUI();
   refreshSummary();
+
+  // ---------- export for prescriptions.js (처방 시스템 확장, additive only) ----------
+  window.MaumjaroCore = {
+    SYMPTOMS,
+    loadRecords,
+    sameDay,
+    showToast,
+    requestMotionPermission,
+    launchEmotionFlow(key) {
+      const symptom = SYMPTOMS[key];
+      if (!symptom || state !== 'idle') return;
+      selectedSymptom = key;
+      doseTagMg.textContent = symptom.mg;
+      doseTagLabel.textContent = `${symptom.label} 처방`;
+      doseCaption.textContent = symptom.caption;
+      doseTag.hidden = false;
+      doseCaption.hidden = false;
+      startPrepare();
+    },
+  };
 })();
