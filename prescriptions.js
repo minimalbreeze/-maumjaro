@@ -257,39 +257,50 @@
 
   let genericState = 'idle'; // idle | preparing | ready | injecting
   let currentGeneric = null;
+  // null = 어떤 버튼도 "일반 처방 플로우"를 소유하고 있지 않음(감정 플로우 중이거나 완전 유휴).
+  // 일반 플로우를 시작시킨 버튼만 이 값을 가지며, 그 버튼의 disabled/텍스트는
+  // startGenericPrepare/Inject/complete가 직접 관리한다(관찰자와의 레이스 방지).
+  let activeTriggerBtn = null;
 
-  new MutationObserver(() => {
-    todayRxBtn.disabled = genericState !== 'idle' || appHasOtherFlowActive();
-  }).observe(appEl, { attributes: true, attributeFilter: ['class'] });
+  // "activeTriggerBtn이 아닌" 트리거 버튼만 동기화한다.
+  function syncOtherTriggerButtons() {
+    const blocked = genericState !== 'idle' || appHasOtherFlowActive();
+    if (todayRxBtn !== activeTriggerBtn) todayRxBtn.disabled = blocked;
+    const detailBtn = document.getElementById('rx-detail-action-btn');
+    if (detailBtn && detailBtn !== activeTriggerBtn) detailBtn.disabled = blocked;
+  }
+  new MutationObserver(syncOtherTriggerButtons).observe(appEl, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- 일반(비감정) 처방 실행 ----------
-  function startGenericPrepare(prescription) {
+  function startGenericPrepare(prescription, triggerBtn) {
     if (genericState !== 'idle' || appHasOtherFlowActive()) return;
+    activeTriggerBtn = triggerBtn || todayRxBtn;
     currentGeneric = prescription;
     genericState = 'preparing';
     actionBtn.disabled = true;
-    todayRxBtn.disabled = true;
-    todayRxBtn.textContent = '준비 중...';
-    appEl.classList.add('state-preparing');
+    activeTriggerBtn.disabled = true;
+    activeTriggerBtn.textContent = '준비 중...';
+    appEl.classList.add('rx-preparing');
+    syncOtherTriggerButtons();
 
     tween(1300, easeInOutCubic, (t) => {
       setSyringeByHeadY(HEAD_Y_IDLE + (HEAD_Y_READY - HEAD_Y_IDLE) * t);
     }, () => {
       genericState = 'ready';
-      appEl.classList.remove('state-preparing');
-      appEl.classList.add('state-ready');
-      todayRxBtn.disabled = false;
-      todayRxBtn.textContent = '주사 놓기';
+      appEl.classList.remove('rx-preparing');
+      appEl.classList.add('rx-ready');
+      activeTriggerBtn.disabled = false;
+      activeTriggerBtn.textContent = '주사 놓기';
     });
   }
 
   function startGenericInject() {
     if (genericState !== 'ready') return;
     genericState = 'injecting';
-    appEl.classList.remove('state-ready');
-    appEl.classList.add('state-injecting');
-    todayRxBtn.disabled = true;
-    todayRxBtn.textContent = '주사 중...';
+    appEl.classList.remove('rx-ready');
+    appEl.classList.add('rx-injecting');
+    activeTriggerBtn.disabled = true;
+    activeTriggerBtn.textContent = '주사 중...';
 
     let dropletTriggered = false;
     tween(1100, easeInCubic, (t) => {
@@ -300,7 +311,7 @@
         droplet.style.opacity = '1';
       }
     }, () => {
-      appEl.classList.remove('state-injecting');
+      appEl.classList.remove('rx-injecting');
       setTimeout(() => {
         droplet.setAttribute('r', 0);
         droplet.style.opacity = '0';
@@ -319,8 +330,10 @@
     genericState = 'idle';
     currentGeneric = null;
     actionBtn.disabled = false;
-    todayRxBtn.disabled = appHasOtherFlowActive();
-    todayRxBtn.textContent = '처방받기';
+    activeTriggerBtn.disabled = appHasOtherFlowActive();
+    activeTriggerBtn.textContent = '처방받기';
+    activeTriggerBtn = null;
+    syncOtherTriggerButtons();
   }
 
   // ---------- 일반 처방용 모션 제스처 (app.js의 감정 플로우와 독립적인 리스너) ----------
@@ -340,15 +353,15 @@
     }
   });
 
-  // ---------- 오늘의 처방 카드 렌더 + 버튼 동작 ----------
-  function renderTodayCard() {
-    const p = pickTodaysPrescription();
-    todayRxEmoji.textContent = p.emoji;
-    todayRxTitle.textContent = p.title;
-    todayRxDiagnosis.textContent = p.diagnosis;
-    todayRxCard.hidden = false;
-
-    todayRxBtn.onclick = () => {
+  // ---------- 트리거 버튼 공용 배선 (오늘의 카드 / 처방센터 상세에서 공유) ----------
+  function wireGenericTrigger(btnEl, p) {
+    btnEl.onclick = () => {
+      // 이 버튼이 이미 자기 자신의 "준비 완료" 상태를 소유하고 있으면
+      // 아래의 "다른 처방 진행 중" 가드보다 먼저 주사를 놓는다.
+      if (p.category !== 'emotion' && activeTriggerBtn === btnEl && genericState === 'ready') {
+        startGenericInject();
+        return;
+      }
       if (genericState !== 'idle' || appHasOtherFlowActive()) {
         Core.showToast('지금 다른 처방이 진행 중이에요');
         return;
@@ -357,14 +370,115 @@
       if (p.category === 'emotion') {
         Core.launchEmotionFlow(p._legacyKey);
       } else {
-        if (todayRxBtn.textContent === '주사 놓기') {
-          startGenericInject();
-        } else {
-          startGenericPrepare(p);
-        }
+        startGenericPrepare(p, btnEl);
       }
     };
   }
 
+  // ---------- 오늘의 처방 카드 렌더 ----------
+  function renderTodayCard() {
+    const p = pickTodaysPrescription();
+    todayRxEmoji.textContent = p.emoji;
+    todayRxTitle.textContent = p.title;
+    todayRxDiagnosis.textContent = p.diagnosis;
+    todayRxCard.hidden = false;
+    wireGenericTrigger(todayRxBtn, p);
+  }
+
   renderTodayCard();
+
+  // ---------- 처방센터 ----------
+  const viewRx = document.getElementById('view-rx');
+  const rxCenterContent = document.getElementById('rx-center-content');
+  const RARITY_LABEL = { common: '흔함', rare: '레어', epic: '에픽' };
+
+  function rxCategoryCount(catId) {
+    return ALL_PRESCRIPTIONS.filter((p) => p.category === catId).length;
+  }
+
+  function renderRxGrid() {
+    const tiles = RX_CATEGORIES.map((c) => {
+      const count = rxCategoryCount(c.id);
+      return `
+        <div class="rx-category-tile${count === 0 ? ' empty' : ''}" data-cat="${c.id}">
+          <span class="rx-category-emoji">${c.emoji}</span>
+          <span class="rx-category-label">${c.label}</span>
+          <span class="rx-category-count">${count > 0 ? `${count}개` : '곧 추가돼요'}</span>
+        </div>`;
+    }).join('');
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <span class="rx-nav-title">🏥 처방센터</span>
+      </div>
+      <div class="rx-category-grid">${tiles}</div>`;
+
+    rxCenterContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
+      tile.addEventListener('click', () => {
+        const catId = tile.dataset.cat;
+        if (rxCategoryCount(catId) === 0) {
+          Core.showToast('이 카테고리는 곧 추가돼요 🚧');
+          return;
+        }
+        renderRxList(catId);
+      });
+    });
+  }
+
+  function renderRxList(catId) {
+    const meta = getCategoryMeta(catId);
+    const items = ALL_PRESCRIPTIONS.filter((p) => p.category === catId);
+    const cards = items.map((p) => `
+      <div class="rx-list-card" data-id="${p.id}">
+        <span class="rx-list-emoji">${p.emoji}</span>
+        <div class="rx-list-body">
+          <div class="rx-list-title-row">
+            <span class="rx-list-title">${p.title}</span>
+            <span class="rx-rarity-badge rx-rarity-${p.rarity}">${RARITY_LABEL[p.rarity] || p.rarity}</span>
+          </div>
+          <div class="rx-list-desc">${p.diagnosis}</div>
+        </div>
+      </div>`).join('');
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="rx-list-back" type="button">‹</button>
+        <span class="rx-nav-title">${meta ? `${meta.emoji} ${meta.label}` : '처방 목록'}</span>
+      </div>
+      ${cards || '<p class="rx-empty-msg">아직 처방이 없어요</p>'}`;
+
+    document.getElementById('rx-list-back').addEventListener('click', renderRxGrid);
+    rxCenterContent.querySelectorAll('.rx-list-card').forEach((card) => {
+      card.addEventListener('click', () => renderRxDetail(card.dataset.id, catId));
+    });
+  }
+
+  function renderRxDetail(prescriptionId, fromCatId) {
+    const p = ALL_PRESCRIPTIONS.find((x) => x.id === prescriptionId);
+    if (!p) { renderRxGrid(); return; }
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="rx-detail-back" type="button">‹</button>
+        <span class="rx-nav-title">${p.title}</span>
+      </div>
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">${p.emoji}</div>
+        <div class="rx-detail-title">${p.title}</div>
+        <div class="rx-detail-diagnosis">${p.diagnosis}</div>
+        <p class="rx-detail-symptom">${p.symptom}</p>
+        <button class="action-btn rx-detail-action-btn" id="rx-detail-action-btn" type="button">처방받기</button>
+      </div>`;
+
+    document.getElementById('rx-detail-back').addEventListener('click', () => renderRxList(fromCatId));
+    const detailBtn = document.getElementById('rx-detail-action-btn');
+    wireGenericTrigger(detailBtn, p);
+    syncOtherTriggerButtons();
+  }
+
+  // ---------- 탭 전환 시 처방센터 뷰 노출 (app.js의 기존 탭 리스너는 무변경, 별도 리스너 추가) ----------
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+      viewRx.hidden = view !== 'rx';
+      if (view === 'rx') renderRxGrid();
+    });
+  });
 })();

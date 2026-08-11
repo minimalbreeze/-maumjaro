@@ -200,7 +200,8 @@ body {
   pointer-events: none;
 }
 
-#app.state-ready .ready-glow {
+#app.state-ready .ready-glow,
+#app.rx-ready .ready-glow {
   opacity: 1;
   transform: scale(1);
   animation: pulse-glow 1.8s ease-in-out infinite;
@@ -211,7 +212,8 @@ body {
   50% { transform: scale(1.12); opacity: 1; }
 }
 
-#app.state-ready #syringe-svg {
+#app.state-ready #syringe-svg,
+#app.rx-ready #syringe-svg {
   animation: syringe-breathe 1.6s ease-in-out infinite;
 }
 @keyframes syringe-breathe {
@@ -219,17 +221,21 @@ body {
   50% { transform: rotate(2deg) translateY(-5px); }
 }
 
-#app.state-injecting #syringe-svg {
+#app.state-injecting #syringe-svg,
+#app.rx-injecting #syringe-svg {
   transform: translateY(6px);
   animation: none;
 }
 
-#app.state-preparing #syringe-svg {
+#app.state-preparing #syringe-svg,
+#app.rx-preparing #syringe-svg {
   animation: syringe-idle-bob 3.2s ease-in-out infinite;
 }
 
 #app.state-preparing #syringe-svg,
-#app.state-injecting #syringe-svg {
+#app.state-injecting #syringe-svg,
+#app.rx-preparing #syringe-svg,
+#app.rx-injecting #syringe-svg {
   filter: drop-shadow(0 8px 22px rgba(255,145,102,0.4));
 }
 
@@ -261,13 +267,14 @@ body {
 .sparkle-3 { bottom: 30%; left: 16%; font-size: 11px; }
 .sparkle-4 { bottom: 20%; right: 22%; font-size: 16px; }
 
-#app.state-ready .sparkle {
+#app.state-ready .sparkle,
+#app.rx-ready .sparkle {
   animation: sparkle-twinkle 1.6s ease-in-out infinite;
 }
-#app.state-ready .sparkle-1 { animation-delay: 0s; }
-#app.state-ready .sparkle-2 { animation-delay: 0.35s; }
-#app.state-ready .sparkle-3 { animation-delay: 0.7s; }
-#app.state-ready .sparkle-4 { animation-delay: 1.05s; }
+#app.state-ready .sparkle-1, #app.rx-ready .sparkle-1 { animation-delay: 0s; }
+#app.state-ready .sparkle-2, #app.rx-ready .sparkle-2 { animation-delay: 0.35s; }
+#app.state-ready .sparkle-3, #app.rx-ready .sparkle-3 { animation-delay: 0.7s; }
+#app.state-ready .sparkle-4, #app.rx-ready .sparkle-4 { animation-delay: 1.05s; }
 
 @keyframes sparkle-twinkle {
   0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
@@ -963,6 +970,160 @@ body {
 .rx-slip-save-btn:disabled {
   opacity: 0.55;
   cursor: default;
+}
+
+/* ---------- 처방센터 ---------- */
+
+#rx-center-content {
+  width: 100%;
+  padding-bottom: 20px;
+}
+
+.rx-nav-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.rx-back-btn {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+}
+.rx-nav-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.rx-category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.rx-category-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 4px 12px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+}
+.rx-category-tile:active {
+  transform: scale(0.96);
+}
+.rx-category-tile.empty {
+  opacity: 0.5;
+}
+.rx-category-emoji {
+  font-size: 22px;
+}
+.rx-category-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.rx-category-count {
+  font-size: 9.5px;
+  color: var(--text-dim);
+}
+
+.rx-list-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.rx-list-card:active {
+  transform: scale(0.98);
+}
+.rx-list-emoji {
+  flex-shrink: 0;
+  font-size: 22px;
+}
+.rx-list-body {
+  flex: 1;
+  min-width: 0;
+}
+.rx-list-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rx-list-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.rx-list-desc {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.rx-rarity-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #fff;
+}
+.rx-rarity-common { background: #b3aca6; }
+.rx-rarity-rare { background: #6f9be0; }
+.rx-rarity-epic { background: #b779ef; }
+
+.rx-empty-msg {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13.5px;
+  padding: 50px 10px;
+}
+
+.rx-detail-card {
+  text-align: center;
+  padding: 24px 16px 16px;
+  border-radius: 20px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+}
+.rx-detail-emoji {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+.rx-detail-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+.rx-detail-diagnosis {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 4px 0 14px;
+}
+.rx-detail-symptom {
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(0,0,0,0.04);
+  border-radius: 12px;
+  padding: 12px 14px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.rx-detail-action-btn {
+  width: 100%;
 }
 
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
