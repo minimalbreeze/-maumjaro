@@ -216,8 +216,35 @@
   </div>
 </div>
 
+<div id="rx-slip-overlay" class="settings-overlay">
+  <div class="settings-card rx-slip-card">
+    <div class="rx-slip-content" id="rx-slip-content">
+      <div class="rx-slip-header">
+        <span class="rx-slip-hospital">🏥 맘운자로 처방전</span>
+      </div>
+      <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-slip-patient">오늘의 나</span></div>
+      <div class="rx-slip-row"><span class="rx-slip-key">진단명</span><span class="rx-slip-value" id="rx-slip-diagnosis"></span></div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">처방</span>
+        <p class="rx-slip-text" id="rx-slip-prescription"></p>
+      </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">주의사항</span>
+        <p class="rx-slip-text" id="rx-slip-warning"></p>
+      </div>
+      <div class="rx-slip-divider"></div>
+      <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value">맘운자로</span></div>
+      <div class="rx-slip-row"><span class="rx-slip-key">발급일</span><span class="rx-slip-value" id="rx-slip-date"></span></div>
+    </div>
+    <p class="rx-slip-hint" id="rx-slip-hint">이미지로 저장하거나 화면을 캡처해서 공유해보세요</p>
+    <button id="rx-slip-save" class="action-btn rx-slip-save-btn" type="button">🖼️ 이미지로 저장</button>
+    <button id="rx-slip-close" class="settings-close" type="button">닫기</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="prescriptions-data.js"></script>
 <script src="app.js"></script>
 <script src="prescriptions.js"></script>

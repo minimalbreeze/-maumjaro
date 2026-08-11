@@ -898,6 +898,73 @@ body {
   background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
 }
 
+/* ---------- Prescription slip (처방전) ---------- */
+
+.rx-slip-card {
+  max-width: 320px;
+  background: #fffdf9;
+  border: 1.5px dashed var(--card-border);
+}
+.rx-slip-header {
+  text-align: center;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1.5px dashed var(--card-border);
+}
+.rx-slip-hospital {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+.rx-slip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.rx-slip-key {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-right: 10px;
+}
+.rx-slip-value {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+}
+.rx-slip-block {
+  margin-bottom: 10px;
+}
+.rx-slip-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.rx-slip-divider {
+  border-top: 1.5px dashed var(--card-border);
+  margin: 10px 0 12px;
+}
+.rx-slip-hint {
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin: 14px 0 14px;
+}
+.rx-slip-save-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 12px 0;
+}
+.rx-slip-save-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
 .dose-tag {

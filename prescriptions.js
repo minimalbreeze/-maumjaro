@@ -34,6 +34,16 @@
   const rxCtaFriend = document.getElementById('rx-cta-friend');
   const rxCtaAnother = document.getElementById('rx-cta-another');
 
+  const rxSlipOverlay = document.getElementById('rx-slip-overlay');
+  const rxSlipPatient = document.getElementById('rx-slip-patient');
+  const rxSlipDiagnosis = document.getElementById('rx-slip-diagnosis');
+  const rxSlipPrescription = document.getElementById('rx-slip-prescription');
+  const rxSlipWarning = document.getElementById('rx-slip-warning');
+  const rxSlipDate = document.getElementById('rx-slip-date');
+  const rxSlipContent = document.getElementById('rx-slip-content');
+  const rxSlipSaveBtn = document.getElementById('rx-slip-save');
+  const rxSlipCloseBtn = document.getElementById('rx-slip-close');
+
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
   if (!localStorage.getItem(RX_SCHEMA_KEY)) localStorage.setItem(RX_SCHEMA_KEY, '1');
@@ -103,7 +113,7 @@
   }
 
   // ---------- 처방 결과 화면 렌더 ----------
-  function showResultScreen(p) {
+  function showResultScreen(p, ts) {
     const [stat1Label, stat2Label] = STAT_TEMPLATES[p.category] || STAT_TEMPLATES.default;
     const stat1 = statPercent(p.id, 1);
     const stat2 = statPercent(p.id, 2);
@@ -128,7 +138,10 @@
       });
     });
 
-    rxCtaSlip.onclick = () => Core.showToast('처방전 발급 기능은 곧 추가돼요 📝');
+    rxCtaSlip.onclick = () => {
+      closeResultScreen();
+      showSlipScreen(p, ts);
+    };
     rxCtaFriend.onclick = () => Core.showToast('친구에게 처방하기는 곧 추가돼요 💌');
     rxCtaAnother.onclick = () => Core.showToast('다른 처방 뽑기는 곧 추가돼요 🎰');
   }
@@ -138,6 +151,54 @@
   rxResultOverlay.addEventListener('click', (e) => {
     if (e.target === rxResultOverlay) closeResultScreen();
   });
+
+  // ---------- 처방전 (공유 슬립) ----------
+  function formatSlipDate(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function getPatientName() {
+    const name = (localStorage.getItem('maumjaro:username') || '').trim();
+    return name ? `${name}님` : '오늘의 나';
+  }
+  function showSlipScreen(p, ts) {
+    rxSlipPatient.textContent = getPatientName();
+    rxSlipDiagnosis.textContent = p.diagnosis;
+    rxSlipPrescription.textContent = p.prescription;
+    rxSlipWarning.textContent = p.warning;
+    rxSlipDate.textContent = formatSlipDate(ts || Date.now());
+    rxSlipOverlay.classList.add('show');
+  }
+  function closeSlipScreen() {
+    rxSlipOverlay.classList.remove('show');
+  }
+  rxSlipOverlay.addEventListener('click', (e) => {
+    if (e.target === rxSlipOverlay) closeSlipScreen();
+  });
+  rxSlipCloseBtn.addEventListener('click', closeSlipScreen);
+
+  function saveSlipAsImage() {
+    if (typeof window.html2canvas !== 'function') {
+      Core.showToast('이미지 저장을 사용할 수 없어요. 화면을 캡처해주세요');
+      return;
+    }
+    rxSlipSaveBtn.disabled = true;
+    const originalLabel = rxSlipSaveBtn.textContent;
+    rxSlipSaveBtn.textContent = '저장 중...';
+    window.html2canvas(rxSlipContent, { backgroundColor: '#fffdf9', scale: 2 }).then((canvas) => {
+      const link = document.createElement('a');
+      link.download = `맘운자로_처방전_${formatSlipDate(Date.now())}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      Core.showToast('처방전 이미지를 저장했어요 🖼️');
+    }).catch(() => {
+      Core.showToast('이미지 저장에 실패했어요. 화면을 캡처해주세요');
+    }).finally(() => {
+      rxSlipSaveBtn.disabled = false;
+      rxSlipSaveBtn.textContent = originalLabel;
+    });
+  }
+  rxSlipSaveBtn.addEventListener('click', saveSlipAsImage);
 
   // ---------- 오늘의 처방: 날짜 시드 결정론적 선택 ----------
   function todayKey() {
@@ -253,7 +314,7 @@
     const now = Date.now();
     recordRx({ prescriptionId: p.id, category: p.category, ts: now });
 
-    showResultScreen(p);
+    showResultScreen(p, now);
 
     genericState = 'idle';
     currentGeneric = null;
