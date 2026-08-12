@@ -68,6 +68,11 @@
   const rxFriendPhotoBtn = document.getElementById('rx-friend-photo-btn');
   const rxFriendPhotoInput = document.getElementById('rx-friend-photo-input');
   const rxFriendNoteInput = document.getElementById('rx-friend-note-input');
+  const rxFriendRecipientInput = document.getElementById('rx-friend-recipient-input');
+
+  const rxSentHistoryOverlay = document.getElementById('rx-sent-history-overlay');
+  const rxSentHistoryList = document.getElementById('rx-sent-history-list');
+  const rxSentHistoryCloseBtn = document.getElementById('rx-sent-history-close');
 
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
@@ -87,6 +92,27 @@
     const list = loadRxRecords();
     list.push({ id: `rx_${ts}_${Math.random().toString(36).slice(2, 8)}`, prescriptionId, category, ts });
     localStorage.setItem(RX_LS_KEY, JSON.stringify(list));
+  }
+
+  // ---------- 친구에게 보낸 처방 기록 (별도 키) ----------
+  const FRIEND_SENT_LS_KEY = 'maumjaro:friendSentRecords';
+  function loadFriendSentRecords() {
+    try {
+      const raw = localStorage.getItem(FRIEND_SENT_LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function recordFriendSend({ recipient, prescriptionId, category, title, emoji, ts }) {
+    const list = loadFriendSentRecords();
+    list.push({
+      id: `fs_${ts}_${Math.random().toString(36).slice(2, 8)}`,
+      recipient: recipient || '친구',
+      prescriptionId, category, title, emoji, ts,
+    });
+    localStorage.setItem(FRIEND_SENT_LS_KEY, JSON.stringify(list));
   }
   // 감정 처방은 app.js가 기존 방식대로 completeInjection()에서 처리하고,
   // 완료 시 이 이벤트만 추가로 쏴준다 (app.js 로직 자체는 무변경).
@@ -203,6 +229,14 @@
     const d = new Date(ts);
     return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
   }
+  function formatSentDateTime(ts) {
+    const d = new Date(ts);
+    const h = d.getHours();
+    const ampm = h < 12 ? '오전' : '오후';
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${formatSlipDate(ts)} ${ampm} ${h12}:${m}`;
+  }
   function getPatientName() {
     const name = (localStorage.getItem('maumjaro:username') || '').trim();
     return name ? `${name}님` : '오늘의 나';
@@ -300,6 +334,7 @@
   // ---------- 공유(Web Share API 우선, 실패 시 클립보드 폴백) ----------
   let pickedShareText = '';
   let pickedShareUrl = '';
+  let pickedPrescription = null;
   async function shareOrCopy(text, url) {
     if (navigator.share) {
       try {
@@ -324,6 +359,7 @@
     rxFriendPhotoBtn.textContent = '📷 사진 추가';
     rxFriendPhotoInput.value = '';
     rxFriendNoteInput.textContent = '';
+    rxFriendRecipientInput.value = '';
   }
   rxFriendPhotoBtn.addEventListener('click', () => rxFriendPhotoInput.click());
   rxFriendPhotoInput.addEventListener('change', () => {
@@ -342,6 +378,16 @@
   // 사진이나 메모를 추가했으면 처방전과 같은 방식(이미지 캡처 + 공유)으로,
   // 아니면 기존처럼 텍스트+링크로 보낸다.
   async function sendFriendPrescription() {
+    if (pickedPrescription) {
+      recordFriendSend({
+        recipient: rxFriendRecipientInput.value.trim(),
+        prescriptionId: pickedPrescription.id,
+        category: pickedPrescription.category,
+        title: pickedPrescription.title,
+        emoji: pickedPrescription.emoji,
+        ts: Date.now(),
+      });
+    }
     const hasPhoto = !rxFriendPhotoImg.hidden;
     const hasNote = rxFriendNoteInput.textContent.trim().length > 0;
     if (!hasPhoto && !hasNote) {
@@ -404,6 +450,7 @@
       chip.addEventListener('click', () => {
         const p = pickRandomFromCategory(chip.dataset.cat);
         if (!p) { Core.showToast('처방을 찾지 못했어요'); return; }
+        pickedPrescription = p;
         pickedShareText = p.shareText;
         pickedShareUrl = buildShareUrl(p.id);
         rxFriendShareText.textContent = pickedShareText;
@@ -421,6 +468,31 @@
     if (e.target === rxFriendOverlay) closeFriendPicker();
   });
   rxFriendCloseBtn.addEventListener('click', closeFriendPicker);
+
+  // ---------- 보낸 처방 기록 보기 ----------
+  function openSentHistory() {
+    const list = loadFriendSentRecords().slice().sort((a, b) => b.ts - a.ts);
+    if (!list.length) {
+      rxSentHistoryList.innerHTML = '<p class="rx-empty-msg">아직 친구에게 보낸 처방이 없어요</p>';
+    } else {
+      rxSentHistoryList.innerHTML = list.map((rec) => `
+        <div class="rx-sent-item">
+          <span class="rx-sent-emoji">${rec.emoji || '💌'}</span>
+          <div class="rx-sent-body">
+            <div class="rx-sent-title">${rec.title || '처방'} → <strong>${rec.recipient}</strong>님</div>
+            <div class="rx-sent-date">${formatSentDateTime(rec.ts)}</div>
+          </div>
+        </div>`).join('');
+    }
+    rxSentHistoryOverlay.classList.add('show');
+  }
+  function closeSentHistory() {
+    rxSentHistoryOverlay.classList.remove('show');
+  }
+  rxSentHistoryOverlay.addEventListener('click', (e) => {
+    if (e.target === rxSentHistoryOverlay) closeSentHistory();
+  });
+  rxSentHistoryCloseBtn.addEventListener('click', closeSentHistory);
 
   // ---------- 오늘의 처방: 날짜 시드 결정론적 선택 ----------
   function todayKey() {
@@ -659,11 +731,13 @@
     rxCenterContent.innerHTML = `
       <div class="rx-nav-header">
         <span class="rx-nav-title">🏥 처방센터</span>
+        <button class="rx-friend-quick-btn" id="rx-sent-history-btn" type="button">📋 보낸 기록</button>
         <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 친구에게</button>
       </div>
       <div class="rx-category-grid">${tiles}</div>`;
 
     document.getElementById('rx-friend-quick-btn').addEventListener('click', openFriendPicker);
+    document.getElementById('rx-sent-history-btn').addEventListener('click', openSentHistory);
 
     rxCenterContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {

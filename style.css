@@ -1301,6 +1301,67 @@ body {
   padding: 10px 0;
   font-size: 13.5px;
 }
+.rx-friend-recipient-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rx-friend-recipient-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+}
+.rx-friend-recipient-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ---------- 보낸 처방 기록 ---------- */
+
+.rx-sent-history-card {
+  max-width: 360px;
+  max-height: 78vh;
+  overflow-y: auto;
+}
+#rx-sent-history-list {
+  margin-bottom: 14px;
+}
+.rx-sent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  margin-bottom: 8px;
+}
+.rx-sent-emoji {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+.rx-sent-body {
+  flex: 1;
+  min-width: 0;
+}
+.rx-sent-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.rx-sent-title strong {
+  color: var(--accent-a);
+}
+.rx-sent-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
 
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
 
