@@ -19,6 +19,11 @@
   const todayRxDiagnosis = document.getElementById('today-rx-diagnosis');
   const todayRxBtn = document.getElementById('today-rx-btn');
 
+  const doseTag = document.getElementById('dose-tag');
+  const doseTagMg = document.getElementById('dose-tag-mg');
+  const doseTagLabel = document.getElementById('dose-tag-label');
+  const doseCaption = document.getElementById('dose-caption');
+
   const rxResultOverlay = document.getElementById('rx-result-overlay');
   const rxResultEmoji = document.getElementById('rx-result-emoji');
   const rxResultTitle = document.getElementById('rx-result-title');
@@ -191,7 +196,7 @@
   });
   rxSlipCloseBtn.addEventListener('click', closeSlipScreen);
 
-  function saveSlipAsImage() {
+  async function saveSlipAsImage() {
     if (typeof window.html2canvas !== 'function') {
       Core.showToast('이미지 저장을 사용할 수 없어요. 화면을 캡처해주세요');
       return;
@@ -199,18 +204,37 @@
     rxSlipSaveBtn.disabled = true;
     const originalLabel = rxSlipSaveBtn.textContent;
     rxSlipSaveBtn.textContent = '저장 중...';
-    window.html2canvas(rxSlipContent, { backgroundColor: '#fffdf9', scale: 2 }).then((canvas) => {
+    const filename = `맘운자로_처방전_${formatSlipDate(Date.now())}.png`;
+    try {
+      const canvas = await window.html2canvas(rxSlipContent, { backgroundColor: '#fffdf9', scale: 2 });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('canvas.toBlob returned null');
+
+      // iOS Safari 등은 <a download>가 사실상 동작하지 않으므로,
+      // 파일 공유가 가능하면(주로 모바일) 공유 시트를 통해 저장하도록 우선 시도한다.
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '맘운자로 처방전' });
+        Core.showToast('공유 시트에서 "저장"을 선택해보세요 🖼️');
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.download = `맘운자로_처방전_${formatSlipDate(Date.now())}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = filename;
+      link.href = url;
+      document.body.appendChild(link);
       link.click();
-      Core.showToast('처방전 이미지를 저장했어요 🖼️');
-    }).catch(() => {
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      Core.showToast('처방전 이미지를 저장했어요 (안 보이면 화면을 캡처해주세요) 🖼️');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // 사용자가 공유 시트를 취소함
       Core.showToast('이미지 저장에 실패했어요. 화면을 캡처해주세요');
-    }).finally(() => {
+    } finally {
       rxSlipSaveBtn.disabled = false;
       rxSlipSaveBtn.textContent = originalLabel;
-    });
+    }
   }
   rxSlipSaveBtn.addEventListener('click', saveSlipAsImage);
 
@@ -359,6 +383,15 @@
     appEl.classList.add('rx-preparing');
     syncOtherTriggerButtons();
 
+    // 처방 카테고리 색으로 주사약/뱃지를 물들인다 (기존 감정 플로우의 dose-tag/--dose-color 재사용)
+    document.body.style.setProperty('--dose-color', prescription.color || '');
+    liquid.style.fill = prescription.color || '';
+    doseTagMg.textContent = prescription.emoji;
+    doseTagLabel.textContent = `${prescription.title}`;
+    doseCaption.textContent = prescription.diagnosis;
+    doseTag.hidden = false;
+    doseCaption.hidden = false;
+
     tween(1300, easeInOutCubic, (t) => {
       setSyringeByHeadY(HEAD_Y_IDLE + (HEAD_Y_READY - HEAD_Y_IDLE) * t);
     }, () => {
@@ -401,6 +434,10 @@
     const now = Date.now();
     recordRx({ prescriptionId: p.id, category: p.category, ts: now });
 
+    doseTag.hidden = true;
+    doseCaption.hidden = true;
+    liquid.style.fill = '';
+
     showResultScreen(p, now);
 
     genericState = 'idle';
@@ -430,6 +467,11 @@
   });
 
   // ---------- 트리거 버튼 공용 배선 (오늘의 카드 / 처방센터 상세에서 공유) ----------
+  function switchToHomeTab() {
+    const homeTabBtn = document.querySelector('.tab-btn[data-view="home"]');
+    if (homeTabBtn) homeTabBtn.click();
+  }
+
   function wireGenericTrigger(btnEl, p) {
     btnEl.onclick = () => {
       // 이 버튼이 이미 자기 자신의 "준비 완료" 상태를 소유하고 있으면
@@ -442,6 +484,8 @@
         Core.showToast('지금 다른 처방이 진행 중이에요');
         return;
       }
+      // 처방센터/랜덤 등 어디서 눌렀든, 주사는 항상 눈에 보이는 홈(주사기) 화면에서 진행한다.
+      switchToHomeTab();
       Core.requestMotionPermission();
       if (p.category === 'emotion') {
         Core.launchEmotionFlow(p._legacyKey);
