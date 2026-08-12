@@ -48,6 +48,13 @@
   const rxSlipContent = document.getElementById('rx-slip-content');
   const rxSlipSaveBtn = document.getElementById('rx-slip-save');
   const rxSlipCloseBtn = document.getElementById('rx-slip-close');
+  const rxSlipPhotoImg = document.getElementById('rx-slip-photo-img');
+  const rxSlipPhotoBtn = document.getElementById('rx-slip-photo-btn');
+  const rxSlipPhotoInput = document.getElementById('rx-slip-photo-input');
+  const rxSlipNoteInput = document.getElementById('rx-slip-note-input');
+
+  const rxImageOverlay = document.getElementById('rx-image-overlay');
+  const rxImageOverlayEmoji = document.getElementById('rx-image-overlay-emoji');
 
   const rxFriendOverlay = document.getElementById('rx-friend-overlay');
   const rxFriendGrid = document.getElementById('rx-friend-grid');
@@ -171,6 +178,20 @@
     if (e.target === rxResultOverlay) closeResultScreen();
   });
 
+  // ---------- 처방 완료 순간, 그 처방을 상징하는 큰 이미지가 떴다가 페이드아웃 ----------
+  function showRxImageFade(p) {
+    rxImageOverlayEmoji.textContent = p.emoji;
+    document.body.style.setProperty('--dose-color', p.color || '');
+    rxImageOverlay.classList.remove('fade-out');
+    rxImageOverlay.classList.add('show');
+    setTimeout(() => {
+      rxImageOverlay.classList.add('fade-out');
+      setTimeout(() => {
+        rxImageOverlay.classList.remove('show', 'fade-out');
+      }, 1150);
+    }, 650);
+  }
+
   // ---------- 처방전 (공유 슬립) ----------
   function formatSlipDate(ts) {
     const d = new Date(ts);
@@ -186,6 +207,14 @@
     rxSlipPrescription.textContent = p.prescription;
     rxSlipWarning.textContent = p.warning;
     rxSlipDate.textContent = formatSlipDate(ts || Date.now());
+
+    // 첨부 사진/한마디는 처방마다 새로 시작한다 (이전 처방 내용이 남지 않도록)
+    rxSlipPhotoImg.src = '';
+    rxSlipPhotoImg.hidden = true;
+    rxSlipPhotoBtn.textContent = '📷 사진 추가';
+    rxSlipPhotoInput.value = '';
+    rxSlipNoteInput.textContent = '';
+
     rxSlipOverlay.classList.add('show');
   }
   function closeSlipScreen() {
@@ -195,6 +224,20 @@
     if (e.target === rxSlipOverlay) closeSlipScreen();
   });
   rxSlipCloseBtn.addEventListener('click', closeSlipScreen);
+
+  rxSlipPhotoBtn.addEventListener('click', () => rxSlipPhotoInput.click());
+  rxSlipPhotoInput.addEventListener('change', () => {
+    const file = rxSlipPhotoInput.files && rxSlipPhotoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      rxSlipPhotoImg.src = reader.result;
+      rxSlipPhotoImg.hidden = false;
+      rxSlipPhotoBtn.textContent = '📷 사진 변경';
+    };
+    reader.onerror = () => Core.showToast('사진을 불러오지 못했어요');
+    reader.readAsDataURL(file);
+  });
 
   async function saveSlipAsImage() {
     if (typeof window.html2canvas !== 'function') {
@@ -438,6 +481,7 @@
     doseCaption.hidden = true;
     liquid.style.fill = '';
 
+    showRxImageFade(p);
     showResultScreen(p, now);
 
     genericState = 'idle';

@@ -161,6 +161,10 @@
   <p class="healing-text" id="healing-text">마음에&nbsp;평온이&nbsp;스며듭니다</p>
 </div>
 
+<div id="rx-image-overlay" class="rx-image-overlay">
+  <div class="rx-image-overlay-emoji" id="rx-image-overlay-emoji"></div>
+</div>
+
 <div id="settings-overlay" class="settings-overlay">
   <div class="settings-card">
     <h2>설정</h2>
@@ -229,6 +233,7 @@
       <div class="rx-slip-header">
         <span class="rx-slip-hospital">🏥 맘운자로 처방전</span>
       </div>
+      <img id="rx-slip-photo-img" class="rx-slip-photo-img" hidden alt="첨부 사진" />
       <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-slip-patient">오늘의 나</span></div>
       <div class="rx-slip-row"><span class="rx-slip-key">진단명</span><span class="rx-slip-value" id="rx-slip-diagnosis"></span></div>
       <div class="rx-slip-block">
@@ -239,10 +244,16 @@
         <span class="rx-slip-key">주의사항</span>
         <p class="rx-slip-text" id="rx-slip-warning"></p>
       </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">주치의 한마디 (선택)</span>
+        <div class="rx-slip-note-input" id="rx-slip-note-input" contenteditable="true" data-placeholder="친구에게 전하고 싶은 말을 적어보세요"></div>
+      </div>
       <div class="rx-slip-divider"></div>
       <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value">맘운자로</span></div>
       <div class="rx-slip-row"><span class="rx-slip-key">발급일</span><span class="rx-slip-value" id="rx-slip-date"></span></div>
     </div>
+    <button id="rx-slip-photo-btn" class="rx-slip-photo-btn" type="button">📷 사진 추가</button>
+    <input type="file" id="rx-slip-photo-input" accept="image/*" hidden />
     <p class="rx-slip-hint" id="rx-slip-hint">이미지로 저장하거나 화면을 캡처해서 공유해보세요</p>
     <button id="rx-slip-save" class="action-btn rx-slip-save-btn" type="button">🖼️ 이미지로 저장</button>
     <button id="rx-slip-close" class="settings-close" type="button">닫기</button>
