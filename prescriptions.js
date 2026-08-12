@@ -179,7 +179,7 @@
   });
 
   // ---------- 처방 완료 순간, 그 처방을 상징하는 큰 이미지가 떴다가 페이드아웃 ----------
-  function showRxImageFade(p) {
+  function showRxImageFade(p, onDone) {
     rxImageOverlayEmoji.textContent = p.emoji;
     document.body.style.setProperty('--dose-color', p.color || '');
     rxImageOverlay.classList.remove('fade-out');
@@ -188,8 +188,9 @@
       rxImageOverlay.classList.add('fade-out');
       setTimeout(() => {
         rxImageOverlay.classList.remove('show', 'fade-out');
-      }, 1150);
-    }, 650);
+        if (onDone) onDone();
+      }, 2600);
+    }, 1400);
   }
 
   // ---------- 처방전 (공유 슬립) ----------
@@ -481,8 +482,7 @@
     doseCaption.hidden = true;
     liquid.style.fill = '';
 
-    showRxImageFade(p);
-    showResultScreen(p, now);
+    showRxImageFade(p, () => showResultScreen(p, now));
 
     genericState = 'idle';
     currentGeneric = null;
