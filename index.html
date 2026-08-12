@@ -36,9 +36,6 @@
 
     <div class="syringe-stage">
       <div class="ready-glow" id="ready-glow"></div>
-      <div id="rx-image-overlay" class="rx-image-overlay">
-        <div class="rx-image-overlay-emoji" id="rx-image-overlay-emoji"></div>
-      </div>
       <span class="sparkle sparkle-1">✦</span>
       <span class="sparkle sparkle-2">✦</span>
       <span class="sparkle sparkle-3">✦</span>
@@ -164,6 +161,10 @@
   <p class="healing-text" id="healing-text">마음에&nbsp;평온이&nbsp;스며듭니다</p>
 </div>
 
+<div id="rx-image-overlay" class="rx-image-overlay">
+  <div class="rx-image-overlay-emoji" id="rx-image-overlay-emoji"></div>
+</div>
+
 <div id="settings-overlay" class="settings-overlay">
   <div class="settings-card">
     <h2>설정</h2>
@@ -265,8 +266,14 @@
     <p class="rx-friend-sub">어떤 처방을 보낼까요?</p>
     <div class="rx-friend-grid" id="rx-friend-grid"></div>
     <div class="rx-friend-result" id="rx-friend-result" hidden>
-      <p class="rx-friend-share-text" id="rx-friend-share-text"></p>
+      <div class="rx-friend-capture" id="rx-friend-capture">
+        <img id="rx-friend-photo-img" class="rx-slip-photo-img" hidden alt="첨부 사진" />
+        <p class="rx-friend-share-text" id="rx-friend-share-text"></p>
+        <div class="rx-slip-note-input" id="rx-friend-note-input" contenteditable="true" data-placeholder="친구에게 하고 싶은 말을 적어보세요 (선택)"></div>
+      </div>
       <p class="rx-friend-link" id="rx-friend-link"></p>
+      <button id="rx-friend-photo-btn" class="rx-slip-photo-btn" type="button">📷 사진 추가</button>
+      <input type="file" id="rx-friend-photo-input" accept="image/*" hidden />
       <button id="rx-friend-share-btn" class="action-btn rx-friend-share-btn" type="button">📤 공유하기</button>
     </div>
     <button id="rx-friend-close" class="settings-close" type="button">닫기</button>

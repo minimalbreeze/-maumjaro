@@ -63,6 +63,11 @@
   const rxFriendLink = document.getElementById('rx-friend-link');
   const rxFriendCloseBtn = document.getElementById('rx-friend-close');
   const rxFriendShareBtn = document.getElementById('rx-friend-share-btn');
+  const rxFriendCapture = document.getElementById('rx-friend-capture');
+  const rxFriendPhotoImg = document.getElementById('rx-friend-photo-img');
+  const rxFriendPhotoBtn = document.getElementById('rx-friend-photo-btn');
+  const rxFriendPhotoInput = document.getElementById('rx-friend-photo-input');
+  const rxFriendNoteInput = document.getElementById('rx-friend-note-input');
 
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
@@ -313,10 +318,82 @@
       Core.showToast('복사에 실패했어요. 직접 선택해서 복사해주세요');
     }
   }
-  rxFriendShareBtn.addEventListener('click', () => shareOrCopy(pickedShareText, pickedShareUrl));
+  function resetFriendAttachments() {
+    rxFriendPhotoImg.src = '';
+    rxFriendPhotoImg.hidden = true;
+    rxFriendPhotoBtn.textContent = '📷 사진 추가';
+    rxFriendPhotoInput.value = '';
+    rxFriendNoteInput.textContent = '';
+  }
+  rxFriendPhotoBtn.addEventListener('click', () => rxFriendPhotoInput.click());
+  rxFriendPhotoInput.addEventListener('change', () => {
+    const file = rxFriendPhotoInput.files && rxFriendPhotoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      rxFriendPhotoImg.src = reader.result;
+      rxFriendPhotoImg.hidden = false;
+      rxFriendPhotoBtn.textContent = '📷 사진 변경';
+    };
+    reader.onerror = () => Core.showToast('사진을 불러오지 못했어요');
+    reader.readAsDataURL(file);
+  });
+
+  // 사진이나 메모를 추가했으면 처방전과 같은 방식(이미지 캡처 + 공유)으로,
+  // 아니면 기존처럼 텍스트+링크로 보낸다.
+  async function sendFriendPrescription() {
+    const hasPhoto = !rxFriendPhotoImg.hidden;
+    const hasNote = rxFriendNoteInput.textContent.trim().length > 0;
+    if (!hasPhoto && !hasNote) {
+      shareOrCopy(pickedShareText, pickedShareUrl);
+      return;
+    }
+    if (typeof window.html2canvas !== 'function') {
+      Core.showToast('사진 포함 공유를 사용할 수 없어요. 텍스트로 보낼게요');
+      shareOrCopy(pickedShareText, pickedShareUrl);
+      return;
+    }
+    rxFriendShareBtn.disabled = true;
+    const originalLabel = rxFriendShareBtn.textContent;
+    rxFriendShareBtn.textContent = '준비 중...';
+    try {
+      const canvas = await window.html2canvas(rxFriendCapture, { backgroundColor: '#fffdf9', scale: 2 });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('canvas.toBlob returned null');
+      const file = new File([blob], '맘운자로_친구처방.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: `${pickedShareText}\n${pickedShareUrl}`, title: '맘운자로 처방' });
+        return;
+      }
+      // 파일 공유 미지원 환경: 이미지 다운로드 + 텍스트는 클립보드로 폴백
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = '맘운자로_친구처방.png';
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      try {
+        await navigator.clipboard.writeText(`${pickedShareText}\n${pickedShareUrl}`);
+        Core.showToast('이미지 저장 + 링크 복사 완료 🖼️');
+      } catch (e) {
+        Core.showToast('이미지를 저장했어요. 링크도 함께 보내주세요 🖼️');
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      Core.showToast('전송 준비에 실패했어요. 텍스트로 보낼게요');
+      shareOrCopy(pickedShareText, pickedShareUrl);
+    } finally {
+      rxFriendShareBtn.disabled = false;
+      rxFriendShareBtn.textContent = originalLabel;
+    }
+  }
+  rxFriendShareBtn.addEventListener('click', sendFriendPrescription);
 
   function openFriendPicker() {
     rxFriendResult.hidden = true;
+    resetFriendAttachments();
     const chipCats = RX_CATEGORIES.filter((c) => c.id === 'random' || rxCategoryCount(c.id) > 0);
     rxFriendGrid.innerHTML = chipCats.map((c) => `
       <button class="rx-friend-chip" type="button" data-cat="${c.id}">
@@ -331,6 +408,7 @@
         pickedShareUrl = buildShareUrl(p.id);
         rxFriendShareText.textContent = pickedShareText;
         rxFriendLink.textContent = pickedShareUrl;
+        resetFriendAttachments();
         rxFriendResult.hidden = false;
       });
     });

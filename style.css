@@ -908,19 +908,19 @@ body {
 /* ---------- 처방 완료 시 큰 이미지 페이드 효과 ---------- */
 
 .rx-image-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(circle, var(--dose-color, #ff9166) 0%, transparent 72%);
+  background: radial-gradient(circle, var(--dose-color, rgba(255,145,102,0.5)) 0%, rgba(20,12,8,0.4) 70%);
   transition: opacity 1.6s ease;
 }
 .rx-image-overlay.show {
-  opacity: 0.4;
+  opacity: 0.6;
 }
 .rx-image-overlay.fade-out {
   opacity: 0;
@@ -928,8 +928,8 @@ body {
 }
 .rx-image-overlay-emoji {
   font-size: 150px;
-  opacity: 0.85;
-  filter: drop-shadow(0 14px 30px rgba(0,0,0,0.2));
+  opacity: 0.9;
+  filter: drop-shadow(0 14px 30px rgba(0,0,0,0.25));
   transform: scale(0.75);
   transition: transform 1.6s cubic-bezier(.2,.9,.3,1);
 }
