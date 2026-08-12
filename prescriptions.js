@@ -701,6 +701,265 @@
 
   renderTodayCard();
 
+  // ---------- 통합 기록(기존 감정 기록 + 새 처방 기록, 일/월/년) ----------
+  // app.js의 renderHistory/renderDayView 등은 무변경으로 그대로 두고,
+  // 기록 탭이 열릴 때/세그먼트를 바꿀 때 이 렌더러가 #history-content를 덮어써서 통합 화면을 보여준다.
+  const historyContentEl = document.getElementById('history-content');
+  const DOW_KR = ['일', '월', '화', '수', '목', '금', '토'];
+  let unifiedPeriod = 'day';
+  let unifiedMonthCursor = uStartOfMonth(new Date());
+  let unifiedYearCursor = new Date().getFullYear();
+  let unifiedSelectedDayKey = null;
+
+  function uDateKey(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function uStartOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function uFormatDayLabel(d) {
+    const today = new Date();
+    const yest = new Date(); yest.setDate(today.getDate() - 1);
+    if (Core.sameDay(d, today)) return `오늘 · ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    if (Core.sameDay(d, yest)) return `어제 · ${d.getMonth() + 1}월 ${d.getDate()}일`;
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW_KR[d.getDay()]})`;
+  }
+  function uFormatTime(d) {
+    let h = d.getHours();
+    const ampm = h < 12 ? '오전' : '오후';
+    let h12 = h % 12; if (h12 === 0) h12 = 12;
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${ampm} ${h12}:${m}`;
+  }
+  function uBuildBarChart(items, opts) {
+    const compact = opts && opts.compact;
+    const max = Math.max(1, ...items.map((it) => it.count));
+    const barsHtml = items.map((it) => {
+      const h = it.count === 0 ? 3 : Math.max(6, Math.round((it.count / max) * (compact ? 100 : 140)));
+      return `
+        <div class="year-bar-col${it.count === 0 ? ' zero' : ''}${it.highlight ? ' highlight' : ''}">
+          <span class="year-bar-count">${it.count > 0 ? it.count : ''}</span>
+          <div class="year-bar" style="height:${h}px"></div>
+          <span class="year-bar-label">${it.label}</span>
+        </div>`;
+    }).join('');
+    return `<div class="year-bars${compact ? ' compact' : ''}">${barsHtml}</div>`;
+  }
+
+  function getUnifiedRecords() {
+    const rx = loadRxRecords();
+    const rxTsSet = new Set(rx.map((r) => r.ts));
+    // maumjaro:records엔 있지만 rxRecords엔 없는 것 = 처방 시스템 도입 이전의 예전 감정 기록.
+    // 어떤 감정이었는지는 알 수 없으므로 일반 "감정 처방"으로 표시한다.
+    const legacy = Core.loadRecords()
+      .filter((ts) => !rxTsSet.has(ts))
+      .map((ts) => ({ id: `legacy_${ts}`, prescriptionId: null, category: 'emotion', ts }));
+    return [...rx, ...legacy];
+  }
+  function resolveRecordDisplay(rec) {
+    const p = rec.prescriptionId ? ALL_PRESCRIPTIONS.find((x) => x.id === rec.prescriptionId) : null;
+    if (p) return { emoji: p.emoji, title: p.title };
+    if (rec.category === 'emotion') return { emoji: '💉', title: '감정 처방' };
+    return { emoji: '💊', title: '처방' };
+  }
+
+  function renderUnifiedHistory() {
+    const records = getUnifiedRecords();
+    if (unifiedPeriod === 'day') renderUnifiedDayView(records);
+    else if (unifiedPeriod === 'month') renderUnifiedMonthView(records);
+    else renderUnifiedYearView(records);
+  }
+
+  function renderUnifiedDayView(records) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const last14 = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      last14.push(d);
+    }
+    const countMap = new Map();
+    records.forEach((r) => {
+      const k = uDateKey(new Date(r.ts));
+      countMap.set(k, (countMap.get(k) || 0) + 1);
+    });
+    const chartItems = last14.map((d) => ({
+      label: String(d.getDate()),
+      count: countMap.get(uDateKey(d)) || 0,
+      highlight: Core.sameDay(d, today),
+    }));
+    const chartTotal = chartItems.reduce((a, b) => a + b.count, 0);
+    const chartHtml = `
+      <div class="chart-section">
+        <div class="chart-title">최근 14일 <strong>${chartTotal}</strong>번</div>
+        ${uBuildBarChart(chartItems)}
+      </div>`;
+
+    if (records.length === 0) {
+      historyContentEl.innerHTML = chartHtml + '<p class="empty-msg">아직 기록이 없어요.<br/>첫 처방을 받아보세요.</p>';
+      return;
+    }
+    const groups = new Map();
+    records.forEach((r) => {
+      const key = uDateKey(new Date(r.ts));
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    const keys = Array.from(groups.keys()).sort().reverse();
+    let html = '';
+    keys.forEach((key) => {
+      const list = groups.get(key).slice().sort((a, b) => a.ts - b.ts);
+      const label = uFormatDayLabel(new Date(list[0].ts));
+      const chips = list.map((r) => {
+        const { emoji } = resolveRecordDisplay(r);
+        return `<span class="time-chip">${emoji} ${uFormatTime(new Date(r.ts))}</span>`;
+      }).join('');
+      html += `
+        <div class="day-group">
+          <div class="day-group-head">
+            <span class="date">${label}</span>
+            <span class="count">${list.length}회</span>
+          </div>
+          <div class="time-chips">${chips}</div>
+        </div>`;
+    });
+    historyContentEl.innerHTML = chartHtml + html;
+  }
+
+  function renderUnifiedMonthView(records) {
+    const y = unifiedMonthCursor.getFullYear();
+    const m = unifiedMonthCursor.getMonth();
+    const firstDow = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const countByDate = new Map();
+    records.forEach((r) => {
+      const d = new Date(r.ts);
+      if (d.getFullYear() === y && d.getMonth() === m) {
+        const k = uDateKey(d);
+        countByDate.set(k, (countByDate.get(k) || 0) + 1);
+      }
+    });
+    const monthTotal = Array.from(countByDate.values()).reduce((a, b) => a + b, 0);
+
+    let dowHtml = DOW_KR.map((d) => `<div class="cal-dow">${d}</div>`).join('');
+    let cellsHtml = '';
+    for (let i = 0; i < firstDow; i++) cellsHtml += '<div class="cal-cell blank"></div>';
+    const today = new Date();
+    const chartItems = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cellDate = new Date(y, m, day);
+      const key = uDateKey(cellDate);
+      const cnt = countByDate.get(key) || 0;
+      const isToday = Core.sameDay(cellDate, today);
+      cellsHtml += `<div class="cal-cell${cnt > 0 ? ' has-record' : ''}${isToday ? ' today' : ''}" data-key="${key}">
+          <span>${day}</span>
+          ${cnt > 0 ? '<span class="badge"></span>' : ''}
+        </div>`;
+      const showLabel = day === 1 || day === daysInMonth || day % 5 === 0;
+      chartItems.push({ label: showLabel ? String(day) : '', count: cnt, highlight: isToday });
+    }
+
+    historyContentEl.innerHTML = `
+      <div class="period-nav">
+        <button id="u-month-prev">‹</button>
+        <span class="period-label">${y}년 ${m + 1}월</span>
+        <button id="u-month-next">›</button>
+      </div>
+      <div class="period-total">이번 달 <strong>${monthTotal}</strong>번</div>
+      <div class="chart-section">${uBuildBarChart(chartItems, { compact: true })}</div>
+      <div class="calendar-grid">${dowHtml}${cellsHtml}</div>
+      <div id="u-day-detail-slot"></div>
+    `;
+
+    document.getElementById('u-month-prev').addEventListener('click', () => {
+      unifiedMonthCursor = new Date(y, m - 1, 1);
+      renderUnifiedMonthView(getUnifiedRecords());
+    });
+    document.getElementById('u-month-next').addEventListener('click', () => {
+      unifiedMonthCursor = new Date(y, m + 1, 1);
+      renderUnifiedMonthView(getUnifiedRecords());
+    });
+
+    historyContentEl.querySelectorAll('.cal-cell.has-record').forEach((cell) => {
+      cell.addEventListener('click', () => {
+        unifiedSelectedDayKey = cell.dataset.key;
+        renderUnifiedDayDetail(records, unifiedSelectedDayKey);
+      });
+    });
+
+    if (unifiedSelectedDayKey && countByDate.has(unifiedSelectedDayKey)) {
+      renderUnifiedDayDetail(records, unifiedSelectedDayKey);
+    }
+  }
+
+  function renderUnifiedDayDetail(records, key) {
+    const slot = document.getElementById('u-day-detail-slot');
+    if (!slot) return;
+    const list = records.filter((r) => uDateKey(new Date(r.ts)) === key).sort((a, b) => a.ts - b.ts);
+    if (list.length === 0) { slot.innerHTML = ''; return; }
+    const label = uFormatDayLabel(new Date(list[0].ts));
+    const chips = list.map((r) => {
+      const { emoji } = resolveRecordDisplay(r);
+      return `<span class="time-chip">${emoji} ${uFormatTime(new Date(r.ts))}</span>`;
+    }).join('');
+    slot.innerHTML = `
+      <div class="day-detail">
+        <div class="date">${label} · ${list.length}회</div>
+        <div class="time-chips">${chips}</div>
+      </div>`;
+  }
+
+  function renderUnifiedYearView(records) {
+    const y = unifiedYearCursor;
+    const counts = new Array(12).fill(0);
+    records.forEach((r) => {
+      const d = new Date(r.ts);
+      if (d.getFullYear() === y) counts[d.getMonth()]++;
+    });
+    const total = counts.reduce((a, b) => a + b, 0);
+    const max = Math.max(1, ...counts);
+
+    let barsHtml = '';
+    for (let i = 0; i < 12; i++) {
+      const c = counts[i];
+      const h = c === 0 ? 3 : Math.max(6, Math.round((c / max) * 140));
+      barsHtml += `
+        <div class="year-bar-col${c === 0 ? ' zero' : ''}">
+          <span class="year-bar-count">${c > 0 ? c : ''}</span>
+          <div class="year-bar" style="height:${h}px"></div>
+          <span class="year-bar-label">${i + 1}월</span>
+        </div>`;
+    }
+
+    historyContentEl.innerHTML = `
+      <div class="period-nav">
+        <button id="u-year-prev">‹</button>
+        <span class="period-label">${y}년</span>
+        <button id="u-year-next">›</button>
+      </div>
+      <div class="period-total">올해 총 <strong>${total}</strong>번</div>
+      <div class="year-bars">${barsHtml}</div>
+    `;
+
+    document.getElementById('u-year-prev').addEventListener('click', () => {
+      unifiedYearCursor = y - 1;
+      renderUnifiedYearView(getUnifiedRecords());
+    });
+    document.getElementById('u-year-next').addEventListener('click', () => {
+      unifiedYearCursor = y + 1;
+      renderUnifiedYearView(getUnifiedRecords());
+    });
+  }
+
+  document.querySelectorAll('.seg-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      unifiedPeriod = btn.dataset.period;
+      renderUnifiedHistory();
+    });
+  });
+
   // ---------- 처방센터 ----------
   const viewRx = document.getElementById('view-rx');
   const rxCenterContent = document.getElementById('rx-center-content');
@@ -850,6 +1109,7 @@
       const view = btn.dataset.view;
       viewRx.hidden = view !== 'rx';
       if (view === 'rx') renderRxGrid();
+      if (view === 'history') renderUnifiedHistory();
     });
   });
 
