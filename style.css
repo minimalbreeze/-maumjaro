@@ -803,6 +803,32 @@ body {
 .toggle-btn[aria-pressed="false"] {
   opacity: 0.6;
 }
+.settings-divider {
+  border-top: 1px solid var(--card-border);
+  margin: 4px 0 16px;
+}
+.settings-reset-btn {
+  width: 100%;
+  border: 1px solid rgba(239,106,84,0.35);
+  border-radius: 12px;
+  padding: 11px 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ef6a54;
+  background: rgba(239,106,84,0.08);
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.settings-reset-btn:active {
+  transform: scale(0.98);
+}
+.settings-reset-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 0 0 16px;
+  line-height: 1.4;
+}
 .settings-close {
   width: 100%;
   border: none;

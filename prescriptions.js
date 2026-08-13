@@ -215,6 +215,10 @@
 
   // ---------- 처방 완료 순간, 그 처방을 상징하는 큰 이미지가 떴다가 페이드아웃 ----------
   function showRxImageFade(p, onDone) {
+    if (localStorage.getItem('maumjaro:imageFadeOn') === 'off') {
+      if (onDone) onDone();
+      return;
+    }
     rxImageOverlayEmoji.textContent = p.emoji;
     document.body.style.setProperty('--dose-color', p.color || '');
     rxImageOverlay.classList.remove('fade-out');
@@ -684,6 +688,7 @@
   const GENERIC_MOTION_COOLDOWN_MS = 1500;
   let lastGenericMotionTs = 0;
   window.addEventListener('devicemotion', (e) => {
+    if (localStorage.getItem('maumjaro:motionOn') === 'off') return;
     if (genericState !== 'ready') return;
     const acc = (e.acceleration && e.acceleration.x !== null) ? e.acceleration : e.accelerationIncludingGravity;
     if (!acc || acc.x === null || acc.x === undefined) return;
@@ -1261,4 +1266,46 @@
   } catch (e) {
     // 잘못된 URL 형식이어도 앱은 정상적으로 계속 동작해야 한다.
   }
+
+  // ---------- 설정 확장: 동작 센서 on/off, 완료 효과 on/off, 기록 초기화 ----------
+  const motionToggleBtn = document.getElementById('motion-toggle');
+  const fadeToggleBtn = document.getElementById('fade-toggle');
+  const settingsResetBtn = document.getElementById('settings-reset-btn');
+
+  let motionOn = localStorage.getItem('maumjaro:motionOn') !== 'off';
+  let imageFadeOn = localStorage.getItem('maumjaro:imageFadeOn') !== 'off';
+
+  function updateMotionToggleUI() {
+    motionToggleBtn.textContent = motionOn ? '📳 켜짐' : '📴 꺼짐';
+    motionToggleBtn.setAttribute('aria-pressed', String(motionOn));
+  }
+  function updateFadeToggleUI() {
+    fadeToggleBtn.textContent = imageFadeOn ? '✨ 켜짐' : '⭕ 꺼짐';
+    fadeToggleBtn.setAttribute('aria-pressed', String(imageFadeOn));
+  }
+  updateMotionToggleUI();
+  updateFadeToggleUI();
+
+  motionToggleBtn.addEventListener('click', () => {
+    motionOn = !motionOn;
+    localStorage.setItem('maumjaro:motionOn', motionOn ? 'on' : 'off');
+    updateMotionToggleUI();
+  });
+  fadeToggleBtn.addEventListener('click', () => {
+    imageFadeOn = !imageFadeOn;
+    localStorage.setItem('maumjaro:imageFadeOn', imageFadeOn ? 'on' : 'off');
+    updateFadeToggleUI();
+  });
+
+  settingsResetBtn.addEventListener('click', () => {
+    const ok = window.confirm('정말 모든 기록을 초기화할까요? 감정·처방·보낸 기록이 전부 사라지고 되돌릴 수 없어요.');
+    if (!ok) return;
+    localStorage.removeItem('maumjaro:records');
+    localStorage.removeItem(RX_LS_KEY);
+    localStorage.removeItem(FRIEND_SENT_LS_KEY);
+    localStorage.removeItem(RX_SCHEMA_KEY);
+    Core.refreshSummary();
+    renderUnifiedHistory();
+    Core.showToast('모든 기록을 초기화했어요 🗑️');
+  });
 })();

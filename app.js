@@ -131,6 +131,7 @@
   }
 
   function handleDeviceMotion(e) {
+    if (localStorage.getItem('maumjaro:motionOn') === 'off') return;
     if (state !== 'ready') return;
     const acc = (e.acceleration && e.acceleration.x !== null) ? e.acceleration : e.accelerationIncludingGravity;
     if (!acc || acc.x === null || acc.x === undefined) return;
@@ -820,6 +821,7 @@
     sameDay,
     showToast,
     requestMotionPermission,
+    refreshSummary,
     launchEmotionFlow(key) {
       const symptom = SYMPTOMS[key];
       if (!symptom || state !== 'idle') return;
