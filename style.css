@@ -773,6 +773,8 @@ body {
 .settings-card {
   width: 100%;
   max-width: 340px;
+  max-height: 92vh;
+  overflow-y: auto;
   background: var(--bg-top);
   border: 1px solid var(--card-border);
   border-radius: 20px;
