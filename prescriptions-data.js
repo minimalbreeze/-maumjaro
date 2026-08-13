@@ -196,5 +196,12 @@
       shareText: '휴가 필요성 과다증... 연차 씁니다', isPremium: false },
   ];
 
-  window.MAUMJARO_RX_DATA = { RX_CATEGORIES, PRESCRIPTIONS_SEED };
+  // ---------- 커스텀 진료실 원클릭 템플릿 (환자명/처방의는 템플릿과 무관하게 직접 입력) ----------
+  const CUSTOM_TEMPLATES = [
+    { label: '직장 상사 저격용', d: '눈치 없음 말기', rx: '눈치껏 좀 하세요 처방', w: '더 눈치 없어질 수 있음' },
+    { label: '다이어트 팩폭용', d: '야식 참을성 결핍증', rx: '오늘 저녁은 그냥 굶는 셈 치기', w: '내일 더 배고파질 수 있음' },
+    { label: '잠수쟁이 친구용', d: '답장 실종 증후군', rx: '읽었으면 답장 좀 하기', w: '읽씹 재발 가능성 높음' },
+  ];
+
+  window.MAUMJARO_RX_DATA = { RX_CATEGORIES, PRESCRIPTIONS_SEED, CUSTOM_TEMPLATES };
 })();

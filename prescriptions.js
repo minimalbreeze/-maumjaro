@@ -2,7 +2,7 @@
   'use strict';
 
   const Core = window.MaumjaroCore;
-  const { RX_CATEGORIES, PRESCRIPTIONS_SEED } = window.MAUMJARO_RX_DATA;
+  const { RX_CATEGORIES, PRESCRIPTIONS_SEED, CUSTOM_TEMPLATES } = window.MAUMJARO_RX_DATA;
 
   // ---------- DOM refs (다른 모든 코드보다 먼저 선언 — TDZ 방지) ----------
   const appEl = document.getElementById('app');
@@ -993,10 +993,19 @@
         <button class="rx-friend-quick-btn" id="rx-sent-history-btn" type="button">📋 보낸 기록</button>
         <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 친구에게</button>
       </div>
+      <button class="rx-custom-cta" id="rx-custom-cta-btn" type="button">
+        <span class="rx-custom-cta-emoji">✍️</span>
+        <span class="rx-custom-cta-text">
+          <span class="rx-custom-cta-title">커스텀 진료실</span>
+          <span class="rx-custom-cta-sub">친구를 저격하는 나만의 처방전 만들기</span>
+        </span>
+        <span class="rx-custom-cta-arrow">›</span>
+      </button>
       <div class="rx-category-grid">${tiles}</div>`;
 
     document.getElementById('rx-friend-quick-btn').addEventListener('click', openFriendPicker);
     document.getElementById('rx-sent-history-btn').addEventListener('click', openSentHistory);
+    document.getElementById('rx-custom-cta-btn').addEventListener('click', renderCustomForm);
 
     rxCenterContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {
@@ -1011,6 +1020,94 @@
         }
         renderRxList(catId);
       });
+    });
+  }
+
+  // ---------- 커스텀 진료실 (UGC 처방전 만들기, Phase 1: 폼 + 미리보기만) ----------
+  const CUSTOM_FIELD_LIMITS = { p: 10, d: 15, rx: 30, w: 30, dr: 10 };
+  function renderCustomForm() {
+    const myName = (localStorage.getItem('maumjaro:username') || '').trim();
+    const templateBtns = CUSTOM_TEMPLATES.map((t, i) => `
+      <button class="rx-custom-template-btn" type="button" data-idx="${i}">${t.label}</button>`).join('');
+
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="rx-custom-back" type="button">‹</button>
+        <span class="rx-nav-title">✍️ 커스텀 진료실</span>
+      </div>
+
+      <p class="rx-custom-hint">💛 상대방이 속상해할 만한 내용은 피해주세요. 재미로 웃고 넘길 수 있는 선까지만!</p>
+
+      <div class="rx-custom-templates">${templateBtns}</div>
+
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="rx-custom-p">환자명</label>
+        <input type="text" id="rx-custom-p" class="rx-custom-input" maxlength="${CUSTOM_FIELD_LIMITS.p}" placeholder="예: 민지" />
+        <span class="rx-custom-counter" id="rx-custom-p-count">0/${CUSTOM_FIELD_LIMITS.p}</span>
+      </div>
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="rx-custom-d">진단명</label>
+        <input type="text" id="rx-custom-d" class="rx-custom-input" maxlength="${CUSTOM_FIELD_LIMITS.d}" placeholder="예: 야식 참을성 결핍증" />
+        <span class="rx-custom-counter" id="rx-custom-d-count">0/${CUSTOM_FIELD_LIMITS.d}</span>
+      </div>
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="rx-custom-rx">처방 내용</label>
+        <input type="text" id="rx-custom-rx" class="rx-custom-input" maxlength="${CUSTOM_FIELD_LIMITS.rx}" placeholder="예: 오늘 저녁은 굶는 셈 치기" />
+        <span class="rx-custom-counter" id="rx-custom-rx-count">0/${CUSTOM_FIELD_LIMITS.rx}</span>
+      </div>
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="rx-custom-w">주의사항</label>
+        <input type="text" id="rx-custom-w" class="rx-custom-input" maxlength="${CUSTOM_FIELD_LIMITS.w}" placeholder="예: 내일 더 배고파질 수 있음" />
+        <span class="rx-custom-counter" id="rx-custom-w-count">0/${CUSTOM_FIELD_LIMITS.w}</span>
+      </div>
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="rx-custom-dr">처방의</label>
+        <input type="text" id="rx-custom-dr" class="rx-custom-input" maxlength="${CUSTOM_FIELD_LIMITS.dr}" placeholder="예: 맘운자로" value="${myName}" />
+        <span class="rx-custom-counter" id="rx-custom-dr-count">${myName.length}/${CUSTOM_FIELD_LIMITS.dr}</span>
+      </div>
+
+      <div class="rx-custom-preview" id="rx-custom-preview">
+        <div class="rx-slip-header"><span class="rx-slip-hospital">🏥 맘운자로 처방전</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-custom-preview-p">-</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">진단명</span><span class="rx-slip-value" id="rx-custom-preview-d">-</span></div>
+        <p class="rx-slip-text" id="rx-custom-preview-rx">-</p>
+        <p class="rx-slip-text" id="rx-custom-preview-w">-</p>
+        <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value" id="rx-custom-preview-dr">-</span></div>
+      </div>
+
+      <button class="action-btn rx-custom-submit-btn" id="rx-custom-submit-btn" type="button">💉 처방전 완성하고 공유하기</button>
+    `;
+
+    document.getElementById('rx-custom-back').addEventListener('click', renderRxGrid);
+
+    const fields = ['p', 'd', 'rx', 'w', 'dr'];
+    fields.forEach((key) => {
+      const input = document.getElementById(`rx-custom-${key}`);
+      const counter = document.getElementById(`rx-custom-${key}-count`);
+      const previewEl = document.getElementById(`rx-custom-preview-${key}`);
+      const updatePreview = () => {
+        const val = input.value.trim();
+        counter.textContent = `${input.value.length}/${CUSTOM_FIELD_LIMITS[key]}`;
+        previewEl.textContent = val || '-';
+      };
+      input.addEventListener('input', updatePreview);
+      updatePreview();
+    });
+
+    rxCenterContent.querySelectorAll('.rx-custom-template-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const t = CUSTOM_TEMPLATES[Number(btn.dataset.idx)];
+        if (!t) return;
+        ['d', 'rx', 'w'].forEach((key) => {
+          const input = document.getElementById(`rx-custom-${key}`);
+          input.value = t[key];
+          input.dispatchEvent(new Event('input'));
+        });
+      });
+    });
+
+    document.getElementById('rx-custom-submit-btn').addEventListener('click', () => {
+      Core.showToast('공유 기능은 곧 추가돼요 🚧 (Phase 2에서 연결)');
     });
   }
 
