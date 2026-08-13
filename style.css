@@ -100,6 +100,47 @@ body {
   margin-bottom: 4px;
 }
 .today-rx-card[hidden] { display: none; }
+
+.custom-incoming-card {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  margin-bottom: 4px;
+  box-shadow: 0 10px 26px rgba(183,121,239,0.35);
+  animation: custom-incoming-pulse 1.8s ease-in-out infinite;
+}
+.custom-incoming-card[hidden] { display: none; }
+.custom-incoming-card .today-rx-eyebrow,
+.custom-incoming-card .today-rx-diagnosis {
+  color: rgba(255,255,255,0.85);
+}
+.custom-incoming-card .today-rx-title {
+  color: #fff;
+}
+.custom-incoming-emoji {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+}
+.custom-incoming-btn {
+  background: #fff;
+  color: #b779ef;
+}
+@keyframes custom-incoming-pulse {
+  0%, 100% { box-shadow: 0 10px 26px rgba(183,121,239,0.35); }
+  50% { box-shadow: 0 10px 32px rgba(183,121,239,0.6); }
+}
 .today-rx-emoji {
   flex-shrink: 0;
   width: 38px;

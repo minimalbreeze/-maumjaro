@@ -78,6 +78,19 @@
   const rxSentHistoryList = document.getElementById('rx-sent-history-list');
   const rxSentHistoryCloseBtn = document.getElementById('rx-sent-history-close');
 
+  const customIncomingCard = document.getElementById('custom-incoming-card');
+  const customIncomingTitle = document.getElementById('custom-incoming-title');
+  const customIncomingBtn = document.getElementById('custom-incoming-btn');
+
+  const rxRevealOverlay = document.getElementById('rx-custom-reveal-overlay');
+  const rxRevealDiagnosis = document.getElementById('rx-reveal-diagnosis');
+  const rxRevealPatient = document.getElementById('rx-reveal-patient');
+  const rxRevealPrescription = document.getElementById('rx-reveal-prescription');
+  const rxRevealWarning = document.getElementById('rx-reveal-warning');
+  const rxRevealDoctor = document.getElementById('rx-reveal-doctor');
+  const rxRevealMakeBtn = document.getElementById('rx-reveal-make-btn');
+  const rxRevealCloseBtn = document.getElementById('rx-reveal-close');
+
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
   if (!localStorage.getItem(RX_SCHEMA_KEY)) localStorage.setItem(RX_SCHEMA_KEY, '1');
@@ -336,6 +349,27 @@
   function buildShareUrl(prescriptionId) {
     return `${location.origin}${location.pathname}?rx=${encodeURIComponent(prescriptionId)}`;
   }
+
+  // ---------- 커스텀 처방전 링크 인코딩/디코딩 (서버 없이 URL에 압축 저장) ----------
+  function buildCustomShareUrl(payload) {
+    const json = JSON.stringify(payload);
+    const encoded = window.LZString
+      ? window.LZString.compressToEncodedURIComponent(json)
+      : encodeURIComponent(json);
+    return `${location.origin}${location.pathname}?custom=${encoded}`;
+  }
+  function decodeCustomPayload(raw) {
+    if (!raw || !window.LZString) return null;
+    try {
+      const json = window.LZString.decompressFromEncodedURIComponent(raw);
+      if (!json) return null;
+      const payload = JSON.parse(json);
+      if (!payload || typeof payload !== 'object' || !payload.d || !payload.rx) return null;
+      return payload;
+    } catch (e) {
+      return null;
+    }
+  }
   function pickRandomFromCategory(catId) {
     const pool = catId === 'random' ? ALL_PRESCRIPTIONS : ALL_PRESCRIPTIONS.filter((p) => p.category === catId);
     if (!pool.length) return null;
@@ -591,6 +625,7 @@
 
   let genericState = 'idle'; // idle | preparing | ready | injecting
   let currentGeneric = null;
+  let currentOnComplete = null; // 준비/주사 애니메이션이 끝났을 때 호출할 완료 콜백 (기본: completeGenericInjection)
   // null = 어떤 버튼도 "일반 처방 플로우"를 소유하고 있지 않음(감정 플로우 중이거나 완전 유휴).
   // 일반 플로우를 시작시킨 버튼만 이 값을 가지며, 그 버튼의 disabled/텍스트는
   // startGenericPrepare/Inject/complete가 직접 관리한다(관찰자와의 레이스 방지).
@@ -606,10 +641,11 @@
   new MutationObserver(syncOtherTriggerButtons).observe(appEl, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- 일반(비감정) 처방 실행 ----------
-  function startGenericPrepare(prescription, triggerBtn) {
+  function startGenericPrepare(prescription, triggerBtn, onComplete) {
     if (genericState !== 'idle' || appHasOtherFlowActive()) return;
     activeTriggerBtn = triggerBtn || todayRxBtn;
     currentGeneric = prescription;
+    currentOnComplete = onComplete || completeGenericInjection;
     genericState = 'preparing';
     actionBtn.disabled = true;
     activeTriggerBtn.disabled = true;
@@ -659,8 +695,20 @@
         droplet.setAttribute('r', 0);
         droplet.style.opacity = '0';
       }, 250);
-      completeGenericInjection();
+      currentOnComplete();
     });
+  }
+
+  function resetGenericFlowState(triggerLabel) {
+    genericState = 'idle';
+    currentGeneric = null;
+    actionBtn.disabled = false;
+    if (activeTriggerBtn) {
+      activeTriggerBtn.disabled = appHasOtherFlowActive();
+      activeTriggerBtn.textContent = triggerLabel;
+    }
+    activeTriggerBtn = null;
+    syncOtherTriggerButtons();
   }
 
   function completeGenericInjection() {
@@ -674,13 +722,7 @@
 
     showRxImageFade(p, () => showResultScreen(p, now));
 
-    genericState = 'idle';
-    currentGeneric = null;
-    actionBtn.disabled = false;
-    activeTriggerBtn.disabled = appHasOtherFlowActive();
-    activeTriggerBtn.textContent = '처방받기';
-    activeTriggerBtn = null;
-    syncOtherTriggerButtons();
+    resetGenericFlowState('처방받기');
   }
 
   // ---------- 일반 처방용 모션 제스처 (app.js의 감정 플로우와 독립적인 리스너) ----------
@@ -727,6 +769,69 @@
       } else {
         startGenericPrepare(p, btnEl);
       }
+    };
+  }
+
+  // ---------- 커스텀 처방전 수신(공개) 화면 ----------
+  function openCustomReveal(payload) {
+    document.body.style.setProperty('--dose-color', '#b779ef');
+    rxRevealDiagnosis.textContent = payload.d;
+    rxRevealPatient.textContent = payload.p || '누군가';
+    rxRevealPrescription.textContent = payload.rx;
+    rxRevealWarning.textContent = payload.w || '개인차가 있을 수 있어요';
+    rxRevealDoctor.textContent = payload.dr || '맘운자로';
+    rxRevealOverlay.classList.add('show');
+  }
+  function closeCustomReveal() {
+    rxRevealOverlay.classList.remove('show');
+  }
+  rxRevealOverlay.addEventListener('click', (e) => {
+    if (e.target === rxRevealOverlay) closeCustomReveal();
+  });
+  rxRevealCloseBtn.addEventListener('click', closeCustomReveal);
+  rxRevealMakeBtn.addEventListener('click', () => {
+    closeCustomReveal();
+    const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
+    if (rxTabBtn) rxTabBtn.click();
+    renderCustomForm();
+  });
+
+  // ---------- 커스텀 처방전 수신자 플로우: 주사를 놓아야 내용이 공개된다 ----------
+  // 받는 사람 쪽엔 감정/카테고리 개념이 없으므로 recordRx는 절대 호출하지 않는다
+  // (조회만으로는 기록이 남지 않는다는 기존 ?rx= 딥링크 원칙과 동일).
+  function wireCustomIncomingTrigger(payload) {
+    const syntheticP = {
+      id: 'custom-incoming',
+      category: 'custom',
+      title: '저격 처방전',
+      diagnosis: payload.p ? `${payload.p}님을 위한 처방` : '누군가를 위한 처방',
+      emoji: '🎯',
+      color: '#b779ef',
+    };
+    customIncomingTitle.textContent = payload.p ? `${payload.p}님을 위한 처방전` : '나를 위한 처방전';
+    customIncomingCard.hidden = false;
+
+    function completeCustomReception() {
+      doseTag.hidden = true;
+      doseCaption.hidden = true;
+      liquid.style.fill = '';
+      customIncomingCard.hidden = true;
+      showRxImageFade(syntheticP, () => openCustomReveal(payload));
+      resetGenericFlowState('처방받기');
+    }
+
+    customIncomingBtn.onclick = () => {
+      if (activeTriggerBtn === customIncomingBtn && genericState === 'ready') {
+        startGenericInject();
+        return;
+      }
+      if (genericState !== 'idle' || appHasOtherFlowActive()) {
+        Core.showToast('지금 다른 처방이 진행 중이에요');
+        return;
+      }
+      switchToHomeTab();
+      Core.requestMotionPermission();
+      startGenericPrepare(syntheticP, customIncomingBtn, completeCustomReception);
     };
   }
 
@@ -1148,7 +1253,60 @@
     });
 
     document.getElementById('rx-custom-submit-btn').addEventListener('click', () => {
-      Core.showToast('공유 기능은 곧 추가돼요 🚧 (Phase 2에서 연결)');
+      const p = document.getElementById('rx-custom-p').value.trim();
+      const d = document.getElementById('rx-custom-d').value.trim();
+      const rx = document.getElementById('rx-custom-rx').value.trim();
+      const w = document.getElementById('rx-custom-w').value.trim();
+      const dr = document.getElementById('rx-custom-dr').value.trim();
+      if (!p || !d || !rx) {
+        Core.showToast('환자명·진단명·처방 내용은 꼭 입력해주세요');
+        return;
+      }
+      const payload = { p, d, rx, w, dr: dr || '맘운자로', ts: Date.now() };
+      const url = buildCustomShareUrl(payload);
+      recordFriendSend({
+        recipient: p,
+        prescriptionId: null,
+        category: 'custom',
+        title: d,
+        emoji: '🎯',
+        ts: payload.ts,
+      });
+      renderCustomShareResult(payload, url);
+    });
+  }
+
+  function renderCustomShareResult(payload, url) {
+    const shareText = `🚨 ${payload.p}님을 위한 맞춤 처방전이 도착했어요! 지금 확인해보세요`;
+    rxCenterContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="rx-custom-share-back" type="button">‹</button>
+        <span class="rx-nav-title">✅ 처방전 완성!</span>
+      </div>
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-header"><span class="rx-slip-hospital">🏥 맘운자로 처방전</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value">${payload.p}</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">진단명</span><span class="rx-slip-value">${payload.d}</span></div>
+        <p class="rx-slip-text">${payload.rx}</p>
+        <p class="rx-slip-text">${payload.w || ''}</p>
+        <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value">${payload.dr}</span></div>
+      </div>
+
+      <p class="rx-friend-link">${url}</p>
+      <button class="action-btn rx-custom-submit-btn" id="rx-custom-share-send-btn" type="button">📤 친구에게 보내기</button>
+      <button class="rx-cta-btn" id="rx-custom-share-copy-btn" type="button">🔗 링크만 복사하기</button>
+    `;
+
+    document.getElementById('rx-custom-share-back').addEventListener('click', renderRxGrid);
+    document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url));
+    document.getElementById('rx-custom-share-copy-btn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        Core.showToast('링크를 복사했어요 📋');
+      } catch (e) {
+        Core.showToast('복사에 실패했어요. 직접 선택해서 복사해주세요');
+      }
     });
   }
 
@@ -1265,6 +1423,21 @@
     }
   } catch (e) {
     // 잘못된 URL 형식이어도 앱은 정상적으로 계속 동작해야 한다.
+  }
+
+  // ---------- 커스텀 처방전 딥링크 진입 처리 (?custom=<LZString>) ----------
+  // 손상되었거나 LZString 로딩에 실패한 링크는 조용히 무시하고 평소처럼 홈이 보인다.
+  try {
+    const customRaw = new URLSearchParams(location.search).get('custom');
+    if (customRaw) {
+      const payload = decodeCustomPayload(customRaw);
+      if (payload) {
+        switchToHomeTab();
+        wireCustomIncomingTrigger(payload);
+      }
+    }
+  } catch (e) {
+    // 손상된 링크여도 앱은 정상적으로 계속 동작해야 한다.
   }
 
   // ---------- 설정 확장: 동작 센서 on/off, 완료 효과 on/off, 기록 초기화 ----------

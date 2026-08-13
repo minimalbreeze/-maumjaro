@@ -24,6 +24,16 @@
   </header>
 
   <main id="view-home" class="view">
+    <div id="custom-incoming-card" class="custom-incoming-card" hidden>
+      <div class="custom-incoming-emoji">🚨</div>
+      <div class="today-rx-body">
+        <div class="today-rx-eyebrow" id="custom-incoming-eyebrow">긴급 처방전 도착</div>
+        <div class="today-rx-title" id="custom-incoming-title"></div>
+        <div class="today-rx-diagnosis">주사를 놓아서 확인해보세요</div>
+      </div>
+      <button class="today-rx-btn custom-incoming-btn" id="custom-incoming-btn" type="button">확인하기</button>
+    </div>
+
     <div id="today-rx-card" class="today-rx-card" hidden>
       <div class="today-rx-emoji" id="today-rx-emoji">💉</div>
       <div class="today-rx-body">
@@ -316,9 +326,37 @@
   </div>
 </div>
 
+<div id="rx-custom-reveal-overlay" class="settings-overlay">
+  <div class="settings-card rx-slip-card">
+    <div class="rx-slip-content">
+      <div class="rx-slip-header">
+        <span class="rx-slip-hospital">🏥 맘운자로 저격 처방전</span>
+      </div>
+      <div class="rx-slip-banner" id="rx-reveal-banner">
+        <div class="rx-slip-banner-emoji">🎯</div>
+        <div class="rx-slip-banner-diagnosis" id="rx-reveal-diagnosis"></div>
+      </div>
+      <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-reveal-patient"></span></div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">처방</span>
+        <p class="rx-slip-text" id="rx-reveal-prescription"></p>
+      </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">주의사항</span>
+        <p class="rx-slip-text" id="rx-reveal-warning"></p>
+      </div>
+      <div class="rx-slip-divider"></div>
+      <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value" id="rx-reveal-doctor"></span></div>
+    </div>
+    <button id="rx-reveal-make-btn" class="action-btn rx-custom-submit-btn" type="button">✍️ 나도 저격 처방전 만들기</button>
+    <button id="rx-reveal-close" class="settings-close" type="button">닫기</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script src="prescriptions-data.js"></script>
 <script src="app.js"></script>
 <script src="prescriptions.js"></script>
