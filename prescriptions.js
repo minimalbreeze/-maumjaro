@@ -668,6 +668,7 @@
     doseCaption.textContent = prescription.diagnosis;
     doseTag.hidden = false;
     doseCaption.hidden = false;
+    Core.playPrepareSound(1300);
 
     tween(1300, easeInOutCubic, (t) => {
       setSyringeByHeadY(HEAD_Y_IDLE + (HEAD_Y_READY - HEAD_Y_IDLE) * t);
@@ -677,6 +678,7 @@
       appEl.classList.add('rx-ready');
       activeTriggerBtn.disabled = false;
       activeTriggerBtn.textContent = '주사 놓기';
+      Core.playReadyChime();
     });
   }
 
@@ -687,6 +689,7 @@
     appEl.classList.add('rx-injecting');
     activeTriggerBtn.disabled = true;
     activeTriggerBtn.textContent = '주사 중...';
+    Core.playInjectPress();
 
     let dropletTriggered = false;
     tween(1100, easeInCubic, (t) => {
@@ -702,6 +705,7 @@
         droplet.setAttribute('r', 0);
         droplet.style.opacity = '0';
       }, 250);
+      Core.playHealingChime();
       currentOnComplete();
     });
   }

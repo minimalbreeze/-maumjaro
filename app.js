@@ -822,6 +822,10 @@
     showToast,
     requestMotionPermission,
     refreshSummary,
+    playPrepareSound,
+    playReadyChime,
+    playInjectPress,
+    playHealingChime,
     launchEmotionFlow(key) {
       const symptom = SYMPTOMS[key];
       if (!symptom || state !== 'idle') return;
