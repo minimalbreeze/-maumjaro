@@ -48,6 +48,8 @@
   const rxSlipContent = document.getElementById('rx-slip-content');
   const rxSlipSaveBtn = document.getElementById('rx-slip-save');
   const rxSlipCloseBtn = document.getElementById('rx-slip-close');
+  const rxSlipBannerEmoji = document.getElementById('rx-slip-banner-emoji');
+  const rxSlipBannerDiagnosis = document.getElementById('rx-slip-banner-diagnosis');
   const rxSlipPhotoImg = document.getElementById('rx-slip-photo-img');
   const rxSlipPhotoBtn = document.getElementById('rx-slip-photo-btn');
   const rxSlipPhotoInput = document.getElementById('rx-slip-photo-input');
@@ -64,6 +66,8 @@
   const rxFriendCloseBtn = document.getElementById('rx-friend-close');
   const rxFriendShareBtn = document.getElementById('rx-friend-share-btn');
   const rxFriendCapture = document.getElementById('rx-friend-capture');
+  const rxFriendBannerEmoji = document.getElementById('rx-friend-banner-emoji');
+  const rxFriendBannerDiagnosis = document.getElementById('rx-friend-banner-diagnosis');
   const rxFriendPhotoImg = document.getElementById('rx-friend-photo-img');
   const rxFriendPhotoBtn = document.getElementById('rx-friend-photo-btn');
   const rxFriendPhotoInput = document.getElementById('rx-friend-photo-input');
@@ -242,6 +246,9 @@
     return name ? `${name}님` : '오늘의 나';
   }
   function showSlipScreen(p, ts) {
+    document.body.style.setProperty('--dose-color', p.color || '');
+    rxSlipBannerEmoji.textContent = p.emoji || '💊';
+    rxSlipBannerDiagnosis.textContent = p.diagnosis;
     rxSlipPatient.textContent = getPatientName();
     rxSlipDiagnosis.textContent = p.diagnosis;
     rxSlipPrescription.textContent = p.prescription;
@@ -249,7 +256,7 @@
     rxSlipDate.textContent = formatSlipDate(ts || Date.now());
 
     // 첨부 사진/한마디는 처방마다 새로 시작한다 (이전 처방 내용이 남지 않도록)
-    rxSlipPhotoImg.src = '';
+    rxSlipPhotoImg.style.backgroundImage = '';
     rxSlipPhotoImg.hidden = true;
     rxSlipPhotoBtn.textContent = '📷 사진 추가';
     rxSlipPhotoInput.value = '';
@@ -271,7 +278,7 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      rxSlipPhotoImg.src = reader.result;
+      rxSlipPhotoImg.style.backgroundImage = `url(${reader.result})`;
       rxSlipPhotoImg.hidden = false;
       rxSlipPhotoBtn.textContent = '📷 사진 변경';
     };
@@ -354,7 +361,7 @@
     }
   }
   function resetFriendAttachments() {
-    rxFriendPhotoImg.src = '';
+    rxFriendPhotoImg.style.backgroundImage = '';
     rxFriendPhotoImg.hidden = true;
     rxFriendPhotoBtn.textContent = '📷 사진 추가';
     rxFriendPhotoInput.value = '';
@@ -367,7 +374,7 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      rxFriendPhotoImg.src = reader.result;
+      rxFriendPhotoImg.style.backgroundImage = `url(${reader.result})`;
       rxFriendPhotoImg.hidden = false;
       rxFriendPhotoBtn.textContent = '📷 사진 변경';
     };
@@ -453,6 +460,9 @@
         pickedPrescription = p;
         pickedShareText = p.shareText;
         pickedShareUrl = buildShareUrl(p.id);
+        document.body.style.setProperty('--dose-color', p.color || '');
+        rxFriendBannerEmoji.textContent = p.emoji || '💊';
+        rxFriendBannerDiagnosis.textContent = p.diagnosis;
         rxFriendShareText.textContent = pickedShareText;
         rxFriendLink.textContent = pickedShareUrl;
         resetFriendAttachments();
@@ -470,20 +480,37 @@
   rxFriendCloseBtn.addEventListener('click', closeFriendPicker);
 
   // ---------- 보낸 처방 기록 보기 ----------
-  function openSentHistory() {
-    const list = loadFriendSentRecords().slice().sort((a, b) => b.ts - a.ts);
+  let sentHistoryFilter = 'all'; // all | library | custom
+  function renderSentHistoryList() {
+    const all = loadFriendSentRecords().slice().sort((a, b) => b.ts - a.ts);
+    const list = all.filter((rec) => {
+      if (sentHistoryFilter === 'library') return rec.category !== 'custom';
+      if (sentHistoryFilter === 'custom') return rec.category === 'custom';
+      return true;
+    });
     if (!list.length) {
-      rxSentHistoryList.innerHTML = '<p class="rx-empty-msg">아직 친구에게 보낸 처방이 없어요</p>';
-    } else {
-      rxSentHistoryList.innerHTML = list.map((rec) => `
+      rxSentHistoryList.innerHTML = '<p class="rx-empty-msg">아직 보낸 처방이 없어요</p>';
+      return;
+    }
+    rxSentHistoryList.innerHTML = list.map((rec) => {
+      const isCustom = rec.category === 'custom';
+      return `
         <div class="rx-sent-item">
           <span class="rx-sent-emoji">${rec.emoji || '💌'}</span>
           <div class="rx-sent-body">
             <div class="rx-sent-title">${rec.title || '처방'} → <strong>${rec.recipient}</strong>님</div>
             <div class="rx-sent-date">${formatSentDateTime(rec.ts)}</div>
           </div>
-        </div>`).join('');
-    }
+          <span class="rx-sent-tag${isCustom ? ' custom' : ''}">${isCustom ? '커스텀' : '라이브러리'}</span>
+        </div>`;
+    }).join('');
+  }
+  function openSentHistory() {
+    sentHistoryFilter = 'all';
+    rxSentHistoryOverlay.querySelectorAll('.rx-sent-filter-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.filter === 'all');
+    });
+    renderSentHistoryList();
     rxSentHistoryOverlay.classList.add('show');
   }
   function closeSentHistory() {
@@ -493,6 +520,15 @@
     if (e.target === rxSentHistoryOverlay) closeSentHistory();
   });
   rxSentHistoryCloseBtn.addEventListener('click', closeSentHistory);
+  rxSentHistoryOverlay.querySelectorAll('.rx-sent-filter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      sentHistoryFilter = btn.dataset.filter;
+      rxSentHistoryOverlay.querySelectorAll('.rx-sent-filter-btn').forEach((b) => {
+        b.classList.toggle('active', b === btn);
+      });
+      renderSentHistoryList();
+    });
+  });
 
   // ---------- 오늘의 처방: 날짜 시드 결정론적 선택 ----------
   function todayKey() {
@@ -991,7 +1027,7 @@
       <div class="rx-nav-header">
         <span class="rx-nav-title">🏥 처방센터</span>
         <button class="rx-friend-quick-btn" id="rx-sent-history-btn" type="button">📋 보낸 기록</button>
-        <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 친구에게</button>
+        <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 골라서 보내기</button>
       </div>
       <button class="rx-custom-cta" id="rx-custom-cta-btn" type="button">
         <span class="rx-custom-cta-emoji">✍️</span>

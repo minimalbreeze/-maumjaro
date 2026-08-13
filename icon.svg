@@ -1,23 +1,63 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#241b45"/>
-      <stop offset="100%" stop-color="#120d26"/>
+      <stop offset="0%" stop-color="#ff9166"/>
+      <stop offset="100%" stop-color="#ffc66b"/>
     </linearGradient>
     <linearGradient id="liq" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#8b7cf6"/>
-      <stop offset="100%" stop-color="#f6a8d8"/>
+      <stop offset="0%" stop-color="#ff9166"/>
+      <stop offset="100%" stop-color="#ffc66b"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="50%" stop-color="rgba(255,255,255,0.55)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.05)"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g transform="translate(196,90) rotate(0)">
-    <rect x="-24" y="0" width="120" height="26" rx="8" fill="#cfd3e6"/>
-    <rect x="24" y="26" width="24" height="90" fill="#cfd3e6"/>
-    <rect x="8" y="116" width="56" height="18" rx="3" fill="#b7bcd6"/>
-    <rect x="-4" y="110" width="80" height="220" rx="10" fill="rgba(255,255,255,0.06)" stroke="#c7cbe6" stroke-width="5"/>
-    <rect x="4" y="230" width="64" height="96" fill="url(#liq)"/>
-    <path d="M4 330 L68 330 L52 350 L20 350 Z" fill="#c7cbe6"/>
-    <rect x="28" y="350" width="8" height="90" fill="#d9dcef"/>
-    <path d="M28 440 L36 440 L32 460 Z" fill="#d9dcef"/>
+
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <!-- sparkles -->
+  <g fill="#fff6e6">
+    <path d="M120 120 l6 16 l16 6 l-16 6 l-6 16 l-6 -16 l-16 -6 l16 -6 z" opacity="0.9"/>
+    <path d="M400 150 l4 11 l11 4 l-11 4 l-4 11 l-4 -11 l-11 -4 l11 -4 z" opacity="0.8"/>
+    <path d="M392 330 l5 13 l13 5 l-13 5 l-5 13 l-5 -13 l-13 -5 l13 -5 z" opacity="0.7"/>
   </g>
+
+  <!-- flange -->
+  <g>
+    <rect x="204" y="424" width="104" height="26" rx="9" fill="#fdfbf6" stroke="#1f5c50" stroke-width="13"/>
+    <line x1="228" y1="430" x2="228" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
+    <line x1="256" y1="430" x2="256" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
+    <line x1="284" y1="430" x2="284" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <!-- plunger rod -->
+  <rect x="234" y="326" width="44" height="104" rx="8" fill="#fdfbf6" stroke="#1f5c50" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- barrel -->
+  <rect x="180" y="222" width="152" height="214" rx="42" fill="#fdfbf6" stroke="#1f5c50" stroke-width="17"/>
+
+  <!-- liquid -->
+  <rect x="197" y="304" width="118" height="118" rx="16" fill="url(#liq)"/>
+
+  <!-- plunger head -->
+  <g>
+    <rect x="190" y="290" width="132" height="38" rx="11" fill="#ef6a54" stroke="#1f5c50" stroke-width="12"/>
+    <rect x="200" y="296" width="112" height="9" rx="4" fill="rgba(255,255,255,0.4)"/>
+    <line x1="212" y1="304" x2="212" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
+    <line x1="240" y1="304" x2="240" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
+    <line x1="268" y1="304" x2="268" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
+    <line x1="296" y1="304" x2="296" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- glass shine over barrel -->
+  <rect x="180" y="222" width="152" height="214" rx="42" fill="url(#shine)"/>
+
+  <!-- needle hub -->
+  <path d="M198 222 L314 222 L272 172 L240 172 Z" fill="#5fb3a3" stroke="#1f5c50" stroke-width="13" stroke-linejoin="round"/>
+
+  <!-- needle -->
+  <rect x="238" y="96" width="36" height="80" fill="#eef1f5" stroke="#1f5c50" stroke-width="11" stroke-linejoin="round"/>
+  <path d="M238 96 L274 96 L256 48 Z" fill="#eef1f5" stroke="#1f5c50" stroke-width="11" stroke-linejoin="round"/>
 </svg>

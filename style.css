@@ -993,11 +993,33 @@ body {
   color: var(--text-dim);
   margin: 14px 0 14px;
 }
+.rx-slip-banner {
+  border-radius: 16px;
+  padding: 22px 16px;
+  margin-bottom: 14px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--dose-color, #ff9166), #ffc66b);
+}
+.rx-slip-banner-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+}
+.rx-slip-banner-diagnosis {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.35;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
 .rx-slip-photo-img {
   display: block;
   width: 100%;
-  max-height: 160px;
-  object-fit: cover;
+  height: 160px;
+  background-color: rgba(0,0,0,0.04);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: 12px;
   margin-bottom: 12px;
 }
@@ -1483,6 +1505,40 @@ body {
   font-size: 11px;
   color: var(--text-dim);
   margin-top: 2px;
+}
+.rx-sent-tag {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(154,168,224,0.18);
+  color: #6b7bc4;
+}
+.rx-sent-tag.custom {
+  background: rgba(183,121,239,0.18);
+  color: #9a5fd6;
+}
+.rx-sent-filter-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.rx-sent-filter-btn {
+  flex: 1;
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rx-sent-filter-btn.active {
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  color: #fff;
+  border-color: transparent;
 }
 
 /* ---------- Dose tag / caption (symptom-based prescription) ---------- */
