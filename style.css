@@ -1772,3 +1772,77 @@ body {
 .symptom-confirm-btn:disabled {
   opacity: 0.45;
 }
+
+/* ---------- 커스텀 처방전 9:16 스토리 캡처 (화면 밖에 항상 존재, 캡처 직전에 내용만 채움) ---------- */
+
+.rx-story-capture {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 540px;
+  height: 960px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 56px 40px;
+  background: linear-gradient(160deg, #b779ef, #ff8fb3);
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+.rx-story-badge {
+  align-self: flex-start;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  color: #b779ef;
+  font-size: 20px;
+  font-weight: 800;
+}
+.rx-story-card {
+  width: 100%;
+  background: #fffdf9;
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.rx-story-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  color: #fff;
+}
+.rx-story-banner-emoji {
+  font-size: 40px;
+}
+.rx-story-banner-diagnosis {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+}
+.rx-story-card .rx-slip-row {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+.rx-story-card .rx-slip-key {
+  font-size: 14px;
+}
+.rx-story-card .rx-slip-block {
+  margin-bottom: 18px;
+}
+.rx-story-card .rx-slip-text {
+  font-size: 19px;
+  line-height: 1.5;
+}
+.rx-story-footer {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0.95;
+}

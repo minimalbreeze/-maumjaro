@@ -91,6 +91,13 @@
   const rxRevealMakeBtn = document.getElementById('rx-reveal-make-btn');
   const rxRevealCloseBtn = document.getElementById('rx-reveal-close');
 
+  const rxStoryCapture = document.getElementById('rx-story-capture');
+  const rxStoryDiagnosis = document.getElementById('rx-story-diagnosis');
+  const rxStoryPatient = document.getElementById('rx-story-patient');
+  const rxStoryPrescription = document.getElementById('rx-story-prescription');
+  const rxStoryWarning = document.getElementById('rx-story-warning');
+  const rxStoryDoctor = document.getElementById('rx-story-doctor');
+
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
   if (!localStorage.getItem(RX_SCHEMA_KEY)) localStorage.setItem(RX_SCHEMA_KEY, '1');
@@ -1276,6 +1283,50 @@
     });
   }
 
+  // ---------- 인스타 스토리용 9:16 이미지 저장 (화면 밖 전용 컨테이너를 캡처) ----------
+  async function saveCustomStoryImage(payload, btnEl) {
+    if (typeof window.html2canvas !== 'function') {
+      Core.showToast('이미지 저장을 사용할 수 없어요. 화면을 캡처해주세요');
+      return;
+    }
+    rxStoryDiagnosis.textContent = payload.d;
+    rxStoryPatient.textContent = payload.p;
+    rxStoryPrescription.textContent = payload.rx;
+    rxStoryWarning.textContent = payload.w || '개인차가 있을 수 있어요';
+    rxStoryDoctor.textContent = payload.dr;
+
+    const originalLabel = btnEl.textContent;
+    btnEl.disabled = true;
+    btnEl.textContent = '준비 중...';
+    const filename = `맘운자로_저격처방전_${formatSlipDate(Date.now())}.png`;
+    try {
+      const canvas = await window.html2canvas(rxStoryCapture, { width: 540, height: 960, scale: 2, backgroundColor: '#fffdf9' });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('canvas.toBlob returned null');
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: '맘운자로 저격 처방전' });
+        Core.showToast('공유 시트에서 인스타 스토리에 올려보세요 📸');
+        return;
+      }
+      const objUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = objUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
+      Core.showToast('이미지를 저장했어요. 스토리에 올려보세요 📸');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      Core.showToast('이미지 저장에 실패했어요. 화면을 캡처해주세요');
+    } finally {
+      btnEl.disabled = false;
+      btnEl.textContent = originalLabel;
+    }
+  }
+
   function renderCustomShareResult(payload, url) {
     const shareText = `🚨 ${payload.p}님을 위한 맞춤 처방전이 도착했어요! 지금 확인해보세요`;
     rxCenterContent.innerHTML = `
@@ -1295,11 +1346,15 @@
 
       <p class="rx-friend-link">${url}</p>
       <button class="action-btn rx-custom-submit-btn" id="rx-custom-share-send-btn" type="button">📤 친구에게 보내기</button>
+      <button class="rx-cta-btn" id="rx-custom-share-story-btn" type="button">📸 스토리 이미지로 저장</button>
       <button class="rx-cta-btn" id="rx-custom-share-copy-btn" type="button">🔗 링크만 복사하기</button>
     `;
 
     document.getElementById('rx-custom-share-back').addEventListener('click', renderRxGrid);
     document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url));
+    document.getElementById('rx-custom-share-story-btn').addEventListener('click', (e) => {
+      saveCustomStoryImage(payload, e.currentTarget);
+    });
     document.getElementById('rx-custom-share-copy-btn').addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(url);
