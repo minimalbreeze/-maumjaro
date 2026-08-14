@@ -206,9 +206,7 @@
     `;
 
     document.getElementById('fortune-edit-profile-btn').addEventListener('click', () => {
-      localStorage.removeItem(SAJU_PROFILE_KEY);
-      localStorage.removeItem(SAJU_CHART_KEY);
-      renderProfileForm();
+      renderProfileForm(profile); // 기존 값을 채운 채로 수정 화면 진입 (재입력 아님)
     });
 
     fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
@@ -360,51 +358,65 @@
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
   }
 
-  function renderProfileForm() {
+  // existingProfile이 있으면 "수정 모드"로, 기존 값을 그대로 채워서 보여준다.
+  function renderProfileForm(existingProfile) {
+    const isEdit = !!existingProfile;
+    const defaultName = (existingProfile && existingProfile.name)
+      || (localStorage.getItem('maumjaro:username') || '').trim()
+      || '';
+    const todayStr = new Date().toISOString().slice(0, 10);
+
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
-        <span class="rx-nav-title">🔮 사주 정보 입력</span>
+        ${isEdit ? '<button class="rx-back-btn" id="fortune-form-back" type="button">‹</button>' : ''}
+        <span class="rx-nav-title">💫 나만의 맘운 프로필</span>
       </div>
+      <p class="rx-custom-hint">오늘의 맘운을 보기 전에, 나만의 운세 기준을 만들어 주세요</p>
       <p class="rx-custom-hint">💛 한 번만 입력하면 계속 재사용돼요. 이 정보는 이 기기에만 저장되고 외부로 전송되지 않아요</p>
 
-      <div class="segmented" id="fortune-calendar-toggle">
-        <button class="seg-btn active" data-val="solar" type="button">양력</button>
-        <button class="seg-btn" data-val="lunar" type="button">음력</button>
+      <div class="rx-custom-field">
+        <label class="rx-slip-key" for="fortune-name">이름 또는 닉네임</label>
+        <input type="text" id="fortune-name" class="rx-custom-input" maxlength="12" placeholder="예: 민지" value="${defaultName}" />
       </div>
 
-      <div class="rx-custom-field" id="fortune-leap-field" style="display:none;">
+      <div class="segmented" id="fortune-calendar-toggle">
+        <button class="seg-btn${existingProfile && existingProfile.calendarType === 'lunar' ? '' : ' active'}" data-val="solar" type="button">양력</button>
+        <button class="seg-btn${existingProfile && existingProfile.calendarType === 'lunar' ? ' active' : ''}" data-val="lunar" type="button">음력</button>
+      </div>
+
+      <div class="rx-custom-field" id="fortune-leap-field" style="display:${existingProfile && existingProfile.calendarType === 'lunar' ? 'flex' : 'none'};">
         <div class="sound-row">
           <span>윤달이에요</span>
-          <button id="fortune-leap-toggle" class="toggle-btn" type="button" aria-pressed="false">⭕ 꺼짐</button>
+          <button id="fortune-leap-toggle" class="toggle-btn" type="button" aria-pressed="${existingProfile ? String(!!existingProfile.isLeapMonth) : 'false'}">${existingProfile && existingProfile.isLeapMonth ? '✅ 켜짐' : '⭕ 꺼짐'}</button>
         </div>
       </div>
 
       <div class="rx-custom-field">
         <label class="rx-slip-key" for="fortune-birthdate">생년월일</label>
-        <input type="date" id="fortune-birthdate" class="rx-custom-input" />
+        <input type="date" id="fortune-birthdate" class="rx-custom-input" min="1900-01-01" max="${todayStr}" value="${existingProfile ? existingProfile.birthDate : ''}" />
       </div>
 
       <div class="rx-custom-field">
         <label class="rx-slip-key" for="fortune-birthtime">태어난 시간</label>
-        <input type="time" id="fortune-birthtime" class="rx-custom-input" />
+        <input type="time" id="fortune-birthtime" class="rx-custom-input" value="${existingProfile && existingProfile.birthTime ? existingProfile.birthTime : ''}" ${existingProfile && existingProfile.timeUnknown ? 'disabled' : ''} />
       </div>
       <div class="sound-row">
         <span>태어난 시간을 몰라요</span>
-        <button id="fortune-time-unknown-toggle" class="toggle-btn" type="button" aria-pressed="false">⭕ 꺼짐</button>
+        <button id="fortune-time-unknown-toggle" class="toggle-btn" type="button" aria-pressed="${existingProfile ? String(!!existingProfile.timeUnknown) : 'false'}">${existingProfile && existingProfile.timeUnknown ? '✅ 켜짐' : '⭕ 꺼짐'}</button>
       </div>
 
       <div class="segmented" id="fortune-gender-toggle" style="margin-top:14px;">
-        <button class="seg-btn active" data-val="female" type="button">여성</button>
-        <button class="seg-btn" data-val="male" type="button">남성</button>
+        <button class="seg-btn${existingProfile && existingProfile.gender === 'male' ? '' : ' active'}" data-val="female" type="button">여성</button>
+        <button class="seg-btn${existingProfile && existingProfile.gender === 'male' ? ' active' : ''}" data-val="male" type="button">남성</button>
       </div>
 
-      <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">🔮 운세 보기</button>
+      <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">💫 ${isEdit ? '맘운 프로필 저장하기' : '맘운 프로필 완성하기'}</button>
     `;
 
-    let calendarType = 'solar';
-    let isLeapMonth = false;
-    let timeUnknown = false;
-    let gender = 'female';
+    let calendarType = (existingProfile && existingProfile.calendarType) || 'solar';
+    let isLeapMonth = !!(existingProfile && existingProfile.isLeapMonth);
+    let timeUnknown = !!(existingProfile && existingProfile.timeUnknown);
+    let gender = (existingProfile && existingProfile.gender) || 'female';
 
     const calendarToggle = document.getElementById('fortune-calendar-toggle');
     const leapField = document.getElementById('fortune-leap-field');
@@ -412,6 +424,11 @@
     const timeUnknownToggle = document.getElementById('fortune-time-unknown-toggle');
     const birthTimeInput = document.getElementById('fortune-birthtime');
     const genderToggle = document.getElementById('fortune-gender-toggle');
+    const nameInput = document.getElementById('fortune-name');
+
+    if (isEdit) {
+      document.getElementById('fortune-form-back').addEventListener('click', () => renderFortuneHub(existingProfile));
+    }
 
     calendarToggle.querySelectorAll('.seg-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -447,13 +464,21 @@
         Core.showToast('생년월일을 입력해주세요');
         return;
       }
+      if (birthDate > todayStr) {
+        Core.showToast('생년월일이 오늘보다 미래예요. 다시 확인해주세요');
+        return;
+      }
+      if (birthDate < '1900-01-01') {
+        Core.showToast('1900년 이후 날짜로 입력해주세요');
+        return;
+      }
       const birthTime = birthTimeInput.value || null;
       if (!timeUnknown && !birthTime) {
         Core.showToast('태어난 시간을 입력하거나 "모름"을 선택해주세요');
         return;
       }
       const profile = {
-        name: (localStorage.getItem('maumjaro:username') || '').trim() || null,
+        name: nameInput.value.trim() || null,
         calendarType,
         birthDate,
         isLeapMonth: calendarType === 'lunar' ? isLeapMonth : false,
@@ -463,7 +488,7 @@
         savedAt: Date.now(),
       };
       saveSajuProfile(profile);
-      localStorage.removeItem(SAJU_CHART_KEY); // 새 프로필이면 이전 캐시 무효화
+      localStorage.removeItem(SAJU_CHART_KEY); // 프로필이 바뀌면 이전 계산 캐시는 무효화하고 다시 계산한다
       renderFortuneHub(profile);
     });
   }
