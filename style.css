@@ -101,6 +101,14 @@ body {
 }
 .today-rx-card[hidden] { display: none; }
 
+.home-maumun-card {
+  background: linear-gradient(135deg, rgba(255,198,107,0.18), rgba(255,145,102,0.1));
+  border-color: rgba(255,198,107,0.4);
+}
+.home-maumun-card .today-rx-btn {
+  background: linear-gradient(135deg, #ffc66b, #ff9166);
+}
+
 .custom-incoming-card {
   flex-shrink: 0;
   width: 100%;

@@ -1561,5 +1561,14 @@
   });
 
   // ---------- 외부 모듈 export (fortune.js가 기존 주사 인터랙션을 재사용하기 위함, app.js의 Core 패턴과 동일) ----------
-  window.MaumjaroRx = { wireExternalTrigger, showRxImageFade };
+  window.MaumjaroRx = {
+    wireExternalTrigger,
+    showRxImageFade,
+    goToRxCategory(catId) {
+      const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
+      if (rxTabBtn) rxTabBtn.click();
+      if (catId === 'random') runRandomPrescription();
+      else renderRxList(catId);
+    },
+  };
 })();

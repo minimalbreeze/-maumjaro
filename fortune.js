@@ -6,6 +6,8 @@
   const {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED, MAUMUN_CONNECTOR,
+    MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
+    TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const viewFortune = document.getElementById('view-fortune');
@@ -28,6 +30,11 @@
   maumunRevealOverlay.addEventListener('click', (e) => {
     if (e.target === maumunRevealOverlay) closeMaumunReveal();
   });
+
+  const homeMaumunCard = document.getElementById('home-maumun-card');
+  const homeMaumunOneline = document.getElementById('home-maumun-oneline');
+  const homeMaumunSub = document.getElementById('home-maumun-sub');
+  const homeMaumunBtn = document.getElementById('home-maumun-btn');
 
   const SAJU_PROFILE_KEY = 'maumjaro:sajuProfile';
   const SAJU_CHART_KEY = 'maumjaro:sajuChart';
@@ -207,7 +214,7 @@
           <span class="rx-category-count">이번 주</span>
         </div>
         <div class="rx-category-tile" data-fortune="monthly">
-          <span class="rx-category-emoji">🗓️</span>
+          <span class="rx-category-emoji">📆</span>
           <span class="rx-category-label">월간 운세</span>
           <span class="rx-category-count">이번 달</span>
         </div>
@@ -240,10 +247,43 @@
     });
   }
 
+  function starsText(n) {
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  // 사주팔자(일주) + 오늘 날짜 + salt로 결정론적 인덱스를 뽑는다.
+  // 같은 사람이 같은 날 다시 봐도 같은 결과, salt가 다르면 카테고리별로 다른 결과가 나온다.
+  function dailyPickIndex(chart, salt, length) {
+    const dateKey = new Date().toISOString().slice(0, 10);
+    return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${dateKey}:${salt}`) % length;
+  }
+
+  function categorySectionHtml(label, item, rxCategory) {
+    return `
+      <div class="rx-custom-preview" style="margin-bottom:10px;">
+        <div class="rx-slip-row"><span class="rx-slip-key">${label}</span><span class="rx-slip-value">${starsText(item.stars)}</span></div>
+        <p class="rx-slip-text">${item.quip}</p>
+        <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">💊 ${item.hint}</p>
+        <button class="rx-friend-quick-btn fortune-goto-rx-btn" type="button" data-rxcat="${rxCategory}" style="margin-top:6px;">처방 후보 보러가기 ›</button>
+      </div>`;
+  }
+
   function renderFortuneDaily(profile) {
     const chart = getOrComputeSajuChart(profile);
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
     const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+
+    const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+    const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+    const wealthItem = WEALTH_FORTUNE_SEED.items[dailyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+    const loveItem = LOVE_FORTUNE_SEED.items[dailyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+    const workItem = WORK_FORTUNE_SEED.items[dailyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+    const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
+    const luckyColor = LUCKY_COLORS[dailyPickIndex(chart, 'color', LUCKY_COLORS.length)];
+    const luckyNumber = dailyPickIndex(chart, 'number', 9) + 1;
+    const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
+    const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
+
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
@@ -251,14 +291,31 @@
       </div>
       <div class="rx-detail-card">
         <div class="rx-detail-emoji">${seed.emoji}</div>
-        <div class="rx-detail-title">${seed.title}</div>
+        <div class="rx-detail-title">오늘의 전체운 · ${seed.title}</div>
         <div class="rx-detail-diagnosis">${seed.diagnosis}</div>
         <p class="rx-detail-symptom">${seed.advice}</p>
       </div>
-      <p class="rx-custom-hint">⚠️ ${seed.caution}</p>
+      <p class="rx-custom-hint">💛 ${oneLine}</p>
+
+      ${categorySectionHtml('마음운', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('인간관계운', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('연애운', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('일/직장운', workItem, WORK_FORTUNE_SEED.rxCategory)}
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-row"><span class="rx-slip-key">행운의 색</span><span class="rx-slip-value">${luckyColor}</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">행운의 숫자</span><span class="rx-slip-value">${luckyNumber}</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">행운의 아이템</span><span class="rx-slip-value">${luckyItem}</span></div>
+        <div class="rx-slip-row"><span class="rx-slip-key">오늘 피하면 좋은 것</span><span class="rx-slip-value">${avoidToday}</span></div>
+      </div>
+
       ${pillarsBlockHtml(chart)}
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+    });
   }
 
   function renderFortuneWeekly(profile) {
@@ -523,8 +580,32 @@
       saveSajuProfile(profile);
       localStorage.removeItem(SAJU_CHART_KEY); // 프로필이 바뀌면 이전 계산 캐시는 무효화하고 다시 계산한다
       renderFortuneHub(profile);
+      renderHomeMaumunTeaser(); // 방금 만든/수정한 프로필을 홈 카드에도 바로 반영
     });
   }
+
+  // ---------- 홈 화면 "🌞 오늘의 맘운" 티저 카드 ----------
+  // 사주 프로필이 있을 때만 노출한다. 없는 사용자의 홈 화면은 기존 그대로 유지된다.
+  function renderHomeMaumunTeaser() {
+    const profile = loadSajuProfile();
+    if (!profile) {
+      homeMaumunCard.hidden = true;
+      return;
+    }
+    const chart = getOrComputeSajuChart(profile);
+    const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
+    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
+    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    homeMaumunOneline.textContent = oneLine;
+    homeMaumunSub.textContent = `${seed.emoji} ${seed.title}`;
+    homeMaumunCard.hidden = false;
+    homeMaumunBtn.onclick = () => {
+      const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+      if (fortuneTabBtn) fortuneTabBtn.click();
+      renderFortuneDaily(profile);
+    };
+  }
+  renderHomeMaumunTeaser();
 
   // ---------- 탭 전환 시 운세 탭 노출 (기존 tab-btn 리스너들 옆에 세 번째 리스너로 추가) ----------
   document.querySelectorAll('.tab-btn').forEach((btn) => {
