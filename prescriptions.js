@@ -846,6 +846,25 @@
     };
   }
 
+  // ---------- 외부 모듈(fortune.js 등)이 기존 주사 인터랙션을 재사용하기 위한 공용 배선 ----------
+  // wireGenericTrigger/wireCustomIncomingTrigger와 완전히 동일한 준비→주사 로직이며,
+  // 사주 계산 엔진 등 다른 기능이 이 UI를 대체하지 않고 그대로 재사용할 수 있도록 노출한다.
+  function wireExternalTrigger(btnEl, syntheticPrescription, onComplete) {
+    btnEl.onclick = () => {
+      if (activeTriggerBtn === btnEl && genericState === 'ready') {
+        startGenericInject();
+        return;
+      }
+      if (genericState !== 'idle' || appHasOtherFlowActive()) {
+        Core.showToast('지금 다른 처방이 진행 중이에요');
+        return;
+      }
+      switchToHomeTab();
+      Core.requestMotionPermission();
+      startGenericPrepare(syntheticPrescription, btnEl, onComplete);
+    };
+  }
+
   // ---------- 오늘의 처방 카드 렌더 ----------
   function renderTodayCard() {
     const p = pickTodaysPrescription();
@@ -1540,4 +1559,7 @@
     renderUnifiedHistory();
     Core.showToast('모든 기록을 초기화했어요 🗑️');
   });
+
+  // ---------- 외부 모듈 export (fortune.js가 기존 주사 인터랙션을 재사용하기 위함, app.js의 Core 패턴과 동일) ----------
+  window.MaumjaroRx = { wireExternalTrigger, showRxImageFade };
 })();

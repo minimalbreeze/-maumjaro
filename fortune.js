@@ -2,6 +2,7 @@
   'use strict';
 
   const Core = window.MaumjaroCore;
+  const Rx = window.MaumjaroRx; // prescriptions.js가 노출하는 기존 주사 인터랙션 재사용 창구
   const {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED, MAUMUN_CONNECTOR,
@@ -9,6 +10,24 @@
 
   const viewFortune = document.getElementById('view-fortune');
   const fortuneContent = document.getElementById('fortune-content');
+
+  const maumunRevealOverlay = document.getElementById('maumun-reveal-overlay');
+  const maumunRevealTitle = document.getElementById('maumun-reveal-title');
+  const maumunRevealText = document.getElementById('maumun-reveal-text');
+  const maumunRevealClose = document.getElementById('maumun-reveal-close');
+
+  function closeMaumunReveal() {
+    maumunRevealOverlay.classList.remove('show');
+  }
+  function openMaumunReveal(title, text) {
+    maumunRevealTitle.textContent = title;
+    maumunRevealText.textContent = text;
+    maumunRevealOverlay.classList.add('show');
+  }
+  maumunRevealClose.addEventListener('click', closeMaumunReveal);
+  maumunRevealOverlay.addEventListener('click', (e) => {
+    if (e.target === maumunRevealOverlay) closeMaumunReveal();
+  });
 
   const SAJU_PROFILE_KEY = 'maumjaro:sajuProfile';
   const SAJU_CHART_KEY = 'maumjaro:sajuChart';
@@ -349,13 +368,27 @@
           <div class="today-rx-diagnosis">${fortuneSeed.diagnosis}</div>
         </div>
       </div>
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">💞</div>
-        <div class="rx-detail-title">오늘의 맘운 처방</div>
-        <p class="rx-detail-symptom">${connector}</p>
-      </div>
+      <p class="rx-custom-hint">마음과 운을 하나로 묶은 맘운 처방이 준비됐어요. 주사를 놓아서 확인해보세요</p>
+      <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 맘운 처방받기</button>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+
+    // 사주 계산 엔진이 기존 주사 UI를 대체하지 않도록, 처방센터/커스텀 처방전과 동일한
+    // startGenericPrepare/startGenericInject 인터랙션을 그대로 재사용한다 (prescriptions.js의 export).
+    const syntheticP = {
+      id: 'maumun-today',
+      category: 'maumun',
+      title: '오늘의 맘운 처방',
+      diagnosis: `${emotion.label} × ${fortuneSeed.title}`,
+      emoji: '💞',
+      color: emotion.color || '#b779ef',
+    };
+    const injectBtn = document.getElementById('fortune-maumun-inject-btn');
+    Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
+      Rx.showRxImageFade(syntheticP, () => {
+        openMaumunReveal(`${emotion.label} × ${fortuneSeed.title}`, connector);
+      });
+    });
   }
 
   // existingProfile이 있으면 "수정 모드"로, 기존 값을 그대로 채워서 보여준다.
