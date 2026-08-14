@@ -30,5 +30,85 @@
       caution: '너무 의존하려는 마음이 커지면 다음 날 허무해질 수 있음' },
   ];
 
-  window.MAUMJARO_FORTUNE_DATA = { STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT, DAILY_FORTUNE_SEED };
+  // ---------- 주간 운세 시드: 이번 주 월요일 일진 오행 vs 일간 관계 5종 ----------
+  const WEEKLY_FORTUNE_SEED = [
+    { relation: 'same', emoji: '🪞', title: '고집이 세지는 한 주', diagnosis: '주간 동류 과다',
+      advice: '이번 주는 남 말에 잘 안 흔들리는 주. 밀어붙이던 일이 있다면 계속 밀어붙여도 좋음',
+      caution: '주변과 부딪히는 순간이 한 번쯤은 올 수 있음. 미리 마음의 준비를' },
+    { relation: 'output', emoji: '💬', title: '많이 벌이게 되는 한 주', diagnosis: '주간 표현 욕구 분출',
+      advice: '아이디어를 꺼내거나 새로운 걸 시작하기 좋은 주. 미뤄둔 연락도 이번 주에 하면 잘 풀림',
+      caution: '주 후반부에 에너지가 급격히 떨어질 수 있음. 초반에 다 쓰지 말기' },
+    { relation: 'wealth', emoji: '💰', title: '결실이 따라오는 한 주', diagnosis: '주간 획득 활성화',
+      advice: '이번 주에 시도한 일은 결과가 따라올 가능성이 높음. 미뤄둔 협상이나 계약이 있다면 이번 주에',
+      caution: '욕심이 과해지면 주말쯤 역풍을 맞을 수 있음' },
+    { relation: 'authority', emoji: '🧱', title: '여기저기 눌리는 한 주', diagnosis: '주간 외부 압박',
+      advice: '이번 주는 무리한 확장보다 방어적으로 가는 게 이득. 급한 일 아니면 다음 주로 미뤄도 됨',
+      caution: '주 중반에 예상 못 한 곳에서 막힐 수 있음' },
+    { relation: 'resource', emoji: '🌱', title: '채워지는 한 주', diagnosis: '주간 에너지 보충',
+      advice: '주변의 도움이나 좋은 소식이 들어올 수 있는 주. 이번 주는 부탁하는 것도 나쁘지 않음',
+      caution: '너무 기대면 주말에 급격히 허무해질 수 있음' },
+  ];
+
+  // ---------- 월간 운세 시드: 이번 달 월주 오행 vs 일간 관계 5종 ----------
+  const MONTHLY_FORTUNE_SEED = [
+    { relation: 'same', emoji: '🪞', title: '내 뜻대로 밀어붙이는 달', diagnosis: '월간 동류 과다',
+      advice: '이번 달은 남 눈치보다 내 판단을 믿어도 되는 달. 큰 결정이 있다면 이번 달에 내려도 좋음',
+      caution: '고집이 과해지면 월말에 관계에서 마찰이 생길 수 있음' },
+    { relation: 'output', emoji: '💬', title: '크게 벌이기 좋은 달', diagnosis: '월간 표현 욕구 분출',
+      advice: '새로운 프로젝트나 관계를 시작하기 좋은 달. 하고 싶었던 걸 이번 달에 저질러도 좋음',
+      caution: '벌인 일을 다 수습하기엔 에너지가 부족할 수 있음. 우선순위를 정하기' },
+    { relation: 'wealth', emoji: '💰', title: '결실을 보는 달', diagnosis: '월간 획득 활성화',
+      advice: '그동안 쌓아온 게 있다면 이번 달에 결과로 이어질 가능성이 높음',
+      caution: '들어온 만큼 나갈 수도 있음. 지출 계획은 미리 세워두기' },
+    { relation: 'authority', emoji: '🧱', title: '몸을 사려야 하는 달', diagnosis: '월간 외부 압박',
+      advice: '이번 달은 새 판을 벌이기보다 있는 걸 지키는 데 집중하는 게 나음',
+      caution: '무리하게 정면돌파하면 다음 달까지 여파가 갈 수 있음' },
+    { relation: 'resource', emoji: '🌱', title: '귀인을 만나는 달', diagnosis: '월간 에너지 보충',
+      advice: '이번 달은 누군가의 도움이나 좋은 인연이 들어올 가능성이 높은 달. 새 만남에 열려 있기',
+      caution: '의존이 습관이 되면 다음 달에 부담으로 돌아올 수 있음' },
+  ];
+
+  // ---------- 토정비결(간이판): 일주+올해 조합으로 결정되는 연간 운세 12괘 ----------
+  // 전통 토정비결의 정식 괘 산출식(태세/월건/일진 수리 조합)을 그대로 구현한 것이 아니라,
+  // 앱의 다른 콘텐츠와 같은 톤으로 재해석한 "간이 버전"임을 화면에 명시한다.
+  const TOJEONG_SEED = [
+    { title: '제1괘 · 새싹이 트는 괘', emoji: '🌱', summary: '올해는 뭔가 새로 시작하기 좋은 해',
+      detail: '작게 시작한 일이 생각보다 오래갈 수 있는 해예요. 크게 벌이기보다 하나씩 심어두는 쪽이 유리해요' },
+    { title: '제2괘 · 바람을 타는 괘', emoji: '🌬️', summary: '올해는 흐름에 몸을 맡기는 게 유리한 해',
+      detail: '억지로 방향을 틀기보다 상황이 흘러가는 대로 두면 의외로 좋은 곳에 도착할 수 있어요' },
+    { title: '제3괘 · 물이 고이는 괘', emoji: '💧', summary: '올해는 급하게 서두르면 오히려 손해 보는 해',
+      detail: '천천히 채워가는 쪽이 유리해요. 조급함이 가장 큰 적' },
+    { title: '제4괘 · 볕이 드는 괘', emoji: '☀️', summary: '올해는 그동안 안 풀리던 일이 풀릴 조짐',
+      detail: '작년까지 꼬였던 일이 자연스럽게 풀리는 흐름이 보여요. 다만 방심은 금물' },
+    { title: '제5괘 · 산을 넘는 괘', emoji: '⛰️', summary: '올해는 고비가 하나 있지만 넘고 나면 편해지는 해',
+      detail: '상반기에 힘든 구간이 있을 수 있지만, 넘기고 나면 하반기는 한결 수월해져요' },
+    { title: '제6괘 · 씨앗을 고르는 괘', emoji: '🌾', summary: '올해는 선택과 집중이 중요한 해',
+      detail: '이것저것 다 잡으려다 하나도 못 잡을 수 있어요. 정말 중요한 것 하나만 고르기' },
+    { title: '제7괘 · 등불을 켜는 괘', emoji: '🕯️', summary: '올해는 주변 사람 덕을 보는 해',
+      detail: '혼자 애쓰는 것보다 누군가와 함께할 때 훨씬 수월하게 풀려요' },
+    { title: '제8괘 · 강을 건너는 괘', emoji: '🚣', summary: '올해는 변화가 많은 해',
+      detail: '이사, 이직, 관계 변화처럼 환경이 바뀌는 일이 생길 수 있어요. 변화 자체는 나쁘지 않은 흐름' },
+    { title: '제9괘 · 달이 차는 괘', emoji: '🌕', summary: '올해는 인내심이 결실로 돌아오는 해',
+      detail: '올해 초 시작한 게 있다면 연말쯤 눈에 보이는 결과가 나올 수 있어요' },
+    { title: '제10괘 · 서리를 견디는 괘', emoji: '❄️', summary: '올해는 잠깐 움츠러드는 시기가 있는 해',
+      detail: '무리해서 확장하기보다 내실을 다지는 게 유리해요. 봄은 반드시 옴' },
+    { title: '제11괘 · 나무가 자라는 괘', emoji: '🌳', summary: '올해는 꾸준함이 가장 강력한 무기인 해',
+      detail: '화려한 한 방보다 매일 조금씩 쌓는 쪽이 훨씬 크게 남아요' },
+    { title: '제12괘 · 별을 보는 괘', emoji: '⭐', summary: '올해는 방향을 다시 잡기 좋은 해',
+      detail: '지금까지와 다른 길을 고민하고 있다면, 올해가 그 방향을 정하기 나쁘지 않은 타이밍이에요' },
+  ];
+
+  // ---------- 맘운(마음+운) 연결 문구: 오늘의 운세 relation별로 감정 캡션과 이어붙이는 짧은 브릿지 ----------
+  const MAUMUN_CONNECTOR = {
+    same: '지금 그 마음, 오늘의 기운과도 결이 비슷해요. 억지로 다잡으려 하지 말고 그 흐름 그대로 가보세요',
+    output: '그 마음 붙잡고만 있지 말고, 오늘은 꺼내놓기 좋은 기운이에요',
+    wealth: '그 마음을 잘 다독이면, 오늘은 뭔가 하나 얻어가는 날이 될 수 있어요',
+    authority: '지금 마음이 무거운 날, 오늘의 기운도 비슷하게 눌려 있어요. 오늘만큼은 무리하지 마세요',
+    resource: '그 마음, 오늘은 주변에서 채워줄 수도 있어요. 혼자 다 해내려 하지 마세요',
+  };
+
+  window.MAUMJARO_FORTUNE_DATA = {
+    STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
+    DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED, MAUMUN_CONNECTOR,
+  };
 })();
