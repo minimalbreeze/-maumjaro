@@ -382,14 +382,27 @@
 </div>
 
 <div id="maumun-reveal-overlay" class="settings-overlay">
-  <div class="settings-card">
-    <div class="rx-nav-header">
-      <span class="rx-nav-title">💞 오늘의 맘운 처방</span>
-    </div>
-    <div class="rx-detail-card">
-      <div class="rx-detail-emoji" id="maumun-reveal-emoji">💞</div>
-      <div class="rx-detail-title" id="maumun-reveal-title"></div>
-      <p class="rx-detail-symptom" id="maumun-reveal-text"></p>
+  <div class="settings-card rx-slip-card">
+    <div class="rx-slip-content">
+      <div class="rx-slip-header">
+        <span class="rx-slip-hospital">🏥 맘운자로 맘운 처방전</span>
+      </div>
+      <div class="rx-slip-banner" id="maumun-reveal-banner">
+        <div class="rx-slip-banner-emoji" id="maumun-reveal-emoji">💞</div>
+        <div class="rx-slip-banner-diagnosis" id="maumun-reveal-diagnosis"></div>
+      </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">오늘의 해석</span>
+        <p class="rx-slip-text" id="maumun-reveal-interpretation"></p>
+      </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">처방</span>
+        <p class="rx-slip-text" id="maumun-reveal-prescription"></p>
+      </div>
+      <div class="rx-slip-block">
+        <span class="rx-slip-key">복용법</span>
+        <p class="rx-slip-text" id="maumun-reveal-dosage"></p>
+      </div>
     </div>
     <button id="maumun-reveal-close" class="settings-close" type="button">닫기</button>
   </div>

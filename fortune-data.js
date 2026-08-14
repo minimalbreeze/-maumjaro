@@ -98,15 +98,6 @@
       detail: '지금까지와 다른 길을 고민하고 있다면, 올해가 그 방향을 정하기 나쁘지 않은 타이밍이에요' },
   ];
 
-  // ---------- 맘운(마음+운) 연결 문구: 오늘의 운세 relation별로 감정 캡션과 이어붙이는 짧은 브릿지 ----------
-  const MAUMUN_CONNECTOR = {
-    same: '지금 그 마음, 오늘의 기운과도 결이 비슷해요. 억지로 다잡으려 하지 말고 그 흐름 그대로 가보세요',
-    output: '그 마음 붙잡고만 있지 말고, 오늘은 꺼내놓기 좋은 기운이에요',
-    wealth: '그 마음을 잘 다독이면, 오늘은 뭔가 하나 얻어가는 날이 될 수 있어요',
-    authority: '지금 마음이 무거운 날, 오늘의 기운도 비슷하게 눌려 있어요. 오늘만큼은 무리하지 마세요',
-    resource: '그 마음, 오늘은 주변에서 채워줄 수도 있어요. 혼자 다 해내려 하지 마세요',
-  };
-
   // ---------- 4.0-C: 오늘의 운세 세부 카테고리 (별점 + 코멘트 + 처방 후보) ----------
   // 무겁거나 불안감을 주는 표현("사고수", "매우 나쁨" 등)은 쓰지 않는다. 위안 + 행동 가이드 중심.
   // rxCategory: 4.0-D에서 "처방 후보 보러가기"가 연결될 처방센터 카테고리 id (RX_CATEGORIES와 매칭)
@@ -179,10 +170,82 @@
     '안 좋은 기억 곱씹기', '너무 많은 약속 한 번에 잡기', '급한 답장 재촉하기',
   ];
 
+  // ---------- 4.0-D: 마음(감정) × 운세 카테고리 해석 매트릭스 ----------
+  // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조를 위한 콘텐츠.
+  // 진단명은 반드시 놀이적/패러디적 표현만 사용한다 — 우울증/불안장애/공황장애 등
+  // 실제 질환명은 절대 쓰지 않는다(맘운자로 전체 원칙과 동일, PRESCRIPTIONS_SEED와 같은 톤).
+
+  // 각 감정이 오늘의 운세 중 어떤 카테고리와 함께 해석되는지 매핑 (SYMPTOMS의 키 기준)
+  const MAUMUN_EMOTION_CATEGORY = {
+    stress: 'work',
+    anxiety: 'social',
+    depression: 'mind',
+    lethargy: 'work',
+    loneliness: 'love',
+    anger: 'social',
+  };
+
+  const FORTUNE_CATEGORY_LABELS = {
+    mind: '마음운', social: '인간관계운', wealth: '재물운', love: '연애운', work: '일/직장운',
+  };
+
+  // 카테고리 별점(1~5)을 low(1~2)/mid(3)/high(4~5) 3단계로 나눠, 감정별로 해석/진단명/처방/복용법을 미리 써둔다.
+  const MAUMUN_INTERPRETATION = {
+    stress: {
+      low: { interpretation: '오늘은 업무 압박이 평소보다 크게 느껴질 수 있는 날이에요. 잘하고 있다는 걸 스스로에게 알려주세요.',
+        diagnosis: '퇴근 대기증', prescription: '지금 당장 다 끝내지 않아도 괜찮아요. 오늘 몫만 하기.', dosage: '숨 한 번 크게 쉬고, 할 일 목록에서 하나만 지우기.' },
+      mid: { interpretation: '오늘은 그럭저럭 버틸 만한 압박감이에요. 무리하지 않는 선에서 진행하세요.',
+        diagnosis: '할 일 산더미 증후군', prescription: '우선순위 하나만 정해서 그것만 오늘 끝내기.', dosage: '커피 한 잔, 그리고 딱 한 가지 일에만 집중하기.' },
+      high: { interpretation: '오늘은 생각보다 수월하게 풀릴 수 있는 날이에요. 압박감에 비해 결과는 나쁘지 않을 거예요.',
+        diagnosis: '괜한 걱정 과다증', prescription: '걱정한 만큼 나쁘지 않을 테니 일단 시작하기.', dosage: '하루 10분 걱정 타임만 정해두고 나머지는 흘려보내기.' },
+    },
+    anxiety: {
+      low: { interpretation: '오늘은 다른 사람의 말 한마디를 평소보다 크게 받아들일 수 있어요.',
+        diagnosis: '과잉걱정 증후군', prescription: '아직 일어나지 않은 일은 오늘의 걱정에서 제외하세요.', dosage: '걱정은 하루 10분만.' },
+      mid: { interpretation: '오늘은 사람들 반응에 평소보다 예민해질 수 있는 날이에요. 그럴 수 있다고 인정해주세요.',
+        diagnosis: '눈치 과부하 증후군', prescription: '상대방 반응을 다 해석하려 하지 말고 있는 그대로 받아들이기.', dosage: '메시지 확인은 정해진 시간에만 하기.' },
+      high: { interpretation: '오늘은 걱정했던 것보다 사람들 반응이 훨씬 편안하게 느껴질 수 있는 날이에요.',
+        diagnosis: '혼자 시나리오 쓰기 증후군', prescription: '머릿속 최악의 시나리오는 오늘 하루 잠시 꺼두세요.', dosage: '실제 반응이 오기 전까지는 판단 보류하기.' },
+    },
+    depression: {
+      low: { interpretation: '오늘은 마음이 유독 가라앉는 날일 수 있어요. 이유를 찾지 않아도 괜찮아요.',
+        diagnosis: '이불 중력 과다증', prescription: '아무것도 안 해도 되는 시간을 스스로에게 허락하기.', dosage: '하루 한 번, 좋아하는 것 딱 하나만 하기.' },
+      mid: { interpretation: '오늘은 기분이 오르락내리락할 수 있는 날이에요. 그 흐름을 억지로 막지 않아도 돼요.',
+        diagnosis: '마음 날씨 변덕증', prescription: '기분이 안 좋다고 오늘 전체를 나쁜 날로 규정하지 않기.', dosage: '기분 안 좋은 순간엔 딱 5분만 쉬어가기.' },
+      high: { interpretation: '오늘은 마음이 생각보다 단단하게 버텨줄 수 있는 날이에요.',
+        diagnosis: '의외로 괜찮음 증후군', prescription: '오늘 컨디션이 나쁘지 않다면 그걸 그냥 누리기.', dosage: '스스로에게 칭찬 한마디 잊지 않기.' },
+    },
+    lethargy: {
+      low: { interpretation: '오늘은 몸도 마음도 잘 안 움직이는 날일 수 있어요. 억지로 시동 걸지 않아도 돼요.',
+        diagnosis: '멈춰버린 배터리 증후군', prescription: '오늘은 최소한의 일만 하기로 목표를 낮추기.', dosage: '물 한 잔 마시는 것부터 시작하기.' },
+      mid: { interpretation: '오늘은 의욕이 왔다 갔다 할 수 있는 날이에요. 그 파도에 몸을 맡겨도 괜찮아요.',
+        diagnosis: '간헐적 의욕 증후군', prescription: '의욕 생길 때 몰아서 하고, 없을 땐 쉬어가기.', dosage: '일 30분, 휴식 10분 세트로 반복하기.' },
+      high: { interpretation: '오늘은 생각보다 몸이 잘 따라줄 수 있는 날이에요.',
+        diagnosis: '숨은 에너지 발견증', prescription: '미뤄뒀던 것 중 하나만 오늘 시작해보기.', dosage: '시작이 반이니 5분만 일단 해보기.' },
+    },
+    loneliness: {
+      low: { interpretation: '오늘은 곁에 아무도 없다는 생각이 유독 크게 느껴질 수 있는 날이에요.',
+        diagnosis: '혼자만의 우주 증후군', prescription: '연락은 못해도 괜찮아요, 오늘은 스스로에게 곁이 되어주기.', dosage: '좋아하는 노래 한 곡 들으며 나를 다독이기.' },
+      mid: { interpretation: '오늘은 누군가와 연결되고 싶은 마음이 스칠 수 있는 날이에요.',
+        diagnosis: '연락하고 싶다 참는 증후군', prescription: '부담 없는 사람에게 짧은 안부 인사 한 번 건네보기.', dosage: '"ㅋㅋ" 하나만 보내도 충분해요.' },
+      high: { interpretation: '오늘은 혼자 있는 시간이 오히려 편안하게 느껴질 수 있는 날이에요.',
+        diagnosis: '혼삶 만족도 상승증', prescription: '혼자만의 시간을 죄책감 없이 즐기기.', dosage: '나 홀로 취향대로 하루 보내기.' },
+    },
+    anger: {
+      low: { interpretation: '오늘은 사소한 일에도 욱하는 마음이 쉽게 올라올 수 있는 날이에요.',
+        diagnosis: '발끈 지수 상승증', prescription: '화가 나는 순간, 바로 반응하지 말고 3초만 참아보기.', dosage: '심호흡 세 번, 그다음에 말하기.' },
+      mid: { interpretation: '오늘은 짜증이 스멀스멀 올라올 수 있는 날이에요. 그 감정, 억지로 누르지 않아도 돼요.',
+        diagnosis: '부글부글 보류증', prescription: '화난 이유를 종이에 적어보고 나중에 다시 읽어보기.', dosage: '화날 땐 그 자리를 잠깐 벗어나기.' },
+      high: { interpretation: '오늘은 생각보다 감정 기복 없이 잔잔하게 흘러갈 수 있는 날이에요.',
+        diagnosis: '평온 모드 발동증', prescription: '오늘의 평온함을 그냥 누리기.', dosage: '괜히 긁어 부스럼 만들지 않기.' },
+    },
+  };
+
   window.MAUMJARO_FORTUNE_DATA = {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
-    DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED, MAUMUN_CONNECTOR,
+    DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
     MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
+    MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
   };
 })();

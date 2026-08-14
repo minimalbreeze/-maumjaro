@@ -5,25 +5,38 @@
   const Rx = window.MaumjaroRx; // prescriptions.js가 노출하는 기존 주사 인터랙션 재사용 창구
   const {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
-    DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED, MAUMUN_CONNECTOR,
+    DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
     MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
+    MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
   } = window.MAUMJARO_FORTUNE_DATA;
+
+  const FORTUNE_SEED_BY_CATEGORY = {
+    mind: MIND_FORTUNE_SEED, social: SOCIAL_FORTUNE_SEED, wealth: WEALTH_FORTUNE_SEED,
+    love: LOVE_FORTUNE_SEED, work: WORK_FORTUNE_SEED,
+  };
 
   const viewFortune = document.getElementById('view-fortune');
   const fortuneContent = document.getElementById('fortune-content');
 
   const maumunRevealOverlay = document.getElementById('maumun-reveal-overlay');
-  const maumunRevealTitle = document.getElementById('maumun-reveal-title');
-  const maumunRevealText = document.getElementById('maumun-reveal-text');
+  const maumunRevealEmoji = document.getElementById('maumun-reveal-emoji');
+  const maumunRevealDiagnosis = document.getElementById('maumun-reveal-diagnosis');
+  const maumunRevealInterpretation = document.getElementById('maumun-reveal-interpretation');
+  const maumunRevealPrescription = document.getElementById('maumun-reveal-prescription');
+  const maumunRevealDosage = document.getElementById('maumun-reveal-dosage');
   const maumunRevealClose = document.getElementById('maumun-reveal-close');
 
   function closeMaumunReveal() {
     maumunRevealOverlay.classList.remove('show');
   }
-  function openMaumunReveal(title, text) {
-    maumunRevealTitle.textContent = title;
-    maumunRevealText.textContent = text;
+  function openMaumunReveal({ emoji, diagnosis, interpretation, prescription, dosage, color }) {
+    document.body.style.setProperty('--dose-color', color || '#b779ef');
+    maumunRevealEmoji.textContent = emoji;
+    maumunRevealDiagnosis.textContent = diagnosis;
+    maumunRevealInterpretation.textContent = interpretation;
+    maumunRevealPrescription.textContent = prescription;
+    maumunRevealDosage.textContent = dosage;
     maumunRevealOverlay.classList.add('show');
   }
   maumunRevealClose.addEventListener('click', closeMaumunReveal);
@@ -399,33 +412,46 @@
       return;
     }
 
+    // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조: 감정에 매핑된 운세 카테고리를
+    // 오늘의 운세(renderFortuneDaily)와 동일한 결정론적 시드로 골라, 감정×카테고리 티어로
+    // 미리 써둔 해석/진단명/처방/복용법 매트릭스에서 오늘의 맘운을 뽑는다.
     const chart = getOrComputeSajuChart(profile);
-    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-    const fortuneSeed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
-    const connector = MAUMUN_CONNECTOR[relation];
+    const categoryKey = MAUMUN_EMOTION_CATEGORY[emotion.key] || 'mind';
+    const categorySeed = FORTUNE_SEED_BY_CATEGORY[categoryKey];
+    const categoryItem = categorySeed.items[dailyPickIndex(chart, categoryKey, categorySeed.items.length)];
+    const tier = categoryItem.stars <= 2 ? 'low' : categoryItem.stars === 3 ? 'mid' : 'high';
+    const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
+      || MAUMUN_INTERPRETATION.stress.mid;
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">💞 오늘의 맘운</span>
+        <span class="rx-nav-title">🌞 오늘의 맘운</span>
       </div>
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-row"><span class="rx-slip-key">오늘의 ${FORTUNE_CATEGORY_LABELS[categoryKey]}</span><span class="rx-slip-value">${starsText(categoryItem.stars)}</span></div>
+      </div>
+
       <div class="today-rx-card" style="display:flex;">
         <div class="today-rx-emoji">${emotion.emoji}</div>
         <div class="today-rx-body">
           <div class="today-rx-eyebrow">오늘의 마음</div>
-          <div class="today-rx-title">${emotion.label} · ${emotion.mg}</div>
+          <div class="today-rx-title">${emotion.label}</div>
           <div class="today-rx-diagnosis">${emotion.caption}</div>
         </div>
       </div>
-      <div class="today-rx-card" style="display:flex;">
-        <div class="today-rx-emoji">${fortuneSeed.emoji}</div>
-        <div class="today-rx-body">
-          <div class="today-rx-eyebrow">오늘의 운</div>
-          <div class="today-rx-title">${fortuneSeed.title}</div>
-          <div class="today-rx-diagnosis">${fortuneSeed.diagnosis}</div>
-        </div>
+
+      <div class="rx-detail-card">
+        <div class="rx-detail-title">오늘의 해석</div>
+        <p class="rx-detail-symptom">${interp.interpretation}</p>
       </div>
-      <p class="rx-custom-hint">마음과 운을 하나로 묶은 맘운 처방이 준비됐어요. 주사를 놓아서 확인해보세요</p>
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-row"><span class="rx-slip-key">💊 오늘의 맘운 처방</span><span class="rx-slip-value">${interp.diagnosis}</span></div>
+      </div>
+
+      <p class="rx-custom-hint">주사를 놓으면 처방과 복용법이 담긴 맘운 처방전을 확인할 수 있어요</p>
       <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 맘운 처방받기</button>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
@@ -435,15 +461,22 @@
     const syntheticP = {
       id: 'maumun-today',
       category: 'maumun',
-      title: '오늘의 맘운 처방',
-      diagnosis: `${emotion.label} × ${fortuneSeed.title}`,
-      emoji: '💞',
+      title: interp.diagnosis,
+      diagnosis: interp.diagnosis,
+      emoji: emotion.emoji,
       color: emotion.color || '#b779ef',
     };
     const injectBtn = document.getElementById('fortune-maumun-inject-btn');
     Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
       Rx.showRxImageFade(syntheticP, () => {
-        openMaumunReveal(`${emotion.label} × ${fortuneSeed.title}`, connector);
+        openMaumunReveal({
+          emoji: emotion.emoji,
+          diagnosis: interp.diagnosis,
+          interpretation: interp.interpretation,
+          prescription: interp.prescription,
+          dosage: interp.dosage,
+          color: emotion.color,
+        });
       });
     });
   }
