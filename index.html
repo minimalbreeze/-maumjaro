@@ -162,6 +162,10 @@
     <div id="rx-center-content"></div>
   </main>
 
+  <main id="view-fortune" class="view" hidden>
+    <div id="fortune-content"></div>
+  </main>
+
   <nav class="tabbar">
     <button class="tab-btn active" data-view="home">
       <span class="tab-icon">💉</span><span>홈</span>
@@ -171,6 +175,9 @@
     </button>
     <button class="tab-btn" data-view="rx">
       <span class="tab-icon">🏥</span><span>처방센터</span>
+    </button>
+    <button class="tab-btn" data-view="fortune">
+      <span class="tab-icon">🔮</span><span>운</span>
     </button>
   </nav>
 
@@ -389,8 +396,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
 <script src="prescriptions-data.js"></script>
+<script src="fortune-data.js"></script>
 <script src="app.js"></script>
 <script src="prescriptions.js"></script>
+<script src="fortune.js"></script>
 </body>
 </html>
