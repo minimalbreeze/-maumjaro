@@ -4,6 +4,9 @@
   const Core = window.MaumjaroCore;
   const { RX_CATEGORIES, PRESCRIPTIONS_SEED, CUSTOM_TEMPLATES } = window.MAUMJARO_RX_DATA;
 
+  // 처방을 친구에게 보낼 때 운세 기능으로도 자연스럽게 유입되도록 붙이는 후킹 문구.
+  const FORTUNE_HOOK_LINE = '\n\n💌 무료 오늘의 운세도 같이 확인해보세요!';
+
   // ---------- DOM refs (다른 모든 코드보다 먼저 선언 — TDZ 방지) ----------
   const appEl = document.getElementById('app');
   const actionBtn = document.getElementById('action-btn');
@@ -503,7 +506,7 @@
         const p = pickRandomFromCategory(chip.dataset.cat);
         if (!p) { Core.showToast('처방을 찾지 못했어요'); return; }
         pickedPrescription = p;
-        pickedShareText = p.shareText;
+        pickedShareText = p.shareText + FORTUNE_HOOK_LINE;
         pickedShareUrl = buildShareUrl(p.id);
         document.body.style.setProperty('--dose-color', p.color || '');
         rxFriendBannerEmoji.textContent = p.emoji || '💊';
@@ -1351,7 +1354,7 @@
   }
 
   function renderCustomShareResult(payload, url) {
-    const shareText = `🚨 ${payload.p}님을 위한 맞춤 처방전이 도착했어요! 지금 확인해보세요`;
+    const shareText = `🚨 ${payload.p}님을 위한 맞춤 처방전이 도착했어요! 지금 확인해보세요` + FORTUNE_HOOK_LINE;
     rxCenterContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="rx-custom-share-back" type="button">‹</button>

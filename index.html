@@ -177,6 +177,7 @@
       <button class="seg-btn" data-period="year">년</button>
     </div>
     <div id="history-content"></div>
+    <div id="history-unified-feed"></div>
   </main>
 
   <main id="view-rx" class="view" hidden>
@@ -191,14 +192,14 @@
     <button class="tab-btn active" data-view="home">
       <span class="tab-icon">💉</span><span>홈</span>
     </button>
-    <button class="tab-btn" data-view="history">
-      <span class="tab-icon">📋</span><span>기록</span>
-    </button>
     <button class="tab-btn" data-view="rx">
       <span class="tab-icon">🏥</span><span>처방센터</span>
     </button>
     <button class="tab-btn" data-view="fortune">
       <span class="tab-icon">🔮</span><span>운세</span>
+    </button>
+    <button class="tab-btn" data-view="history">
+      <span class="tab-icon">📋</span><span>기록</span>
     </button>
   </nav>
 
@@ -221,6 +222,10 @@
     <div class="name-row">
       <input id="name-input" type="text" maxlength="12" placeholder="이름을 입력해주세요" />
       <button id="name-save-btn">저장</button>
+    </div>
+    <div class="sound-row">
+      <span>🔮 나만의 맘운 프로필</span>
+      <button id="settings-fortune-profile-btn" class="toggle-btn" type="button">설정하기</button>
     </div>
     <div class="sound-row">
       <span>사운드</span>

@@ -331,36 +331,36 @@
         </span>
         <span class="rx-custom-cta-arrow">›</span>
       </button>
-      <div class="fortune-category-grid">
-        <div class="fortune-category-tile" data-fortune="daily">
-          <span class="fortune-category-emoji">🔮</span>
-          <span class="fortune-category-label">오늘의 운세</span>
-          <span class="fortune-category-desc">매일 새로 만나는<br/>오늘의 흐름</span>
+      <div class="rx-category-grid">
+        <div class="rx-category-tile" data-fortune="daily">
+          <span class="rx-category-emoji">🔮</span>
+          <span class="rx-category-label">오늘의 운세</span>
+          <span class="rx-category-count">매일 갱신</span>
         </div>
-        <div class="fortune-category-tile" data-fortune="weekly">
-          <span class="fortune-category-emoji">📅</span>
-          <span class="fortune-category-label">주간 운세</span>
-          <span class="fortune-category-desc">이번 주 다섯 가지 운을<br/>한눈에</span>
+        <div class="rx-category-tile" data-fortune="weekly">
+          <span class="rx-category-emoji">📅</span>
+          <span class="rx-category-label">주간 운세</span>
+          <span class="rx-category-count">이번 주</span>
         </div>
-        <div class="fortune-category-tile" data-fortune="monthly">
-          <span class="fortune-category-emoji">📆</span>
-          <span class="fortune-category-label">월간 운세</span>
-          <span class="fortune-category-desc">이번 달 전체 흐름과<br/>핵심 키워드</span>
+        <div class="rx-category-tile" data-fortune="monthly">
+          <span class="rx-category-emoji">📆</span>
+          <span class="rx-category-label">월간 운세</span>
+          <span class="rx-category-count">이번 달</span>
         </div>
-        <div class="fortune-category-tile" data-fortune="tojeong">
-          <span class="fortune-category-emoji">📜</span>
-          <span class="fortune-category-label">토정비결</span>
-          <span class="fortune-category-desc">올해 운세를<br/>간단하게 (간이판)</span>
+        <div class="rx-category-tile" data-fortune="tojeong">
+          <span class="rx-category-emoji">📜</span>
+          <span class="rx-category-label">토정비결</span>
+          <span class="rx-category-count">올해(간이판)</span>
         </div>
-        <div class="fortune-category-tile" data-fortune="maumun">
-          <span class="fortune-category-emoji">💞</span>
-          <span class="fortune-category-label">맘운 처방</span>
-          <span class="fortune-category-desc">오늘의 마음과 운을<br/>하나로 합쳐서</span>
+        <div class="rx-category-tile" data-fortune="maumun">
+          <span class="rx-category-emoji">💞</span>
+          <span class="rx-category-label">맘운 처방</span>
+          <span class="rx-category-count">마음+운</span>
         </div>
-        <div class="fortune-category-tile" data-fortune="maumun-history">
-          <span class="fortune-category-emoji">📖</span>
-          <span class="fortune-category-label">지난 맘운</span>
-          <span class="fortune-category-desc">${Object.keys(loadMaumunLog()).length}일 동안의<br/>기록 다시 보기</span>
+        <div class="rx-category-tile" data-fortune="maumun-history">
+          <span class="rx-category-emoji">📖</span>
+          <span class="rx-category-label">지난 맘운</span>
+          <span class="rx-category-count">${Object.keys(loadMaumunLog()).length}일 기록</span>
         </div>
       </div>
     `;
@@ -371,7 +371,7 @@
     document.getElementById('fortune-maumun-cta-btn').addEventListener('click', () => renderMaumun(profile));
     document.getElementById('fortune-ai-cta-btn').addEventListener('click', () => renderAiMaumun(profile));
 
-    fortuneContent.querySelectorAll('.fortune-category-tile').forEach((tile) => {
+    fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {
         const type = tile.dataset.fortune;
         if (type === 'daily') renderFortuneDaily(profile);
@@ -395,6 +395,35 @@
     return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${dateKey}:${salt}`) % length;
   }
 
+  // 운세가 "즉석에서 뚝딱" 나오면 가벼워 보이니, 결과를 보여주기 전에 짧게 읽는 시늉을 한다.
+  // 매번 딜레이가 미세하게 달라야 기계적으로 느껴지지 않는다.
+  const MYSTICAL_LOADING_LINES = [
+    '오늘의 기운을 읽는 중...',
+    '사주와 오늘의 흐름을 맞춰보는 중...',
+    '별자리와 마음을 함께 살피는 중...',
+    '조용히 점괘를 살피는 중...',
+  ];
+  const AI_MAUMUN_LOADING_LINES = [
+    '질문을 곱씹어 보는 중...',
+    '사주와 오늘의 마음을 함께 짚어보는 중...',
+    '오늘의 기운에 질문을 겹쳐보는 중...',
+  ];
+  function withMysticalReveal(profile, title, buildAndRender) {
+    const loadingLine = MYSTICAL_LOADING_LINES[Math.floor(Math.random() * MYSTICAL_LOADING_LINES.length)];
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+        <span class="rx-nav-title">${title}</span>
+      </div>
+      <div class="fortune-loading">
+        <div class="fortune-loading-orb">🔮</div>
+        <p class="fortune-loading-text">${loadingLine}</p>
+      </div>
+    `;
+    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    setTimeout(buildAndRender, 1400 + Math.floor(Math.random() * 900));
+  }
+
   function categorySectionHtml(label, item, rxCategory) {
     return `
       <div class="rx-custom-preview" style="margin-bottom:10px;">
@@ -406,225 +435,233 @@
   }
 
   function renderFortuneDaily(profile) {
-    const chart = getOrComputeSajuChart(profile);
-    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    withMysticalReveal(profile, '🔮 오늘의 운세', () => {
+      const chart = getOrComputeSajuChart(profile);
+      const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
+      const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
 
-    const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
-    const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
-    const wealthItem = WEALTH_FORTUNE_SEED.items[dailyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
-    const loveItem = LOVE_FORTUNE_SEED.items[dailyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
-    const workItem = WORK_FORTUNE_SEED.items[dailyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
-    const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
-    const luckyColor = LUCKY_COLORS[dailyPickIndex(chart, 'color', LUCKY_COLORS.length)];
-    const luckyNumber = dailyPickIndex(chart, 'number', 9) + 1;
-    const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
-    const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
+      const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+      const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+      const wealthItem = WEALTH_FORTUNE_SEED.items[dailyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+      const loveItem = LOVE_FORTUNE_SEED.items[dailyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+      const workItem = WORK_FORTUNE_SEED.items[dailyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+      const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
+      const luckyColor = LUCKY_COLORS[dailyPickIndex(chart, 'color', LUCKY_COLORS.length)];
+      const luckyNumber = dailyPickIndex(chart, 'number', 9) + 1;
+      const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
+      const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">🔮 오늘의 운세</span>
-      </div>
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${seed.emoji}</div>
-        <div class="rx-detail-title">오늘의 전체운 · ${seed.title}</div>
-        <div class="rx-detail-diagnosis">${seed.diagnosis}</div>
-        <p class="rx-detail-symptom">${seed.advice}</p>
-      </div>
-      <p class="rx-custom-hint">💛 ${oneLine}</p>
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">🔮 오늘의 운세</span>
+        </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${seed.emoji}</div>
+          <div class="rx-detail-title">오늘의 전체운 · ${seed.title}</div>
+          <div class="rx-detail-diagnosis">${seed.diagnosis}</div>
+          <p class="rx-detail-symptom">${seed.advice}</p>
+        </div>
+        <p class="rx-custom-hint">💛 ${oneLine}</p>
 
-      ${categorySectionHtml('마음운', mindItem, MIND_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('인간관계운', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('연애운', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('일/직장운', workItem, WORK_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('마음운', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('인간관계운', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('연애운', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('일/직장운', workItem, WORK_FORTUNE_SEED.rxCategory)}
 
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">행운의 색</span><span class="rx-slip-value">${luckyColor}</span></div>
-        <div class="rx-slip-row"><span class="rx-slip-key">행운의 숫자</span><span class="rx-slip-value">${luckyNumber}</span></div>
-        <div class="rx-slip-row"><span class="rx-slip-key">행운의 아이템</span><span class="rx-slip-value">${luckyItem}</span></div>
-        <div class="rx-slip-row"><span class="rx-slip-key">오늘 피하면 좋은 것</span><span class="rx-slip-value">${avoidToday}</span></div>
-      </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">행운의 색</span><span class="rx-slip-value">${luckyColor}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">행운의 숫자</span><span class="rx-slip-value">${luckyNumber}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">행운의 아이템</span><span class="rx-slip-value">${luckyItem}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">오늘 피하면 좋은 것</span><span class="rx-slip-value">${avoidToday}</span></div>
+        </div>
 
-      ${pillarsBlockHtml(chart)}
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
-      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+        ${pillarsBlockHtml(chart)}
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
     });
   }
 
   function renderFortuneWeekly(profile) {
-    // 4.1: 새 프로필 없이 기존 5개 카테고리 풀(마음/재물/연애/인간관계/일)을 "이번 주 월요일" 기준
-    // 결정론적 시드로 재사용한다 — 요일이 바뀌어도 이번 주 안에서는 결과가 안 바뀐다.
-    const chart = getOrComputeSajuChart(profile);
+    withMysticalReveal(profile, '📅 이번 주 전체 흐름', () => {
+      // 4.1: 새 프로필 없이 기존 5개 카테고리 풀(마음/재물/연애/인간관계/일)을 "이번 주 월요일" 기준
+      // 결정론적 시드로 재사용한다 — 요일이 바뀌어도 이번 주 안에서는 결과가 안 바뀐다.
+      const chart = getOrComputeSajuChart(profile);
 
-    const mindItem = MIND_FORTUNE_SEED.items[weeklyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
-    const wealthItem = WEALTH_FORTUNE_SEED.items[weeklyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
-    const loveItem = LOVE_FORTUNE_SEED.items[weeklyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
-    const socialItem = SOCIAL_FORTUNE_SEED.items[weeklyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
-    const workItem = WORK_FORTUNE_SEED.items[weeklyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+      const mindItem = MIND_FORTUNE_SEED.items[weeklyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+      const wealthItem = WEALTH_FORTUNE_SEED.items[weeklyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+      const loveItem = LOVE_FORTUNE_SEED.items[weeklyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+      const socialItem = SOCIAL_FORTUNE_SEED.items[weeklyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+      const workItem = WORK_FORTUNE_SEED.items[weeklyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
 
-    const luckyDayIdx = weeklyPickIndex(chart, 'luckyday', 7);
-    let carefulDayIdx = weeklyPickIndex(chart, 'carefulday', 6);
-    if (carefulDayIdx >= luckyDayIdx) carefulDayIdx += 1; // 행운의 날과 겹치지 않도록
+      const luckyDayIdx = weeklyPickIndex(chart, 'luckyday', 7);
+      let carefulDayIdx = weeklyPickIndex(chart, 'carefulday', 6);
+      if (carefulDayIdx >= luckyDayIdx) carefulDayIdx += 1; // 행운의 날과 겹치지 않도록
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">📅 이번 주 전체 흐름</span>
-      </div>
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">📅 이번 주 전체 흐름</span>
+        </div>
 
-      ${categorySectionHtml('마음', mindItem, MIND_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('재물', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('연애', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('일', workItem, WORK_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('마음', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('재물', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('연애', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('일', workItem, WORK_FORTUNE_SEED.rxCategory)}
 
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">🍀 행운의 날</span><span class="rx-slip-value">${WEEKDAY_LABELS[luckyDayIdx]}</span></div>
-        <div class="rx-slip-row"><span class="rx-slip-key">⚠️ 조심할 날</span><span class="rx-slip-value">${WEEKDAY_LABELS[carefulDayIdx]}</span></div>
-      </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">🍀 행운의 날</span><span class="rx-slip-value">${WEEKDAY_LABELS[luckyDayIdx]}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">⚠️ 조심할 날</span><span class="rx-slip-value">${WEEKDAY_LABELS[carefulDayIdx]}</span></div>
+        </div>
 
-      <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
-    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
-      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+        <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
     });
   }
 
   function renderFortuneMonthly(profile) {
-    // 4.1: 전체운은 4.0-A에서 이미 만든 MONTHLY_FORTUNE_SEED(오행 관계 기반)를 그대로 재사용하고,
-    // 나머지 카테고리는 월 단위 결정론적 시드로 기존 5개 풀 중 4개(재물/연애/직장/인간관계)를 재사용한다.
-    // "마음"은 별점 대신 한 달 흐름을 서술하는 별도 콘텐츠(마음의 흐름)로 대체한다.
-    const chart = getOrComputeSajuChart(profile);
-    const relation = elementRelation(chart.dayMasterElement, monthAnchorElement());
-    const overall = MONTHLY_FORTUNE_SEED.find((s) => s.relation === relation) || MONTHLY_FORTUNE_SEED[0];
+    withMysticalReveal(profile, '📆 이번 달 전체 흐름', () => {
+      // 4.1: 전체운은 4.0-A에서 이미 만든 MONTHLY_FORTUNE_SEED(오행 관계 기반)를 그대로 재사용하고,
+      // 나머지 카테고리는 월 단위 결정론적 시드로 기존 5개 풀 중 4개(재물/연애/직장/인간관계)를 재사용한다.
+      // "마음"은 별점 대신 한 달 흐름을 서술하는 별도 콘텐츠(마음의 흐름)로 대체한다.
+      const chart = getOrComputeSajuChart(profile);
+      const relation = elementRelation(chart.dayMasterElement, monthAnchorElement());
+      const overall = MONTHLY_FORTUNE_SEED.find((s) => s.relation === relation) || MONTHLY_FORTUNE_SEED[0];
 
-    const wealthItem = WEALTH_FORTUNE_SEED.items[monthlyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
-    const loveItem = LOVE_FORTUNE_SEED.items[monthlyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
-    const workItem = WORK_FORTUNE_SEED.items[monthlyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
-    const socialItem = SOCIAL_FORTUNE_SEED.items[monthlyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
-    const mindFlow = MONTHLY_MIND_FLOW_SEED[monthlyPickIndex(chart, 'mindflow', MONTHLY_MIND_FLOW_SEED.length)];
-    const keyword = MONTH_KEYWORDS[monthlyPickIndex(chart, 'keyword', MONTH_KEYWORDS.length)];
-    const monthlyRx = MONTHLY_PRESCRIPTION_SEED[monthlyPickIndex(chart, 'rx', MONTHLY_PRESCRIPTION_SEED.length)];
+      const wealthItem = WEALTH_FORTUNE_SEED.items[monthlyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+      const loveItem = LOVE_FORTUNE_SEED.items[monthlyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+      const workItem = WORK_FORTUNE_SEED.items[monthlyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+      const socialItem = SOCIAL_FORTUNE_SEED.items[monthlyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+      const mindFlow = MONTHLY_MIND_FLOW_SEED[monthlyPickIndex(chart, 'mindflow', MONTHLY_MIND_FLOW_SEED.length)];
+      const keyword = MONTH_KEYWORDS[monthlyPickIndex(chart, 'keyword', MONTH_KEYWORDS.length)];
+      const monthlyRx = MONTHLY_PRESCRIPTION_SEED[monthlyPickIndex(chart, 'rx', MONTHLY_PRESCRIPTION_SEED.length)];
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">📆 이번 달 전체 흐름</span>
-      </div>
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">📆 이번 달 전체 흐름</span>
+        </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${overall.emoji}</div>
-        <div class="rx-detail-title">이번 달 전체운 · ${overall.title}</div>
-        <div class="rx-detail-diagnosis">${overall.diagnosis}</div>
-        <p class="rx-detail-symptom">${overall.advice}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${overall.emoji}</div>
+          <div class="rx-detail-title">이번 달 전체운 · ${overall.title}</div>
+          <div class="rx-detail-diagnosis">${overall.diagnosis}</div>
+          <p class="rx-detail-symptom">${overall.advice}</p>
+        </div>
 
-      ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('연애운', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('직장운', workItem, WORK_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('연애운', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('직장운', workItem, WORK_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-title">🌊 마음의 흐름</div>
-        <p class="rx-detail-symptom">${mindFlow}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-title">🌊 마음의 흐름</div>
+          <p class="rx-detail-symptom">${mindFlow}</p>
+        </div>
 
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">이번 달 핵심 키워드</span><span class="rx-slip-value">${keyword}</span></div>
-      </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">이번 달 핵심 키워드</span><span class="rx-slip-value">${keyword}</span></div>
+        </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-title">${monthlyRx.title}</div>
-        <p class="rx-detail-symptom">${monthlyRx.advice}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-title">${monthlyRx.title}</div>
+          <p class="rx-detail-symptom">${monthlyRx.advice}</p>
+        </div>
 
-      <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
-    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
-      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+        <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
     });
   }
 
   function renderFortuneTojeong(profile) {
-    // 4.2: 토정비결을 "올해 전체 흐름 한 장"에서 10개 섹션의 연간 가이드로 확장.
-    // 전통 토정비결 산출식을 그대로 구현하지 않고, 기존 5개 카테고리 풀(재물/연애/인간관계/일/마음)과
-    // 월간 키워드/처방 풀을 "올해" 단위 salt로 재사용해 새 콘텐츠 작성 부담 없이 톤을 통일한다.
-    const chart = getOrComputeSajuChart(profile);
+    withMysticalReveal(profile, '📜 토정비결', () => {
+      // 4.2: 토정비결을 "올해 전체 흐름 한 장"에서 10개 섹션의 연간 가이드로 확장.
+      // 전통 토정비결 산출식을 그대로 구현하지 않고, 기존 5개 카테고리 풀(재물/연애/인간관계/일/마음)과
+      // 월간 키워드/처방 풀을 "올해" 단위 salt로 재사용해 새 콘텐츠 작성 부담 없이 톤을 통일한다.
+      const chart = getOrComputeSajuChart(profile);
 
-    const overall = TOJEONG_SEED[yearlyPickIndex(chart, 'tojeong-overall', TOJEONG_SEED.length)];
+      const overall = TOJEONG_SEED[yearlyPickIndex(chart, 'tojeong-overall', TOJEONG_SEED.length)];
 
-    const firstHalfRelation = elementRelation(chart.dayMasterElement, firstHalfAnchorElement());
-    const firstHalf = FIRST_HALF_FORTUNE_SEED.find((s) => s.relation === firstHalfRelation) || FIRST_HALF_FORTUNE_SEED[0];
+      const firstHalfRelation = elementRelation(chart.dayMasterElement, firstHalfAnchorElement());
+      const firstHalf = FIRST_HALF_FORTUNE_SEED.find((s) => s.relation === firstHalfRelation) || FIRST_HALF_FORTUNE_SEED[0];
 
-    const secondHalfRelation = elementRelation(chart.dayMasterElement, secondHalfAnchorElement());
-    const secondHalf = SECOND_HALF_FORTUNE_SEED.find((s) => s.relation === secondHalfRelation) || SECOND_HALF_FORTUNE_SEED[0];
+      const secondHalfRelation = elementRelation(chart.dayMasterElement, secondHalfAnchorElement());
+      const secondHalf = SECOND_HALF_FORTUNE_SEED.find((s) => s.relation === secondHalfRelation) || SECOND_HALF_FORTUNE_SEED[0];
 
-    const wealthItem = WEALTH_FORTUNE_SEED.items[yearlyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
-    const loveItem = LOVE_FORTUNE_SEED.items[yearlyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
-    const socialItem = SOCIAL_FORTUNE_SEED.items[yearlyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
-    const workItem = WORK_FORTUNE_SEED.items[yearlyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
-    const mindItem = MIND_FORTUNE_SEED.items[yearlyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+      const wealthItem = WEALTH_FORTUNE_SEED.items[yearlyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+      const loveItem = LOVE_FORTUNE_SEED.items[yearlyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+      const socialItem = SOCIAL_FORTUNE_SEED.items[yearlyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+      const workItem = WORK_FORTUNE_SEED.items[yearlyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+      const mindItem = MIND_FORTUNE_SEED.items[yearlyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
 
-    const keyword = MONTH_KEYWORDS[yearlyPickIndex(chart, 'keyword', MONTH_KEYWORDS.length)];
-    const yearlyRx = YEARLY_PRESCRIPTION_SEED[yearlyPickIndex(chart, 'rx', YEARLY_PRESCRIPTION_SEED.length)];
+      const keyword = MONTH_KEYWORDS[yearlyPickIndex(chart, 'keyword', MONTH_KEYWORDS.length)];
+      const yearlyRx = YEARLY_PRESCRIPTION_SEED[yearlyPickIndex(chart, 'rx', YEARLY_PRESCRIPTION_SEED.length)];
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">📜 토정비결</span>
-      </div>
-      <p class="rx-custom-hint">💛 전통 토정비결의 정식 산출식을 그대로 구현한 게 아니라, 앱 톤에 맞게 재해석한 간이 버전이에요</p>
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">📜 토정비결</span>
+        </div>
+        <p class="rx-custom-hint">💛 전통 토정비결의 정식 산출식을 그대로 구현한 게 아니라, 앱 톤에 맞게 재해석한 간이 버전이에요</p>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${overall.emoji}</div>
-        <div class="rx-detail-title">올해의 전체 흐름 · ${overall.title}</div>
-        <div class="rx-detail-diagnosis">${overall.summary}</div>
-        <p class="rx-detail-symptom">${overall.detail}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${overall.emoji}</div>
+          <div class="rx-detail-title">올해의 전체 흐름 · ${overall.title}</div>
+          <div class="rx-detail-diagnosis">${overall.summary}</div>
+          <p class="rx-detail-symptom">${overall.detail}</p>
+        </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${firstHalf.emoji}</div>
-        <div class="rx-detail-title">상반기 · ${firstHalf.title}</div>
-        <div class="rx-detail-diagnosis">${firstHalf.diagnosis}</div>
-        <p class="rx-detail-symptom">${firstHalf.advice}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${firstHalf.emoji}</div>
+          <div class="rx-detail-title">상반기 · ${firstHalf.title}</div>
+          <div class="rx-detail-diagnosis">${firstHalf.diagnosis}</div>
+          <p class="rx-detail-symptom">${firstHalf.advice}</p>
+        </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${secondHalf.emoji}</div>
-        <div class="rx-detail-title">하반기 · ${secondHalf.title}</div>
-        <div class="rx-detail-diagnosis">${secondHalf.diagnosis}</div>
-        <p class="rx-detail-symptom">${secondHalf.advice}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${secondHalf.emoji}</div>
+          <div class="rx-detail-title">하반기 · ${secondHalf.title}</div>
+          <div class="rx-detail-diagnosis">${secondHalf.diagnosis}</div>
+          <p class="rx-detail-symptom">${secondHalf.advice}</p>
+        </div>
 
-      ${categorySectionHtml('재물', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('연애', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('일', workItem, WORK_FORTUNE_SEED.rxCategory)}
-      ${categorySectionHtml('마음', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('재물', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('연애', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('일', workItem, WORK_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('마음', mindItem, MIND_FORTUNE_SEED.rxCategory)}
 
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">올해의 키워드</span><span class="rx-slip-value">${keyword}</span></div>
-      </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">올해의 키워드</span><span class="rx-slip-value">${keyword}</span></div>
+        </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-title">💊 올해의 맘운 처방</div>
-        <p class="rx-detail-symptom">${yearlyRx.advice}</p>
-      </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-title">💊 올해의 맘운 처방</div>
+          <p class="rx-detail-symptom">${yearlyRx.advice}</p>
+        </div>
 
-      <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
-    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
-      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+        <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
     });
   }
 
@@ -755,83 +792,85 @@
       return;
     }
 
-    // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조: 감정에 매핑된 운세 카테고리를
-    // 오늘의 운세(renderFortuneDaily)와 동일한 결정론적 시드로 골라, 감정×카테고리 티어로
-    // 미리 써둔 해석/진단명/처방/복용법 매트릭스에서 오늘의 맘운을 뽑는다.
-    const chart = getOrComputeSajuChart(profile);
-    const categoryKey = MAUMUN_EMOTION_CATEGORY[emotion.key] || 'mind';
-    const categorySeed = FORTUNE_SEED_BY_CATEGORY[categoryKey];
-    const categoryItem = categorySeed.items[dailyPickIndex(chart, categoryKey, categorySeed.items.length)];
-    const tier = categoryItem.stars <= 2 ? 'low' : categoryItem.stars === 3 ? 'mid' : 'high';
-    const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
-      || MAUMUN_INTERPRETATION.stress.mid;
+    withMysticalReveal(profile, '🌞 오늘의 맘운', () => {
+      // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조: 감정에 매핑된 운세 카테고리를
+      // 오늘의 운세(renderFortuneDaily)와 동일한 결정론적 시드로 골라, 감정×카테고리 티어로
+      // 미리 써둔 해석/진단명/처방/복용법 매트릭스에서 오늘의 맘운을 뽑는다.
+      const chart = getOrComputeSajuChart(profile);
+      const categoryKey = MAUMUN_EMOTION_CATEGORY[emotion.key] || 'mind';
+      const categorySeed = FORTUNE_SEED_BY_CATEGORY[categoryKey];
+      const categoryItem = categorySeed.items[dailyPickIndex(chart, categoryKey, categorySeed.items.length)];
+      const tier = categoryItem.stars <= 2 ? 'low' : categoryItem.stars === 3 ? 'mid' : 'high';
+      const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
+        || MAUMUN_INTERPRETATION.stress.mid;
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">🌞 오늘의 맘운</span>
-      </div>
-
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">오늘의 ${FORTUNE_CATEGORY_LABELS[categoryKey]}</span><span class="rx-slip-value">${starsText(categoryItem.stars)}</span></div>
-      </div>
-
-      <div class="today-rx-card" style="display:flex;">
-        <div class="today-rx-emoji">${emotion.emoji}</div>
-        <div class="today-rx-body">
-          <div class="today-rx-eyebrow">오늘의 마음</div>
-          <div class="today-rx-title">${emotion.label}</div>
-          <div class="today-rx-diagnosis">${emotion.caption}</div>
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">🌞 오늘의 맘운</span>
         </div>
-      </div>
 
-      <div class="rx-detail-card">
-        <div class="rx-detail-title">오늘의 해석</div>
-        <p class="rx-detail-symptom">${interp.interpretation}</p>
-      </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">오늘의 ${FORTUNE_CATEGORY_LABELS[categoryKey]}</span><span class="rx-slip-value">${starsText(categoryItem.stars)}</span></div>
+        </div>
 
-      <div class="rx-custom-preview">
-        <div class="rx-slip-row"><span class="rx-slip-key">💊 오늘의 맘운 처방</span><span class="rx-slip-value">${interp.diagnosis}</span></div>
-      </div>
+        <div class="today-rx-card" style="display:flex;">
+          <div class="today-rx-emoji">${emotion.emoji}</div>
+          <div class="today-rx-body">
+            <div class="today-rx-eyebrow">오늘의 마음</div>
+            <div class="today-rx-title">${emotion.label}</div>
+            <div class="today-rx-diagnosis">${emotion.caption}</div>
+          </div>
+        </div>
 
-      <p class="rx-custom-hint">주사를 놓으면 처방과 복용법이 담긴 맘운 처방전을 확인할 수 있어요</p>
-      <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 맘운 처방받기</button>
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+        <div class="rx-detail-card">
+          <div class="rx-detail-title">오늘의 해석</div>
+          <p class="rx-detail-symptom">${interp.interpretation}</p>
+        </div>
 
-    // 사주 계산 엔진이 기존 주사 UI를 대체하지 않도록, 처방센터/커스텀 처방전과 동일한
-    // startGenericPrepare/startGenericInject 인터랙션을 그대로 재사용한다 (prescriptions.js의 export).
-    const syntheticP = {
-      id: 'maumun-today',
-      category: 'maumun',
-      title: interp.diagnosis,
-      diagnosis: interp.diagnosis,
-      emoji: emotion.emoji,
-      color: emotion.color || '#b779ef',
-    };
-    const injectBtn = document.getElementById('fortune-maumun-inject-btn');
-    Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
-      resetDoseVisuals();
-      Rx.showRxImageFade(syntheticP, () => {
-        const entry = {
-          date: todayDateKey(),
-          emotionKey: emotion.key,
-          emotionLabel: emotion.label,
-          emotionEmoji: emotion.emoji,
-          emotionColor: emotion.color,
-          categoryKey,
-          categoryLabel: FORTUNE_CATEGORY_LABELS[categoryKey],
-          stars: categoryItem.stars,
-          diagnosis: interp.diagnosis,
-          interpretation: interp.interpretation,
-          prescription: interp.prescription,
-          dosage: interp.dosage,
-          injected: true,
-          ts: Date.now(),
-        };
-        saveMaumunLogEntry(entry);
-        renderHomeMaumunTeaser(); // 홈 카드도 바로 "오늘 완료" 상태로 갱신
-        openMaumunReveal(maumunEntryToReveal(entry));
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">💊 오늘의 맘운 처방</span><span class="rx-slip-value">${interp.diagnosis}</span></div>
+        </div>
+
+        <p class="rx-custom-hint">주사를 놓으면 처방과 복용법이 담긴 맘운 처방전을 확인할 수 있어요</p>
+        <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 맘운 처방받기</button>
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+
+      // 사주 계산 엔진이 기존 주사 UI를 대체하지 않도록, 처방센터/커스텀 처방전과 동일한
+      // startGenericPrepare/startGenericInject 인터랙션을 그대로 재사용한다 (prescriptions.js의 export).
+      const syntheticP = {
+        id: 'maumun-today',
+        category: 'maumun',
+        title: interp.diagnosis,
+        diagnosis: interp.diagnosis,
+        emoji: emotion.emoji,
+        color: emotion.color || '#b779ef',
+      };
+      const injectBtn = document.getElementById('fortune-maumun-inject-btn');
+      Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
+        resetDoseVisuals();
+        Rx.showRxImageFade(syntheticP, () => {
+          const entry = {
+            date: todayDateKey(),
+            emotionKey: emotion.key,
+            emotionLabel: emotion.label,
+            emotionEmoji: emotion.emoji,
+            emotionColor: emotion.color,
+            categoryKey,
+            categoryLabel: FORTUNE_CATEGORY_LABELS[categoryKey],
+            stars: categoryItem.stars,
+            diagnosis: interp.diagnosis,
+            interpretation: interp.interpretation,
+            prescription: interp.prescription,
+            dosage: interp.dosage,
+            injected: true,
+            ts: Date.now(),
+          };
+          saveMaumunLogEntry(entry);
+          renderHomeMaumunTeaser(); // 홈 카드도 바로 "오늘 완료" 상태로 갱신
+          openMaumunReveal(maumunEntryToReveal(entry));
+        });
       });
     });
   }
@@ -961,14 +1000,27 @@
       count.textContent = `${input.value.length}/60`;
     });
 
-    document.getElementById('ai-maumun-submit-btn').addEventListener('click', () => {
+    const submitBtn = document.getElementById('ai-maumun-submit-btn');
+    submitBtn.addEventListener('click', () => {
       const question = input.value.trim();
       if (!question) {
         Core.showToast('궁금한 걸 먼저 적어주세요');
         return;
       }
-      const answer = buildAiMaumunAnswer(profile, emotion, question);
-      renderAiMaumunAnswer(answer);
+      const answerEl = document.getElementById('ai-maumun-answer');
+      const loadingLine = AI_MAUMUN_LOADING_LINES[Math.floor(Math.random() * AI_MAUMUN_LOADING_LINES.length)];
+      submitBtn.disabled = true;
+      answerEl.innerHTML = `
+        <div class="fortune-loading" style="padding:50px 20px;">
+          <div class="fortune-loading-orb">🔮</div>
+          <p class="fortune-loading-text">${loadingLine}</p>
+        </div>`;
+      answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        const answer = buildAiMaumunAnswer(profile, emotion, question);
+        renderAiMaumunAnswer(answer);
+        submitBtn.disabled = false;
+      }, 1600 + Math.floor(Math.random() * 900));
     });
   }
 
@@ -1140,12 +1192,89 @@
   }
   renderHomeMaumunTeaser();
 
-  // ---------- 탭 전환 시 운세 탭 노출 (기존 tab-btn 리스너들 옆에 세 번째 리스너로 추가) ----------
+  // ---------- 설정에서 맘운 프로필 등록/수정 진입점 (app.js의 설정 모달을 열고 닫는 로직은 무수정,
+  // 이 버튼 클릭만 새로 감지해서 운세 탭으로 이동시킨다) ----------
+  const settingsFortuneProfileBtn = document.getElementById('settings-fortune-profile-btn');
+  const settingsOverlayEl = document.getElementById('settings-overlay');
+  if (settingsFortuneProfileBtn) {
+    settingsFortuneProfileBtn.addEventListener('click', () => {
+      if (settingsOverlayEl) settingsOverlayEl.classList.remove('show');
+      const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+      if (fortuneTabBtn) fortuneTabBtn.click();
+      renderProfileForm(loadSajuProfile());
+    });
+  }
+
+  // ---------- 4.5: 기록 탭 통합 피드 — 개인 처방/친구에게 보낸 처방/맘운 기록을 한 곳에서 ----------
+  // app.js의 기존 달력/차트 렌더링(renderHistory)은 전혀 건드리지 않고, 그 아래 새 컨테이너에
+  // 세 가지 기록을 합쳐서 최신순으로 보여주기만 한다. rxRecords/friendSentRecords는 prescriptions.js가
+  // 소유한 키를 그대로 읽는다(fortune.js가 이미 rxRecords를 이렇게 읽어온 것과 같은 방식).
+  function findPrescriptionMeta(prescriptionId, category) {
+    if (category === 'emotion') {
+      const key = String(prescriptionId || '').replace('emotion-', '');
+      const s = Core.SYMPTOMS[key];
+      return s ? { title: `${s.label} 처방`, emoji: s.emoji } : { title: '마음 처방', emoji: '💉' };
+    }
+    const seed = (window.MAUMJARO_RX_DATA && window.MAUMJARO_RX_DATA.PRESCRIPTIONS_SEED) || [];
+    const p = seed.find((x) => x.id === prescriptionId);
+    return p ? { title: p.title, emoji: p.emoji } : { title: '처방', emoji: '💉' };
+  }
+
+  function loadHistoryFeedItems() {
+    const items = [];
+    try {
+      const list = JSON.parse(localStorage.getItem('maumjaro:rxRecords') || '[]');
+      list.forEach((r) => {
+        const meta = findPrescriptionMeta(r.prescriptionId, r.category);
+        items.push({ ts: r.ts, emoji: meta.emoji, title: meta.title, badge: '💉 개인 처방' });
+      });
+    } catch (e) { /* 손상된 데이터는 조용히 건너뛴다 */ }
+    try {
+      const list = JSON.parse(localStorage.getItem('maumjaro:friendSentRecords') || '[]');
+      list.forEach((r) => {
+        items.push({ ts: r.ts, emoji: r.emoji || '💌', title: r.title || '처방', badge: `💌 ${r.recipient || '친구'}에게 보냄` });
+      });
+    } catch (e) { /* 손상된 데이터는 조용히 건너뛴다 */ }
+    Object.values(loadMaumunLog()).forEach((e) => {
+      items.push({ ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, badge: `🔮 ${e.categoryLabel} ${starsText(e.stars)}` });
+    });
+    items.sort((a, b) => b.ts - a.ts);
+    return items;
+  }
+
+  function formatFeedTime(ts) {
+    const d = new Date(ts);
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function renderHistoryUnifiedFeed() {
+    const feedEl = document.getElementById('history-unified-feed');
+    if (!feedEl) return;
+    const items = loadHistoryFeedItems();
+    if (!items.length) {
+      feedEl.innerHTML = '';
+      return;
+    }
+    const cardsHtml = items.map((it) => `
+      <div class="rx-list-card">
+        <span class="rx-list-emoji">${it.emoji}</span>
+        <div class="rx-list-body">
+          <div class="rx-list-title-row">
+            <span class="rx-list-title">${it.title}</span>
+          </div>
+          <div class="rx-list-desc"><span class="history-feed-badge">${it.badge}</span> · ${formatFeedTime(it.ts)}</div>
+        </div>
+      </div>`).join('');
+    feedEl.innerHTML = `<div class="history-feed-title">📋 전체 활동</div>${cardsHtml}`;
+  }
+
+  // ---------- 탭 전환 시 운세 탭 노출 + 기록 탭 통합 피드 갱신 (기존 tab-btn 리스너들 옆에 독립 리스너로 추가) ----------
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
       viewFortune.hidden = view !== 'fortune';
       if (view === 'fortune') renderFortuneHome();
+      if (view === 'history') renderHistoryUnifiedFeed();
     });
   });
 
