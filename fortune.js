@@ -57,6 +57,17 @@
     if (e.target === maumunRevealOverlay) closeMaumunReveal();
   });
 
+  // prescriptions.js의 completeGenericInjection/completeCustomReception과 동일한 정리 동작.
+  // 주사 완료 콜백에서 이 3줄을 빼먹으면 방금 맞은 처방의 뱃지/색이 다음 방문까지 홈 화면에 그대로 남는다.
+  function resetDoseVisuals() {
+    const doseTagEl = document.getElementById('dose-tag');
+    const doseCaptionEl = document.getElementById('dose-caption');
+    const liquidEl = document.getElementById('liquid');
+    if (doseTagEl) doseTagEl.hidden = true;
+    if (doseCaptionEl) doseCaptionEl.hidden = true;
+    if (liquidEl) liquidEl.style.fill = '';
+  }
+
   const homeMaumunCard = document.getElementById('home-maumun-card');
   const homeMaumunOneline = document.getElementById('home-maumun-oneline');
   const homeMaumunSub = document.getElementById('home-maumun-sub');
@@ -678,6 +689,7 @@
     };
 
     Rx.wireExternalTrigger(friendMaumunIncomingBtn, syntheticP, () => {
+      resetDoseVisuals();
       Rx.showRxImageFade(syntheticP, () => {
         friendMaumunIncomingCard.hidden = true;
         openMaumunReveal({
@@ -799,6 +811,7 @@
     };
     const injectBtn = document.getElementById('fortune-maumun-inject-btn');
     Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
+      resetDoseVisuals();
       Rx.showRxImageFade(syntheticP, () => {
         const entry = {
           date: todayDateKey(),
