@@ -1565,6 +1565,7 @@
   window.MaumjaroRx = {
     wireExternalTrigger,
     showRxImageFade,
+    shareOrCopy,
     goToRxCategory(catId) {
       const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
       if (rxTabBtn) rxTabBtn.click();

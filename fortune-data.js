@@ -315,6 +315,14 @@
     { advice: '일정 사이에 여유 시간을 일부러 비워두는 한 해로 삼아보세요.' },
   ];
 
+  // ---------- 4.3: 친구에게 오늘의 운세 보내기 공유 문구 ----------
+  // 호기심은 자극하되 "사고", "위험" 같은 공포/불안 조장 표현은 쓰지 않는다.
+  const MAUMUN_SHARE_TEXTS = [
+    '야 너 오늘 운세 좀 봐봐.',
+    '오늘 너한테 뭔가 나온다.',
+    '맘운자로에서 네 운세를 확인해봤어.',
+  ];
+
   window.MAUMJARO_FORTUNE_DATA = {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
@@ -323,5 +331,6 @@
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
+    MAUMUN_SHARE_TEXTS,
   };
 })();

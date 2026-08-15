@@ -11,6 +11,7 @@
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
+    MAUMUN_SHARE_TEXTS,
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const FORTUNE_SEED_BY_CATEGORY = {
@@ -28,20 +29,29 @@
   const maumunRevealPrescription = document.getElementById('maumun-reveal-prescription');
   const maumunRevealDosage = document.getElementById('maumun-reveal-dosage');
   const maumunRevealClose = document.getElementById('maumun-reveal-close');
+  const maumunRevealMakeBtn = document.getElementById('maumun-reveal-make-btn');
 
   function closeMaumunReveal() {
     maumunRevealOverlay.classList.remove('show');
   }
-  function openMaumunReveal({ emoji, diagnosis, interpretation, prescription, dosage, color }) {
+  // showMakeOwnBtn: 친구가 보낸 맘운을 확인한 직후에만 "나도 오늘의 맘운 보기" CTA를 노출한다.
+  // 내 맘운을 볼 때(다시 보기/지난 맘운 등)는 이미 내가 보고 있는 화면이라 기본값 false로 숨긴다.
+  function openMaumunReveal({ emoji, diagnosis, interpretation, prescription, dosage, color, showMakeOwnBtn }) {
     document.body.style.setProperty('--dose-color', color || '#b779ef');
     maumunRevealEmoji.textContent = emoji;
     maumunRevealDiagnosis.textContent = diagnosis;
     maumunRevealInterpretation.textContent = interpretation;
     maumunRevealPrescription.textContent = prescription;
     maumunRevealDosage.textContent = dosage;
+    maumunRevealMakeBtn.hidden = !showMakeOwnBtn;
     maumunRevealOverlay.classList.add('show');
   }
   maumunRevealClose.addEventListener('click', closeMaumunReveal);
+  maumunRevealMakeBtn.addEventListener('click', () => {
+    closeMaumunReveal();
+    const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+    if (fortuneTabBtn) fortuneTabBtn.click(); // 탭 리스너가 renderFortuneHome()을 호출해 프로필 유무에 맞게 알아서 분기한다
+  });
   maumunRevealOverlay.addEventListener('click', (e) => {
     if (e.target === maumunRevealOverlay) closeMaumunReveal();
   });
@@ -50,6 +60,11 @@
   const homeMaumunOneline = document.getElementById('home-maumun-oneline');
   const homeMaumunSub = document.getElementById('home-maumun-sub');
   const homeMaumunBtn = document.getElementById('home-maumun-btn');
+
+  // 4.3: 친구가 보낸 오늘의 운세 수신 카드 (custom-incoming-card와 동일한 클래스를 그대로 재사용)
+  const friendMaumunIncomingCard = document.getElementById('friend-maumun-incoming-card');
+  const friendMaumunIncomingTitle = document.getElementById('friend-maumun-incoming-title');
+  const friendMaumunIncomingBtn = document.getElementById('friend-maumun-incoming-btn');
 
   const SAJU_PROFILE_KEY = 'maumjaro:sajuProfile';
   const SAJU_CHART_KEY = 'maumjaro:sajuChart';
@@ -604,6 +619,66 @@
     };
   }
 
+  // ---------- 4.3: 친구에게 오늘의 운세 보내기 (3.0 커스텀 처방전과 완전히 같은 URL 공유 구조 재사용) ----------
+  // 서버 없이 URL에 압축 저장하는 방식 그대로: LZString + 쿼리 파라미터(?maumun=). ?custom=과 같은 패턴이되
+  // 파라미터명을 분리해 딥링크 진입 시 어떤 종류의 공유인지 구분한다.
+  function buildMaumunShareUrl(payload) {
+    const json = JSON.stringify(payload);
+    const encoded = window.LZString
+      ? window.LZString.compressToEncodedURIComponent(json)
+      : encodeURIComponent(json);
+    return `${location.origin}${location.pathname}?maumun=${encoded}`;
+  }
+  function decodeMaumunPayload(raw) {
+    if (!raw || !window.LZString) return null;
+    try {
+      const json = window.LZString.decompressFromEncodedURIComponent(raw);
+      if (!json) return null;
+      const payload = JSON.parse(json);
+      if (!payload || typeof payload !== 'object' || !payload.d || !payload.rx) return null;
+      return payload;
+    } catch (e) {
+      return null;
+    }
+  }
+  function shareMaumunEntry(entry) {
+    const myName = (localStorage.getItem('maumjaro:username') || '').trim();
+    const payload = {
+      d: entry.diagnosis, i: entry.interpretation, rx: entry.prescription, do: entry.dosage,
+      e: entry.emotionEmoji, c: entry.emotionColor, fr: myName || undefined, ts: Date.now(),
+    };
+    const url = buildMaumunShareUrl(payload);
+    const text = MAUMUN_SHARE_TEXTS[Math.floor(Math.random() * MAUMUN_SHARE_TEXTS.length)];
+    Rx.shareOrCopy(text, url);
+  }
+
+  // 받는 사람 쪽엔 감정/사주 개념이 없으므로 맘운 기록(maumunLog)엔 절대 저장하지 않는다 —
+  // 3.0의 ?custom= 수신자 플로우와 동일하게 "주사를 놓아야 내용이 공개"되는 구조만 재사용한다.
+  function wireIncomingMaumunTrigger(payload) {
+    friendMaumunIncomingTitle.textContent = payload.fr ? `${payload.fr}가 보낸 운세` : '친구가 보낸 운세';
+    friendMaumunIncomingCard.hidden = false;
+
+    const syntheticP = {
+      id: 'friend-maumun-incoming',
+      category: 'maumun',
+      title: payload.d,
+      diagnosis: payload.d,
+      emoji: payload.e || '🔮',
+      color: payload.c || '#b779ef',
+    };
+
+    Rx.wireExternalTrigger(friendMaumunIncomingBtn, syntheticP, () => {
+      Rx.showRxImageFade(syntheticP, () => {
+        friendMaumunIncomingCard.hidden = true;
+        openMaumunReveal({
+          emoji: payload.e, diagnosis: payload.d, interpretation: payload.i,
+          prescription: payload.rx, dosage: payload.do, color: payload.c,
+          showMakeOwnBtn: true,
+        });
+      });
+    });
+  }
+
   function renderMaumun(profile) {
     // 오늘 이미 확인(주사 완료)했다면 새로 계산하지 않고 기록된 그대로 보여준다 —
     // 같은 날 여러 번 들어와도 오늘의 맘운이 계속 달라지지 않도록 하는 장치.
@@ -626,12 +701,14 @@
         </div>
         <p class="rx-custom-hint">✅ 오늘의 맘운은 이미 확인했어요. 처방전은 언제든 다시 볼 수 있어요.</p>
         <button class="action-btn" id="fortune-maumun-reopen-btn" type="button" style="width:100%;">💊 처방전 다시 보기</button>
+        <button class="rx-friend-quick-btn" id="fortune-maumun-share-btn" type="button" style="width:100%;margin-top:10px;">💌 친구에게 오늘의 운세 보내기</button>
         <button class="rx-friend-quick-btn" id="fortune-maumun-history-btn" type="button" style="width:100%;margin-top:10px;">📖 지난 맘운 보기</button>
       `;
       document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
       document.getElementById('fortune-maumun-reopen-btn').addEventListener('click', () => {
         openMaumunReveal(maumunEntryToReveal(todayEntry));
       });
+      document.getElementById('fortune-maumun-share-btn').addEventListener('click', () => shareMaumunEntry(todayEntry));
       document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => renderMaumunHistory(profile));
       return;
     }
@@ -946,4 +1023,14 @@
       if (view === 'fortune') renderFortuneHome();
     });
   });
+
+  // ---------- 4.3: 친구가 보낸 운세 딥링크 진입 처리 (?maumun=<LZString>) ----------
+  // prescriptions.js의 ?custom= 처리와 완전히 같은 원칙: 손상된 링크는 조용히 무시하고 평소처럼 홈이 보인다.
+  (function handleFriendMaumunDeepLink() {
+    const raw = new URLSearchParams(location.search).get('maumun');
+    if (!raw) return;
+    const payload = decodeMaumunPayload(raw);
+    if (!payload) return;
+    wireIncomingMaumunTrigger(payload);
+  })();
 })();
