@@ -1503,6 +1503,13 @@ body {
   border: 1px solid var(--card-border);
 }
 .rx-friend-result[hidden] { display: none; }
+.rx-friend-capture {
+  background: #fffdf9;
+  border: 1.5px dashed var(--card-border);
+  border-radius: 20px;
+  padding: 18px 16px 16px;
+  margin-bottom: 10px;
+}
 .rx-friend-video-preview {
   display: block;
   width: 100%;
