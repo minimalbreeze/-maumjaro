@@ -1289,76 +1289,312 @@
     });
   }
 
-  // ---------- 4.5: 기록 탭 통합 피드 — 개인 처방/친구에게 보낸 처방/맘운 기록을 한 곳에서 ----------
-  // app.js의 기존 달력/차트 렌더링(renderHistory)은 전혀 건드리지 않고, 그 아래 새 컨테이너에
-  // 세 가지 기록을 합쳐서 최신순으로 보여주기만 한다. rxRecords/friendSentRecords는 prescriptions.js가
-  // 소유한 키를 그대로 읽는다(fortune.js가 이미 rxRecords를 이렇게 읽어온 것과 같은 방식).
-  function findPrescriptionMeta(prescriptionId, category) {
-    if (category === 'emotion') {
-      const key = String(prescriptionId || '').replace('emotion-', '');
-      const s = Core.SYMPTOMS[key];
-      return s ? { title: `${s.label} 처방`, emoji: s.emoji } : { title: '마음 처방', emoji: '💉' };
-    }
-    const seed = (window.MAUMJARO_RX_DATA && window.MAUMJARO_RX_DATA.PRESCRIPTIONS_SEED) || [];
-    const p = seed.find((x) => x.id === prescriptionId);
-    return p ? { title: p.title, emoji: p.emoji } : { title: '처방', emoji: '💉' };
-  }
+  // ---------- 4.7: 기록 탭을 개인처방/친구처방/운세 카테고리별 일/월/년 보기로 재구조화 ----------
+  // app.js의 기존 달력(#segmented + #history-content, 개인처방 전용)은 전혀 건드리지 않고
+  // 그대로 재사용한다 — "개인처방" 카테고리를 고르면 그 두 요소를 보여주기만 하고, 그 외
+  // 카테고리("친구처방"/"운세")를 고르면 fortune.js가 같은 클래스로 새로 그린 화면을 보여준다.
+  // rxRecords/friendSentRecords는 prescriptions.js가 소유한 키를 그대로 읽는다(기존 패턴과 동일).
+  const historyNativeSegmented = document.getElementById('segmented');
+  const historyNativeContent = document.getElementById('history-content');
+  const historyCustomArea = document.getElementById('history-unified-feed');
+  const HISTORY_DOW = ['일', '월', '화', '수', '목', '금', '토']; // app.js의 DOW와 동일(일요일=0 기준, new Date().getDay()와 정렬 맞춤)
 
-  function loadHistoryFeedItems() {
-    const items = [];
-    try {
-      const list = JSON.parse(localStorage.getItem('maumjaro:rxRecords') || '[]');
-      list.forEach((r) => {
-        const meta = findPrescriptionMeta(r.prescriptionId, r.category);
-        items.push({ ts: r.ts, emoji: meta.emoji, title: meta.title, badge: '💉 개인 처방' });
-      });
-    } catch (e) { /* 손상된 데이터는 조용히 건너뛴다 */ }
+  function loadFriendSentItems() {
     try {
       const list = JSON.parse(localStorage.getItem('maumjaro:friendSentRecords') || '[]');
-      list.forEach((r) => {
-        items.push({ ts: r.ts, emoji: r.emoji || '💌', title: r.title || '처방', badge: `💌 ${r.recipient || '친구'}에게 보냄` });
-      });
-    } catch (e) { /* 손상된 데이터는 조용히 건너뛴다 */ }
-    Object.values(loadMaumunLog()).forEach((e) => {
-      items.push({ ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, badge: `🔮 ${e.categoryLabel} ${starsText(e.stars)}` });
-    });
-    items.sort((a, b) => b.ts - a.ts);
-    return items;
-  }
-
-  function formatFeedTime(ts) {
-    const d = new Date(ts);
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  }
-
-  function renderHistoryUnifiedFeed() {
-    const feedEl = document.getElementById('history-unified-feed');
-    if (!feedEl) return;
-    const items = loadHistoryFeedItems();
-    if (!items.length) {
-      feedEl.innerHTML = '';
-      return;
+      return list.map((r) => ({ ts: r.ts, emoji: r.emoji || '💌', title: r.title || '처방', sub: `${r.recipient || '친구'}에게 보냄` }));
+    } catch (e) {
+      return [];
     }
-    const cardsHtml = items.map((it) => `
+  }
+  function loadMaumunItems() {
+    return Object.values(loadMaumunLog()).map((e) => ({
+      ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, sub: `🔮 ${e.categoryLabel} ${starsText(e.stars)}`,
+    }));
+  }
+
+  function historyDateKey(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function historyFormatTime(d) {
+    const h = d.getHours();
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    const ap = h < 12 ? '오전' : '오후';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${ap} ${h12}:${mi}`;
+  }
+  function historyFormatDayLabel(d) {
+    return Core.sameDay(d, new Date()) ? `오늘 · ${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  }
+  function historyBuildBarChart(items, compact) {
+    const max = Math.max(1, ...items.map((it) => it.count));
+    const bars = items.map((it) => {
+      const h = it.count === 0 ? 3 : Math.max(6, Math.round((it.count / max) * (compact ? 100 : 140)));
+      return `
+        <div class="year-bar-col${it.count === 0 ? ' zero' : ''}${it.highlight ? ' highlight' : ''}">
+          <span class="year-bar-count">${it.count > 0 ? it.count : ''}</span>
+          <div class="year-bar" style="height:${h}px"></div>
+          <span class="year-bar-label">${it.label}</span>
+        </div>`;
+    }).join('');
+    return `<div class="year-bars${compact ? ' compact' : ''}">${bars}</div>`;
+  }
+  function historyItemCardHtml(it) {
+    return `
       <div class="rx-list-card">
         <span class="rx-list-emoji">${it.emoji}</span>
         <div class="rx-list-body">
-          <div class="rx-list-title-row">
-            <span class="rx-list-title">${it.title}</span>
-          </div>
-          <div class="rx-list-desc"><span class="history-feed-badge">${it.badge}</span> · ${formatFeedTime(it.ts)}</div>
+          <div class="rx-list-title-row"><span class="rx-list-title">${it.title}</span></div>
+          <div class="rx-list-desc">${it.sub} · ${historyFormatTime(it.date)}</div>
         </div>
-      </div>`).join('');
-    feedEl.innerHTML = `<div class="history-feed-title">📋 전체 활동</div>${cardsHtml}`;
+      </div>`;
   }
 
-  // ---------- 탭 전환 시 운세 탭 노출 + 기록 탭 통합 피드 갱신 (기존 tab-btn 리스너들 옆에 독립 리스너로 추가) ----------
+  // 개인처방(기존 app.js 달력)을 뺀 나머지 카테고리(친구처방/운세)를 위한 일/월/년 렌더러.
+  // app.js의 renderDayView/renderMonthView/renderYearView와 같은 CSS 클래스를 그대로 재사용해
+  // 시각적으로 완전히 통일된 화면을 별도 구현으로 만든다(app.js 자체는 무수정).
+  function renderHistoryCategoryView(profile, navTitle, loadItemsFn) {
+    let period = 'day';
+    let monthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let yearCursor = new Date().getFullYear();
+    let selectedDayKey = null;
+
+    function draw() {
+      const items = loadItemsFn().map((it) => ({ ...it, date: new Date(it.ts) }));
+      historyCustomArea.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="history-cat-back" type="button">‹</button>
+          <span class="rx-nav-title">${navTitle}</span>
+        </div>
+        <div class="segmented" id="history-cat-seg">
+          <button class="seg-btn${period === 'day' ? ' active' : ''}" data-period="day">일</button>
+          <button class="seg-btn${period === 'month' ? ' active' : ''}" data-period="month">월</button>
+          <button class="seg-btn${period === 'year' ? ' active' : ''}" data-period="year">년</button>
+        </div>
+        <div id="history-cat-body"></div>
+      `;
+      document.getElementById('history-cat-back').addEventListener('click', () => renderHistoryHub(profile));
+      document.getElementById('history-cat-seg').querySelectorAll('.seg-btn').forEach((btn) => {
+        btn.addEventListener('click', () => { period = btn.dataset.period; draw(); });
+      });
+
+      const body = document.getElementById('history-cat-body');
+      if (period === 'day') drawDay(body, items);
+      else if (period === 'month') drawMonth(body, items);
+      else drawYear(body, items);
+    }
+
+    function drawDay(body, items) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const last14 = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        last14.push(d);
+      }
+      const countMap = new Map();
+      items.forEach((it) => {
+        const k = historyDateKey(it.date);
+        countMap.set(k, (countMap.get(k) || 0) + 1);
+      });
+      const chartItems = last14.map((d) => ({
+        label: String(d.getDate()), count: countMap.get(historyDateKey(d)) || 0, highlight: Core.sameDay(d, today),
+      }));
+      const chartTotal = chartItems.reduce((a, b) => a + b.count, 0);
+      const chartHtml = `<div class="chart-section"><div class="chart-title">최근 14일 <strong>${chartTotal}</strong>번</div>${historyBuildBarChart(chartItems)}</div>`;
+
+      if (items.length === 0) {
+        body.innerHTML = `${chartHtml}<p class="empty-msg">아직 기록이 없어요.</p>`;
+        return;
+      }
+      const groups = new Map();
+      items.forEach((it) => {
+        const k = historyDateKey(it.date);
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(it);
+      });
+      const keys = Array.from(groups.keys()).sort().reverse();
+      const groupsHtml = keys.map((k) => {
+        const list = groups.get(k).sort((a, b) => b.date - a.date);
+        return `
+          <div class="day-group">
+            <div class="day-group-head">
+              <span class="date">${historyFormatDayLabel(list[0].date)}</span>
+              <span class="count">${list.length}회</span>
+            </div>
+            ${list.map(historyItemCardHtml).join('')}
+          </div>`;
+      }).join('');
+      body.innerHTML = chartHtml + groupsHtml;
+    }
+
+    function drawMonth(body, items) {
+      const y = monthCursor.getFullYear();
+      const m = monthCursor.getMonth();
+      const firstDow = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      const countByDate = new Map();
+      items.forEach((it) => {
+        if (it.date.getFullYear() === y && it.date.getMonth() === m) {
+          const k = historyDateKey(it.date);
+          countByDate.set(k, (countByDate.get(k) || 0) + 1);
+        }
+      });
+      const monthTotal = Array.from(countByDate.values()).reduce((a, b) => a + b, 0);
+      const dowHtml = HISTORY_DOW.map((d) => `<div class="cal-dow">${d}</div>`).join('');
+      let cellsHtml = '';
+      for (let i = 0; i < firstDow; i++) cellsHtml += '<div class="cal-cell blank"></div>';
+      const today = new Date();
+      const chartItems = [];
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(y, m, day);
+        const key = historyDateKey(cellDate);
+        const cnt = countByDate.get(key) || 0;
+        const isToday = Core.sameDay(cellDate, today);
+        cellsHtml += `<div class="cal-cell${cnt > 0 ? ' has-record' : ''}${isToday ? ' today' : ''}" data-key="${key}">
+            <span>${day}</span>
+            ${cnt > 0 ? '<span class="badge"></span>' : ''}
+          </div>`;
+        const showLabel = day === 1 || day === daysInMonth || day % 5 === 0;
+        chartItems.push({ label: showLabel ? String(day) : '', count: cnt, highlight: isToday });
+      }
+      body.innerHTML = `
+        <div class="period-nav">
+          <button id="history-cat-month-prev">‹</button>
+          <span class="period-label">${y}년 ${m + 1}월</span>
+          <button id="history-cat-month-next">›</button>
+        </div>
+        <div class="period-total">이번 달 <strong>${monthTotal}</strong>번</div>
+        <div class="chart-section">${historyBuildBarChart(chartItems, true)}</div>
+        <div class="calendar-grid">${dowHtml}${cellsHtml}</div>
+        <div id="history-cat-day-detail"></div>
+      `;
+      document.getElementById('history-cat-month-prev').addEventListener('click', () => {
+        monthCursor = new Date(y, m - 1, 1);
+        draw();
+      });
+      document.getElementById('history-cat-month-next').addEventListener('click', () => {
+        monthCursor = new Date(y, m + 1, 1);
+        draw();
+      });
+      body.querySelectorAll('.cal-cell.has-record').forEach((cell) => {
+        cell.addEventListener('click', () => {
+          selectedDayKey = cell.dataset.key;
+          drawDayDetail(items);
+        });
+      });
+      if (selectedDayKey && countByDate.has(selectedDayKey)) drawDayDetail(items);
+    }
+
+    function drawDayDetail(items) {
+      const slot = document.getElementById('history-cat-day-detail');
+      if (!slot) return;
+      const list = items.filter((it) => historyDateKey(it.date) === selectedDayKey).sort((a, b) => a.date - b.date);
+      if (list.length === 0) { slot.innerHTML = ''; return; }
+      slot.innerHTML = `<div class="day-group">${list.map(historyItemCardHtml).join('')}</div>`;
+    }
+
+    function drawYear(body, items) {
+      const y = yearCursor;
+      const counts = new Array(12).fill(0);
+      items.forEach((it) => { if (it.date.getFullYear() === y) counts[it.date.getMonth()]++; });
+      const total = counts.reduce((a, b) => a + b, 0);
+      const chartItems = counts.map((c, i) => ({ label: `${i + 1}월`, count: c }));
+      body.innerHTML = `
+        <div class="period-nav">
+          <button id="history-cat-year-prev">‹</button>
+          <span class="period-label">${y}년</span>
+          <button id="history-cat-year-next">›</button>
+        </div>
+        <div class="period-total">올해 총 <strong>${total}</strong>번</div>
+        ${historyBuildBarChart(chartItems)}
+      `;
+      document.getElementById('history-cat-year-prev').addEventListener('click', () => { yearCursor = y - 1; draw(); });
+      document.getElementById('history-cat-year-next').addEventListener('click', () => { yearCursor = y + 1; draw(); });
+    }
+
+    draw();
+  }
+
+  // ---------- 기록 탭 진입점: 개인처방/친구처방/운세 3개 카테고리 중 선택 ----------
+  function renderHistoryHub(profile) {
+    if (historyNativeSegmented) historyNativeSegmented.hidden = true;
+    if (historyNativeContent) historyNativeContent.hidden = true;
+    if (!historyCustomArea) return;
+    historyCustomArea.hidden = false;
+    historyCustomArea.innerHTML = `
+      <div class="rx-nav-header">
+        <span class="rx-nav-title">📋 기록</span>
+      </div>
+      <div class="rx-category-grid">
+        <div class="rx-category-tile" data-cat="personal">
+          <span class="rx-category-emoji">💉</span>
+          <span class="rx-category-label">개인 처방</span>
+          <span class="rx-category-count">일/월/년</span>
+        </div>
+        <div class="rx-category-tile" data-cat="friend">
+          <span class="rx-category-emoji">💌</span>
+          <span class="rx-category-label">친구처방</span>
+          <span class="rx-category-count">일/월/년</span>
+        </div>
+        <div class="rx-category-tile" data-cat="maumun">
+          <span class="rx-category-emoji">🔮</span>
+          <span class="rx-category-label">운세</span>
+          <span class="rx-category-count">일/월/년</span>
+        </div>
+      </div>
+    `;
+    historyCustomArea.querySelectorAll('.rx-category-tile').forEach((tile) => {
+      tile.addEventListener('click', () => {
+        const cat = tile.dataset.cat;
+        if (cat === 'personal') {
+          // 개인처방은 app.js가 이미 만들어둔 달력을 그대로 다시 보여준다 — 새로 구현하지 않는다.
+          historyCustomArea.hidden = true;
+          if (historyNativeSegmented) historyNativeSegmented.hidden = false;
+          if (historyNativeContent) historyNativeContent.hidden = false;
+          renderHistoryPersonalBackWiring(profile);
+          return;
+        }
+        historyCustomArea.hidden = false;
+        if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
+        else renderHistoryCategoryView(profile, '🔮 운세 기록', loadMaumunItems);
+      });
+    });
+  }
+
+  // 개인처방 달력(app.js 소유)을 보여주는 동안, 뒤로가기로 카테고리 선택으로 돌아갈 수 있도록
+  // 작은 뒤로가기 바를 그 위에 하나 추가한다. app.js의 #history-content 내부는 건드리지 않는다.
+  function renderHistoryPersonalBackWiring(profile) {
+    let backBar = document.getElementById('history-personal-back-bar');
+    if (!backBar) {
+      backBar = document.createElement('div');
+      backBar.id = 'history-personal-back-bar';
+      backBar.className = 'rx-nav-header';
+      backBar.innerHTML = '<button class="rx-back-btn" id="history-personal-back-btn" type="button">‹</button><span class="rx-nav-title">💉 개인 처방 기록</span>';
+      historyNativeSegmented.parentNode.insertBefore(backBar, historyNativeSegmented);
+    }
+    backBar.hidden = false;
+    document.getElementById('history-personal-back-btn').onclick = () => {
+      backBar.hidden = true;
+      renderHistoryHub(profile);
+    };
+  }
+
+  // ---------- 탭 전환 시 운세 탭 노출 + 기록 탭 진입점 렌더 (기존 tab-btn 리스너들 옆에 독립 리스너로 추가) ----------
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
       viewFortune.hidden = view !== 'fortune';
       if (view === 'fortune') renderFortuneHome();
-      if (view === 'history') renderHistoryUnifiedFeed();
+      if (view === 'history') renderHistoryHub(loadSajuProfile());
+      else {
+        const backBar = document.getElementById('history-personal-back-bar');
+        if (backBar) backBar.hidden = true;
+      }
     });
   });
 
