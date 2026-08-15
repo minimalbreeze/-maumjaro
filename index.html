@@ -335,8 +335,7 @@
 <div id="rx-friend-overlay" class="settings-overlay">
   <div class="settings-card rx-friend-card">
     <h2>💌 친구에게 처방하기</h2>
-    <p class="rx-friend-sub">기존 처방 중에서 골라 보내요. 직접 쓰고 싶다면 커스텀 진료실을 이용해주세요</p>
-    <div class="rx-friend-grid" id="rx-friend-grid"></div>
+    <p class="rx-friend-sub">이 처방을 친구에게 그대로 보내요. 직접 쓰고 싶다면 커스텀 진료실을 이용해주세요</p>
     <div class="rx-friend-result" id="rx-friend-result" hidden>
       <div class="rx-friend-recipient-row">
         <span class="rx-slip-key">받는 사람</span>
@@ -352,8 +351,13 @@
         <div class="rx-slip-note-input" id="rx-friend-note-input" contenteditable="true" data-placeholder="친구에게 하고 싶은 말을 적어보세요 (선택)"></div>
       </div>
       <p class="rx-friend-link" id="rx-friend-link"></p>
-      <button id="rx-friend-photo-btn" class="rx-slip-photo-btn" type="button">📷 사진 추가</button>
+      <video id="rx-friend-video-preview" class="rx-friend-video-preview" controls playsinline hidden></video>
+      <div class="rx-friend-attach-row">
+        <button id="rx-friend-photo-btn" class="rx-slip-photo-btn" type="button">📷 사진 추가</button>
+        <button id="rx-friend-video-btn" class="rx-slip-photo-btn" type="button">🎥 동영상 추가</button>
+      </div>
       <input type="file" id="rx-friend-photo-input" accept="image/*" hidden />
+      <input type="file" id="rx-friend-video-input" accept="video/*" hidden />
       <button id="rx-friend-share-btn" class="action-btn rx-friend-share-btn" type="button">📤 공유하기</button>
     </div>
     <button id="rx-friend-close" class="settings-close" type="button">닫기</button>

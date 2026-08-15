@@ -62,7 +62,6 @@
   const rxImageOverlayEmoji = document.getElementById('rx-image-overlay-emoji');
 
   const rxFriendOverlay = document.getElementById('rx-friend-overlay');
-  const rxFriendGrid = document.getElementById('rx-friend-grid');
   const rxFriendResult = document.getElementById('rx-friend-result');
   const rxFriendShareText = document.getElementById('rx-friend-share-text');
   const rxFriendLink = document.getElementById('rx-friend-link');
@@ -74,6 +73,9 @@
   const rxFriendPhotoImg = document.getElementById('rx-friend-photo-img');
   const rxFriendPhotoBtn = document.getElementById('rx-friend-photo-btn');
   const rxFriendPhotoInput = document.getElementById('rx-friend-photo-input');
+  const rxFriendVideoPreview = document.getElementById('rx-friend-video-preview');
+  const rxFriendVideoBtn = document.getElementById('rx-friend-video-btn');
+  const rxFriendVideoInput = document.getElementById('rx-friend-video-input');
   const rxFriendNoteInput = document.getElementById('rx-friend-note-input');
   const rxFriendRecipientInput = document.getElementById('rx-friend-recipient-input');
 
@@ -222,7 +224,7 @@
     };
     rxCtaFriend.onclick = () => {
       closeResultScreen();
-      openFriendPicker();
+      openFriendShareOverlay(p);
     };
     rxCtaAnother.onclick = () => {
       closeResultScreen();
@@ -380,11 +382,6 @@
       return null;
     }
   }
-  function pickRandomFromCategory(catId) {
-    const pool = catId === 'random' ? ALL_PRESCRIPTIONS : ALL_PRESCRIPTIONS.filter((p) => p.category === catId);
-    if (!pool.length) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
 
   // ---------- 공유(Web Share API 우선, 실패 시 클립보드 폴백) ----------
   let pickedShareText = '';
@@ -408,6 +405,7 @@
       Core.showToast('복사에 실패했어요. 직접 선택해서 복사해주세요');
     }
   }
+  let pickedVideoFile = null;
   function resetFriendAttachments() {
     rxFriendPhotoImg.style.backgroundImage = '';
     rxFriendPhotoImg.hidden = true;
@@ -415,6 +413,12 @@
     rxFriendPhotoInput.value = '';
     rxFriendNoteInput.textContent = '';
     rxFriendRecipientInput.value = '';
+    pickedVideoFile = null;
+    if (rxFriendVideoPreview.src) URL.revokeObjectURL(rxFriendVideoPreview.src);
+    rxFriendVideoPreview.src = '';
+    rxFriendVideoPreview.hidden = true;
+    rxFriendVideoBtn.textContent = '🎥 동영상 추가';
+    rxFriendVideoInput.value = '';
   }
   rxFriendPhotoBtn.addEventListener('click', () => rxFriendPhotoInput.click());
   rxFriendPhotoInput.addEventListener('change', () => {
@@ -430,8 +434,53 @@
     reader.readAsDataURL(file);
   });
 
-  // 사진이나 메모를 추가했으면 처방전과 같은 방식(이미지 캡처 + 공유)으로,
-  // 아니면 기존처럼 텍스트+링크로 보낸다.
+  const FRIEND_VIDEO_MAX_BYTES = 50 * 1024 * 1024; // 카톡 등으로 공유하기에 무리 없는 상한선
+  rxFriendVideoBtn.addEventListener('click', () => rxFriendVideoInput.click());
+  rxFriendVideoInput.addEventListener('change', () => {
+    const file = rxFriendVideoInput.files && rxFriendVideoInput.files[0];
+    if (!file) return;
+    if (file.size > FRIEND_VIDEO_MAX_BYTES) {
+      Core.showToast('동영상 용량이 너무 커요 (50MB 이하로 선택해주세요)');
+      rxFriendVideoInput.value = '';
+      return;
+    }
+    pickedVideoFile = file;
+    if (rxFriendVideoPreview.src) URL.revokeObjectURL(rxFriendVideoPreview.src);
+    rxFriendVideoPreview.src = URL.createObjectURL(file);
+    rxFriendVideoPreview.hidden = false;
+    rxFriendVideoBtn.textContent = '🎥 동영상 변경';
+  });
+
+  // 동영상은 캔버스로 합성할 수 없으니, 파일 그대로 공유 시트에 실어 보낸다.
+  // 카카오톡 등 파일 공유를 지원하는 앱으로 보내면 링크를 누르지 않아도 바로 재생 미리보기가 뜬다.
+  async function shareVideoFile(file, text, url) {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text: `${text}\n${url}`, title: '맘운자로 처방' });
+        return;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        // 공유 실패 시 아래 다운로드 폴백으로 이어간다.
+      }
+    }
+    const objUrl = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.download = file.name || '맘운자로_친구처방.mp4';
+    link.href = objUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      Core.showToast('동영상 저장 + 링크 복사 완료 🎥');
+    } catch (e) {
+      Core.showToast('동영상을 저장했어요. 링크도 함께 보내주세요 🎥');
+    }
+  }
+
+  // 사진/동영상/메모 중 하나라도 추가했으면 파일로(이미지는 캡처, 동영상은 원본 그대로) 공유하고,
+  // 아무것도 없으면 기존처럼 텍스트+링크로 보낸다.
   async function sendFriendPrescription() {
     if (pickedPrescription) {
       recordFriendSend({
@@ -445,8 +494,23 @@
     }
     const hasPhoto = !rxFriendPhotoImg.hidden;
     const hasNote = rxFriendNoteInput.textContent.trim().length > 0;
-    if (!hasPhoto && !hasNote) {
+    const hasVideo = !!pickedVideoFile;
+
+    if (!hasPhoto && !hasNote && !hasVideo) {
       shareOrCopy(pickedShareText, pickedShareUrl);
+      return;
+    }
+    // 동영상만 있고 사진/메모가 없으면 슬립 이미지를 합성할 필요 없이 영상 파일 자체를 바로 공유한다.
+    if (hasVideo && !hasPhoto && !hasNote) {
+      rxFriendShareBtn.disabled = true;
+      const label = rxFriendShareBtn.textContent;
+      rxFriendShareBtn.textContent = '준비 중...';
+      try {
+        await shareVideoFile(pickedVideoFile, pickedShareText, pickedShareUrl);
+      } finally {
+        rxFriendShareBtn.disabled = false;
+        rxFriendShareBtn.textContent = label;
+      }
       return;
     }
     if (typeof window.html2canvas !== 'function') {
@@ -461,10 +525,15 @@
       const canvas = await window.html2canvas(rxFriendCapture, { backgroundColor: '#fffdf9', scale: 2 });
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('canvas.toBlob returned null');
-      const file = new File([blob], '맘운자로_친구처방.png', { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], text: `${pickedShareText}\n${pickedShareUrl}`, title: '맘운자로 처방' });
+      const imgFile = new File([blob], '맘운자로_친구처방.png', { type: 'image/png' });
+      const filesToShare = hasVideo ? [imgFile, pickedVideoFile] : [imgFile];
+      if (navigator.canShare && navigator.canShare({ files: filesToShare })) {
+        await navigator.share({ files: filesToShare, text: `${pickedShareText}\n${pickedShareUrl}`, title: '맘운자로 처방' });
         return;
+      }
+      if (hasVideo) {
+        // 이미지+동영상 동시 공유가 안 되는 환경: 이미지는 캡처 경로로, 동영상은 별도 경로로 보낸다.
+        await shareVideoFile(pickedVideoFile, pickedShareText, pickedShareUrl);
       }
       // 파일 공유 미지원 환경: 이미지 다운로드 + 텍스트는 클립보드로 폴백
       const url = URL.createObjectURL(blob);
@@ -492,31 +561,20 @@
   }
   rxFriendShareBtn.addEventListener('click', sendFriendPrescription);
 
-  function openFriendPicker() {
-    rxFriendResult.hidden = true;
+  // 카테고리를 따로 고르게 하지 않고, 지금 보고 있는(또는 방금 받은) 처방 p를 그대로
+  // 친구에게 보내기 결과 화면으로 바로 연다. 처방 목록 -> 상세("처방받기") 흐름 안에서
+  // "친구에게 보내기" 버튼을 누르는 순간 호출된다.
+  function openFriendShareOverlay(p) {
+    pickedPrescription = p;
+    pickedShareText = p.shareText + FORTUNE_HOOK_LINE;
+    pickedShareUrl = buildShareUrl(p.id);
+    document.body.style.setProperty('--dose-color', p.color || '');
+    rxFriendBannerEmoji.textContent = p.emoji || '💊';
+    rxFriendBannerDiagnosis.textContent = p.diagnosis;
+    rxFriendShareText.textContent = pickedShareText;
+    rxFriendLink.textContent = pickedShareUrl;
     resetFriendAttachments();
-    const chipCats = RX_CATEGORIES.filter((c) => c.id === 'random' || rxCategoryCount(c.id) > 0);
-    rxFriendGrid.innerHTML = chipCats.map((c) => `
-      <button class="rx-friend-chip" type="button" data-cat="${c.id}">
-        <span class="emoji">${c.emoji}</span>
-        <span>${c.label}</span>
-      </button>`).join('');
-    rxFriendGrid.querySelectorAll('.rx-friend-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        const p = pickRandomFromCategory(chip.dataset.cat);
-        if (!p) { Core.showToast('처방을 찾지 못했어요'); return; }
-        pickedPrescription = p;
-        pickedShareText = p.shareText + FORTUNE_HOOK_LINE;
-        pickedShareUrl = buildShareUrl(p.id);
-        document.body.style.setProperty('--dose-color', p.color || '');
-        rxFriendBannerEmoji.textContent = p.emoji || '💊';
-        rxFriendBannerDiagnosis.textContent = p.diagnosis;
-        rxFriendShareText.textContent = pickedShareText;
-        rxFriendLink.textContent = pickedShareUrl;
-        resetFriendAttachments();
-        rxFriendResult.hidden = false;
-      });
-    });
+    rxFriendResult.hidden = false;
     rxFriendOverlay.classList.add('show');
   }
   function closeFriendPicker() {
@@ -1170,7 +1228,6 @@
       <div class="rx-nav-header">
         <span class="rx-nav-title">🏥 처방센터</span>
         <button class="rx-friend-quick-btn" id="rx-sent-history-btn" type="button">📋 보낸 기록</button>
-        <button class="rx-friend-quick-btn" id="rx-friend-quick-btn" type="button">💌 골라서 보내기</button>
       </div>
       <button class="rx-custom-cta" id="rx-custom-cta-btn" type="button">
         <span class="rx-custom-cta-emoji">✍️</span>
@@ -1182,7 +1239,6 @@
       </button>
       <div class="rx-category-grid">${tiles}</div>`;
 
-    document.getElementById('rx-friend-quick-btn').addEventListener('click', openFriendPicker);
     document.getElementById('rx-sent-history-btn').addEventListener('click', openSentHistory);
     document.getElementById('rx-custom-cta-btn').addEventListener('click', renderCustomForm);
 
@@ -1433,6 +1489,7 @@
         <div class="rx-detail-diagnosis">${p.diagnosis}</div>
         <p class="rx-detail-symptom">${p.symptom}</p>
         <button class="action-btn rx-detail-action-btn" id="rx-detail-action-btn" type="button">처방받기</button>
+        <button class="rx-friend-quick-btn" id="rx-detail-friend-btn" type="button" style="width:100%;margin-top:10px;">💌 친구에게 보내기</button>
       </div>`;
 
     document.getElementById('rx-detail-back').addEventListener('click', () => {
@@ -1442,6 +1499,7 @@
     const detailBtn = document.getElementById('rx-detail-action-btn');
     wireGenericTrigger(detailBtn, p);
     syncOtherTriggerButtons();
+    document.getElementById('rx-detail-friend-btn').addEventListener('click', () => openFriendShareOverlay(p));
   }
 
   // ---------- 랜덤 처방 (슬롯머신) ----------
