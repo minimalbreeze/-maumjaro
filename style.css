@@ -1268,7 +1268,8 @@ body {
 
 /* ---------- 처방센터 ---------- */
 
-#rx-center-content {
+#rx-center-content,
+#fortune-content {
   width: 100%;
   padding-bottom: 20px;
 }
