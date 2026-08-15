@@ -183,6 +183,9 @@
     lethargy: 'work',
     loneliness: 'love',
     anger: 'social',
+    joy: 'mind',
+    ordinary: 'mind',
+    excitement: 'love',
   };
 
   const FORTUNE_CATEGORY_LABELS = {
@@ -238,6 +241,32 @@
         diagnosis: '부글부글 보류증', prescription: '화난 이유를 종이에 적어보고 나중에 다시 읽어보기.', dosage: '화날 땐 그 자리를 잠깐 벗어나기.' },
       high: { interpretation: '오늘은 생각보다 감정 기복 없이 잔잔하게 흘러갈 수 있는 날이에요.',
         diagnosis: '평온 모드 발동증', prescription: '오늘의 평온함을 그냥 누리기.', dosage: '괜히 긁어 부스럼 만들지 않기.' },
+    },
+    // 위로가 필요한 감정만이 아니라 기쁘거나 평범한 날에도 자연스럽게 맘운을 받을 수 있도록 추가.
+    // 진단명은 다른 감정과 같은 톤(놀이적 패러디)을 유지하되, 부정적으로 몰아가지 않는다.
+    joy: {
+      low: { interpretation: '오늘은 좋은 기분이 살짝 흔들릴 일이 생길 수 있는 날이에요.',
+        diagnosis: '행복 흔들림 주의보', prescription: '기분 좋은 이유 하나만 다시 떠올려보기.', dosage: '오늘 감사한 것 하나만 마음에 새기기.' },
+      mid: { interpretation: '오늘의 좋은 기분, 무난하게 이어갈 수 있는 날이에요.',
+        diagnosis: '잔잔한 행복 지속증', prescription: '지금 기분을 굳이 설명하려 하지 말고 그냥 누리기.', dosage: '좋아하는 것 하나 더 하기.' },
+      high: { interpretation: '오늘은 기쁨이 배가될 수 있는 날이에요. 이 기세 이어가도 좋아요.',
+        diagnosis: '웃음 참기 실패증', prescription: '오늘의 좋은 기운, 아낌없이 표현해도 좋아요.', dosage: '웃고 싶을 때 그냥 웃기.' },
+    },
+    ordinary: {
+      low: { interpretation: '오늘은 평범한 하루에도 괜히 마음이 쓰일 수 있는 날이에요.',
+        diagnosis: '잔잔함 과소평가증', prescription: '특별한 일 없는 하루도 충분히 좋은 하루라는 걸 기억하기.', dosage: '오늘 하루를 있는 그대로 인정해주기.' },
+      mid: { interpretation: '오늘은 무난하게 흘러가는, 그야말로 평범한 하루예요.',
+        diagnosis: '무탈함 인식 부족증', prescription: '아무 일 없이 지나가는 것도 감사할 일이에요.', dosage: '특별한 계획 없이 하루 흘려보내기.' },
+      high: { interpretation: '오늘의 평범함 속에 은근히 좋은 순간이 숨어있을 수 있는 날이에요.',
+        diagnosis: '숨은 행운 발견증', prescription: '평범해 보이는 하루, 잘 들여다보면 괜찮은 순간이 있을 거예요.', dosage: '오늘 하루 중 좋았던 순간 하나 찾아보기.' },
+    },
+    excitement: {
+      low: { interpretation: '오늘은 설렘이 살짝 불안으로 바뀔 수 있는 날이에요.',
+        diagnosis: '기대 과열 증후군', prescription: '너무 큰 기대는 잠시 내려놓고 지금 이 순간을 즐겨보기.', dosage: '결과보다 지금의 설렘 자체를 즐기기.' },
+      mid: { interpretation: '오늘의 설렘, 적당히 잘 유지되는 날이에요.',
+        diagnosis: '잔잔한 두근거림증', prescription: '설레는 마음을 굳이 숨기지 않아도 괜찮아요.', dosage: '설레는 이유를 떠올리며 하루 보내기.' },
+      high: { interpretation: '오늘은 설렘이 현실이 될 가능성이 높은 날이에요.',
+        diagnosis: '두근거림 만개증', prescription: '오늘은 기대해도 좋은 날, 마음껏 설레어도 돼요.', dosage: '설레는 마음 그대로 표현해보기.' },
     },
   };
 
