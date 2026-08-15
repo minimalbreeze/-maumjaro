@@ -944,6 +944,66 @@
     };
   }
 
+  // 4.6: Cloudflare Worker 등으로 배포한 DeepSeek 프록시의 URL. 배포 방법은 AI_PROXY_SETUP.md 참고.
+  // 비워두면(기본값) 지금처럼 템플릿 기반 유사 AI로 동작한다 — API 키를 정적 사이트에 직접
+  // 넣으면 공개 저장소에 노출되므로, 실제 AI를 쓰려면 반드시 이 프록시를 거쳐야 한다.
+  const AI_MAUMUN_PROXY_URL = '';
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function fetchAiMaumunFromProxy(profile, emotion, question) {
+    const chart = getOrComputeSajuChart(profile);
+    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
+    const opening = AI_MAUMUN_OPENING_SEED[relation];
+    const category = detectAiMaumunCategory(question);
+    const categorySeed = FORTUNE_SEED_BY_CATEGORY[category];
+    const categoryItem = categorySeed.items[dailyPickIndex(chart, `ai-${category}`, categorySeed.items.length)];
+
+    const systemPrompt = [
+      '너는 "맘운자로"라는 한국 앱의 "AI 맘운" 캐릭터다.',
+      '사용자의 사주(오행 관계), 오늘의 운세, 오늘 감정, 사용자의 질문을 종합해서 답한다.',
+      '문체: 상냥한 존댓말, 따뜻하고 위로가 되는 톤. 무겁거나 불안을 조장하는 표현은 쓰지 않는다.',
+      '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
+      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 오늘 전체 흐름 한두 문장 → 질문과 관련된 오늘의 운 해석 → "그러니까"로 시작하는 구체적 조언 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
+      '문단 사이는 줄바꿈 두 번으로 구분한다. 전체 250자 내외로 짧게 답한다.',
+    ].join(' ');
+
+    const userPrompt = [
+      `오늘의 전체 기운: ${opening}`,
+      `오늘 해당하는 운 카테고리(${FORTUNE_CATEGORY_LABELS[category]}) 힌트: ${categoryItem.quip}`,
+      `오늘의 감정: ${emotion.label}`,
+      `질문: ${question}`,
+    ].join('\n');
+
+    return fetch(AI_MAUMUN_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt, userPrompt }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('proxy error'); return r.json(); })
+      .then((data) => {
+        if (!data || !data.answer) throw new Error('empty answer');
+        return { text: data.answer, rxCategory: categorySeed.rxCategory };
+      });
+  }
+
+  function renderAiMaumunRawAnswer(text, rxCategory) {
+    const answerEl = document.getElementById('ai-maumun-answer');
+    const paragraphs = text.trim().split(/\n{2,}/)
+      .map((p) => `<p class="rx-detail-symptom" style="margin-top:10px;">${escapeHtml(p)}</p>`).join('');
+    answerEl.innerHTML = `
+      <div class="rx-detail-card" style="margin-top:16px;">
+        ${paragraphs}
+        <button class="rx-friend-quick-btn ai-maumun-goto-rx-btn" type="button" style="margin-top:10px;">처방 후보 보러가기 ›</button>
+      </div>`;
+    answerEl.querySelector('.ai-maumun-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(rxCategory));
+    answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function renderAiMaumunAnswer(answer) {
     const answerEl = document.getElementById('ai-maumun-answer');
     answerEl.innerHTML = `
@@ -1016,11 +1076,23 @@
           <p class="fortune-loading-text">${loadingLine}</p>
         </div>`;
       answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => {
+
+      function fallBackToTemplate() {
         const answer = buildAiMaumunAnswer(profile, emotion, question);
         renderAiMaumunAnswer(answer);
         submitBtn.disabled = false;
-      }, 1600 + Math.floor(Math.random() * 900));
+      }
+
+      if (AI_MAUMUN_PROXY_URL) {
+        fetchAiMaumunFromProxy(profile, emotion, question)
+          .then(({ text, rxCategory }) => {
+            renderAiMaumunRawAnswer(text, rxCategory);
+            submitBtn.disabled = false;
+          })
+          .catch(fallBackToTemplate); // 프록시가 아직 없거나 응답에 실패해도 앱이 멈추지 않는다
+      } else {
+        setTimeout(fallBackToTemplate, 1600 + Math.floor(Math.random() * 900));
+      }
     });
   }
 
