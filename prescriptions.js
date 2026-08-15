@@ -86,6 +86,7 @@
   const customIncomingCard = document.getElementById('custom-incoming-card');
   const customIncomingTitle = document.getElementById('custom-incoming-title');
   const customIncomingBtn = document.getElementById('custom-incoming-btn');
+  const customIncomingEyebrow = document.getElementById('custom-incoming-eyebrow');
 
   const rxRevealOverlay = document.getElementById('rx-custom-reveal-overlay');
   const rxRevealDiagnosis = document.getElementById('rx-reveal-diagnosis');
@@ -359,7 +360,16 @@
 
   // ---------- 친구에게 처방하기 ----------
   function buildShareUrl(prescriptionId) {
-    return `${location.origin}${location.pathname}?rx=${encodeURIComponent(prescriptionId)}`;
+    const base = `${location.origin}${location.pathname}?rx=${encodeURIComponent(prescriptionId)}`;
+    // 받는 사람 화면에 "OO님이 보냈어요"를 띄우기 위해 보낸 사람 이름을 같이 실어보낸다.
+    // 설정에서 이름을 넣지 않았다면 파라미터 자체를 붙이지 않는다(기존 링크 형태 그대로).
+    let sender = '';
+    try {
+      sender = (localStorage.getItem('maumjaro:username') || '').trim().slice(0, 12);
+    } catch (e) {
+      sender = '';
+    }
+    return sender ? `${base}&from=${encodeURIComponent(sender)}` : base;
   }
 
   // ---------- 커스텀 처방전 링크 인코딩/디코딩 (서버 없이 URL에 압축 저장) ----------
@@ -884,6 +894,7 @@
       emoji: '🎯',
       color: '#b779ef',
     };
+    customIncomingEyebrow.textContent = '긴급 처방전 도착';
     customIncomingTitle.textContent = payload.p ? `${payload.p}님을 위한 처방전` : '나를 위한 처방전';
     customIncomingCard.hidden = false;
 
@@ -1552,16 +1563,45 @@
     });
   });
 
-  // ---------- 공유 딥링크 진입 처리 (?rx=<id>) ----------
-  // 잘못되었거나 없는 id는 조용히 무시하고 평소처럼 홈이 보인다. 실행 기록은 남기지 않는다.
+  // ---------- 공유 딥링크 진입 처리 (?rx=<id>&from=<보낸사람>) ----------
+  // 카톡 링크 미리보기(og:title/og:description)가 "누군가 당신을 위한 처방전을 보냈습니다 /
+  // 주사를 놓아야 확인할 수 있습니다"라고 약속하므로, 받는 사람 경험도 그 약속과 일치시킨다.
+  // 커스텀 처방전(?custom=)과 완전히 같은 방식이며, 기존 주사 인터랙션을 그대로 재사용한다.
+  // 조회만으로는 기록을 남기지 않는다는 기존 원칙은 유지한다(recordRx 호출 없음).
+  function wireSharedRxIncoming(shared, senderName) {
+    const syntheticP = {
+      id: 'shared-incoming',
+      category: shared.category,
+      title: shared.title,
+      diagnosis: senderName ? `${senderName}님이 보낸 처방` : '누군가 보낸 처방',
+      emoji: shared.emoji,
+      color: shared.color || '',
+    };
+    customIncomingEyebrow.textContent = '💌 친구가 보낸 처방';
+    customIncomingTitle.textContent = senderName ? `${senderName}님이 보냈어요` : '나를 위한 처방전';
+    customIncomingCard.hidden = false;
+
+    wireExternalTrigger(customIncomingBtn, syntheticP, () => {
+      doseTag.hidden = true;
+      doseCaption.hidden = true;
+      liquid.style.fill = '';
+      customIncomingCard.hidden = true;
+      // 받는 사람에게도 평소와 같은 결과 화면을 보여준다. 이 화면의
+      // "💌 친구에게 처방하기" 버튼을 통해 바이럴 루프가 그대로 이어진다.
+      showRxImageFade(shared, () => showResultScreen(shared));
+      resetGenericFlowState('처방받기');
+    });
+  }
+
   try {
-    const sharedId = new URLSearchParams(location.search).get('rx');
-    if (sharedId) {
+    const params = new URLSearchParams(location.search);
+    const sharedId = params.get('rx');
+    // ?custom= 링크가 우선이다 — 두 수신 카드가 같은 DOM을 쓰므로 동시에 띄우지 않는다.
+    if (sharedId && !params.get('custom')) {
       const shared = ALL_PRESCRIPTIONS.find((p) => p.id === sharedId);
       if (shared) {
-        const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
-        if (rxTabBtn) rxTabBtn.click();
-        renderRxDetail(shared.id, shared.category, { fromRandom: true });
+        switchToHomeTab();
+        wireSharedRxIncoming(shared, (params.get('from') || '').trim().slice(0, 12));
       }
     }
   } catch (e) {
