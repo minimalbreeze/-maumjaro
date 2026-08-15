@@ -268,6 +268,53 @@
     { title: '이번 달 처방: 완충 지대 만들기', advice: '일정 사이에 여유 시간을 일부러 비워두는 달로 삼아보세요.' },
   ];
 
+  // ---------- 4.2: 토정비결 상반기/하반기 시드 (연초/연말 기준 오행 관계 5종, 기존 WEEKLY/MONTHLY_FORTUNE_SEED와 같은 패턴) ----------
+  const FIRST_HALF_FORTUNE_SEED = [
+    { relation: 'same', emoji: '🪞', title: '내 페이스를 지키는 상반기', diagnosis: '상반기 동류 과다',
+      advice: '연초부터 내 판단을 믿고 밀어붙여도 좋은 시기예요. 큰 계획이 있다면 상반기에 시동을 걸어보세요.',
+      caution: '고집이 과해지면 상반기 중반쯤 주변과 부딪힐 수 있어요.' },
+    { relation: 'output', emoji: '💬', title: '새로운 걸 벌이기 좋은 상반기', diagnosis: '상반기 표현 욕구 분출',
+      advice: '새로운 시도나 관계를 시작하기 좋은 흐름이에요. 미뤄뒀던 걸 상반기 안에 꺼내보세요.',
+      caution: '너무 여러 개를 동시에 벌이면 여름쯤 지칠 수 있어요.' },
+    { relation: 'wealth', emoji: '💰', title: '결실이 따라오는 상반기', diagnosis: '상반기 획득 활성화',
+      advice: '작년부터 쌓아온 게 있다면 상반기에 눈에 보이는 결과로 이어질 수 있어요.',
+      caution: '들어온 만큼 나가는 지출도 늘 수 있으니 계획을 미리 세워두기.' },
+    { relation: 'authority', emoji: '🧱', title: '몸을 사려야 하는 상반기', diagnosis: '상반기 외부 압박',
+      advice: '연초부터 무리하게 확장하기보다 있는 걸 지키는 데 집중하는 게 유리해요.',
+      caution: '억지로 밀어붙이면 상반기 내내 여파가 갈 수 있어요.' },
+    { relation: 'resource', emoji: '🌱', title: '도움을 받는 상반기', diagnosis: '상반기 에너지 보충',
+      advice: '연초에 좋은 인연이나 도움이 들어올 수 있는 시기예요. 새로운 만남에 열려 있기.',
+      caution: '의존이 습관이 되면 하반기에 부담으로 돌아올 수 있어요.' },
+  ];
+  const SECOND_HALF_FORTUNE_SEED = [
+    { relation: 'same', emoji: '🪞', title: '뚝심으로 마무리하는 하반기', diagnosis: '하반기 동류 과다',
+      advice: '연말까지 내 속도를 지키면서 밀고 나가도 좋은 시기예요.',
+      caution: '고집이 과해지면 연말 즈음 관계에서 마찰이 생길 수 있어요.' },
+    { relation: 'output', emoji: '💬', title: '정리하며 벌이기도 하는 하반기', diagnosis: '하반기 표현 욕구 분출',
+      advice: '상반기에 벌인 일을 정리하면서 동시에 새로운 걸 시도해도 좋은 흐름이에요.',
+      caution: '연말로 갈수록 에너지가 급격히 떨어질 수 있으니 페이스 조절하기.' },
+    { relation: 'wealth', emoji: '💰', title: '결실을 보는 하반기', diagnosis: '하반기 획득 활성화',
+      advice: '한 해 동안 쌓아온 노력이 연말쯤 결과로 이어질 가능성이 높아요.',
+      caution: '연말 지출이 커질 수 있으니 미리 계획 세워두기.' },
+    { relation: 'authority', emoji: '🧱', title: '내실을 다지는 하반기', diagnosis: '하반기 외부 압박',
+      advice: '새 판을 벌이기보다 한 해를 잘 마무리하는 데 집중하는 게 나아요.',
+      caution: '무리하게 정면돌파하면 내년 초까지 여파가 갈 수 있어요.' },
+    { relation: 'resource', emoji: '🌱', title: '귀인을 만나는 하반기', diagnosis: '하반기 에너지 보충',
+      advice: '연말로 갈수록 도움이나 좋은 인연이 들어올 가능성이 높은 시기예요.',
+      caution: '의존이 습관이 되면 내년에 부담으로 돌아올 수 있어요.' },
+  ];
+
+  // 올해의 맘운 처방 — MONTHLY_PRESCRIPTION_SEED는 문구에 "이번 달"이 박혀 있어 연간 화면엔 그대로 못 쓴다.
+  // 그래서 이것만 별도로 작은 풀을 새로 둔다 (진단명이 아니라 "올 한 해"를 위한 가벼운 생활 처방).
+  const YEARLY_PRESCRIPTION_SEED = [
+    { advice: '올해는 계획을 다 채우려 하지 말고, 세운 목표의 절반만 지워도 성공으로 치세요.' },
+    { advice: '평소보다 한 박자 느리게 움직여도 되는 해예요. 조급해하지 않기.' },
+    { advice: '에너지를 뺏어가는 관계는 올해 안에 살짝 거리를 둬도 괜찮아요.' },
+    { advice: '망설이던 게 있다면 올해 안에 하나만 저질러보세요.' },
+    { advice: '올해는 스스로 잘한 것부터 찾아서 칭찬해주는 연습을 해보세요.' },
+    { advice: '일정 사이에 여유 시간을 일부러 비워두는 한 해로 삼아보세요.' },
+  ];
+
   window.MAUMJARO_FORTUNE_DATA = {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
@@ -275,5 +322,6 @@
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
+    FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
   };
 })();

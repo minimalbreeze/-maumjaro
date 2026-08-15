@@ -10,6 +10,7 @@
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
+    FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const FORTUNE_SEED_BY_CATEGORY = {
@@ -217,6 +218,29 @@
   }
   function monthlyPickIndex(chart, salt, length) {
     return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${monthKey()}:${salt}`) % length;
+  }
+
+  // 4.2: 연 단위로 "올해 내내 안 바뀌는" salt 키.
+  function yearKey() {
+    return String(new Date().getFullYear());
+  }
+  function yearlyPickIndex(chart, salt, length) {
+    return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${yearKey()}:${salt}`) % length;
+  }
+
+  // 올해 1월 1일(정오 고정) 월주 오행 — 상반기 운세의 기준
+  function firstHalfAnchorElement() {
+    const year = new Date().getFullYear();
+    const jan1 = new Date(year, 0, 1, 12, 0, 0);
+    const ec = Solar.fromDate(jan1).getLunar().getEightChar();
+    return GAN_ELEMENT[ec.getMonthGan()];
+  }
+  // 올해 7월 1일(정오 고정) 월주 오행 — 하반기 운세의 기준
+  function secondHalfAnchorElement() {
+    const year = new Date().getFullYear();
+    const jul1 = new Date(year, 6, 1, 12, 0, 0);
+    const ec = Solar.fromDate(jul1).getLunar().getEightChar();
+    return GAN_ELEMENT[ec.getMonthGan()];
   }
 
   // 오늘 기록된 감정(2.0의 rxRecords, category:'emotion')을 읽어온다 — prescriptions.js 파일은 무수정,
@@ -494,24 +518,78 @@
   }
 
   function renderFortuneTojeong(profile) {
+    // 4.2: 토정비결을 "올해 전체 흐름 한 장"에서 10개 섹션의 연간 가이드로 확장.
+    // 전통 토정비결 산출식을 그대로 구현하지 않고, 기존 5개 카테고리 풀(재물/연애/인간관계/일/마음)과
+    // 월간 키워드/처방 풀을 "올해" 단위 salt로 재사용해 새 콘텐츠 작성 부담 없이 톤을 통일한다.
     const chart = getOrComputeSajuChart(profile);
-    const year = new Date().getFullYear();
-    const idx = hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${year}`) % TOJEONG_SEED.length;
-    const t = TOJEONG_SEED[idx];
+
+    const overall = TOJEONG_SEED[yearlyPickIndex(chart, 'tojeong-overall', TOJEONG_SEED.length)];
+
+    const firstHalfRelation = elementRelation(chart.dayMasterElement, firstHalfAnchorElement());
+    const firstHalf = FIRST_HALF_FORTUNE_SEED.find((s) => s.relation === firstHalfRelation) || FIRST_HALF_FORTUNE_SEED[0];
+
+    const secondHalfRelation = elementRelation(chart.dayMasterElement, secondHalfAnchorElement());
+    const secondHalf = SECOND_HALF_FORTUNE_SEED.find((s) => s.relation === secondHalfRelation) || SECOND_HALF_FORTUNE_SEED[0];
+
+    const wealthItem = WEALTH_FORTUNE_SEED.items[yearlyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+    const loveItem = LOVE_FORTUNE_SEED.items[yearlyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+    const socialItem = SOCIAL_FORTUNE_SEED.items[yearlyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+    const workItem = WORK_FORTUNE_SEED.items[yearlyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+    const mindItem = MIND_FORTUNE_SEED.items[yearlyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+
+    const keyword = MONTH_KEYWORDS[yearlyPickIndex(chart, 'keyword', MONTH_KEYWORDS.length)];
+    const yearlyRx = YEARLY_PRESCRIPTION_SEED[yearlyPickIndex(chart, 'rx', YEARLY_PRESCRIPTION_SEED.length)];
+
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
         <span class="rx-nav-title">📜 토정비결</span>
       </div>
       <p class="rx-custom-hint">💛 전통 토정비결의 정식 산출식을 그대로 구현한 게 아니라, 앱 톤에 맞게 재해석한 간이 버전이에요</p>
+
       <div class="rx-detail-card">
-        <div class="rx-detail-emoji">${t.emoji}</div>
-        <div class="rx-detail-title">${t.title}</div>
-        <div class="rx-detail-diagnosis">${t.summary}</div>
-        <p class="rx-detail-symptom">${t.detail}</p>
+        <div class="rx-detail-emoji">${overall.emoji}</div>
+        <div class="rx-detail-title">올해의 전체 흐름 · ${overall.title}</div>
+        <div class="rx-detail-diagnosis">${overall.summary}</div>
+        <p class="rx-detail-symptom">${overall.detail}</p>
       </div>
+
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">${firstHalf.emoji}</div>
+        <div class="rx-detail-title">상반기 · ${firstHalf.title}</div>
+        <div class="rx-detail-diagnosis">${firstHalf.diagnosis}</div>
+        <p class="rx-detail-symptom">${firstHalf.advice}</p>
+      </div>
+
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">${secondHalf.emoji}</div>
+        <div class="rx-detail-title">하반기 · ${secondHalf.title}</div>
+        <div class="rx-detail-diagnosis">${secondHalf.diagnosis}</div>
+        <p class="rx-detail-symptom">${secondHalf.advice}</p>
+      </div>
+
+      ${categorySectionHtml('재물', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('연애', loveItem, LOVE_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('인간관계', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('일', workItem, WORK_FORTUNE_SEED.rxCategory)}
+      ${categorySectionHtml('마음', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-row"><span class="rx-slip-key">올해의 키워드</span><span class="rx-slip-value">${keyword}</span></div>
+      </div>
+
+      <div class="rx-detail-card">
+        <div class="rx-detail-title">💊 올해의 맘운 처방</div>
+        <p class="rx-detail-symptom">${yearlyRx.advice}</p>
+      </div>
+
+      <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+      btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+    });
   }
 
   // ---------- 맘운: 오늘의 마음(2.0 감정 기록) + 오늘의 운을 합성 ----------
