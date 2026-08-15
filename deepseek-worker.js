@@ -8,7 +8,7 @@
 // 실제로 배포된 GitHub Pages 주소로 정확히 맞춰야 한다(마지막 슬래시 없이).
 // CORS를 이 origin으로만 열어서, 다른 사이트가 브라우저에서 이 Worker를
 // 직접 호출하는 걸 막는다(완벽한 보안은 아니지만 기본적인 오남용 방지책).
-const ALLOWED_ORIGIN = 'https://minimalbreeze.github.io';
+const ALLOWED_ORIGIN = 'https://maumjaro.minimalbreeze.com';
 
 function corsHeaders(origin) {
   const allow = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;

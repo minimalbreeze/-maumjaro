@@ -59,7 +59,7 @@ const AI_MAUMUN_PROXY_URL = 'https://maumjaro-ai.<your-subdomain>.workers.dev';
 
 ## 참고 — 비용/오남용 관리
 
-- Worker의 CORS를 `https://minimalbreeze.github.io`로만 열어뒀지만, 이건
+- Worker의 CORS를 `https://maumjaro.minimalbreeze.com`으로만 열어뒀지만, 이건
   브라우저에서의 직접 호출만 막을 뿐 완벽한 보안은 아닙니다. DeepSeek
   대시보드에서 **월 사용량 한도(spending limit)**를 걸어두는 걸 권장합니다.
 - 질문 길이는 Worker에서 1500자로 제한해뒀습니다(과금 폭주 방지).

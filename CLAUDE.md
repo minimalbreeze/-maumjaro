@@ -45,8 +45,11 @@
 
 ## 이 리포지토리의 기존 아키텍처 원칙 (브랜드 원칙과 함께 지킬 것)
 
-- 정적 사이트, 빌드 도구 없음. GitHub Pages(`minimalbreeze.github.io/-maumjaro/`)에
-  그대로 배포된다.
+- 정적 사이트, 빌드 도구 없음. GitHub Pages에 그대로 배포되며, 공식 주소는
+  커스텀 도메인 `https://maumjaro.minimalbreeze.com/` 이다(저장소 루트의 `CNAME`
+  파일로 연결). 기존 `minimalbreeze.github.io/-maumjaro/` 주소는 GitHub이 자동으로
+  새 주소로 넘겨주므로 예전에 공유된 링크도 계속 동작한다. 절대 URL(og:url,
+  og:image, canonical, sitemap.xml)은 항상 커스텀 도메인 기준으로 유지한다.
 - `app.js`(마음 주사 핵심 로직)는 원칙적으로 무수정. 다른 파일이 재사용해야 할
   기능은 `window.MaumjaroCore` export를 통해서만 접근한다.
 - `prescriptions.js`(처방 시스템)도 최소 수정. 외부 재사용은
