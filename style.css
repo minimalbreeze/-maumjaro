@@ -1345,6 +1345,45 @@ body {
   color: var(--text-dim);
 }
 
+/* ---------- 운세센터 전용 그리드 (처방센터보다 타일 수가 적어, 2열로 키워서 밀도를 맞춘다) ---------- */
+.fortune-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.fortune-category-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 10px 16px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  text-align: center;
+}
+.fortune-category-tile:active {
+  transform: scale(0.96);
+}
+.fortune-category-emoji {
+  font-size: 30px;
+}
+.fortune-category-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.fortune-category-count {
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.fortune-category-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
 .rx-list-card {
   display: flex;
   align-items: center;

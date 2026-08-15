@@ -258,41 +258,50 @@
 
   // ---------- 운세센터: 오늘/주간/월간/토정비결/맘운 그리드 (처방센터의 renderRxGrid 패턴 재사용) ----------
   function renderFortuneHub(profile) {
+    const maumunDone = !!getTodayMaumunEntry();
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <span class="rx-nav-title">🔮 운세센터</span>
         <button class="rx-friend-quick-btn" id="fortune-edit-profile-btn" type="button">✏️ 정보 수정</button>
       </div>
-      <div class="rx-category-grid">
-        <div class="rx-category-tile" data-fortune="daily">
-          <span class="rx-category-emoji">🔮</span>
-          <span class="rx-category-label">오늘의 운세</span>
-          <span class="rx-category-count">매일 갱신</span>
+      <button class="rx-custom-cta" id="fortune-maumun-cta-btn" type="button">
+        <span class="rx-custom-cta-emoji">🌞</span>
+        <span class="rx-custom-cta-text">
+          <span class="rx-custom-cta-title">오늘의 맘운</span>
+          <span class="rx-custom-cta-sub">${maumunDone ? '오늘의 맘운, 다시 보기' : '마음과 운, 오늘의 처방으로'}</span>
+        </span>
+        <span class="rx-custom-cta-arrow">›</span>
+      </button>
+      <div class="fortune-category-grid">
+        <div class="fortune-category-tile" data-fortune="daily">
+          <span class="fortune-category-emoji">🔮</span>
+          <span class="fortune-category-label">오늘의 운세</span>
+          <span class="fortune-category-desc">매일 새로 만나는<br/>오늘의 흐름</span>
         </div>
-        <div class="rx-category-tile" data-fortune="weekly">
-          <span class="rx-category-emoji">📅</span>
-          <span class="rx-category-label">주간 운세</span>
-          <span class="rx-category-count">이번 주</span>
+        <div class="fortune-category-tile" data-fortune="weekly">
+          <span class="fortune-category-emoji">📅</span>
+          <span class="fortune-category-label">주간 운세</span>
+          <span class="fortune-category-desc">이번 주 다섯 가지 운을<br/>한눈에</span>
         </div>
-        <div class="rx-category-tile" data-fortune="monthly">
-          <span class="rx-category-emoji">📆</span>
-          <span class="rx-category-label">월간 운세</span>
-          <span class="rx-category-count">이번 달</span>
+        <div class="fortune-category-tile" data-fortune="monthly">
+          <span class="fortune-category-emoji">📆</span>
+          <span class="fortune-category-label">월간 운세</span>
+          <span class="fortune-category-desc">이번 달 전체 흐름과<br/>핵심 키워드</span>
         </div>
-        <div class="rx-category-tile" data-fortune="tojeong">
-          <span class="rx-category-emoji">📜</span>
-          <span class="rx-category-label">토정비결</span>
-          <span class="rx-category-count">올해(간이판)</span>
+        <div class="fortune-category-tile" data-fortune="tojeong">
+          <span class="fortune-category-emoji">📜</span>
+          <span class="fortune-category-label">토정비결</span>
+          <span class="fortune-category-desc">올해 운세를<br/>간단하게 (간이판)</span>
         </div>
-        <div class="rx-category-tile" data-fortune="maumun">
-          <span class="rx-category-emoji">💞</span>
-          <span class="rx-category-label">맘운 처방</span>
-          <span class="rx-category-count">마음+운</span>
+        <div class="fortune-category-tile" data-fortune="maumun">
+          <span class="fortune-category-emoji">💞</span>
+          <span class="fortune-category-label">맘운 처방</span>
+          <span class="fortune-category-desc">오늘의 마음과 운을<br/>하나로 합쳐서</span>
         </div>
-        <div class="rx-category-tile" data-fortune="maumun-history">
-          <span class="rx-category-emoji">📖</span>
-          <span class="rx-category-label">지난 맘운</span>
-          <span class="rx-category-count">${Object.keys(loadMaumunLog()).length}일 기록</span>
+        <div class="fortune-category-tile" data-fortune="maumun-history">
+          <span class="fortune-category-emoji">📖</span>
+          <span class="fortune-category-label">지난 맘운</span>
+          <span class="fortune-category-desc">${Object.keys(loadMaumunLog()).length}일 동안의<br/>기록 다시 보기</span>
         </div>
       </div>
     `;
@@ -300,8 +309,9 @@
     document.getElementById('fortune-edit-profile-btn').addEventListener('click', () => {
       renderProfileForm(profile); // 기존 값을 채운 채로 수정 화면 진입 (재입력 아님)
     });
+    document.getElementById('fortune-maumun-cta-btn').addEventListener('click', () => renderMaumun(profile));
 
-    fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
+    fortuneContent.querySelectorAll('.fortune-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {
         const type = tile.dataset.fortune;
         if (type === 'daily') renderFortuneDaily(profile);
