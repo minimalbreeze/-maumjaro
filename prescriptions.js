@@ -1555,6 +1555,7 @@
     localStorage.removeItem(RX_LS_KEY);
     localStorage.removeItem(FRIEND_SENT_LS_KEY);
     localStorage.removeItem(RX_SCHEMA_KEY);
+    localStorage.removeItem('maumjaro:maumunLog'); // 4.0-E 맘운 기록 — 사주 프로필(설정성)과 달리 "기록"이라 함께 초기화
     Core.refreshSummary();
     renderUnifiedHistory();
     Core.showToast('모든 기록을 초기화했어요 🗑️');

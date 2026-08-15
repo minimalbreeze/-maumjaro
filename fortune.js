@@ -52,6 +52,34 @@
   const SAJU_PROFILE_KEY = 'maumjaro:sajuProfile';
   const SAJU_CHART_KEY = 'maumjaro:sajuChart';
   const FORTUNE_CALC_VERSION = 1;
+  const MAUMUN_LOG_KEY = 'maumjaro:maumunLog'; // 기존 감정/처방 기록 키와 완전 독립된 별도 구조
+
+  function todayDateKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function formatMaumunDate(dateStr) {
+    const [, m, d] = dateStr.split('-').map(Number);
+    return `${m}월 ${d}일`;
+  }
+
+  // ---------- 날짜별 맘운 기록 (날짜를 key로 하는 객체라 같은 날 재저장은 자동으로 덮어쓰기됨) ----------
+  function loadMaumunLog() {
+    try {
+      const raw = localStorage.getItem(MAUMUN_LOG_KEY);
+      const log = raw ? JSON.parse(raw) : {};
+      return (log && typeof log === 'object') ? log : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function saveMaumunLogEntry(entry) {
+    const log = loadMaumunLog();
+    log[entry.date] = entry;
+    localStorage.setItem(MAUMUN_LOG_KEY, JSON.stringify(log));
+  }
+  function getTodayMaumunEntry() {
+    return loadMaumunLog()[todayDateKey()] || null;
+  }
 
   // ---------- 사주 프로필 저장/로드 (별도 키, 기존 4개 키와 완전 독립) ----------
   function loadSajuProfile() {
@@ -241,6 +269,11 @@
           <span class="rx-category-label">맘운 처방</span>
           <span class="rx-category-count">마음+운</span>
         </div>
+        <div class="rx-category-tile" data-fortune="maumun-history">
+          <span class="rx-category-emoji">📖</span>
+          <span class="rx-category-label">지난 맘운</span>
+          <span class="rx-category-count">${Object.keys(loadMaumunLog()).length}일 기록</span>
+        </div>
       </div>
     `;
 
@@ -256,6 +289,7 @@
         else if (type === 'monthly') renderFortuneMonthly(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
+        else if (type === 'maumun-history') renderMaumunHistory(profile);
       });
     });
   }
@@ -393,7 +427,49 @@
   }
 
   // ---------- 맘운: 오늘의 마음(2.0 감정 기록) + 오늘의 운을 합성 ----------
+  function maumunEntryToReveal(entry) {
+    return {
+      emoji: entry.emotionEmoji,
+      diagnosis: entry.diagnosis,
+      interpretation: entry.interpretation,
+      prescription: entry.prescription,
+      dosage: entry.dosage,
+      color: entry.emotionColor,
+    };
+  }
+
   function renderMaumun(profile) {
+    // 오늘 이미 확인(주사 완료)했다면 새로 계산하지 않고 기록된 그대로 보여준다 —
+    // 같은 날 여러 번 들어와도 오늘의 맘운이 계속 달라지지 않도록 하는 장치.
+    const todayEntry = getTodayMaumunEntry();
+    if (todayEntry) {
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">🌞 오늘의 맘운</span>
+        </div>
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">오늘의 ${todayEntry.categoryLabel}</span><span class="rx-slip-value">${starsText(todayEntry.stars)}</span></div>
+        </div>
+        <div class="today-rx-card" style="display:flex;">
+          <div class="today-rx-emoji">${todayEntry.emotionEmoji}</div>
+          <div class="today-rx-body">
+            <div class="today-rx-eyebrow">오늘의 마음</div>
+            <div class="today-rx-title">${todayEntry.emotionLabel}</div>
+          </div>
+        </div>
+        <p class="rx-custom-hint">✅ 오늘의 맘운은 이미 확인했어요. 처방전은 언제든 다시 볼 수 있어요.</p>
+        <button class="action-btn" id="fortune-maumun-reopen-btn" type="button" style="width:100%;">💊 처방전 다시 보기</button>
+        <button class="rx-friend-quick-btn" id="fortune-maumun-history-btn" type="button" style="width:100%;margin-top:10px;">📖 지난 맘운 보기</button>
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      document.getElementById('fortune-maumun-reopen-btn').addEventListener('click', () => {
+        openMaumunReveal(maumunEntryToReveal(todayEntry));
+      });
+      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => renderMaumunHistory(profile));
+      return;
+    }
+
     const emotion = getTodayEmotionEntry();
 
     if (!emotion) {
@@ -404,11 +480,13 @@
         </div>
         <p class="rx-custom-hint">아직 오늘의 마음을 기록하지 않으셨어요. 홈에서 먼저 오늘의 감정을 처방받고 오면, 오늘의 운세와 합쳐서 맘운을 보여드릴게요</p>
         <button class="action-btn" id="fortune-goto-home-btn" type="button" style="width:100%;">💉 홈에서 마음 처방받기</button>
+        <button class="rx-friend-quick-btn" id="fortune-maumun-history-btn" type="button" style="width:100%;margin-top:10px;">📖 지난 맘운 보기</button>
       `;
       document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
       document.getElementById('fortune-goto-home-btn').addEventListener('click', () => {
         document.querySelector('.tab-btn[data-view="home"]').click();
       });
+      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => renderMaumunHistory(profile));
       return;
     }
 
@@ -469,14 +547,59 @@
     const injectBtn = document.getElementById('fortune-maumun-inject-btn');
     Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
       Rx.showRxImageFade(syntheticP, () => {
-        openMaumunReveal({
-          emoji: emotion.emoji,
+        const entry = {
+          date: todayDateKey(),
+          emotionKey: emotion.key,
+          emotionLabel: emotion.label,
+          emotionEmoji: emotion.emoji,
+          emotionColor: emotion.color,
+          categoryKey,
+          categoryLabel: FORTUNE_CATEGORY_LABELS[categoryKey],
+          stars: categoryItem.stars,
           diagnosis: interp.diagnosis,
           interpretation: interp.interpretation,
           prescription: interp.prescription,
           dosage: interp.dosage,
-          color: emotion.color,
-        });
+          injected: true,
+          ts: Date.now(),
+        };
+        saveMaumunLogEntry(entry);
+        renderHomeMaumunTeaser(); // 홈 카드도 바로 "오늘 완료" 상태로 갱신
+        openMaumunReveal(maumunEntryToReveal(entry));
+      });
+    });
+  }
+
+  // ---------- 지난 맘운: 날짜별 기록을 카드로 보여준다 ----------
+  function renderMaumunHistory(profile) {
+    const log = loadMaumunLog();
+    const entries = Object.values(log).sort((a, b) => b.date.localeCompare(a.date));
+    const cardsHtml = entries.length
+      ? entries.map((e) => `
+        <div class="rx-list-card" data-date="${e.date}">
+          <span class="rx-list-emoji">${e.emotionEmoji}</span>
+          <div class="rx-list-body">
+            <div class="rx-list-title-row">
+              <span class="rx-list-title">${formatMaumunDate(e.date)}</span>
+            </div>
+            <div class="rx-list-desc">${e.emotionEmoji} ${e.emotionLabel} · 🔮 ${e.categoryLabel} ${starsText(e.stars)}</div>
+            <div class="rx-list-desc">💉 ${e.diagnosis} 처방</div>
+          </div>
+        </div>`).join('')
+      : '<p class="rx-empty-msg">아직 지난 맘운 기록이 없어요</p>';
+
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+        <span class="rx-nav-title">📖 지난 맘운</span>
+      </div>
+      ${cardsHtml}
+    `;
+    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    fortuneContent.querySelectorAll('.rx-list-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        const entry = log[card.dataset.date];
+        if (entry) openMaumunReveal(maumunEntryToReveal(entry));
       });
     });
   }
@@ -619,24 +742,33 @@
 
   // ---------- 홈 화면 "🌞 오늘의 맘운" 티저 카드 ----------
   // 사주 프로필이 있을 때만 노출한다. 없는 사용자의 홈 화면은 기존 그대로 유지된다.
+  // 홈 카드는 세 가지 상태를 가진다: 프로필 없음(숨김) / 오늘 아직 미확인(안내) / 오늘 확인 완료(기록 요약).
+  // "오늘 확인 완료" 상태는 매번 새로 계산하지 않고 기록된 그대로 보여줘 반복 방문해도 내용이 안 바뀐다.
   function renderHomeMaumunTeaser() {
     const profile = loadSajuProfile();
     if (!profile) {
       homeMaumunCard.hidden = true;
       return;
     }
-    const chart = getOrComputeSajuChart(profile);
-    const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
-    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
-    homeMaumunOneline.textContent = oneLine;
-    homeMaumunSub.textContent = `${seed.emoji} ${seed.title}`;
+    const todayEntry = getTodayMaumunEntry();
+    if (todayEntry) {
+      homeMaumunOneline.textContent = `${todayEntry.diagnosis} 처방 완료`;
+      homeMaumunSub.textContent = `${todayEntry.emotionEmoji} ${todayEntry.emotionLabel} · 🔮 ${todayEntry.categoryLabel} ${starsText(todayEntry.stars)}`;
+      homeMaumunBtn.textContent = '다시 보기';
+      homeMaumunBtn.onclick = () => {
+        openMaumunReveal(maumunEntryToReveal(todayEntry));
+      };
+    } else {
+      homeMaumunOneline.textContent = '아직 오늘의 맘운을 확인하지 않았어요.';
+      homeMaumunSub.textContent = '탭해서 오늘의 맘운을 만나보세요';
+      homeMaumunBtn.textContent = '확인하기';
+      homeMaumunBtn.onclick = () => {
+        const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+        if (fortuneTabBtn) fortuneTabBtn.click();
+        renderMaumun(profile);
+      };
+    }
     homeMaumunCard.hidden = false;
-    homeMaumunBtn.onclick = () => {
-      const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
-      if (fortuneTabBtn) fortuneTabBtn.click();
-      renderFortuneDaily(profile);
-    };
   }
   renderHomeMaumunTeaser();
 
