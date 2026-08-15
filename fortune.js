@@ -13,6 +13,7 @@
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
     MAUMUN_SHARE_TEXTS,
     AI_MAUMUN_KEYWORDS, AI_MAUMUN_OPENING_SEED, AI_MAUMUN_ADVICE_SEED, AI_MAUMUN_AFFIRMATION_SEED,
+    AI_MAUMUN_WITTY_FALLBACK,
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const FORTUNE_SEED_BY_CATEGORY = {
@@ -911,13 +912,16 @@
 
   // ---------- 4.4: AI 맘운 (실제 LLM 호출 없이 사주 프로필+오늘의 운세+오늘의 감정+질문 키워드를
   // 조합해 미리 써둔 문장 풀에서 답변을 조립하는 "유사 AI") ----------
+  // 매칭되는 키워드가 없으면 null을 돌려준다 — 호출부가 "질문을 못 알아들었다"는 사실 자체를
+  // 알아야 위트있는 안내 문구를 붙일지 말지 판단할 수 있기 때문에, 여기서 'mind'로 조용히
+  // 대체해버리지 않는다.
   function detectAiMaumunCategory(question) {
     const q = question.toLowerCase();
     const cats = Object.keys(AI_MAUMUN_KEYWORDS);
     for (let i = 0; i < cats.length; i++) {
       if (AI_MAUMUN_KEYWORDS[cats[i]].some((kw) => q.includes(kw))) return cats[i];
     }
-    return 'mind'; // 특정 키워드가 없으면 마음 카테고리로 기본 대응
+    return null;
   }
 
   function buildAiMaumunAnswer(profile, emotion, question) {
@@ -925,7 +929,8 @@
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
     const opening = AI_MAUMUN_OPENING_SEED[relation];
 
-    const category = detectAiMaumunCategory(question);
+    const matchedCategory = detectAiMaumunCategory(question);
+    const category = matchedCategory || 'mind';
     const categorySeed = FORTUNE_SEED_BY_CATEGORY[category];
     const categoryItem = categorySeed.items[dailyPickIndex(chart, `ai-${category}`, categorySeed.items.length)];
 
@@ -933,12 +938,17 @@
     const qIdx = (pool) => hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${todayDateKey()}:${question}`) % pool.length;
     const advice = AI_MAUMUN_ADVICE_SEED[category][qIdx(AI_MAUMUN_ADVICE_SEED[category])];
     const affirmation = AI_MAUMUN_AFFIRMATION_SEED[category][qIdx(AI_MAUMUN_AFFIRMATION_SEED[category])];
+    // 질문이 뭘 묻는지 알아챘으면 그 답(advice)을 맨 앞으로, 못 알아챘으면(엉뚱한 질문) 위트있게
+    // 인정하고 넘어가는 문구를 맨 앞으로 — 어느 쪽이든 "직접적인 답"이 가장 먼저 나오게 한다.
+    const directAnswer = matchedCategory
+      ? advice
+      : AI_MAUMUN_WITTY_FALLBACK[qIdx(AI_MAUMUN_WITTY_FALLBACK)];
 
     return {
+      directAnswer,
       opening,
-      context: `다만 오늘의 ${FORTUNE_CATEGORY_LABELS[category]}이 조금 예민하게 작용할 수 있어요. ${categoryItem.quip}`,
-      emotionLine: `그리고 지금 마음엔 '${emotion.label}'도 자리하고 있으니, 너무 몰아붙이지 않아도 돼요.`,
-      advice: `그러니까 ${advice}`,
+      context: `오늘의 ${FORTUNE_CATEGORY_LABELS[category]}이 조금 예민하게 작용할 수 있어요. ${categoryItem.quip}`,
+      emotionLine: `지금 마음엔 '${emotion.label}'도 자리하고 있으니, 너무 몰아붙이지 않아도 돼요.`,
       affirmation,
       rxCategory: categorySeed.rxCategory,
     };
@@ -968,7 +978,9 @@
       '사용자의 사주(오행 관계), 오늘의 운세, 오늘 감정, 사용자의 질문을 종합해서 답한다.',
       '문체: 상냥한 존댓말, 따뜻하고 위로가 되는 톤. 무겁거나 불안을 조장하는 표현은 쓰지 않는다.',
       '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
-      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 오늘 전체 흐름 한두 문장 → 질문과 관련된 오늘의 운 해석 → "그러니까"로 시작하는 구체적 조언 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
+      '가장 중요한 원칙: 질문에 대한 직접적인 답변을 맨 처음 문장으로 먼저 제시한다. 오늘의 흐름이나 운세 설명으로 답을 미루지 않는다.',
+      '질문이 이상하거나 엉뚱하거나 운세와 관련 없어 보여도 당황하지 말고, 센스있고 위트있게 받아치면서 자연스럽게 위로로 이어간다. 질문을 무시하거나 "답할 수 없다"고 말하지 않는다.',
+      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 질문에 대한 직접적인 답 한두 문장(위트 포함 가능) → 오늘 전체 흐름 → 질문과 관련된 오늘의 운 해석 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
       '문단 사이는 줄바꿈 두 번으로 구분한다. 전체 250자 내외로 짧게 답한다.',
     ].join(' ');
 
@@ -1008,10 +1020,10 @@
     const answerEl = document.getElementById('ai-maumun-answer');
     answerEl.innerHTML = `
       <div class="rx-detail-card" style="margin-top:16px;">
-        <p class="rx-detail-symptom">${answer.opening}</p>
+        <p class="rx-detail-symptom" style="font-weight:700;">${answer.directAnswer}</p>
+        <p class="rx-detail-symptom" style="margin-top:10px;">${answer.opening}</p>
         <p class="rx-detail-symptom" style="margin-top:10px;">${answer.context}</p>
         <p class="rx-detail-symptom" style="margin-top:10px;">${answer.emotionLine}</p>
-        <p class="rx-detail-symptom" style="margin-top:10px;">${answer.advice}</p>
         <div class="rx-custom-preview" style="margin-top:14px;">
           <div class="rx-slip-row"><span class="rx-slip-key">💉 오늘의 처방</span></div>
           <p class="rx-slip-text">'${answer.affirmation}'</p>

@@ -431,6 +431,16 @@
     ],
   };
 
+  // 질문이 일/연애/인간관계/재물 어느 키워드에도 안 걸릴 때(엉뚱하거나 예상 밖의 질문일 때)
+  // 당황하지 않고 위트있게 받아치면서 자연스럽게 위로로 이어가는 오프닝 문구.
+  const AI_MAUMUN_WITTY_FALLBACK = [
+    '음, 그건 오늘의 운세 카테고리에는 없는 질문이네요. 그래도 답은 해드릴게요 — 일단 오늘 하루, 너무 애쓰지 않아도 돼요.',
+    '오, 예상 못 한 질문인데요? 정확한 답은 저도 모르겠지만, 마음만은 확실히 다독여드릴 수 있어요.',
+    '그건 사주로도 잘 안 나오는 질문이네요 😄 대신 오늘 하루는 마음 편히 보내시라는 말은 자신 있게 해드릴게요.',
+    '흠, 신선한 질문이에요. 정답은 저도 잘 모르겠지만, 오늘 하루 무사히 넘기는 게 제일 중요하다는 건 확실해요.',
+    '그건 맘운자로 담당 밖의 질문 같은데요? 그래도 오늘 마음만큼은 확실히 챙겨드릴게요.',
+  ];
+
   // ---------- 4.3: 친구에게 오늘의 운세 보내기 공유 문구 ----------
   // 호기심은 자극하되 "사고", "위험" 같은 공포/불안 조장 표현은 쓰지 않는다.
   const MAUMUN_SHARE_TEXTS = [
@@ -449,5 +459,6 @@
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
     MAUMUN_SHARE_TEXTS,
     AI_MAUMUN_KEYWORDS, AI_MAUMUN_OPENING_SEED, AI_MAUMUN_ADVICE_SEED, AI_MAUMUN_AFFIRMATION_SEED,
+    AI_MAUMUN_WITTY_FALLBACK,
   };
 })();
