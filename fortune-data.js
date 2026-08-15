@@ -241,11 +241,39 @@
     },
   };
 
+  // ---------- 4.1: 주간/월간 맘운 확장 콘텐츠 ----------
+  const WEEKDAY_LABELS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+
+  const MONTH_KEYWORDS = [
+    '새로운 시작', '정리와 비움', '휴식', '확장', '인내', '관계 다지기', '전환점', '결실', '재정비', '충전',
+  ];
+
+  // 월간 "마음의 흐름" — 별점이 아니라 한 달 동안의 기분 궤적을 짧은 서술로 보여준다.
+  const MONTHLY_MIND_FLOW_SEED = [
+    '초반엔 잔잔하다가 중순부터 에너지가 붙는 흐름이에요. 후반부에 뭔가를 시작해도 늦지 않아요.',
+    '이번 달은 감정 기복이 좀 있을 수 있어요. 오르내림 자체를 자연스럽게 받아들이면 한결 편해져요.',
+    '월초에 마음이 바쁘다가 월말로 갈수록 차분해지는 흐름이에요. 초반에 무리하지 않는 게 포인트예요.',
+    '전체적으로 안정적인 한 달이에요. 큰 동요 없이 내 페이스를 유지하기 좋은 시기예요.',
+    '중순쯤 마음이 살짝 무거워지는 구간이 있을 수 있어요. 그 시기만 잘 넘기면 한결 가벼워져요.',
+    '이번 달은 마음이 유독 말랑해지는 시기예요. 평소보다 감정에 솔직해져도 괜찮아요.',
+  ];
+
+  // 이번 달 처방 — 진단명이 아니라 "이번 한 달"을 위한 가벼운 생활 처방
+  const MONTHLY_PRESCRIPTION_SEED = [
+    { title: '이번 달 처방: 계획 다이어트', advice: '할 일을 다 채우려 하지 말고, 이번 달은 목록에서 절반만 지워도 성공으로 치세요.' },
+    { title: '이번 달 처방: 느긋함 보충', advice: '평소보다 한 박자 느리게 움직여도 되는 달이에요. 서두르지 않기.' },
+    { title: '이번 달 처방: 관계 정리', advice: '에너지를 뺏어가는 관계는 살짝 거리를 둬도 괜찮은 달이에요.' },
+    { title: '이번 달 처방: 저지르기', advice: '망설이던 게 있다면 이번 달 안에 하나만 저질러보세요.' },
+    { title: '이번 달 처방: 자기 칭찬 처방', advice: '이번 달은 스스로 잘한 것부터 찾아서 칭찬해주는 연습을 해보세요.' },
+    { title: '이번 달 처방: 완충 지대 만들기', advice: '일정 사이에 여유 시간을 일부러 비워두는 달로 삼아보세요.' },
+  ];
+
   window.MAUMJARO_FORTUNE_DATA = {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
     MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
+    WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
   };
 })();
