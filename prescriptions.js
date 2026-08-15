@@ -521,6 +521,9 @@
     rxFriendShareBtn.disabled = true;
     const originalLabel = rxFriendShareBtn.textContent;
     rxFriendShareBtn.textContent = '준비 중...';
+    // 메모를 안 썼으면 안내용 placeholder 문구("친구에게 하고 싶은 말을...")가
+    // 그대로 이미지에 박혀버리므로, 캡처 순간에만 잠깐 숨겼다가 되돌린다.
+    if (!hasNote) rxFriendNoteInput.style.display = 'none';
     try {
       const canvas = await window.html2canvas(rxFriendCapture, { backgroundColor: '#fffdf9', scale: 2 });
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -555,6 +558,7 @@
       Core.showToast('전송 준비에 실패했어요. 텍스트로 보낼게요');
       shareOrCopy(pickedShareText, pickedShareUrl);
     } finally {
+      if (!hasNote) rxFriendNoteInput.style.display = '';
       rxFriendShareBtn.disabled = false;
       rxFriendShareBtn.textContent = originalLabel;
     }
