@@ -1552,7 +1552,10 @@
       tile.addEventListener('click', () => {
         const topic = tarotTopicOf(tile.dataset.topic);
         const existing = getTarotDraw(topic.key);
-        if (existing) renderTarotResult(profile, existing);
+        // 카드를 골랐지만 아직 주사를 놓지 않았으면 게이트로 돌려보낸다(공개를 건너뛸 수 없게).
+        // revealed 필드가 없던 기존 기록은 이미 본 것으로 취급한다.
+        if (existing && existing.revealed === false) renderTarotGate(profile, topic, existing);
+        else if (existing) renderTarotResult(profile, existing);
         else renderTarotShuffle(profile, topic);
       });
     });
@@ -1651,23 +1654,65 @@
 
     openBtn.addEventListener('click', () => {
       if (picked.length !== 3) return;
-      const cards = picked.map((i) => fan[i]);
       const entry = {
         date: todayDateKey(),
         topic: topic.key,
-        cards,
+        cards: picked.map((i) => fan[i]),
+        revealed: false, // 주사를 놓아야 공개된다
         injected: false,
         summary: TAROT_SUMMARY_SEED[Math.floor(Math.random() * TAROT_SUMMARY_SEED.length)],
         ts: Date.now(),
       };
-      // 주사를 놓지 않아도 오늘 뽑은 카드는 고정되어야 한다(다시 들어와도 같은 카드).
+      // 고른 순간 카드를 고정한다(다시 들어와도 같은 카드).
       saveTarotDraw(entry);
-      // 결과를 바로 펼치지 않고 한 장씩 전체화면으로 공개한 뒤 해석으로 넘어간다.
-      const revealed = cards.map((c) => {
-        const card = tarotCardOf(c.id);
-        return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };
+      renderTarotGate(profile, topic, entry);
+    });
+  }
+
+  // ---------- 2.5단계: 주사를 놓아야 카드가 열린다 ----------
+  // 기존 "카드 열어보기" 버튼을 주사로 교체한 화면. 탭 횟수는 그대로라 마찰은 늘지 않고,
+  // 주사가 "결과를 여는 행위"가 되어 브랜드의 핵심 인터랙션이 앞으로 나온다.
+  function renderTarotGate(profile, topic, entry) {
+    const cards = entry.cards.map((c) => {
+      const card = tarotCardOf(c.id);
+      return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };
+    });
+
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
+        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
+      </div>
+      <p class="tarot-hint">카드 3장을 골랐어요.<br /><strong>주사를 놓으면 카드가 열립니다</strong></p>
+      <div class="tarot-gate-cards">
+        ${[0, 1, 2].map((i) => `<div class="tarot-card-back" style="--g:${i}">${TAROT_BACK_SVG}</div>`).join('')}
+      </div>
+      <button class="action-btn" id="tarot-open-btn" type="button" style="width:100%;">💉 주사 놓고 카드 열기</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
+    `;
+
+    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
+
+    const syntheticP = {
+      id: 'tarot-reveal',
+      category: 'tarot',
+      title: `${topic.label} 타로`,
+      diagnosis: '카드를 여는 중',
+      emoji: '🎴',
+      color: '#b779ef',
+    };
+    const openBtn = document.getElementById('tarot-open-btn');
+    Rx.wireExternalTrigger(openBtn, syntheticP, () => {
+      resetDoseVisuals();
+      Rx.resetGenericFlowState('💉 주사 놓고 카드 열기');
+      Rx.showRxImageFade(syntheticP, () => {
+        // 주사는 홈 탭에서 놓이므로, 공개 전에 운세 탭으로 돌아온다.
+        const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+        if (fortuneTabBtn) fortuneTabBtn.click();
+        const opened = { ...(getTarotDraw(entry.topic) || entry), revealed: true };
+        saveTarotDraw(opened);
+        revealTarotCardsOneByOne(cards, topic, () => renderTarotResult(profile, opened));
       });
-      revealTarotCardsOneByOne(revealed, topic, () => renderTarotResult(profile, entry));
     });
   }
 

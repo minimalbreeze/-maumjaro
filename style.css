@@ -2260,6 +2260,25 @@ body {
   margin-top: 10px;
 }
 
+/* 주사를 기다리는 뒤집힌 카드 3장 (공개 전 게이트 화면) */
+.tarot-gate-cards {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 22px 0 26px;
+}
+.tarot-gate-cards .tarot-card-back {
+  width: 84px;
+  height: 143px;
+  border-radius: 10px;
+  animation: tarot-gate-float 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--g) * 0.25s);
+}
+@keyframes tarot-gate-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(1.5deg); }
+}
+
 /* 종합 결과 — 카드 아래, 공유 이미지에도 함께 담긴다 */
 .tarot-verdict {
   text-align: center;
