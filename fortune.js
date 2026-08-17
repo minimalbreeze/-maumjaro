@@ -824,6 +824,7 @@
 
         <div class="rx-custom-preview">
           <div class="rx-slip-row"><span class="rx-slip-key">오늘의 ${FORTUNE_CATEGORY_LABELS[categoryKey]}</span><span class="rx-slip-value">${starsText(categoryItem.stars)}</span></div>
+          <p class="rx-slip-text">${categoryItem.quip}</p>
         </div>
 
         <div class="today-rx-card" style="display:flex;">
@@ -839,7 +840,7 @@
           <div class="tarot-card-back" style="--g:0">${TAROT_BACK_SVG}</div>
         </div>
 
-        <p class="tarot-hint"><strong>주사를 놓으면 오늘의 맘운이 열립니다</strong><br />해석과 처방, 복용법이 함께 나와요</p>
+        <p class="tarot-hint">이 둘을 합치면 오늘의 맘운이 나와요.<br /><strong>주사를 놓으면 해석과 처방이 열립니다</strong></p>
         <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 주사 놓고 오늘의 맘운 열기</button>
         <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
       `;
