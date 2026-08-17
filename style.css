@@ -24,6 +24,11 @@ body {
   background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
   color: var(--text);
   min-height: 100vh;
+  /* dvh는 브라우저 툴바가 차지하는 높이를 뺀 "실제로 보이는" 높이다.
+     카톡/인스타 인앱 브라우저처럼 하단 툴바가 항상 떠 있는 환경에서
+     100vh를 쓰면 화면이 툴바 뒤로 잘린다. 아래 줄을 모르는 구형 브라우저는
+     그냥 무시하고 위의 100vh를 쓰므로 안전하다. */
+  min-height: 100dvh;
   overflow: hidden;
 }
 
@@ -31,6 +36,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* 인앱 브라우저에서 하단 탭바가 잘리지 않도록 (위 주석 참고) */
   max-width: 480px;
   margin: 0 auto;
   padding-top: var(--safe-top);
@@ -783,6 +789,7 @@ body {
   width: 100%;
   max-width: 340px;
   max-height: 92vh;
+  max-height: 92dvh; /* 인앱 브라우저에서 모달 하단(닫기 버튼)이 잘리지 않도록 */
   overflow-y: auto;
   background: var(--bg-top);
   border: 1px solid var(--card-border);
@@ -1578,6 +1585,7 @@ body {
 .rx-sent-history-card {
   max-width: 360px;
   max-height: 78vh;
+  max-height: 78dvh; /* 인앱 브라우저에서 목록 하단이 잘리지 않도록 */
   overflow-y: auto;
 }
 #rx-sent-history-list {
