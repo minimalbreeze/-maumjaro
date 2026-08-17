@@ -2068,6 +2068,30 @@
       return [];
     }
   }
+  // 타로는 log[날짜][주제] 구조라 평탄화해서 항목 목록으로 바꾼다.
+  // 주제가 없던 구형 기록도 normalizeTarotDay가 'today'로 읽어주므로 함께 나온다.
+  function loadTarotItems() {
+    const log = loadTarotLog();
+    const out = [];
+    Object.keys(log).forEach((date) => {
+      const day = normalizeTarotDay(log[date]);
+      Object.keys(day).forEach((topicKey) => {
+        const e = day[topicKey];
+        if (!e || !Array.isArray(e.cards) || e.cards.length !== 3) return;
+        const cards = e.cards.map((c) => tarotCardOf(c.id)).filter(Boolean);
+        if (cards.length !== 3) return; // 카드 데이터가 바뀌어 못 찾으면 건너뛴다
+        const topic = tarotTopicOf(e.topic || topicKey);
+        const verdict = tarotVerdictOf(e.cards, topic);
+        out.push({
+          ts: e.ts,
+          emoji: topic.emoji,
+          title: `${topic.label} 타로`,
+          sub: `${starsText(verdict.stars)} · ${cards.map((c) => c.name).join(' · ')}`,
+        });
+      });
+    });
+    return out;
+  }
   function loadMaumunItems() {
     return Object.values(loadMaumunLog()).map((e) => ({
       ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, sub: `🔮 ${e.categoryLabel} ${starsText(e.stars)}`,
@@ -2307,6 +2331,11 @@
           <span class="rx-category-label">운세</span>
           <span class="rx-category-count">일/월/년</span>
         </div>
+        <div class="rx-category-tile" data-cat="tarot">
+          <span class="rx-category-emoji">🎴</span>
+          <span class="rx-category-label">타로</span>
+          <span class="rx-category-count">일/월/년</span>
+        </div>
       </div>
     `;
     historyCustomArea.querySelectorAll('.rx-category-tile').forEach((tile) => {
@@ -2322,6 +2351,7 @@
         }
         historyCustomArea.hidden = false;
         if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
+        else if (cat === 'tarot') renderHistoryCategoryView(profile, '🎴 타로 기록', loadTarotItems);
         else renderHistoryCategoryView(profile, '🔮 운세 기록', loadMaumunItems);
       });
     });
