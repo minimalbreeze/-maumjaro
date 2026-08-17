@@ -19,7 +19,7 @@
       rev: { keyword: '섣부름', line: '조금만 더 준비해도 늦지 않아요. 지금은 숨 고르기 구간이에요' },
     },
     {
-      id: 1, name: '마법사', en: 'The Magician', emoji: '🎩', rxCategory: 'work',
+      id: 1, name: '마법사', en: 'The Magician', emoji: '🎩', rxCategory: 'work', img: 'tarot/magician.jpg',
       up: { keyword: '실행력', line: '필요한 건 이미 다 가지고 있어요. 손만 뻗으면 되는 날이에요' },
       rev: { keyword: '헛도는 힘', line: '에너지는 충분한데 방향이 흩어져 있어요. 하나만 골라보세요' },
     },
@@ -104,12 +104,12 @@
       rev: { keyword: '흐린 기대', line: '기대를 접어둔 상태죠. 아직 완전히 꺼진 건 아니에요' },
     },
     {
-      id: 18, name: '달', en: 'The Moon', emoji: '🌕', rxCategory: 'sleep',
+      id: 18, name: '달', en: 'The Moon', emoji: '🌕', rxCategory: 'sleep', img: 'tarot/moon.jpg',
       up: { keyword: '안개', line: '아직 다 안 보여요. 오늘 결론 내리지 않아도 돼요' },
       rev: { keyword: '걷히는 안개', line: '헷갈렸던 게 조금씩 선명해져요. 조금만 더 기다려보세요' },
     },
     {
-      id: 19, name: '태양', en: 'The Sun', emoji: '☀️', rxCategory: 'fun',
+      id: 19, name: '태양', en: 'The Sun', emoji: '☀️', rxCategory: 'fun', img: 'tarot/sun.jpg',
       up: { keyword: '환함', line: '숨길 게 없는 날이에요. 그냥 나로 있어도 잘 굴러가요' },
       rev: { keyword: '억지 웃음', line: '괜찮은 척이 조금 길었어요. 오늘은 안 웃어도 돼요' },
     },

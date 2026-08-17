@@ -2093,6 +2093,34 @@ body {
   color: rgba(233,207,150,0.8);
 }
 
+/* 실제 도판을 쓰는 카드 — 그림이 카드를 꽉 채우고 금박 테두리만 남긴다 */
+.tarot-face.has-img {
+  position: relative;
+  padding: 3px;
+  overflow: hidden;
+}
+.tarot-face-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 120 / 205;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #f6f1e4;
+}
+/* 역방향은 그림을 실제로 뒤집는다 (정통 타로와 동일) */
+.tarot-face.has-img.reversed .tarot-face-img {
+  transform: rotate(180deg);
+}
+/* 도판 카드의 이름·방향은 카드 밖 캡션으로 (그림에 인쇄된 이름을 가리지 않도록) */
+.tarot-face-under {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
 /* ---------- 카드 한 장을 전체화면으로 공개 ---------- */
 .tarot-card-modal {
   width: 100%;

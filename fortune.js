@@ -1187,8 +1187,20 @@
   // 한 곳에서 만든다 — 크기는 CSS로만 달라진다(디자인이 갈라지지 않게).
   function tarotFaceHtml(c, opts) {
     const o = opts || {};
+    const style = o.delay ? ` style="animation-delay:${o.delay}s;"` : '';
+    // 실제 도판(퍼블릭 도메인 1909년 원본)이 있는 카드는 그 그림을 카드 전체로 쓴다.
+    // 도판 안에 이미 로마숫자와 카드 이름이 그려져 있으므로 우리 텍스트는 겹쳐 넣지 않고,
+    // 도판에 없는 정/역방향만 작은 배지로 얹는다.
+    if (c.card.img) {
+      // 방향 표시는 카드 위에 얹지 않는다 — 도판 하단에 인쇄된 카드 이름을 가리기 때문.
+      // 결과 화면에서는 카드 아래 캡션으로, 전체화면에서는 이미 키워드 줄에 표시된다.
+      return `
+        <div class="tarot-face has-img${c.reversed ? ' reversed' : ''}"${style}>
+          <img class="tarot-face-img" src="${c.card.img}" alt="${c.card.name} 카드" loading="lazy" decoding="async" />
+        </div>`;
+    }
     return `
-      <div class="tarot-face${c.reversed ? ' reversed' : ''}"${o.delay ? ` style="animation-delay:${o.delay}s;"` : ''}>
+      <div class="tarot-face${c.reversed ? ' reversed' : ''}"${style}>
         <div class="tarot-face-frame">
           <div class="tarot-face-num">${tarotRoman(c.card.id)}</div>
           <div class="tarot-face-art"><span class="tarot-face-emoji">${c.card.emoji}</span></div>
@@ -1487,6 +1499,7 @@
       <div class="tarot-face-wrap tappable" data-card-i="${i}">
         <div class="tarot-face-pos">${TAROT_POSITIONS[i].emoji} ${TAROT_POSITIONS[i].label}</div>
         ${tarotFaceHtml(c, { delay: i * 0.45 })}
+        ${c.card.img ? `<div class="tarot-face-under">${c.card.name} · ${tarotDirLabel(c.reversed)}</div>` : ''}
       </div>`).join('');
 
     const readHtml = cards.map((c, i) => `
