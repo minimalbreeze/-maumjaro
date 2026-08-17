@@ -957,7 +957,7 @@
   // 4.6: Cloudflare Worker 등으로 배포한 DeepSeek 프록시의 URL. 배포 방법은 AI_PROXY_SETUP.md 참고.
   // 비워두면(기본값) 지금처럼 템플릿 기반 유사 AI로 동작한다 — API 키를 정적 사이트에 직접
   // 넣으면 공개 저장소에 노출되므로, 실제 AI를 쓰려면 반드시 이 프록시를 거쳐야 한다.
-  const AI_MAUMUN_PROXY_URL = '';
+  const AI_MAUMUN_PROXY_URL = 'https://maumjaro-ai.mb5252-f00.workers.dev';
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -969,9 +969,15 @@
     const chart = getOrComputeSajuChart(profile);
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
     const opening = AI_MAUMUN_OPENING_SEED[relation];
-    const category = detectAiMaumunCategory(question);
+    // detectAiMaumunCategory는 키워드가 안 맞으면 null을 준다("타이거 우즈 나이" 같은 사실 질문).
+    // 운세 힌트를 뽑을 때는 기본값으로 마음운을 쓰되, 매칭 여부는 프롬프트 톤을 정하는 데 쓴다.
+    const matchedCategory = detectAiMaumunCategory(question);
+    const category = matchedCategory || 'mind';
     const categorySeed = FORTUNE_SEED_BY_CATEGORY[category];
     const categoryItem = categorySeed.items[dailyPickIndex(chart, `ai-${category}`, categorySeed.items.length)];
+
+    const now = new Date();
+    const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
 
     const systemPrompt = [
       '너는 "맘운자로"라는 한국 앱의 "AI 맘운" 캐릭터다.',
@@ -979,12 +985,18 @@
       '문체: 상냥한 존댓말, 따뜻하고 위로가 되는 톤. 무겁거나 불안을 조장하는 표현은 쓰지 않는다.',
       '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
       '가장 중요한 원칙: 질문에 대한 직접적인 답변을 맨 처음 문장으로 먼저 제시한다. 오늘의 흐름이나 운세 설명으로 답을 미루지 않는다.',
+      // 사실 질문 대응: 아는 건 정확히, 모르는 건 솔직히. 지어내면 앱 신뢰도가 무너진다.
+      '질문이 인물·날짜·상식 같은 사실 확인이면 아는 범위에서 정확하게 답한다. 나이를 물으면 아래에 주어진 오늘 날짜를 기준으로 계산한다.',
+      '확실하지 않은 사실은 지어내지 말고 "정확히는 모르겠어요"라고 솔직히 말한 뒤 위트로 넘어간다.',
+      '날씨, 오늘의 뉴스, 주가, 경기 결과처럼 실시간 정보는 알 수 없다. 이런 질문에는 모른다고 짧게 인정하고 위트있게 받아친 뒤 오늘의 운 이야기로 넘어간다.',
       '질문이 이상하거나 엉뚱하거나 운세와 관련 없어 보여도 당황하지 말고, 센스있고 위트있게 받아치면서 자연스럽게 위로로 이어간다. 질문을 무시하거나 "답할 수 없다"고 말하지 않는다.',
-      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 질문에 대한 직접적인 답 한두 문장(위트 포함 가능) → 오늘 전체 흐름 → 질문과 관련된 오늘의 운 해석 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
-      '문단 사이는 줄바꿈 두 번으로 구분한다. 전체 250자 내외로 짧게 답한다.',
+      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 질문에 대한 직접적인 답 한두 문장(위트 포함 가능) → 오늘 전체 흐름 한 문장 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
+      // 길게 답하면 아래 처방/주사 흐름이 화면 밖으로 밀린다.
+      '문단 사이는 줄바꿈 두 번으로 구분한다. 문단은 최대 3개, 전체 180자 이내로 짧게 답한다. 장황한 설명이나 목록은 절대 쓰지 않는다.',
     ].join(' ');
 
     const userPrompt = [
+      `오늘 날짜: ${todayLabel}`,
       `오늘의 전체 기운: ${opening}`,
       `오늘 해당하는 운 카테고리(${FORTUNE_CATEGORY_LABELS[category]}) 힌트: ${categoryItem.quip}`,
       `오늘의 감정: ${emotion.label}`,
