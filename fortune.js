@@ -835,17 +835,13 @@
           </div>
         </div>
 
-        <div class="rx-detail-card">
-          <div class="rx-detail-title">오늘의 해석</div>
-          <p class="rx-detail-symptom">${interp.interpretation}</p>
+        <div class="tarot-gate-cards" style="margin:20px 0 22px;">
+          <div class="tarot-card-back" style="--g:0">${TAROT_BACK_SVG}</div>
         </div>
 
-        <div class="rx-custom-preview">
-          <div class="rx-slip-row"><span class="rx-slip-key">💊 오늘의 맘운 처방</span><span class="rx-slip-value">${interp.diagnosis}</span></div>
-        </div>
-
-        <p class="rx-custom-hint">주사를 놓으면 처방과 복용법이 담긴 맘운 처방전을 확인할 수 있어요</p>
-        <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 맘운 처방받기</button>
+        <p class="tarot-hint"><strong>주사를 놓으면 오늘의 맘운이 열립니다</strong><br />해석과 처방, 복용법이 함께 나와요</p>
+        <button class="action-btn" id="fortune-maumun-inject-btn" type="button" style="width:100%;">💉 주사 놓고 오늘의 맘운 열기</button>
+        <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
       `;
       document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
 
@@ -1709,7 +1705,8 @@
         // 주사는 홈 탭에서 놓이므로, 공개 전에 운세 탭으로 돌아온다.
         const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
         if (fortuneTabBtn) fortuneTabBtn.click();
-        const opened = { ...(getTarotDraw(entry.topic) || entry), revealed: true };
+        // 이 주사가 곧 오늘의 처방이다(결과 화면에서 또 놓지 않는다).
+        const opened = { ...(getTarotDraw(entry.topic) || entry), revealed: true, injected: true };
         saveTarotDraw(opened);
         revealTarotCardsOneByOne(cards, topic, () => renderTarotResult(profile, opened));
       });
@@ -1769,10 +1766,10 @@
           <span class="rx-slip-value">${autoRx ? `${autoRx.emoji} ${autoRx.title}` : `${advice.card.name} · ${advice.side.keyword}`}</span>
         </div>
         <p class="rx-slip-text">${autoRx ? autoRx.diagnosis : advice.side.line}</p>
-        <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">종합 결과에 맞춰 골라둔 처방이에요. 바로 주사를 놓을 수 있어요</p>
+        <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">종합 결과에 맞춰 자동으로 처방됐어요. 주사는 카드를 열 때 이미 맞았어요 💉</p>
         <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">다른 처방도 보기 ›</button>
       </div>
-      <button class="action-btn" id="tarot-inject-btn" type="button" style="width:100%;margin-top:12px;">💉 이 처방으로 주사 놓기</button>
+      <button class="action-btn" id="tarot-slip-btn" type="button" style="width:100%;margin-top:12px;">📝 처방전 보기</button>
       <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🎴 타로 결과 공유하기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${topic.label} 타로는 오늘 이걸로 고정돼요. 다른 주제는 지금 바로 볼 수 있어요</p>
     `;
@@ -1787,39 +1784,19 @@
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn, topic, verdict));
 
-    // 기존 주사 인터랙션을 그대로 재사용한다(새로 구현하지 않는다).
-    // 자동으로 고른 실제 처방이 있으면 그걸로 주사를 놓고, 없으면 카드 기준으로 만든다.
-    const syntheticP = autoRx ? {
-      id: autoRx.id,
-      category: autoRx.category,
-      title: autoRx.title,
-      diagnosis: autoRx.diagnosis,
-      emoji: autoRx.emoji,
-      color: autoRx.color || '#b779ef',
-    } : {
-      id: 'tarot-today',
-      category: 'tarot',
-      title: `${advice.card.name} 처방`,
-      diagnosis: `${advice.card.name} · ${advice.side.keyword}`,
-      emoji: advice.card.emoji,
-      color: '#b779ef',
-    };
-    const injectBtn = document.getElementById('tarot-inject-btn');
-    Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
-      resetDoseVisuals();
-      Rx.resetGenericFlowState('💉 이 처방으로 주사 놓기'); // 상태를 idle로 되돌려야 다음 주사가 가능하다
-      Rx.showRxImageFade(syntheticP, () => {
-        saveTarotDraw({ ...(getTarotDraw(entry.topic) || entry), injected: true });
-        openMaumunReveal({
-          emoji: syntheticP.emoji,
-          diagnosis: `${topic.label} · ${verdict.title}`,
-          // 카드 문구들은 마침표 없이 끝나므로, 이어 붙일 때 마침표를 넣어야 문장이 자연스럽다.
-          interpretation: `${verdict.line}. ${advice.side.line}`,
-          prescription: autoRx ? autoRx.prescription : advice.side.line,
-          dosage: autoRx ? autoRx.title : `${advice.card.name} ${tarotDirLabel(advice.reversed)}`,
-          color: syntheticP.color,
-          showMakeOwnBtn: false,
-        });
+    // 주사는 카드를 열 때(게이트) 이미 놓았으므로 여기서 또 놓지 않는다.
+    // 처방전은 주사 없이 바로 열어볼 수 있게 한다.
+    const slipEmoji = autoRx ? autoRx.emoji : advice.card.emoji;
+    document.getElementById('tarot-slip-btn').addEventListener('click', () => {
+      openMaumunReveal({
+        emoji: slipEmoji,
+        diagnosis: `${topic.label} · ${verdict.title}`,
+        // 카드 문구들은 마침표 없이 끝나므로, 이어 붙일 때 마침표를 넣어야 문장이 자연스럽다.
+        interpretation: `${verdict.line}. ${advice.side.line}`,
+        prescription: autoRx ? autoRx.prescription : advice.side.line,
+        dosage: autoRx ? autoRx.title : `${advice.card.name} ${tarotDirLabel(advice.reversed)}`,
+        color: (autoRx && autoRx.color) || '#b779ef',
+        showMakeOwnBtn: false,
       });
     });
   }
