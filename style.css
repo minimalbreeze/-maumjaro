@@ -1542,6 +1542,40 @@ body {
   margin: 0 0 8px;
   white-space: pre-wrap;
 }
+/* 공유 이미지 하단 유입 훅 — 텍스트만으로는 눈에 안 걸려서 카드 뒷면 그림을 함께 넣는다.
+   뒤집힌 카드 세 장이라 "뽑아보고 싶은" 느낌을 준다. */
+.rx-hook-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--card-border);
+}
+.rx-hook-cards {
+  flex-shrink: 0;
+  display: flex;
+}
+/* 살짝 겹쳐 부채처럼 보이게 */
+.rx-hook-cards .tarot-card-back {
+  width: 26px;
+  height: 41px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.28);
+}
+.rx-hook-cards .tarot-card-back:nth-child(1) { transform: rotate(-9deg); }
+.rx-hook-cards .tarot-card-back:nth-child(2) { margin-left: -7px; z-index: 1; }
+.rx-hook-cards .tarot-card-back:nth-child(3) { margin-left: -7px; transform: rotate(9deg); }
+.rx-hook-text {
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.rx-hook-text strong {
+  color: var(--text);
+}
+
 .rx-friend-link {
   font-size: 11.5px;
   color: #3b82c4;

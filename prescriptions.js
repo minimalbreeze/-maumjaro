@@ -90,6 +90,15 @@
   const customIncomingBtn = document.getElementById('custom-incoming-btn');
   const customIncomingEyebrow = document.getElementById('custom-incoming-eyebrow');
 
+  // 공유 이미지 하단 훅에 타로 카드 뒷면 세 장을 채운다.
+  // tarot-data.js가 이 파일보다 먼저 로드되므로 그대로 읽어 쓴다(없으면 훅은 텍스트만 남는다).
+  (function fillHookCards() {
+    const box = document.getElementById('rx-hook-cards');
+    const svg = window.MAUMJARO_TAROT_DATA && window.MAUMJARO_TAROT_DATA.TAROT_BACK_SVG;
+    if (!box || !svg) return;
+    box.innerHTML = [0, 1, 2].map(() => `<div class="tarot-card-back">${svg}</div>`).join('');
+  })();
+
   const rxRevealOverlay = document.getElementById('rx-custom-reveal-overlay');
   const rxRevealDiagnosis = document.getElementById('rx-reveal-diagnosis');
   const rxRevealPatient = document.getElementById('rx-reveal-patient');
@@ -587,7 +596,9 @@
     document.body.style.setProperty('--dose-color', p.color || '');
     rxFriendBannerEmoji.textContent = p.emoji || '💊';
     rxFriendBannerDiagnosis.textContent = p.diagnosis;
-    rxFriendShareText.textContent = pickedShareText;
+    // 이미지 안에는 처방 문구만 넣는다. 유입 훅은 아래 카드 그림 띠가 시각적으로 담당하고,
+    // 텍스트 훅은 카톡 메시지 본문(pickedShareText)으로 나가므로 이미지에서 중복시키지 않는다.
+    rxFriendShareText.textContent = p.shareText;
     rxFriendLink.textContent = pickedShareUrl;
     resetFriendAttachments();
     rxFriendResult.hidden = false;
