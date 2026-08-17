@@ -861,6 +861,9 @@
       const injectBtn = document.getElementById('fortune-maumun-inject-btn');
       Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
         resetDoseVisuals();
+        // 직접 onComplete를 넘긴 흐름은 기본 완료 처리를 타지 않으므로 상태를 직접 되돌린다.
+        // 이게 없으면 주사 상태가 'injecting'에 머물러 이후 모든 주사가 막혔다.
+        Rx.resetGenericFlowState('처방받기');
         Rx.showRxImageFade(syntheticP, () => {
           const entry = {
             date: todayDateKey(),
@@ -1462,6 +1465,7 @@
     const injectBtn = document.getElementById('tarot-inject-btn');
     Rx.wireExternalTrigger(injectBtn, syntheticP, () => {
       resetDoseVisuals();
+      Rx.resetGenericFlowState('💉 이 처방으로 주사 놓기'); // 상태를 idle로 되돌려야 다음 주사가 가능하다
       Rx.showRxImageFade(syntheticP, () => {
         saveTarotDraw({ ...entry, injected: true });
         openMaumunReveal({

@@ -723,6 +723,18 @@
   new MutationObserver(syncOtherTriggerButtons).observe(appEl, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- 일반(비감정) 처방 실행 ----------
+  // app.js가 소유한 홈 화면 요소들. 감정 플로우에서 쓰는 것과 같은 팔 그림/상태 문구를
+  // 처방·타로·맘운 등 일반 플로우에서도 재사용해, 동작 인식 없이 탭으로도 주사를 놓게 한다.
+  const genericArmTarget = document.getElementById('arm-target');
+  const genericStatusText = document.getElementById('status-text');
+  if (genericArmTarget) {
+    // app.js에도 같은 요소의 클릭 리스너가 있지만 그쪽은 자기 state('ready')만 검사하므로
+    // 두 리스너는 서로 배타적으로 동작한다(감정 플로우 / 일반 플로우 동시 진행 불가).
+    genericArmTarget.addEventListener('click', () => {
+      if (genericState === 'ready') startGenericInject();
+    });
+  }
+
   function startGenericPrepare(prescription, triggerBtn, onComplete) {
     if (genericState !== 'idle' || appHasOtherFlowActive()) return;
     activeTriggerBtn = triggerBtn || todayRxBtn;
@@ -753,6 +765,12 @@
       appEl.classList.add('rx-ready');
       activeTriggerBtn.disabled = false;
       activeTriggerBtn.textContent = '주사 놓기';
+      // 준비가 끝나면 홈 화면에 팔 그림(탭 영역)과 안내 문구를 띄운다.
+      // 이게 없으면 처방센터/타로/맘운처럼 다른 탭에서 시작한 주사는, 홈 탭으로 옮겨진 뒤
+      // 정작 누를 대상이 없어져(트리거 버튼은 숨겨진 탭에 있고 홈 버튼은 비활성) 동작 인식
+      // 외에는 주사를 놓을 방법이 없었다.
+      if (genericArmTarget) genericArmTarget.hidden = false;
+      if (genericStatusText) genericStatusText.textContent = '준비되었어요. 팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요';
       Core.playReadyChime();
     });
   }
@@ -764,6 +782,8 @@
     appEl.classList.add('rx-injecting');
     activeTriggerBtn.disabled = true;
     activeTriggerBtn.textContent = '주사 중...';
+    if (genericArmTarget) genericArmTarget.hidden = true;
+    if (genericStatusText) genericStatusText.textContent = '마음에 천천히 전달되고 있어요';
     Core.playInjectPress();
 
     let dropletTriggered = false;
@@ -789,6 +809,9 @@
     genericState = 'idle';
     currentGeneric = null;
     actionBtn.disabled = false;
+    // 흐름이 끝나거나 중단되어도 팔 그림과 안내 문구가 남아있지 않게 한다.
+    if (genericArmTarget) genericArmTarget.hidden = true;
+    Core.refreshSummary(); // 상태 문구를 평상시("오늘 마음 주사를 맞았어요")로 되돌린다
     if (activeTriggerBtn) {
       activeTriggerBtn.disabled = appHasOtherFlowActive();
       activeTriggerBtn.textContent = triggerLabel;
@@ -1671,6 +1694,10 @@
     wireExternalTrigger,
     showRxImageFade,
     shareOrCopy,
+    // wireExternalTrigger에 직접 onComplete를 넘긴 흐름(맘운·타로 등)은 기본 완료 처리를
+    // 타지 않으므로, 자기 후처리를 끝낸 뒤 이걸 호출해 주사 상태를 idle로 되돌려야 한다.
+    // 호출하지 않으면 genericState가 'injecting'에 머물러 이후 모든 주사가 막힌다.
+    resetGenericFlowState,
     goToRxCategory(catId) {
       const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
       if (rxTabBtn) rxTabBtn.click();
