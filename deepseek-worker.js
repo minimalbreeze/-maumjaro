@@ -67,7 +67,9 @@ export default {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
-          max_tokens: 500,
+          // 답변이 길어지면 처방/주사 흐름을 가려버리므로 짧게 끊는다.
+          // 실제 길이 조절은 시스템 프롬프트에서 하고, 여기는 안전장치 겸 비용 상한이다.
+          max_tokens: 320,
           temperature: 0.8,
         }),
       });
