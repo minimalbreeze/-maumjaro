@@ -27,6 +27,18 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers });
     }
+
+    // CORS 헤더는 브라우저만 지키는 규칙이라, curl 같은 직접 호출은 전혀 막지 못한다.
+    // 그래서 서버에서도 Origin을 직접 검사해 우리 앱에서 온 요청만 통과시킨다.
+    // (헤더는 위조할 수 있으므로 완벽한 차단은 아니다 — 실질적인 상한은 DeepSeek 잔액을
+    //  적게 유지하는 것이다. 이 검사는 주소를 알아낸 사람의 손쉬운 무단 사용을 막는 용도.)
+    if (origin !== ALLOWED_ORIGIN) {
+      return new Response(JSON.stringify({ error: 'forbidden origin' }), {
+        status: 403,
+        headers: { ...headers, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'method not allowed' }), {
         status: 405,
