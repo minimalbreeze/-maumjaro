@@ -1183,6 +1183,82 @@
     return out;
   }
 
+  // 카드 앞면 마크업. 작은 카드(결과 화면)와 큰 카드(전체화면 공개)가 같은 구조를 쓰도록
+  // 한 곳에서 만든다 — 크기는 CSS로만 달라진다(디자인이 갈라지지 않게).
+  function tarotFaceHtml(c, opts) {
+    const o = opts || {};
+    return `
+      <div class="tarot-face${c.reversed ? ' reversed' : ''}"${o.delay ? ` style="animation-delay:${o.delay}s;"` : ''}>
+        <div class="tarot-face-frame">
+          <div class="tarot-face-num">${tarotRoman(c.card.id)}</div>
+          <div class="tarot-face-art"><span class="tarot-face-emoji">${c.card.emoji}</span></div>
+          <div class="tarot-face-label">
+            <div class="tarot-face-name">${c.card.name}</div>
+            <span class="tarot-face-dir">${tarotDirLabel(c.reversed)}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // ---------- 카드 한 장을 전체화면으로 보여준다 ----------
+  // mode 'sequence': 뽑은 3장을 한 장씩 넘겨 보며 긴장감을 만든 뒤 결과로 넘어간다.
+  // mode 'single'  : 결과 화면에서 특정 카드를 다시 크게 볼 때.
+  const tarotCardOverlay = document.getElementById('tarot-card-overlay');
+  const tarotCardStep = document.getElementById('tarot-card-step');
+  const tarotCardPos = document.getElementById('tarot-card-pos');
+  const tarotCardStage = document.getElementById('tarot-card-stage');
+  const tarotCardKey = document.getElementById('tarot-card-key');
+  const tarotCardLine = document.getElementById('tarot-card-line');
+  const tarotCardNextBtn = document.getElementById('tarot-card-next');
+  let tarotCardOnNext = null;
+
+  function paintTarotCardModal(c, index, total, nextLabel) {
+    tarotCardStep.textContent = total > 1 ? `${index + 1} / ${total}` : '뽑은 카드';
+    tarotCardPos.textContent = `${TAROT_POSITIONS[index].emoji} ${TAROT_POSITIONS[index].label}`;
+    // innerHTML을 다시 넣어야 뒤집히는 애니메이션이 매번 재생된다.
+    tarotCardStage.innerHTML = tarotFaceHtml(c);
+    tarotCardKey.textContent = `${c.card.name} · ${tarotDirLabel(c.reversed)} · ${c.side.keyword}`;
+    tarotCardLine.textContent = c.side.line;
+    tarotCardNextBtn.textContent = nextLabel;
+    tarotSound('playReadyChime'); // 카드가 열릴 때 신비로운 소리
+  }
+
+  function closeTarotCardOverlay() {
+    tarotCardOverlay.classList.remove('show');
+    tarotCardOnNext = null;
+  }
+
+  tarotCardNextBtn.addEventListener('click', () => {
+    const fn = tarotCardOnNext;
+    if (typeof fn === 'function') fn();
+    else closeTarotCardOverlay();
+  });
+
+  // 3장을 순서대로 한 장씩 공개하고, 다 넘기면 onFinish로 결과 화면으로 간다.
+  function revealTarotCardsOneByOne(cards, onFinish) {
+    let i = 0;
+    const step = () => {
+      if (i >= cards.length) {
+        closeTarotCardOverlay();
+        tarotSound('playHealingChime'); // 세 장을 다 본 뒤 마무리 소리
+        onFinish();
+        return;
+      }
+      const isLast = i === cards.length - 1;
+      paintTarotCardModal(cards[i], i, cards.length, isLast ? '🔮 오늘의 해석 보기' : '다음 카드 ›');
+      i += 1;
+      tarotCardOnNext = step;
+    };
+    tarotCardOverlay.classList.add('show');
+    step();
+  }
+
+  function openTarotCardSingle(cards, index) {
+    tarotCardOverlay.classList.add('show');
+    paintTarotCardModal(cards[index], index, 1, '닫기');
+    tarotCardOnNext = closeTarotCardOverlay;
+  }
+
   // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.
   // (처방전 공유와 같은 방식 — 새로 구현하지 않고 기존 패턴을 따른다)
   async function shareTarotDraw(entry, cards, btn) {
@@ -1322,7 +1398,11 @@
       deck.classList.remove('shuffling');
       void deck.offsetWidth; // 애니메이션 재시작을 위한 강제 리플로우
       deck.classList.add('shuffling');
-      tarotSound('playInjectPress'); // 카드 넘기는 짧은 소리
+      // 카드가 스르륵 넘어가는 느낌을 내려고 짧은 클릭음을 촘촘히 겹쳐 낸다(리플 셔플).
+      tarotSound('playInjectPress');
+      setTimeout(() => tarotSound('playInjectPress'), 90);
+      setTimeout(() => tarotSound('playInjectPress'), 165);
+      setTimeout(() => tarotSound('playInjectPress'), 225);
       if (shuffles >= NEEDED) {
         setTimeout(() => renderTarotFan(profile), 520);
       }
@@ -1386,7 +1466,12 @@
       };
       // 주사를 놓지 않아도 오늘 뽑은 카드는 고정되어야 한다(다시 들어와도 같은 카드).
       saveTarotDraw(entry);
-      renderTarotResult(profile, entry);
+      // 결과를 바로 펼치지 않고 한 장씩 전체화면으로 공개한 뒤 해석으로 넘어간다.
+      const revealed = cards.map((c) => {
+        const card = tarotCardOf(c.id);
+        return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };
+      });
+      revealTarotCardsOneByOne(revealed, () => renderTarotResult(profile, entry));
     });
   }
 
@@ -1399,18 +1484,9 @@
     const advice = cards[2]; // 세 번째 자리 = 오늘의 처방 방향
 
     const facesHtml = cards.map((c, i) => `
-      <div class="tarot-face-wrap">
+      <div class="tarot-face-wrap tappable" data-card-i="${i}">
         <div class="tarot-face-pos">${TAROT_POSITIONS[i].emoji} ${TAROT_POSITIONS[i].label}</div>
-        <div class="tarot-face${c.reversed ? ' reversed' : ''}" style="animation-delay:${i * 0.45}s;">
-          <div class="tarot-face-frame">
-            <div class="tarot-face-num">${tarotRoman(c.card.id)}</div>
-            <div class="tarot-face-art"><span class="tarot-face-emoji">${c.card.emoji}</span></div>
-            <div class="tarot-face-label">
-              <div class="tarot-face-name">${c.card.name}</div>
-              <span class="tarot-face-dir">${tarotDirLabel(c.reversed)}</span>
-            </div>
-          </div>
-        </div>
+        ${tarotFaceHtml(c, { delay: i * 0.45 })}
       </div>`).join('');
 
     const readHtml = cards.map((c, i) => `
@@ -1434,6 +1510,7 @@
         <p class="tarot-hint" style="margin-bottom:0;">${entry.summary}</p>
         <div class="tarot-share-foot">맘운자로 · maumjaro.minimalbreeze.com</div>
       </div>
+      <p class="tarot-reveal-hint">카드를 누르면 크게 다시 볼 수 있어요</p>
       ${readHtml}
       <div class="rx-custom-preview" style="margin-top:12px;">
         <div class="rx-slip-row">
@@ -1450,6 +1527,10 @@
 
     document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
     document.getElementById('tarot-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(advice.card.rxCategory));
+    // 작은 카드를 눌러 그 카드만 다시 전체화면으로 본다
+    fortuneContent.querySelectorAll('.tarot-face-wrap.tappable').forEach((el) => {
+      el.addEventListener('click', () => openTarotCardSingle(cards, Number(el.dataset.cardI)));
+    });
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn));
 

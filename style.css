@@ -2093,6 +2093,91 @@ body {
   color: rgba(233,207,150,0.8);
 }
 
+/* ---------- 카드 한 장을 전체화면으로 공개 ---------- */
+.tarot-card-modal {
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  padding: 4px 8px;
+  transform: translateY(12px) scale(0.97);
+  transition: transform 0.28s ease;
+}
+.settings-overlay.show .tarot-card-modal {
+  transform: translateY(0) scale(1);
+}
+.tarot-card-step {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(233,207,150,0.9);
+}
+.tarot-card-pos {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+/* 큰 카드는 작은 카드와 같은 마크업을 쓰고 크기만 키운다 (디자인이 갈라지지 않게) */
+.tarot-card-stage {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 12px;
+}
+.tarot-card-stage .tarot-face {
+  width: min(62vw, 218px);
+  padding: 6px;
+  border-radius: 14px;
+  border-width: 1.5px;
+  /* 등장 애니메이션은 카드가 뒤집히듯 */
+  animation: tarot-flip 0.62s ease forwards;
+}
+.tarot-card-stage .tarot-face-frame {
+  border-radius: 10px;
+  padding: 10px 6px 8px;
+}
+.tarot-card-stage .tarot-face-num {
+  font-size: 13px;
+}
+.tarot-card-stage .tarot-face-art {
+  height: min(30vw, 108px);
+}
+.tarot-card-stage .tarot-face-emoji {
+  font-size: min(19vw, 68px);
+  filter: drop-shadow(0 0 16px rgba(233,207,150,0.55));
+}
+.tarot-card-stage .tarot-face-name {
+  font-size: 17px;
+}
+.tarot-card-stage .tarot-face-dir {
+  font-size: 11.5px;
+  margin-top: 4px;
+}
+.tarot-card-key {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: rgba(233,207,150,0.95);
+}
+.tarot-card-line {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.92);
+  margin: 8px 0 18px;
+  word-break: keep-all;
+}
+/* 결과 화면의 작은 카드도 눌러서 다시 크게 볼 수 있다 */
+.tarot-face-wrap.tappable .tarot-face {
+  cursor: pointer;
+}
+.tarot-face-wrap.tappable .tarot-face:active {
+  transform: scale(0.97);
+}
+.tarot-reveal-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 8px 0 0;
+}
+
 /* 공유용 캡처 영역 */
 .tarot-share-capture {
   background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
