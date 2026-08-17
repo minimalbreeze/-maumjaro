@@ -17,7 +17,7 @@
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const {
-    TAROT_MAJOR, TAROT_POSITIONS, TAROT_SHUFFLE_LINES, TAROT_SUMMARY_SEED, TAROT_BACK_SVG,
+    TAROT_MAJOR, TAROT_TOPICS, TAROT_VERDICT, TAROT_SHUFFLE_LINES, TAROT_SUMMARY_SEED, TAROT_BACK_SVG,
   } = window.MAUMJARO_TAROT_DATA;
 
   const FORTUNE_SEED_BY_CATEGORY = {
@@ -355,7 +355,7 @@
         <div class="rx-category-tile" data-fortune="tarot">
           <span class="rx-category-emoji">🎴</span>
           <span class="rx-category-label">타로</span>
-          <span class="rx-category-count">${getTodayTarotDraw() ? '오늘 뽑음' : '3장 뽑기'}</span>
+          <span class="rx-category-count">${countTodayTarotDraws() ? `오늘 ${countTodayTarotDraws()}개` : '주제별 3장'}</span>
         </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
@@ -387,7 +387,7 @@
         if (type === 'daily') renderFortuneDaily(profile);
         else if (type === 'weekly') renderFortuneWeekly(profile);
         else if (type === 'monthly') renderFortuneMonthly(profile);
-        else if (type === 'tarot') renderTarotEntry(profile);
+        else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
         else if (type === 'maumun-history') renderMaumunHistory(profile);
@@ -1141,6 +1141,8 @@
   const TAROT_LOG_KEY = 'maumjaro:tarotLog';
   const TAROT_FAN_COUNT = 9; // 부채꼴에 펼칠 카드 수
 
+  // 저장 구조: log[날짜][주제] = entry. 주제마다 하루 한 번씩 볼 수 있다.
+  // 주제 선택이 없던 시절의 기록(log[날짜]에 cards가 바로 있던 형태)은 'today' 주제로 읽어준다.
   function loadTarotLog() {
     try {
       const raw = localStorage.getItem(TAROT_LOG_KEY);
@@ -1150,16 +1152,56 @@
       return {};
     }
   }
+  function normalizeTarotDay(day) {
+    if (!day || typeof day !== 'object') return {};
+    return Array.isArray(day.cards) ? { today: day } : day; // 구 형식 마이그레이션
+  }
   function saveTarotDraw(entry) {
     const log = loadTarotLog();
-    log[entry.date] = entry;
+    const day = normalizeTarotDay(log[entry.date]);
+    day[entry.topic || 'today'] = entry;
+    log[entry.date] = day;
     localStorage.setItem(TAROT_LOG_KEY, JSON.stringify(log));
   }
-  function getTodayTarotDraw() {
-    const entry = loadTarotLog()[todayDateKey()];
+  function getTarotDraw(topicKey) {
+    const day = normalizeTarotDay(loadTarotLog()[todayDateKey()]);
+    const entry = day[topicKey];
     // 카드 데이터가 바뀌어 id를 못 찾는 경우까지 대비한다.
     if (!entry || !Array.isArray(entry.cards) || entry.cards.length !== 3) return null;
     return entry.cards.every((c) => tarotCardOf(c.id)) ? entry : null;
+  }
+  function countTodayTarotDraws() {
+    return Object.keys(normalizeTarotDay(loadTarotLog()[todayDateKey()])).length;
+  }
+  function tarotTopicOf(key) {
+    return TAROT_TOPICS.find((t) => t.key === key) || TAROT_TOPICS[TAROT_TOPICS.length - 1];
+  }
+
+  // ---------- 종합 결과 ----------
+  // 정방향 +1, 역방향 -1을 더해 -3~+3 점수를 내고 다섯 단계로 읽는다.
+  function tarotVerdictOf(cards, topic) {
+    const score = cards.reduce((sum, c) => sum + (c.reversed ? -1 : 1), 0);
+    const level = TAROT_VERDICT.find((v) => score >= v.min) || TAROT_VERDICT[TAROT_VERDICT.length - 1];
+    return {
+      score,
+      stars: level.stars,
+      title: level.title,
+      line: level.line.replace('{topic}', topic.label),
+    };
+  }
+
+  // ---------- 종합 결과에 따른 자동 처방 ----------
+  // 주제에 맞는 처방센터 카테고리에서 실제 처방 하나를 골라준다(사용자가 고르지 않아도 되게).
+  // 같은 날 같은 주제면 늘 같은 처방이 나오도록 날짜+카드로 결정한다.
+  function pickTarotPrescription(cards, topic, adviceCard) {
+    const catId = topic.rxCategory || adviceCard.card.rxCategory;
+    const seed = (window.MAUMJARO_RX_DATA && window.MAUMJARO_RX_DATA.PRESCRIPTIONS_SEED) || [];
+    const pool = seed.filter((p) => p.category === catId);
+    if (!pool.length) return null;
+    const key = `${todayDateKey()}-${topic.key}-${cards.map((c) => c.card.id).join('-')}`;
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 100000;
+    return pool[h % pool.length];
   }
 
   function tarotCardOf(id) {
@@ -1224,9 +1266,10 @@
   const tarotCardNextBtn = document.getElementById('tarot-card-next');
   let tarotCardOnNext = null;
 
-  function paintTarotCardModal(c, index, total, nextLabel) {
-    tarotCardStep.textContent = total > 1 ? `${index + 1} / ${total}` : '뽑은 카드';
-    tarotCardPos.textContent = `${TAROT_POSITIONS[index].emoji} ${TAROT_POSITIONS[index].label}`;
+  function paintTarotCardModal(c, index, total, nextLabel, topic) {
+    const pos = topic.positions[index];
+    tarotCardStep.textContent = total > 1 ? `${topic.emoji} ${topic.label} · ${index + 1} / ${total}` : `${topic.emoji} ${topic.label}`;
+    tarotCardPos.textContent = `${pos.emoji} ${pos.label}`;
     // innerHTML을 다시 넣어야 뒤집히는 애니메이션이 매번 재생된다.
     tarotCardStage.innerHTML = tarotFaceHtml(c);
     tarotCardKey.textContent = `${c.card.name} · ${tarotDirLabel(c.reversed)} · ${c.side.keyword}`;
@@ -1247,7 +1290,7 @@
   });
 
   // 3장을 순서대로 한 장씩 공개하고, 다 넘기면 onFinish로 결과 화면으로 간다.
-  function revealTarotCardsOneByOne(cards, onFinish) {
+  function revealTarotCardsOneByOne(cards, topic, onFinish) {
     let i = 0;
     const step = () => {
       if (i >= cards.length) {
@@ -1257,7 +1300,7 @@
         return;
       }
       const isLast = i === cards.length - 1;
-      paintTarotCardModal(cards[i], i, cards.length, isLast ? '🔮 오늘의 해석 보기' : '다음 카드 ›');
+      paintTarotCardModal(cards[i], i, cards.length, isLast ? '🔮 종합 결과 보기' : '다음 카드 ›', topic);
       i += 1;
       tarotCardOnNext = step;
     };
@@ -1265,9 +1308,9 @@
     step();
   }
 
-  function openTarotCardSingle(cards, index) {
+  function openTarotCardSingle(cards, index, topic) {
     tarotCardOverlay.classList.add('show');
-    paintTarotCardModal(cards[index], index, 1, '닫기');
+    paintTarotCardModal(cards[index], index, 1, '닫기', topic);
     tarotCardOnNext = closeTarotCardOverlay;
   }
 
@@ -1275,7 +1318,7 @@
   // 카드별 고정 문구를 나열하는 것과 달리, 세 장의 관계 + 오늘 감정 + 오늘의 기운을 묶어
   // 한 편의 리딩으로 읽어준다. 결과는 그날의 뽑기 기록에 캐시해서, 다시 들어와도 같은
   // 리딩이 보이고 API도 하루 한 번만 부른다.
-  function fetchTarotReading(profile, cards) {
+  function fetchTarotReading(profile, cards, topic, verdict) {
     const chart = getOrComputeSajuChart(profile);
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
     const opening = AI_MAUMUN_OPENING_SEED[relation];
@@ -1285,7 +1328,9 @@
 
     const systemPrompt = [
       '너는 "맘운자로"라는 한국 앱의 타로 리더다.',
+      '사용자가 물어본 주제에 대해서만 답한다. 주제와 상관없는 이야기로 넘어가지 않는다.',
       '뽑힌 세 장을 각각 따로 설명하지 말고, 세 장이 이어지는 하나의 이야기로 읽어준다.',
+      '주어진 종합 결과(점수)와 어긋나는 해석을 하지 않는다. 점수가 낮으면 억지로 긍정하지 않고 쉬어가라는 쪽으로 읽는다.',
       '문체: 상냥한 존댓말. 신비롭지만 겁주지 않는다. 불안을 조장하는 표현은 쓰지 않는다.',
       '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
       '카드 이름과 정/역방향은 이미 화면에 보이므로 나열하지 말고, 의미만 엮어 말한다.',
@@ -1296,9 +1341,11 @@
       '전체 150자를 절대 넘기지 않는다. 수식어를 덧붙이지 말고 짧게 끊어라. 항목 번호나 제목은 쓰지 않는다.',
     ].join(' ');
 
-    const cardLines = cards.map((c, i) => `${TAROT_POSITIONS[i].label}: ${c.card.name}(${tarotDirLabel(c.reversed)}, ${c.side.keyword})`).join('\n');
+    const cardLines = cards.map((c, i) => `${topic.positions[i].label}: ${c.card.name}(${tarotDirLabel(c.reversed)}, ${c.side.keyword})`).join('\n');
     const userPrompt = [
       `오늘 날짜: ${todayLabel}`,
+      `물어본 주제: ${topic.label} — ${topic.question}`,
+      `종합 결과: ${verdict.title} (5점 중 ${verdict.stars}점)`,
       `오늘의 전체 기운: ${opening}`,
       emotion ? `오늘 기록한 감정: ${emotion.label}` : '오늘 감정은 아직 기록하지 않았다',
       '뽑힌 카드:',
@@ -1331,7 +1378,7 @@
 
   // 리딩을 붙인다. 캐시가 있으면 그걸 쓰고, 없으면 한 번만 불러와 저장한다.
   // 프록시가 없거나 실패하면 이 블록만 조용히 비워둔다 — 카드별 해석은 그대로 남아 있다.
-  function wireTarotReading(profile, entry, cards) {
+  function wireTarotReading(profile, entry, cards, topic, verdict) {
     const el = document.getElementById('tarot-ai-reading');
     if (!el) return;
     if (entry.reading) {
@@ -1349,9 +1396,11 @@
           <p class="fortune-loading-text">세 장을 이어 읽고 있어요…</p>
         </div>
       </div>`;
-    fetchTarotReading(profile, cards)
+    fetchTarotReading(profile, cards, topic, verdict)
       .then((text) => {
-        saveTarotDraw({ ...loadTarotLog()[entry.date], reading: text });
+        // 저장 시점에 최신 기록을 다시 읽어 리딩만 덧붙인다(주사 여부 등이 덮이지 않게).
+        const latest = getTarotDraw(entry.topic) || entry;
+        saveTarotDraw({ ...latest, reading: text });
         renderTarotReadingText(text);
       })
       .catch(() => {
@@ -1361,7 +1410,7 @@
             <button class="rx-friend-quick-btn" id="tarot-reading-retry" type="button" style="margin-top:8px;">다시 시도</button>
           </div>`;
         const retry = document.getElementById('tarot-reading-retry');
-        if (retry) retry.addEventListener('click', () => wireTarotReading(profile, entry, cards));
+        if (retry) retry.addEventListener('click', () => wireTarotReading(profile, entry, cards, topic, verdict));
       });
   }
 
@@ -1469,17 +1518,49 @@
     el.addEventListener('mouseleave', up);
   }
 
+  // ---------- 0단계: 무엇을 볼지 고르기 ----------
+  function renderTarotTopics(profile) {
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
+        <span class="rx-nav-title">🎴 타로</span>
+      </div>
+      <p class="tarot-hint">무엇이 궁금한지 골라주세요</p>
+      <div class="rx-category-grid">
+        ${TAROT_TOPICS.map((t) => {
+          const done = !!getTarotDraw(t.key);
+          return `
+          <div class="rx-category-tile" data-topic="${t.key}">
+            <span class="rx-category-emoji">${t.emoji}</span>
+            <span class="rx-category-label">${t.label}</span>
+            <span class="rx-category-count">${done ? '오늘 봤어요' : '3장 뽑기'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">주제마다 하루에 한 번씩 볼 수 있어요</p>
+    `;
+    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
+    fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
+      tile.addEventListener('click', () => {
+        const topic = tarotTopicOf(tile.dataset.topic);
+        const existing = getTarotDraw(topic.key);
+        if (existing) renderTarotResult(profile, existing);
+        else renderTarotShuffle(profile, topic);
+      });
+    });
+  }
+
   // ---------- 1단계: 셔플 ----------
-  function renderTarotShuffle(profile) {
+  function renderTarotShuffle(profile, topic) {
     let shuffles = 0;
     const NEEDED = 3;
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">🎴 오늘의 타로</span>
+        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
       </div>
-      <p class="tarot-hint" id="tarot-hint">${TAROT_SHUFFLE_LINES[0]}</p>
+      <p class="tarot-hint" id="tarot-hint">${topic.question}<br />${TAROT_SHUFFLE_LINES[0]}</p>
       <div class="tarot-deck" id="tarot-deck">
         <div class="tarot-deck-inner">
           ${[0, 1, 2, 3, 4].map((i) => `<div class="tarot-card-back tarot-card-big" style="--r:${(i - 2) * 2.2}deg;transform:rotate(${(i - 2) * 2.2}deg);">${TAROT_BACK_SVG}</div>`).join('')}
@@ -1494,7 +1575,7 @@
     const hint = document.getElementById('tarot-hint');
     const countEl = document.getElementById('tarot-count');
 
-    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
 
     function doShuffle() {
       if (shuffles >= NEEDED) return;
@@ -1510,7 +1591,7 @@
       setTimeout(() => tarotSound('playInjectPress'), 165);
       setTimeout(() => tarotSound('playInjectPress'), 225);
       if (shuffles >= NEEDED) {
-        setTimeout(() => renderTarotFan(profile), 520);
+        setTimeout(() => renderTarotFan(profile, topic), 520);
       }
     }
 
@@ -1519,14 +1600,14 @@
   }
 
   // ---------- 2단계: 부채꼴에서 3장 직접 뽑기 ----------
-  function renderTarotFan(profile) {
+  function renderTarotFan(profile, topic) {
     const fan = buildTarotFan();
     const picked = [];
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">🎴 오늘의 타로</span>
+        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
       </div>
       <p class="tarot-hint">마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
       <div class="tarot-fan" id="tarot-fan">
@@ -1536,7 +1617,7 @@
       <button class="action-btn" id="tarot-open-btn" type="button" style="width:100%;" disabled>카드를 3장 골라주세요</button>
     `;
 
-    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
 
     const countEl = document.getElementById('tarot-count');
     const openBtn = document.getElementById('tarot-open-btn');
@@ -1565,6 +1646,7 @@
       const cards = picked.map((i) => fan[i]);
       const entry = {
         date: todayDateKey(),
+        topic: topic.key,
         cards,
         injected: false,
         summary: TAROT_SUMMARY_SEED[Math.floor(Math.random() * TAROT_SUMMARY_SEED.length)],
@@ -1577,7 +1659,7 @@
         const card = tarotCardOf(c.id);
         return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };
       });
-      revealTarotCardsOneByOne(revealed, () => renderTarotResult(profile, entry));
+      revealTarotCardsOneByOne(revealed, topic, () => renderTarotResult(profile, entry));
     });
   }
 
@@ -1587,11 +1669,15 @@
       const card = tarotCardOf(c.id);
       return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };
     });
-    const advice = cards[2]; // 세 번째 자리 = 오늘의 처방 방향
+    const advice = cards[2]; // 세 번째 자리 = 무엇을 할까 → 처방으로 이어진다
+    const topic = tarotTopicOf(entry.topic);
+    const verdict = tarotVerdictOf(cards, topic);
+    // 종합 결과에 맞춰 실제 처방을 자동으로 골라준다(사용자가 따로 고르지 않아도 되게).
+    const autoRx = pickTarotPrescription(cards, topic, advice);
 
     const facesHtml = cards.map((c, i) => `
       <div class="tarot-face-wrap tappable" data-card-i="${i}">
-        <div class="tarot-face-pos">${TAROT_POSITIONS[i].emoji} ${TAROT_POSITIONS[i].label}</div>
+        <div class="tarot-face-pos">${topic.positions[i].emoji} ${topic.positions[i].label}</div>
         ${tarotFaceHtml(c, { delay: i * 0.45 })}
         ${c.card.img ? `<div class="tarot-face-under">${c.card.name} · ${tarotDirLabel(c.reversed)}</div>` : ''}
       </div>`).join('');
@@ -1600,7 +1686,7 @@
       <div class="tarot-read-card">
         <span class="tarot-read-emoji">${c.card.emoji}</span>
         <div class="tarot-read-body">
-          <div class="tarot-read-pos">${TAROT_POSITIONS[i].emoji} ${TAROT_POSITIONS[i].label}</div>
+          <div class="tarot-read-pos">${topic.positions[i].emoji} ${topic.positions[i].label}</div>
           <div class="tarot-read-title">${c.card.name} · ${tarotDirLabel(c.reversed)} · ${c.side.keyword}</div>
           <p class="tarot-read-line">${c.side.line}</p>
         </div>
@@ -1609,12 +1695,16 @@
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">🎴 오늘의 타로</span>
+        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
       </div>
       <div class="tarot-share-capture" id="tarot-share-capture">
-        <div class="tarot-share-title">🎴 오늘의 타로</div>
+        <div class="tarot-share-title">${topic.emoji} ${topic.label} 타로</div>
         <div class="tarot-reveal-row">${facesHtml}</div>
-        <p class="tarot-hint" style="margin-bottom:0;">${entry.summary}</p>
+        <div class="tarot-verdict">
+          <div class="tarot-verdict-stars">${starsText(verdict.stars)}</div>
+          <div class="tarot-verdict-title">${verdict.title}</div>
+          <p class="tarot-verdict-line">${verdict.line}</p>
+        </div>
         <div class="tarot-share-foot">맘운자로 · maumjaro.minimalbreeze.com</div>
       </div>
       <p class="tarot-reveal-hint">카드를 누르면 크게 다시 볼 수 있어요</p>
@@ -1622,29 +1712,38 @@
       ${readHtml}
       <div class="rx-custom-preview" style="margin-top:12px;">
         <div class="rx-slip-row">
-          <span class="rx-slip-key">오늘의 처방</span>
-          <span class="rx-slip-value">${advice.card.name} · ${advice.side.keyword}</span>
+          <span class="rx-slip-key">자동 처방</span>
+          <span class="rx-slip-value">${autoRx ? `${autoRx.emoji} ${autoRx.title}` : `${advice.card.name} · ${advice.side.keyword}`}</span>
         </div>
-        <p class="rx-slip-text">${advice.side.line}</p>
-        <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">처방 후보 보러가기 ›</button>
+        <p class="rx-slip-text">${autoRx ? autoRx.diagnosis : advice.side.line}</p>
+        <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">종합 결과에 맞춰 골라둔 처방이에요. 바로 주사를 놓을 수 있어요</p>
+        <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">다른 처방도 보기 ›</button>
       </div>
       <button class="action-btn" id="tarot-inject-btn" type="button" style="width:100%;margin-top:12px;">💉 이 처방으로 주사 놓기</button>
       <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🎴 타로 결과 공유하기</button>
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">오늘 뽑은 카드는 그대로 저장돼요. 새로 뽑는 건 내일부터예요</p>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${topic.label} 타로는 오늘 이걸로 고정돼요. 다른 주제는 지금 바로 볼 수 있어요</p>
     `;
 
-    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
-    document.getElementById('tarot-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(advice.card.rxCategory));
+    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
+    document.getElementById('tarot-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(topic.rxCategory || advice.card.rxCategory));
     // 작은 카드를 눌러 그 카드만 다시 전체화면으로 본다
     fortuneContent.querySelectorAll('.tarot-face-wrap.tappable').forEach((el) => {
-      el.addEventListener('click', () => openTarotCardSingle(cards, Number(el.dataset.cardI)));
+      el.addEventListener('click', () => openTarotCardSingle(cards, Number(el.dataset.cardI), topic));
     });
-    wireTarotReading(profile, entry, cards);
+    wireTarotReading(profile, entry, cards, topic, verdict);
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn));
 
     // 기존 주사 인터랙션을 그대로 재사용한다(새로 구현하지 않는다).
-    const syntheticP = {
+    // 자동으로 고른 실제 처방이 있으면 그걸로 주사를 놓고, 없으면 카드 기준으로 만든다.
+    const syntheticP = autoRx ? {
+      id: autoRx.id,
+      category: autoRx.category,
+      title: autoRx.title,
+      diagnosis: autoRx.diagnosis,
+      emoji: autoRx.emoji,
+      color: autoRx.color || '#b779ef',
+    } : {
       id: 'tarot-today',
       category: 'tarot',
       title: `${advice.card.name} 처방`,
@@ -1657,26 +1756,19 @@
       resetDoseVisuals();
       Rx.resetGenericFlowState('💉 이 처방으로 주사 놓기'); // 상태를 idle로 되돌려야 다음 주사가 가능하다
       Rx.showRxImageFade(syntheticP, () => {
-        saveTarotDraw({ ...entry, injected: true });
+        saveTarotDraw({ ...(getTarotDraw(entry.topic) || entry), injected: true });
         openMaumunReveal({
-          emoji: advice.card.emoji,
-          diagnosis: `${advice.card.name} 처방`,
+          emoji: syntheticP.emoji,
+          diagnosis: `${topic.label} · ${verdict.title}`,
           // 카드 문구들은 마침표 없이 끝나므로, 이어 붙일 때 마침표를 넣어야 문장이 자연스럽다.
-          interpretation: `${cards[0].side.line}. ${cards[1].side.line}`,
-          prescription: advice.side.line,
-          dosage: `${advice.card.name} ${tarotDirLabel(advice.reversed)} · ${advice.side.keyword}`,
-          color: '#b779ef',
+          interpretation: `${verdict.line}. ${advice.side.line}`,
+          prescription: autoRx ? autoRx.prescription : advice.side.line,
+          dosage: autoRx ? autoRx.title : `${advice.card.name} ${tarotDirLabel(advice.reversed)}`,
+          color: syntheticP.color,
           showMakeOwnBtn: false,
         });
       });
     });
-  }
-
-  // 타로 진입점: 오늘 이미 뽑았으면 같은 카드를 다시 보여주고, 아니면 셔플부터 시작한다.
-  function renderTarotEntry(profile) {
-    const today = getTodayTarotDraw();
-    if (today) renderTarotResult(profile, today);
-    else renderTarotShuffle(profile);
   }
 
   // ---------- 4.8: 맘운 프로필 백업/복구 ----------

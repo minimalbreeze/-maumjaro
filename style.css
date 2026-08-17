@@ -2226,6 +2226,30 @@ body {
   margin-top: 10px;
 }
 
+/* 종합 결과 — 카드 아래, 공유 이미지에도 함께 담긴다 */
+.tarot-verdict {
+  text-align: center;
+  margin-top: 12px;
+}
+.tarot-verdict-stars {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--accent-a);
+}
+.tarot-verdict-title {
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+.tarot-verdict-line {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  word-break: keep-all;
+}
+
 /* AI 리딩 (세 장을 엮은 해석) — 카드별 해석보다 눈에 먼저 들어오게 살짝 강조 */
 .tarot-ai-card {
   padding: 13px 15px;

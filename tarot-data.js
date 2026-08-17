@@ -129,11 +129,75 @@
     },
   ];
 
-  // 3장 스프레드의 각 자리 — 앱의 핵심 흐름(운 → 마음 → 처방)에 그대로 대응시킨다.
-  const TAROT_POSITIONS = [
-    { key: 'mind', label: '지금 내 마음', emoji: '💗', hint: '지금 마음속에서 일어나는 일' },
-    { key: 'flow', label: '오늘의 흐름', emoji: '🌊', hint: '오늘 나를 둘러싼 기운' },
-    { key: 'advice', label: '오늘의 처방 방향', emoji: '💉', hint: '오늘 나에게 필요한 것' },
+  // 타로 주제. 사람들이 실제로 골라 보는 항목들이며, 주제마다 3장의 자리 이름이 달라진다
+  // (같은 스프레드라도 무엇을 묻는지에 따라 읽는 지점이 다르기 때문).
+  // 세 번째 자리는 항상 "무엇을 할까"에 해당해서, 그대로 처방으로 이어진다.
+  // rxCategory는 처방센터 카테고리 id와 맞춘다. null이면 뽑힌 카드의 rxCategory를 따른다.
+  const TAROT_TOPICS = [
+    {
+      key: 'love', label: '연애', emoji: '💕', rxCategory: 'love',
+      question: '지금 이 사람과의 관계가 어떻게 흘러갈까요?',
+      positions: [
+        { label: '상대의 마음', emoji: '💗' },
+        { label: '우리 사이의 흐름', emoji: '🌊' },
+        { label: '내가 할 수 있는 것', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'work', label: '직업', emoji: '💼', rxCategory: 'work',
+      question: '지금 일이 어떤 방향으로 가고 있을까요?',
+      positions: [
+        { label: '지금 나의 자리', emoji: '📍' },
+        { label: '앞으로의 흐름', emoji: '🌊' },
+        { label: '필요한 태도', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'money', label: '재물', emoji: '💰', rxCategory: 'money',
+      question: '돈의 흐름이 어떻게 움직일까요?',
+      positions: [
+        { label: '지금의 흐름', emoji: '📍' },
+        { label: '다가오는 변화', emoji: '🌊' },
+        { label: '지켜야 할 것', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'social', label: '인간관계', emoji: '👥', rxCategory: 'social',
+      question: '그 사람과의 관계를 어떻게 풀어갈까요?',
+      positions: [
+        { label: '이 관계의 지금', emoji: '📍' },
+        { label: '상대의 마음', emoji: '💗' },
+        { label: '풀어가는 방법', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'mind', label: '마음', emoji: '💗', rxCategory: 'emotion',
+      question: '지금 내 마음이 어떤 상태일까요?',
+      positions: [
+        { label: '지금 내 마음', emoji: '💗' },
+        { label: '마음의 흐름', emoji: '🌊' },
+        { label: '필요한 돌봄', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'today', label: '오늘 전체', emoji: '🌤️', rxCategory: null,
+      question: '오늘 하루가 어떻게 흘러갈까요?',
+      positions: [
+        { label: '지금 내 마음', emoji: '💗' },
+        { label: '오늘의 흐름', emoji: '🌊' },
+        { label: '오늘의 처방 방향', emoji: '💉' },
+      ],
+    },
+  ];
+
+  // 종합 결과: 정방향은 +1, 역방향은 -1로 더해 -3~+3 점수를 낸 뒤 다섯 단계로 읽는다.
+  // {topic}에는 주제 이름이 들어간다. 겁주지 않되 솔직하게, 낮은 점수도 "쉬어가라"로 풀어준다.
+  const TAROT_VERDICT = [
+    { min: 3, stars: 5, title: '아주 좋아요', line: '{topic} 쪽으로 흐름이 시원하게 열려 있어요. 망설이지 않아도 되는 날이에요' },
+    { min: 1, stars: 4, title: '좋아요', line: '{topic}에 대해 지금 방향은 맞게 가고 있어요. 속도만 내 페이스로 두세요' },
+    { min: 0, stars: 3, title: '아직 반반이에요', line: '{topic}은 어느 쪽으로도 기울지 않았어요. 결론은 조금 뒤에 내도 돼요' },
+    { min: -2, stars: 2, title: '천천히 가세요', line: '{topic}에서 서두르면 놓치는 게 생겨요. 한 박자 늦춰도 늦지 않아요' },
+    { min: -3, stars: 1, title: '숨 고를 때', line: '{topic}은 지금 밀어붙이기보다 쉬어가는 쪽이 나아요. 잠깐 내려놓아도 괜찮아요' },
   ];
 
   // 셔플 안내 문구 (섞을 때마다 순서대로 노출)
@@ -202,7 +266,8 @@
 
   window.MAUMJARO_TAROT_DATA = {
     TAROT_MAJOR,
-    TAROT_POSITIONS,
+    TAROT_TOPICS,
+    TAROT_VERDICT,
     TAROT_SHUFFLE_LINES,
     TAROT_SUMMARY_SEED,
     TAROT_BACK_SVG,
