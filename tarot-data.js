@@ -132,11 +132,11 @@
     { key: 'advice', label: '오늘의 처방 방향', emoji: '💉', hint: '오늘 나에게 필요한 것' },
   ];
 
-  // 셔플 안내 문구 (흔들기 전에 번갈아 노출)
+  // 셔플 안내 문구 (섞을 때마다 순서대로 노출)
   const TAROT_SHUFFLE_LINES = [
-    '폰을 가볍게 흔들어 카드를 섞어주세요',
+    '카드를 좌우로 쓸어 섞어주세요',
     '마음속으로 오늘 궁금한 걸 한 가지 떠올려보세요',
-    '충분히 섞였다고 느껴지면 멈추면 돼요',
+    '한 번만 더 섞으면 카드를 펼칠게요',
   ];
 
   // 3장을 다 뒤집은 뒤 붙는 마무리 한마디 (감정과 무관하게 톤만 잡아주는 역할)
@@ -148,10 +148,59 @@
     '지금 필요한 말만 딱 골라 나온 느낌이에요.',
   ];
 
+  // 카드 뒷면 — 직접 그린 원본 SVG.
+  // 검정 바탕 + 금박 라인아트 + 기하 프레임 + 식물 문양 + 초승달/별이라는 고전 타로 뒷면의
+  // 문법을 따르되, 시중 도판을 베끼지 않고 새로 구성했다(저작권 안전).
+  // 비율은 실제 타로 카드에 가까운 120:205.
+  const GOLD = '#d4af37';
+  const TAROT_BACK_SVG = `
+    <svg viewBox="0 0 120 205" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <rect width="120" height="205" fill="#0e0b1c"/>
+      <g stroke="${GOLD}" fill="none" stroke-width="0.8" stroke-linecap="round">
+        <rect x="4" y="4" width="112" height="197" rx="3" opacity="0.9"/>
+        <rect x="8.5" y="8.5" width="103" height="188" rx="2" opacity="0.4"/>
+        <polygon points="60,42 105,102 60,163 15,102" opacity="0.7"/>
+        <polygon points="60,55 94,102 60,149 26,102" opacity="0.3"/>
+        <circle cx="60" cy="102" r="29" opacity="0.75"/>
+        <circle cx="60" cy="102" r="33.5" opacity="0.35" stroke-dasharray="1 3.2"/>
+        <path d="M60 15 C51 20 44 20 37 16" opacity="0.75"/>
+        <path d="M60 15 C69 20 76 20 83 16" opacity="0.75"/>
+        <path d="M60 190 C51 185 44 185 37 189" opacity="0.75"/>
+        <path d="M60 190 C69 185 76 185 83 189" opacity="0.75"/>
+        <path d="M14 26 C22 33 24 40 23 47" opacity="0.5"/>
+        <path d="M106 26 C98 33 96 40 97 47" opacity="0.5"/>
+        <path d="M14 179 C22 172 24 165 23 158" opacity="0.5"/>
+        <path d="M106 179 C98 172 96 165 97 158" opacity="0.5"/>
+      </g>
+      <g fill="${GOLD}">
+        <ellipse cx="49" cy="18" rx="3.4" ry="1.5" transform="rotate(-18 49 18)" opacity="0.8"/>
+        <ellipse cx="71" cy="18" rx="3.4" ry="1.5" transform="rotate(18 71 18)" opacity="0.8"/>
+        <ellipse cx="49" cy="187" rx="3.4" ry="1.5" transform="rotate(18 49 187)" opacity="0.8"/>
+        <ellipse cx="71" cy="187" rx="3.4" ry="1.5" transform="rotate(-18 71 187)" opacity="0.8"/>
+        <ellipse cx="20" cy="37" rx="3" ry="1.3" transform="rotate(42 20 37)" opacity="0.6"/>
+        <ellipse cx="100" cy="37" rx="3" ry="1.3" transform="rotate(-42 100 37)" opacity="0.6"/>
+        <ellipse cx="20" cy="168" rx="3" ry="1.3" transform="rotate(-42 20 168)" opacity="0.6"/>
+        <ellipse cx="100" cy="168" rx="3" ry="1.3" transform="rotate(42 100 168)" opacity="0.6"/>
+        <circle cx="60" cy="30" r="1.5" opacity="0.85"/>
+        <circle cx="60" cy="175" r="1.5" opacity="0.85"/>
+        <circle cx="9" cy="102" r="1.3" opacity="0.7"/>
+        <circle cx="111" cy="102" r="1.3" opacity="0.7"/>
+      </g>
+      <circle cx="61.5" cy="102" r="14.5" fill="${GOLD}" opacity="0.9"/>
+      <circle cx="68" cy="98.5" r="12.5" fill="#0e0b1c"/>
+      <g fill="${GOLD}">
+        <path d="M44 84 l1.4 3.9 3.9 1.4 -3.9 1.4 -1.4 3.9 -1.4-3.9 -3.9-1.4 3.9-1.4z" opacity="0.95"/>
+        <path d="M77 116 l1.2 3.3 3.3 1.2 -3.3 1.2 -1.2 3.3 -1.2-3.3 -3.3-1.2 3.3-1.2z" opacity="0.85"/>
+        <path d="M72 78 l0.9 2.5 2.5 0.9 -2.5 0.9 -0.9 2.5 -0.9-2.5 -2.5-0.9 2.5-0.9z" opacity="0.7"/>
+        <path d="M45 122 l0.9 2.5 2.5 0.9 -2.5 0.9 -0.9 2.5 -0.9-2.5 -2.5-0.9 2.5-0.9z" opacity="0.7"/>
+      </g>
+    </svg>`;
+
   window.MAUMJARO_TAROT_DATA = {
     TAROT_MAJOR,
     TAROT_POSITIONS,
     TAROT_SHUFFLE_LINES,
     TAROT_SUMMARY_SEED,
+    TAROT_BACK_SVG,
   };
 })();

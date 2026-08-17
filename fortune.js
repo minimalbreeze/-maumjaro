@@ -17,7 +17,7 @@
   } = window.MAUMJARO_FORTUNE_DATA;
 
   const {
-    TAROT_MAJOR, TAROT_POSITIONS, TAROT_SHUFFLE_LINES, TAROT_SUMMARY_SEED,
+    TAROT_MAJOR, TAROT_POSITIONS, TAROT_SHUFFLE_LINES, TAROT_SUMMARY_SEED, TAROT_BACK_SVG,
   } = window.MAUMJARO_TAROT_DATA;
 
   const FORTUNE_SEED_BY_CATEGORY = {
@@ -1251,35 +1251,41 @@
     }
   }
 
-  // ---------- 흔들기 감지 (app.js의 주사 모션과 별개, 타로 화면에서만 살아있다) ----------
-  let tarotShakeHandler = null;
-  function stopTarotShakeWatch() {
-    if (tarotShakeHandler) window.removeEventListener('devicemotion', tarotShakeHandler);
-    tarotShakeHandler = null;
-  }
-  function startTarotShakeWatch(onShake) {
-    stopTarotShakeWatch();
-    let lastAt = 0;
-    tarotShakeHandler = (e) => {
-      if (localStorage.getItem('maumjaro:motionOn') === 'off') return;
-      const gravityFree = e.acceleration && e.acceleration.x !== null && e.acceleration.x !== undefined;
-      const acc = gravityFree ? e.acceleration : e.accelerationIncludingGravity;
-      if (!acc || acc.x === null || acc.x === undefined) return;
-      const mag = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
-      // 중력이 포함된 값은 가만히 있어도 ~10이 나오므로 기준을 높인다.
-      const threshold = gravityFree ? 16 : 28;
-      const now = Date.now();
-      if (mag > threshold && now - lastAt > 450) {
-        lastAt = now;
-        onShake();
+  // ---------- 카드를 쓸어서 섞기 ----------
+  // 처음엔 폰 흔들기(devicemotion)로 만들었지만, iOS에는 "흔들어서 입력 되돌리기"라는
+  // OS 기본 기능이 있어 흔들 때마다 시스템 팝업("입력 실행 취소")이 떴다. 웹에서 이 기능을
+  // 끌 방법이 없으므로 흔들기를 걷어내고, 실제 카드를 섞는 동작에 더 가까운 좌우 쓸기로 바꿨다.
+  // (주사 놓기의 폰 찌르기 모션은 app.js 소유라 그대로 두었다 — 그쪽은 텍스트 입력과 무관하다.)
+  function wireTarotSwipeShuffle(el, onShuffle) {
+    let startX = null;
+    let fired = false;
+    const SWIPE_PX = 46;
+
+    const down = (e) => {
+      startX = (e.touches ? e.touches[0].clientX : e.clientX);
+      fired = false;
+    };
+    const move = (e) => {
+      if (startX === null || fired) return;
+      const x = (e.touches ? e.touches[0].clientX : e.clientX);
+      if (Math.abs(x - startX) >= SWIPE_PX) {
+        fired = true;
+        onShuffle();
       }
     };
-    window.addEventListener('devicemotion', tarotShakeHandler);
+    const up = () => { startX = null; };
+
+    el.addEventListener('touchstart', down, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    el.addEventListener('touchend', up);
+    el.addEventListener('mousedown', down);
+    el.addEventListener('mousemove', move);
+    el.addEventListener('mouseup', up);
+    el.addEventListener('mouseleave', up);
   }
 
   // ---------- 1단계: 셔플 ----------
   function renderTarotShuffle(profile) {
-    stopTarotShakeWatch();
     let shuffles = 0;
     const NEEDED = 3;
 
@@ -1290,21 +1296,20 @@
       </div>
       <p class="tarot-hint" id="tarot-hint">${TAROT_SHUFFLE_LINES[0]}</p>
       <div class="tarot-deck" id="tarot-deck">
-        ${[0, 1, 2, 3, 4].map((i) => `<button class="tarot-card-back" type="button" tabindex="-1" style="--r:${(i - 2) * 3}deg;transform:rotate(${(i - 2) * 3}deg);">✦</button>`).join('')}
+        <div class="tarot-deck-inner">
+          ${[0, 1, 2, 3, 4].map((i) => `<div class="tarot-card-back tarot-card-big" style="--r:${(i - 2) * 2.2}deg;transform:rotate(${(i - 2) * 2.2}deg);">${TAROT_BACK_SVG}</div>`).join('')}
+        </div>
       </div>
       <p class="tarot-count" id="tarot-count">섞기 ${shuffles} / ${NEEDED}</p>
       <button class="action-btn" id="tarot-shuffle-btn" type="button" style="width:100%;">🔀 카드 섞기</button>
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">폰을 흔들어도 섞여요</p>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">카드를 좌우로 쓸어도 섞여요</p>
     `;
 
     const deck = document.getElementById('tarot-deck');
     const hint = document.getElementById('tarot-hint');
     const countEl = document.getElementById('tarot-count');
 
-    document.getElementById('tarot-back').addEventListener('click', () => {
-      stopTarotShakeWatch();
-      renderFortuneHub(profile);
-    });
+    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
 
     function doShuffle() {
       if (shuffles >= NEEDED) return;
@@ -1316,19 +1321,16 @@
       deck.classList.add('shuffling');
       tarotSound('playInjectPress'); // 카드 넘기는 짧은 소리
       if (shuffles >= NEEDED) {
-        stopTarotShakeWatch();
         setTimeout(() => renderTarotFan(profile), 520);
       }
     }
 
     document.getElementById('tarot-shuffle-btn').addEventListener('click', doShuffle);
-    Core.requestMotionPermission();
-    startTarotShakeWatch(doShuffle);
+    wireTarotSwipeShuffle(deck, doShuffle);
   }
 
   // ---------- 2단계: 부채꼴에서 3장 직접 뽑기 ----------
   function renderTarotFan(profile) {
-    stopTarotShakeWatch();
     const fan = buildTarotFan();
     const picked = [];
 
@@ -1339,7 +1341,7 @@
       </div>
       <p class="tarot-hint">마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
       <div class="tarot-fan" id="tarot-fan">
-        ${fan.map((_, i) => `<button class="tarot-card-back" type="button" data-i="${i}" style="--i:${i};">✦</button>`).join('')}
+        ${fan.map((_, i) => `<button class="tarot-card-back" type="button" data-i="${i}" style="--i:${i};" aria-label="${i + 1}번째 카드">${TAROT_BACK_SVG}</button>`).join('')}
       </div>
       <p class="tarot-count" id="tarot-count">0 / 3 선택</p>
       <button class="action-btn" id="tarot-open-btn" type="button" style="width:100%;" disabled>카드를 3장 골라주세요</button>
@@ -1387,7 +1389,6 @@
 
   // ---------- 3단계: 공개 + 해석 + 처방 → 주사 ----------
   function renderTarotResult(profile, entry) {
-    stopTarotShakeWatch();
     const cards = entry.cards.map((c) => {
       const card = tarotCardOf(c.id);
       return { card, reversed: c.reversed, side: tarotSideOf(card, c.reversed) };

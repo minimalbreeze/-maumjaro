@@ -1914,17 +1914,32 @@ body {
   margin: 0 0 10px;
 }
 
-/* 셔플 단계: 카드 뭉치가 겹쳐 쌓인 모습 */
+/* 셔플 단계: 실제 카드에 가까운 크기로 크게 (화면 폭에 맞춰 반응) */
 .tarot-deck {
-  position: relative;
-  height: 132px;
-  margin: 18px 0 4px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* stretch로 늘어나면 아래 비율 계산이 깨진다 */
+  margin: 14px 0 6px;
+  touch-action: pan-y; /* 좌우 쓸기는 우리가 처리하고, 위아래 스크롤은 살린다 */
 }
-.tarot-deck .tarot-card-back {
+/* aspect-ratio는 flex 안에서 늘어남과 겹쳐 비율이 어긋났다. 높이를 직접 계산해 확실히 맞춘다.
+   120:205 = 실제 타로 카드에 가까운 비율. */
+.tarot-deck-inner {
+  --tarot-w: min(62vw, 214px);
+  position: relative;
+  width: var(--tarot-w);
+  height: calc(var(--tarot-w) * 205 / 120);
+  flex: 0 0 auto;
+}
+/* .tarot-card-back의 고정 크기(66x104)보다 뒤에 오지 않으므로 선택자를 한 단계 더 붙여
+   우선순위를 확실히 올린다 — 그렇지 않으면 큰 카드가 작은 크기로 눌린다. */
+.tarot-deck-inner .tarot-card-big {
   position: absolute;
-  left: 50%;
-  top: 12px;
-  margin-left: -33px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  cursor: grab;
 }
 .tarot-deck.shuffling .tarot-card-back {
   animation: tarot-shuffle 0.42s ease-in-out;
@@ -1939,7 +1954,7 @@ body {
 .tarot-fan {
   position: relative;
   height: 208px;
-  margin: 10px 0 18px; /* 아래 "n / 3 선택" 문구와 겹치지 않도록 여유를 둔다 */
+  margin: 26px 0 30px; /* 아래 "n / 3 선택" 문구와 겹치지 않도록 여유를 둔다 */
 }
 .tarot-fan .tarot-card-back {
   position: absolute;
@@ -1950,9 +1965,6 @@ body {
   transform-origin: 50% 178%;
   transform: rotate(calc((var(--i) - 4) * 11deg));
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  /* 카드가 겹쳐도 각 카드의 심볼이 부채 바깥쪽에 보이게 위로 정렬한다 */
-  align-items: flex-start;
-  padding-top: 9px;
 }
 .tarot-fan .tarot-card-back:active {
   filter: brightness(1.1);
@@ -1966,31 +1978,23 @@ body {
   opacity: 0.45;
 }
 
-/* 카드 뒷면 — 짙은 밤하늘 + 금박 문양으로 신비감을 준다.
-   별가루는 ::before가 아니라 배경 레이어로 넣는다 (html2canvas 캡처 호환) */
+/* 카드 뒷면 — 직접 그린 금박 라인아트 SVG가 카드를 꽉 채운다 */
 .tarot-card-back {
   width: 66px;
   height: 104px;
-  border: 1px solid rgba(224,190,120,0.6);
+  border: none;
   border-radius: 9px;
   padding: 0;
   cursor: pointer;
-  background-image:
-    radial-gradient(1.4px 1.4px at 22% 18%, rgba(255,255,255,0.85), transparent 60%),
-    radial-gradient(1.2px 1.2px at 72% 26%, rgba(255,240,200,0.7), transparent 60%),
-    radial-gradient(1.3px 1.3px at 34% 72%, rgba(255,255,255,0.6), transparent 60%),
-    radial-gradient(1.1px 1.1px at 78% 78%, rgba(255,240,200,0.65), transparent 60%),
-    radial-gradient(circle at 50% 46%, rgba(224,190,120,0.35) 0 17%, transparent 18%),
-    radial-gradient(circle at 50% 46%, transparent 0 25%, rgba(224,190,120,0.22) 26%, transparent 27%),
-    linear-gradient(155deg, #3b2270 0%, #1d1340 55%, #46265f 100%);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  color: #e9cf96;
-  text-shadow: 0 0 6px rgba(233,207,150,0.7);
+  overflow: hidden;
+  background: #0e0b1c;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.34);
   -webkit-tap-highlight-color: transparent;
+}
+.tarot-card-back svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ---------- 공개된 카드 앞면: 실제 타로 카드처럼 ---------- */
