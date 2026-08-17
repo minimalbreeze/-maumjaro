@@ -1,10 +1,15 @@
 :root {
+  /* 위에서 아래로 "마음(따뜻한 낮) → 운세·타로(신비로운 밤)"로 넘어가는 3구간 배경.
+     밤으로 가되 글자색(--text)이 계속 읽히도록 라벤더 톤에서 멈춘다. */
   --bg-top: #fff8f3;
-  --bg-bottom: #ffe1ec;
+  --bg-mid: #ffe6ef;
+  --bg-bottom: #ddd5f6;
   --card: rgba(255,255,255,0.75);
   --card-border: rgba(255,150,175,0.22);
   --text: #6b4657;
-  --text-dim: #b98a9a;
+  /* 배경 아래쪽이 라벤더로 어두워진 만큼 보조 텍스트도 한 단계 진하게 —
+     기존 #b98a9a는 라벤더 위에서 명암비 2.08까지 떨어졌다(3.1로 회복). */
+  --text-dim: #9c6b7d;
   --accent-a: #ff9166;
   --accent-b: #ffc66b;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -21,7 +26,14 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard", sans-serif;
-  background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+  /* 위(마음)는 금빛 온기, 아래(운세·타로)는 보라빛 밤으로 넘어가는 4겹 배경.
+     투명 끝점을 transparent 대신 alpha 0인 같은 색으로 쓴다 — transparent는
+     rgba(0,0,0,0)이라 중간이 탁한 회색으로 번지는 브라우저가 있다. */
+  background:
+    radial-gradient(125% 55% at 50% -5%, rgba(255,190,110,0.34), rgba(255,190,110,0) 62%),
+    radial-gradient(120% 52% at 50% 103%, rgba(126,92,208,0.34), rgba(126,92,208,0) 64%),
+    radial-gradient(72% 34% at 12% 90%, rgba(96,110,205,0.20), rgba(96,110,205,0) 70%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 44%, var(--bg-bottom) 100%);
   color: var(--text);
   min-height: 100vh;
   /* dvh는 브라우저 툴바가 차지하는 높이를 뺀 "실제로 보이는" 높이다.
@@ -32,9 +44,11 @@ body {
   overflow: hidden;
 }
 
-/* 홈 배경 장식 — "여기가 마음 + 운세 + 타로를 다루는 곳"임을 은은하게 알려준다.
-   원칙: 주인공인 주사기를 가리지 않도록 화면 가장자리에만 배치하고, 불투명도를 낮게 둬서
-   운세 앱처럼 보이지 않게 한다(브랜드 원칙 1). 이미지 파일 없이 SVG 하나로 처리해 용량 0. */
+/* 홈 배경 장식 — "여기가 마음 + 운세 + 타로를 다루는 곳"임을 알려준다.
+   세 심볼을 배경 그라데이션의 색 순서와 맞춰 위에서 아래로 놓는다:
+     마음(코랄 하트) → 운세(금빛 초승달·별) → 타로(보라 카드 부채꼴)
+   원칙: 주인공인 주사기를 가리지 않도록 화면 가장자리에만 배치한다(브랜드 원칙 1).
+   이미지 파일 없이 SVG 하나로 처리해 용량 0. */
 body::before {
   content: '';
   position: fixed;
@@ -44,7 +58,7 @@ body::before {
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 375 812'%3E%3Cg fill='none' stroke='%23c9853f' stroke-linecap='round'%3E%3Cpath d='M62 108 a30 30 0 1 0 6 58' stroke-width='7' opacity='.13'/%3E%3Crect x='24' y='352' width='58' height='92' rx='7' transform='rotate(-13 53 398)' stroke-width='1.6' opacity='.12'/%3E%3Crect x='296' y='368' width='58' height='92' rx='7' transform='rotate(14 325 414)' stroke-width='1.6' opacity='.12'/%3E%3Crect x='283' y='356' width='58' height='92' rx='7' transform='rotate(5 312 402)' stroke-width='1.4' opacity='.08'/%3E%3Cpath d='M56 636 c-13-13-3-30 12-24 4-9 18-8 20 3 3 15-14 26-22 33-3-3-7-8-10-12z' stroke-width='1.8' opacity='.12'/%3E%3C/g%3E%3Cg fill='%23c9853f'%3E%3Cpath d='M300 96 l2.6 7.4 7.4 2.6 -7.4 2.6 -2.6 7.4 -2.6-7.4 -7.4-2.6 7.4-2.6z' opacity='.16'/%3E%3Cpath d='M336 168 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8-5 -5-1.8 5-1.8z' opacity='.13'/%3E%3Cpath d='M40 236 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6-4.4 -4.4-1.6 4.4-1.6z' opacity='.12'/%3E%3Cpath d='M330 592 l2.2 6 6 2.2 -6 2.2 -2.2 6 -2.2-6 -6-2.2 6-2.2z' opacity='.14'/%3E%3Cpath d='M286 700 l1.7 4.7 4.7 1.7 -4.7 1.7 -1.7 4.7 -1.7-4.7 -4.7-1.7 4.7-1.7z' opacity='.12'/%3E%3Cpath d='M92 720 l1.5 4.2 4.2 1.5 -4.2 1.5 -1.5 4.2 -1.5-4.2 -4.2-1.5 4.2-1.5z' opacity='.11'/%3E%3Ccircle cx='352' cy='268' r='2' opacity='.12'/%3E%3Ccircle cx='22' cy='520' r='2' opacity='.1'/%3E%3Ccircle cx='348' cy='484' r='1.8' opacity='.1'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 375 812'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M44 452 C22 434 32 414 44 426 C56 414 66 434 44 452 Z' stroke='%23f2607f' stroke-width='2.8' opacity='.28'/%3E%3Cpath d='M318 268 a30 30 0 1 1 -6 58' stroke='%23c9853f' stroke-width='8' opacity='.24'/%3E%3Crect x='14' y='600' width='60' height='95' rx='7' transform='rotate(-17 44 647)' stroke='%237c5cc4' stroke-width='1.8' opacity='.16'/%3E%3Crect x='28' y='592' width='60' height='95' rx='7' transform='rotate(-6 58 639)' stroke='%237c5cc4' stroke-width='2' opacity='.22'/%3E%3Crect x='301' y='608' width='60' height='95' rx='7' transform='rotate(16 331 655)' stroke='%237c5cc4' stroke-width='1.8' opacity='.16'/%3E%3Crect x='287' y='600' width='60' height='95' rx='7' transform='rotate(5 317 647)' stroke='%237c5cc4' stroke-width='2' opacity='.22'/%3E%3C/g%3E%3Cg fill='%23c9853f'%3E%3Cpath d='M300 88 l2.9 8.4 8.4 2.9 -8.4 2.9 -2.9 8.4 -2.9-8.4 -8.4-2.9 8.4-2.9z' opacity='.26'/%3E%3Cpath d='M348 236 l2 5.6 5.6 2 -5.6 2 -2 5.6 -2-5.6 -5.6-2 5.6-2z' opacity='.22'/%3E%3Cpath d='M338 190 l1.7 4.6 4.6 1.7 -4.6 1.7 -1.7 4.6 -1.7-4.6 -4.6-1.7 4.6-1.7z' opacity='.20'/%3E%3Cpath d='M36 240 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8-5 -5-1.8 5-1.8z' opacity='.20'/%3E%3Cpath d='M292 344 l2.3 6.5 6.5 2.3 -6.5 2.3 -2.3 6.5 -2.3-6.5 -6.5-2.3 6.5-2.3z' opacity='.20'/%3E%3C/g%3E%3Cg fill='%237c5cc4'%3E%3Cpath d='M92 726 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8-5 -5-1.8 5-1.8z' opacity='.22'/%3E%3Cpath d='M286 742 l2 5.6 5.6 2 -5.6 2 -2 5.6 -2-5.6 -5.6-2 5.6-2z' opacity='.20'/%3E%3Ccircle cx='24' cy='548' r='2.4' opacity='.18'/%3E%3Ccircle cx='352' cy='520' r='2.2' opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 #app {
