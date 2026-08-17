@@ -1168,6 +1168,67 @@
   function tarotDirLabel(reversed) {
     return reversed ? '역방향' : '정방향';
   }
+  // 실제 타로 카드처럼 상단에 로마숫자를 넣는다 (0은 관례대로 0으로 표기)
+  function tarotRoman(n) {
+    if (n === 0) return '0';
+    const table = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+    let rest = n;
+    let out = '';
+    table.forEach(([v, s]) => {
+      while (rest >= v) { out += s; rest -= v; }
+    });
+    return out;
+  }
+
+  // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.
+  // (처방전 공유와 같은 방식 — 새로 구현하지 않고 기존 패턴을 따른다)
+  async function shareTarotDraw(entry, cards, btn) {
+    const names = cards.map((c) => `${c.card.name}(${tarotDirLabel(c.reversed)})`).join(' · ');
+    const text = `🎴 오늘의 타로\n${names}\n\n${entry.summary}`;
+    const url = `${location.origin}${location.pathname}`;
+    const node = document.getElementById('tarot-share-capture');
+
+    if (typeof window.html2canvas !== 'function' || !node) {
+      Rx.shareOrCopy(text, url);
+      return;
+    }
+
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '준비 중...';
+    try {
+      const canvas = await window.html2canvas(node, { backgroundColor: '#fdf2f4', scale: 2 });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('toBlob failed');
+      const file = new File([blob], '맘운자로_타로.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: `${text}\n${url}`, title: '오늘의 타로' });
+        return;
+      }
+      // 파일 공유 미지원: 이미지 저장 + 텍스트는 클립보드로
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = '맘운자로_타로.png';
+      a.href = objUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
+      try {
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        Core.showToast('이미지 저장 + 링크 복사 완료 🎴');
+      } catch (e) {
+        Core.showToast('타로 이미지를 저장했어요 🎴');
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      Core.showToast('이미지 준비에 실패했어요. 텍스트로 보낼게요');
+      Rx.shareOrCopy(text, url);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
 
   // 부채꼴에 올릴 카드들을 미리 정한다. 사용자가 고른 자리의 카드가 그대로 자기 카드가 된다
   // (뽑은 뒤에 몰래 다른 카드를 배정하지 않는다 — 직접 골랐다는 감각이 타로의 핵심).
@@ -1334,11 +1395,18 @@
     const advice = cards[2]; // 세 번째 자리 = 오늘의 처방 방향
 
     const facesHtml = cards.map((c, i) => `
-      <div class="tarot-face${c.reversed ? ' reversed' : ''}" style="animation-delay:${i * 0.45}s;">
+      <div class="tarot-face-wrap">
         <div class="tarot-face-pos">${TAROT_POSITIONS[i].emoji} ${TAROT_POSITIONS[i].label}</div>
-        <span class="tarot-face-emoji">${c.card.emoji}</span>
-        <div class="tarot-face-name">${c.card.name}</div>
-        <span class="tarot-face-dir">${tarotDirLabel(c.reversed)}</span>
+        <div class="tarot-face${c.reversed ? ' reversed' : ''}" style="animation-delay:${i * 0.45}s;">
+          <div class="tarot-face-frame">
+            <div class="tarot-face-num">${tarotRoman(c.card.id)}</div>
+            <div class="tarot-face-art"><span class="tarot-face-emoji">${c.card.emoji}</span></div>
+            <div class="tarot-face-label">
+              <div class="tarot-face-name">${c.card.name}</div>
+              <span class="tarot-face-dir">${tarotDirLabel(c.reversed)}</span>
+            </div>
+          </div>
+        </div>
       </div>`).join('');
 
     const readHtml = cards.map((c, i) => `
@@ -1356,8 +1424,12 @@
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
         <span class="rx-nav-title">🎴 오늘의 타로</span>
       </div>
-      <div class="tarot-reveal-row">${facesHtml}</div>
-      <p class="tarot-hint">${entry.summary}</p>
+      <div class="tarot-share-capture" id="tarot-share-capture">
+        <div class="tarot-share-title">🎴 오늘의 타로</div>
+        <div class="tarot-reveal-row">${facesHtml}</div>
+        <p class="tarot-hint" style="margin-bottom:0;">${entry.summary}</p>
+        <div class="tarot-share-foot">맘운자로 · maumjaro.minimalbreeze.com</div>
+      </div>
       ${readHtml}
       <div class="rx-custom-preview" style="margin-top:12px;">
         <div class="rx-slip-row">
@@ -1368,11 +1440,14 @@
         <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">처방 후보 보러가기 ›</button>
       </div>
       <button class="action-btn" id="tarot-inject-btn" type="button" style="width:100%;margin-top:12px;">💉 이 처방으로 주사 놓기</button>
+      <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🎴 타로 결과 공유하기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">오늘 뽑은 카드는 그대로 저장돼요. 새로 뽑는 건 내일부터예요</p>
     `;
 
     document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
     document.getElementById('tarot-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(advice.card.rxCategory));
+    const shareBtn = document.getElementById('tarot-share-btn');
+    shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn));
 
     // 기존 주사 인터랙션을 그대로 재사용한다(새로 구현하지 않는다).
     const syntheticP = {
