@@ -2226,6 +2226,20 @@ body {
   margin-top: 10px;
 }
 
+/* AI 리딩 (세 장을 엮은 해석) — 카드별 해석보다 눈에 먼저 들어오게 살짝 강조 */
+.tarot-ai-card {
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, rgba(183,121,239,0.1), rgba(255,143,179,0.1));
+  border: 1px solid rgba(183,121,239,0.3);
+  margin: 12px 0 10px;
+}
+.tarot-ai-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
 /* 해석 목록 */
 .tarot-read-card {
   display: flex;

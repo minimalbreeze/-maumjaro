@@ -1271,6 +1271,100 @@
     tarotCardOnNext = closeTarotCardOverlay;
   }
 
+  // ---------- 타로 AI 리딩: 3장을 하나의 이야기로 엮는다 ----------
+  // 카드별 고정 문구를 나열하는 것과 달리, 세 장의 관계 + 오늘 감정 + 오늘의 기운을 묶어
+  // 한 편의 리딩으로 읽어준다. 결과는 그날의 뽑기 기록에 캐시해서, 다시 들어와도 같은
+  // 리딩이 보이고 API도 하루 한 번만 부른다.
+  function fetchTarotReading(profile, cards) {
+    const chart = getOrComputeSajuChart(profile);
+    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
+    const opening = AI_MAUMUN_OPENING_SEED[relation];
+    const emotion = getTodayEmotionEntry();
+    const now = new Date();
+    const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+
+    const systemPrompt = [
+      '너는 "맘운자로"라는 한국 앱의 타로 리더다.',
+      '뽑힌 세 장을 각각 따로 설명하지 말고, 세 장이 이어지는 하나의 이야기로 읽어준다.',
+      '문체: 상냥한 존댓말. 신비롭지만 겁주지 않는다. 불안을 조장하는 표현은 쓰지 않는다.',
+      '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
+      '카드 이름과 정/역방향은 이미 화면에 보이므로 나열하지 말고, 의미만 엮어 말한다.',
+      '운세는 정해진 미래가 아니라 오늘을 살아가는 참고라는 태도를 유지한다. 단정하거나 겁주지 않는다.',
+      // 글자 수만 지시하면 잘 안 지켜서, 문장 수와 문장 길이까지 함께 못박는다.
+      '형식을 엄격히 지켜라: (1) 오늘의 흐름을 두 문장으로. 한 문장은 40자를 넘기지 않는다.',
+      '(2) 줄바꿈 두 번. (3) "💉 오늘의 처방:" 뒤에 따옴표로 감싼 한 문장.',
+      '전체 150자를 절대 넘기지 않는다. 수식어를 덧붙이지 말고 짧게 끊어라. 항목 번호나 제목은 쓰지 않는다.',
+    ].join(' ');
+
+    const cardLines = cards.map((c, i) => `${TAROT_POSITIONS[i].label}: ${c.card.name}(${tarotDirLabel(c.reversed)}, ${c.side.keyword})`).join('\n');
+    const userPrompt = [
+      `오늘 날짜: ${todayLabel}`,
+      `오늘의 전체 기운: ${opening}`,
+      emotion ? `오늘 기록한 감정: ${emotion.label}` : '오늘 감정은 아직 기록하지 않았다',
+      '뽑힌 카드:',
+      cardLines,
+    ].join('\n');
+
+    return fetch(AI_MAUMUN_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt, userPrompt }),
+    })
+      .then((r) => { if (!r.ok) throw new Error('proxy error'); return r.json(); })
+      .then((data) => {
+        if (!data || !data.answer) throw new Error('empty answer');
+        return String(data.answer).trim();
+      });
+  }
+
+  function renderTarotReadingText(text) {
+    const el = document.getElementById('tarot-ai-reading');
+    if (!el) return;
+    const paragraphs = text.split(/\n{2,}/)
+      .map((p) => `<p class="tarot-read-line" style="margin-top:8px;">${escapeHtml(p)}</p>`).join('');
+    el.innerHTML = `
+      <div class="tarot-ai-card">
+        <div class="tarot-ai-title">🔮 세 장을 엮은 오늘의 리딩</div>
+        ${paragraphs}
+      </div>`;
+  }
+
+  // 리딩을 붙인다. 캐시가 있으면 그걸 쓰고, 없으면 한 번만 불러와 저장한다.
+  // 프록시가 없거나 실패하면 이 블록만 조용히 비워둔다 — 카드별 해석은 그대로 남아 있다.
+  function wireTarotReading(profile, entry, cards) {
+    const el = document.getElementById('tarot-ai-reading');
+    if (!el) return;
+    if (entry.reading) {
+      renderTarotReadingText(entry.reading);
+      return;
+    }
+    if (!AI_MAUMUN_PROXY_URL) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = `
+      <div class="tarot-ai-card">
+        <div class="fortune-loading" style="padding:14px 0;">
+          <div class="fortune-loading-orb">🔮</div>
+          <p class="fortune-loading-text">세 장을 이어 읽고 있어요…</p>
+        </div>
+      </div>`;
+    fetchTarotReading(profile, cards)
+      .then((text) => {
+        saveTarotDraw({ ...loadTarotLog()[entry.date], reading: text });
+        renderTarotReadingText(text);
+      })
+      .catch(() => {
+        el.innerHTML = `
+          <div class="tarot-ai-card">
+            <p class="tarot-read-line" style="color:var(--text-dim);">리딩을 불러오지 못했어요.</p>
+            <button class="rx-friend-quick-btn" id="tarot-reading-retry" type="button" style="margin-top:8px;">다시 시도</button>
+          </div>`;
+        const retry = document.getElementById('tarot-reading-retry');
+        if (retry) retry.addEventListener('click', () => wireTarotReading(profile, entry, cards));
+      });
+  }
+
   // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.
   // (처방전 공유와 같은 방식 — 새로 구현하지 않고 기존 패턴을 따른다)
   async function shareTarotDraw(entry, cards, btn) {
@@ -1524,6 +1618,7 @@
         <div class="tarot-share-foot">맘운자로 · maumjaro.minimalbreeze.com</div>
       </div>
       <p class="tarot-reveal-hint">카드를 누르면 크게 다시 볼 수 있어요</p>
+      <div id="tarot-ai-reading"></div>
       ${readHtml}
       <div class="rx-custom-preview" style="margin-top:12px;">
         <div class="rx-slip-row">
@@ -1544,6 +1639,7 @@
     fortuneContent.querySelectorAll('.tarot-face-wrap.tappable').forEach((el) => {
       el.addEventListener('click', () => openTarotCardSingle(cards, Number(el.dataset.cardI)));
     });
+    wireTarotReading(profile, entry, cards);
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn));
 
