@@ -1109,6 +1109,28 @@
   }
 
   // existingProfile이 있으면 "수정 모드"로, 기존 값을 그대로 채워서 보여준다.
+  // ---------- 4.8: 맘운 프로필 백업/복구 ----------
+  // 브라우저 저장소는 사파리의 저장소 자동 정리(7일 미접속)나 기기 변경으로 비워질 수 있다.
+  // 서버가 없는 정적 사이트라 자동 동기화는 불가능하므로, 사용자가 직접 보관했다가
+  // 되살릴 수 있는 코드를 제공한다. 커스텀 처방전과 동일하게 LZString을 재사용한다.
+  function buildProfileBackupCode(profile) {
+    const json = JSON.stringify(profile);
+    return window.LZString ? window.LZString.compressToEncodedURIComponent(json) : '';
+  }
+  function parseProfileBackupCode(code) {
+    if (!code || !window.LZString) return null;
+    try {
+      const json = window.LZString.decompressFromEncodedURIComponent(code.trim());
+      if (!json) return null;
+      const p = JSON.parse(json);
+      // 최소한 생년월일이 있어야 사주 계산이 가능하다. 형식이 어긋나면 조용히 거절한다.
+      if (!p || typeof p !== 'object' || typeof p.birthDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.birthDate)) return null;
+      return p;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function renderProfileForm(existingProfile) {
     const isEdit = !!existingProfile;
     const defaultName = (existingProfile && existingProfile.name)
@@ -1161,6 +1183,16 @@
       </div>
 
       <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">💫 ${isEdit ? '맘운 프로필 저장하기' : '맘운 프로필 완성하기'}</button>
+
+      <div style="margin-top:24px;">
+        <span class="rx-slip-key" style="display:block;margin-bottom:6px;">🔐 백업 &amp; 복구</span>
+        <p class="rx-custom-hint" style="margin:0 0 8px;">기기를 바꾸거나 브라우저 기록이 지워져도, 이 코드만 있으면 그대로 되살릴 수 있어요</p>
+        <input type="text" id="fortune-backup-input" class="rx-custom-input" style="width:100%;" placeholder="복구하려면 백업 코드를 붙여넣으세요" />
+        <div class="rx-friend-attach-row" style="margin-top:8px;">
+          ${isEdit ? '<button id="fortune-backup-copy" class="rx-slip-photo-btn" type="button">📋 내 코드 복사</button>' : ''}
+          <button id="fortune-backup-restore" class="rx-slip-photo-btn" type="button">♻️ 코드로 복구</button>
+        </div>
+      </div>
     `;
 
     let calendarType = (existingProfile && existingProfile.calendarType) || 'solar';
@@ -1241,6 +1273,42 @@
       localStorage.removeItem(SAJU_CHART_KEY); // 프로필이 바뀌면 이전 계산 캐시는 무효화하고 다시 계산한다
       renderFortuneHub(profile);
       renderHomeMaumunTeaser(); // 방금 만든/수정한 프로필을 홈 카드에도 바로 반영
+    });
+
+    // ---------- 백업 코드 복사 / 복구 ----------
+    const backupInput = document.getElementById('fortune-backup-input');
+    const backupCopyBtn = document.getElementById('fortune-backup-copy');
+
+    if (backupCopyBtn) {
+      backupCopyBtn.addEventListener('click', async () => {
+        const code = buildProfileBackupCode(existingProfile);
+        if (!code) {
+          Core.showToast('백업 코드를 만들지 못했어요');
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(code);
+          Core.showToast('백업 코드를 복사했어요. 메모장에 붙여넣어 보관하세요 🔐');
+        } catch (e) {
+          // 클립보드 권한이 없는 환경에서는 입력칸에 넣어 직접 복사하도록 한다.
+          backupInput.value = code;
+          backupInput.select();
+          Core.showToast('입력칸의 코드를 길게 눌러 복사해주세요');
+        }
+      });
+    }
+
+    document.getElementById('fortune-backup-restore').addEventListener('click', () => {
+      const restored = parseProfileBackupCode(backupInput.value);
+      if (!restored) {
+        Core.showToast('백업 코드를 다시 확인해주세요');
+        return;
+      }
+      saveSajuProfile(restored);
+      localStorage.removeItem(SAJU_CHART_KEY); // 복구한 프로필 기준으로 다시 계산
+      Core.showToast('맘운 프로필을 되살렸어요 ✨');
+      renderFortuneHub(restored);
+      renderHomeMaumunTeaser();
     });
   }
 
