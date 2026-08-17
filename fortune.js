@@ -717,7 +717,8 @@
       e: entry.emotionEmoji, c: entry.emotionColor, fr: myName || undefined, ts: Date.now(),
     };
     const url = buildMaumunShareUrl(payload);
-    const text = MAUMUN_SHARE_TEXTS[Math.floor(Math.random() * MAUMUN_SHARE_TEXTS.length)];
+    // 운세를 보낸 사람에겐 운세 안내가 중복이므로, 타로와 마음 처방 쪽으로 유도한다.
+    const text = `${MAUMUN_SHARE_TEXTS[Math.floor(Math.random() * MAUMUN_SHARE_TEXTS.length)]}\n\n🎴 타로 · 💉 마음 처방도 무료예요!`;
     Rx.shareOrCopy(text, url);
   }
 
@@ -1416,9 +1417,16 @@
 
   // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.
   // (처방전 공유와 같은 방식 — 새로 구현하지 않고 기존 패턴을 따른다)
-  async function shareTarotDraw(entry, cards, btn) {
+  async function shareTarotDraw(entry, cards, btn, topic, verdict) {
     const names = cards.map((c) => `${c.card.name}(${tarotDirLabel(c.reversed)})`).join(' · ');
-    const text = `🎴 오늘의 타로\n${names}\n\n${entry.summary}`;
+    // 주제와 별점을 앞에 세워 "무슨 타로를 봤는지"가 한눈에 보이게 한다(클릭률에 직접 영향).
+    // 타로를 공유하는 사람에겐 타로 안내가 의미 없으므로, 운세와 마음 처방 쪽으로 유도한다.
+    const text = [
+      `🎴 ${topic.label} 타로 봤는데 ${starsText(verdict.stars)} 나왔어`,
+      names,
+      '',
+      '🔮 오늘의 운세 · 💉 마음 처방도 무료예요!',
+    ].join('\n');
     const url = `${location.origin}${location.pathname}`;
     const node = document.getElementById('tarot-share-capture');
 
@@ -1732,7 +1740,7 @@
     });
     wireTarotReading(profile, entry, cards, topic, verdict);
     const shareBtn = document.getElementById('tarot-share-btn');
-    shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn));
+    shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn, topic, verdict));
 
     // 기존 주사 인터랙션을 그대로 재사용한다(새로 구현하지 않는다).
     // 자동으로 고른 실제 처방이 있으면 그걸로 주사를 놓고, 없으면 카드 기준으로 만든다.
