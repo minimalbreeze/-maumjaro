@@ -1236,7 +1236,7 @@
       // 결과 화면에서는 카드 아래 캡션으로, 전체화면에서는 이미 키워드 줄에 표시된다.
       return `
         <div class="tarot-face has-img${c.reversed ? ' reversed' : ''}"${style}>
-          <img class="tarot-face-img" src="${c.card.img}" alt="${c.card.name} 카드" loading="lazy" decoding="async" />
+          <img class="tarot-face-img" src="${c.card.img}" alt="${c.card.name} 카드" decoding="async" />
         </div>`;
     }
     return `
@@ -1412,6 +1412,65 @@
       });
   }
 
+  // ---------- 공유 이미지 미리 만들기 ----------
+  // iOS는 navigator.share()를 "사용자가 누른 직후"에만 열어준다(제스처 권한).
+  // 그런데 타로 캡처에는 실제 카드 도판 3장(각 200KB)이 들어가서 html2canvas가 몇 초씩
+  // 걸리고, 그 사이 제스처 권한이 만료돼 공유 시트가 아예 뜨지 않는다. 그러면 await가
+  // 끝나지 않아 버튼이 "준비 중..."에 멈춘 채로 남는다(= 친구에게 전송이 안 되는 증상).
+  // 처방전 공유가 멀쩡한 이유도 같다 — 그쪽 캡처엔 무거운 도판이 없어 제때 끝난다.
+  // 그래서 결과 화면이 뜨는 즉시 백그라운드로 이미지를 만들어 두고, 버튼을 누르는
+  // 순간에는 기다리지 않고 곧바로 공유 시트를 연다.
+  let tarotShareBlob = null;
+  let tarotShareBlobJob = null;
+
+  function withTimeout(promise, ms) {
+    // 거부가 아니라 null로 "시간 초과"를 알린다 — 어떤 경우에도 버튼이 멈추지 않게 한다.
+    return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
+  }
+
+  async function buildTarotShareBlob() {
+    const node = document.getElementById('tarot-share-capture');
+    if (!node || typeof window.html2canvas !== 'function') return null;
+    // html2canvas는 화면 밖 클론을 그리므로, 원본 이미지의 디코딩이 끝난 뒤에 시작해야 안전하다.
+    await Promise.all([...node.querySelectorAll('img')].map((im) => (
+      im.decode ? im.decode().catch(() => {}) : Promise.resolve()
+    )));
+    const canvas = await window.html2canvas(node, {
+      backgroundColor: '#fdf2f4',
+      scale: 2,
+      imageTimeout: 8000, // 기본 15초는 너무 길다. 못 그리면 빨리 포기하고 텍스트로 보낸다
+      onclone: (doc) => {
+        // html2canvas는 화면 밖 클론에서 CSS 애니메이션을 처음부터 다시 재생한다.
+        // 카드 등장 애니메이션(tarot-flip)은 opacity:0 + rotateY(90deg)로 시작하므로,
+        // 등장 지연이 걸린 2·3번째 카드가 "폭 0"인 채로 찍혀 공유 이미지에 빈칸으로 나갔다.
+        // 캡처본에서는 애니메이션을 끝난 상태(정면·불투명)로 고정한다.
+        // transform은 .tarot-face에만 지우고 이미지에는 손대지 않는다 —
+        // 역방향 카드의 rotate(180deg)는 .tarot-face-img에 걸려 있어 그대로 살아야 한다.
+        doc.querySelectorAll('.tarot-face').forEach((f) => {
+          f.style.animation = 'none';
+          f.style.opacity = '1';
+          f.style.transform = 'none';
+        });
+      },
+    });
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  function startTarotShareImage() {
+    tarotShareBlob = null;
+    tarotShareBlobJob = buildTarotShareBlob()
+      .then((b) => { tarotShareBlob = b; return b; })
+      .catch(() => null);
+  }
+
+  // 여기서 await를 하지 않고 promise를 그대로 돌려주는 게 핵심이다.
+  // navigator.share()가 클릭 핸들러 안에서 "동기적으로" 불려야 iOS가 제스처로 인정한다.
+  function shareTarotBlobNow(blob, text, url) {
+    const file = new File([blob], '맘운자로_타로.png', { type: 'image/png' });
+    if (!(navigator.canShare && navigator.canShare({ files: [file] }))) return null;
+    return navigator.share({ files: [file], text: `${text}\n${url}`, title: '오늘의 타로' });
+  }
+
   // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.
   // (처방전 공유와 같은 방식 — 새로 구현하지 않고 기존 패턴을 따른다)
   async function shareTarotDraw(entry, cards, btn, topic, verdict) {
@@ -1425,23 +1484,42 @@
       '🔮 오늘의 운세 · 💉 마음 처방도 무료예요!',
     ].join('\n');
     const url = `${location.origin}${location.pathname}`;
-    const node = document.getElementById('tarot-share-capture');
 
-    if (typeof window.html2canvas !== 'function' || !node) {
+    // 이미 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
+    // 버튼 라벨도 바꾸지 않는다 — 여기서 멈출 일이 없어야 정상이다.
+    if (tarotShareBlob) {
+      const sharing = shareTarotBlobNow(tarotShareBlob, text, url);
+      if (sharing) {
+        try {
+          await sharing;
+        } catch (e) {
+          if (!e || e.name !== 'AbortError') Rx.shareOrCopy(text, url);
+        }
+        return;
+      }
+    }
+
+    if (typeof window.html2canvas !== 'function' || !document.getElementById('tarot-share-capture')) {
       Rx.shareOrCopy(text, url);
       return;
     }
 
+    // 아직 이미지가 준비되기 전이거나 파일 공유를 못 쓰는 환경.
+    // 기다리되 상한을 둬서, 어떤 경우에도 버튼이 "준비 중..."에 갇히지 않게 한다.
     const label = btn.textContent;
     btn.disabled = true;
     btn.textContent = '준비 중...';
     try {
-      const canvas = await window.html2canvas(node, { backgroundColor: '#fdf2f4', scale: 2 });
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('toBlob failed');
-      const file = new File([blob], '맘운자로_타로.png', { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], text: `${text}\n${url}`, title: '오늘의 타로' });
+      const blob = await withTimeout(tarotShareBlobJob || buildTarotShareBlob(), 12000);
+      if (!blob) {
+        Core.showToast('이미지 준비가 늦어져서 텍스트로 보낼게요');
+        Rx.shareOrCopy(text, url);
+        return;
+      }
+      tarotShareBlob = blob;
+      const sharing = shareTarotBlobNow(blob, text, url);
+      if (sharing) {
+        await sharing;
         return;
       }
       // 파일 공유 미지원: 이미지 저장 + 텍스트는 클립보드로
@@ -1784,6 +1862,9 @@
     wireTarotReading(profile, entry, cards, topic, verdict);
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn, topic, verdict));
+    // 사용자가 결과를 읽는 동안 공유 이미지를 미리 만들어 둔다.
+    // 그래야 공유 버튼을 눌렀을 때 기다림 없이 바로 공유 시트가 열린다(iOS 제스처 유지).
+    startTarotShareImage();
 
     // 주사는 카드를 열 때(게이트) 이미 놓았으므로 여기서 또 놓지 않는다.
     // 처방전은 주사 없이 바로 열어볼 수 있게 한다.
