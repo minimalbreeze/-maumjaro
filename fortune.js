@@ -42,7 +42,10 @@
   }
   // showMakeOwnBtn: 친구가 보낸 맘운을 확인한 직후에만 "나도 오늘의 맘운 보기" CTA를 노출한다.
   // 내 맘운을 볼 때(다시 보기/지난 맘운 등)는 이미 내가 보고 있는 화면이라 기본값 false로 숨긴다.
-  function openMaumunReveal({ emoji, diagnosis, interpretation, prescription, dosage, color, showMakeOwnBtn }) {
+  // makeOwnLabel: 타로를 받고 온 사람에겐 "나도 타로 보기"가 더 자연스러우므로 문구만 바꿔 끼운다.
+  // 이동 경로는 바꾸지 않는다 — 사주 프로필이 없는 새 사용자는 renderFortuneHome()이
+  // 알아서 프로필 입력으로 보내주므로, 타로 화면으로 직행시키면 오히려 막힌다.
+  function openMaumunReveal({ emoji, diagnosis, interpretation, prescription, dosage, color, showMakeOwnBtn, makeOwnLabel }) {
     document.body.style.setProperty('--dose-color', color || '#b779ef');
     maumunRevealEmoji.textContent = emoji;
     maumunRevealDiagnosis.textContent = diagnosis;
@@ -50,6 +53,7 @@
     maumunRevealPrescription.textContent = prescription;
     maumunRevealDosage.textContent = dosage;
     maumunRevealMakeBtn.hidden = !showMakeOwnBtn;
+    if (showMakeOwnBtn) maumunRevealMakeBtn.textContent = makeOwnLabel || '🔮 나도 오늘의 맘운 보기';
     maumunRevealOverlay.classList.add('show');
   }
   maumunRevealClose.addEventListener('click', closeMaumunReveal);
@@ -83,6 +87,11 @@
   const friendMaumunIncomingTitle = document.getElementById('friend-maumun-incoming-title');
   const friendMaumunIncomingBtn = document.getElementById('friend-maumun-incoming-btn');
 
+  // 친구가 보낸 타로 수신 카드 (위 운세 수신 카드와 같은 구조 — 종류만 구분한다)
+  const friendTarotIncomingCard = document.getElementById('friend-tarot-incoming-card');
+  const friendTarotIncomingTitle = document.getElementById('friend-tarot-incoming-title');
+  const friendTarotIncomingBtn = document.getElementById('friend-tarot-incoming-btn');
+
   const SAJU_PROFILE_KEY = 'maumjaro:sajuProfile';
   const SAJU_CHART_KEY = 'maumjaro:sajuChart';
   const FORTUNE_CALC_VERSION = 1;
@@ -90,10 +99,6 @@
 
   function todayDateKey() {
     return new Date().toISOString().slice(0, 10);
-  }
-  function formatMaumunDate(dateStr) {
-    const [, m, d] = dateStr.split('-').map(Number);
-    return `${m}월 ${d}일`;
   }
 
   // ---------- 날짜별 맘운 기록 (날짜를 key로 하는 객체라 같은 날 재저장은 자동으로 덮어쓰기됨) ----------
@@ -367,11 +372,6 @@
           <span class="rx-category-label">맘운 처방</span>
           <span class="rx-category-count">마음+운</span>
         </div>
-        <div class="rx-category-tile" data-fortune="maumun-history">
-          <span class="rx-category-emoji">📖</span>
-          <span class="rx-category-label">지난 맘운</span>
-          <span class="rx-category-count">${Object.keys(loadMaumunLog()).length}일 기록</span>
-        </div>
       </div>
     `;
 
@@ -390,7 +390,6 @@
         else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
-        else if (type === 'maumun-history') renderMaumunHistory(profile);
       });
     });
   }
@@ -725,7 +724,9 @@
   // 받는 사람 쪽엔 감정/사주 개념이 없으므로 맘운 기록(maumunLog)엔 절대 저장하지 않는다 —
   // 3.0의 ?custom= 수신자 플로우와 동일하게 "주사를 놓아야 내용이 공개"되는 구조만 재사용한다.
   function wireIncomingMaumunTrigger(payload) {
-    friendMaumunIncomingTitle.textContent = payload.fr ? `${payload.fr}가 보낸 운세` : '친구가 보낸 운세';
+    friendMaumunIncomingTitle.textContent = payload.fr
+      ? `${payload.fr}${nameSubjectParticle(payload.fr)} 보낸 운세`
+      : '친구가 보낸 운세';
     friendMaumunIncomingCard.hidden = false;
 
     const syntheticP = {
@@ -746,6 +747,89 @@
           prescription: payload.rx, dosage: payload.do, color: payload.c,
           showMakeOwnBtn: true,
         });
+        // onComplete를 직접 넘긴 흐름은 기본 완료 처리를 타지 않으므로 여기서 주사 상태를
+        // 되돌려야 한다. 빠뜨리면 genericState가 'injecting'에 머물러 이후 주사가 전부 막힌다.
+        Rx.resetGenericFlowState('확인하기');
+      });
+    });
+  }
+
+  // 이름 뒤에 붙는 주격 조사를 받침에 맞춰 고른다 ("효성이 본" / "민지가 본").
+  // 한글 음절은 0xAC00부터 종성 28개 단위로 배열되므로, 나머지가 0이면 받침이 없다.
+  function nameSubjectParticle(name) {
+    const last = String(name || '').trim().slice(-1);
+    if (!last) return '가';
+    const code = last.charCodeAt(0);
+    if (code < 0xac00 || code > 0xd7a3) return '가'; // 한글이 아닌 이름은 기존대로 "가"
+    return (code - 0xac00) % 28 === 0 ? '가' : '이';
+  }
+
+  // ---------- 친구에게 타로 결과 보내기 (?tarot=<LZString>) ----------
+  // 예전엔 공유 링크가 그냥 홈 주소여서, 친구는 이미지만 보고 끝이라 앱으로 들어올 이유가 없었다.
+  // 운세 공유(?maumun=)와 똑같은 구조로 결과를 URL에 실어, 받는 사람도 "주사를 놓아야 열리는"
+  // 경험을 거쳐 자기 타로로 이어지게 한다(바이럴 루프: 내 타로 → 친구에게 주사 → 친구의 타로).
+  function buildTarotShareUrl(payload) {
+    const json = JSON.stringify(payload);
+    const encoded = window.LZString
+      ? window.LZString.compressToEncodedURIComponent(json)
+      : encodeURIComponent(json);
+    return `${location.origin}${location.pathname}?tarot=${encoded}`;
+  }
+  function decodeTarotPayload(raw) {
+    if (!raw || !window.LZString) return null;
+    try {
+      const json = window.LZString.decompressFromEncodedURIComponent(raw);
+      if (!json) return null;
+      const p = JSON.parse(json);
+      if (!p || typeof p !== 'object' || !Array.isArray(p.c) || !p.c.length || !p.vt) return null;
+      return p;
+    } catch (e) {
+      return null;
+    }
+  }
+  // 카드는 id만 실어 보내고 이름·방향은 받는 쪽에서 TAROT_MAJOR로 되살린다(링크 길이 절약).
+  function tarotPayloadCards(payload) {
+    return payload.c
+      .map((pair) => {
+        const card = TAROT_MAJOR.find((c) => c.id === pair[0]);
+        return card ? { card, reversed: !!pair[1] } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function wireIncomingTarotTrigger(payload) {
+    const cards = tarotPayloadCards(payload);
+    if (!cards.length) return; // 카드를 하나도 못 살리면 조용히 무시하고 평소 홈을 보여준다
+    const topicLabel = payload.tl || '오늘의';
+    friendTarotIncomingTitle.textContent = payload.fr
+      ? `${payload.fr}${nameSubjectParticle(payload.fr)} 본 ${topicLabel} 타로`
+      : `친구가 본 ${topicLabel} 타로`;
+    friendTarotIncomingCard.hidden = false;
+
+    const syntheticP = {
+      id: 'friend-tarot-incoming',
+      category: 'maumun',
+      title: payload.vt,
+      diagnosis: payload.vt,
+      emoji: payload.te || '🎴',
+      color: '#b779ef',
+    };
+
+    Rx.wireExternalTrigger(friendTarotIncomingBtn, syntheticP, () => {
+      resetDoseVisuals();
+      Rx.showRxImageFade(syntheticP, () => {
+        friendTarotIncomingCard.hidden = true;
+        openMaumunReveal({
+          emoji: payload.te || '🎴',
+          diagnosis: `${topicLabel} 타로 · ${payload.vt}`,
+          interpretation: cards.map((c) => `${c.card.name}(${tarotDirLabel(c.reversed)})`).join(' · '),
+          prescription: payload.vl || '',
+          dosage: starsText(payload.s || 3),
+          color: '#b779ef',
+          showMakeOwnBtn: true, // "나도 보기" → 운세/타로 탭으로 이어진다
+          makeOwnLabel: '🎴 나도 타로 보기',
+        });
+        Rx.resetGenericFlowState('확인하기');
       });
     });
   }
@@ -780,7 +864,7 @@
         openMaumunReveal(maumunEntryToReveal(todayEntry));
       });
       document.getElementById('fortune-maumun-share-btn').addEventListener('click', () => shareMaumunEntry(todayEntry));
-      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => renderMaumunHistory(profile));
+      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => openHistoryCategory('maumun'));
       return;
     }
 
@@ -800,7 +884,7 @@
       document.getElementById('fortune-goto-home-btn').addEventListener('click', () => {
         document.querySelector('.tab-btn[data-view="home"]').click();
       });
-      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => renderMaumunHistory(profile));
+      document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => openHistoryCategory('maumun'));
       return;
     }
 
@@ -887,39 +971,9 @@
     });
   }
 
-  // ---------- 지난 맘운: 날짜별 기록을 카드로 보여준다 ----------
-  function renderMaumunHistory(profile) {
-    const log = loadMaumunLog();
-    const entries = Object.values(log).sort((a, b) => b.date.localeCompare(a.date));
-    const cardsHtml = entries.length
-      ? entries.map((e) => `
-        <div class="rx-list-card" data-date="${e.date}">
-          <span class="rx-list-emoji">${e.emotionEmoji}</span>
-          <div class="rx-list-body">
-            <div class="rx-list-title-row">
-              <span class="rx-list-title">${formatMaumunDate(e.date)}</span>
-            </div>
-            <div class="rx-list-desc">${e.emotionEmoji} ${e.emotionLabel} · 🔮 ${e.categoryLabel} ${starsText(e.stars)}</div>
-            <div class="rx-list-desc">💉 ${e.diagnosis} 처방</div>
-          </div>
-        </div>`).join('')
-      : '<p class="rx-empty-msg">아직 지난 맘운 기록이 없어요</p>';
-
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">📖 지난 맘운</span>
-      </div>
-      ${cardsHtml}
-    `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    fortuneContent.querySelectorAll('.rx-list-card').forEach((card) => {
-      card.addEventListener('click', () => {
-        const entry = log[card.dataset.date];
-        if (entry) openMaumunReveal(maumunEntryToReveal(entry));
-      });
-    });
-  }
+  // "지난 맘운" 전용 화면은 없앴다 — 기록 탭 → 운세와 같은 loadMaumunLog()를 읽는 중복이었고,
+  // 기록 쪽이 일/월/년 뷰까지 되는 상위 호환이다. 항목을 눌러 처방전을 다시 여는 기능은
+  // renderHistoryCategoryView의 onOpen으로 옮겨갔다.
 
   // ---------- 4.4: AI 맘운 (실제 LLM 호출 없이 사주 프로필+오늘의 운세+오늘의 감정+질문 키워드를
   // 조합해 미리 써둔 문장 풀에서 답변을 조립하는 "유사 AI") ----------
@@ -1483,7 +1537,15 @@
       '',
       '🔮 오늘의 운세 · 💉 마음 처방도 무료예요!',
     ].join('\n');
-    const url = `${location.origin}${location.pathname}`;
+    // 결과를 URL에 실어 보낸다 — 친구가 링크를 열면 "친구가 보낸 타로"가 뜨고,
+    // 주사를 놓아야 열리는 흐름을 거쳐 자기 타로로 이어진다(그냥 홈 주소를 보내면 유입이 끊긴다).
+    const myName = (localStorage.getItem('maumjaro:username') || '').trim();
+    const url = buildTarotShareUrl({
+      tl: topic.label, te: topic.emoji,
+      c: cards.map((c) => [c.card.id, c.reversed ? 1 : 0]),
+      s: verdict.stars, vt: verdict.title, vl: verdict.line,
+      fr: myName || undefined, ts: Date.now(),
+    });
 
     // 이미 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
     // 버튼 라벨도 바꾸지 않는다 — 여기서 멈출 일이 없어야 정상이다.
@@ -2176,6 +2238,7 @@
   function loadMaumunItems() {
     return Object.values(loadMaumunLog()).map((e) => ({
       ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, sub: `🔮 ${e.categoryLabel} ${starsText(e.stars)}`,
+      openKey: e.date, // 눌러서 그날 처방전을 다시 열기 위한 키
     }));
   }
 
@@ -2209,8 +2272,10 @@
     return `<div class="year-bars${compact ? ' compact' : ''}">${bars}</div>`;
   }
   function historyItemCardHtml(it) {
+    // openKey가 있는 항목은 눌러서 그날의 처방전을 다시 열 수 있다(운세 기록).
+    const openAttr = it.openKey ? ` data-open="${it.openKey}"` : '';
     return `
-      <div class="rx-list-card">
+      <div class="rx-list-card${it.openKey ? ' tappable' : ''}"${openAttr}>
         <span class="rx-list-emoji">${it.emoji}</span>
         <div class="rx-list-body">
           <div class="rx-list-title-row"><span class="rx-list-title">${it.title}</span></div>
@@ -2222,11 +2287,19 @@
   // 개인처방(기존 app.js 달력)을 뺀 나머지 카테고리(친구처방/운세)를 위한 일/월/년 렌더러.
   // app.js의 renderDayView/renderMonthView/renderYearView와 같은 CSS 클래스를 그대로 재사용해
   // 시각적으로 완전히 통일된 화면을 별도 구현으로 만든다(app.js 자체는 무수정).
-  function renderHistoryCategoryView(profile, navTitle, loadItemsFn) {
+  function renderHistoryCategoryView(profile, navTitle, loadItemsFn, onOpen) {
     let period = 'day';
     let monthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     let yearCursor = new Date().getFullYear();
     let selectedDayKey = null;
+
+    // 항목을 눌러 그날 기록을 다시 여는 동작. draw()가 내용을 통째로 다시 그리므로
+    // 카드마다 붙이지 않고 컨테이너에 위임한다. addEventListener가 아니라 onclick 대입이라
+    // 여러 번 호출돼도 핸들러가 중복 등록되지 않고, onOpen이 없는 카테고리에서는 아무 일도 안 한다.
+    historyCustomArea.onclick = (ev) => {
+      const card = ev.target.closest('[data-open]');
+      if (card && onOpen) onOpen(card.dataset.open);
+    };
 
     function draw() {
       const items = loadItemsFn().map((it) => ({ ...it, date: new Date(it.ts) }));
@@ -2386,6 +2459,16 @@
     draw();
   }
 
+  // 지난 기록 열람은 전부 기록 탭 한 곳으로만 모은다.
+  // (운세센터에 따로 있던 "지난 맘운"은 기록 → 운세와 같은 loadMaumunLog()를 읽는 중복이었다.
+  //  기록 쪽은 일/월/년 뷰까지 되는 상위 호환이라 그쪽을 남기고 이 함수로 연결한다.)
+  function openHistoryCategory(cat) {
+    const tabBtn = document.querySelector('.tab-btn[data-view="history"]');
+    if (tabBtn) tabBtn.click(); // 이 클릭이 renderHistoryHub를 동기적으로 실행해 타일을 만든다
+    const tile = historyCustomArea && historyCustomArea.querySelector(`.rx-category-tile[data-cat="${cat}"]`);
+    if (tile) tile.click();
+  }
+
   // ---------- 기록 탭 진입점: 개인처방/친구처방/운세 3개 카테고리 중 선택 ----------
   function renderHistoryHub(profile) {
     if (historyNativeSegmented) historyNativeSegmented.hidden = true;
@@ -2433,7 +2516,12 @@
         historyCustomArea.hidden = false;
         if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
         else if (cat === 'tarot') renderHistoryCategoryView(profile, '🎴 타로 기록', loadTarotItems);
-        else renderHistoryCategoryView(profile, '🔮 운세 기록', loadMaumunItems);
+        // 운세 기록은 항목을 누르면 그날의 맘운 처방전을 다시 열어준다
+        // (운세센터에 따로 있던 "지난 맘운" 화면의 기능을 여기로 옮겨온 것).
+        else renderHistoryCategoryView(profile, '🔮 운세 기록', loadMaumunItems, (date) => {
+          const entry = loadMaumunLog()[date];
+          if (entry) openMaumunReveal(maumunEntryToReveal(entry));
+        });
       });
     });
   }
@@ -2478,5 +2566,15 @@
     const payload = decodeMaumunPayload(raw);
     if (!payload) return;
     wireIncomingMaumunTrigger(payload);
+  })();
+
+  // ---------- 친구가 보낸 타로 딥링크 진입 처리 (?tarot=<LZString>) ----------
+  // 위 ?maumun= 처리와 같은 원칙: 손상된 링크는 조용히 무시하고 평소처럼 홈이 보인다.
+  (function handleFriendTarotDeepLink() {
+    const raw = new URLSearchParams(location.search).get('tarot');
+    if (!raw) return;
+    const payload = decodeTarotPayload(raw);
+    if (!payload) return;
+    wireIncomingTarotTrigger(payload);
   })();
 })();
