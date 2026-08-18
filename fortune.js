@@ -434,6 +434,111 @@
     setTimeout(buildAndRender, 1400 + Math.floor(Math.random() * 900));
   }
 
+  // ---------- 오늘의 캡슐 (뽑기 연출) ----------
+  // 중요: 운세 결과는 사주와 날짜로 이미 정해져 있다. 그래서 이 뽑기는 "결과를 정하는" 게
+  // 아니라 정해진 결과를 여는 의식이다 — 어떤 캡슐을 골라도 내용은 같고, 화면에도 그렇게
+  // 적어둔다. 진짜 랜덤으로 만들면 마음에 안 들 때 다시 뽑으면 그만이 되어버려서,
+  // 사주 기반이라는 정체성이 무너진다.
+  // 크리스탈볼 같은 운세 클리셰 대신 약 캡슐을 쓰는 것도 브랜드 원칙(운세 앱처럼 보이지 않기)에 맞춘 것.
+  const GACHA_LOG_KEY = 'maumjaro:gachaLog';
+  const GACHA_CAPSULE_COUNT = 5;
+
+  function loadGachaLog() {
+    try {
+      const raw = localStorage.getItem(GACHA_LOG_KEY);
+      const log = raw ? JSON.parse(raw) : {};
+      return (log && typeof log === 'object') ? log : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function gachaDrawnToday(kind) {
+    return loadGachaLog()[`${kind}:${todayDateKey()}`] === true;
+  }
+  function markGachaDrawn(kind) {
+    const log = loadGachaLog();
+    // 날짜가 바뀐 기록은 굳이 쌓아두지 않는다(오늘 것만 있으면 충분).
+    const today = todayDateKey();
+    const next = {};
+    Object.keys(log).forEach((k) => { if (k.endsWith(`:${today}`)) next[k] = log[k]; });
+    next[`${kind}:${today}`] = true;
+    try { localStorage.setItem(GACHA_LOG_KEY, JSON.stringify(next)); } catch (e) { /* 저장 실패는 무시 */ }
+  }
+
+  // 별점 여러 개를 평균 내 1~5 등급으로. 등급은 캡슐 색과 이펙트에만 쓰인다.
+  function gachaGradeOf(starsList) {
+    const list = starsList.filter((n) => typeof n === 'number' && n > 0);
+    if (!list.length) return 3;
+    const avg = list.reduce((a, b) => a + b, 0) / list.length;
+    return Math.max(1, Math.min(5, Math.round(avg)));
+  }
+
+  function withCapsuleGacha(profile, kind, title, grade, buildAndRender) {
+    // 하루 한 번만 뽑는다. 같은 날 다시 들어오면 연출 없이 바로 결과를 보여준다 —
+    // 매번 강제하면 금방 성가셔지고, 맘운은 뒤에 주사 게이트도 있어 단계가 너무 길어진다.
+    if (gachaDrawnToday(kind)) {
+      buildAndRender();
+      return;
+    }
+
+    const capsules = Array.from({ length: GACHA_CAPSULE_COUNT }, (_, i) => `
+      <button class="gacha-capsule" type="button" data-i="${i}" style="animation-delay:${(i * 0.31).toFixed(2)}s;">
+        <span class="gacha-capsule-shine"></span>
+      </button>`).join('');
+
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+        <span class="rx-nav-title">${title}</span>
+      </div>
+      <div class="gacha-stage">
+        <p class="gacha-guide" id="gacha-guide">오늘의 캡슐을 하나 골라주세요</p>
+        <div class="gacha-tray" id="gacha-tray">${capsules}</div>
+        <p class="gacha-note">어떤 걸 골라도 오늘의 운은 같아요. 여는 재미로 고르는 거예요 💊</p>
+      </div>
+    `;
+    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+
+    const tray = document.getElementById('gacha-tray');
+    const guide = document.getElementById('gacha-guide');
+    let opening = false;
+
+    tray.querySelectorAll('.gacha-capsule').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (opening) return;
+        opening = true;
+        openCapsule(el);
+      });
+    });
+
+    function openCapsule(el) {
+      tray.querySelectorAll('.gacha-capsule').forEach((c) => {
+        if (c !== el) c.classList.add('is-gone');
+      });
+      el.classList.add('is-picked', `grade-${grade}`);
+      guide.textContent = '캡슐이 열리고 있어요…';
+      tarotSound('playInjectPress');
+
+      setTimeout(() => {
+        el.classList.add('is-open');
+        tarotSound('playReadyChime');
+        // 최고 등급일 때만 화면 섬광과 진동을 더한다(매일 보는 화면이라 아껴 쓴다).
+        if (grade === 5) {
+          const flash = document.createElement('div');
+          flash.className = 'gacha-flash';
+          document.body.appendChild(flash);
+          setTimeout(() => flash.remove(), 900);
+          tarotSound('playHealingChime');
+          try { if (navigator.vibrate) navigator.vibrate([18, 40, 28]); } catch (e) { /* 무시 */ }
+        }
+        setTimeout(() => {
+          markGachaDrawn(kind);
+          buildAndRender();
+        }, 820);
+      }, 780);
+    }
+  }
+
   function categorySectionHtml(label, item, rxCategory) {
     return `
       <div class="rx-custom-preview" style="margin-bottom:10px;">
@@ -445,22 +550,26 @@
   }
 
   function renderFortuneDaily(profile) {
-    withMysticalReveal(profile, '🔮 오늘의 운세', () => {
-      const chart = getOrComputeSajuChart(profile);
-      const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-      const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    // 캡슐 색을 정하려면 등급이 먼저 필요하므로, 결과 계산을 연출보다 앞으로 옮겼다.
+    // (계산은 사주와 날짜만 쓰는 결정론이라 언제 계산하든 결과는 같다.)
+    const chart = getOrComputeSajuChart(profile);
+    const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
+    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
 
-      const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
-      const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
-      const wealthItem = WEALTH_FORTUNE_SEED.items[dailyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
-      const loveItem = LOVE_FORTUNE_SEED.items[dailyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
-      const workItem = WORK_FORTUNE_SEED.items[dailyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
-      const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
-      const luckyColor = LUCKY_COLORS[dailyPickIndex(chart, 'color', LUCKY_COLORS.length)];
-      const luckyNumber = dailyPickIndex(chart, 'number', 9) + 1;
-      const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
-      const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
+    const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
+    const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+    const wealthItem = WEALTH_FORTUNE_SEED.items[dailyPickIndex(chart, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+    const loveItem = LOVE_FORTUNE_SEED.items[dailyPickIndex(chart, 'love', LOVE_FORTUNE_SEED.items.length)];
+    const workItem = WORK_FORTUNE_SEED.items[dailyPickIndex(chart, 'work', WORK_FORTUNE_SEED.items.length)];
+    const oneLine = TODAY_ONELINE_SEED[dailyPickIndex(chart, 'oneline', TODAY_ONELINE_SEED.length)];
+    const luckyColor = LUCKY_COLORS[dailyPickIndex(chart, 'color', LUCKY_COLORS.length)];
+    const luckyNumber = dailyPickIndex(chart, 'number', 9) + 1;
+    const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
+    const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
 
+    const grade = gachaGradeOf([mindItem, socialItem, wealthItem, loveItem, workItem].map((it) => it.stars));
+
+    withCapsuleGacha(profile, 'daily', '🔮 오늘의 운세', grade, () => {
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
@@ -931,18 +1040,19 @@
       return;
     }
 
-    withMysticalReveal(profile, '🌞 오늘의 맘운', () => {
-      // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조: 감정에 매핑된 운세 카테고리를
-      // 오늘의 운세(renderFortuneDaily)와 동일한 결정론적 시드로 골라, 감정×카테고리 티어로
-      // 미리 써둔 해석/진단명/처방/복용법 매트릭스에서 오늘의 맘운을 뽑는다.
-      const chart = getOrComputeSajuChart(profile);
-      const categoryKey = MAUMUN_EMOTION_CATEGORY[emotion.key] || 'mind';
-      const categorySeed = FORTUNE_SEED_BY_CATEGORY[categoryKey];
-      const categoryItem = categorySeed.items[dailyPickIndex(chart, categoryKey, categorySeed.items.length)];
-      const tier = categoryItem.stars <= 2 ? 'low' : categoryItem.stars === 3 ? 'mid' : 'high';
-      const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
-        || MAUMUN_INTERPRETATION.stress.mid;
+    // "운세가 감정을 해석하고 그 결과가 처방으로 이어지는" 구조: 감정에 매핑된 운세 카테고리를
+    // 오늘의 운세(renderFortuneDaily)와 동일한 결정론적 시드로 골라, 감정×카테고리 티어로
+    // 미리 써둔 해석/진단명/처방/복용법 매트릭스에서 오늘의 맘운을 뽑는다.
+    // 캡슐 등급을 정하려면 이 계산이 연출보다 먼저 끝나 있어야 한다.
+    const chart = getOrComputeSajuChart(profile);
+    const categoryKey = MAUMUN_EMOTION_CATEGORY[emotion.key] || 'mind';
+    const categorySeed = FORTUNE_SEED_BY_CATEGORY[categoryKey];
+    const categoryItem = categorySeed.items[dailyPickIndex(chart, categoryKey, categorySeed.items.length)];
+    const tier = categoryItem.stars <= 2 ? 'low' : categoryItem.stars === 3 ? 'mid' : 'high';
+    const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
+      || MAUMUN_INTERPRETATION.stress.mid;
 
+    withCapsuleGacha(profile, 'maumun', '🌞 오늘의 맘운', gachaGradeOf([categoryItem.stars]), () => {
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
