@@ -1482,6 +1482,20 @@
     return Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
   }
 
+  // 카드 등장 애니메이션이 실제로 끝날 때까지 기다린다.
+  // getAnimations()가 있으면 정확히 기다리고, 없으면 애니메이션 총 길이
+  // (지연 최대 0.9s + 재생 0.55s)에 여유를 둔 시간만큼 기다린다.
+  // 어느 쪽이든 상한을 둬서, 애니메이션이 끝나지 않아도 공유가 막히지 않게 한다.
+  function waitForTarotRevealAnimations(node) {
+    const capped = new Promise((resolve) => setTimeout(resolve, 1800));
+    const faces = [...node.querySelectorAll('.tarot-face')];
+    if (!faces.length || typeof faces[0].getAnimations !== 'function') return capped;
+    const finished = Promise.all(
+      faces.flatMap((f) => f.getAnimations().map((a) => a.finished.catch(() => {})))
+    );
+    return Promise.race([finished, capped]);
+  }
+
   async function buildTarotShareBlob() {
     const node = document.getElementById('tarot-share-capture');
     if (!node || typeof window.html2canvas !== 'function') return null;
@@ -1489,21 +1503,42 @@
     await Promise.all([...node.querySelectorAll('img')].map((im) => (
       im.decode ? im.decode().catch(() => {}) : Promise.resolve()
     )));
+    // 카드 등장 애니메이션(tarot-flip)이 끝나기를 기다린다. 이게 핵심이다 —
+    // html2canvas는 클론을 그리기 전에 "원본" 요소의 기하 정보를 읽는데, 회전(rotateY) 중에
+    // 재면 폭이 찌그러진 값이 잡혀 카드가 세로로 눌린 조각으로 찍힌다. onclone은 클론의
+    // 인라인 스타일만 고칠 뿐, 이미 측정된 기하는 되돌리지 못한다.
+    await waitForTarotRevealAnimations(node);
+
+    // 라이브 화면에서 실제 크기를 재둔다(애니메이션이 끝난 뒤라 이제 정확한 값이다).
+    const liveFaces = [...node.querySelectorAll('.tarot-face')].map((el) => el.getBoundingClientRect());
+    const liveImgs = [...node.querySelectorAll('.tarot-face-img')].map((el) => el.getBoundingClientRect());
+
     const canvas = await window.html2canvas(node, {
       backgroundColor: '#fdf2f4',
       scale: 2,
       imageTimeout: 8000, // 기본 15초는 너무 길다. 못 그리면 빨리 포기하고 텍스트로 보낸다
       onclone: (doc) => {
-        // html2canvas는 화면 밖 클론에서 CSS 애니메이션을 처음부터 다시 재생한다.
-        // 카드 등장 애니메이션(tarot-flip)은 opacity:0 + rotateY(90deg)로 시작하므로,
-        // 등장 지연이 걸린 2·3번째 카드가 "폭 0"인 채로 찍혀 공유 이미지에 빈칸으로 나갔다.
-        // 캡처본에서는 애니메이션을 끝난 상태(정면·불투명)로 고정한다.
-        // transform은 .tarot-face에만 지우고 이미지에는 손대지 않는다 —
-        // 역방향 카드의 rotate(180deg)는 .tarot-face-img에 걸려 있어 그대로 살아야 한다.
-        doc.querySelectorAll('.tarot-face').forEach((f) => {
+        // 클론에서는 애니메이션이 처음부터 다시 재생되므로 끝난 상태로 고정한다.
+        // transform은 .tarot-face에만 지운다 — 역방향 카드의 rotate(180deg)는
+        // .tarot-face-img에 걸려 있어 그대로 살아야 한다.
+        [...doc.querySelectorAll('.tarot-face')].forEach((f, i) => {
           f.style.animation = 'none';
           f.style.opacity = '1';
           f.style.transform = 'none';
+          const r = liveFaces[i];
+          if (r && r.width) {
+            f.style.width = `${Math.round(r.width)}px`;
+            f.style.height = `${Math.round(r.height)}px`;
+          }
+        });
+        // 카드 그림 높이는 aspect-ratio로 잡혀 있는데 html2canvas는 이 속성을 모른다.
+        // 실제 픽셀 크기를 박아넣어 어느 브라우저에서든 같은 비율로 찍히게 한다.
+        [...doc.querySelectorAll('.tarot-face-img')].forEach((im, i) => {
+          const r = liveImgs[i];
+          if (!r || !r.width) return;
+          im.style.aspectRatio = 'auto';
+          im.style.width = `${Math.round(r.width)}px`;
+          im.style.height = `${Math.round(r.height)}px`;
         });
       },
     });
