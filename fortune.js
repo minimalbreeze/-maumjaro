@@ -774,12 +774,32 @@
   // 예전엔 공유 링크가 그냥 홈 주소여서, 친구는 이미지만 보고 끝이라 앱으로 들어올 이유가 없었다.
   // 운세 공유(?maumun=)와 똑같은 구조로 결과를 URL에 실어, 받는 사람도 "주사를 놓아야 열리는"
   // 경험을 거쳐 자기 타로로 이어지게 한다(바이럴 루프: 내 타로 → 친구에게 주사 → 친구의 타로).
-  function buildTarotShareUrl(payload) {
-    const json = JSON.stringify(payload);
-    const encoded = window.LZString
-      ? window.LZString.compressToEncodedURIComponent(json)
-      : encodeURIComponent(json);
-    return `${location.origin}${shareBasePath()}?tarot=${encoded}`;
+  // 카톡에 붙었을 때 링크가 길면 그것만으로 지저분해 보인다. 다행히 실어 보낼 값의
+  // 가짓수가 아주 적어서(주제 6가지, 카드는 22장 × 정/역 = 44가지) 숫자 하나로 접을 수 있다.
+  //   n = ((주제 * 44 + 카드1) * 44 + 카드2) * 44 + 카드3      카드 = id * 2 + 역방향
+  // 최댓값이 511103이라 36진수로 네 글자면 충분하다 → ?t=aydb
+  const TAROT_CARD_STATES = 44; // 22장 × 정방향/역방향
+
+  function buildTarotShareUrl(topicKey, cards) {
+    const ti = TAROT_TOPICS.findIndex((t) => t.key === topicKey);
+    let n = ti < 0 ? 0 : ti;
+    cards.forEach((c) => { n = n * TAROT_CARD_STATES + (c.card.id * 2 + (c.reversed ? 1 : 0)); });
+    return `${location.origin}${shareBasePath()}?t=${n.toString(36)}`;
+  }
+
+  // 보낸 사람 이름은 링크에 넣지 않는다 — 카톡·문자 어디로 보내든 받는 쪽에 이미
+  // 보낸 사람이 표시되므로 중복이고, 한글 이름은 퍼센트 인코딩되며 링크를 두 배로 늘린다.
+  function parseTarotShareCode(code) {
+    let n = parseInt(String(code || ''), 36);
+    if (!Number.isFinite(n) || n < 0) return null;
+    const nums = [];
+    for (let i = 0; i < 3; i++) {
+      nums.unshift(n % TAROT_CARD_STATES);
+      n = Math.floor(n / TAROT_CARD_STATES);
+    }
+    const topic = TAROT_TOPICS[n];
+    if (!topic) return null;
+    return { t: topic.key, c: nums };
   }
   function decodeTarotPayload(raw) {
     if (!raw || !window.LZString) return null;
@@ -1597,14 +1617,9 @@
     ].join('\n');
     // 결과를 URL에 실어 보낸다 — 친구가 링크를 열면 "친구가 보낸 타로"가 뜨고,
     // 주사를 놓아야 열리는 흐름을 거쳐 자기 타로로 이어진다(그냥 홈 주소를 보내면 유입이 끊긴다).
-    // 링크에는 주제 키와 카드만 싣는다. 별점·판정 제목·판정 문구는 받는 쪽에서
+    // 링크에는 주제와 카드만 싣는다. 별점·판정 제목·판정 문구는 받는 쪽에서
     // tarotVerdictOf가 똑같이 계산해내므로 실어 보낼 이유가 없다(링크가 길어질 뿐이다).
-    const myName = (localStorage.getItem('maumjaro:username') || '').trim();
-    const url = buildTarotShareUrl({
-      t: topic.key,
-      c: cards.map((c) => c.card.id * 2 + (c.reversed ? 1 : 0)),
-      fr: myName || undefined,
-    });
+    const url = buildTarotShareUrl(topic.key, cards);
 
     // 이미 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
     // 버튼 라벨도 바꾸지 않는다 — 여기서 멈출 일이 없어야 정상이다.
@@ -2627,12 +2642,14 @@
     wireIncomingMaumunTrigger(payload);
   })();
 
-  // ---------- 친구가 보낸 타로 딥링크 진입 처리 (?tarot=<LZString>) ----------
+  // ---------- 친구가 보낸 타로 딥링크 진입 처리 ----------
+  // 지금 쓰는 형식은 짧은 코드(?t=aydb). 이미 카톡으로 나간 예전 링크(?tarot=<LZString>)도
+  // 계속 열려야 하므로 둘 다 읽는다.
   // 위 ?maumun= 처리와 같은 원칙: 손상된 링크는 조용히 무시하고 평소처럼 홈이 보인다.
   (function handleFriendTarotDeepLink() {
-    const raw = new URLSearchParams(location.search).get('tarot');
-    if (!raw) return;
-    const payload = decodeTarotPayload(raw);
+    const q = new URLSearchParams(location.search);
+    const short = q.get('t');
+    const payload = short ? parseTarotShareCode(short) : decodeTarotPayload(q.get('tarot'));
     if (!payload) return;
     wireIncomingTarotTrigger(payload);
   })();
