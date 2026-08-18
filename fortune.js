@@ -690,12 +690,18 @@
   // ---------- 4.3: 친구에게 오늘의 운세 보내기 (3.0 커스텀 처방전과 완전히 같은 URL 공유 구조 재사용) ----------
   // 서버 없이 URL에 압축 저장하는 방식 그대로: LZString + 쿼리 파라미터(?maumun=). ?custom=과 같은 패턴이되
   // 파라미터명을 분리해 딥링크 진입 시 어떤 종류의 공유인지 구분한다.
+  // 공유 링크의 경로 부분. "…/index.html"은 "…/"와 같은 페이지를 가리키므로,
+  // 카톡 등에 붙었을 때 링크가 조금이라도 짧아 보이게 끝의 index.html은 떼고 보낸다.
+  function shareBasePath() {
+    return location.pathname.replace(/index\.html$/, '');
+  }
+
   function buildMaumunShareUrl(payload) {
     const json = JSON.stringify(payload);
     const encoded = window.LZString
       ? window.LZString.compressToEncodedURIComponent(json)
       : encodeURIComponent(json);
-    return `${location.origin}${location.pathname}?maumun=${encoded}`;
+    return `${location.origin}${shareBasePath()}?maumun=${encoded}`;
   }
   function decodeMaumunPayload(raw) {
     if (!raw || !window.LZString) return null;
@@ -773,7 +779,7 @@
     const encoded = window.LZString
       ? window.LZString.compressToEncodedURIComponent(json)
       : encodeURIComponent(json);
-    return `${location.origin}${location.pathname}?tarot=${encoded}`;
+    return `${location.origin}${shareBasePath()}?tarot=${encoded}`;
   }
   function decodeTarotPayload(raw) {
     if (!raw || !window.LZString) return null;
@@ -781,18 +787,23 @@
       const json = window.LZString.decompressFromEncodedURIComponent(raw);
       if (!json) return null;
       const p = JSON.parse(json);
-      if (!p || typeof p !== 'object' || !Array.isArray(p.c) || !p.c.length || !p.vt) return null;
+      if (!p || typeof p !== 'object' || !Array.isArray(p.c) || !p.c.length) return null;
+      if (!p.t && !p.vt) return null; // 주제 키(신형)도 판정 문구(구형)도 없으면 못 읽는 링크다
       return p;
     } catch (e) {
       return null;
     }
   }
-  // 카드는 id만 실어 보내고 이름·방향은 받는 쪽에서 TAROT_MAJOR로 되살린다(링크 길이 절약).
+  // 카드 한 장을 숫자 하나로 접는다: id * 2 + 역방향(0/1).
+  // 이름·방향·판정은 전부 받는 쪽에서 되살리므로 링크에 실을 필요가 없다.
+  // 구형 링크는 [id, 역방향] 쌍으로 실려 있어 둘 다 읽을 수 있게 둔다.
   function tarotPayloadCards(payload) {
     return payload.c
-      .map((pair) => {
-        const card = TAROT_MAJOR.find((c) => c.id === pair[0]);
-        return card ? { card, reversed: !!pair[1] } : null;
+      .map((v) => {
+        const id = Array.isArray(v) ? v[0] : (v >> 1);
+        const reversed = Array.isArray(v) ? !!v[1] : !!(v & 1);
+        const card = TAROT_MAJOR.find((c) => c.id === id);
+        return card ? { card, reversed } : null;
       })
       .filter(Boolean);
   }
@@ -800,7 +811,19 @@
   function wireIncomingTarotTrigger(payload) {
     const cards = tarotPayloadCards(payload);
     if (!cards.length) return; // 카드를 하나도 못 살리면 조용히 무시하고 평소 홈을 보여준다
-    const topicLabel = payload.tl || '오늘의';
+
+    // 별점·판정 제목·판정 문구는 카드와 주제만 있으면 tarotVerdictOf가 똑같이 다시 만든다
+    // (같은 입력 → 같은 결과). 그래서 링크에는 주제 키와 카드만 싣는다.
+    // 구형 링크(주제 키 없이 문구를 통째로 담던 방식)는 실려온 값을 그대로 쓴다.
+    const topic = payload.t
+      ? tarotTopicOf(payload.t)
+      : { label: payload.tl || '오늘의', emoji: payload.te || '🎴' };
+    const verdict = payload.t
+      ? tarotVerdictOf(cards, topic)
+      : { stars: payload.s || 3, title: payload.vt, line: payload.vl || '' };
+    const topicLabel = topic.label;
+    const topicEmoji = topic.emoji || '🎴';
+
     friendTarotIncomingTitle.textContent = payload.fr
       ? `${payload.fr}${nameSubjectParticle(payload.fr)} 본 ${topicLabel} 타로`
       : `친구가 본 ${topicLabel} 타로`;
@@ -809,9 +832,9 @@
     const syntheticP = {
       id: 'friend-tarot-incoming',
       category: 'maumun',
-      title: payload.vt,
-      diagnosis: payload.vt,
-      emoji: payload.te || '🎴',
+      title: verdict.title,
+      diagnosis: verdict.title,
+      emoji: topicEmoji,
       color: '#b779ef',
     };
 
@@ -820,11 +843,11 @@
       Rx.showRxImageFade(syntheticP, () => {
         friendTarotIncomingCard.hidden = true;
         openMaumunReveal({
-          emoji: payload.te || '🎴',
-          diagnosis: `${topicLabel} 타로 · ${payload.vt}`,
+          emoji: topicEmoji,
+          diagnosis: `${topicLabel} 타로 · ${verdict.title}`,
           interpretation: cards.map((c) => `${c.card.name}(${tarotDirLabel(c.reversed)})`).join(' · '),
-          prescription: payload.vl || '',
-          dosage: starsText(payload.s || 3),
+          prescription: verdict.line,
+          dosage: starsText(verdict.stars),
           color: '#b779ef',
           showMakeOwnBtn: true, // "나도 보기" → 운세/타로 탭으로 이어진다
           makeOwnLabel: '🎴 나도 타로 보기',
@@ -1574,12 +1597,13 @@
     ].join('\n');
     // 결과를 URL에 실어 보낸다 — 친구가 링크를 열면 "친구가 보낸 타로"가 뜨고,
     // 주사를 놓아야 열리는 흐름을 거쳐 자기 타로로 이어진다(그냥 홈 주소를 보내면 유입이 끊긴다).
+    // 링크에는 주제 키와 카드만 싣는다. 별점·판정 제목·판정 문구는 받는 쪽에서
+    // tarotVerdictOf가 똑같이 계산해내므로 실어 보낼 이유가 없다(링크가 길어질 뿐이다).
     const myName = (localStorage.getItem('maumjaro:username') || '').trim();
     const url = buildTarotShareUrl({
-      tl: topic.label, te: topic.emoji,
-      c: cards.map((c) => [c.card.id, c.reversed ? 1 : 0]),
-      s: verdict.stars, vt: verdict.title, vl: verdict.line,
-      fr: myName || undefined, ts: Date.now(),
+      t: topic.key,
+      c: cards.map((c) => c.card.id * 2 + (c.reversed ? 1 : 0)),
+      fr: myName || undefined,
     });
 
     // 이미 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
