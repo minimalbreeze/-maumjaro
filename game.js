@@ -575,6 +575,46 @@
     onPrescriptionCompleted(1200);
   });
 
+  // ---------- 현재 카테고리 표시 ----------
+  // .active 토글은 app.js가 이미 하고 있으므로(app.js는 무수정), 여기서는 그 변화를
+  // 지켜보다가 접근성 속성만 맞춰준다. 버튼 클릭이 아니라 클래스 변화를 보기 때문에
+  // 코드가 프로그램적으로 탭을 옮기는 경우(친구 처방 수신, "나도 타로 보기" 등)도 모두 잡힌다.
+  //
+  // 이 앱은 URL 라우팅이 없다. 대신 화면 전환이 전부 .tab-btn 클릭 한 곳을 지나가므로
+  // ACTIVE와 실제 보이는 화면은 구조적으로 어긋날 수 없다.
+  const TAB_CATEGORY = {
+    home: 'prescription',        // 마음처방(핵심 루프) + 친구가 보낸 처방/운세/타로 수신
+    rx: 'prescription_center',   // 처방센터 · 커스텀 처방전 · 친구에게 보내기
+    fortune: 'fortune',          // 오늘의 운세 · 타로 · 토정비결 · 맘운 · AI맘운
+    history: 'record',
+  };
+  let lastCategory = null;
+
+  function syncActiveNav(fireEvent) {
+    const btns = document.querySelectorAll('.tab-btn');
+    let current = null;
+    btns.forEach((b) => {
+      const on = b.classList.contains('active');
+      // 색으로만 알리지 않는다 — 보조기기에는 aria-current로 현재 위치를 알린다.
+      if (on) b.setAttribute('aria-current', 'page');
+      else b.removeAttribute('aria-current');
+      if (on) current = TAB_CATEGORY[b.dataset.view] || b.dataset.view;
+    });
+    if (current && current !== lastCategory) {
+      if (fireEvent && lastCategory) {
+        track('navigation_category_selected', { category: current, previous_category: lastCategory });
+      }
+      lastCategory = current;
+    }
+  }
+
+  const tabbar = document.querySelector('.tabbar');
+  if (tabbar) {
+    syncActiveNav(false); // 첫 진입 상태를 맞춰두고, 그때는 이벤트를 보내지 않는다
+    new MutationObserver(() => syncActiveNav(true))
+      .observe(tabbar, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+
   // ---------- 나머지 이벤트 (app.js를 고치지 않고 위임 리스너로 붙인다) ----------
   document.addEventListener('click', (e) => {
     const t = e.target;
