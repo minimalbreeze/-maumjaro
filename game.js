@@ -547,6 +547,8 @@
       ? `🔥 ${result.streak}일 연속 달성! ${result.milestone.label}`
       : '🎁 오늘의 마음약이 도착했어요';
     rewardOverlay.hidden = false;
+    // 두드리는 동안 공유 이미지를 미리 만들어 둔다(캡처가 4초쯤 걸리기 때문)
+    if (result.rarity.order >= rarityOrder(GAME_CONFIG.shareMinRarity)) buildShareImage(result);
     track('reward_open_started', { streak: result.streak, level: result.level });
   }
 
@@ -603,7 +605,7 @@
     } else { bonusEl.hidden = true; }
 
     const shareable = r.rarity.order >= rarityOrder(GAME_CONFIG.shareMinRarity);
-    rewardShareBtn.hidden = !shareable;
+    rewardShareBtn.hidden = !shareable; // 이미지는 상자를 열 때 이미 만들기 시작했다
 
     sound('playHealingChime');
     renderPanel();
@@ -621,18 +623,72 @@
   if (rewardBox) rewardBox.addEventListener('click', tapBox);
   if (rewardSkip) rewardSkip.addEventListener('click', revealReward);
   if (rewardClose) rewardClose.addEventListener('click', closeReward);
+  // 공유 이미지를 미리 만들어 둔다(타로 공유와 같은 이유).
+  // iOS는 navigator.share()가 "사용자가 누른 직후"에만 열리므로, 버튼을 누른 뒤에
+  // 캡처를 시작하면 그 사이 제스처 권한이 만료돼 공유 시트가 뜨지 않는다.
+  let shareBlob = null;
+  // 상자를 열기 시작할 때 미리 찍는다. 사용자가 다섯 번 두드리고 결과를 읽는 동안
+  // 캡처가 끝나 있어야, 공유 버튼을 눌렀을 때 기다림 없이 바로 공유 시트가 열린다
+  // (iOS는 사용자가 누른 직후에만 공유 시트를 열어준다).
+  function buildShareImage(r) {
+    shareBlob = null;
+    const node = document.getElementById('med-share-capture');
+    if (!node || !r || typeof window.html2canvas !== 'function') return;
+    const rar = r.rarity;
+    node.style.setProperty('--rar', rar.color);
+    document.getElementById('med-share-rarity').textContent = rar.label;
+    document.getElementById('med-share-rarity').style.color = rar.color;
+    document.getElementById('med-share-icon').textContent = r.medicine.icon;
+    document.getElementById('med-share-name').textContent = r.medicine.name;
+    document.getElementById('med-share-desc').textContent = r.medicine.description;
+    window.html2canvas(node, { backgroundColor: '#fffaf3', scale: 2, imageTimeout: 6000 })
+      .then((c) => new Promise((res) => c.toBlob(res, 'image/png')))
+      .then((b) => { shareBlob = b; })
+      .catch(() => { shareBlob = null; });
+  }
+
+  function shareText(r) {
+    // 설명에 이미 따옴표가 들어 있는 약이 있어서, 바깥에 또 감싸면 ""처럼 겹쳐 보인다.
+    return [
+      '오늘 나 이거 뽑음ㅋㅋ',
+      `${r.rarity.label} ${r.medicine.icon} ${r.medicine.name}`,
+      r.medicine.description,
+      '',
+      '너도 오늘의 마음약 뽑아봐 →',
+    ].join('\n');
+  }
+
   if (rewardShareBtn) {
-    rewardShareBtn.addEventListener('click', () => {
+    rewardShareBtn.addEventListener('click', async () => {
       const r = pendingReward;
       if (!r) return;
-      const text = `오늘 나 이거 뽑음ㅋㅋ\n${r.rarity.label} 💊 ${r.medicine.name}\n"${r.medicine.description}"\n\n너도 오늘의 마음약 뽑아봐 →`;
+      const text = shareText(r);
       const url = `${location.origin}${location.pathname.replace(/index\.html$/, '')}`;
+      // 링크는 반드시 text 안에 넣는다. navigator.share의 url 필드로 따로 넘기면
+      // 카카오톡이 텍스트만 가져가고 링크를 버려서, 친구가 들어올 방법이 사라진다.
+      const full = `${text}\n${url}`;
       track('reward_shared', { rarity: r.rarity.key, medicine_id: r.medicine.id });
+
       try {
-        const Rx = window.MaumjaroRx;
-        if (Rx && typeof Rx.shareOrCopy === 'function') Rx.shareOrCopy(text, url);
-        else if (navigator.share) navigator.share({ text: `${text}\n${url}` });
-      } catch (e) { /* 공유 실패는 조용히 넘어간다 */ }
+        if (shareBlob && navigator.canShare) {
+          const file = new File([shareBlob], '맘운자로_마음약.png', { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], text: full, title: '오늘의 마음약' });
+            return;
+          }
+        }
+        if (navigator.share) { await navigator.share({ text: full }); return; }
+        await navigator.clipboard.writeText(full);
+        const C = window.MaumjaroCore;
+        if (C && C.showToast) C.showToast('공유 문구를 복사했어요 📋');
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // 사용자가 공유 시트를 닫음
+        try {
+          await navigator.clipboard.writeText(full);
+          const C = window.MaumjaroCore;
+          if (C && C.showToast) C.showToast('공유 문구를 복사했어요 📋');
+        } catch (e2) { /* 여기까지 실패하면 조용히 넘어간다 */ }
+      }
     });
   }
 

@@ -2445,6 +2445,43 @@ body::before {
   margin-top: 12px; border: none; background: none; cursor: pointer;
   font-size: 11.5px; color: var(--text-dim); text-decoration: underline;
 }
+/* 공유 이미지 전용 카드 — 화면 밖에 두되 실제로 렌더링돼 있어야 캡처된다
+   (display:none이면 크기가 0이라 못 찍는다) */
+.med-share-capture {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 320px;
+  padding: 26px 20px 18px;
+  text-align: center;
+  background: linear-gradient(180deg, #fffaf3, #ffeef2);
+  border-radius: 20px;
+  pointer-events: none;
+}
+.med-share-rarity { font-size: 12px; font-weight: 800; letter-spacing: .1em; margin-bottom: 12px; }
+.med-share-icon { font-size: 58px; line-height: 1; margin-bottom: 10px; }
+.med-share-name { font-size: 22px; font-weight: 800; color: #6b4657; }
+.med-share-desc {
+  font-size: 13.5px; color: #6b4657; opacity: .82; line-height: 1.6;
+  margin: 10px 0 16px; word-break: keep-all;
+}
+.med-share-foot { font-size: 10.5px; font-weight: 700; color: #b98a9a; }
+
+/* 결과 화면에 보이는 카드 */
+.reward-card {
+  background: linear-gradient(180deg, #fffaf3, #ffeef2);
+  border: 1px solid rgba(255,150,175,0.28);
+  border-radius: 18px;
+  padding: 20px 16px 14px;
+  margin-bottom: 14px;
+}
+.reward-card-foot {
+  margin-top: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #b98a9a;
+  letter-spacing: .01em;
+}
 .reward-rarity {
   display: inline-block; padding: 3px 12px; border-radius: 999px;
   font-size: 11px; font-weight: 800; letter-spacing: .08em; margin-bottom: 12px;
