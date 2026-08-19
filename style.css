@@ -2462,6 +2462,66 @@ body::before {
   background: rgba(128,128,128,0.12); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
 }
 
+.game-vacation { font-size: 11px; color: var(--text-dim); margin: 8px 0 0; }
+.game-report-btn {
+  width: 100%; margin-top: 7px; padding: 8px; cursor: pointer;
+  border: 1px dashed var(--card-border); border-radius: 12px; background: none;
+  font-size: 12px; font-weight: 700; color: var(--text-dim);
+}
+.invite-welcome {
+  width: 100%; margin-bottom: 10px; padding: 11px 13px; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(183,121,239,0.16), rgba(255,143,179,0.14));
+  border: 1px solid rgba(183,121,239,0.28);
+}
+.invite-welcome strong { display: block; font-size: 13px; color: var(--text); }
+.invite-welcome span { display: block; font-size: 11.5px; color: var(--text-dim); margin-top: 3px; }
+
+/* 연속출석 특별 보상은 상자부터 다르다 */
+.reward-box.is-special .reward-box-body { background: linear-gradient(180deg, #ffd9a0, #f0a12e); }
+.reward-box.is-special .reward-box-lid { background: linear-gradient(180deg, #fff0c9, #ffd479); }
+.reward-box.is-special .reward-box-glow {
+  opacity: .3;
+  background: radial-gradient(circle, rgba(255,220,150,0.95), rgba(255,255,255,0) 70%);
+}
+.reward-dup {
+  display: inline-block; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid currentColor; font-size: 10.5px; font-weight: 800;
+}
+.reward-bonus {
+  margin: 10px 0 4px; padding: 9px 12px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,198,107,0.22), rgba(255,145,102,0.18));
+  border: 1px solid rgba(240,161,46,0.35);
+  font-size: 12px; color: var(--text);
+}
+.reward-bonus[hidden] { display: none; }
+
+/* ---------- 이번 달의 나 ---------- */
+.report-overlay {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(38,24,52,0.55); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.report-overlay[hidden] { display: none; }
+.report-sheet {
+  width: 100%; max-width: 340px; background: var(--bg-top);
+  border: 1px solid var(--card-border); border-radius: 22px;
+  padding: 22px 20px 16px; max-height: 88dvh; overflow-y: auto;
+}
+.report-title { font-size: 19px; font-weight: 800; color: var(--text); text-align: center; margin-bottom: 16px; }
+.report-sec { font-size: 11.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 8px; }
+.report-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); margin-bottom: 7px; }
+.report-row > span:first-child { flex: 0 0 74px; }
+.report-bar { flex: 1; height: 7px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
+.report-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff9166, #ffc66b); }
+.report-stats { display: flex; gap: 8px; margin: 16px 0 12px; }
+.report-stats > div {
+  flex: 1; text-align: center; padding: 10px 4px; border-radius: 12px;
+  background: var(--card); border: 1px solid var(--card-border);
+}
+.report-stats strong { display: block; font-size: 17px; font-weight: 800; color: var(--text); }
+.report-stats span { font-size: 10px; color: var(--text-dim); }
+.report-quote { font-size: 13px; color: var(--text); text-align: center; margin: 0 0 6px; }
+
 /* ---------- 내 마음약국 ---------- */
 .pharmacy-overlay {
   position: fixed; inset: 0; z-index: 1200;
@@ -2506,6 +2566,12 @@ body::before {
   position: absolute; top: 5px; right: 6px; font-size: 10px;
   font-weight: 800; color: var(--text-dim);
 }
+.med-season { font-size: 9px; font-weight: 700; color: var(--text-dim); margin-top: 3px; }
+.med-tier {
+  display: inline-block; margin-top: 4px; padding: 0 6px; border-radius: 999px;
+  border: 1px solid currentColor; font-size: 8.5px; font-weight: 800; letter-spacing: .05em;
+}
+.med-card.out-season { opacity: .42; }
 
 @media (prefers-reduced-motion: reduce) {
   .reward-box.tap-1, .reward-box.tap-2, .reward-box.tap-3, .reward-box.tap-4 { animation: none; }

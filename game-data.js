@@ -159,6 +159,35 @@
     { id: 'm_reset', name: '마음리셋주사', category: 'mind', rarity: 'epic', icon: '💉',
       description: '어제의 나와 오늘의 나를 분리해 준다. 어제는 어제로 두자.',
       hint: '다시 시작하고 싶을 때.', shareText: '마음을 리셋했습니다' },
+
+    // ── 시즌 한정 ────────────────────────────────────────
+    // season이 지금과 맞을 때만 뽑기 후보에 들어간다. 기간이 지나면 새로 얻을 수 없지만,
+    // 이미 얻은 사람의 컬렉션에는 그대로 남는다(잠금이 아니라 '기간 지남'으로 표시).
+    // weekday: 0=일 … 6=토 / months: 1~12
+    { id: 'se_monday', name: '월요병긴급주사', category: 'work', rarity: 'rare', icon: '💉',
+      description: '월요일에만 조제된다. 화요일이 오면 저절로 사라진다.',
+      hint: '월요일에만 만날 수 있어요.', shareText: '월요병을 넘겼습니다',
+      limited: true, season: '월요일', weekday: 1 },
+    { id: 'se_friday', name: '불금점화제', category: 'work', rarity: 'rare', icon: '💊',
+      description: '금요일 오후에 효과가 가장 세다. 주말을 미리 당겨 쓰게 해준다.',
+      hint: '금요일에만 만날 수 있어요.', shareText: '불금에 불을 붙였습니다',
+      limited: true, season: '금요일', weekday: 5 },
+    { id: 'se_exam', name: '벼락치기각성제', category: 'work', rarity: 'epic', icon: '💉',
+      description: '시험 기간에만 유통된다. 복용 후 기억력은 24시간만 유지된다.',
+      hint: '시험 기간(4·6·10·12월)에만 나타나요.', shareText: '벼락치기에 성공했습니다',
+      limited: true, season: '시험기간', months: [4, 6, 10, 12] },
+    { id: 'se_xmas', name: '솔로생존정', category: 'love', rarity: 'epic', icon: '💊',
+      description: '12월에만 조제된다. 거리의 캐럴을 배경음악으로 바꿔준다.',
+      hint: '12월에만 만날 수 있어요.', shareText: '연말을 무사히 살아냈습니다',
+      limited: true, season: '크리스마스', months: [12] },
+    { id: 'se_yearend', name: '약속과다해독제', category: 'social', rarity: 'rare', icon: '💊',
+      description: '연말에만 필요한 약. 이번 주 약속이 네 개를 넘겼을 때 쓴다.',
+      hint: '11~12월에만 만날 수 있어요.', shareText: '연말 약속을 버텼습니다',
+      limited: true, season: '연말', months: [11, 12] },
+    { id: 'se_newyear', name: '새해다짐보존제', category: 'mind', rarity: 'legendary', icon: '🧪',
+      description: '1월에만 만들어진다. 다짐이 2월까지 가게 해준다는 소문이 있다.',
+      hint: '1월에만 만날 수 있어요.', shareText: '새해 다짐을 지키는 중입니다',
+      limited: true, season: '새해', months: [1] },
   ];
 
   // ---------- 레벨 ----------
@@ -190,9 +219,18 @@
     dailyBaseXp: 10,          // 그날 첫 처방 완료 시
     rarityBonusXp: { normal: 0, rare: 5, epic: 15, legendary: 40 },
     openTapCount: 5,          // 보상 상자를 여는 데 필요한 탭 수
-    bonusBoxEnabled: false,   // PHASE 3에서 켠다
-    bonusBoxChance: 0.03,
+    bonusBoxEnabled: true,    // 낮은 확률로 추가 보상 상자
+    bonusBoxChance: 0.08,
+    bonusBoxXp: 15,
     shareMinRarity: 'rare',   // 이 등급 이상일 때 공유를 권한다
+    // 같은 마음약을 이만큼 모으면 등급 표시가 올라간다(중복이 꽝으로 느껴지지 않게).
+    duplicateTiers: [
+      { count: 3, label: 'SILVER', color: '#9fb2c4' },
+      { count: 5, label: 'GOLD', color: '#e0a83c' },
+      { count: 10, label: 'PRISM', color: '#b779ef' },
+    ],
+    // 친구 링크로 처음 들어온 사람에게 줄 환영 보상(가입 없이 바로 체험시키기 위함)
+    inviteWelcomeXp: 10,
   };
 
   window.MAUMJARO_GAME_DATA = {

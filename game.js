@@ -118,15 +118,27 @@
   function rarityOrder(key) { return rarityOf(key).order; }
   function medicineOf(id) { return MEDICINES.find((m) => m.id === id) || null; }
 
-  // 오늘 받을 수 있는 마음약 후보. 시즌 한정(limited)은 기간이 지나면 빠진다(PHASE 3 대비).
+  // 지금 이 시점에 시즌 한정 마음약을 얻을 수 있는지.
+  // 요일(weekday)·월(months)·기간(availableFrom~Until) 중 지정된 조건만 검사한다.
+  function inSeason(m, now) {
+    if (!m.limited) return true;
+    const d = now || new Date();
+    if (typeof m.weekday === 'number' && d.getDay() !== m.weekday) return false;
+    if (Array.isArray(m.months) && !m.months.includes(d.getMonth() + 1)) return false;
+    if (m.availableFrom && d.getTime() < new Date(m.availableFrom).getTime()) return false;
+    if (m.availableUntil && d.getTime() > new Date(m.availableUntil).getTime()) return false;
+    return true;
+  }
   function availableMedicines(now) {
-    const t = now ? now.getTime() : Date.now();
-    return MEDICINES.filter((m) => {
-      if (!m.limited) return true;
-      if (m.availableFrom && t < new Date(m.availableFrom).getTime()) return false;
-      if (m.availableUntil && t > new Date(m.availableUntil).getTime()) return false;
-      return true;
-    });
+    return MEDICINES.filter((m) => inSeason(m, now));
+  }
+
+  // 같은 약을 여러 번 얻었을 때의 등급. 중복이 꽝으로 느껴지지 않게 하는 장치다.
+  function duplicateTierOf(count) {
+    const tiers = GAME_CONFIG.duplicateTiers || [];
+    let hit = null;
+    tiers.forEach((t) => { if (count >= t.count) hit = t; });
+    return hit;
   }
 
   function pickRarity(rand, minRarityKey) {
@@ -265,28 +277,55 @@
     saveState(s);
 
     const afterLevel = levelFromXp(s.xp).level;
+    const count = s.collection[med.id].count;
 
     return {
       medicine: med,
       rarity: rarityOf(med.rarity),
       isNew: !prev,
-      count: s.collection[med.id].count,
+      count,
+      dupTier: duplicateTierOf(count),
       gainedXp,
       streak,
       milestone,
       usedVacation,
+      vacationTickets: s.vacationTickets || 0,
+      // 보너스 박스는 같은 씨앗을 쓰되 다른 문자열을 섞어, 재실행해도 결과가 같게 한다
+      bonus: GAME_CONFIG.bonusBoxEnabled
+        && mulberry32(hashStr(`${s.salt}|bonus|${today}`))() < GAME_CONFIG.bonusBoxChance,
       leveledUp: afterLevel > beforeLevel,
       level: afterLevel,
       levelTitle: titleForLevel(afterLevel),
     };
   }
 
+  // 보너스 박스 수령(별도 멱등 키). 오늘 한 번만.
+  function claimBonusBox() {
+    const today = todayKey();
+    const awardId = `bonus:${today}`;
+    const s = loadState();
+    if (s.awards[awardId]) return null;
+    s.xp += GAME_CONFIG.bonusBoxXp;
+    s.vacationTickets = (s.vacationTickets || 0) + 1;
+    s.awards[awardId] = true;
+    saveState(s);
+    return { xp: GAME_CONFIG.bonusBoxXp, vacationTickets: s.vacationTickets };
+  }
+
   // ---------- 컬렉션 조회 ----------
   function getCollection() {
     const s = loadState();
+    const now = new Date();
     return MEDICINES.map((m) => {
       const owned = s.collection[m.id];
-      return { ...m, owned: !!owned, count: owned ? owned.count : 0, firstAt: owned ? owned.firstAt : null };
+      return {
+        ...m,
+        owned: !!owned,
+        count: owned ? owned.count : 0,
+        firstAt: owned ? owned.firstAt : null,
+        available: inSeason(m, now), // 시즌이 지나면 새로 얻을 수 없다(이미 얻은 건 그대로 남는다)
+        dupTier: owned ? duplicateTierOf(owned.count) : null,
+      };
     });
   }
 
@@ -380,14 +419,91 @@
         </div>
       </div>
       ${다음보상}
+      ${p.vacationTickets > 0
+        ? `<p class="game-vacation">🛡️ 마음휴가권 ×${p.vacationTickets} · 하루 빠져도 연속이 지켜져요</p>`
+        : ''}
       <button class="game-pharmacy-btn" id="game-pharmacy-btn" type="button">
         💊 내 마음약국 <strong>${p.collectedCount}/${p.totalMedicines}</strong>
         <span class="game-pharmacy-pct">${pct}%</span>
       </button>
+      <button class="game-report-btn" id="game-report-btn" type="button">📊 이번 달의 나 보기</button>
     `;
     panel.hidden = false;
     const btn = document.getElementById('game-pharmacy-btn');
     if (btn) btn.addEventListener('click', () => openPharmacy());
+    const rep = document.getElementById('game-report-btn');
+    if (rep) rep.addEventListener('click', () => openMonthlyReport());
+  }
+
+  // ---------- 월간 감정 리포트 ----------
+  // 감정 종류는 app.js가 쓰는 rxRecords의 prescriptionId('emotion-joy' 형태)에 들어 있다.
+  // 이 파일은 그 키를 읽기만 하고 쓰지 않는다.
+  function monthlyReport() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const mo = now.getMonth();
+    let rx = [];
+    try { rx = JSON.parse(localStorage.getItem('maumjaro:rxRecords') || '[]'); } catch (e) { rx = []; }
+    const Core = window.MaumjaroCore;
+    const S = (Core && Core.SYMPTOMS) || {};
+
+    const thisMonth = rx.filter((r) => {
+      const d = new Date(r.ts);
+      return d.getFullYear() === y && d.getMonth() === mo;
+    });
+    const counts = {};
+    thisMonth.forEach((r) => {
+      if (r.category !== 'emotion') return;
+      const key = String(r.prescriptionId || '').replace(/^emotion-/, '');
+      if (!S[key]) return;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const top = Object.keys(counts)
+      .sort((a, b) => counts[b] - counts[a])
+      .slice(0, 3)
+      .map((k) => ({ key: k, label: S[k].label, emoji: S[k].emoji, n: counts[k],
+        pct: total ? Math.round((counts[k] / total) * 100) : 0 }));
+
+    const s = loadState();
+    const newThisMonth = Object.keys(s.collection).filter((id) => {
+      const d = new Date(s.collection[id].firstAt || 0);
+      return d.getFullYear() === y && d.getMonth() === mo;
+    }).length;
+
+    return { month: mo + 1, total: thisMonth.length, emotionTotal: total, top,
+      longestStreak: s.longestStreak || 0, newMedicines: newThisMonth };
+  }
+
+  function openMonthlyReport() {
+    const r = monthlyReport();
+    const ov = document.getElementById('report-overlay');
+    if (!ov) return;
+    const 요약 = r.total === 0
+      ? '이번 달 기록이 아직 없어요. 오늘 첫 처방을 남겨보세요.'
+      : r.total >= 20 ? '이번 달도 꽤 잘 버텼어요.'
+      : r.total >= 10 ? '꾸준히 마음을 챙기고 있어요.'
+      : '조금씩 쌓이고 있어요.';
+    document.getElementById('report-body').innerHTML = `
+      <div class="report-title">${r.month}월의 나</div>
+      ${r.top.length ? `
+        <div class="report-sec">가장 많이 고른 감정</div>
+        ${r.top.map((t) => `
+          <div class="report-row">
+            <span>${t.emoji} ${t.label}</span>
+            <span class="report-bar"><i style="width:${t.pct}%"></i></span>
+            <strong>${t.pct}%</strong>
+          </div>`).join('')}
+      ` : ''}
+      <div class="report-stats">
+        <div><strong>${r.total}</strong><span>이번 달 처방</span></div>
+        <div><strong>${r.longestStreak}</strong><span>최장 연속</span></div>
+        <div><strong>${r.newMedicines}</strong><span>새 마음약</span></div>
+      </div>
+      <p class="report-quote">“${요약}”</p>
+    `;
+    ov.hidden = false;
+    track('monthly_report_viewed', { total: r.total });
   }
 
   // ---------- 보상 개봉 ----------
@@ -423,7 +539,8 @@
     opening = false;
     rewardStage.hidden = false;
     rewardResult.hidden = true;
-    rewardBox.className = 'reward-box';
+    // 3·7·14·30일은 상자부터 다르게 보여준다(평소와 같은 화면이면 달성감이 없다).
+    rewardBox.className = 'reward-box' + (result.milestone ? ' is-special' : '');
     rewardCount.textContent = `0 / ${GAME_CONFIG.openTapCount}`;
     rewardGuide.textContent = '톡톡 두드려 열어보세요!';
     rewardEyebrow.textContent = result.milestone
@@ -465,11 +582,25 @@
     document.getElementById('reward-desc').textContent = r.medicine.description;
 
     const parts = [];
-    parts.push(r.isNew ? '<span class="reward-new">NEW</span>' : `보유 ×${r.count}`);
+    if (r.isNew) parts.push('<span class="reward-new">NEW</span>');
+    else if (r.dupTier) parts.push(`<span class="reward-dup" style="color:${r.dupTier.color};border-color:${r.dupTier.color};">${r.dupTier.label} ×${r.count}</span>`);
+    else parts.push(`보유 ×${r.count}`);
     parts.push(`+${r.gainedXp} XP`);
     if (r.leveledUp) parts.push(`🎉 Lv.${r.level} ${r.levelTitle}`);
     if (r.usedVacation) parts.push('🛡️ 마음휴가권 사용');
+    if (r.medicine.limited) parts.push(`✨ ${r.medicine.season} 한정`);
     document.getElementById('reward-meta').innerHTML = parts.join(' · ');
+
+    // 보너스 박스: 낮은 확률로 한 번 더. 오늘 한 번만 지급된다.
+    const bonusEl = document.getElementById('reward-bonus');
+    if (r.bonus) {
+      const got = claimBonusBox();
+      if (got) {
+        bonusEl.innerHTML = `🎁 <strong>BONUS BOX!</strong> +${got.xp} XP · 🛡️ 마음휴가권 ×1`;
+        bonusEl.hidden = false;
+        track('bonus_box_opened', { streak: r.streak });
+      } else { bonusEl.hidden = true; }
+    } else { bonusEl.hidden = true; }
 
     const shareable = r.rarity.order >= rarityOrder(GAME_CONFIG.shareMinRarity);
     rewardShareBtn.hidden = !shareable;
@@ -532,18 +663,22 @@
     document.getElementById('pharmacy-grid').innerHTML = shown.map((m) => {
       const r = rarityOf(m.rarity);
       if (!m.owned) {
-        return `<div class="med-card locked">
-          <div class="med-icon">🔒</div>
+        // 시즌이 지난 한정판은 "지금은 못 얻는다"는 걸 알려준다(그냥 잠금과 다르다).
+        return `<div class="med-card locked${m.limited && !m.available ? ' out-season' : ''}">
+          <div class="med-icon">${m.limited && !m.available ? '⏳' : '🔒'}</div>
           <div class="med-name">???</div>
           <div class="med-hint">${m.hint}</div>
         </div>`;
       }
+      const tier = m.dupTier;
       return `<div class="med-card" style="--r:${r.color};background:${r.tint};">
         <div class="med-rarity" style="color:${r.color};">${r.label}</div>
         <div class="med-icon">${m.icon}</div>
         <div class="med-name">${m.name}</div>
         <div class="med-hint">${m.description}</div>
-        ${m.count > 1 ? `<div class="med-count">×${m.count}</div>` : ''}
+        ${m.limited ? `<div class="med-season">✨ ${m.season} 한정</div>` : ''}
+        ${m.count > 1 ? `<div class="med-count"${tier ? ` style="color:${tier.color};"` : ''}>×${m.count}</div>` : ''}
+        ${tier ? `<div class="med-tier" style="color:${tier.color};border-color:${tier.color};">${tier.label}</div>` : ''}
       </div>`;
     }).join('');
 
@@ -551,6 +686,10 @@
       b.addEventListener('click', () => { pharmacyFilter = b.dataset.f; renderPharmacy(); });
     });
   }
+  const reportCloseBtn = document.getElementById('report-close');
+  if (reportCloseBtn) reportCloseBtn.addEventListener('click', () => {
+    document.getElementById('report-overlay').hidden = true;
+  });
   const pharmacyCloseBtn = document.getElementById('pharmacy-close');
   if (pharmacyCloseBtn) pharmacyCloseBtn.addEventListener('click', () => { pharmacyOverlay.hidden = true; });
 
@@ -631,11 +770,26 @@
     if (t.closest('#tarot-share-btn')) { track('reward_shared', { source: 'tarot' }); }
   }, true);
 
-  // 친구가 보낸 링크로 들어온 경우
-  (function trackInviteOpen() {
+  // 친구가 보낸 링크로 들어온 경우.
+  // 처음 온 사람에게는 "너도 오늘의 마음약을 받을 수 있다"는 것을 바로 알려준다 —
+  // 친구 것만 구경하고 나가면 바이럴 루프가 거기서 끊긴다.
+  (function handleInviteArrival() {
     const q = new URLSearchParams(location.search);
     const kind = q.get('custom') ? 'custom' : q.get('maumun') ? 'maumun' : (q.get('t') || q.get('tarot')) ? 'tarot' : '';
-    if (kind) track('friend_invite_opened', { source: kind });
+    if (!kind) return;
+    track('friend_invite_opened', { source: kind });
+
+    const s = loadState();
+    const 처음온사람 = !s.lastCheckInDate && Object.keys(s.collection).length === 0;
+    if (!처음온사람 || !emotionSection) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'invite-welcome';
+    banner.innerHTML = `
+      <strong>친구가 보낸 처방이 도착했어요 💌</strong>
+      <span>확인하고 나면, 오늘의 마음약도 하나 받을 수 있어요</span>
+    `;
+    emotionSection.parentNode.insertBefore(banner, emotionSection);
   })();
 
   renderEmotionPicker();
