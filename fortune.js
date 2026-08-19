@@ -484,20 +484,52 @@
     '사주와 오늘의 마음을 함께 짚어보는 중...',
     '오늘의 기운에 질문을 겹쳐보는 중...',
   ];
+  // 결과가 나오기 전 대기 구간. 그냥 기다리게 두면 지루하므로 캡슐을 직접 열게 한다.
+  //
+  // 중요: 이건 "뽑기"가 아니라 "여는 연출"이다.
+  //  - 운세 결과는 사주와 날짜로 이미 정해져 있어서, 어떤 캡슐을 골라도 내용이 같다.
+  //  - 마음약을 주는 하루 한 번의 뽑기는 처방 완료 후 보상 상자 쪽에만 있다.
+  // 두 개가 다 "뽑기"로 보이면 하루에 두 번 뽑는 것처럼 느껴지므로, 문구도 "열어보세요"로 둔다.
+  const REVEAL_CAPSULE_COUNT = 5;
+
   function withMysticalReveal(profile, title, buildAndRender) {
     const loadingLine = MYSTICAL_LOADING_LINES[Math.floor(Math.random() * MYSTICAL_LOADING_LINES.length)];
+    const capsules = Array.from({ length: REVEAL_CAPSULE_COUNT }, (_, i) => `
+      <button class="reveal-capsule" type="button" data-i="${i}" style="animation-delay:${(i * 0.31).toFixed(2)}s;">
+        <span class="reveal-capsule-shine"></span>
+      </button>`).join('');
+
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
         <span class="rx-nav-title">${title}</span>
       </div>
-      <div class="fortune-loading">
-        <div class="fortune-loading-orb">🔮</div>
-        <p class="fortune-loading-text">${loadingLine}</p>
+      <div class="reveal-stage">
+        <p class="reveal-guide" id="reveal-guide">캡슐을 하나 열어보세요</p>
+        <div class="reveal-tray" id="reveal-tray">${capsules}</div>
+        <p class="reveal-note">어떤 걸 골라도 오늘의 운은 같아요 💊</p>
       </div>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    setTimeout(buildAndRender, 1400 + Math.floor(Math.random() * 900));
+
+    const tray = document.getElementById('reveal-tray');
+    const guide = document.getElementById('reveal-guide');
+    let opening = false;
+    tray.querySelectorAll('.reveal-capsule').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (opening) return;
+        opening = true;
+        tray.querySelectorAll('.reveal-capsule').forEach((c) => { if (c !== el) c.classList.add('is-gone'); });
+        el.classList.add('is-picked');
+        guide.textContent = loadingLine;
+        tarotSound('playInjectPress');
+        setTimeout(() => {
+          el.classList.add('is-open');
+          tarotSound('playReadyChime');
+          setTimeout(buildAndRender, 700);
+        }, 700);
+      });
+    });
   }
 
   function categorySectionHtml(label, item, rxCategory) {

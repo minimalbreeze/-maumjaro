@@ -204,6 +204,9 @@
       <button class="seg-btn" data-period="month">월</button>
       <button class="seg-btn" data-period="year">년</button>
     </div>
+    <!-- 게임 진행 현황 (game.js가 채운다). fortune.js가 아래 피드를 통째로 다시 그리므로
+         영향을 받지 않도록 별도 컨테이너로 분리해 둔다. -->
+    <div id="history-game-panel" class="history-game-panel" hidden></div>
     <div id="history-content"></div>
     <div id="history-unified-feed"></div>
   </main>

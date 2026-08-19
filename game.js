@@ -45,6 +45,7 @@
       v: STATE_VERSION,
       salt: Math.random().toString(36).slice(2, 10), // 사용자마다 다른 뽑기 결과를 만들기 위한 씨앗
       lastCheckInDate: null,
+      checkInDays: [],       // 출석한 날짜들('YYYY-MM-DD'). 기록 탭 달력에 쓴다
       currentStreak: 0,
       longestStreak: 0,
       totalCheckIns: 0,
@@ -73,7 +74,8 @@
         saveState(fresh);
         return fresh;
       }
-      const merged = { ...defaultState(), ...s, collection: s.collection || {}, awards: s.awards || {} };
+      const merged = { ...defaultState(), ...s, collection: s.collection || {}, awards: s.awards || {},
+        checkInDays: Array.isArray(s.checkInDays) ? s.checkInDays : [] };
       if (!merged.salt) { merged.salt = defaultState().salt; saveState(merged); }
       return merged;
     } catch (e) {
@@ -269,6 +271,9 @@
     s.currentStreak = streak;
     s.longestStreak = Math.max(s.longestStreak || 0, streak);
     s.totalCheckIns = (s.totalCheckIns || 0) + 1;
+    if (!s.checkInDays.includes(today)) s.checkInDays.push(today);
+    // 달력은 최근 것만 보여주므로 무한정 쌓지 않는다(약 1년치).
+    if (s.checkInDays.length > 400) s.checkInDays = s.checkInDays.slice(-400);
     if (usedVacation) s.vacationTickets = Math.max(0, (s.vacationTickets || 0) - 1);
     if (milestone && milestone.vacationTickets) {
       s.vacationTickets = (s.vacationTickets || 0) + milestone.vacationTickets;
@@ -342,9 +347,10 @@
   // 처음 온 사람이 3초 안에 무엇을 할지 알 수 있도록, 감정 선택을 홈 맨 위로 꺼낸다.
   // 기존 감정 모달(#symptom-overlay)은 그대로 두고 여기서는 app.js가 이미 export해둔
   // launchEmotionFlow(key)만 부른다 — 그래서 app.js를 한 줄도 고치지 않는다.
-  // 18종을 다 늘어놓으면 화면이 넘치므로 대표 8개만 먼저 보이고 나머지는 접어둔다(삭제 아님).
-  const FEATURED_EMOTIONS = ['stress', 'exhausted', 'depression', 'loneliness',
-    'anger', 'joy', 'excitement', 'ordinary'];
+  // 대표 4개만 먼저 보이고 나머지 14개는 접어둔다(삭제 아님).
+  // 선택지가 많으면 고르는 것 자체가 일이 되어 첫 행동이 늦어진다. 가장 자주 고를 만한
+  // 넷(부정 둘 · 긍정 하나 · 중립 하나)만 남겨 3초 안에 손이 나가게 한다.
+  const FEATURED_EMOTIONS = ['stress', 'exhausted', 'joy', 'ordinary'];
 
   const emotionSection = document.getElementById('home-emotion');
   let emotionsExpanded = false;
@@ -433,6 +439,49 @@
     if (btn) btn.addEventListener('click', () => openPharmacy());
     const rep = document.getElementById('game-report-btn');
     if (rep) rep.addEventListener('click', () => openMonthlyReport());
+  }
+
+  // ---------- 기록 탭: 게임 진행 현황 ----------
+  // "내가 얼마나 해왔는지"가 눈에 보여야 계속할 이유가 생긴다.
+  // 최근 4주 출석 달력 + 연속/최고/누적 + 레벨 + 컬렉션을 한 화면에 모은다.
+  function renderHistoryGamePanel() {
+    const el = document.getElementById('history-game-panel');
+    if (!el) return;
+    const p = previewToday();
+    const s = loadState();
+    const done = new Set(s.checkInDays || []);
+
+    // 오늘을 마지막 칸으로 두고 4주(28일)를 그린다
+    const cells = [];
+    for (let i = 27; i >= 0; i--) {
+      const key = shiftDays(todayKey(), -i);
+      cells.push({ key, on: done.has(key), today: i === 0, day: Number(key.slice(-2)) });
+    }
+    const xpPct = Math.round((p.xpInto / p.xpNeed) * 100);
+    const colPct = Math.round((p.collectedCount / p.totalMedicines) * 100);
+
+    el.innerHTML = `
+      <div class="hg-head">
+        <span class="hg-streak">🔥 ${p.streak}일 연속</span>
+        <span class="hg-sub">최고 ${p.longestStreak}일 · 누적 ${p.totalCheckIns}일</span>
+      </div>
+      <div class="hg-cal">${cells.map((c) => `
+        <span class="hg-cell${c.on ? ' on' : ''}${c.today ? ' today' : ''}" title="${c.key}">${c.day}</span>
+      `).join('')}</div>
+      <div class="hg-row">
+        <span class="hg-label">Lv.${p.level} ${p.levelTitle}</span>
+        <span class="hg-bar"><i style="width:${xpPct}%"></i></span>
+        <span class="hg-val">${p.xpInto}/${p.xpNeed}</span>
+      </div>
+      <div class="hg-row">
+        <span class="hg-label">💊 마음약국</span>
+        <span class="hg-bar"><i class="col" style="width:${colPct}%"></i></span>
+        <span class="hg-val">${p.collectedCount}/${p.totalMedicines}</span>
+      </div>
+      ${p.vacationTickets > 0 ? `<p class="hg-note">🛡️ 마음휴가권 ×${p.vacationTickets}</p>` : ''}
+      ${p.nextMilestone ? `<p class="hg-note">🎁 ${p.nextMilestone.days - p.streak}일 뒤 ${p.nextMilestone.days}일 달성 · ${p.nextMilestone.label}</p>` : ''}
+    `;
+    el.hidden = false;
   }
 
   // ---------- 월간 감정 리포트 ----------
@@ -795,6 +844,12 @@
       else b.removeAttribute('aria-current');
       if (on) current = TAB_CATEGORY[b.dataset.view] || b.dataset.view;
     });
+    // 기록 탭에 들어올 때마다 진행 현황을 새로 그린다
+    const hg = document.getElementById('history-game-panel');
+    if (hg) {
+      if (current === 'record') renderHistoryGamePanel();
+      else hg.hidden = true;
+    }
     if (current && current !== lastCategory) {
       if (fireEvent && lastCategory) {
         track('navigation_category_selected', { category: current, previous_category: lastCategory });
