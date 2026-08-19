@@ -97,9 +97,75 @@
   const FORTUNE_CALC_VERSION = 1;
   const MAUMUN_LOG_KEY = 'maumjaro:maumunLog'; // 기존 감정/처방 기록 키와 완전 독립된 별도 구조
 
-  function todayDateKey() {
-    return new Date().toISOString().slice(0, 10);
+  // 날짜 키는 반드시 "사용자의 로컬 날짜"여야 한다.
+  // 예전에는 toISOString()(UTC)을 썼는데, 그러면 한국에서는 하루가 자정이 아니라
+  // 오전 9시에 바뀐다. app.js는 처음부터 로컬 날짜(dateKey)를 써왔기 때문에 같은 앱 안에
+  // "오늘"이 두 가지로 존재했고, 연속 출석을 세는 순간 이 차이가 바로 버그가 된다.
+  function dateKeyOf(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
+  function todayDateKey() {
+    return dateKeyOf(new Date());
+  }
+
+  // ---------- UTC 날짜 키로 저장된 기존 기록을 로컬 날짜로 옮긴다 (1회만 실행) ----------
+  // 각 기록에 ts(저장 시각)가 들어 있어서, 그 값으로 로컬 날짜를 정확히 다시 계산할 수 있다.
+  const DATE_MIGRATION_KEY = 'maumjaro:dateMigration';
+  const DATE_MIGRATION_VERSION = '1';
+
+  function migrateDateKeysToLocal() {
+    if (localStorage.getItem(DATE_MIGRATION_KEY) === DATE_MIGRATION_VERSION) return;
+    try {
+      // 키 상수(TAROT_LOG_KEY 등)는 파일 아래쪽에서 const로 선언돼 아직 초기화 전이므로,
+      // 이 함수 안에서는 문자열을 직접 쓴다.
+      // 맘운: { '날짜': entry }
+      const maumun = JSON.parse(localStorage.getItem('maumjaro:maumunLog') || '{}');
+      const nextMaumun = {};
+      Object.keys(maumun).forEach((oldKey) => {
+        const e = maumun[oldKey];
+        if (!e || typeof e !== 'object') return;
+        const key = e.ts ? dateKeyOf(new Date(e.ts)) : oldKey;
+        // 같은 날로 겹치면 더 나중에 저장된 것을 남긴다
+        if (!nextMaumun[key] || (e.ts || 0) >= (nextMaumun[key].ts || 0)) {
+          nextMaumun[key] = { ...e, date: key };
+        }
+      });
+      localStorage.setItem('maumjaro:maumunLog', JSON.stringify(nextMaumun));
+
+      // 타로: { '날짜': { 주제키: entry } } — 주제별로 ts가 달라 각각 재계산한다
+      const tarot = JSON.parse(localStorage.getItem('maumjaro:tarotLog') || '{}');
+      const nextTarot = {};
+      Object.keys(tarot).forEach((oldKey) => {
+        const day = tarot[oldKey];
+        if (!day || typeof day !== 'object') return;
+        const entries = Array.isArray(day.cards) ? { today: day } : day; // 구 형식도 흡수
+        Object.keys(entries).forEach((topicKey) => {
+          const e = entries[topicKey];
+          if (!e || typeof e !== 'object') return;
+          const key = e.ts ? dateKeyOf(new Date(e.ts)) : oldKey;
+          if (!nextTarot[key]) nextTarot[key] = {};
+          const prev = nextTarot[key][topicKey];
+          if (!prev || (e.ts || 0) >= (prev.ts || 0)) {
+            nextTarot[key][topicKey] = { ...e, date: key };
+          }
+        });
+      });
+      localStorage.setItem('maumjaro:tarotLog', JSON.stringify(nextTarot));
+
+      // 캡슐 뽑기 기록은 "오늘 뽑았는지"만 담아 과거 값이 의미 없다. 그냥 비운다
+      // (최악의 경우 오늘 캡슐을 한 번 더 뽑게 되는 정도라 안전하다).
+      localStorage.removeItem('maumjaro:gachaLog');
+
+      localStorage.setItem(DATE_MIGRATION_KEY, DATE_MIGRATION_VERSION);
+    } catch (e) {
+      // 이관에 실패해도 앱은 계속 동작해야 한다. 다음 실행 때 다시 시도한다.
+    }
+  }
+  // 아래 어떤 코드가 기록을 읽기 전에 먼저 끝나야 한다.
+  migrateDateKeysToLocal();
 
   // ---------- 날짜별 맘운 기록 (날짜를 key로 하는 객체라 같은 날 재저장은 자동으로 덮어쓰기됨) ----------
   function loadMaumunLog() {

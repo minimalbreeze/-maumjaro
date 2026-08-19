@@ -83,6 +83,9 @@
       <button class="today-rx-btn" id="home-maumun-btn" type="button">자세히</button>
     </div>
 
+    <!-- 게임 레이어: 오늘의 보상 / 연속출석 / 컬렉션 진행률 (game.js가 채운다) -->
+    <div id="game-panel" class="game-panel" hidden></div>
+
     <div id="today-rx-card" class="today-rx-card" hidden>
       <div class="today-rx-emoji" id="today-rx-emoji">💉</div>
       <div class="today-rx-body">
@@ -204,6 +207,45 @@
   <main id="view-fortune" class="view" hidden>
     <div id="fortune-content"></div>
   </main>
+
+  <!-- 보상 개봉 오버레이 -->
+  <div id="reward-overlay" class="reward-overlay" hidden>
+    <div class="reward-sheet">
+      <div id="reward-stage">
+        <p class="reward-eyebrow" id="reward-eyebrow">🎁 오늘의 마음약이 도착했어요</p>
+        <p class="reward-guide" id="reward-guide">톡톡 두드려 열어보세요!</p>
+        <button class="reward-box" id="reward-box" type="button" aria-label="상자 두드리기">
+          <span class="reward-box-lid"></span>
+          <span class="reward-box-body"></span>
+          <span class="reward-box-glow"></span>
+        </button>
+        <p class="reward-count" id="reward-count">0 / 5</p>
+        <button class="reward-skip" id="reward-skip" type="button">바로 열기</button>
+      </div>
+      <div id="reward-result" hidden>
+        <div class="reward-rarity" id="reward-rarity">RARE</div>
+        <div class="reward-icon" id="reward-icon">💊</div>
+        <div class="reward-name" id="reward-name"></div>
+        <p class="reward-desc" id="reward-desc"></p>
+        <div class="reward-meta" id="reward-meta"></div>
+        <button class="action-btn" id="reward-share-btn" type="button" hidden>📤 자랑하기</button>
+        <button class="reward-close" id="reward-close" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 마음약국 (컬렉션) -->
+  <div id="pharmacy-overlay" class="pharmacy-overlay" hidden>
+    <div class="pharmacy-sheet">
+      <div class="pharmacy-head">
+        <span class="pharmacy-title">💊 내 마음약국</span>
+        <button class="pharmacy-close" id="pharmacy-close" type="button">✕</button>
+      </div>
+      <p class="pharmacy-progress" id="pharmacy-progress"></p>
+      <div class="pharmacy-filters" id="pharmacy-filters"></div>
+      <div class="pharmacy-grid" id="pharmacy-grid"></div>
+    </div>
+  </div>
 
   <nav class="tabbar">
     <button class="tab-btn active" data-view="home">
@@ -499,12 +541,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<!-- GA4 — 측정 ID를 넣기 전까지는 아무것도 로드되지 않는다(요청 0, 쿠키 0).
+     아래 따옴표 안에 G-XXXXXXXXXX 를 넣는 순간부터 측정이 시작된다. -->
+<script>
+  window.MAUMJARO_GA4_ID = '';
+</script>
+<script>
+  (function () {
+    var id = window.MAUMJARO_GA4_ID;
+    if (!id) return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', id, { anonymize_ip: true });
+  })();
+</script>
+
 <script src="prescriptions-data.js"></script>
 <script src="fortune-data.js"></script>
 <script src="tarot-data.js"></script>
+<script src="game-data.js"></script>
 <script src="app.js"></script>
 <script src="prescriptions.js"></script>
 <script src="fortune.js"></script>
+<script src="game.js"></script>
 
 <!-- Cloudflare Web Analytics — 방문/유입 경로만 집계한다.
      쿠키를 쓰지 않으므로 동의 배너가 필요 없고, 감정 기록·사주 정보는 전송되지 않는다

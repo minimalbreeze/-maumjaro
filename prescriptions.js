@@ -837,6 +837,11 @@
     const p = currentGeneric;
     const now = Date.now();
     recordRx({ prescriptionId: p.id, category: p.category, ts: now });
+    // 게임 레이어(game.js)가 출석을 붙일 수 있도록 알린다.
+    // app.js가 감정 처방 완료 때 쏘는 'maumjaro:emotion-injected'와 같은 역할이다.
+    document.dispatchEvent(new CustomEvent('maumjaro:rx-injected', {
+      detail: { prescriptionId: p.id, category: p.category, ts: now },
+    }));
 
     doseTag.hidden = true;
     doseCaption.hidden = true;
