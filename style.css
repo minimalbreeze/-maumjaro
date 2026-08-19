@@ -2271,6 +2271,34 @@ body::before {
   margin: 8px 0 0;
 }
 
+/* ---------- 홈: 오늘 기분 고르기 ---------- */
+.home-emotion { width: 100%; flex-shrink: 0; margin-bottom: 10px; }
+.home-emotion[hidden] { display: none; }
+.home-emo-title {
+  font-size: 19px; font-weight: 800; color: var(--text);
+  margin: 2px 0 2px; text-align: center;
+}
+.home-emo-sub {
+  font-size: 12px; color: var(--text-dim); margin: 0 0 12px; text-align: center;
+}
+.home-emo-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
+}
+.home-emo {
+  border: 1px solid var(--card-border); border-radius: 13px;
+  background: var(--card); cursor: pointer;
+  padding: 9px 2px 7px; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; min-height: 60px; /* 손가락으로 누르기 충분한 크기 */
+}
+.home-emo:active { transform: scale(0.95); }
+.home-emo-icon { font-size: 22px; line-height: 1; }
+.home-emo-label { font-size: 10.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.home-emo-more {
+  width: 100%; margin-top: 8px; padding: 7px; cursor: pointer;
+  border: none; background: none; text-decoration: underline;
+  font-size: 11.5px; color: var(--text-dim);
+}
+
 /* ================= 게임 레이어 (출석 / 마음약 / 컬렉션) ================= */
 
 .game-panel {
@@ -2434,120 +2462,6 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .reward-box.tap-1, .reward-box.tap-2, .reward-box.tap-3, .reward-box.tap-4 { animation: none; }
-}
-
-/* ---------- 오늘의 캡슐 (뽑기 연출) ---------- */
-/* 고르기 전에는 5개가 완전히 똑같이 보여야 한다 — 색이 다르면 등급을 미리 눈치채서
-   고르는 재미가 사라진다. 등급 색은 고른 뒤에만 입힌다. */
-.gacha-stage {
-  width: 100%;
-  padding: 26px 0 10px;
-  text-align: center;
-}
-.gacha-guide {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 26px;
-}
-.gacha-note {
-  font-size: 11.5px;
-  color: var(--text-dim);
-  margin: 30px 0 0;
-  line-height: 1.5;
-}
-.gacha-tray {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  min-height: 130px;
-}
-.gacha-capsule {
-  flex: 0 0 auto;
-  width: 54px;
-  height: 86px;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  /* 위 절반은 색 있는 뚜껑, 아래 절반은 투명한 몸통 — 실제 약 캡슐 모양 */
-  background: linear-gradient(180deg, #cfc6ea 0 50%, #f8f5fc 50% 100%);
-  box-shadow: 0 6px 14px rgba(90,70,130,0.22), inset 0 0 0 1px rgba(255,255,255,0.6);
-  animation: gacha-float 2.6s ease-in-out infinite;
-  transition: opacity .45s ease, transform .45s ease, width .45s ease, margin .45s ease, box-shadow .45s ease;
-}
-.gacha-capsule-shine {
-  position: absolute;
-  left: 11px;
-  top: 11px;
-  width: 13px;
-  height: 21px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.75);
-  transition: all .5s ease;
-}
-@keyframes gacha-float {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-10px) rotate(2deg); }
-}
-/* 고르지 않은 캡슐은 폭까지 줄여서 사라진다 — 남은 하나가 자연스럽게 가운데로 온다 */
-.gacha-capsule.is-gone {
-  animation: none;
-  opacity: 0;
-  transform: scale(0.5);
-  width: 0;
-  margin: 0 -6px;
-}
-/* animation을 꺼야 transition이 transform을 넘겨받는다 */
-.gacha-capsule.is-picked {
-  animation: none;
-  transform: scale(1.35);
-}
-.gacha-capsule.grade-1 { background: linear-gradient(180deg,#a49dbe 0 50%,#f0eef6 50% 100%); }
-.gacha-capsule.grade-2 { background: linear-gradient(180deg,#9d93d4 0 50%,#f2effb 50% 100%); }
-.gacha-capsule.grade-3 { background: linear-gradient(180deg,#ff9166 0 50%,#fff2ea 50% 100%); }
-.gacha-capsule.grade-4 {
-  background: linear-gradient(180deg,#ffc66b 0 50%,#fff8e8 50% 100%);
-  box-shadow: 0 8px 22px rgba(255,180,80,0.5), 0 0 0 6px rgba(255,198,107,0.22), inset 0 0 0 1px rgba(255,255,255,0.7);
-}
-.gacha-capsule.grade-5 {
-  background: linear-gradient(180deg,#ff8fb3 0 26%,#ffc66b 26% 50%,#fffaf0 50% 100%);
-  box-shadow: 0 10px 26px rgba(183,121,239,0.55), 0 0 0 8px rgba(255,198,107,0.28), inset 0 0 0 1px rgba(255,255,255,0.8);
-}
-/* 캡슐이 열리는 순간: 빛이 번지며 부풀어 사라진다 */
-.gacha-capsule.is-open {
-  overflow: visible;
-  transform: scale(1.75);
-  opacity: 0;
-}
-.gacha-capsule.is-open .gacha-capsule-shine {
-  left: -60%;
-  top: -60%;
-  width: 220%;
-  height: 220%;
-  background: radial-gradient(circle, rgba(255,255,255,0.95), rgba(255,255,255,0) 70%);
-}
-/* 최고 등급에서만 쓰는 화면 섬광 */
-.gacha-flash {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 42%, rgba(255,255,255,0.95), rgba(255,236,190,0.5) 40%, rgba(255,255,255,0) 72%);
-  animation: gacha-flash-out .9s ease forwards;
-}
-@keyframes gacha-flash-out {
-  0% { opacity: 0; }
-  18% { opacity: 1; }
-  100% { opacity: 0; }
-}
-/* 움직임을 줄이도록 설정한 사용자에게는 떠다니는 애니메이션을 끈다 */
-@media (prefers-reduced-motion: reduce) {
-  .gacha-capsule { animation: none; }
-  .gacha-flash { display: none; }
 }
 
 /* 공유용 캡처 영역 */

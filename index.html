@@ -83,8 +83,9 @@
       <button class="today-rx-btn" id="home-maumun-btn" type="button">자세히</button>
     </div>
 
-    <!-- 게임 레이어: 오늘의 보상 / 연속출석 / 컬렉션 진행률 (game.js가 채운다) -->
-    <div id="game-panel" class="game-panel" hidden></div>
+    <!-- 홈 첫 화면의 주인공: 오늘 기분 고르기 (game.js가 채운다) -->
+    <section id="home-emotion" class="home-emotion" hidden></section>
+
 
     <div id="today-rx-card" class="today-rx-card" hidden>
       <div class="today-rx-emoji" id="today-rx-emoji">💉</div>
@@ -188,6 +189,10 @@
     <div class="today-summary">
       오늘 <strong id="today-count">0</strong>번 · 이번 달 <strong id="month-count">0</strong>번
     </div>
+
+    <!-- 게임 레이어: 연속출석 / 오늘 보상 / 컬렉션 진행률 (game.js가 채운다).
+         감정 선택과 주사(CTA)가 첫 화면에 다 보이도록 CTA 아래에 둔다. -->
+    <div id="game-panel" class="game-panel" hidden></div>
   </main>
 
   <main id="view-history" class="view" hidden>

@@ -299,6 +299,58 @@
     } catch (e) { /* 측정 실패가 기능을 막지 않는다 */ }
   }
 
+  // ---------- 홈: 오늘 기분 고르기 ----------
+  // 처음 온 사람이 3초 안에 무엇을 할지 알 수 있도록, 감정 선택을 홈 맨 위로 꺼낸다.
+  // 기존 감정 모달(#symptom-overlay)은 그대로 두고 여기서는 app.js가 이미 export해둔
+  // launchEmotionFlow(key)만 부른다 — 그래서 app.js를 한 줄도 고치지 않는다.
+  // 18종을 다 늘어놓으면 화면이 넘치므로 대표 8개만 먼저 보이고 나머지는 접어둔다(삭제 아님).
+  const FEATURED_EMOTIONS = ['stress', 'exhausted', 'depression', 'loneliness',
+    'anger', 'joy', 'excitement', 'ordinary'];
+
+  const emotionSection = document.getElementById('home-emotion');
+  let emotionsExpanded = false;
+
+  function chipHtml(key, sym) {
+    return `<button class="home-emo" type="button" data-emo="${key}">
+      <span class="home-emo-icon">${sym.emoji}</span>
+      <span class="home-emo-label">${sym.label}</span>
+    </button>`;
+  }
+
+  function renderEmotionPicker() {
+    if (!emotionSection) return;
+    const Core = window.MaumjaroCore;
+    const S = Core && Core.SYMPTOMS;
+    if (!S || typeof Core.launchEmotionFlow !== 'function') return; // 훅이 없으면 조용히 비활성
+
+    const featured = FEATURED_EMOTIONS.filter((k) => S[k]);
+    const rest = Object.keys(S).filter((k) => !featured.includes(k));
+    const shown = emotionsExpanded ? featured.concat(rest) : featured;
+
+    emotionSection.innerHTML = `
+      <h2 class="home-emo-title">오늘 기분 어때?</h2>
+      <p class="home-emo-sub">오늘 마음 상태를 골라봐 💉</p>
+      <div class="home-emo-grid">${shown.map((k) => chipHtml(k, S[k])).join('')}</div>
+      <button class="home-emo-more" id="home-emo-more" type="button">
+        ${emotionsExpanded ? '접기' : `다른 감정 보기 (${rest.length})`}
+      </button>
+    `;
+    emotionSection.hidden = false;
+
+    emotionSection.querySelectorAll('.home-emo').forEach((b) => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.emo;
+        track('emotion_selected', { emotion: key });
+        track('prescription_started', { source: 'home' });
+        Core.launchEmotionFlow(key); // 여기서부터는 기존 주사 흐름 그대로
+      });
+    });
+    document.getElementById('home-emo-more').addEventListener('click', () => {
+      emotionsExpanded = !emotionsExpanded;
+      renderEmotionPicker();
+    });
+  }
+
   // ---------- 홈 패널 ----------
   const panel = document.getElementById('game-panel');
 
@@ -546,6 +598,7 @@
     if (kind) track('friend_invite_opened', { source: kind });
   })();
 
+  renderEmotionPicker();
   renderPanel();
 
   window.MaumjaroGame = {
