@@ -546,15 +546,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
-<!-- GA4 — 측정 ID를 넣기 전까지는 아무것도 로드되지 않는다(요청 0, 쿠키 0).
-     아래 따옴표 안에 G-XXXXXXXXXX 를 넣는 순간부터 측정이 시작된다. -->
+<!-- GA4 — 측정 ID가 비어 있으면 아무것도 로드되지 않는다(요청 0, 쿠키 0). -->
 <script>
-  window.MAUMJARO_GA4_ID = '';
+  window.MAUMJARO_GA4_ID = 'G-TPJ8FPW0W0';
 </script>
 <script>
   (function () {
     var id = window.MAUMJARO_GA4_ID;
     if (!id) return;
+    // 개발용 로컬 서버에서 나오는 트래픽은 보내지 않는다.
+    // 안 막으면 테스트 방문이 실제 지표에 섞여 초기 데이터가 지저분해진다.
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
