@@ -97,6 +97,15 @@
   const FORTUNE_CALC_VERSION = 1;
   const MAUMUN_LOG_KEY = 'maumjaro:maumunLog'; // 기존 감정/처방 기록 키와 완전 독립된 별도 구조
 
+  // 사주 계산 라이브러리(lunar)는 첫 화면을 막지 않으려고 나중에 받는다.
+  // 그래서 실제로 계산이 필요한 화면에 들어가기 직전에 준비가 끝났는지 확인한다.
+  // 보통은 이미 받아져 있어 그 자리에서 바로 실행된다.
+  function withLunar(fn) {
+    if (typeof window.Solar === 'function' || typeof window.Solar === 'object') { fn(); return; }
+    if (window.MaumjaroLib) { window.MaumjaroLib.lunar().then(fn); return; }
+    fn(); // 로더가 없는 환경이면 그냥 시도한다
+  }
+
   // 날짜 키는 반드시 "사용자의 로컬 날짜"여야 한다.
   // 예전에는 toISOString()(UTC)을 썼는데, 그러면 한국에서는 하루가 자정이 아니라
   // 오전 9시에 바뀐다. app.js는 처음부터 로컬 날짜(dateKey)를 써왔기 때문에 같은 앱 안에
@@ -1642,7 +1651,12 @@
 
   async function buildTarotShareBlob() {
     const node = document.getElementById('tarot-share-capture');
-    if (!node || typeof window.html2canvas !== 'function') return null;
+    if (!node) return null;
+    // 캡처 라이브러리는 나중에 받으므로 여기서 준비를 기다린다.
+    if (typeof window.html2canvas !== 'function' && window.MaumjaroLib) {
+      await window.MaumjaroLib.html2canvas();
+    }
+    if (typeof window.html2canvas !== 'function') return null;
     // html2canvas는 화면 밖 클론을 그리므로, 원본 이미지의 디코딩이 끝난 뒤에 시작해야 안전하다.
     await Promise.all([...node.querySelectorAll('img')].map((im) => (
       im.decode ? im.decode().catch(() => {}) : Promise.resolve()
@@ -2348,7 +2362,7 @@
       homeMaumunBtn.onclick = () => {
         const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
         if (fortuneTabBtn) fortuneTabBtn.click();
-        renderMaumun(profile);
+        withLunar(() => renderMaumun(profile)); // 탭 이동 직후라 아직 로딩 중일 수 있다
       };
     }
     homeMaumunCard.hidden = false;
@@ -2724,7 +2738,9 @@
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
       viewFortune.hidden = view !== 'fortune';
-      if (view === 'fortune') renderFortuneHome();
+      // 운세 화면은 사주 계산이 필요하므로 lunar 준비를 확인하고 그린다
+      // (보통은 이미 받아져 있어 그 자리에서 바로 실행된다).
+      if (view === 'fortune') withLunar(renderFortuneHome);
       if (view === 'history') renderHistoryHub(loadSajuProfile());
       else {
         const backBar = document.getElementById('history-personal-back-bar');

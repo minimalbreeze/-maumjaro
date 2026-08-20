@@ -806,10 +806,15 @@
   // 상자를 열기 시작할 때 미리 찍는다. 사용자가 다섯 번 두드리고 결과를 읽는 동안
   // 캡처가 끝나 있어야, 공유 버튼을 눌렀을 때 기다림 없이 바로 공유 시트가 열린다
   // (iOS는 사용자가 누른 직후에만 공유 시트를 열어준다).
-  function buildShareImage(r) {
+  async function buildShareImage(r) {
     shareBlob = null;
     const node = document.getElementById('med-share-capture');
-    if (!node || !r || typeof window.html2canvas !== 'function') return;
+    if (!node || !r) return;
+    // 캡처 라이브러리는 첫 화면을 막지 않으려고 나중에 받는다. 여기서 준비를 기다린다.
+    if (typeof window.html2canvas !== 'function' && window.MaumjaroLib) {
+      await window.MaumjaroLib.html2canvas();
+    }
+    if (typeof window.html2canvas !== 'function') return;
     const rar = r.rarity;
     node.style.setProperty('--rar', rar.color);
     document.getElementById('med-share-rarity').textContent = rar.label;

@@ -589,9 +589,40 @@
 
 <div id="toast" class="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- lz-string(5KB)만 먼저 받는다. 친구 공유 링크(?custom= ?maumun= ?t=)를 페이지가
+     열리는 순간 해독해야 하므로 이건 미룰 수 없다. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+
+<!-- 무거운 두 라이브러리(lunar 436KB, html2canvas 199KB)는 첫 화면을 막지 않게 뒤로 미룬다.
+     동기 <script>로 두면 다 받을 때까지 화면이 그려지지 않아 첫 로딩이 그만큼 늦어졌다.
+       lunar       운세/타로 화면에 들어갈 때만 필요 (홈에서는 쓰지 않는다)
+       html2canvas 공유 이미지를 만들 때만 필요 (모든 호출부가 존재 여부를 먼저 확인한다)
+     첫 화면이 그려진 뒤 조용히 미리 받아두고, 그래도 아직이면 필요한 쪽에서 기다린다. -->
+<script>
+  window.MaumjaroLib = (function () {
+    var cache = {};
+    function load(name, src) {
+      if (cache[name]) return cache[name];
+      cache[name] = new Promise(function (resolve) {
+        var s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = function () { resolve(true); };
+        s.onerror = function () { resolve(false); }; // 실패해도 앱은 계속 돌아야 한다
+        document.head.appendChild(s);
+      });
+      return cache[name];
+    }
+    return {
+      lunar: function () { return load('lunar', 'https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js'); },
+      html2canvas: function () { return load('html2canvas', 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'); }
+    };
+  })();
+  window.addEventListener('load', function () {
+    var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 1); };
+    idle(function () { window.MaumjaroLib.lunar(); window.MaumjaroLib.html2canvas(); });
+  });
+</script>
 <!-- GA4 — 측정 ID가 비어 있으면 아무것도 로드되지 않는다(요청 0, 쿠키 0). -->
 <script>
   window.MAUMJARO_GA4_ID = 'G-TPJ8FPW0W0';
