@@ -562,7 +562,10 @@
 
     state = 'idle';
     actionBtn.disabled = false;
-    actionBtn.textContent = '준비하기';
+    // 평상시 문구는 이 버튼이 무엇을 하는 버튼인지 그 자체로 알려줘야 한다.
+    // ("준비하기"만 보면 처음 온 사람은 무엇을 준비하는지 알 수 없다.)
+    // 진행 중 문구(준비 중.../주사하기/주사 중...)는 그대로 둔다.
+    actionBtn.textContent = '오늘의 처방 받기 💉';
     doseTag.hidden = true;
     doseCaption.hidden = true;
     selectedSymptom = null;

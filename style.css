@@ -2326,8 +2326,21 @@ body::before {
 /* ---------- 홈 상단 한 줄 티저 ----------
    전체 게임 패널은 CTA 아래에 그대로 두고, 첫 화면에는 "지금 상태 + 오늘 받을 것"만
    한 줄로 얹는다. 상단에 카드가 여러 개 쌓이면 모바일 RPG처럼 보인다. */
+/* 홈 마음약국 진행률 — 은은하게. 보상 개봉이 가장 강하고 이건 약한 단계다(강약 원칙). */
+.home-collection {
+  width: 100%; flex-shrink: 0; margin: 0 0 4px;
+  padding: 9px 13px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--card-border); background: var(--card);
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
+}
+.home-collection[hidden] { display: none; }
+.hc-top { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text); }
+.hc-pct { margin-left: auto; color: var(--text-dim); }
+.hc-bar { display: block; width: 100%; height: 6px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
+.hc-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
+
 .home-teaser {
-  width: 100%; flex-shrink: 0; margin-bottom: 10px;
+  width: 100%; flex-shrink: 0; margin-bottom: 8px;
   padding: 9px 13px; border-radius: 999px;
   background: linear-gradient(135deg, rgba(255,145,102,0.15), rgba(255,198,107,0.12));
   border: 1px solid rgba(255,145,102,0.24);

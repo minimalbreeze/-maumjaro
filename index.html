@@ -78,8 +78,6 @@
     </div>
     </div><!-- /incoming-stack -->
 
-    <!-- 상단 한 줄: 지금 상태 + 오늘 받을 것 (game.js가 채운다) -->
-    <div id="home-teaser" class="home-teaser" hidden></div>
     <p id="first-guide" class="first-guide" hidden></p>
 
     <div id="home-maumun-card" class="today-rx-card home-maumun-card" hidden>
@@ -184,7 +182,14 @@
 
     <p class="status-text" id="status-text">오늘 마음 주사를 맞기 전이에요</p>
 
-    <button id="action-btn" class="action-btn">준비하기</button>
+    <!-- 지금 며칠째인지 + 오늘 받을 것. CTA 바로 위에 둬야 "처방하면 뭘 얻는지"가
+         버튼을 누르기 직전에 보인다. -->
+    <div id="home-teaser" class="home-teaser" hidden></div>
+
+    <button id="action-btn" class="action-btn">오늘의 처방 받기 💉</button>
+
+    <!-- 마음약국 진행률. CTA 바로 아래에 둬서 아직 모을 게 남았다는 걸 첫 화면에서 보여준다. -->
+    <button class="home-collection" id="home-collection" type="button" hidden></button>
 
     <!-- 주사기가 화면 가운데를 넉넉히 차지하도록, 오늘의 처방 카드는 CTA 아래로 내렸다.
          (주사기 무대는 flex:1이라 위쪽 요소가 늘어난 만큼 그대로 줄어든다) -->

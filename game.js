@@ -436,6 +436,30 @@
     }
   }
 
+  // ---------- 홈 마음약국 진행률 (CTA 바로 아래) ----------
+  // 접힘선 아래에 있으면 "모을 게 남았다"는 감각이 첫 화면에서 전달되지 않는다.
+  const homeCollection = document.getElementById('home-collection');
+
+  function renderHomeCollection() {
+    if (!homeCollection) return;
+    const p = previewToday();
+    const pct = Math.round((p.collectedCount / p.totalMedicines) * 100);
+    homeCollection.innerHTML = `
+      <span class="hc-top">💊 내 마음약국
+        <strong>${p.collectedCount}/${p.totalMedicines}</strong>
+        <span class="hc-pct">${pct}%</span></span>
+      <span class="hc-bar"><i style="width:${pct}%"></i></span>
+    `;
+    homeCollection.hidden = false;
+  }
+  if (homeCollection) {
+    homeCollection.addEventListener('click', () => {
+      track('reward_preview_clicked', {});
+      track('collection_progress_clicked', { source: 'home' });
+      openPharmacy();
+    });
+  }
+
   // ---------- 도착한 처방 접이식 줄 ----------
   // 카드가 2개 이상이면 홈 최상단을 다 먹으므로 한 줄로 접는다.
   // 1개일 때는 중요한 알림이라 그대로 펼쳐 둔다(탭을 하나 더 요구하면 확인율이 떨어진다).
@@ -760,6 +784,7 @@
     sound('playHealingChime');
     renderPanel();
     renderTeaser(); // 보상을 받은 뒤 상단 줄도 "오늘 완료"로 바뀌어야 한다
+    renderHomeCollection(); // 방금 얻은 마음약이 진행률에 바로 반영되게
     track('reward_open_completed', { rarity: r.rarity.key, medicine_id: r.medicine.id, streak: r.streak });
     track('medicine_obtained', { rarity: r.rarity.key, medicine_id: r.medicine.id, is_new: r.isNew ? 1 : 0 });
     if (shareable) track('rare_medicine_obtained', { rarity: r.rarity.key, medicine_id: r.medicine.id });
@@ -1020,6 +1045,7 @@
 
   renderEmotionPicker();
   renderTeaser();
+  renderHomeCollection();
   renderPanel();
 
   window.MaumjaroGame = {
