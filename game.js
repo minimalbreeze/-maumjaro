@@ -577,21 +577,17 @@
         <span class="hg-bar"><i style="width:${xpPct}%"></i></span>
         <span class="hg-val">${p.xpInto}/${p.xpNeed}</span>
       </div>
-      <button class="hg-row hg-tap" id="hg-pharmacy" type="button">
+      <div class="hg-row">
         <span class="hg-label">💊 마음약국</span>
         <span class="hg-bar"><i class="col" style="width:${colPct}%"></i></span>
-        <span class="hg-val">${p.collectedCount}/${p.totalMedicines} ›</span>
-      </button>
+        <span class="hg-val">${p.collectedCount}/${p.totalMedicines}</span>
+      </div>
       ${p.vacationTickets > 0 ? `<p class="hg-note">🛡️ 마음휴가권 ×${p.vacationTickets}</p>` : ''}
       ${p.nextMilestone ? `<p class="hg-note">🎁 ${p.nextMilestone.days - p.streak}일 뒤 ${p.nextMilestone.days}일 달성 · ${p.nextMilestone.label}</p>` : ''}
     `;
     el.hidden = false;
-    // 내가 모은 마음약을 돌아보는 곳이므로 기록 탭에서도 바로 열 수 있어야 한다.
-    const ph = document.getElementById('hg-pharmacy');
-    if (ph) ph.addEventListener('click', () => {
-      track('collection_progress_clicked', { source: 'history' });
-      openPharmacy();
-    });
+    // 마음약국으로 들어가는 입구는 기록 탭의 '마음약' 카테고리 타일 하나로 통일한다.
+    // 여기 진행바는 같은 숫자를 두 번 보여주지 않도록 표시 전용으로 둔다.
   }
 
   // ---------- 월간 감정 리포트 ----------

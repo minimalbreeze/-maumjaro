@@ -2424,6 +2424,23 @@
     });
     return out;
   }
+  // 마음약 기록. 컬렉션은 약마다 처음 얻은 시각(firstAt)을 갖고 있어서,
+  // 그 날짜로 "이 날 이 약을 새로 얻었다"는 기록을 만든다.
+  // 데이터는 game.js가 관리하므로 여기서는 export된 것만 읽는다.
+  function loadMedicineItems() {
+    const G = window.MaumjaroGame;
+    if (!G || typeof G.getCollection !== 'function') return [];
+    return G.getCollection()
+      .filter((m) => m.owned && m.firstAt)
+      .map((m) => ({
+        ts: m.firstAt,
+        emoji: m.icon,
+        title: m.name,
+        sub: `${G.rarityOf(m.rarity).label}${m.count > 1 ? ` · 보유 ${m.count}개` : ''}`,
+        openKey: m.id, // 눌러서 마음약국 열기
+      }));
+  }
+
   function loadMaumunItems() {
     return Object.values(loadMaumunLog()).map((e) => ({
       ts: e.ts, emoji: e.emotionEmoji, title: `${e.diagnosis} 처방`, sub: `🔮 ${e.categoryLabel} ${starsText(e.stars)}`,
@@ -2445,7 +2462,11 @@
     return `${ap} ${h12}:${mi}`;
   }
   function historyFormatDayLabel(d) {
-    return Core.sameDay(d, new Date()) ? `오늘 · ${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getMonth() + 1}월 ${d.getDate()}일`;
+    const now = new Date();
+    // 작년 이전 기록은 연도를 붙인다. 안 붙이면 "7월 12일" 아래 "7월 17일"이 오는
+    // 것처럼 순서가 뒤집힌 것처럼 보인다(실제로는 연도가 달라서 맞는 순서다).
+    const md = `${d.getFullYear() !== now.getFullYear() ? `${d.getFullYear()}년 ` : ''}${d.getMonth() + 1}월 ${d.getDate()}일`;
+    return Core.sameDay(d, now) ? `오늘 · ${md}` : md;
   }
   function historyBuildBarChart(items, compact) {
     const max = Math.max(1, ...items.map((it) => it.count));
@@ -2664,6 +2685,11 @@
     if (historyNativeContent) historyNativeContent.hidden = true;
     if (!historyCustomArea) return;
     historyCustomArea.hidden = false;
+    // 마음약 타일만 "몇 종 모았는지"를 바로 보여준다 — 컬렉션은 그게 핵심 정보다.
+    const medItems = loadMedicineItems();
+    const medTotal = (window.MaumjaroGame && typeof window.MaumjaroGame.getCollection === 'function')
+      ? window.MaumjaroGame.getCollection().length : 0;
+    const medSub = medTotal ? `${medItems.length}/${medTotal}종` : '일/월/년';
     historyCustomArea.innerHTML = `
       <div class="rx-nav-header">
         <span class="rx-nav-title">📋 기록</span>
@@ -2689,6 +2715,11 @@
           <span class="rx-category-label">타로</span>
           <span class="rx-category-count">일/월/년</span>
         </div>
+        <div class="rx-category-tile" data-cat="medicine">
+          <span class="rx-category-emoji">💊</span>
+          <span class="rx-category-label">마음약</span>
+          <span class="rx-category-count">${medSub}</span>
+        </div>
       </div>
     `;
     historyCustomArea.querySelectorAll('.rx-category-tile').forEach((tile) => {
@@ -2705,6 +2736,14 @@
         historyCustomArea.hidden = false;
         if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
         else if (cat === 'tarot') renderHistoryCategoryView(profile, '🎴 타로 기록', loadTarotItems);
+        // 마음약은 "언제 무엇을 처음 얻었는지"가 기록이다. 항목을 누르면 마음약국이 열린다.
+        else if (cat === 'medicine') {
+          const G = window.MaumjaroGame;
+          if (G && typeof G.track === 'function') G.track('collection_progress_clicked', { source: 'history' });
+          renderHistoryCategoryView(profile, '💊 마음약 기록', loadMedicineItems, () => {
+            if (G && typeof G.openPharmacy === 'function') G.openPharmacy();
+          });
+        }
         // 운세 기록은 항목을 누르면 그날의 맘운 처방전을 다시 열어준다
         // (운세센터에 따로 있던 "지난 맘운" 화면의 기능을 여기로 옮겨온 것).
         else renderHistoryCategoryView(profile, '🔮 운세 기록', loadMaumunItems, (date) => {
