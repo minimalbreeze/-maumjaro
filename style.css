@@ -250,7 +250,9 @@ body::before {
   /* 주사기는 이 앱의 얼굴이라 화면에서 확실히 커야 한다.
      위쪽에 감정 선택이 들어오면서 flex:1로 나눠 갖는 높이가 줄었으므로,
      최소 높이를 화면 기준으로 잡아 어떤 폰에서도 충분히 커 보이게 한다. */
-  min-height: min(38dvh, 330px);
+  /* flex:1이 남는 공간을 다 가져가므로, 최소 높이는 "이보다 작아지지 말라" 정도로만 둔다.
+     너무 크게 잡으면 화면이 짧은 폰에서 아래 CTA를 밀어내고 주사기도 아래로 치우친다. */
+  min-height: min(34dvh, 300px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2379,11 +2381,11 @@ body::before {
 .home-emotion { width: 100%; flex-shrink: 0; margin-bottom: 10px; }
 .home-emotion[hidden] { display: none; }
 .home-emo-title {
-  font-size: 19px; font-weight: 800; color: var(--text);
-  margin: 2px 0 2px; text-align: center;
+  font-size: 18px; font-weight: 800; color: var(--text);
+  margin: 0 0 1px; text-align: center;
 }
 .home-emo-sub {
-  font-size: 12px; color: var(--text-dim); margin: 0 0 12px; text-align: center;
+  font-size: 11.5px; color: var(--text-dim); margin: 0 0 9px; text-align: center;
 }
 .home-emo-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
@@ -2398,9 +2400,23 @@ body::before {
 .home-emo-icon { font-size: 22px; line-height: 1; }
 .home-emo-label { font-size: 10.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
 .home-emo-more {
-  width: 100%; margin-top: 8px; padding: 7px; cursor: pointer;
+  width: 100%; margin-top: 5px; padding: 5px; cursor: pointer;
   border: none; background: none; text-decoration: underline;
   font-size: 11.5px; color: var(--text-dim);
+}
+
+/* 화면이 짧은 폰(브라우저 툴바가 큰 경우 포함)에서는 위아래를 더 조인다.
+   주사기가 가운데 오고 CTA가 접힘선 안에 들어오는 것이 최우선이다. */
+@media (max-height: 720px) {
+  .home-emotion { margin-bottom: 6px; }
+  .home-emo-title { font-size: 16.5px; }
+  .home-emo-sub { margin-bottom: 7px; }
+  .home-emo { min-height: 54px; padding: 7px 2px 6px; }
+  .home-emo-icon { font-size: 20px; }
+  .first-guide { margin-bottom: 6px; }
+  .home-teaser { margin-bottom: 6px; padding: 7px 12px; }
+  #action-btn { margin-bottom: 10px; }
+  .syringe-stage { margin: 0; }
 }
 
 /* ================= 게임 레이어 (출석 / 마음약 / 컬렉션) ================= */
