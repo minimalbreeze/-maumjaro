@@ -2318,6 +2318,50 @@ body::before {
   margin: 8px 0 0;
 }
 
+/* 준비하기 버튼과 아래 카드가 딱 붙어 답답해 보여서 간격을 준다
+   (다른 요소 사이는 12~14px인데 여기만 0이었다). #action-btn만 노려서
+   fortune.js 등이 쓰는 .action-btn 전반에는 영향을 주지 않는다. */
+#action-btn { margin-bottom: 14px; }
+
+/* ---------- 홈 상단 한 줄 티저 ----------
+   전체 게임 패널은 CTA 아래에 그대로 두고, 첫 화면에는 "지금 상태 + 오늘 받을 것"만
+   한 줄로 얹는다. 상단에 카드가 여러 개 쌓이면 모바일 RPG처럼 보인다. */
+.home-teaser {
+  width: 100%; flex-shrink: 0; margin-bottom: 10px;
+  padding: 9px 13px; border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255,145,102,0.15), rgba(255,198,107,0.12));
+  border: 1px solid rgba(255,145,102,0.24);
+  font-size: 12px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 7px; justify-content: center;
+  text-align: center; line-height: 1.35;
+}
+.home-teaser[hidden] { display: none; }
+.home-teaser .t-sep { color: var(--text-dim); font-weight: 400; }
+.home-teaser.done { background: rgba(128,128,128,0.10); border-color: var(--card-border); }
+
+/* ---------- 도착한 처방 접이식 줄 ----------
+   친구가 보낸 처방/운세/타로 카드가 2개 이상이면 홈 최상단을 다 먹는다.
+   기능은 그대로 두고 표시만 한 줄로 접는다(1개일 때는 중요한 알림이라 그대로 편다). */
+.incoming-summary {
+  width: 100%; flex-shrink: 0; margin-bottom: 10px;
+  padding: 11px 14px; border-radius: 14px; cursor: pointer;
+  background: linear-gradient(135deg, rgba(183,121,239,0.16), rgba(255,143,179,0.14));
+  border: 1px solid rgba(183,121,239,0.28);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+.incoming-summary[hidden] { display: none; }
+.incoming-summary .is-arrow { margin-left: auto; color: var(--text-dim); font-size: 12px; }
+
+/* ---------- 첫 방문 3단계 안내 ---------- */
+.first-guide {
+  width: 100%; flex-shrink: 0; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 11px; color: var(--text-dim);
+}
+.first-guide[hidden] { display: none; }
+.first-guide b { color: var(--text); font-weight: 700; }
+
 /* ---------- 홈: 오늘 기분 고르기 ---------- */
 .home-emotion { width: 100%; flex-shrink: 0; margin-bottom: 10px; }
 .home-emotion[hidden] { display: none; }
@@ -2376,12 +2420,22 @@ body::before {
 }
 .game-next { font-size: 11px; color: var(--text-dim); margin: 9px 0 0; line-height: 1.45; }
 .game-pharmacy-btn {
-  width: 100%; margin-top: 10px; padding: 9px 12px;
+  width: 100%; margin-top: 10px; padding: 10px 12px;
   border: 1px dashed var(--card-border); border-radius: 12px;
   background: none; color: var(--text); font-size: 12.5px; font-weight: 700;
-  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left;
 }
+.gp-top { display: flex; align-items: center; gap: 6px; width: 100%; }
 .game-pharmacy-pct { margin-left: auto; color: var(--text-dim); font-weight: 700; }
+.gp-bar {
+  display: block; width: 100%; height: 6px; border-radius: 999px;
+  background: rgba(128,128,128,0.16); overflow: hidden;
+}
+.gp-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
+.gp-locked {
+  display: block; font-size: 10px; font-weight: 400; color: var(--text-dim);
+  line-height: 1.4; word-break: keep-all;
+}
 
 /* ---------- 보상 개봉 ---------- */
 .reward-overlay {
@@ -2421,15 +2475,51 @@ body::before {
   background: radial-gradient(circle, rgba(255,236,190,0.9), rgba(255,255,255,0) 70%);
   opacity: 0; transition: opacity .45s ease; pointer-events: none;
 }
-/* 두드릴수록 커지는 반응 */
+/* 두드릴수록 균열이 늘고 빛이 새어 나온다 — 숫자만 오르면 손맛이 없다 */
+.reward-box-crack {
+  position: absolute; left: 6px; right: 6px; bottom: 0; height: 74px;
+  border-radius: 10px; pointer-events: none; opacity: 0;
+  transition: opacity .25s ease;
+  background:
+    linear-gradient(196deg, transparent 46%, rgba(255,255,255,0.92) 47%, transparent 48%),
+    linear-gradient(160deg, transparent 58%, rgba(255,255,255,0.8) 59%, transparent 60%),
+    linear-gradient(210deg, transparent 30%, rgba(255,255,255,0.7) 31%, transparent 32%);
+}
 .reward-box.tap-1 { animation: box-shake .3s ease; }
 .reward-box.tap-2 { animation: box-shake .3s ease; }
+.reward-box.tap-2 .reward-box-crack { opacity: .45; }
 .reward-box.tap-3 { animation: box-shake .34s ease; }
+.reward-box.tap-3 .reward-box-crack { opacity: .75; }
 .reward-box.tap-3 .reward-box-glow { opacity: .45; }
 .reward-box.tap-4 { animation: box-shake-hard .36s ease; }
+.reward-box.tap-4 .reward-box-crack { opacity: 1; }
 .reward-box.tap-4 .reward-box-glow { opacity: .7; }
 .reward-box.is-open .reward-box-lid { transform: translateY(-48px) rotate(-16deg); opacity: 0; }
 .reward-box.is-open .reward-box-glow { opacity: 1; }
+
+/* 희귀도별 마무리 — 등급이 올라갈수록 퍼짐이 커진다. 길이는 모두 짧게 유지한다. */
+.reward-box-burst {
+  position: absolute; left: 50%; top: 50%; width: 10px; height: 10px;
+  border-radius: 50%; transform: translate(-50%, -50%) scale(0);
+  pointer-events: none; opacity: 0;
+}
+.reward-box.is-open .reward-box-burst { animation: burst-out .55s ease-out forwards; }
+.reward-box.burst-normal .reward-box-burst { box-shadow: 0 0 0 0 rgba(255,255,255,0.75); }
+.reward-box.burst-rare .reward-box-burst { box-shadow: 0 0 0 0 rgba(79,134,232,0.6); }
+.reward-box.burst-epic .reward-box-burst { box-shadow: 0 0 0 0 rgba(183,121,239,0.65); }
+.reward-box.burst-legendary .reward-box-burst { box-shadow: 0 0 0 0 rgba(240,161,46,0.75); }
+.reward-box.burst-normal .reward-box-burst { --bs: 60px; }
+.reward-box.burst-rare .reward-box-burst { --bs: 90px; }
+.reward-box.burst-epic .reward-box-burst { --bs: 130px; }
+.reward-box.burst-legendary .reward-box-burst { --bs: 180px; }
+@keyframes burst-out {
+  0% { opacity: .95; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 var(--bs, 80px) rgba(255,255,255,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reward-box.is-open .reward-box-burst { animation: none; }
+  .reward-box-crack { transition: none; }
+}
 @keyframes box-shake {
   0%,100% { transform: translateX(0) rotate(0); }
   30% { transform: translateX(-5px) rotate(-3deg); }
@@ -2440,6 +2530,24 @@ body::before {
   25% { transform: translateX(-8px) rotate(-5deg) scale(1.04); }
   75% { transform: translateX(8px) rotate(5deg) scale(1.04); }
 }
+/* LEGENDARY에서만 쓰는 화면 섬광. 아껴 써야 특별하게 느껴진다. */
+.reward-flash {
+  position: fixed; inset: 0; z-index: 1300; pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(255,255,255,0.95), rgba(255,236,190,0.5) 40%, rgba(255,255,255,0) 72%);
+  animation: reward-flash-out .9s ease forwards;
+}
+@keyframes reward-flash-out {
+  0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .reward-flash { display: none; } }
+
+.reward-copy {
+  width: 100%; margin-top: 8px; padding: 9px; cursor: pointer;
+  border: 1px solid var(--card-border); border-radius: 999px; background: none;
+  font-size: 12px; font-weight: 700; color: var(--text-dim);
+}
+.reward-copy[hidden] { display: none; }
+
 .reward-count { font-size: 12px; color: var(--text-dim); margin: 18px 0 0; font-weight: 700; }
 .reward-skip {
   margin-top: 12px; border: none; background: none; cursor: pointer;

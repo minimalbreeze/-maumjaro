@@ -43,6 +43,10 @@
   </header>
 
   <main id="view-home" class="view">
+    <!-- 도착한 처방이 2개 이상이면 이 줄로 접는다 (game.js가 관리) -->
+    <button id="incoming-summary" class="incoming-summary" type="button" hidden></button>
+
+    <div id="incoming-stack">
     <div id="custom-incoming-card" class="custom-incoming-card" hidden>
       <div class="custom-incoming-emoji">🚨</div>
       <div class="today-rx-body">
@@ -72,6 +76,11 @@
       </div>
       <button class="today-rx-btn custom-incoming-btn" id="friend-tarot-incoming-btn" type="button">확인하기</button>
     </div>
+    </div><!-- /incoming-stack -->
+
+    <!-- 상단 한 줄: 지금 상태 + 오늘 받을 것 (game.js가 채운다) -->
+    <div id="home-teaser" class="home-teaser" hidden></div>
+    <p id="first-guide" class="first-guide" hidden></p>
 
     <div id="home-maumun-card" class="today-rx-card home-maumun-card" hidden>
       <div class="today-rx-emoji">🌞</div>
@@ -228,7 +237,9 @@
         <button class="reward-box" id="reward-box" type="button" aria-label="상자 두드리기">
           <span class="reward-box-lid"></span>
           <span class="reward-box-body"></span>
+          <span class="reward-box-crack"></span>
           <span class="reward-box-glow"></span>
+          <span class="reward-box-burst" id="reward-box-burst"></span>
         </button>
         <p class="reward-count" id="reward-count">0 / 5</p>
         <button class="reward-skip" id="reward-skip" type="button">바로 열기</button>
@@ -245,6 +256,7 @@
         <div class="reward-meta" id="reward-meta"></div>
         <div class="reward-bonus" id="reward-bonus" hidden></div>
         <button class="action-btn" id="reward-share-btn" type="button" hidden>📤 자랑하기</button>
+        <button class="reward-copy" id="reward-copy-btn" type="button" hidden>🔗 링크만 복사</button>
         <button class="reward-close" id="reward-close" type="button">닫기</button>
       </div>
     </div>

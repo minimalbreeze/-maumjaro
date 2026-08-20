@@ -12,10 +12,16 @@
   // weight는 "기본 뽑기"에서의 상대 가중치다(합이 100이 되도록 두었지만 합계는 자유).
   // 연속출석 특별 보상은 이 확률을 쓰지 않고 최소 등급을 강제한다(아래 STREAK_REWARDS).
   const RARITIES = [
-    { key: 'normal', label: 'NORMAL', order: 1, weight: 65, color: '#8e93a8', tint: 'rgba(142,147,168,0.16)' },
-    { key: 'rare', label: 'RARE', order: 2, weight: 25, color: '#4f86e8', tint: 'rgba(79,134,232,0.16)' },
-    { key: 'epic', label: 'EPIC', order: 3, weight: 9, color: '#b779ef', tint: 'rgba(183,121,239,0.18)' },
-    { key: 'legendary', label: 'LEGENDARY', order: 4, weight: 1, color: '#f0a12e', tint: 'rgba(240,161,46,0.20)' },
+    // shareLabel: 공유 버튼 문구. 등급이 올라갈수록 살짝 들뜬 표현을 쓰되,
+    // 브랜드 톤을 벗어나지 않는 선에서만 조절한다(문구만 고치면 되도록 데이터로 뺐다).
+    { key: 'normal', label: 'NORMAL', order: 1, weight: 65, color: '#8e93a8', tint: 'rgba(142,147,168,0.16)',
+      shareLabel: '📤 공유하기' },
+    { key: 'rare', label: 'RARE', order: 2, weight: 25, color: '#4f86e8', tint: 'rgba(79,134,232,0.16)',
+      shareLabel: '📤 친구한테 자랑하기' },
+    { key: 'epic', label: 'EPIC', order: 3, weight: 9, color: '#b779ef', tint: 'rgba(183,121,239,0.18)',
+      shareLabel: '🔥 나 이거 뽑았어ㅋㅋ' },
+    { key: 'legendary', label: 'LEGENDARY', order: 4, weight: 1, color: '#f0a12e', tint: 'rgba(240,161,46,0.20)',
+      shareLabel: '👑 이건 진짜 자랑해야 함' },
   ];
 
   // ---------- 카테고리 ----------

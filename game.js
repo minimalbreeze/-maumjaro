@@ -385,6 +385,7 @@
     emotionSection.querySelectorAll('.home-emo').forEach((b) => {
       b.addEventListener('click', () => {
         const key = b.dataset.emo;
+        track('home_primary_cta_clicked', { emotion: key }); // 홈의 첫 행동이 무엇인지 본다
         track('emotion_selected', { emotion: key });
         track('prescription_started', { source: 'home' });
         Core.launchEmotionFlow(key); // 여기서부터는 기존 주사 흐름 그대로
@@ -396,8 +397,91 @@
     });
   }
 
+  // ---------- 홈 상단 한 줄 티저 ----------
+  // 첫 화면에서 "지금 며칠째인지 + 오늘 뭘 받는지"만 알려준다.
+  // 전체 게임 패널(레벨·컬렉션 등)은 CTA 아래에 그대로 둬서, 상단이 RPG처럼 보이지 않게 한다.
+  const teaser = document.getElementById('home-teaser');
+  const firstGuide = document.getElementById('first-guide');
+
+  function renderTeaser() {
+    if (!teaser) return;
+    const p = previewToday();
+    if (p.claimed) {
+      const 다음 = p.nextMilestone
+        ? `내일 오면 🔥 ${p.streak + 1}일`
+        : `내일 오면 🔥 ${p.streak + 1}일`;
+      teaser.className = 'home-teaser done';
+      teaser.innerHTML = `✅ 오늘 마음처방 완료 <span class="t-sep">·</span> ${다음}`;
+    } else if (p.totalCheckIns === 0) {
+      teaser.className = 'home-teaser';
+      teaser.innerHTML = '🎁 오늘 첫 마음약을 받을 수 있어요';
+    } else {
+      // 오늘 처방하면 몇 일째가 되고 무엇이 확정인지 미리 알려준다
+      const 예정 = streakRewardFor(p.streak);
+      const 보상문구 = 예정 ? `<strong>${예정.label}</strong>` : '마음약 1개';
+      teaser.className = 'home-teaser';
+      teaser.innerHTML = `🔥 ${p.streak - 1}일 연속 <span class="t-sep">·</span> 오늘 처방하면 ${보상문구}`;
+    }
+    teaser.hidden = false;
+    track('reward_tease_viewed', { claimed: p.claimed ? 1 : 0, streak: p.streak });
+
+    // 처음 온 사람에게만 흐름을 한 줄로 알려준다(팝업 튜토리얼은 만들지 않는다)
+    if (firstGuide) {
+      if (p.totalCheckIns === 0) {
+        firstGuide.innerHTML = '<b>①</b> 기분 고르기 → <b>②</b> 마음처방 → <b>③</b> 상자 열고 마음약 받기';
+        firstGuide.hidden = false;
+      } else {
+        firstGuide.hidden = true;
+      }
+    }
+  }
+
+  // ---------- 도착한 처방 접이식 줄 ----------
+  // 카드가 2개 이상이면 홈 최상단을 다 먹으므로 한 줄로 접는다.
+  // 1개일 때는 중요한 알림이라 그대로 펼쳐 둔다(탭을 하나 더 요구하면 확인율이 떨어진다).
+  const incomingIds = ['custom-incoming-card', 'friend-maumun-incoming-card', 'friend-tarot-incoming-card'];
+  const incomingStack = document.getElementById('incoming-stack');
+  const incomingSummary = document.getElementById('incoming-summary');
+  let incomingExpanded = false;
+
+  function syncIncoming() {
+    if (!incomingStack || !incomingSummary) return;
+    const visible = incomingIds
+      .map((id) => document.getElementById(id))
+      .filter((el) => el && !el.hidden);
+    if (visible.length >= 2 && !incomingExpanded) {
+      incomingStack.style.display = 'none';
+      incomingSummary.innerHTML = `💌 도착한 처방 <strong>${visible.length}개</strong><span class="is-arrow">펼치기 ›</span>`;
+      incomingSummary.hidden = false;
+    } else {
+      incomingStack.style.display = '';
+      incomingSummary.hidden = true;
+    }
+  }
+  if (incomingSummary) {
+    incomingSummary.addEventListener('click', () => {
+      incomingExpanded = true;
+      syncIncoming();
+      track('incoming_expanded', {});
+    });
+  }
+  if (incomingStack) {
+    new MutationObserver(syncIncoming)
+      .observe(incomingStack, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
+    syncIncoming();
+  }
+
   // ---------- 홈 패널 ----------
   const panel = document.getElementById('game-panel');
+
+  // 아직 못 얻은 마음약을 두 개만 살짝 보여준다.
+  // "남은 게 있다"는 감각이 있어야 모으고 싶어진다(전부 나열하면 부담스럽다).
+  function lockedTeaseHtml() {
+    const locked = getCollection().filter((m) => !m.owned && m.available);
+    if (!locked.length) return '';
+    const pick = locked.slice(0, 2);
+    return `<span class="gp-locked">${pick.map((m) => `🔒 ${m.hint}`).join(' · ')}</span>`;
+  }
 
   function renderPanel() {
     if (!panel) return;
@@ -429,14 +513,19 @@
         ? `<p class="game-vacation">🛡️ 마음휴가권 ×${p.vacationTickets} · 하루 빠져도 연속이 지켜져요</p>`
         : ''}
       <button class="game-pharmacy-btn" id="game-pharmacy-btn" type="button">
-        💊 내 마음약국 <strong>${p.collectedCount}/${p.totalMedicines}</strong>
-        <span class="game-pharmacy-pct">${pct}%</span>
+        <span class="gp-top">💊 내 마음약국 <strong>${p.collectedCount}/${p.totalMedicines}</strong>
+          <span class="game-pharmacy-pct">${pct}%</span></span>
+        <span class="gp-bar"><i style="width:${pct}%"></i></span>
+        ${lockedTeaseHtml()}
       </button>
       <button class="game-report-btn" id="game-report-btn" type="button">📊 이번 달의 나 보기</button>
     `;
     panel.hidden = false;
     const btn = document.getElementById('game-pharmacy-btn');
-    if (btn) btn.addEventListener('click', () => openPharmacy());
+    if (btn) btn.addEventListener('click', () => {
+      track('collection_progress_clicked', { collected: p.collectedCount, total: p.totalMedicines });
+      openPharmacy();
+    });
     const rep = document.getElementById('game-report-btn');
     if (rep) rep.addEventListener('click', () => openMonthlyReport());
   }
@@ -614,10 +703,18 @@
   function revealReward() {
     if (opening || !pendingReward) return;
     opening = true;
-    rewardBox.classList.add('is-open');
-    sound('playReadyChime');
     const r = pendingReward;
-    if (r.rarity.order >= 3) { buzz([18, 40, 28]); }
+    // 등급이 올라갈수록 퍼짐이 커진다(길이는 모두 짧게 유지)
+    rewardBox.classList.add('is-open', `burst-${r.rarity.key}`);
+    sound('playReadyChime');
+    buzz(r.rarity.order >= 3 ? [18, 40, 28] : 26);
+    // LEGENDARY만 화면 전체가 한 번 번쩍인다
+    if (r.rarity.key === 'legendary') {
+      const flash = document.createElement('div');
+      flash.className = 'reward-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 900);
+    }
     setTimeout(() => showRewardResult(r), 620);
   }
 
@@ -655,9 +752,14 @@
 
     const shareable = r.rarity.order >= rarityOrder(GAME_CONFIG.shareMinRarity);
     rewardShareBtn.hidden = !shareable; // 이미지는 상자를 열 때 이미 만들기 시작했다
+    // 등급에 맞는 문구로 바꾼다(데이터에서 온다)
+    if (shareable) rewardShareBtn.textContent = r.rarity.shareLabel || '📤 자랑하기';
+    const copyBtn = document.getElementById('reward-copy-btn');
+    if (copyBtn) copyBtn.hidden = !shareable; // 메인 CTA 하나 + 보조 하나만 둔다
 
     sound('playHealingChime');
     renderPanel();
+    renderTeaser(); // 보상을 받은 뒤 상단 줄도 "오늘 완료"로 바뀌어야 한다
     track('reward_open_completed', { rarity: r.rarity.key, medicine_id: r.medicine.id, streak: r.streak });
     track('medicine_obtained', { rarity: r.rarity.key, medicine_id: r.medicine.id, is_new: r.isNew ? 1 : 0 });
     if (shareable) track('rare_medicine_obtained', { rarity: r.rarity.key, medicine_id: r.medicine.id });
@@ -738,6 +840,19 @@
           if (C && C.showToast) C.showToast('공유 문구를 복사했어요 📋');
         } catch (e2) { /* 여기까지 실패하면 조용히 넘어간다 */ }
       }
+    });
+  }
+
+  const copyOnlyBtn = document.getElementById('reward-copy-btn');
+  if (copyOnlyBtn) {
+    copyOnlyBtn.addEventListener('click', async () => {
+      const url = `${location.origin}${location.pathname.replace(/index\.html$/, '')}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        const C = window.MaumjaroCore;
+        if (C && C.showToast) C.showToast('링크를 복사했어요 📋');
+        track('reward_shared', { method: 'copy' });
+      } catch (e) { /* 복사 실패는 조용히 넘어간다 */ }
     });
   }
 
@@ -904,6 +1019,7 @@
   })();
 
   renderEmotionPicker();
+  renderTeaser();
   renderPanel();
 
   window.MaumjaroGame = {
