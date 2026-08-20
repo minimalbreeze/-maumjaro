@@ -2698,6 +2698,12 @@ body::before {
 }
 .hg-cell.today { box-shadow: 0 0 0 2px var(--text); }
 .hg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+/* 눌러서 마음약국을 열 수 있는 줄 */
+.hg-tap {
+  width: 100%; padding: 5px 6px; margin: -5px -6px 4px; cursor: pointer;
+  border: none; background: none; border-radius: 9px; text-align: left;
+}
+.hg-tap:active { background: rgba(128,128,128,0.10); }
 .hg-label { flex: 0 0 92px; font-size: 11px; font-weight: 700; color: var(--text); }
 .hg-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
 .hg-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff9166, #ffc66b); }

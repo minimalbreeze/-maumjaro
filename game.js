@@ -444,11 +444,13 @@
     if (!homeCollection) return;
     const p = previewToday();
     const pct = Math.round((p.collectedCount / p.totalMedicines) * 100);
+    // 잠긴 약 힌트도 여기서 보여준다(게임 패널에 있던 중복 카드는 없앴다).
     homeCollection.innerHTML = `
       <span class="hc-top">💊 내 마음약국
         <strong>${p.collectedCount}/${p.totalMedicines}</strong>
         <span class="hc-pct">${pct}%</span></span>
       <span class="hc-bar"><i style="width:${pct}%"></i></span>
+      ${lockedTeaseHtml()}
     `;
     homeCollection.hidden = false;
   }
@@ -536,20 +538,9 @@
       ${p.vacationTickets > 0
         ? `<p class="game-vacation">🛡️ 마음휴가권 ×${p.vacationTickets} · 하루 빠져도 연속이 지켜져요</p>`
         : ''}
-      <button class="game-pharmacy-btn" id="game-pharmacy-btn" type="button">
-        <span class="gp-top">💊 내 마음약국 <strong>${p.collectedCount}/${p.totalMedicines}</strong>
-          <span class="game-pharmacy-pct">${pct}%</span></span>
-        <span class="gp-bar"><i style="width:${pct}%"></i></span>
-        ${lockedTeaseHtml()}
-      </button>
       <button class="game-report-btn" id="game-report-btn" type="button">📊 이번 달의 나 보기</button>
     `;
     panel.hidden = false;
-    const btn = document.getElementById('game-pharmacy-btn');
-    if (btn) btn.addEventListener('click', () => {
-      track('collection_progress_clicked', { collected: p.collectedCount, total: p.totalMedicines });
-      openPharmacy();
-    });
     const rep = document.getElementById('game-report-btn');
     if (rep) rep.addEventListener('click', () => openMonthlyReport());
   }
@@ -586,15 +577,21 @@
         <span class="hg-bar"><i style="width:${xpPct}%"></i></span>
         <span class="hg-val">${p.xpInto}/${p.xpNeed}</span>
       </div>
-      <div class="hg-row">
+      <button class="hg-row hg-tap" id="hg-pharmacy" type="button">
         <span class="hg-label">💊 마음약국</span>
         <span class="hg-bar"><i class="col" style="width:${colPct}%"></i></span>
-        <span class="hg-val">${p.collectedCount}/${p.totalMedicines}</span>
-      </div>
+        <span class="hg-val">${p.collectedCount}/${p.totalMedicines} ›</span>
+      </button>
       ${p.vacationTickets > 0 ? `<p class="hg-note">🛡️ 마음휴가권 ×${p.vacationTickets}</p>` : ''}
       ${p.nextMilestone ? `<p class="hg-note">🎁 ${p.nextMilestone.days - p.streak}일 뒤 ${p.nextMilestone.days}일 달성 · ${p.nextMilestone.label}</p>` : ''}
     `;
     el.hidden = false;
+    // 내가 모은 마음약을 돌아보는 곳이므로 기록 탭에서도 바로 열 수 있어야 한다.
+    const ph = document.getElementById('hg-pharmacy');
+    if (ph) ph.addEventListener('click', () => {
+      track('collection_progress_clicked', { source: 'history' });
+      openPharmacy();
+    });
   }
 
   // ---------- 월간 감정 리포트 ----------
