@@ -444,6 +444,15 @@
     if (!homeCollection) return;
     const p = previewToday();
     const pct = Math.round((p.collectedCount / p.totalMedicines) * 100);
+
+    // 아직 한 알도 없는 사람에게는 이 카드를 아예 보여주지 않는다.
+    // "0/46 · 0% · 🔒..."가 첫인사가 되면 시작하기도 전에 못 모은 것부터 보게 된다.
+    // 첫 마음약을 받는 순간부터 진행률이 의미를 갖는다.
+    if (p.collectedCount === 0) {
+      homeCollection.hidden = true;
+      return;
+    }
+
     // 잠긴 약 힌트도 여기서 보여준다(게임 패널에 있던 중복 카드는 없앴다).
     homeCollection.innerHTML = `
       <span class="hc-top">💊 내 마음약국

@@ -85,10 +85,30 @@ body::before {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+/* 앱이 무엇인지 알려주는 유일한 문장이다. 12.5px이면 처음 온 사람이 읽기 전에 나간다.
+   모바일 본문 권장 최소가 16px이라 그쪽으로 올렸다. */
 .app-header .tagline {
   margin: 2px 0 0;
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--text-dim);
+}
+/* 무료·설치 불필요를 첫 화면에서 못 박는다. 공유 미리보기(OG)가 "설치도 가입도 없이
+   30초"를 약속하는데 착지 화면에 그 말이 없으면 "가입해야 하나?" 하고 되돌아간다. */
+.app-trust {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 7px 0 0;
+  flex-wrap: wrap;
+}
+.app-trust span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: rgba(128,128,128,0.12);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
 }
 .settings-btn {
   position: absolute;
@@ -2336,7 +2356,7 @@ body::before {
   display: flex; flex-direction: column; gap: 6px; text-align: left;
 }
 .home-collection[hidden] { display: none; }
-.hc-top { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text); }
+.hc-top { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--text); }
 .hc-pct { margin-left: auto; color: var(--text-dim); }
 .hc-bar { display: block; width: 100%; height: 6px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
 .hc-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
@@ -2346,7 +2366,7 @@ body::before {
   padding: 9px 13px; border-radius: 999px;
   background: linear-gradient(135deg, rgba(255,145,102,0.15), rgba(255,198,107,0.12));
   border: 1px solid rgba(255,145,102,0.24);
-  font-size: 12px; font-weight: 700; color: var(--text);
+  font-size: 13.5px; font-weight: 700; color: var(--text);
   display: flex; align-items: center; gap: 7px; justify-content: center;
   text-align: center; line-height: 1.35;
 }
@@ -2372,7 +2392,7 @@ body::before {
 .first-guide {
   width: 100%; flex-shrink: 0; margin-bottom: 10px;
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 11px; color: var(--text-dim);
+  font-size: 13px; color: var(--text-dim);
 }
 .first-guide[hidden] { display: none; }
 .first-guide b { color: var(--text); font-weight: 700; }
@@ -2385,7 +2405,7 @@ body::before {
   margin: 0 0 1px; text-align: center;
 }
 .home-emo-sub {
-  font-size: 11.5px; color: var(--text-dim); margin: 0 0 9px; text-align: center;
+  font-size: 14px; color: var(--text-dim); margin: 0 0 9px; text-align: center;
 }
 .home-emo-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
@@ -2398,11 +2418,11 @@ body::before {
 }
 .home-emo:active { transform: scale(0.95); }
 .home-emo-icon { font-size: 22px; line-height: 1; }
-.home-emo-label { font-size: 10.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.home-emo-label { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
 .home-emo-more {
   width: 100%; margin-top: 5px; padding: 5px; cursor: pointer;
   border: none; background: none; text-decoration: underline;
-  font-size: 11.5px; color: var(--text-dim);
+  font-size: 14px; color: var(--text-dim);
 }
 
 /* 화면이 짧은 폰(브라우저 툴바가 큰 경우 포함)에서는 위아래를 더 조인다.
@@ -2462,7 +2482,7 @@ body::before {
 }
 .gp-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
 .gp-locked {
-  display: block; font-size: 10px; font-weight: 400; color: var(--text-dim);
+  display: block; font-size: 12px; font-weight: 400; color: var(--text-dim);
   line-height: 1.4; word-break: keep-all;
 }
 
