@@ -350,7 +350,12 @@
   // 대표 4개만 먼저 보이고 나머지 14개는 접어둔다(삭제 아님).
   // 선택지가 많으면 고르는 것 자체가 일이 되어 첫 행동이 늦어진다. 가장 자주 고를 만한
   // 넷(부정 둘 · 긍정 하나 · 중립 하나)만 남겨 3초 안에 손이 나가게 한다.
-  const FEATURED_EMOTIONS = ['stress', 'exhausted', 'joy', 'ordinary'];
+  // 홈에 바로 보여줄 감정. 자주 고를 것 같은 순으로 10개를 앞세우고 나머지 8개는 "다른 감정 보기"에 둔다.
+  // 5열 2줄로 딱 떨어지게 10개를 유지한다(개수를 바꾸면 마지막 줄이 어중간해진다).
+  const FEATURED_EMOTIONS = [
+    'stress', 'anxiety', 'depression', 'lethargy', 'exhausted',
+    'loneliness', 'joy', 'ordinary', 'excitement', 'comfort',
+  ];
 
   const emotionSection = document.getElementById('home-emotion');
   let emotionsExpanded = false;

@@ -1885,15 +1885,18 @@
         <span class="rx-nav-title">🎴 타로</span>
       </div>
       <p class="tarot-hint">무엇이 궁금한지 골라주세요</p>
-      <div class="rx-category-grid">
+      <div class="tarot-topic-list">
         ${TAROT_TOPICS.map((t) => {
           const done = !!getTarotDraw(t.key);
           return `
-          <div class="rx-category-tile" data-topic="${t.key}">
-            <span class="rx-category-emoji">${t.emoji}</span>
-            <span class="rx-category-label">${t.label}</span>
-            <span class="rx-category-count">${done ? '오늘 봤어요' : '3장 뽑기'}</span>
-          </div>`;
+          <button class="tarot-topic-row${done ? ' done' : ''}" type="button" data-topic="${t.key}">
+            <span class="tt-emoji">${t.emoji}</span>
+            <span class="tt-body">
+              <span class="tt-label">${t.label}</span>
+              <span class="tt-sub">${done ? '오늘 봤어요' : t.question}</span>
+            </span>
+            <span class="tt-arrow">${done ? '↻' : '›'}</span>
+          </button>`;
         }).join('')}
       </div>
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">주제마다 하루에 한 번씩 볼 수 있어요</p>
@@ -1904,7 +1907,7 @@
       if (profile) renderFortuneHub(profile);
       else goHomeTab();
     });
-    fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
+    fortuneContent.querySelectorAll('.tarot-topic-row').forEach((tile) => {
       tile.addEventListener('click', () => {
         const topic = tarotTopicOf(tile.dataset.topic);
         const existing = getTarotDraw(topic.key);
@@ -2871,4 +2874,8 @@
     if (!payload) return;
     wireIncomingTarotTrigger(payload);
   })();
+
+  // AI 프록시 주소는 이 파일이 원본이다. heal-ai.js가 같은 주소를 또 적어두면
+  // 나중에 프록시를 옮길 때 한쪽만 고쳐져 조용히 어긋난다. 여기서만 노출한다.
+  window.MaumjaroFortune = { AI_PROXY_URL: AI_MAUMUN_PROXY_URL };
 })();

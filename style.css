@@ -271,8 +271,9 @@ body::before {
      위쪽에 감정 선택이 들어오면서 flex:1로 나눠 갖는 높이가 줄었으므로,
      최소 높이를 화면 기준으로 잡아 어떤 폰에서도 충분히 커 보이게 한다. */
   /* flex:1이 남는 공간을 다 가져가므로, 최소 높이는 "이보다 작아지지 말라" 정도로만 둔다.
-     너무 크게 잡으면 화면이 짧은 폰에서 아래 CTA를 밀어내고 주사기도 아래로 치우친다. */
-  min-height: min(34dvh, 300px);
+     너무 크게 잡으면 화면이 짧은 폰에서 아래 CTA를 밀어내고 주사기도 아래로 치우친다.
+     감정이 1줄(4개)에서 2줄(10개)로 늘어난 만큼 이 값을 낮춰야 CTA가 탭바에 안 가린다. */
+  min-height: min(30dvh, 258px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1426,6 +1427,39 @@ body::before {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
+
+/* 타로 주제는 3열 타일 대신 화면 폭을 꽉 채우는 행으로 둔다.
+   주제마다 질문 문장을 같이 보여줘야 무엇을 뽑는지 알 수 있는데,
+   3열 타일에는 그 문장이 들어갈 자리가 없다. 탭 영역도 훨씬 넓어진다. */
+.tarot-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+}
+.tarot-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 15px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  text-align: left;
+}
+.tarot-topic-row:active { transform: scale(0.985); }
+.tarot-topic-row.done { opacity: 0.62; }
+.tt-emoji { font-size: 26px; line-height: 1; flex-shrink: 0; }
+.tt-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.tt-label { font-size: 15.5px; font-weight: 800; color: var(--text); }
+.tt-sub {
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.35;
+  word-break: keep-all; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.tt-arrow { font-size: 19px; color: var(--text-dim); flex-shrink: 0; }
 .rx-category-tile {
   display: flex;
   flex-direction: column;
@@ -2407,18 +2441,24 @@ body::before {
 .home-emo-sub {
   font-size: 14px; color: var(--text-dim); margin: 0 0 9px; text-align: center;
 }
+/* 감정 10개를 5열 2줄로 담는다. 4열이면 10개가 4+4+2로 떨어져 마지막 줄이 비어 보인다.
+   칸이 좁아진 만큼 라벨을 줄바꿈 허용으로 바꿔야 "스트레스"가 잘리지 않는다. */
 .home-emo-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
 }
 .home-emo {
   border: 1px solid var(--card-border); border-radius: 13px;
   background: var(--card); cursor: pointer;
-  padding: 9px 2px 7px; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; min-height: 60px; /* 손가락으로 누르기 충분한 크기 */
+  padding: 6px 1px 5px; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; min-height: 50px; /* 손가락으로 누르기 충분한 크기 */
 }
 .home-emo:active { transform: scale(0.95); }
-.home-emo-icon { font-size: 22px; line-height: 1; }
-.home-emo-label { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.home-emo-icon { font-size: 20px; line-height: 1; }
+/* 5열이라 칸이 좁다. nowrap을 두면 "스트레스"가 칸 밖으로 넘친다. */
+.home-emo-label {
+  font-size: 11.5px; font-weight: 700; color: var(--text);
+  line-height: 1.2; text-align: center; word-break: keep-all;
+}
 .home-emo-more {
   width: 100%; margin-top: 5px; padding: 5px; cursor: pointer;
   border: none; background: none; text-decoration: underline;
@@ -2428,15 +2468,23 @@ body::before {
 /* 화면이 짧은 폰(브라우저 툴바가 큰 경우 포함)에서는 위아래를 더 조인다.
    주사기가 가운데 오고 CTA가 접힘선 안에 들어오는 것이 최우선이다. */
 @media (max-height: 720px) {
-  .home-emotion { margin-bottom: 6px; }
+  .home-emotion { margin-bottom: 5px; }
   .home-emo-title { font-size: 16.5px; }
-  .home-emo-sub { margin-bottom: 7px; }
-  .home-emo { min-height: 54px; padding: 7px 2px 6px; }
-  .home-emo-icon { font-size: 20px; }
-  .first-guide { margin-bottom: 6px; }
-  .home-teaser { margin-bottom: 6px; padding: 7px 12px; }
-  #action-btn { margin-bottom: 10px; }
-  .syringe-stage { margin: 0; }
+  /* "오늘 마음 상태를 골라봐"는 바로 위 "오늘 기분 어때?"와 같은 말이다.
+     좁은 화면에서는 이 한 줄을 빼서 CTA가 탭바에 가리지 않게 한다.
+     주사기(브랜드의 얼굴)를 더 줄이는 것보다 중복 문구를 없애는 쪽이 낫다. */
+  .home-emo-sub { display: none; }
+  /* 감정이 4개(1줄)에서 10개(2줄)로 늘면서 이 화면대에서 CTA가 접힘선 밖으로 밀렸다.
+     한 줄이 늘어난 만큼 타일 높이와 주사기 최소 높이를 함께 줄여 되돌린다. */
+  .home-emo { min-height: 48px; padding: 5px 1px 4px; gap: 1px; }
+  .home-emo-icon { font-size: 18px; }
+  .home-emo-label { font-size: 11px; }
+  .home-emo-grid { gap: 5px; }
+  .home-emo-more { margin-top: 3px; padding: 3px; font-size: 13px; }
+  .first-guide { margin-bottom: 5px; font-size: 12px; }
+  .home-teaser { margin-bottom: 5px; padding: 6px 12px; }
+  #action-btn { margin-bottom: 8px; }
+  .syringe-stage { margin: 0; min-height: min(26dvh, 210px); }
 }
 
 /* ================= 게임 레이어 (출석 / 마음약 / 컬렉션) ================= */
