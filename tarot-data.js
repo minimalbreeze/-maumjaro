@@ -188,6 +188,65 @@
         { label: '오늘의 처방 방향', emoji: '💉' },
       ],
     },
+
+    // ⚠️ 새 주제는 반드시 이 아래(배열 끝)에만 추가한다.
+    // 공유 링크(?t=...)가 주제를 "배열 인덱스"로 인코딩하기 때문에(buildTarotShareUrl),
+    // 중간에 끼워 넣으면 이미 카톡으로 나간 링크들이 다른 주제로 열린다.
+    // 순서를 바꾸는 것도 같은 이유로 금지다.
+    {
+      key: 'study', label: '공부', emoji: '📚', rxCategory: 'study',
+      question: '지금 이 공부가 어떤 결과로 이어질까요?',
+      positions: [
+        { label: '지금 나의 자리', emoji: '📍' },
+        { label: '앞으로의 흐름', emoji: '🌊' },
+        { label: '집중을 위한 처방', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'health', label: '건강', emoji: '🌱', rxCategory: 'sleep',
+      question: '요즘 내 몸과 마음의 컨디션은 어떨까요?',
+      positions: [
+        { label: '지금의 컨디션', emoji: '📍' },
+        { label: '앞으로의 흐름', emoji: '🌊' },
+        { label: '돌봐야 할 것', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'choice', label: '선택', emoji: '🔀', rxCategory: 'daily',
+      question: '지금 고민 중인 그 선택, 어느 쪽이 좋을까요?',
+      positions: [
+        { label: '이 길을 골랐을 때', emoji: '↖️' },
+        { label: '저 길을 골랐을 때', emoji: '↗️' },
+        { label: '결정을 위한 처방', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'family', label: '가족', emoji: '🏠', rxCategory: 'social',
+      question: '가족과의 관계가 어떻게 흘러갈까요?',
+      positions: [
+        { label: '지금 우리 사이', emoji: '📍' },
+        { label: '상대의 마음', emoji: '💗' },
+        { label: '다가가는 방법', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'rest', label: '휴식', emoji: '🛋️', rxCategory: 'sleep',
+      question: '지금 나에게 필요한 쉼은 무엇일까요?',
+      positions: [
+        { label: '지금 나의 피로', emoji: '📍' },
+        { label: '쉬어야 할 방향', emoji: '🌊' },
+        { label: '오늘의 쉼 처방', emoji: '💉' },
+      ],
+    },
+    {
+      key: 'week', label: '이번 주', emoji: '📅', rxCategory: null,
+      question: '이번 주가 어떻게 흘러갈까요?',
+      positions: [
+        { label: '이번 주의 시작', emoji: '📍' },
+        { label: '주중의 흐름', emoji: '🌊' },
+        { label: '이번 주의 처방', emoji: '💉' },
+      ],
+    },
   ];
 
   // 종합 결과: 정방향은 +1, 역방향은 -1로 더해 -3~+3 점수를 낸 뒤 다섯 단계로 읽는다.

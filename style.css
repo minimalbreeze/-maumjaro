@@ -2441,16 +2441,16 @@ body::before {
 .home-emo-sub {
   font-size: 14px; color: var(--text-dim); margin: 0 0 9px; text-align: center;
 }
-/* 감정 10개를 5열 2줄로 담는다. 4열이면 10개가 4+4+2로 떨어져 마지막 줄이 비어 보인다.
-   칸이 좁아진 만큼 라벨을 줄바꿈 허용으로 바꿔야 "스트레스"가 잘리지 않는다. */
+/* 감정 12개를 4열 3줄로 담는다. 12는 4로 나누어떨어져 빈 칸이 남지 않는다.
+   (5열이면 12개가 5+5+2로 떨어져 마지막 줄에 세 칸이 빈다.) */
 .home-emo-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
 }
 .home-emo {
   border: 1px solid var(--card-border); border-radius: 13px;
   background: var(--card); cursor: pointer;
-  padding: 6px 1px 5px; display: flex; flex-direction: column;
-  align-items: center; gap: 2px; min-height: 50px; /* 손가락으로 누르기 충분한 크기 */
+  padding: 5px 1px 4px; display: flex; flex-direction: column;
+  align-items: center; gap: 1px; min-height: 45px; /* 손가락으로 누르기 충분한 크기 */
 }
 .home-emo:active { transform: scale(0.95); }
 .home-emo-icon { font-size: 20px; line-height: 1; }
@@ -2469,22 +2469,20 @@ body::before {
    주사기가 가운데 오고 CTA가 접힘선 안에 들어오는 것이 최우선이다. */
 @media (max-height: 720px) {
   .home-emotion { margin-bottom: 5px; }
-  .home-emo-title { font-size: 16.5px; }
-  /* "오늘 마음 상태를 골라봐"는 바로 위 "오늘 기분 어때?"와 같은 말이다.
-     좁은 화면에서는 이 한 줄을 빼서 CTA가 탭바에 가리지 않게 한다.
-     주사기(브랜드의 얼굴)를 더 줄이는 것보다 중복 문구를 없애는 쪽이 낫다. */
-  .home-emo-sub { display: none; }
+  .home-emo-title { font-size: 16.5px; margin-bottom: 6px; }
   /* 감정이 4개(1줄)에서 10개(2줄)로 늘면서 이 화면대에서 CTA가 접힘선 밖으로 밀렸다.
      한 줄이 늘어난 만큼 타일 높이와 주사기 최소 높이를 함께 줄여 되돌린다. */
-  .home-emo { min-height: 48px; padding: 5px 1px 4px; gap: 1px; }
-  .home-emo-icon { font-size: 18px; }
-  .home-emo-label { font-size: 11px; }
-  .home-emo-grid { gap: 5px; }
+  /* 감정이 3줄(12개)이 되면서 짧은 화면에서 CTA가 탭바 밑으로 밀린다.
+     여기 값은 반드시 기본값보다 작아야 한다 — 크면 오히려 기본값을 키워버린다. */
+  .home-emo { min-height: 38px; padding: 3px 1px 3px; gap: 0; }
+  .home-emo-icon { font-size: 16px; }
+  .home-emo-label { font-size: 10.5px; }
+  .home-emo-grid { gap: 4px; }
   .home-emo-more { margin-top: 3px; padding: 3px; font-size: 13px; }
   .first-guide { margin-bottom: 5px; font-size: 12px; }
   .home-teaser { margin-bottom: 5px; padding: 6px 12px; }
   #action-btn { margin-bottom: 8px; }
-  .syringe-stage { margin: 0; min-height: min(26dvh, 210px); }
+  .syringe-stage { margin: 0; min-height: min(21dvh, 170px); }
 }
 
 /* ================= 게임 레이어 (출석 / 마음약 / 컬렉션) ================= */
