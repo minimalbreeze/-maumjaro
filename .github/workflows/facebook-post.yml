@@ -1,0 +1,40 @@
+name: 페이스북 자동 홍보
+
+on:
+  schedule:
+    # 23:00 UTC = 한국시간 다음날 오전 8시.
+    # GitHub Actions의 예약 실행은 혼잡할 때 5~15분 늦게 도는 경우가 있다(정상 동작).
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '실제로 올리지 않고 문구만 확인하기'
+        type: boolean
+        default: true
+
+# 페이지에 글을 쓰는 일이므로 리포 자체에는 아무 권한도 필요 없다.
+permissions:
+  contents: read
+
+concurrency:
+  # 예약 실행과 수동 실행이 겹쳐 같은 글이 두 번 올라가는 것을 막는다.
+  group: facebook-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 오늘의 마음약 게시
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          # 예약 실행일 때 inputs.dry_run은 비어 있으므로 실제 게시가 된다.
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/fb-post.mjs
