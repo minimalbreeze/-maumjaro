@@ -121,6 +121,9 @@ export function pickMedicine(medicines, today) {
 // 앱의 URL 파라미터는 전부 get('특정이름') 방식이라 모르는 파라미터가 붙어도 무시된다.
 export function buildLink(med) {
   const q = new URLSearchParams({
+    // start=tarot: 홈 대신 타로 주제 선택 화면으로 착지시킨다.
+    // 홈은 감정을 고르는 화면이고, 타로는 입력 없이 바로 시작되어 진입 장벽이 더 낮다.
+    start: 'tarot',
     utm_source: 'facebook',
     utm_medium: 'social',
     utm_campaign: 'daily_medicine',
@@ -137,11 +140,13 @@ const OPENERS = [
   (m) => `${m.icon} 약국에 이런 게 들어왔습니다.\n\n『${m.name}』`,
 ];
 
+// 링크가 타로 화면으로 착지하므로(buildLink의 start=tarot) 마무리 문구도 거기에 맞춘다.
+// "기분을 고르세요" 같은 홈 화면 안내를 쓰면 눌렀을 때 다른 화면이 나와 어긋난다.
 const CLOSERS = [
-  '지금 내 마음엔 어떤 약이 필요할까요?\n30초면 오늘의 처방이 나옵니다 👇',
-  '오늘 기분 한 번 고르면, 마음에 맞는 처방이 나옵니다 👇',
-  '운세도 보고, 마음에 주사도 한 대 놓고 가세요 💉',
-  '내 마음에 필요한 약은 뭔지 뽑아보세요 👇',
+  '오늘 내 카드엔 뭐가 나올까요?\n무료 타로 3장, 30초면 됩니다 👇',
+  '카드 3장 뽑고 마음에 주사도 한 대 놓고 가세요 💉',
+  '설치도 가입도 없이 무료 타로 보러 오세요 🎴',
+  '오늘의 나를 카드 3장으로 확인해보세요 👇',
 ];
 
 export function buildMessage(med, categories, today) {
