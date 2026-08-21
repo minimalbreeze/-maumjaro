@@ -106,6 +106,20 @@
     fn(); // 로더가 없는 환경이면 그냥 시도한다
   }
 
+  // 홈 탭으로 돌려보낸다. 탭 버튼을 실제로 클릭해서 app.js·prescriptions.js에 걸린
+  // 기존 리스너들이 전부 함께 돌게 한다(뷰를 직접 숨겼다 켰다 하지 않는다).
+  function goHomeTab() {
+    const btn = document.querySelector('.tab-btn[data-view="home"]');
+    if (btn) btn.click();
+  }
+
+  // GA4 전송은 game.js가 갖고 있다. 이 파일은 없을 수도 있다고 보고 항상 확인하고 부른다
+  // (스크립트 순서가 바뀌거나 game.js가 빠져도 운세/타로가 죽지 않아야 한다).
+  function trackEvent(name, params) {
+    const G = window.MaumjaroGame;
+    if (G && typeof G.track === 'function') G.track(name, params);
+  }
+
   // 날짜 키는 반드시 "사용자의 로컬 날짜"여야 한다.
   // 예전에는 toISOString()(UTC)을 썼는데, 그러면 한국에서는 하루가 자정이 아니라
   // 오전 9시에 바뀐다. app.js는 처음부터 로컬 날짜(dateKey)를 써왔기 때문에 같은 앱 안에
@@ -386,7 +400,18 @@
   }
 
   // ---------- 운세 탭 렌더 ----------
+  // 홍보 링크(?start=tarot)로 들어왔을 때 한 번만 켜지는 표시.
+  // 탭 전환은 withLunar를 거치는데, lunar가 아직 안 받아졌으면 renderFortuneHome이
+  // 나중에 실행된다. 그래서 진입부에서 타로를 먼저 그려두면 뒤늦게 온 renderFortuneHome이
+  // 그걸 프로필 폼으로 덮어써 버린다. 순서에 기대지 말고 여기서 분기한다.
+  let promoTarotPending = false;
+
   function renderFortuneHome() {
+    if (promoTarotPending) {
+      promoTarotPending = false;
+      renderTarotTopics(loadSajuProfile()); // 프로필 있으면 그대로, 없으면 null
+      return;
+    }
     const profile = loadSajuProfile();
     if (!profile) renderProfileForm();
     else renderFortuneHub(profile);
@@ -1873,7 +1898,12 @@
       </div>
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">주제마다 하루에 한 번씩 볼 수 있어요</p>
     `;
-    document.getElementById('tarot-back').addEventListener('click', () => renderFortuneHub(profile));
+    // 사주 프로필 없이 바로 들어온 경우(공유 링크 ?start=tarot, 폼의 "타로 먼저 보기")에는
+    // 돌아갈 운세센터가 없다. 그럴 땐 홈으로 보낸다 — 빈 폼으로 되돌리면 막다른 길이 된다.
+    document.getElementById('tarot-back').addEventListener('click', () => {
+      if (profile) renderFortuneHub(profile);
+      else goHomeTab();
+    });
     fortuneContent.querySelectorAll('.rx-category-tile').forEach((tile) => {
       tile.addEventListener('click', () => {
         const topic = tarotTopicOf(tile.dataset.topic);
@@ -2208,6 +2238,9 @@
       </div>
 
       <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">💫 ${isEdit ? '맘운 프로필 저장하기' : '맘운 프로필 완성하기'}</button>
+      ${isEdit ? '' : `
+      <button class="rx-slip-photo-btn" id="fortune-skip-to-tarot" type="button" style="width:100%;margin-top:10px;">🎴 생년월일 없이 타로만 먼저 볼래요</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:6px;">타로는 사주 정보가 필요 없어요</p>`}
 
       <div style="margin-top:24px;">
         <span class="rx-slip-key" style="display:block;margin-bottom:6px;">🔐 백업 &amp; 복구</span>
@@ -2235,6 +2268,13 @@
 
     if (isEdit) {
       document.getElementById('fortune-form-back').addEventListener('click', () => renderFortuneHub(existingProfile));
+    } else {
+      // 타로는 사주 데이터를 한 번도 읽지 않는다. 필요 없는 폼 뒤에 가둬 둘 이유가 없어서
+      // 프로필 없이 바로 들어갈 수 있는 길을 연다(profile 자리에 null을 넘긴다).
+      document.getElementById('fortune-skip-to-tarot').addEventListener('click', () => {
+        trackEvent('tarot_opened_without_profile', { source: 'profile_form' });
+        renderTarotTopics(null);
+      });
     }
 
     calendarToggle.querySelectorAll('.seg-btn').forEach((btn) => {
@@ -2796,6 +2836,28 @@
     const payload = decodeMaumunPayload(raw);
     if (!payload) return;
     wireIncomingMaumunTrigger(payload);
+  })();
+
+  // ---------- 홍보 링크 착지 처리 (?start=tarot) ----------
+  // 블로그·SNS에서 "무료 타로"를 보고 들어온 사람을 곧장 타로 주제 선택으로 보낸다.
+  // 운세로 보내지 않는 이유: 오늘의 운세는 사주 일간이 필요해서 첫 화면이 생년월일 폼이 되고,
+  // 처음 온 사람에겐 그게 벽이다. 타로는 사주 데이터를 안 쓰므로 입력 없이 바로 시작된다.
+  // 타로 결과는 원래 주사를 놓아야 열리므로(renderTarotGate), 이 경로도 결국 주사로 이어진다.
+  //
+  // 파라미터가 없으면 아무 일도 일어나지 않는다 — 직접 방문·즐겨찾기는 기존대로 홈이 첫 화면이다.
+  (function handlePromoLanding() {
+    const start = new URLSearchParams(location.search).get('start');
+    if (start !== 'tarot') return;
+    // 친구 공유 딥링크(?custom=, ?maumun=, ?t=)가 함께 있으면 그쪽이 우선이다.
+    // 친구가 보낸 걸 보러 온 사람을 홍보용 타로 화면으로 가로채면 안 된다.
+    const q = new URLSearchParams(location.search);
+    if (q.get('custom') || q.get('maumun') || q.get('t') || q.get('tarot')) return;
+
+    const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
+    if (!fortuneTabBtn) return;
+    promoTarotPending = true;  // renderFortuneHome이 이 표시를 보고 타로를 그린다
+    trackEvent('promo_landing_tarot', { source: 'query_param' });
+    fortuneTabBtn.click();     // 탭 상태·뷰 전환은 기존 리스너에 맡긴다
   })();
 
   // ---------- 친구가 보낸 타로 딥링크 진입 처리 ----------
