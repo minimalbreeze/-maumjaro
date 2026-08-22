@@ -1,0 +1,18 @@
+<!-- 블루칩 나침반 파비콘.
+     맘운자로의 앱 아이콘(주사기)은 건드리지 않는다 — 이건 별도 하위 사이트의
+     탭 아이콘이다. 색만 브랜드 팔레트(코랄 #ff9166 → 옐로 #ffc66b)를 재사용해
+     같은 집안 물건으로 보이게 한다. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff9166"/>
+      <stop offset="1" stop-color="#ffc66b"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#ffffff" stroke-width="3" opacity=".92"/>
+  <!-- 바늘: 북쪽(딥틸)과 남쪽(흰색) -->
+  <path d="M32 15 L38 32 L32 29 Z" fill="#1f5c50"/>
+  <path d="M32 49 L26 32 L32 35 Z" fill="#ffffff"/>
+  <circle cx="32" cy="32" r="3.2" fill="#1f5c50"/>
+</svg>
