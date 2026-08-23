@@ -853,15 +853,26 @@
   }
 
   // ---------- 일반 처방용 모션 제스처 (app.js의 감정 플로우와 독립적인 리스너) ----------
-  const GENERIC_MOTION_THRESHOLD = 28;
+  // 기준값과 계산 방식은 app.js의 감정 플로우와 반드시 같아야 한다.
+  // 한쪽만 고치면 "홈에서는 되는데 타로에서는 안 된다" 같은 증상이 생긴다.
+  const GENERIC_MOTION_THRESHOLD = 14;
   const GENERIC_MOTION_COOLDOWN_MS = 1500;
+  const GENERIC_GRAVITY = 9.81;
   let lastGenericMotionTs = 0;
   window.addEventListener('devicemotion', (e) => {
     if (localStorage.getItem('maumjaro:motionOn') === 'off') return;
     if (genericState !== 'ready') return;
-    const acc = (e.acceleration && e.acceleration.x !== null) ? e.acceleration : e.accelerationIncludingGravity;
-    if (!acc || acc.x === null || acc.x === undefined) return;
-    const mag = Math.sqrt((acc.x || 0) ** 2 + (acc.y || 0) ** 2 + (acc.z || 0) ** 2);
+    // acceleration은 중력 제외, accelerationIncludingGravity는 중력 포함이라
+    // 같은 기준값으로 비교하면 기기마다 필요한 세기가 달라진다. 중력을 뺀 크기로 통일한다.
+    const mag = (() => {
+      const a = e.acceleration;
+      const m = (v) => Math.sqrt((v.x || 0) ** 2 + (v.y || 0) ** 2 + (v.z || 0) ** 2);
+      if (a && a.x !== null && a.x !== undefined) return m(a);
+      const g = e.accelerationIncludingGravity;
+      if (!g || g.x === null || g.x === undefined) return null;
+      return Math.abs(m(g) - GENERIC_GRAVITY);
+    })();
+    if (mag === null) return;
     const now = performance.now();
     if (mag > GENERIC_MOTION_THRESHOLD && now - lastGenericMotionTs > GENERIC_MOTION_COOLDOWN_MS) {
       lastGenericMotionTs = now;

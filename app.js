@@ -266,8 +266,10 @@
   let lastHealingMessage = null;
 
   // ---------- motion-based injection ("찌르기" gesture via accelerometer) ----------
-  const MOTION_THRESHOLD = 28; // m/s^2 of jerk to count as a "stab"
+  // "콕 찌르는" 정도의 순수 가속도(중력 제외) 기준. 28은 약 2.9G라 세게 휘둘러야 겨우 닿았다.
+  const MOTION_THRESHOLD = 14; // m/s^2 of jerk to count as a "stab"
   const MOTION_COOLDOWN_MS = 1500;
+  const GRAVITY = 9.81;
   let motionListenerAttached = false;
   let lastMotionTriggerTime = 0;
 
@@ -275,12 +277,26 @@
     return Math.sqrt((x || 0) ** 2 + (y || 0) ** 2 + (z || 0) ** 2);
   }
 
+  // 두 센서 값은 의미가 다르다.
+  //   acceleration                → 중력 제외. 가만히 두면 0
+  //   accelerationIncludingGravity → 중력 포함. 가만히 둬도 9.8
+  // 예전에는 둘 중 아무거나 골라 같은 기준값과 비교해서, 기기에 따라 필요한 세기가
+  // 세 배 가까이 달라졌다. 항상 "중력을 뺀 크기"로 맞춘 뒤 비교한다.
+  function motionJerk(e) {
+    const a = e.acceleration;
+    if (a && a.x !== null && a.x !== undefined) {
+      return motionMagnitude(a.x, a.y, a.z);
+    }
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.x === null || g.x === undefined) return null;
+    return Math.abs(motionMagnitude(g.x, g.y, g.z) - GRAVITY);
+  }
+
   function handleDeviceMotion(e) {
     if (localStorage.getItem('maumjaro:motionOn') === 'off') return;
     if (state !== 'ready') return;
-    const acc = (e.acceleration && e.acceleration.x !== null) ? e.acceleration : e.accelerationIncludingGravity;
-    if (!acc || acc.x === null || acc.x === undefined) return;
-    const mag = motionMagnitude(acc.x, acc.y, acc.z);
+    const mag = motionJerk(e);
+    if (mag === null) return;
     const now = performance.now();
     if (mag > MOTION_THRESHOLD && now - lastMotionTriggerTime > MOTION_COOLDOWN_MS) {
       lastMotionTriggerTime = now;
@@ -977,6 +993,11 @@
     launchEmotionFlow(key) {
       const symptom = SYMPTOMS[key];
       if (!symptom || state !== 'idle') return;
+      // 홈에서 감정을 바로 누르는 경로도 모션 권한을 요청해야 한다.
+      // 이게 빠져 있어서 홈 버튼으로 시작하면 devicemotion 리스너 자체가 안 붙었고,
+      // 그 결과 "폰을 찌르는" 동작이 조용히 무시됐다(증상 선택 모달 경로에만 있었다).
+      // 이 함수는 버튼 click 핸들러에서 동기로 불리므로 iOS의 사용자 제스처 조건을 만족한다.
+      requestMotionPermission();
       selectedSymptom = key;
       doseTagMg.textContent = symptom.mg;
       doseTagLabel.textContent = `${symptom.label} 처방`;
