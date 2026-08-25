@@ -2456,6 +2456,38 @@ body::before {
   .syringe-stage { margin: 0; min-height: min(26dvh, 210px); }
 }
 
+/* ---------- 홈 화면에 추가 안내 시트 ---------- */
+.install-sheet {
+  position: fixed; inset: 0; z-index: 1300;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(35,20,10,0.45);
+  opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+}
+.install-sheet.show { opacity: 1; pointer-events: auto; }
+.ip-card {
+  width: 100%; max-width: 420px;
+  background: var(--bg-top);
+  border: 1px solid var(--card-border);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 20px calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.3);
+  transform: translateY(14px); transition: transform 0.22s ease;
+}
+.install-sheet.show .ip-card { transform: translateY(0); }
+.ip-title { margin: 0 0 8px; font-size: 16.5px; font-weight: 800; color: var(--text); }
+.ip-body { margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: var(--text); }
+.ip-body b { font-weight: 800; }
+.ip-icon { display: inline-block; transform: translateY(1px); }
+.ip-why { margin: 0 0 14px; font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.ip-go { width: 100%; }
+.ip-later {
+  width: 100%; margin-top: 8px; padding: 10px; cursor: pointer;
+  border: none; background: none; font-size: 13.5px; color: var(--text-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .install-sheet, .install-sheet .ip-card { transition: none; }
+}
+
 /* ================= 게임 레이어 (출석 / 마음약 / 컬렉션) ================= */
 
 .game-panel {
