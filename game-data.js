@@ -15,7 +15,8 @@
     // shareLabel: 공유 버튼 문구. 등급이 올라갈수록 살짝 들뜬 표현을 쓰되,
     // 브랜드 톤을 벗어나지 않는 선에서만 조절한다(문구만 고치면 되도록 데이터로 뺐다).
     { key: 'normal', label: 'NORMAL', order: 1, weight: 65, color: '#8e93a8', tint: 'rgba(142,147,168,0.16)',
-      shareLabel: '📤 공유하기' },
+      // NORMAL은 자랑할 등급이 아니므로 "자랑" 대신 브랜드 흐름 그대로 "보내기"로 권한다.
+      shareLabel: '💌 친구에게 보내기' },
     { key: 'rare', label: 'RARE', order: 2, weight: 25, color: '#4f86e8', tint: 'rgba(79,134,232,0.16)',
       shareLabel: '📤 친구한테 자랑하기' },
     { key: 'epic', label: 'EPIC', order: 3, weight: 9, color: '#b779ef', tint: 'rgba(183,121,239,0.18)',
@@ -228,7 +229,13 @@
     bonusBoxEnabled: true,    // 낮은 확률로 추가 보상 상자
     bonusBoxChance: 0.08,
     bonusBoxXp: 15,
-    shareMinRarity: 'rare',   // 이 등급 이상일 때 공유를 권한다
+    // 이 등급 이상일 때 공유 버튼을 보여준다.
+    // 예전 값은 'rare'였는데, NORMAL이 65%라 주사를 다 놓고도 세 번 중 두 번은
+    // 공유 버튼이 아예 안 보였다. GA4를 보니 친구 링크로 들어온 사람의 완주율이
+    // 40.6%로 직접 방문(8.3%)의 다섯 배였다 — 유일하게 작동하는 유입 경로를
+    // 스스로 막고 있던 셈이라 'normal'로 내려 항상 노출한다.
+    // 등급별 온도 차이는 아래 RARITIES의 shareLabel 문구로만 준다.
+    shareMinRarity: 'normal',
     // 같은 마음약을 이만큼 모으면 등급 표시가 올라간다(중복이 꽝으로 느껴지지 않게).
     duplicateTiers: [
       { count: 3, label: 'SILVER', color: '#9fb2c4' },

@@ -833,9 +833,14 @@
   }
 
   function shareText(r) {
+    // 첫 줄은 등급에 맞춘다. NORMAL까지 공유를 열면서 흔한 약에도 "나 이거 뽑음ㅋㅋ"이
+    // 나가는데, 버튼 문구("💌 친구에게 보내기")와 톤이 어긋난다.
+    const opener = r.rarity.order >= rarityOrder('rare')
+      ? '오늘 나 이거 뽑음ㅋㅋ'
+      : '오늘 내 마음약 이거 나왔어';
     // 설명에 이미 따옴표가 들어 있는 약이 있어서, 바깥에 또 감싸면 ""처럼 겹쳐 보인다.
     return [
-      '오늘 나 이거 뽑음ㅋㅋ',
+      opener,
       `${r.rarity.label} ${r.medicine.icon} ${r.medicine.name}`,
       r.medicine.description,
       '',
