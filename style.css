@@ -2456,6 +2456,18 @@ body::before {
   .syringe-stage { margin: 0; min-height: min(26dvh, 210px); }
 }
 
+/* 헤더 배지 줄(무료·설치 없이·30초)을 그대로 대체하는 버튼.
+   홈은 스크롤 없이 딱 맞게 짜여 있어 줄을 늘리면 CTA가 탭바에 가린다.
+   그래서 높이를 배지와 비슷하게 맞춰 한 줄을 유지한다. */
+.app-trust-install {
+  font-size: 12px; font-weight: 800; cursor: pointer;
+  color: #fff; border: none; border-radius: 999px;
+  padding: 5px 14px; white-space: nowrap;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  box-shadow: 0 2px 8px rgba(183,121,239,0.28);
+}
+.app-trust-install:active { transform: scale(0.96); }
+
 /* ---------- 홈 화면에 추가 안내 시트 ---------- */
 .install-sheet {
   position: fixed; inset: 0; z-index: 1300;

@@ -356,6 +356,12 @@
       <span>완료 이미지 효과</span>
       <button id="fade-toggle" class="toggle-btn" aria-pressed="true">✨ 켜짐</button>
     </div>
+    <!-- 설치 안내는 언제든 다시 볼 수 있어야 한다(첫 완주 때 한 번 뜨는 시트를 놓칠 수 있다).
+         install-prompt.js가 이 버튼을 찾아 배선하고, 이미 설치했으면 행 자체를 숨긴다. -->
+    <div class="sound-row" id="settings-install-row" hidden>
+      <span>📲 홈 화면에 추가</span>
+      <button id="settings-install-btn" class="toggle-btn" type="button">방법 보기</button>
+    </div>
     <div class="settings-divider"></div>
     <button id="settings-reset-btn" class="settings-reset-btn" type="button">🗑️ 모든 기록 초기화</button>
     <p class="settings-reset-hint">이름/사운드/센서 등 설정은 유지되고, 감정·처방·보낸 기록만 지워져요</p>

@@ -138,6 +138,50 @@
     setTimeout(show, DELAY_MS);
   }
 
+  // ---------- 언제든 들어갈 수 있는 입구 ----------
+  // 자동으로 뜨는 시트는 평생 한 번이라 놓치면 끝이다. 직접 찾아 들어올 길을 둔다.
+
+  function hasUsedApp() {
+    try {
+      const Core = window.MaumjaroCore;
+      return !!(Core && typeof Core.loadRecords === 'function' && Core.loadRecords().length > 0);
+    } catch (e) { return false; }
+  }
+
+  // 헤더의 "무료 · 설치 없이 · 30초" 배지 자리를 그대로 쓴다.
+  // 홈 화면은 스크롤 없이 딱 맞게 짜여 있어서 줄을 하나 더 넣으면 CTA가 탭바에 가린다.
+  //
+  // 처음 온 사람에게는 배지가 진입 장벽을 낮추는 역할을 하므로 건드리지 않는다.
+  // 주사를 한 번이라도 완주한 사람에게는 그 문구가 할 일을 다했으므로,
+  // 같은 자리를 설치 버튼으로 바꿔 끼운다(줄 수가 늘지 않는다).
+  function refreshHeaderCta() {
+    const row = document.querySelector('.app-trust');
+    if (!row) return;
+    if (env() === 'desktop') return;
+    if (alreadyInstalled()) return;
+    if (!hasUsedApp()) return;
+    if (row.dataset.installCta === '1') return; // 이미 바꿔 끼웠다
+
+    row.dataset.installCta = '1';
+    row.innerHTML = '<button class="app-trust-install" type="button">📲 홈 화면에 바로가기 추가</button>';
+    row.querySelector('button').addEventListener('click', () => {
+      track('install_entry_clicked', { from: 'header' });
+      show();
+    });
+  }
+
+  function wireSettingsRow() {
+    const row = document.getElementById('settings-install-row');
+    const btn = document.getElementById('settings-install-btn');
+    if (!row || !btn) return;
+    if (env() === 'desktop' || alreadyInstalled()) { row.hidden = true; return; }
+    row.hidden = false;
+    btn.addEventListener('click', () => {
+      track('install_entry_clicked', { from: 'settings' });
+      show();
+    });
+  }
+
   // 보상 오버레이가 닫히는 순간 = 주사를 완주하고 마음약까지 받아본 직후.
   // game.js를 고치지 않고 hidden 속성 변화만 지켜본다.
   function watchReward() {
@@ -146,14 +190,28 @@
     let wasOpen = !ov.hidden;
     new MutationObserver(() => {
       const open = !ov.hidden;
-      if (wasOpen && !open) maybeShow();   // 열려 있다가 닫힌 순간
+      if (wasOpen && !open) {          // 열려 있다가 닫힌 순간
+        maybeShow();
+        refreshHeaderCta();            // 방금 첫 완주를 했다면 헤더 자리도 바꿔 끼운다
+      }
       wasOpen = open;
     }).observe(ov, { attributes: true, attributeFilter: ['hidden'] });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', watchReward);
-  } else {
+  function init() {
     watchReward();
+    wireSettingsRow();
+    refreshHeaderCta();
+    // 주사가 끝나는 즉시 헤더 자리를 바꾼다.
+    // 보상 오버레이가 닫힐 때만 갱신하면, 오늘 보상을 이미 받은 두 번째 주사에서는
+    // 오버레이가 안 열려서 새로고침 전까지 버튼이 나타나지 않는다.
+    document.addEventListener('maumjaro:emotion-injected', () => setTimeout(refreshHeaderCta, 100));
+    document.addEventListener('maumjaro:rx-injected', () => setTimeout(refreshHeaderCta, 100));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
