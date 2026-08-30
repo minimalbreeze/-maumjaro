@@ -526,12 +526,26 @@
   // 두 개가 다 "뽑기"로 보이면 하루에 두 번 뽑는 것처럼 느껴지므로, 문구도 "열어보세요"로 둔다.
   const REVEAL_CAPSULE_COUNT = 5;
 
+  // 캡슐 5개 중 하나를 고르는 방식이었는데, "어떤 걸 골라도 결과는 같다"는 안내를
+  // 붙여야 할 만큼 고르는 의미가 없었다. 갓차 기계를 돌려 뽑는 연출로 바꾼다.
+  //   손잡이 돌리기 → 돔 안 캡슐이 내려감 → 배출구로 떨어짐 → 커지며 열림 → 결과
+  // 소리는 각 단계에 이미 만들어 둔 것을 붙인다(드르륵 / 낙하 / 신비로운 공개).
+  const GACHA_BALL_COLORS = [
+    ['#ff9166', '#ffc66b'], ['#b779ef', '#ff8fb3'], ['#4f86e8', '#7ec8e3'],
+    ['#2f6f5e', '#8fd694'], ['#e0a83c', '#ffd166'], ['#ef6a5a', '#ffb37a'],
+  ];
+
   function withMysticalReveal(profile, title, buildAndRender) {
     const loadingLine = MYSTICAL_LOADING_LINES[Math.floor(Math.random() * MYSTICAL_LOADING_LINES.length)];
-    const capsules = Array.from({ length: REVEAL_CAPSULE_COUNT }, (_, i) => `
-      <button class="reveal-capsule" type="button" data-i="${i}" style="animation-delay:${(i * 0.31).toFixed(2)}s;">
-        <span class="reveal-capsule-shine"></span>
-      </button>`).join('');
+    // 돔 안을 채울 캡슐들. 위치와 색을 흩어 놓아야 "가득 차 있다"는 느낌이 난다.
+    const domeBalls = Array.from({ length: 11 }, (_, i) => {
+      const c = GACHA_BALL_COLORS[i % GACHA_BALL_COLORS.length];
+      const x = 18 + (i * 23) % 64;
+      const y = 16 + Math.floor(i / 3) * 17 + (i % 2) * 5;
+      return `<span class="gm-ball" style="left:${x}%;top:${y}%;background:linear-gradient(150deg,${c[0]},${c[1]});
+        animation-delay:${(i * 0.17).toFixed(2)}s;"></span>`;
+    }).join('');
+    const pick = GACHA_BALL_COLORS[Math.floor(Math.random() * GACHA_BALL_COLORS.length)];
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
@@ -539,32 +553,57 @@
         <span class="rx-nav-title">${title}</span>
       </div>
       <div class="reveal-stage">
-        <p class="reveal-guide" id="reveal-guide">캡슐을 하나 열어보세요</p>
-        <div class="reveal-tray" id="reveal-tray">${capsules}</div>
-        <p class="reveal-note">어떤 걸 골라도 오늘의 운은 같아요 💊</p>
+        <p class="reveal-guide" id="reveal-guide">손잡이를 돌려 오늘의 운을 뽑아보세요</p>
+
+        <div class="gacha" id="gacha">
+          <div class="gm-dome"><span class="gm-dome-shine"></span>${domeBalls}</div>
+          <div class="gm-body">
+            <button class="gm-knob" id="gm-knob" type="button" aria-label="손잡이 돌려 뽑기">
+              <span class="gm-knob-slot"></span>
+            </button>
+            <span class="gm-label">오늘의 운</span>
+          </div>
+          <div class="gm-exit"><span class="gm-exit-hole"></span></div>
+          <!-- 배출구에서 굴러 나와 화면 가운데로 커지는 캡슐 -->
+          <div class="gm-out" id="gm-out">
+            <span class="gm-out-top" style="background:linear-gradient(160deg,${pick[0]},${pick[1]});"></span>
+            <span class="gm-out-bottom"></span>
+            <span class="gm-out-band"></span>
+            <span class="gm-out-glow"></span>
+          </div>
+        </div>
+
+        <p class="reveal-note">하루에 한 번, 오늘의 운이 담긴 캡슐이 나와요 🔮</p>
       </div>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
 
-    const tray = document.getElementById('reveal-tray');
+    const gacha = document.getElementById('gacha');
+    const knob = document.getElementById('gm-knob');
     const guide = document.getElementById('reveal-guide');
-    let opening = false;
-    tray.querySelectorAll('.reveal-capsule').forEach((el) => {
-      el.addEventListener('click', () => {
-        if (opening) return;
-        opening = true;
-        tray.querySelectorAll('.reveal-capsule').forEach((c) => { if (c !== el) c.classList.add('is-gone'); });
-        el.classList.add('is-picked');
+    let turning = false;
+
+    knob.addEventListener('click', () => {
+      if (turning) return;
+      turning = true;
+      knob.disabled = true;
+      gacha.classList.add('is-turning');          // 손잡이 회전 + 돔 안 캡슐이 흔들림
+      sfx('gachaCrank', 10);
+
+      // 캡슐이 배출구로 떨어진다
+      setTimeout(() => {
+        gacha.classList.add('is-dropped');
+        sfx('capsuleDrop');
         guide.textContent = loadingLine;
-        // 갓차 손잡이가 드르륵 돌아가고 캡슐이 굴러 떨어지는 순서로 들려준다.
-        sfx('gachaCrank', 9);
-        setTimeout(() => sfx('capsuleDrop'), 560);
-        setTimeout(() => {
-          el.classList.add('is-open');
-          tarotSound('playReadyChime');
-          setTimeout(buildAndRender, 700);
-        }, 700);
-      });
+      }, 700);
+
+      // 캡슐이 화면 가운데로 커지며 열린다
+      setTimeout(() => {
+        gacha.classList.add('is-opening');
+        sfx('gachaReveal');
+      }, 1500);
+
+      setTimeout(buildAndRender, 2400);
     });
   }
 

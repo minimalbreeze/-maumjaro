@@ -2789,8 +2789,136 @@ body::before {
    보상 뽑기가 아니라 "이미 정해진 결과를 여는" 연출이다. 그래서 등급 색을 입히지 않고,
    다섯 개가 끝까지 똑같이 생겼다(고른 것에 따라 결과가 달라지지 않는다는 뜻). */
 .reveal-stage { width: 100%; padding: 26px 0 10px; text-align: center; }
-.reveal-guide { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 26px; }
-.reveal-note { font-size: 11.5px; color: var(--text-dim); margin: 28px 0 0; }
+.reveal-guide { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 22px; }
+.reveal-note { font-size: 11.5px; color: var(--text-dim); margin: 24px 0 0; }
+
+/* ---------- 갓차 기계 ---------- */
+/* 돔(캡슐 창) + 본체(손잡이) + 배출구. 캡슐 하나가 배출구에서 나와
+   화면 가운데로 커지며 열리는 순서로 움직인다. */
+.gacha {
+  position: relative; width: 190px; height: 250px; margin: 0 auto;
+}
+/* 위쪽 유리 돔 */
+.gm-dome {
+  position: absolute; left: 12px; right: 12px; top: 0; height: 132px;
+  border-radius: 84px 84px 22px 22px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255,255,255,0.85), rgba(255,255,255,0.28) 46%, rgba(255,255,255,0.12) 70%),
+    rgba(255,255,255,0.42);
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: inset 0 -10px 22px rgba(180,130,100,0.16), 0 8px 20px rgba(0,0,0,0.12);
+}
+.gm-dome-shine {
+  position: absolute; left: 16%; top: 12%; width: 26%; height: 34%;
+  border-radius: 50%; background: rgba(255,255,255,0.75);
+  filter: blur(2px); z-index: 3; pointer-events: none;
+}
+/* 돔 안에 담긴 캡슐들 */
+.gm-ball {
+  position: absolute; width: 26px; height: 26px; border-radius: 50%;
+  box-shadow: inset 0 -3px 5px rgba(0,0,0,0.12), inset 0 3px 5px rgba(255,255,255,0.5);
+}
+.gacha.is-turning .gm-ball { animation: gm-jiggle .42s ease-in-out 3; }
+@keyframes gm-jiggle {
+  0%,100% { transform: translate(0,0) rotate(0); }
+  30%     { transform: translate(-3px,3px) rotate(-8deg); }
+  70%     { transform: translate(3px,-2px) rotate(7deg); }
+}
+/* 본체 */
+.gm-body {
+  position: absolute; left: 0; right: 0; top: 126px; height: 96px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ff9166, #ef6a5a);
+  box-shadow: inset 0 3px 8px rgba(255,255,255,0.35), 0 8px 18px rgba(0,0,0,0.16);
+}
+/* 손잡이(46px) 아래로 충분히 내려야 글자가 안 가린다 */
+.gm-label {
+  position: absolute; left: 0; right: 0; top: 68px;
+  font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.92); letter-spacing: .5px;
+}
+/* 손잡이 */
+.gm-knob {
+  position: absolute; left: 50%; top: 16px; width: 46px; height: 46px;
+  margin-left: -23px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 3px solid rgba(255,255,255,0.9);
+  background: radial-gradient(circle at 35% 30%, #fff6e8, #ffd79a 60%, #f0a12e);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.22);
+  transition: transform .18s ease;
+}
+.gm-knob:active { transform: scale(0.94); }
+.gm-knob-slot {
+  position: absolute; left: 50%; top: 50%; width: 5px; height: 24px;
+  margin: -12px 0 0 -2.5px; border-radius: 3px; background: #b8792f;
+}
+.gacha.is-turning .gm-knob { animation: gm-turn .95s cubic-bezier(.4,.1,.3,1) forwards; }
+@keyframes gm-turn { to { transform: rotate(540deg); } }
+/* 배출구 */
+.gm-exit {
+  position: absolute; left: 50%; bottom: 0; width: 84px; height: 40px;
+  margin-left: -42px; border-radius: 10px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.32));
+}
+.gm-exit-hole {
+  position: absolute; left: 8px; right: 8px; top: 7px; bottom: 7px;
+  border-radius: 7px; background: rgba(35,20,10,0.55);
+  box-shadow: inset 0 3px 7px rgba(0,0,0,0.4);
+}
+/* 배출구에서 나오는 캡슐 */
+.gm-out {
+  position: absolute; left: 50%; bottom: 12px; width: 44px; height: 44px;
+  margin-left: -22px; opacity: 0; z-index: 5; pointer-events: none;
+  transition: opacity .2s ease;
+}
+.gm-out-top, .gm-out-bottom {
+  position: absolute; left: 0; right: 0; height: 50%;
+  transition: transform .5s cubic-bezier(.34,1.56,.64,1), opacity .5s ease;
+}
+.gm-out-top { top: 0; border-radius: 40px 40px 0 0; }
+.gm-out-bottom {
+  bottom: 0; border-radius: 0 0 40px 40px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,236,214,0.95));
+}
+.gm-out-band {
+  position: absolute; left: -2px; right: -2px; top: 50%; height: 6px;
+  margin-top: -3px; border-radius: 4px; background: #f0a12e;
+  transition: opacity .3s ease;
+}
+.gm-out-glow {
+  position: absolute; inset: -40%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255,240,205,0.95), rgba(255,255,255,0) 68%);
+  transition: opacity .5s ease;
+}
+/* 1) 배출구로 떨어져 나온다 */
+.gacha.is-dropped .gm-out { opacity: 1; animation: gm-out-drop .55s cubic-bezier(.5,0,.7,1); }
+@keyframes gm-out-drop {
+  0%   { transform: translateY(-58px) scale(.55); }
+  60%  { transform: translateY(4px) scale(1); }
+  78%  { transform: translateY(-7px) scale(1); }
+  100% { transform: translateY(0) scale(1); }
+}
+/* 2) 화면 가운데로 커지며 열린다 */
+.gacha.is-opening .gm-out { animation: gm-out-rise .5s ease forwards; }
+@keyframes gm-out-rise { to { transform: translateY(-96px) scale(2.3); } }
+.gacha.is-opening .gm-out-top { transform: translateY(-30px) rotate(-20deg); opacity: 0; }
+.gacha.is-opening .gm-out-bottom { transform: translateY(16px); opacity: 0; }
+.gacha.is-opening .gm-out-band { opacity: 0; }
+.gacha.is-opening .gm-out-glow { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha .gm-ball, .gacha .gm-knob, .gacha .gm-out { animation: none !important; }
+  .gacha.is-dropped .gm-out { opacity: 1; }
+}
+/* 화면이 짧은 폰에서는 기계를 줄여 스크롤이 생기지 않게 한다 */
+@media (max-height: 720px) {
+  .gacha { width: 158px; height: 208px; }
+  .gm-dome { height: 110px; border-radius: 70px 70px 18px 18px; }
+  .gm-ball { width: 22px; height: 22px; }
+  .gm-body { top: 104px; height: 84px; }
+  .gm-knob { width: 40px; height: 40px; margin-left: -20px; top: 12px; }
+  .gm-label { top: 58px; }
+  .reveal-stage { padding-top: 16px; }
+}
 .reveal-tray {
   display: flex; justify-content: center; align-items: center; gap: 12px; min-height: 120px;
 }
