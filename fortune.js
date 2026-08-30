@@ -558,10 +558,13 @@
         <div class="gacha" id="gacha">
           <div class="gm-dome"><span class="gm-dome-shine"></span>${domeBalls}</div>
           <div class="gm-body">
-            <button class="gm-knob" id="gm-knob" type="button" aria-label="손잡이 돌려 뽑기">
+            <span class="gm-knob-ring" aria-hidden="true"></span>
+            <button class="gm-knob" id="gm-knob" type="button" aria-label="손잡이를 돌려 오늘의 운 뽑기">
               <span class="gm-knob-slot"></span>
             </button>
-            <span class="gm-label">오늘의 운</span>
+            <!-- 화면 위쪽 안내는 손잡이에서 160px 넘게 떨어져 있어 시선이 안 이어진다.
+                 눌러야 할 것 바로 밑에 짧게 한 번 더 적는다. -->
+            <span class="gm-label">👆 손잡이를 돌려주세요</span>
           </div>
           <div class="gm-exit"><span class="gm-exit-hole"></span></div>
           <!-- 배출구에서 굴러 나와 화면 가운데로 커지는 캡슐 -->
