@@ -141,29 +141,24 @@
   // ---------- 언제든 들어갈 수 있는 입구 ----------
   // 자동으로 뜨는 시트는 평생 한 번이라 놓치면 끝이다. 직접 찾아 들어올 길을 둔다.
 
-  function hasUsedApp() {
-    try {
-      const Core = window.MaumjaroCore;
-      return !!(Core && typeof Core.loadRecords === 'function' && Core.loadRecords().length > 0);
-    } catch (e) { return false; }
-  }
-
-  // 헤더의 "무료 · 설치 없이 · 30초" 배지 자리를 그대로 쓴다.
+  // 헤더의 배지 줄에 설치 버튼을 항상 함께 둔다.
   // 홈 화면은 스크롤 없이 딱 맞게 짜여 있어서 줄을 하나 더 넣으면 CTA가 탭바에 가린다.
+  // 그래서 "설치 없이" 배지 하나를 빼고 그 자리에 버튼을 넣는다 — 한 줄이 유지된다.
+  // ("설치 없이"와 "홈 화면에 추가"를 나란히 두면 서로 말이 어긋나기도 한다.)
   //
-  // 처음 온 사람에게는 배지가 진입 장벽을 낮추는 역할을 하므로 건드리지 않는다.
-  // 주사를 한 번이라도 완주한 사람에게는 그 문구가 할 일을 다했으므로,
-  // 같은 자리를 설치 버튼으로 바꿔 끼운다(줄 수가 늘지 않는다).
+  // 처음에는 주사를 완주한 사람에게만 보여줬는데, 그러면 처음 온 사람과 기록을 지운
+  // 사람에게는 영영 안 보인다. 설치는 권유일 뿐 방해가 아니므로 항상 노출한다.
+  // 무료·30초 배지는 그대로 남겨서 진입 장벽을 낮추는 역할도 유지한다.
   function refreshHeaderCta() {
     const row = document.querySelector('.app-trust');
     if (!row) return;
     if (env() === 'desktop') return;
     if (alreadyInstalled()) return;
-    if (!hasUsedApp()) return;
     if (row.dataset.installCta === '1') return; // 이미 바꿔 끼웠다
 
     row.dataset.installCta = '1';
-    row.innerHTML = '<button class="app-trust-install" type="button">📲 홈 화면에 바로가기 추가</button>';
+    row.innerHTML = '<span>무료</span><span>30초</span>'
+      + '<button class="app-trust-install" type="button">📲 홈 화면에 추가</button>';
     row.querySelector('button').addEventListener('click', () => {
       track('install_entry_clicked', { from: 'header' });
       show();
