@@ -1507,8 +1507,8 @@
     tarotCardKey.textContent = `${c.card.name} · ${tarotDirLabel(c.reversed)} · ${c.side.keyword}`;
     tarotCardLine.textContent = c.side.line;
     tarotCardNextBtn.textContent = nextLabel;
-    sfx('cardFlip');              // 카드를 뒤집는 소리
-    tarotSound('playReadyChime'); // 그 위에 신비로운 여운을 겹친다
+    // 결과가 드러나는 순간은 요란하면 안 된다. 노이즈 없는 화음만 부드럽게 올린다.
+    sfx('cardReveal');
   }
 
   function closeTarotCardOverlay() {

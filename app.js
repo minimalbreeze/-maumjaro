@@ -16,6 +16,7 @@
   const plungerRod = document.getElementById('plunger-rod');
   const plungerHead = document.getElementById('plunger-head');
   const liquid = document.getElementById('liquid');
+  const liquidShine = document.getElementById('liquid-shine');
   const droplet = document.getElementById('droplet');
 
   const healingOverlay = document.getElementById('healing-overlay');
@@ -413,6 +414,12 @@
     plungerHead.setAttribute('y', headY);
     liquid.setAttribute('y', LIQUID_TOP);
     liquid.setAttribute('height', liquidHeight);
+    // 액체 표면 하이라이트를 같이 움직인다. 약이 차고 줄어드는 게 원래도 동작했지만
+    // 단색이라 눈에 안 띄어서, 이 반짝임 하나로 "움직인다"가 보이게 했다.
+    if (liquidShine) {
+      liquidShine.setAttribute('y', LIQUID_TOP + 4);
+      liquidShine.setAttribute('height', Math.max(0, liquidHeight - 8));
+    }
     plungerRod.setAttribute('y', headY + HEAD_H);
     plungerRod.setAttribute('height', Math.max(0, ROD_BOTTOM - (headY + HEAD_H)));
   }

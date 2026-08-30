@@ -246,8 +246,42 @@
     inviteWelcomeXp: 10,
   };
 
+  // ---------- 마음약 생김새 ----------
+  // 46종이 전부 💊/💉/🧪 세 개 이모지만 쓰고 있어서, 다른 약을 뽑아도 같은 그림이었다.
+  // 모으는 재미의 핵심은 "다르게 생겼다"는 것이라 모양과 색을 조합해 전부 구분되게 한다.
+  //
+  // 모양 12가지 × 색 8가지 = 96조합 > 46종이라 겹치지 않게 배정할 수 있다.
+  // 배정은 game.js가 MEDICINES의 순서로 계산한다(순서가 고정이라 늘 같은 그림이 나온다).
+  const MED_SHAPES = [
+    'capsule',   // 위아래 두 색 캡슐
+    'tablet',    // 가운데 홈이 파인 원형 정제
+    'oval',      // 타원 정제
+    'syringe',   // 주사기
+    'vial',      // 약병
+    'drop',      // 물방울
+    'gelcap',    // 길쭉한 연질캡슐
+    'triangle',  // 삼각 정제
+    'square',    // 사각 정제
+    'flask',     // 삼각플라스크
+    'star',      // 별 모양 정제
+    'ring',      // 도넛형 정제
+  ];
+
+  // 카테고리 색을 기본으로 쓰되, 같은 카테고리 안에서도 톤을 나눠 서로 달라 보이게 한다.
+  const MED_TINTS = [
+    ['#ff9166', '#ffc66b'], // 코랄~옐로 (브랜드 주색)
+    ['#b779ef', '#ff8fb3'], // 보라~핑크 (CTA 그라디언트)
+    ['#4f86e8', '#7ec8e3'], // 블루
+    ['#2f6f5e', '#8fd694'], // 딥틸~그린
+    ['#ef6a5a', '#ffb37a'], // 레드~오렌지
+    ['#8e7dbe', '#c9b6f0'], // 라벤더
+    ['#e0a83c', '#ffd166'], // 골드
+    ['#5fb3a3', '#a3c4bc'], // 민트
+  ];
+
   window.MAUMJARO_GAME_DATA = {
     RARITIES, MED_CATEGORIES, MEDICINES,
     LEVEL_TITLES, LEVEL_CURVE, STREAK_REWARDS, GAME_CONFIG,
+    MED_SHAPES, MED_TINTS,
   };
 })();

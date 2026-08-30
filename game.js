@@ -118,6 +118,70 @@
   // ---------- 희귀도 / 마음약 ----------
   function rarityOf(key) { return RARITIES.find((r) => r.key === key) || RARITIES[0]; }
   function rarityOrder(key) { return rarityOf(key).order; }
+
+  // ---------- 마음약 생김새 ----------
+  // 배열 순서로 (모양, 색)을 배정한다. 모양 12 × 색 8 = 96조합이라 46종이 전부 다르다.
+  // 순서가 고정이므로 같은 약은 언제나 같은 그림이다.
+  const SHAPES = (window.MAUMJARO_GAME_DATA.MED_SHAPES) || ['capsule'];
+  const TINTS = (window.MAUMJARO_GAME_DATA.MED_TINTS) || [['#ff9166', '#ffc66b']];
+  const medIndex = {};
+  MEDICINES.forEach((m, i) => { medIndex[m.id] = i; });
+
+  function medVisual(m) {
+    const i = medIndex[m.id] == null ? 0 : medIndex[m.id];
+    return {
+      shape: SHAPES[i % SHAPES.length],
+      // 모양이 한 바퀴 돌 때마다 색이 넘어가서 (모양,색) 짝이 반복되지 않는다.
+      tint: TINTS[Math.floor(i / SHAPES.length) % TINTS.length],
+    };
+  }
+
+  // 마음약 한 알을 SVG로 그린다. 이모지(m.icon)는 공유 문구·기록 목록처럼
+  // 글자만 들어가는 자리에 그대로 쓰고, 눈에 보이는 자리에는 이 그림을 쓴다.
+  function medSvg(m, size) {
+    const v = medVisual(m);
+    const [a, b] = v.tint;
+    const s = size || 46;
+    const gid = `mg-${m.id}`;
+    const body = {
+      capsule: `<rect x="9" y="20" width="46" height="24" rx="12" fill="url(#${gid})"/>
+        <rect x="9" y="20" width="23" height="24" rx="12" fill="${a}"/>
+        <rect x="13" y="24" width="9" height="7" rx="3.5" fill="#fff" opacity=".45"/>`,
+      tablet: `<circle cx="32" cy="32" r="21" fill="url(#${gid})"/>
+        <rect x="30.5" y="13" width="3" height="38" rx="1.5" fill="#fff" opacity=".55"/>
+        <circle cx="24" cy="24" r="5" fill="#fff" opacity=".3"/>`,
+      oval: `<ellipse cx="32" cy="32" rx="24" ry="15" fill="url(#${gid})"/>
+        <ellipse cx="24" cy="27" rx="7" ry="4" fill="#fff" opacity=".38"/>`,
+      syringe: `<rect x="26" y="10" width="12" height="34" rx="3" fill="url(#${gid})"/>
+        <rect x="28" y="24" width="8" height="18" rx="2" fill="#fff" opacity=".5"/>
+        <rect x="22" y="8" width="20" height="5" rx="2.5" fill="${a}"/>
+        <rect x="30" y="44" width="4" height="8" fill="${a}"/>
+        <path d="M32 52 L32 58" stroke="${a}" stroke-width="2.5" stroke-linecap="round"/>`,
+      vial: `<rect x="20" y="18" width="24" height="32" rx="5" fill="url(#${gid})"/>
+        <rect x="23" y="30" width="18" height="17" rx="3" fill="#fff" opacity=".42"/>
+        <rect x="24" y="10" width="16" height="9" rx="3" fill="${a}"/>`,
+      drop: `<path d="M32 10 C 42 26, 50 32, 50 40 a18 18 0 0 1-36 0 c0-8 8-14 18-30z" fill="url(#${gid})"/>
+        <ellipse cx="25" cy="38" rx="5" ry="7" fill="#fff" opacity=".35"/>`,
+      gelcap: `<rect x="14" y="24" width="36" height="17" rx="8.5" fill="url(#${gid})"/>
+        <rect x="18" y="27" width="12" height="5" rx="2.5" fill="#fff" opacity=".5"/>`,
+      triangle: `<path d="M32 11 L54 50 L10 50 Z" fill="url(#${gid})" stroke="${a}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M32 22 L42 44 L22 44 Z" fill="#fff" opacity=".28"/>`,
+      square: `<rect x="13" y="13" width="38" height="38" rx="9" fill="url(#${gid})"/>
+        <rect x="19" y="19" width="13" height="10" rx="4" fill="#fff" opacity=".34"/>`,
+      flask: `<path d="M27 10 h10 v16 l12 22 a4 4 0 0 1-3.4 6 H18.4 A4 4 0 0 1 15 48 l12-22z" fill="url(#${gid})"/>
+        <path d="M21 40 h22 l4 8 H17z" fill="#fff" opacity=".33"/>
+        <rect x="25" y="8" width="14" height="4" rx="2" fill="${a}"/>`,
+      star: `<path d="M32 10 l6.6 13.4 14.8 2.2-10.7 10.4 2.5 14.7L32 43.8 18.8 50.7l2.5-14.7L10.6 25.6l14.8-2.2z" fill="url(#${gid})"/>
+        <circle cx="32" cy="30" r="5" fill="#fff" opacity=".3"/>`,
+      ring: `<circle cx="32" cy="32" r="21" fill="url(#${gid})"/>
+        <circle cx="32" cy="32" r="8.5" fill="#fff" opacity=".85"/>
+        <circle cx="24" cy="24" r="4" fill="#fff" opacity=".32"/>`,
+    }[v.shape] || '';
+    return `<svg class="med-svg" viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/>
+      </linearGradient></defs>${body}</svg>`;
+  }
   function medicineOf(id) { return MEDICINES.find((m) => m.id === id) || null; }
 
   // 지금 이 시점에 시즌 한정 마음약을 얻을 수 있는지.
@@ -764,7 +828,7 @@
     rarityEl.textContent = r.rarity.label;
     rarityEl.style.color = r.rarity.color;
     rarityEl.style.background = r.rarity.tint;
-    document.getElementById('reward-icon').textContent = r.medicine.icon;
+    document.getElementById('reward-icon').innerHTML = medSvg(r.medicine, 86);
     document.getElementById('reward-name').textContent = r.medicine.name;
     document.getElementById('reward-desc').textContent = r.medicine.description;
 
@@ -834,7 +898,7 @@
     node.style.setProperty('--rar', rar.color);
     document.getElementById('med-share-rarity').textContent = rar.label;
     document.getElementById('med-share-rarity').style.color = rar.color;
-    document.getElementById('med-share-icon').textContent = r.medicine.icon;
+    document.getElementById('med-share-icon').innerHTML = medSvg(r.medicine, 150);
     document.getElementById('med-share-name').textContent = r.medicine.name;
     document.getElementById('med-share-desc').textContent = r.medicine.description;
     window.html2canvas(node, { backgroundColor: '#fffaf3', scale: 2, imageTimeout: 6000 })
@@ -943,7 +1007,7 @@
       const tier = m.dupTier;
       return `<div class="med-card" style="--r:${r.color};background:${r.tint};">
         <div class="med-rarity" style="color:${r.color};">${r.label}</div>
-        <div class="med-icon">${m.icon}</div>
+        <div class="med-icon">${medSvg(m, 40)}</div>
         <div class="med-name">${m.name}</div>
         <div class="med-hint">${m.description}</div>
         ${m.limited ? `<div class="med-season">✨ ${m.season} 한정</div>` : ''}

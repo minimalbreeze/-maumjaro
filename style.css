@@ -328,13 +328,58 @@ body::before {
   50% { transform: scale(1.12); opacity: 1; }
 }
 
+/* 준비되면 주사기가 흔들린다. 계속 같은 속도면 그냥 배경 움직임처럼 보여서,
+   시간이 지날수록 빨라지고 커지게 해 "빨리 찔러"라는 재촉을 만든다.
+   (1.6s → 0.9s → 0.55s, 진폭 2° → 5°) */
 #app.state-ready #syringe-svg,
 #app.rx-ready #syringe-svg {
-  animation: syringe-breathe 1.6s ease-in-out infinite;
+  animation: syringe-breathe 1.6s ease-in-out infinite,
+             syringe-urge 9s linear 1 forwards;
 }
 @keyframes syringe-breathe {
   0%, 100% { transform: rotate(-2deg) translateY(0); }
   50% { transform: rotate(2deg) translateY(-5px); }
+}
+/* 애니메이션 속도 자체를 시간에 따라 바꾼다 */
+@keyframes syringe-urge {
+  0%   { animation-duration: 1.6s; }
+  40%  { animation-duration: 0.9s; }
+  100% { animation-duration: 0.55s; }
+}
+#app.state-ready #syringe-svg { will-change: transform; }
+
+/* 폰이 콕 찌르는 동작 시연 */
+.poke-demo {
+  position: relative; display: inline-block;
+  width: 34px; height: 30px; vertical-align: middle; margin-right: 6px;
+}
+.poke-phone {
+  position: absolute; left: 2px; top: 4px;
+  width: 13px; height: 22px; border-radius: 3px;
+  background: linear-gradient(160deg, #2f6f5e, #1f5c50);
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5);
+  animation: poke-move 1.6s ease-in-out infinite;
+}
+.poke-wave {
+  position: absolute; right: 3px; top: 50%; width: 12px; height: 12px;
+  margin-top: -6px; border-radius: 50%;
+  border: 2px solid var(--brand-coral, #ff9166);
+  opacity: 0; animation: poke-ping 1.6s ease-out infinite;
+}
+@keyframes poke-move {
+  0%, 55%, 100% { transform: translateX(0) rotate(-8deg); }
+  70%  { transform: translateX(11px) rotate(2deg); }
+  80%  { transform: translateX(8px) rotate(0deg); }
+}
+@keyframes poke-ping {
+  0%, 62% { transform: scale(0.4); opacity: 0; }
+  72%     { transform: scale(1); opacity: 0.9; }
+  100%    { transform: scale(1.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poke-phone, .poke-wave { animation: none; }
+  .poke-wave { opacity: .6; }
+  #app.state-ready #syringe-svg, #app.rx-ready #syringe-svg { animation: none; }
 }
 
 #app.state-injecting #syringe-svg,
@@ -2562,38 +2607,57 @@ body::before {
 }
 .reward-eyebrow { font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin: 0 0 6px; }
 .reward-guide { font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 22px; }
+/* 뽑기 상자를 갓차 캡슐(왁뿌볼)로 바꿨다. 클래스 이름은 그대로 둬서
+   game.js의 tap-1~4 / is-open 로직을 손대지 않는다.
+   body = 아래 반구(반투명), lid = 위 반구(브랜드 색), 둘 사이에 띠가 하나 지난다. */
 .reward-box {
-  width: 132px; height: 116px; margin: 0 auto; display: block;
+  width: 132px; height: 132px; margin: 0 auto; display: block;
   position: relative; border: none; background: none; padding: 0; cursor: pointer;
 }
+/* 아래쪽 반구 — 안이 살짝 비치는 캡슐 느낌 */
 .reward-box-body {
-  position: absolute; left: 6px; right: 6px; bottom: 0; height: 74px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #ffb98a, #ff9166);
-  box-shadow: inset 0 -6px 12px rgba(0,0,0,0.12);
+  position: absolute; left: 8px; right: 8px; top: 50%; height: 58px;
+  border-radius: 0 0 62px 62px;
+  background:
+    radial-gradient(circle at 34% 22%, rgba(255,255,255,0.75), rgba(255,255,255,0) 46%),
+    linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,236,214,0.92));
+  box-shadow: inset 0 -8px 16px rgba(180,120,90,0.18), 0 8px 18px rgba(0,0,0,0.14);
 }
+/* 위쪽 반구 — 열릴 때 위로 튀어오르며 벗겨진다 */
 .reward-box-lid {
-  position: absolute; left: 0; right: 0; top: 22px; height: 30px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #ffd79a, #ffc66b);
+  position: absolute; left: 8px; right: 8px; top: calc(50% - 58px); height: 58px;
+  border-radius: 62px 62px 0 0;
+  background:
+    radial-gradient(circle at 32% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0) 44%),
+    linear-gradient(180deg, #ffb98a, #ff9166);
+  box-shadow: inset 0 6px 14px rgba(255,255,255,0.35);
   transform-origin: 50% 100%;
-  transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
+  transition: transform .45s cubic-bezier(.34,1.56,.64,1), opacity .45s ease;
   z-index: 2;
+}
+/* 두 반구가 맞물리는 띠 */
+.reward-box::after {
+  content: ''; position: absolute; left: 4px; right: 4px; top: calc(50% - 5px);
+  height: 10px; border-radius: 6px; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, #ffd79a, #f0a12e);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
 }
 .reward-box-glow {
   position: absolute; inset: -20%; border-radius: 50%;
   background: radial-gradient(circle, rgba(255,236,190,0.9), rgba(255,255,255,0) 70%);
   opacity: 0; transition: opacity .45s ease; pointer-events: none;
 }
-/* 두드릴수록 균열이 늘고 빛이 새어 나온다 — 숫자만 오르면 손맛이 없다 */
+/* 두드릴수록 균열이 늘고 빛이 새어 나온다 — 숫자만 오르면 손맛이 없다.
+   캡슐 전체(위·아래 반구)에 금이 가야 해서 공 크기에 맞춰 덮는다. */
 .reward-box-crack {
-  position: absolute; left: 6px; right: 6px; bottom: 0; height: 74px;
-  border-radius: 10px; pointer-events: none; opacity: 0;
-  transition: opacity .25s ease;
+  position: absolute; left: 8px; right: 8px; top: calc(50% - 58px); height: 116px;
+  border-radius: 62px; pointer-events: none; opacity: 0;
+  transition: opacity .25s ease; z-index: 4;
   background:
-    linear-gradient(196deg, transparent 46%, rgba(255,255,255,0.92) 47%, transparent 48%),
-    linear-gradient(160deg, transparent 58%, rgba(255,255,255,0.8) 59%, transparent 60%),
-    linear-gradient(210deg, transparent 30%, rgba(255,255,255,0.7) 31%, transparent 32%);
+    linear-gradient(196deg, transparent 44%, rgba(255,255,255,0.95) 45.4%, transparent 46.8%),
+    linear-gradient(158deg, transparent 56%, rgba(255,255,255,0.85) 57.2%, transparent 58.4%),
+    linear-gradient(214deg, transparent 28%, rgba(255,255,255,0.8) 29.2%, transparent 30.4%),
+    linear-gradient(176deg, transparent 66%, rgba(255,255,255,0.7) 67%, transparent 68%);
 }
 .reward-box.tap-1 { animation: box-shake .3s ease; }
 .reward-box.tap-2 { animation: box-shake .3s ease; }
@@ -2604,7 +2668,11 @@ body::before {
 .reward-box.tap-4 { animation: box-shake-hard .36s ease; }
 .reward-box.tap-4 .reward-box-crack { opacity: 1; }
 .reward-box.tap-4 .reward-box-glow { opacity: .7; }
-.reward-box.is-open .reward-box-lid { transform: translateY(-48px) rotate(-16deg); opacity: 0; }
+/* 열릴 때: 위 반구가 튀어올라 벗겨지고, 아래 반구는 살짝 내려앉으며 띠도 사라진다 */
+.reward-box.is-open .reward-box-lid { transform: translateY(-62px) rotate(-22deg); opacity: 0; }
+.reward-box.is-open .reward-box-body { transform: translateY(8px); transition: transform .45s ease; }
+.reward-box.is-open::after { opacity: 0; transition: opacity .3s ease; }
+.reward-box.is-open .reward-box-crack { opacity: 0; }
 .reward-box.is-open .reward-box-glow { opacity: 1; }
 
 /* 희귀도별 마무리 — 등급이 올라갈수록 퍼짐이 커진다. 길이는 모두 짧게 유지한다. */

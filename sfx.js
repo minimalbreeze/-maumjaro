@@ -120,6 +120,32 @@
     blip(c, t + 0.02, 320, 0.09, { type: 'triangle', gain: 0.07, freqTo: 210 });
   }
 
+  // 카드가 열리며 결과가 드러나는 소리.
+  // 처음엔 cardFlip(노이즈)을 썼는데 "촥" 하고 요란해서 신비로운 맛이 없었다.
+  // 노이즈를 걷어내고 5음계 화음을 아주 부드럽게 위로 쌓는다.
+  function cardReveal() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    // 도-미-솔-도-레 (펜타토닉). 어떤 순서로 겹쳐도 불협이 나지 않는다.
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1174.7];
+    notes.forEach((f, i) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t);
+      const st = t + i * 0.075;
+      const dur = 1.5 - i * 0.12;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.075 - i * 0.008, st + 0.12); // 천천히 차오름
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(st);
+      osc.stop(st + dur + 0.05);
+    });
+    // 아주 옅은 반짝임 하나만 얹어 공기감을 준다(노이즈지만 거의 안 들릴 세기).
+    burst(c, t + 0.05, 0.5, { freq: 5200, q: 0.6, gain: 0.012, filter: 'highpass' });
+  }
+
   // ---------- 갓차 ----------
 
   // 손잡이를 돌리는 드르륵. 일정 간격의 딱딱거림 + 밑에 깔리는 저역 진동.
@@ -171,9 +197,29 @@
     }
   }
 
+  // 갓차 캡슐이 열리며 운세가 드러나는 소리. 카드 공개와 같은 계열의 신비로운 톤.
+  function gachaReveal() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    [392.0, 523.25, 659.25, 783.99].forEach((f, i) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t);
+      const st = t + i * 0.06;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.07 - i * 0.008, st + 0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + 1.2 - i * 0.1);
+      osc.connect(g).connect(c.destination);
+      osc.start(st);
+      osc.stop(st + 1.3);
+    });
+    burst(c, t, 0.45, { freq: 4800, q: 0.6, gain: 0.014, filter: 'highpass' });
+  }
+
   window.MaumjaroSfx = {
-    cardShuffle, cardDraw, cardFlip,
-    gachaCrank, capsuleDrop,
+    cardShuffle, cardDraw, cardFlip, cardReveal,
+    gachaCrank, capsuleDrop, gachaReveal,
     capsuleTap, capsuleCrack,
   };
 })();

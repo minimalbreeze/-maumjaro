@@ -151,7 +151,11 @@
           <line x1="52" y1="252" x2="63" y2="252" />
         </g>
         <!-- liquid -->
+        <!-- 약이 차오르고 줄어드는 건 원래부터 동작했지만 눈에 잘 안 띄었다.
+             표면 하이라이트를 얹어 "액체가 실제로 움직인다"가 보이게 한다. -->
         <rect id="liquid" x="58" y="106" width="44" height="0" rx="6" fill="url(#liquidGradient)" />
+        <rect id="liquid-shine" x="62" y="106" width="9" height="0" rx="4.5"
+              fill="rgba(255,255,255,0.55)" pointer-events="none" />
         <!-- plunger head (cute, red block with white ridges + bevel highlight) -->
         <g id="plunger-head-group">
           <rect id="plunger-head" x="55" y="104" width="50" height="18" rx="6" fill="#ef6a54" stroke="#1f5c50" stroke-width="4.5" />
@@ -181,7 +185,13 @@
           <circle cx="70" cy="36" r="9" class="arm-site-ring" />
           <circle cx="70" cy="36" r="3.5" fill="#ef6a54" />
         </svg>
-        <span class="arm-hint">콕! 찔러서 놓기 (폰을 찌르듯 움직여도 돼요)</span>
+        <!-- 글자만으로는 "어느 방향으로 얼마나 세게"를 알 수 없다.
+             폰이 콕 찌르는 동작을 반복해 보여주면 설명이 필요 없어진다. -->
+        <span class="poke-demo" aria-hidden="true">
+          <span class="poke-phone"></span>
+          <span class="poke-wave"></span>
+        </span>
+        <span class="arm-hint">콕! 찔러서 놓기 <b>(폰을 찌르듯 움직여도 돼요)</b></span>
       </button>
     </div>
 
