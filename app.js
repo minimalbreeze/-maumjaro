@@ -666,11 +666,30 @@
     pendingSymptom = null;
     symptomChips.forEach((chip) => chip.classList.remove('selected'));
     dosePreview.hidden = true;
+    // 칩을 한 번 누르면 바로 시작하므로 확인 단계가 없다.
+    // 홈의 감정 버튼도 한 번에 시작하는데, 같은 감정을 고르는 이 모달만
+    // "선택 → 확인" 두 번을 요구하면 큰 버튼(CTA)으로 들어온 사람이 더 손해를 본다.
+    symptomConfirmBtn.hidden = true;
     symptomConfirmBtn.disabled = true;
     symptomOverlay.classList.add('show');
   }
   function closeSymptomPicker() {
     symptomOverlay.classList.remove('show');
+  }
+
+  // 감정을 고른 뒤 실제로 처방을 준비하는 부분. 칩 클릭과 확인 버튼이 같은 길을 쓴다.
+  function beginDose(key) {
+    const symptom = SYMPTOMS[key];
+    if (!symptom) return;
+    requestMotionPermission();
+    selectedSymptom = key;
+    doseTagMg.textContent = symptom.mg;
+    doseTagLabel.textContent = `${symptom.label} 처방`;
+    doseCaption.textContent = symptom.caption;
+    doseTag.hidden = false;
+    doseCaption.hidden = false;
+    closeSymptomPicker();
+    startPrepare();
   }
 
   symptomChips.forEach((chip) => {
@@ -683,8 +702,10 @@
       document.body.style.setProperty('--dose-color', symptom.color);
       dosePreviewBadge.textContent = symptom.mg;
       dosePreviewCaption.textContent = symptom.caption;
-      dosePreview.hidden = false;
-      symptomConfirmBtn.disabled = false;
+      // 한 번 누르면 바로 시작한다(홈 감정 버튼과 동일).
+      // mg와 설명은 닫힌 뒤 본 화면의 dose-tag / dose-caption에서 그대로 보이므로
+      // 여기서 미리 보여주려고 탭을 하나 더 쓸 필요가 없다.
+      beginDose(key);
     });
   });
 
@@ -692,18 +713,11 @@
     if (e.target === symptomOverlay) closeSymptomPicker();
   });
 
+  // 지금은 칩 한 번으로 시작하므로 이 버튼은 화면에 나오지 않는다.
+  // 그래도 핸들러를 남겨 둔다 — 나중에 확인 단계를 되살리더라도 여기만 다시 보이면 된다.
   symptomConfirmBtn.addEventListener('click', () => {
     if (!pendingSymptom) return;
-    requestMotionPermission();
-    selectedSymptom = pendingSymptom;
-    const symptom = SYMPTOMS[selectedSymptom];
-    doseTagMg.textContent = symptom.mg;
-    doseTagLabel.textContent = `${symptom.label} 처방`;
-    doseCaption.textContent = symptom.caption;
-    doseTag.hidden = false;
-    doseCaption.hidden = false;
-    closeSymptomPicker();
-    startPrepare();
+    beginDose(pendingSymptom);
   });
 
   // ---------- summary ----------
