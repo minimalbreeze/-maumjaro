@@ -123,6 +123,34 @@
             <stop offset="50%" stop-color="rgba(255,255,255,0.4)" />
             <stop offset="100%" stop-color="rgba(255,255,255,0.05)" />
           </linearGradient>
+          <!-- 아래 그라디언트들은 모양을 바꾸지 않고 입체감만 얹는다.
+               원통은 왼쪽이 밝고 오른쪽이 어두워야 둥글어 보인다. -->
+          <linearGradient id="barrelShade" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="rgba(31,92,80,0.16)" />
+            <stop offset="18%"  stop-color="rgba(255,255,255,0.55)" />
+            <stop offset="42%"  stop-color="rgba(255,255,255,0.12)" />
+            <stop offset="78%"  stop-color="rgba(31,92,80,0.10)" />
+            <stop offset="100%" stop-color="rgba(31,92,80,0.24)" />
+          </linearGradient>
+          <linearGradient id="headGradient" x1="0" y1="0" x2="1" y2="0.4">
+            <stop offset="0%"   stop-color="#ff8a75" />
+            <stop offset="45%"  stop-color="#ef6a54" />
+            <stop offset="100%" stop-color="#c94a37" />
+          </linearGradient>
+          <linearGradient id="hubGradient" x1="0" y1="0" x2="1" y2="0.5">
+            <stop offset="0%"   stop-color="#8fd6c6" />
+            <stop offset="45%"  stop-color="#5fb3a3" />
+            <stop offset="100%" stop-color="#3d8a7c" />
+          </linearGradient>
+          <linearGradient id="flangeGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#ffffff" />
+            <stop offset="100%" stop-color="#ece4d8" />
+          </linearGradient>
+          <linearGradient id="needleGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stop-color="#c9d2dd" />
+            <stop offset="35%"  stop-color="#ffffff" />
+            <stop offset="100%" stop-color="#aab5c4" />
+          </linearGradient>
           <pattern id="rodStripes" patternUnits="userSpaceOnUse" width="12" height="18">
             <rect x="0" y="0" width="12" height="18" fill="#fdfbf6" />
             <rect x="0" y="0" width="12" height="9" fill="#5fb3a3" />
@@ -131,7 +159,7 @@
 
         <!-- flange (fixed, cute grip with notches) -->
         <g>
-          <rect x="36" y="334" width="88" height="18" rx="8" fill="#fdfbf6" stroke="#1f5c50" stroke-width="5" />
+          <rect x="36" y="334" width="88" height="18" rx="8" fill="url(#flangeGradient)" stroke="#1f5c50" stroke-width="5" />
           <line x1="54" y1="338" x2="54" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
           <line x1="80" y1="338" x2="80" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
           <line x1="106" y1="338" x2="106" y2="348" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
@@ -158,7 +186,7 @@
               fill="rgba(255,255,255,0.55)" pointer-events="none" />
         <!-- plunger head (cute, red block with white ridges + bevel highlight) -->
         <g id="plunger-head-group">
-          <rect id="plunger-head" x="55" y="104" width="50" height="18" rx="6" fill="#ef6a54" stroke="#1f5c50" stroke-width="4.5" />
+          <rect id="plunger-head" x="55" y="104" width="50" height="18" rx="6" fill="url(#headGradient)" stroke="#1f5c50" stroke-width="4.5" />
           <rect x="60" y="107" width="40" height="4" rx="2" fill="rgba(255,255,255,0.4)" />
           <line x1="63" y1="112" x2="63" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
           <line x1="72" y1="112" x2="72" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
@@ -167,12 +195,15 @@
           <line x1="97" y1="112" x2="97" y2="119" stroke="#fdfbf6" stroke-width="2.5" stroke-linecap="round" />
         </g>
         <!-- glass shine -->
-        <rect x="52" y="104" width="56" height="168" rx="16" fill="url(#glassGradient)" />
+        <!-- 원통 음영. 왼쪽 하이라이트 + 오른쪽 그늘로 둥글어 보이게 한다.
+             액체 위에 덮여야 유리 너머로 비치는 느낌이 나므로 순서를 지킬 것. -->
+        <rect x="52" y="104" width="56" height="168" rx="16" fill="url(#barrelShade)" pointer-events="none" />
+        <rect x="52" y="104" width="56" height="168" rx="16" fill="url(#glassGradient)" pointer-events="none" />
 
         <!-- needle hub (teal cap) -->
-        <path d="M59 104 L101 104 L83 81 L77 81 Z" fill="#5fb3a3" stroke="#1f5c50" stroke-width="4.5" stroke-linejoin="round" />
+        <path d="M59 104 L101 104 L83 81 L77 81 Z" fill="url(#hubGradient)" stroke="#1f5c50" stroke-width="4.5" stroke-linejoin="round" />
         <!-- needle -->
-        <rect id="needle" x="76" y="28" width="8" height="53" fill="#eef1f5" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+        <rect id="needle" x="76" y="28" width="8" height="53" fill="url(#needleGradient)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
         <path id="needle-tip" d="M76 28 L84 28 L80 8 Z" fill="#eef1f5" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
         <!-- droplet -->
         <circle id="droplet" cx="80" cy="14" r="0" fill="url(#liquidGradient)" />
@@ -186,12 +217,15 @@
           <circle cx="70" cy="36" r="3.5" fill="#ef6a54" />
         </svg>
         <!-- 글자만으로는 "어느 방향으로 얼마나 세게"를 알 수 없다.
-             폰이 콕 찌르는 동작을 반복해 보여주면 설명이 필요 없어진다. -->
-        <span class="poke-demo" aria-hidden="true">
-          <span class="poke-phone"></span>
-          <span class="poke-wave"></span>
+             폰이 콕 찌르는 동작을 문구 바로 옆에서 반복해 보여준다.
+             (문구와 떨어뜨려 놓으면 따로 노는 장식처럼 보여서 안내가 안 된다) -->
+        <span class="arm-hint">
+          <span class="poke-demo" aria-hidden="true">
+            <span class="poke-phone"></span>
+            <span class="poke-wave"></span>
+          </span>
+          <span>콕! 찔러서 놓기 <b>(폰을 찌르듯)</b></span>
         </span>
-        <span class="arm-hint">콕! 찔러서 놓기 <b>(폰을 찌르듯 움직여도 돼요)</b></span>
       </button>
     </div>
 
