@@ -556,7 +556,9 @@
         tray.querySelectorAll('.reveal-capsule').forEach((c) => { if (c !== el) c.classList.add('is-gone'); });
         el.classList.add('is-picked');
         guide.textContent = loadingLine;
-        tarotSound('playInjectPress');
+        // 갓차 손잡이가 드르륵 돌아가고 캡슐이 굴러 떨어지는 순서로 들려준다.
+        sfx('gachaCrank', 9);
+        setTimeout(() => sfx('capsuleDrop'), 560);
         setTimeout(() => {
           el.classList.add('is-open');
           tarotSound('playReadyChime');
@@ -1505,7 +1507,8 @@
     tarotCardKey.textContent = `${c.card.name} · ${tarotDirLabel(c.reversed)} · ${c.side.keyword}`;
     tarotCardLine.textContent = c.side.line;
     tarotCardNextBtn.textContent = nextLabel;
-    tarotSound('playReadyChime'); // 카드가 열릴 때 신비로운 소리
+    sfx('cardFlip');              // 카드를 뒤집는 소리
+    tarotSound('playReadyChime'); // 그 위에 신비로운 여운을 겹친다
   }
 
   function closeTarotCardOverlay() {
@@ -1844,6 +1847,14 @@
     }
   }
 
+  // 카드·갓차 전용 효과음(sfx.js). 없어도 화면 흐름은 그대로 굴러가야 한다.
+  function sfx(name, arg) {
+    try {
+      const S = window.MaumjaroSfx;
+      if (S && typeof S[name] === 'function') S[name](arg);
+    } catch (e) { /* 소리는 없어도 된다 */ }
+  }
+
   // ---------- 카드를 쓸어서 섞기 ----------
   // 처음엔 폰 흔들기(devicemotion)로 만들었지만, iOS에는 "흔들어서 입력 되돌리기"라는
   // OS 기본 기능이 있어 흔들 때마다 시스템 팝업("입력 실행 취소")이 떴다. 웹에서 이 기능을
@@ -1952,11 +1963,10 @@
       deck.classList.remove('shuffling');
       void deck.offsetWidth; // 애니메이션 재시작을 위한 강제 리플로우
       deck.classList.add('shuffling');
-      // 카드가 스르륵 넘어가는 느낌을 내려고 짧은 클릭음을 촘촘히 겹쳐 낸다(리플 셔플).
-      tarotSound('playInjectPress');
-      setTimeout(() => tarotSound('playInjectPress'), 90);
-      setTimeout(() => tarotSound('playInjectPress'), 165);
-      setTimeout(() => tarotSound('playInjectPress'), 225);
+      // 예전에는 주사 누르는 소리(playInjectPress)를 네 번 겹쳐 셔플을 흉내 냈는데,
+      // 그건 음정이 있는 톤이라 카드가 아니라 알림음처럼 들렸다.
+      // sfx.js가 노이즈로 만든 진짜 사각거림을 쓴다.
+      sfx('cardShuffle');
       if (shuffles >= NEEDED) {
         setTimeout(() => renderTarotFan(profile, topic), 520);
       }
@@ -2000,7 +2010,7 @@
           if (picked.length >= 3) return;
           picked.push(i);
           el.classList.add('picked');
-          tarotSound('playInjectPress');
+          sfx('cardDraw'); // 부채꼴에서 한 장 뽑아 드는 소리
         }
         countEl.textContent = `${picked.length} / 3 선택`;
         openBtn.disabled = picked.length !== 3;

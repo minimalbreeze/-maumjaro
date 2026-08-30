@@ -698,6 +698,14 @@
     } catch (e) { /* 소리는 없어도 된다 */ }
   }
 
+  // 캡슐 계열 효과음(sfx.js). 없어도 개봉 흐름은 그대로 굴러가야 한다.
+  function sfx(name, arg) {
+    try {
+      const S = window.MaumjaroSfx;
+      if (S && typeof S[name] === 'function') S[name](arg);
+    } catch (e) { /* 소리는 없어도 된다 */ }
+  }
+
   function openRewardFlow(result) {
     if (!rewardOverlay || !result) return;
     pendingReward = result;
@@ -724,7 +732,9 @@
     rewardBox.classList.add(`tap-${Math.min(taps, GAME_CONFIG.openTapCount)}`);
     rewardCount.textContent = `${Math.min(taps, GAME_CONFIG.openTapCount)} / ${GAME_CONFIG.openTapCount}`;
     buzz(12);
-    sound('playInjectPress');
+    // 두드릴수록 금이 깊어지는 소리(단계를 넘겨 세기를 키운다).
+    // 예전엔 주사 누르는 톤이라 "두드린다"는 느낌이 없었다.
+    sfx('capsuleTap', taps);
     if (taps >= GAME_CONFIG.openTapCount) revealReward();
   }
 
@@ -734,7 +744,8 @@
     const r = pendingReward;
     // 등급이 올라갈수록 퍼짐이 커진다(길이는 모두 짧게 유지)
     rewardBox.classList.add('is-open', `burst-${r.rarity.key}`);
-    sound('playReadyChime');
+    sfx('capsuleCrack');          // 캡슐이 쩍 갈라지는 소리
+    sound('playReadyChime');      // 그 위에 보상 획득 여운을 겹친다
     buzz(r.rarity.order >= 3 ? [18, 40, 28] : 26);
     // LEGENDARY만 화면 전체가 한 번 번쩍인다
     if (r.rarity.key === 'legendary') {
