@@ -675,8 +675,33 @@
     }
     return Math.abs(h);
   }
+  // 예전에는 날짜만으로 골랐다 — 그러면 같은 날 모든 사용자가 똑같은 처방을 받는다.
+  // "월요일이라 다 같은 처방"이면 오늘의 처방이라는 말이 무색해지므로 사람마다 다르게 만든다.
+  //
+  // 개인 시드는 생년월일(+양/음력)에서 뽑는다. 별자리도 띠도 결국 이 값의 함수라
+  // 이 하나로 "내 별자리·띠에 맞춘 처방"이 자동으로 따라온다.
+  // 사주 프로필이 아직 없는 사람은 기기마다 한 번 만들어 저장한 무작위 시드를 쓴다.
+  const DEVICE_SEED_KEY = 'maumjaro:deviceSeed';
+  function personalSalt() {
+    try {
+      const raw = localStorage.getItem('maumjaro:sajuProfile');
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && p.birthDate) return `${p.calendarType || 'solar'}:${p.birthDate}`;
+      }
+    } catch (e) { /* 프로필이 깨져 있으면 기기 시드로 넘어간다 */ }
+    let s = null;
+    try {
+      s = localStorage.getItem(DEVICE_SEED_KEY);
+      if (!s) {
+        s = Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(DEVICE_SEED_KEY, s);
+      }
+    } catch (e) { s = 'guest'; } // 저장이 막힌 브라우저(시크릿 모드 등)에서도 죽지 않게
+    return s;
+  }
   function pickTodaysPrescription() {
-    const idx = hashStr(todayKey()) % ALL_PRESCRIPTIONS.length;
+    const idx = hashStr(`${todayKey()}|${personalSalt()}`) % ALL_PRESCRIPTIONS.length;
     return ALL_PRESCRIPTIONS[idx];
   }
 
