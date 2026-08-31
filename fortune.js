@@ -1948,6 +1948,67 @@
     el.addEventListener('mouseleave', up);
   }
 
+  // ---------- 타로 전체 화면 무대 ----------
+  // 섞기와 뽑기는 "의식"이라 탭 안에 작게 들어가면 손맛이 안 산다. 갓차(.gacha-full)와
+  // 같은 방식으로 body에 오버레이를 띄우고, 두 단계를 한 무대에서 이어서 보여준다.
+  // 결과(게이트)부터는 주사를 놓아야 하므로 무대를 걷고 원래 자리(fortuneContent)로 돌아간다.
+
+  // 무대를 지켜보는 마스코트. 카드가 섞이는 동안 눈을 깜빡이며 떠 있는다.
+  const TAROT_MOON_SVG = `
+    <svg class="tf-moon" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="tfMoonG" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#fff2c4" />
+          <stop offset="100%" stop-color="#ffc66b" />
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="25" fill="url(#tfMoonG)" />
+      <circle cx="20" cy="19" r="4" fill="#eaa94b" opacity="0.32" />
+      <circle cx="45" cy="43" r="5.4" fill="#eaa94b" opacity="0.28" />
+      <circle cx="43" cy="17" r="2.8" fill="#eaa94b" opacity="0.3" />
+      <ellipse class="tf-moon-eye" cx="25" cy="31" rx="2.6" ry="3.4" fill="#6b4f28" />
+      <ellipse class="tf-moon-eye" cx="39" cy="31" rx="2.6" ry="3.4" fill="#6b4f28" />
+      <path d="M28 39q4 4 8 0" stroke="#6b4f28" stroke-width="2.2" stroke-linecap="round" fill="none" />
+      <ellipse cx="19.5" cy="38.5" rx="3.6" ry="2.3" fill="#ff9fb0" opacity="0.5" />
+      <ellipse cx="44.5" cy="38.5" rx="3.6" ry="2.3" fill="#ff9fb0" opacity="0.5" />
+    </svg>`;
+
+  let tarotStageEl = null;
+
+  // 무대를 열어둔 채 다른 탭으로 넘어가면 오버레이만 덩그러니 남는다. 탭을 누르면 걷는다.
+  function tarotStageTabGuard(e) {
+    if (e.target && e.target.closest && e.target.closest('.tab-btn')) closeTarotStage();
+  }
+
+  function openTarotStage() {
+    if (tarotStageEl) return tarotStageEl;
+    const stars = Array.from({ length: 20 }, (_, i) => {
+      const x = 2 + (i * 37) % 94;
+      const y = 3 + (i * 53) % 90;
+      const s = 3 + (i % 3) * 2;
+      return `<span class="tf-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;
+        animation-delay:${(i * 0.29).toFixed(2)}s;"></span>`;
+    }).join('');
+
+    const el = document.createElement('div');
+    el.className = 'tarot-full';
+    el.innerHTML = `<div class="tf-sky" aria-hidden="true">${stars}${TAROT_MOON_SVG}</div><div class="tf-inner"></div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    tarotStageEl = el;
+    document.addEventListener('click', tarotStageTabGuard, true);
+    return el;
+  }
+
+  function closeTarotStage() {
+    if (!tarotStageEl) return;
+    const el = tarotStageEl;
+    tarotStageEl = null;
+    document.removeEventListener('click', tarotStageTabGuard, true);
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 260);
+  }
+
   // ---------- 0단계: 무엇을 볼지 고르기 ----------
   function renderTarotTopics(profile) {
     fortuneContent.innerHTML = `
@@ -1993,32 +2054,40 @@
     let shuffles = 0;
     const NEEDED = 3;
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
-      </div>
-      <p class="tarot-hint" id="tarot-hint">${topic.question}<br />${TAROT_SHUFFLE_LINES[0]}</p>
-      <div class="tarot-deck" id="tarot-deck">
+    // 아래 요소는 fortuneContent에도 같은 id가 남아 있을 수 있으므로(주제 목록의 tarot-back 등)
+    // 반드시 무대 안에서만 찾는다. document.getElementById로 찾으면 밑에 깔린 화면을 집는다.
+    const stage = openTarotStage();
+    const mount = stage.querySelector('.tf-inner');
+    mount.innerHTML = `
+      <button class="gacha-full-back" data-act="back" type="button" aria-label="뒤로">‹</button>
+      <p class="tf-title">${topic.emoji} ${topic.label} 타로</p>
+      <p class="tf-question">${topic.question}</p>
+      <div class="tarot-deck" data-el="deck">
+        <span class="tf-aura" aria-hidden="true"></span>
         <div class="tarot-deck-inner">
-          ${[0, 1, 2, 3, 4].map((i) => `<div class="tarot-card-back tarot-card-big" style="--r:${(i - 2) * 2.2}deg;transform:rotate(${(i - 2) * 2.2}deg);">${TAROT_BACK_SVG}</div>`).join('')}
+          ${[0, 1, 2, 3, 4].map((i) => `<div class="tarot-card-back tarot-card-big" style="--r:${(i - 2) * 2.2}deg;--n:${i};transform:rotate(${(i - 2) * 2.2}deg);">${TAROT_BACK_SVG}</div>`).join('')}
         </div>
       </div>
-      <p class="tarot-count" id="tarot-count">섞기 ${shuffles} / ${NEEDED}</p>
-      <button class="action-btn" id="tarot-shuffle-btn" type="button" style="width:100%;">🔀 카드 섞기</button>
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">카드를 좌우로 쓸어도 섞여요</p>
+      <p class="tf-line" data-el="hint">${TAROT_SHUFFLE_LINES[0]}</p>
+      <div class="tf-dots" data-el="dots">${[0, 1, 2].map((i) => `<span class="tf-dot" data-dot="${i}"></span>`).join('')}</div>
+      <button class="action-btn tf-cta" data-el="shuffle" type="button">🔀 카드 섞기</button>
+      <p class="tf-note">카드를 좌우로 쓸어도 섞여요</p>
     `;
 
-    const deck = document.getElementById('tarot-deck');
-    const hint = document.getElementById('tarot-hint');
-    const countEl = document.getElementById('tarot-count');
+    const deck = mount.querySelector('[data-el="deck"]');
+    const hint = mount.querySelector('[data-el="hint"]');
+    const dots = mount.querySelectorAll('.tf-dot');
+    const shuffleBtn = mount.querySelector('[data-el="shuffle"]');
 
-    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
+    mount.querySelector('[data-act="back"]').addEventListener('click', () => {
+      closeTarotStage();
+      renderTarotTopics(profile);
+    });
 
     function doShuffle() {
       if (shuffles >= NEEDED) return;
       shuffles += 1;
-      countEl.textContent = `섞기 ${shuffles} / ${NEEDED}`;
+      dots.forEach((d, i) => d.classList.toggle('on', i < shuffles));
       hint.textContent = TAROT_SHUFFLE_LINES[Math.min(shuffles, TAROT_SHUFFLE_LINES.length - 1)];
       deck.classList.remove('shuffling');
       void deck.offsetWidth; // 애니메이션 재시작을 위한 강제 리플로우
@@ -2028,11 +2097,14 @@
       // sfx.js가 노이즈로 만든 진짜 사각거림을 쓴다.
       sfx('cardShuffle');
       if (shuffles >= NEEDED) {
-        setTimeout(() => renderTarotFan(profile, topic), 520);
+        shuffleBtn.disabled = true;
+        shuffleBtn.textContent = '✨ 다 섞였어요';
+        // 같은 무대에서 부채꼴 뽑기로 이어진다(오버레이를 닫지 않는다).
+        setTimeout(() => renderTarotFan(profile, topic), 700);
       }
     }
 
-    document.getElementById('tarot-shuffle-btn').addEventListener('click', doShuffle);
+    shuffleBtn.addEventListener('click', doShuffle);
     wireTarotSwipeShuffle(deck, doShuffle);
   }
 
@@ -2041,25 +2113,42 @@
     const fan = buildTarotFan();
     const picked = [];
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">${topic.emoji} ${topic.label} 타로</span>
+    // 섞기와 같은 무대를 이어서 쓴다(오버레이가 이미 열려 있으면 그대로 재사용).
+    const stage = openTarotStage();
+    const mount = stage.querySelector('.tf-inner');
+    mount.innerHTML = `
+      <button class="gacha-full-back" data-act="back" type="button" aria-label="뒤로">‹</button>
+      <p class="tf-title">${topic.emoji} ${topic.label} 타로</p>
+      <p class="tf-question">마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
+      <div class="tf-slots" data-el="slots">
+        ${[0, 1, 2].map((i) => `<span class="tf-slot" data-slot="${i}"><b>${i + 1}</b></span>`).join('')}
       </div>
-      <p class="tarot-hint">마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
-      <div class="tarot-fan" id="tarot-fan">
+      <div class="tarot-fan" data-el="fan">
         ${fan.map((_, i) => `<button class="tarot-card-back" type="button" data-i="${i}" style="--i:${i};" aria-label="${i + 1}번째 카드">${TAROT_BACK_SVG}</button>`).join('')}
       </div>
-      <p class="tarot-count" id="tarot-count">0 / 3 선택</p>
-      <button class="action-btn" id="tarot-open-btn" type="button" style="width:100%;" disabled>카드를 3장 골라주세요</button>
+      <p class="tf-line" data-el="count">0 / 3 선택</p>
+      <button class="action-btn tf-cta" data-el="open" type="button" disabled>카드를 3장 골라주세요</button>
     `;
 
-    document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
+    mount.querySelector('[data-act="back"]').addEventListener('click', () => {
+      closeTarotStage();
+      renderTarotTopics(profile);
+    });
 
-    const countEl = document.getElementById('tarot-count');
-    const openBtn = document.getElementById('tarot-open-btn');
+    const countEl = mount.querySelector('[data-el="count"]');
+    const openBtn = mount.querySelector('[data-el="open"]');
+    const slots = mount.querySelectorAll('.tf-slot');
 
-    document.getElementById('tarot-fan').querySelectorAll('.tarot-card-back').forEach((el) => {
+    // 고른 카드가 위쪽 자리로 올라간다 — 몇 장 골랐는지 숫자가 아니라 눈으로 보이게.
+    function paintSlots() {
+      slots.forEach((s, i) => {
+        const filled = i < picked.length;
+        s.classList.toggle('filled', filled);
+        s.innerHTML = filled ? TAROT_BACK_SVG : `<b>${i + 1}</b>`;
+      });
+    }
+
+    mount.querySelector('[data-el="fan"]').querySelectorAll('.tarot-card-back').forEach((el) => {
       el.addEventListener('click', () => {
         const i = Number(el.dataset.i);
         const at = picked.indexOf(i);
@@ -2072,6 +2161,7 @@
           el.classList.add('picked');
           sfx('cardDraw'); // 부채꼴에서 한 장 뽑아 드는 소리
         }
+        paintSlots();
         countEl.textContent = `${picked.length} / 3 선택`;
         openBtn.disabled = picked.length !== 3;
         openBtn.textContent = picked.length === 3 ? '🔮 카드 열어보기' : '카드를 3장 골라주세요';
@@ -2091,6 +2181,8 @@
       };
       // 고른 순간 카드를 고정한다(다시 들어와도 같은 카드).
       saveTarotDraw(entry);
+      // 여기부터는 주사를 놓아야 하므로 무대를 걷고 원래 자리로 돌아간다.
+      closeTarotStage();
       renderTarotGate(profile, topic, entry);
     });
   }
