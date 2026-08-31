@@ -2565,32 +2565,35 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mbti-ache { border-left: 3px solid #b779ef; }
 
 /* ---------- MBTI 궁합 ---------- */
-/* 처방센터(.rx-category-grid)와 같은 3열 타일. 16개가 6줄로 화면을 꽉 채운다.
-   4열 작은 칩이었을 때는 화면 위쪽에만 붙어 있어 허전했다. */
+/* 16유형을 한 줄에 4개씩, 4줄로 놓는다. 칸이 좁아진 만큼 글자와 이모지를 줄이고
+   유형 이름은 두 줄까지 허용해 높이를 맞춘다(칸마다 높이가 다르면 격자가 어그러진다). */
 .mbti-pick-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 6px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 12px 0 6px;
 }
 .mbti-pick {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 14px 4px 12px; border-radius: 16px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+  padding: 11px 3px 10px; border-radius: 14px; cursor: pointer;
   border: 1px solid var(--card-border); background: var(--card);
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
   transition: transform .12s ease, border-color .18s ease, background .18s ease;
 }
-.mbti-pick:active { transform: scale(0.96); }
+.mbti-pick:active { transform: scale(0.95); }
 .mbti-pick.on {
   border-color: transparent; color: #fff;
   background: linear-gradient(135deg, #b779ef, #ff8fb3);
   box-shadow: 0 6px 16px rgba(183,121,239,0.34);
 }
-.mbti-pick-emoji { font-size: 24px; line-height: 1; }
-.mbti-pick-code { font-size: 13px; font-weight: 900; letter-spacing: 1px; }
+.mbti-pick-emoji { font-size: 20px; line-height: 1; }
+.mbti-pick-code { font-size: 12px; font-weight: 900; letter-spacing: .5px; }
 .mbti-pick-name {
-  font-size: 10.5px; font-weight: 600; line-height: 1.3; text-align: center;
+  font-size: 9.5px; font-weight: 600; line-height: 1.25; text-align: center;
   color: var(--text-dim); word-break: keep-all;
+  /* 이름이 길어도 두 줄에서 자른다 — 줄 수가 다르면 타일 높이가 들쭉날쭉해진다 */
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.mbti-pick.on .mbti-pick-name { color: rgba(255,255,255,0.9); }
+.mbti-pick.on .mbti-pick-name { color: rgba(255,255,255,0.92); }
 
 /* 마음약 아이콘: 바닥 그림자는 SVG 안에서 그리고, 알 자체의 그림자는 여기서 준다.
    (SVG 안에 필터를 넣으면 12개 모양마다 영역 계산이 달라져 잘리는 것이 생긴다) */
