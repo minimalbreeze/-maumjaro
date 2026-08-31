@@ -111,6 +111,31 @@
       caution: '뜻밖이 늘 좋은 쪽만은 아니다' },
   ];
 
+  // ---------- 사주 궁합 (생년월일로 보는 궁합, 궁합의 본편) ----------
+  // 두 사람의 일간(태어난 날의 천간) 오행이 서로 어떤 관계인지가 핵심이다.
+  //   상생 = 서로를 살림 / 비화 = 결이 같음 / 상극 = 부딪힘
+  // 방향까지 구분한다 — 내가 주는 쪽인지 받는 쪽인지에 따라 관계의 느낌이 다르다.
+  const SAJU_PAIR_LINES = {
+    give:  { stars: 5, label: '내가 살려주는 사이',
+      line: '내 기운이 상대를 자라게 합니다. 옆에 있으면 상대가 잘 풀리는 게 눈에 보여요.',
+      caution: '주기만 하다 내가 비어버리지 않게, 가끔은 받아도 됩니다.' },
+    receive: { stars: 5, label: '나를 살려주는 사이',
+      line: '상대가 있으면 내가 편해집니다. 막혔던 게 이 사람 앞에서는 이상하게 풀려요.',
+      caution: '기대는 게 습관이 되면 상대가 먼저 지칩니다.' },
+    same:  { stars: 4, label: '결이 같은 사이',
+      line: '말하지 않아도 통하는 게 많습니다. 취향도 속도도 비슷해서 편안해요.',
+      caution: '약한 지점까지 똑같아서, 둘 다 같은 자리에서 막힙니다.' },
+    control: { stars: 3, label: '내가 끌고 가는 사이',
+      line: '내가 방향을 잡고 상대가 따라오는 구도입니다. 일에서는 잘 굴러가요.',
+      caution: '끌기만 하면 상대는 눌린다고 느낍니다. 물어봐 주세요.' },
+    pressed: { stars: 3, label: '나를 잡아주는 사이',
+      line: '상대 앞에서는 내가 함부로 못 합니다. 그래서 실수가 줄어드는 관계예요.',
+      caution: '눌린다는 느낌이 오래가면 마음이 먼저 닫힙니다.' },
+  };
+
+  // 사주 궁합에서 띠(연지) 관계는 보조 점수로만 쓴다.
+  const SAJU_ZHI_BONUS = { samhap: 1, yukhap: 1, same: 0, plain: 0, chung: -1, wonjin: -1 };
+
   // ---------- 별자리 궁합 ----------
   // 12×12 = 144쌍을 다 쓸 수는 없다. 서양 점성술이 실제로 쓰는 기준(원소 관계)으로 묶는다.
   //   같은 원소 = 말이 통함 / 불·바람, 흙·물 = 서로를 살림 / 불·물, 흙·바람 = 부딪힘
@@ -165,5 +190,6 @@
     SIGN_DAY_SEED, SIGN_LUCKY_TIME, SIGN_LUCKY_PLACE, SIGN_LUCKY_ACT,
     ZODIAC_PAIR_LINES, ZODIAC_SAME_SIGN, ZODIAC_OPPOSITE,
     ZHI_ORDER, SAMHAP, YUKHAP, CHUNG, WONJIN, ANIMAL_PAIR_LINES,
+    SAJU_PAIR_LINES, SAJU_ZHI_BONUS,
   };
 })();

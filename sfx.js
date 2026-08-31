@@ -309,7 +309,70 @@
     burst(c, fan + 0.24, 0.9, { freq: 5600, q: 0.5, gain: 0.02, filter: 'highpass' });
   }
 
+  // ---------- 궁합 공개 ----------
+
+  // 궁합이 열리는 소리. "봄날 같고 사랑스럽게"가 목표다.
+  // 신비로운 계열(cardReveal)은 차갑고 밤 느낌이라 여기엔 안 맞는다.
+  // 따뜻하게 들리게 하는 건 세 가지다 —
+  //  (1) 장6화음(도-미-솔-라): 장3화음보다 부드럽고 달콤하다. 긴장이 없다.
+  //  (2) 느린 어택: 톡 치고 들어오면 차갑고, 서서히 차오르면 포근하다.
+  //  (3) 아주 옅은 비브라토: 기계음이 아니라 숨 쉬는 소리로 들린다.
+  // 마지막에 작은 종소리 두 방울을 얹어 "반짝"을 만든다.
+  function loveReveal() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+
+    // 도-미-솔-라 (C6/A add6). 어떤 순서로 겹쳐도 달콤하게 맞물린다.
+    const chord = [523.25, 659.25, 783.99, 880.0];
+    chord.forEach((f, i) => {
+      const st = t + i * 0.11;
+      const dur = 1.9 - i * 0.12;
+
+      const osc = c.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, st);
+
+      // 숨 쉬는 느낌을 주는 아주 얕은 비브라토(±0.35%)
+      const lfo = c.createOscillator();
+      const lfoGain = c.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(4.6, st);
+      lfoGain.gain.setValueAtTime(f * 0.0035, st);
+      lfo.connect(lfoGain).connect(osc.frequency);
+
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.085 - i * 0.008, st + 0.22); // 느린 어택
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+
+      osc.connect(g).connect(c.destination);
+      osc.start(st); osc.stop(st + dur + 0.05);
+      lfo.start(st); lfo.stop(st + dur + 0.05);
+    });
+
+    // 한 옥타브 아래 도 — 아주 작게 깔아 바닥을 따뜻하게 받친다
+    blip(c, t, 261.63, 1.6, { type: 'sine', gain: 0.045 });
+
+    // 반짝이는 종소리 두 방울
+    [1567.98, 2093.0].forEach((f, i) => {
+      const st = t + 0.5 + i * 0.19;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, st);
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.035 - i * 0.008, st + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + 0.9);
+      osc.connect(g).connect(c.destination);
+      osc.start(st); osc.stop(st + 0.95);
+    });
+
+    // 봄바람 같은 아주 옅은 공기감(거의 안 들릴 세기로만)
+    burst(c, t + 0.1, 1.1, { freq: 5200, freqTo: 3200, q: 0.4, gain: 0.011, filter: 'highpass' });
+  }
+
   window.MaumjaroSfx = {
+    loveReveal,
     cardShuffle, cardDraw, cardFlip, cardReveal,
     gachaCrank, capsuleDrop, gachaReveal,
     capsuleTap, capsuleCrack,

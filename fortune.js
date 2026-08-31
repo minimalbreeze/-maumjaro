@@ -25,6 +25,7 @@
     SIGN_DAY_SEED, SIGN_LUCKY_TIME, SIGN_LUCKY_PLACE, SIGN_LUCKY_ACT,
     ZODIAC_PAIR_LINES, ZODIAC_SAME_SIGN, ZODIAC_OPPOSITE,
     SAMHAP, YUKHAP, CHUNG, WONJIN, ANIMAL_PAIR_LINES,
+    SAJU_PAIR_LINES, SAJU_ZHI_BONUS,
   } = window.MAUMJARO_ZODIAC_DATA;
 
   // 타로 아이콘. 예전에는 🌙를 썼는데 그건 유니코드상 "화투(하나후다)" 이모지라
@@ -517,7 +518,7 @@
         <div class="rx-category-tile" data-fortune="match">
           <span class="rx-category-emoji">💘</span>
           <span class="rx-category-label">궁합</span>
-          <span class="rx-category-count">별자리·띠</span>
+          <span class="rx-category-count">생년월일</span>
         </div>
       </div>
     `;
@@ -539,7 +540,7 @@
         else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
-        else if (type === 'match') renderMatchCenter(profile, 'zodiac', null);
+        else if (type === 'match') renderMatchCenter(profile, 'saju', null);
       });
     });
   }
@@ -1022,30 +1023,212 @@
     return { stars: d.stars, label: d.label, line: d.line, me: m, you: o, kind: k };
   }
 
+  // 생년월일로 보는 사주 궁합. 궁합의 본편이라 기본 모드로 둔다.
+  // 상대의 태어난 시간은 있으면 좋고 없어도 된다 — 일간·연지는 시(hour)와 무관하다.
+  function sajuPair(myChart, partner) {
+    let otherChart;
+    try { otherChart = calculateSaju(partner); } catch (e) { return null; }
+    const mine = myChart.dayMasterElement;
+    const yours = otherChart.dayMasterElement;
+    const generates = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+    const controls = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+
+    let key = 'same';
+    if (mine === yours) key = 'same';
+    else if (generates[mine] === yours) key = 'give';
+    else if (generates[yours] === mine) key = 'receive';
+    else if (controls[mine] === yours) key = 'control';
+    else key = 'pressed';
+
+    const base = SAJU_PAIR_LINES[key];
+    const zhiPair = animalPair(myChart.pillars.year.zhi, otherChart.pillars.year.zhi);
+    const bonus = zhiPair ? (SAJU_ZHI_BONUS[zhiPair.kind] || 0) : 0;
+    const stars = Math.max(1, Math.min(5, base.stars + bonus));
+
+    return {
+      stars, label: base.label, line: base.line, caution: base.caution,
+      mineEl: mine, yoursEl: yours,
+      zhi: zhiPair,
+      otherChart,
+    };
+  }
+
+  // 궁합 결과는 주사를 놓아야 열린다(타로·MBTI와 같은 규칙).
+  // 한 번 연 짝은 이 세션 동안 기억해 두고, 다시 볼 때는 또 놓게 하지 않는다.
+  const matchRevealed = new Set();
+
+  function matchGateHtml(title) {
+    return `
+      <div class="rx-detail-card mbti-hero">
+        <div class="rx-detail-emoji">💌</div>
+        <div class="rx-detail-title">${title}</div>
+        <p class="rx-detail-symptom">결과가 봉해져 있어요.<br /><strong>주사를 놓으면 열립니다</strong></p>
+        <div class="mbti-sealed" aria-hidden="true">
+          <span class="mbti-sealed-q">💞</span>
+          <span class="mbti-sealed-stamp">봉인</span>
+        </div>
+      </div>
+      <button class="action-btn" id="match-gate-btn" type="button" style="width:100%;">💉 주사 놓고 궁합 열기</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
+    `;
+  }
+
+  function wireMatchGate(pairId, onOpened) {
+    const btn = document.getElementById('match-gate-btn');
+    if (!btn) return;
+    const syntheticP = {
+      id: 'match-reveal', category: 'social', title: '궁합', diagnosis: '결과를 여는 중',
+      emoji: '💞', color: '#ff8fb3',
+    };
+    Rx.wireExternalTrigger(btn, syntheticP, () => {
+      resetDoseVisuals();
+      Rx.resetGenericFlowState('💉 주사 놓고 궁합 열기');
+      Rx.showRxImageFade(syntheticP, () => {
+        const tab = document.querySelector('.tab-btn[data-view="fortune"]');
+        if (tab) tab.click();
+        matchRevealed.add(pairId);
+        sfx('loveReveal'); // 봄날 같은 공개음
+        onOpened();
+      });
+    });
+  }
+
+  // 상대 사주 입력값은 화면을 다시 그려도 유지되어야 한다(주사를 놓고 돌아오므로).
+  let matchPartner = { calendarType: 'solar', birthDate: '', birthTime: '', timeUnknown: true };
+
   function renderMatchCenter(profile, mode, otherKey) {
     const chart = getOrComputeSajuChart(profile);
     const myZodiac = zodiacSignOf(profile);
     const myAnimal = chineseZodiacOf(chart);
-    const isZ = mode !== 'animal';
+    const m = mode || 'saju';
+
+    // ---- 사주 궁합(본편) ----
+    if (m === 'saju') {
+      const ready = !!matchPartner.birthDate;
+      const pair = ready ? sajuPair(chart, {
+        calendarType: matchPartner.calendarType,
+        birthDate: matchPartner.birthDate,
+        isLeapMonth: false,
+        birthTime: matchPartner.timeUnknown ? null : matchPartner.birthTime,
+        timeUnknown: matchPartner.timeUnknown,
+      }) : null;
+      const pairId = `saju:${matchPartner.calendarType}:${matchPartner.birthDate}`;
+      const opened = pair && matchRevealed.has(pairId);
+
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">💞 궁합</span>
+        </div>
+        ${matchTabsHtml(m)}
+
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">🗓️</div>
+          <div class="rx-detail-title">생년월일 궁합</div>
+          <p class="rx-detail-symptom">상대의 생년월일만 있으면 됩니다. 태어난 시간은 있으면 더 좋아요.</p>
+        </div>
+
+        <div class="segmented" id="match-cal-toggle">
+          <button class="seg-btn${matchPartner.calendarType === 'lunar' ? '' : ' active'}" data-val="solar" type="button">양력</button>
+          <button class="seg-btn${matchPartner.calendarType === 'lunar' ? ' active' : ''}" data-val="lunar" type="button">음력</button>
+        </div>
+
+        <div class="rx-custom-field">
+          <label class="rx-slip-key" for="match-birth">상대 생년월일</label>
+          <input type="date" id="match-birth" class="rx-custom-input" value="${matchPartner.birthDate}" />
+        </div>
+        <div class="rx-custom-field">
+          <label class="rx-slip-key" for="match-time">상대 태어난 시간 <span style="color:var(--text-dim);font-weight:400;">(몰라도 괜찮아요)</span></label>
+          <input type="time" id="match-time" class="rx-custom-input" value="${matchPartner.birthTime}" ${matchPartner.timeUnknown ? 'disabled' : ''} />
+        </div>
+        <div class="sound-row">
+          <span>태어난 시간을 몰라요</span>
+          <button id="match-time-unknown" class="toggle-btn" type="button" aria-pressed="${String(matchPartner.timeUnknown)}">${matchPartner.timeUnknown ? '✅ 켜짐' : '⭕ 꺼짐'}</button>
+        </div>
+
+        ${!ready ? `
+          <button class="action-btn" id="match-saju-submit" type="button" style="width:100%;margin-top:14px;">💞 궁합 보기</button>
+        ` : (!opened ? matchGateHtml('사주 궁합 채점 완료') : `
+          <div class="rx-detail-card mbti-pair">
+            <div class="mbti-pair-row">
+              <span class="mbti-pair-side"><b>${elementEmoji(pair.mineEl)}</b><em style="font-size:12px;letter-spacing:0;">${pair.mineEl}</em><i>나</i></span>
+              <span class="mbti-pair-heart">💞</span>
+              <span class="mbti-pair-side"><b>${elementEmoji(pair.yoursEl)}</b><em style="font-size:12px;letter-spacing:0;">${pair.yoursEl}</em><i>상대</i></span>
+            </div>
+            <span class="mbti-type-badge" style="margin-top:6px;">${pair.label}</span>
+            <div style="margin-top:6px;">${starsText(pair.stars)}</div>
+            <p class="rx-detail-symptom" style="margin-top:8px;">${pair.line}</p>
+          </div>
+          <p class="rx-custom-hint">⚠️ ${pair.caution}</p>
+          ${pair.zhi ? `
+          <div class="rx-custom-preview">
+            <div class="rx-slip-row"><span class="rx-slip-key">${pair.zhi.me.emoji} ${pair.zhi.me.name} × ${pair.zhi.you.emoji} ${pair.zhi.you.name}</span>
+              <span class="rx-slip-value">${pair.zhi.label}</span></div>
+            <p class="rx-slip-text">${pair.zhi.line}</p>
+          </div>` : ''}
+          <button class="rx-friend-quick-btn fortune-goto-rx-btn" type="button" data-rxcat="${SOCIAL_FORTUNE_SEED.rxCategory}" style="width:100%;margin-top:8px;">
+            우리 사이에 필요한 처방 보러가기 ›
+          </button>
+          <button class="action-btn" id="match-share-btn" type="button" style="width:100%;margin-top:8px;"
+            data-txt="${escAttr(`${pair.mineEl} × ${pair.yoursEl} · ${pair.label}\n${starsText(pair.stars)}\n우리 궁합 이렇게 나왔는데 볼래?`)}">궁합 결과 보내기 💌</button>
+          <button class="rx-slip-photo-btn" id="match-reset" type="button" style="width:100%;margin-top:8px;">다른 사람과 보기</button>
+        `)}
+
+        <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:12px;">그래서 오늘은? 💞</button>
+        ${matchFooterHtml()}
+      `;
+      wireMatchCommon(profile, m);
+
+      document.getElementById('match-cal-toggle').querySelectorAll('.seg-btn').forEach((b) => {
+        b.addEventListener('click', () => { matchPartner.calendarType = b.dataset.val; renderMatchCenter(profile, m, null); });
+      });
+      const birth = document.getElementById('match-birth');
+      const time = document.getElementById('match-time');
+      birth.addEventListener('change', () => { matchPartner.birthDate = birth.value; });
+      time.addEventListener('change', () => { matchPartner.birthTime = time.value; });
+      document.getElementById('match-time-unknown').addEventListener('click', () => {
+        matchPartner.timeUnknown = !matchPartner.timeUnknown;
+        renderMatchCenter(profile, m, null);
+      });
+
+      const submit = document.getElementById('match-saju-submit');
+      if (submit) {
+        submit.addEventListener('click', () => {
+          if (!birth.value) { Core.showToast('상대 생년월일을 넣어주세요'); return; }
+          matchPartner.birthDate = birth.value;
+          matchPartner.birthTime = time.value;
+          renderMatchCenter(profile, m, null);
+        });
+      }
+      const reset = document.getElementById('match-reset');
+      if (reset) {
+        reset.addEventListener('click', () => {
+          matchPartner = { calendarType: 'solar', birthDate: '', birthTime: '', timeUnknown: true };
+          renderMatchCenter(profile, m, null);
+        });
+      }
+      if (ready && !opened) {
+        wireMatchGate(pairId, () => renderMatchCenter(profile, m, null));
+      }
+      return;
+    }
+
+    // ---- 별자리 / 띠 궁합 ----
+    const isZ = m === 'zodiac';
     const list = isZ ? ZODIAC_SIGNS : CHINESE_ZODIAC;
     const mine = isZ ? myZodiac : myAnimal;
-
     if (!mine) { renderFortuneHub(profile); return; }
 
-    const pair = otherKey
-      ? (isZ ? zodiacPair(mine.key, otherKey) : animalPair(mine.zhi, otherKey))
-      : null;
+    const pair = otherKey ? (isZ ? zodiacPair(mine.key, otherKey) : animalPair(mine.zhi, otherKey)) : null;
+    const pairId = `${m}:${isZ ? mine.key : mine.zhi}:${otherKey}`;
+    const opened = pair && matchRevealed.has(pairId);
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
         <span class="rx-nav-title">💞 궁합</span>
       </div>
-
-      <div class="segmented" id="match-mode-toggle">
-        <button class="seg-btn${isZ ? ' active' : ''}" data-val="zodiac" type="button">⭐ 별자리 궁합</button>
-        <button class="seg-btn${isZ ? '' : ' active'}" data-val="animal" type="button">🐯 띠 궁합</button>
-      </div>
+      ${matchTabsHtml(m)}
 
       <p class="rx-custom-hint" style="text-align:center;">
         내 ${isZ ? '별자리' : '띠'}는 <b>${mine.emoji} ${mine.name}</b>. 상대를 골라주세요
@@ -1062,7 +1245,8 @@
         }).join('')}
       </div>
 
-      ${pair ? `
+      ${!pair ? `<p class="rx-custom-hint" style="text-align:center;margin-top:14px;">상대를 고르면 궁합이 나와요</p>`
+        : (!opened ? matchGateHtml(`${pair.me.name} × ${pair.you.name}`) : `
         <div class="rx-detail-card mbti-pair">
           <div class="mbti-pair-row">
             <span class="mbti-pair-side"><b>${pair.me.emoji}</b><em style="font-size:12px;letter-spacing:0;">${pair.me.name}</em><i>나</i></span>
@@ -1073,46 +1257,61 @@
           <div style="margin-top:6px;">${starsText(pair.stars)}</div>
           <p class="rx-detail-symptom" style="margin-top:8px;">${pair.line}</p>
         </div>
-
         <button class="rx-friend-quick-btn fortune-goto-rx-btn" type="button" data-rxcat="${SOCIAL_FORTUNE_SEED.rxCategory}" style="width:100%;margin-top:8px;">
           우리 사이에 필요한 처방 보러가기 ›
         </button>
-        <button class="action-btn" id="match-share-btn" type="button" style="width:100%;margin-top:8px;">궁합 결과 보내기 💌</button>
-      ` : `<p class="rx-custom-hint" style="text-align:center;margin-top:14px;">상대를 고르면 궁합이 나와요</p>`}
+        <button class="action-btn" id="match-share-btn" type="button" style="width:100%;margin-top:8px;"
+          data-txt="${escAttr(`${pair.me.name} × ${pair.you.name} 궁합 · ${pair.label}\n${starsText(pair.stars)}\n우리 이렇게 나왔는데 볼래?`)}">궁합 결과 보내기 💌</button>
+      `)}
 
       <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:12px;">그래서 오늘은? 💞</button>
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
-        별자리는 원소 관계, 띠는 삼합·육합·충·원진 규칙을 그대로 씁니다. 재미로 봐주세요.
-      </p>
+      ${matchFooterHtml()}
     `;
-
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
-
-    document.getElementById('match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
-      // 모드를 바꾸면 상대 선택은 비운다(별자리 키와 띠 지지는 서로 호환되지 않는다).
-      b.addEventListener('click', () => renderMatchCenter(profile, b.dataset.val, null));
-    });
+    wireMatchCommon(profile, m);
 
     fortuneContent.querySelectorAll('.mbti-pick').forEach((b) => {
       b.addEventListener('click', () => {
         sfx('cardDraw');
-        renderMatchCenter(profile, mode, b.dataset.o);
-        const card = fortuneContent.querySelector('.mbti-pair');
-        if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        trackEvent('fortune_match', { mode, other: b.dataset.o });
+        renderMatchCenter(profile, m, b.dataset.o);
+        trackEvent('fortune_match', { mode: m, other: b.dataset.o });
       });
     });
+    if (pair && !opened) {
+      wireMatchGate(pairId, () => renderMatchCenter(profile, m, otherKey));
+    }
+  }
 
+  function elementEmoji(el) {
+    return { 목: '🌳', 화: '🔥', 토: '⛰️', 금: '⚙️', 수: '💧' }[el] || '✨';
+  }
+  function escAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/\n/g, '&#10;');
+  }
+  function matchTabsHtml(m) {
+    const tabs = [['saju', '🗓️ 생년월일'], ['zodiac', '⭐ 별자리'], ['animal', '🐯 띠']];
+    return `<div class="segmented" id="match-mode-toggle">
+      ${tabs.map(([k, l]) => `<button class="seg-btn${m === k ? ' active' : ''}" data-val="${k}" type="button">${l}</button>`).join('')}
+    </div>`;
+  }
+  function matchFooterHtml() {
+    return `<p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
+      사주는 일간 오행 관계, 별자리는 원소 관계, 띠는 삼합·육합·충·원진 규칙을 그대로 씁니다. 재미로 봐주세요.
+    </p>`;
+  }
+  function wireMatchCommon(profile, m) {
+    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+    document.getElementById('match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
+      // 모드를 바꾸면 상대 선택은 비운다(사주·별자리·띠는 서로 다른 입력을 쓴다).
+      b.addEventListener('click', () => renderMatchCenter(profile, b.dataset.val, null));
+    });
     fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((b) => {
       b.addEventListener('click', () => Rx.goToRxCategory(b.dataset.rxcat));
     });
-
     const share = document.getElementById('match-share-btn');
-    if (share && pair) {
+    if (share) {
       share.addEventListener('click', () => {
-        const text = `${pair.me.name} × ${pair.you.name} 궁합 · ${pair.label}\n${starsText(pair.stars)}\n우리 이렇게 나왔는데 볼래?`;
-        Rx.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/');
+        Rx.shareOrCopy(share.dataset.txt, 'https://maumjaro.minimalbreeze.com/');
       });
     }
   }
