@@ -20,6 +20,11 @@
     TAROT_MAJOR, TAROT_TOPICS, TAROT_VERDICT, TAROT_SHUFFLE_LINES, TAROT_SUMMARY_SEED, TAROT_BACK_SVG,
   } = window.MAUMJARO_TAROT_DATA;
 
+  const {
+    ZODIAC_SIGNS, ZODIAC_CUTOFFS, CHINESE_ZODIAC,
+    SIGN_DAY_SEED, SIGN_LUCKY_TIME, SIGN_LUCKY_PLACE, SIGN_LUCKY_ACT,
+  } = window.MAUMJARO_ZODIAC_DATA;
+
   const FORTUNE_SEED_BY_CATEGORY = {
     mind: MIND_FORTUNE_SEED, social: SOCIAL_FORTUNE_SEED, wealth: WEALTH_FORTUNE_SEED,
     love: LOVE_FORTUNE_SEED, work: WORK_FORTUNE_SEED,
@@ -221,11 +226,21 @@
   function saveSajuProfile(profile) {
     localStorage.setItem(SAJU_PROFILE_KEY, JSON.stringify(profile));
   }
-  function loadSajuChart() {
+  // 프로필이 바뀌면 캐시를 지우도록 되어 있지만, 그 경로를 타지 않고 프로필만 바뀌는 경우
+  // (예전 버전에서 저장된 데이터, 수동 복구 등)에는 캐시가 남아 엉뚱한 사주를 계속 쓴다.
+  // 띠(연주 지지)처럼 캐시에서 바로 읽는 값이 생겼으므로, 프로필 지문을 같이 저장해 대조한다.
+  function profileFingerprint(p) {
+    if (!p) return '';
+    return [p.calendarType, p.birthDate, p.isLeapMonth ? 1 : 0, p.timeUnknown ? 1 : 0, p.birthTime || ''].join('|');
+  }
+  function loadSajuChart(profile) {
     try {
       const raw = localStorage.getItem(SAJU_CHART_KEY);
       const chart = raw ? JSON.parse(raw) : null;
-      return (chart && chart.calcVersion === FORTUNE_CALC_VERSION) ? chart : null;
+      if (!chart || chart.calcVersion !== FORTUNE_CALC_VERSION) return null;
+      // 지문이 없던 시절 캐시는 한 번 다시 계산하고 지문을 붙인다.
+      if (chart.srcKey !== profileFingerprint(profile)) return null;
+      return chart;
     } catch (e) {
       return null;
     }
@@ -234,9 +249,10 @@
     localStorage.setItem(SAJU_CHART_KEY, JSON.stringify(chart));
   }
   function getOrComputeSajuChart(profile) {
-    let chart = loadSajuChart();
+    let chart = loadSajuChart(profile);
     if (chart) return chart;
     chart = calculateSaju(profile);
+    chart.srcKey = profileFingerprint(profile);
     saveSajuChart(chart);
     return chart;
   }
@@ -457,6 +473,16 @@
           <span class="rx-category-label">월간 운세</span>
           <span class="rx-category-count">이번 달</span>
         </div>
+        <div class="rx-category-tile" data-fortune="zodiac">
+          <span class="rx-category-emoji">⭐</span>
+          <span class="rx-category-label">별자리 운세</span>
+          <span class="rx-category-count">오늘</span>
+        </div>
+        <div class="rx-category-tile" data-fortune="animal">
+          <span class="rx-category-emoji">🐯</span>
+          <span class="rx-category-label">띠별 운세</span>
+          <span class="rx-category-count">오늘</span>
+        </div>
         <div class="rx-category-tile" data-fortune="tarot">
           <span class="rx-category-emoji">🎴</span>
           <span class="rx-category-label">타로</span>
@@ -487,6 +513,8 @@
         if (type === 'daily') renderFortuneDaily(profile);
         else if (type === 'weekly') renderFortuneWeekly(profile);
         else if (type === 'monthly') renderFortuneMonthly(profile);
+        else if (type === 'zodiac') renderSignFortune(profile, 'zodiac');
+        else if (type === 'animal') renderSignFortune(profile, 'animal');
         else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
@@ -546,6 +574,10 @@
         animation-delay:${(i * 0.17).toFixed(2)}s;"></span>`;
     }).join('');
     const pick = GACHA_BALL_COLORS[Math.floor(Math.random() * GACHA_BALL_COLORS.length)];
+
+    // 타일을 빠르게 두 번 누르면 기계가 두 대 쌓인다. id(gm-knob, fortune-detail-back)가
+    // 중복되어 getElementById가 엉뚱한 쪽을 잡으므로 반드시 한 대만 남긴다.
+    document.querySelectorAll('.gacha-full').forEach((old) => old.remove());
 
     // 뽑는 순간은 화면을 통째로 쓴다. 탭 안에 작게 들어가 있으면 "기계를 돌린다"는
     // 손맛이 안 산다. 결과는 기존처럼 fortuneContent에 그리므로 buildAndRender는 그대로다.
@@ -798,6 +830,122 @@
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
       });
     });
+  }
+
+  // ---------- 별자리 · 띠별 오늘의 운세 ----------
+  // 사주는 "나 한 사람"의 기운이라 친구와 비교가 안 된다. 별자리·띠는 같은 사람끼리 결과가
+  // 같아서 "나도 사자자리인데!"가 되고, 그게 공유로 이어진다. 그래서 시드를 사주(chart)가
+  // 아니라 별자리/띠 키로 잡는다.
+  function solarBirthOf(profile) {
+    const [y, m, d] = profile.birthDate.split('-').map(Number);
+    if (profile.calendarType === 'lunar' && typeof Lunar !== 'undefined') {
+      try {
+        const s = Lunar.fromYmd(y, profile.isLeapMonth ? -m : m, d).getSolar();
+        return { y: s.getYear(), m: s.getMonth(), d: s.getDay() };
+      } catch (e) { /* 변환이 안 되면 입력값을 그대로 쓴다 */ }
+    }
+    return { y, m, d };
+  }
+
+  function zodiacSignOf(profile) {
+    const { m, d } = solarBirthOf(profile);
+    // 경계일 목록을 월 순서로 훑으며 "이미 지난 경계"의 마지막 것을 고른다.
+    // 1/1~1/19는 어떤 경계도 못 넘으므로 기본값(염소자리)에 남는다 — 해를 넘긴 구간이다.
+    let key = 'capricorn';
+    ZODIAC_CUTOFFS.forEach(([cm, cd, ck]) => {
+      if (m > cm || (m === cm && d >= cd)) key = ck;
+    });
+    return ZODIAC_SIGNS.find((s) => s.key === key) || ZODIAC_SIGNS[9];
+  }
+
+  function chineseZodiacOf(chart) {
+    const zhi = chart && chart.pillars && chart.pillars.year ? chart.pillars.year.zhi : null;
+    return CHINESE_ZODIAC.find((z) => z.zhi === zhi) || null;
+  }
+
+  // 같은 별자리/띠라면 같은 날 같은 결과가 나와야 서로 얘기가 된다.
+  function signPickIndex(signKey, salt, length) {
+    return hashStr(`${signKey}:${todayDateKey()}:${salt}`) % length;
+  }
+
+  function renderSignFortune(profile, mode) {
+    const chart = getOrComputeSajuChart(profile);
+    const list = mode === 'zodiac' ? ZODIAC_SIGNS : CHINESE_ZODIAC;
+    const mine = mode === 'zodiac' ? zodiacSignOf(profile) : chineseZodiacOf(chart);
+    if (!mine) { renderFortuneHub(profile); return; }
+    const title = mode === 'zodiac' ? '⭐ 별자리 오늘의 운세' : '🐯 띠별 오늘의 운세';
+
+    // 내 것 말고 다른 별자리도 눌러볼 수 있게 한다. 갓차는 처음 한 번만 돌린다.
+    function draw(signKey) {
+      const sign = list.find((s) => s.key === signKey) || mine;
+      const day = SIGN_DAY_SEED[signPickIndex(sign.key, 'day', SIGN_DAY_SEED.length)];
+      const mindItem = MIND_FORTUNE_SEED.items[signPickIndex(sign.key, 'mind', MIND_FORTUNE_SEED.items.length)];
+      const socialItem = SOCIAL_FORTUNE_SEED.items[signPickIndex(sign.key, 'social', SOCIAL_FORTUNE_SEED.items.length)];
+      const wealthItem = WEALTH_FORTUNE_SEED.items[signPickIndex(sign.key, 'wealth', WEALTH_FORTUNE_SEED.items.length)];
+      const luckyTime = SIGN_LUCKY_TIME[signPickIndex(sign.key, 'time', SIGN_LUCKY_TIME.length)];
+      const luckyPlace = SIGN_LUCKY_PLACE[signPickIndex(sign.key, 'place', SIGN_LUCKY_PLACE.length)];
+      const luckyAct = SIGN_LUCKY_ACT[signPickIndex(sign.key, 'act', SIGN_LUCKY_ACT.length)];
+      const sub = mode === 'zodiac' ? `${sign.range} · ${sign.element}의 별자리` : `${sign.keyword}의 띠`;
+      const isMine = sign.key === mine.key;
+
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">${title}</span>
+        </div>
+
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${sign.emoji}</div>
+          <div class="rx-detail-title">${sign.name}${isMine ? ' <span class="sign-mine">내 별</span>' : ''}</div>
+          <div class="rx-detail-diagnosis">${sub}</div>
+          <p class="rx-detail-symptom">${sign.trait}</p>
+        </div>
+
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${day.emoji}</div>
+          <div class="rx-detail-title">오늘은 · ${day.title}</div>
+          <div class="rx-detail-diagnosis">${day.diagnosis}</div>
+          <p class="rx-detail-symptom">${day.advice}</p>
+        </div>
+        <p class="rx-custom-hint">⚠️ ${day.caution}</p>
+
+        ${categorySectionHtml('마음운', mindItem, MIND_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('인간관계운', socialItem, SOCIAL_FORTUNE_SEED.rxCategory)}
+        ${categorySectionHtml('재물운', wealthItem, WEALTH_FORTUNE_SEED.rxCategory)}
+
+        <div class="rx-custom-preview">
+          <div class="rx-slip-row"><span class="rx-slip-key">🕐 좋은 시간</span><span class="rx-slip-value">${luckyTime}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">📍 좋은 자리</span><span class="rx-slip-value">${luckyPlace}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">🍀 오늘의 한 가지</span><span class="rx-slip-value">${luckyAct}</span></div>
+        </div>
+
+        <p class="rx-custom-hint" style="text-align:center;">다른 ${mode === 'zodiac' ? '별자리' : '띠'}도 눌러보세요</p>
+        <div class="sign-chips">
+          ${list.map((s) => `
+            <button class="sign-chip${s.key === sign.key ? ' on' : ''}" type="button" data-sign="${s.key}">
+              <span class="sign-chip-emoji">${s.emoji}</span><span>${s.name}</span>
+            </button>`).join('')}
+        </div>
+
+        <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:10px;">그래서 오늘은? 💞</button>
+      `;
+
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
+      fortuneContent.querySelectorAll('.sign-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sfx('capsuleTap');
+          draw(btn.dataset.sign);
+          fortuneContent.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        });
+      });
+      trackEvent('fortune_sign_view', { mode, sign: sign.key, mine: isMine });
+    }
+
+    withMysticalReveal(profile, title, () => draw(mine.key));
   }
 
   function renderFortuneTojeong(profile) {
