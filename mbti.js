@@ -15,6 +15,7 @@
   const {
     MBTI_QUESTIONS, MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX,
     MATCH_AXIS_LINES, MATCH_CAUTION, MATCH_HEADLINES, MATCH_SAME_TYPE,
+    BLOOD_MATCH, BLOOD_DAY_LINES,
   } = D;
 
   const RESULT_KEY = 'maumjaro:mbtiResult';
@@ -304,6 +305,89 @@
     `;
   }
 
+  // ---------- 혈액형 ----------
+  // 같은 혈액형이면 같은 날 같은 말이 나와야 "나도 A형인데!"가 성립한다.
+  function bloodDayLine(key) {
+    const d = new Date();
+    const sig = `${key}:${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    let h = 0;
+    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+    return BLOOD_DAY_LINES[Math.abs(h) % BLOOD_DAY_LINES.length];
+  }
+
+  function bloodHtml(mineKey, viewKey, otherKey, myType) {
+    const view = BLOOD_TYPES.find((b) => b.key === viewKey) || BLOOD_TYPES[0];
+    const isMine = view.key === mineKey;
+    const mixKey = myType ? `${view.key}-${MBTI_TYPES[myType].group}` : null;
+    const mix = mixKey ? BLOOD_MBTI_MIX[mixKey] : null;
+    const pair = mineKey && otherKey ? BLOOD_MATCH[`${mineKey}-${otherKey}`] : null;
+
+    return `
+      <div class="rx-detail-card mbti-hero">
+        <div class="rx-detail-emoji">${view.emoji}</div>
+        <div class="mbti-type-badge">${esc(view.name)}${isMine ? ' · 내 혈액형' : ''}</div>
+        <div class="rx-detail-title">${esc(view.trait)}</div>
+        <p class="rx-detail-symptom">${esc(view.quirk)}</p>
+      </div>
+
+      <div class="rx-custom-preview">
+        <div class="rx-slip-row"><span class="rx-slip-key">🗓️ 오늘의 한 마디</span></div>
+        <p class="rx-slip-text">${esc(bloodDayLine(view.key))}</p>
+      </div>
+
+      ${mix ? `
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">🧬</div>
+        <div class="rx-detail-title">${esc(view.name)} × ${esc(myType)}</div>
+        <p class="rx-detail-symptom">${esc(mix)}</p>
+      </div>` : `
+      <p class="rx-custom-hint">🧪 MBTI 시험을 보면 "혈액형 × 유형" 조합도 볼 수 있어요</p>`}
+
+      <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">다른 혈액형도 눌러보세요</p>
+      <div class="blood-chips" data-role="view">
+        ${BLOOD_TYPES.map((b) => `
+          <button class="blood-chip${b.key === view.key ? ' on' : ''}" type="button" data-b="${b.key}">
+            <span class="blood-chip-emoji">${b.emoji}</span><span>${esc(b.name)}</span>
+          </button>`).join('')}
+      </div>
+
+      ${mineKey ? `
+        <div class="rx-nav-header" style="margin-top:18px;">
+          <span class="rx-nav-title">💞 혈액형 궁합</span>
+        </div>
+        <p class="rx-custom-hint" style="text-align:center;">
+          내 혈액형은 <b>${esc(mineKey)}형</b>. 상대 혈액형을 골라주세요
+        </p>
+        <div class="blood-chips" data-role="match">
+          ${BLOOD_TYPES.map((b) => `
+            <button class="blood-chip${b.key === otherKey ? ' on' : ''}" type="button" data-o="${b.key}">
+              <span class="blood-chip-emoji">${b.emoji}</span><span>${esc(b.name)}</span>
+            </button>`).join('')}
+        </div>
+        ${pair ? `
+        <div class="rx-detail-card mbti-pair">
+          <div class="mbti-pair-row">
+            <span class="mbti-pair-side"><b>${BLOOD_TYPES.find((x) => x.key === mineKey).emoji}</b><em>${esc(mineKey)}형</em><i>나</i></span>
+            <span class="mbti-pair-heart">💞</span>
+            <span class="mbti-pair-side"><b>${BLOOD_TYPES.find((x) => x.key === otherKey).emoji}</b><em>${esc(otherKey)}형</em><i>상대</i></span>
+          </div>
+          ${starRow(pair.stars)}
+          <p class="rx-detail-symptom" style="margin-top:8px;">${esc(pair.line)}</p>
+        </div>` : ''}
+      ` : `
+      <button class="rx-friend-quick-btn" id="blood-add" type="button" style="width:100%;margin-top:14px;">
+        🩸 내 혈액형을 넣으면 궁합까지 볼 수 있어요 ›
+      </button>`}
+
+      <button class="rx-friend-quick-btn mbti-goto-rx" type="button" data-rxcat="social" style="width:100%;margin-top:12px;">
+        사람 사이가 힘든 날의 처방 보러가기 ›
+      </button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
+        혈액형 성격론은 과학적 근거가 없어요. 재미로만 봐주세요.
+      </p>
+    `;
+  }
+
   // ---------- 결과 화면 ----------
   function typeCardHtml(key) {
     const t = MBTI_TYPES[key];
@@ -365,6 +449,7 @@
       </div>
 
       <button class="action-btn" id="mbti-match-open" type="button" style="width:100%;margin-top:6px;">💞 상대 유형 골라서 궁합 보기</button>
+      <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형으로 더 보기</button>
       <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">친구에게 내 유형 보내기 💌</button>
       <button class="rx-friend-quick-btn" id="mbti-retake-btn" type="button" style="width:100%;margin-top:8px;">🔄 초기화하고 다시 시험 보기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
@@ -388,6 +473,7 @@
         <div class="rx-slip-row"><span class="rx-slip-key"></span><span class="rx-slip-value">내 유형에 맞는 마음 처방</span></div>
       </div>
       <button class="action-btn" id="mbti-start-btn" type="button" style="width:100%;margin-top:10px;">✏️ 시험 시작하기</button>
+      <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형 먼저 볼래요</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
         재미로 보는 간이 유형 테스트예요. 공식 MBTI® 검사와는 무관합니다.
       </p>
@@ -445,6 +531,14 @@
       const matchOpen = mount.querySelector('#mbti-match-open');
       if (matchOpen && result) {
         matchOpen.addEventListener('click', () => drawMatch(result.type, null));
+      }
+
+      const bloodOpen = mount.querySelector('#mbti-blood-open');
+      if (bloodOpen) {
+        bloodOpen.addEventListener('click', () => {
+          const mine = blood ? blood.key : null;
+          drawBlood(mine || 'A', null);
+        });
       }
 
       const share = mount.querySelector('#mbti-share-btn');
@@ -523,6 +617,48 @@
           track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
         });
       }
+    }
+
+    // 혈액형 화면: 보고 있는 혈액형(viewKey)과 궁합 상대(otherKey)를 따로 둔다.
+    function drawBlood(viewKey, otherKey) {
+      const b = bloodOf();
+      const mineKey = b ? b.key : null;
+      const r = loadResult();
+      const myType = r ? r.type : null;
+
+      mount.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="blood-back" type="button">‹</button>
+          <span class="rx-nav-title">🩸 혈액형</span>
+        </div>
+        ${bloodHtml(mineKey, viewKey, otherKey, myType)}
+      `;
+
+      mount.querySelector('#blood-back').addEventListener('click', draw);
+
+      mount.querySelectorAll('.blood-chips[data-role="view"] .blood-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sfx('pageMark');
+          drawBlood(btn.dataset.b, otherKey);
+        });
+      });
+      mount.querySelectorAll('.blood-chips[data-role="match"] .blood-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sfx('pageMark');
+          drawBlood(viewKey, btn.dataset.o);
+          track('blood_match', { mine: mineKey, other: btn.dataset.o });
+        });
+      });
+
+      const add = mount.querySelector('#blood-add');
+      if (add && editProfile) add.addEventListener('click', editProfile);
+
+      mount.querySelectorAll('.mbti-goto-rx').forEach((x) => {
+        x.addEventListener('click', () => {
+          const R = Rx();
+          if (R && typeof R.goToRxCategory === 'function') R.goToRxCategory(x.dataset.rxcat);
+        });
+      });
     }
 
     lastDraw = draw;

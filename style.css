@@ -2585,6 +2585,24 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mbti-pick-emoji { font-size: 17px; line-height: 1; }
 .mbti-pick-code { font-size: 10.5px; }
 
+/* 혈액형 칩 4칸 */
+.blood-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 8px 0 4px; }
+.blood-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 2px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--card-border); background: var(--card);
+  color: var(--text); font-size: 11.5px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease;
+}
+.blood-chip:active { transform: scale(0.95); }
+.blood-chip.on {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(135deg, #ef6a5a, #ff9166);
+  box-shadow: 0 4px 12px rgba(239,106,90,0.3);
+}
+.blood-chip-emoji { font-size: 18px; line-height: 1; }
+
 .mbti-pair { text-align: center; }
 .mbti-pair-row {
   display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px;
