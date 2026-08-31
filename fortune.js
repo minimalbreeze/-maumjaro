@@ -555,20 +555,25 @@
       <button class="gacha-full-back" id="fortune-detail-back" type="button" aria-label="뒤로">‹</button>
       <div class="reveal-stage">
         <p class="gacha-full-title">${title}</p>
-        <p class="reveal-guide" id="reveal-guide">손잡이를 돌려 오늘의 운을 뽑아보세요</p>
+        <p class="reveal-guide" id="reveal-guide">버튼을 눌러서 갓차를 뽑아 주세요</p>
 
+        <!-- 진짜 갓차폰 기계의 부품 구성: 유리 돔 → 크롬 테 → 본체(동전 투입구 + 크랭크
+             손잡이 + 가격판) → 뚜껑 달린 배출구 → 받침 다리.
+             예전에는 돔+동그란 버튼뿐이라 사탕 뽑는 기계처럼 보였다. -->
         <div class="gacha" id="gacha">
           <div class="gm-dome"><span class="gm-dome-shine"></span>${domeBalls}</div>
-          <div class="gm-body">
-            <span class="gm-knob-ring" aria-hidden="true"></span>
-            <button class="gm-knob" id="gm-knob" type="button" aria-label="손잡이를 돌려 오늘의 운 뽑기">
-              <span class="gm-knob-slot"></span>
-            </button>
-            <!-- 화면 위쪽 안내는 손잡이에서 160px 넘게 떨어져 있어 시선이 안 이어진다.
-                 눌러야 할 것 바로 밑에 짧게 한 번 더 적는다. -->
-            <span class="gm-label">👆 손잡이를 돌려주세요</span>
+          <div class="gm-rim" aria-hidden="true"></div>
+          <div class="gm-body" aria-hidden="true"><span class="gm-coin"></span></div>
+          <!-- 크랭크: 크롬 원판 + 팔 + 손잡이 공. 원판이 돌면 공이 궤도를 그린다. -->
+          <div class="gm-crank" aria-hidden="true">
+            <span class="gm-crank-plate"></span>
+            <span class="gm-crank-arm"><i></i></span>
           </div>
-          <div class="gm-exit"><span class="gm-exit-hole"></span></div>
+          <div class="gm-exit" aria-hidden="true">
+            <span class="gm-exit-hole"></span>
+            <span class="gm-flap"></span>
+          </div>
+          <div class="gm-legs" aria-hidden="true"><span></span><span></span></div>
           <!-- 배출구에서 굴러 나와 화면 가운데로 커지는 캡슐 -->
           <div class="gm-out" id="gm-out">
             <span class="gm-out-top" style="background:linear-gradient(160deg,${pick[0]},${pick[1]});"></span>
@@ -578,6 +583,7 @@
           </div>
         </div>
 
+        <button class="action-btn gm-turn-btn" id="gm-knob" type="button">🎰 갓차 뽑기</button>
         <p class="reveal-note">하루에 한 번, 오늘의 운이 담긴 캡슐이 나와요 🔮</p>
       </div>
     `;
