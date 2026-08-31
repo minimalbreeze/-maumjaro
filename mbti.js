@@ -13,7 +13,8 @@
   const D = window.MAUMJARO_MBTI_DATA;
   if (!D) return;
   const {
-    MBTI_QUESTIONS, MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX,
+    MBTI_QUESTION_POOL, AXIS_ORDER, QUESTIONS_PER_AXIS,
+    MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX,
     MATCH_AXIS_LINES, MATCH_CAUTION, MATCH_HEADLINES, MATCH_SAME_TYPE,
     BLOOD_MATCH, BLOOD_DAY_LINES,
     TYPE_TELLS, BLOOD_TELLS, FRIEND_AXIS_QUESTIONS, TYPE_GROUPS,
@@ -68,13 +69,37 @@
     return null;
   }
 
+  // ---------- 출제 ----------
+  // 축마다 8문항 풀에서 3개씩 뽑아 12문항 시험지를 만든다. 시험을 볼 때마다 다른 조합이 나온다.
+  // 축 순서(E/I → S/N → T/F → J/P)는 고정하지 않고 문항 전체를 섞는다 —
+  // 같은 축 3개가 연달아 나오면 "아까 그거 또 묻네"가 되기 때문이다.
+  const TOTAL_Q = AXIS_ORDER.length * QUESTIONS_PER_AXIS;
+
+  function buildQuestionSet() {
+    const picked = [];
+    AXIS_ORDER.forEach((ax) => {
+      const pool = (MBTI_QUESTION_POOL[ax.axis] || []).slice();
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      }
+      pool.slice(0, QUESTIONS_PER_AXIS).forEach((q) => {
+        picked.push({ axis: ax.axis, a: ax.a, b: ax.b, q: q.q, ao: q.ao, bo: q.bo });
+      });
+    });
+    for (let i = picked.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = picked[i]; picked[i] = picked[j]; picked[j] = t;
+    }
+    return picked;
+  }
+
   // ---------- 채점 ----------
   // 축마다 3문항이라 동점이 안 난다(2:1 또는 3:0). 그래도 방어적으로 기본값을 둔다.
   function scoreAnswers(answers) {
     const score = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
-    answers.forEach((pick, i) => {
-      const q = MBTI_QUESTIONS[i];
-      if (!q || !pick) return;
+    answers.forEach((pick) => {
+      if (!pick) return;
       score[pick] += 1;
     });
     const type = [
@@ -101,7 +126,9 @@
     // 갓차와 같은 이유로 두 장이 겹치지 않게 항상 한 장만 남긴다.
     document.querySelectorAll('.mbti-exam').forEach((old) => old.remove());
 
-    const answers = new Array(MBTI_QUESTIONS.length).fill(null);
+    // 시험지는 매번 새로 뽑는다 — 같은 사람이 다시 봐도 다른 문제가 나온다.
+    const QSET = buildQuestionSet();
+    const answers = new Array(QSET.length).fill(null);
     let idx = 0;
 
     const el = document.createElement('div');
@@ -127,13 +154,13 @@
     });
 
     function paint(dir) {
-      const q = MBTI_QUESTIONS[idx];
+      const q = QSET[idx];
       sheet.classList.remove('flip-in', 'flip-back');
       void sheet.offsetWidth; // 애니메이션 재시작
       sheet.innerHTML = `
         <div class="mx-head">
           <span class="mx-no">문제 ${idx + 1}</span>
-          <span class="mx-total">/ ${MBTI_QUESTIONS.length}</span>
+          <span class="mx-total">/ ${QSET.length}</span>
         </div>
         <p class="mx-q">${esc(q.q)}</p>
         <div class="mx-choices">
@@ -150,7 +177,7 @@
         </div>
       `;
       sheet.classList.add(dir === 'back' ? 'flip-back' : 'flip-in');
-      bar.style.width = `${(idx / MBTI_QUESTIONS.length) * 100}%`;
+      bar.style.width = `${(idx / QSET.length) * 100}%`;
 
       sheet.querySelectorAll('.mx-choice').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -159,7 +186,7 @@
           sfx('pageMark');
           // 고른 게 눈에 보이고 나서 넘어가야 "체크했다"는 느낌이 난다.
           setTimeout(() => {
-            if (idx < MBTI_QUESTIONS.length - 1) {
+            if (idx < QSET.length - 1) {
               idx += 1;
               sfx('pageFlip');
               paint('next');
@@ -183,6 +210,64 @@
     }
 
     paint('next');
+  }
+
+  // ---------- 주사 게이트 ----------
+  // 브랜드 원칙: 어떤 콘텐츠든 마지막은 "주사를 놓는다"로 이어져야 한다.
+  // 타로가 이미 같은 구조(주사를 놓아야 카드가 열림)를 쓰고 있으므로, 그 흐름을 그대로 빌린다.
+  // 새로 만들지 않고 Rx.wireExternalTrigger + showRxImageFade를 재사용한다.
+  function resetDoseVisuals() {
+    const tag = document.getElementById('dose-tag');
+    const cap = document.getElementById('dose-caption');
+    const liquid = document.getElementById('liquid');
+    if (tag) tag.hidden = true;
+    if (cap) cap.hidden = true;
+    if (liquid) liquid.style.fill = '';
+  }
+
+  function openGate(mount, type, onOpened) {
+    const t = MBTI_TYPES[type];
+    mount.innerHTML = `
+      <div class="rx-nav-header">
+        <span class="rx-nav-title">📝 MBTI</span>
+      </div>
+      <div class="rx-detail-card mbti-hero">
+        <div class="rx-detail-emoji">✉️</div>
+        <div class="rx-detail-title">채점이 끝났어요</div>
+        <p class="rx-detail-symptom">결과지가 봉해져 있어요.<br /><strong>주사를 놓으면 열립니다</strong></p>
+        <div class="mbti-sealed" aria-hidden="true">
+          <span class="mbti-sealed-q">?</span>
+          <span class="mbti-sealed-stamp">봉인</span>
+        </div>
+      </div>
+      <button class="action-btn" id="mbti-gate-btn" type="button" style="width:100%;">💉 주사 놓고 결과 열기</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
+    `;
+
+    const R = Rx();
+    const btn = mount.querySelector('#mbti-gate-btn');
+    // 주사 시스템이 없으면(로드 실패 등) 결과를 영영 못 보게 되면 안 된다. 바로 연다.
+    if (!R || typeof R.wireExternalTrigger !== 'function') { onOpened(); return; }
+
+    const syntheticP = {
+      id: 'mbti-reveal',
+      category: 'mind',
+      title: `${t.name}`,
+      diagnosis: '결과지를 여는 중',
+      emoji: '📝',
+      color: '#b779ef',
+    };
+
+    R.wireExternalTrigger(btn, syntheticP, () => {
+      resetDoseVisuals();
+      R.resetGenericFlowState('💉 주사 놓고 결과 열기');
+      R.showRxImageFade(syntheticP, () => {
+        // 주사는 홈 탭에서 놓인다. 결과를 보여주기 전에 MBTI 탭으로 돌아온다.
+        const tab = document.querySelector('.tab-btn[data-view="mbti"]');
+        if (tab) tab.click();
+        onOpened();
+      });
+    });
   }
 
   // ---------- 결과 발표 ----------
@@ -550,7 +635,6 @@
       </div>
 
       <button class="action-btn" id="mbti-match-open" type="button" style="width:100%;margin-top:6px;">💞 상대 유형 골라서 궁합 보기</button>
-      <button class="rx-slip-photo-btn" id="mbti-guide-open" type="button" style="width:100%;margin-top:8px;">📖 유형 설명서 · 친구 유형 찾기</button>
       <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형으로 더 보기</button>
       <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">친구에게 내 유형 보내기 💌</button>
       <button class="rx-friend-quick-btn" id="mbti-retake-btn" type="button" style="width:100%;margin-top:8px;">🔄 초기화하고 다시 시험 보기</button>
@@ -565,8 +649,9 @@
       <div class="rx-detail-card">
         <div class="rx-detail-emoji">📝</div>
         <div class="rx-detail-title">MBTI 시험지</div>
-        <div class="rx-detail-diagnosis">${MBTI_QUESTIONS.length}문제 · 약 2분</div>
+        <div class="rx-detail-diagnosis">${TOTAL_Q}문제 · 약 2분</div>
         <p class="rx-detail-symptom">한 장에 한 문제씩. 정답은 없으니 먼저 손이 가는 쪽을 고르세요.</p>
+        <p class="rx-custom-hint" style="margin-top:8px;">🔀 볼 때마다 다른 문제가 나와요</p>
       </div>
       <div class="rx-custom-preview">
         <div class="rx-slip-row"><span class="rx-slip-key">결과로 볼 수 있는 것</span><span class="rx-slip-value">16유형 중 내 유형</span></div>
@@ -575,7 +660,6 @@
         <div class="rx-slip-row"><span class="rx-slip-key"></span><span class="rx-slip-value">내 유형에 맞는 마음 처방</span></div>
       </div>
       <button class="action-btn" id="mbti-start-btn" type="button" style="width:100%;margin-top:10px;">✏️ 시험 시작하기</button>
-      <button class="rx-slip-photo-btn" id="mbti-guide-open" type="button" style="width:100%;margin-top:8px;">📖 유형 설명서 · 친구 유형 찾기</button>
       <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형 먼저 볼래요</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
         재미로 보는 간이 유형 테스트예요. 공식 MBTI® 검사와는 무관합니다.
@@ -599,11 +683,21 @@
     function draw() {
       const result = loadResult();
       const blood = bloodOf();
+      // 설명서는 시험을 안 봐도 바로 쓸 수 있는 유일한 콘텐츠라 맨 위에 둔다.
+      // (시험 → 결과 뒤에 숨겨두면 "친구 유형 찾기"가 있는 줄도 모른다)
       mount.innerHTML = `
         <div class="rx-nav-header">
           ${goBack ? '<button class="rx-back-btn" id="mbti-back" type="button">‹</button>' : ''}
           <span class="rx-nav-title">📝 MBTI</span>
         </div>
+        <button class="rx-custom-cta mbti-guide-cta" id="mbti-guide-open" type="button">
+          <span class="rx-custom-cta-emoji">📖</span>
+          <span class="rx-custom-cta-text">
+            <span class="rx-custom-cta-title">유형 설명서</span>
+            <span class="rx-custom-cta-sub">16유형·혈액형 특징 · 친구 유형 찾기</span>
+          </span>
+          <span class="rx-custom-cta-arrow">›</span>
+        </button>
         ${result ? resultHtml(result, blood) : introHtml()}
       `;
       const backBtn = mount.querySelector('#mbti-back');
@@ -669,11 +763,16 @@
       track('mbti_start', {});
       openExam((answers) => {
         const { type, score } = scoreAnswers(answers);
-        announce(type, () => {
-          saveResult({ version: RESULT_VERSION, type, score, at: Date.now() });
-          track('mbti_done', { type });
-          draw();
-          mount.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        // 다 풀었다고 바로 보여주지 않는다 — 주사를 놓아야 결과지가 열린다(브랜드 핵심 흐름).
+        // 결과는 주사를 놓기 전까지 저장하지 않는다. 중간에 나가면 다시 풀어야 한다.
+        track('mbti_gate', { type });
+        openGate(mount, type, () => {
+          announce(type, () => {
+            saveResult({ version: RESULT_VERSION, type, score, at: Date.now() });
+            track('mbti_done', { type });
+            draw();
+            mount.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          });
         });
       }, draw);
     }
@@ -694,6 +793,7 @@
             <button class="mbti-pick${k === other ? ' on' : ''}" type="button" data-t="${k}">
               <span class="mbti-pick-emoji">${MBTI_TYPES[k].emoji}</span>
               <span class="mbti-pick-code">${k}</span>
+              <span class="mbti-pick-name">${esc(MBTI_TYPES[k].name)}</span>
             </button>`).join('')}
         </div>
         <div id="mbti-match-result">${other ? matchHtml(mine, other) : ''}</div>

@@ -1555,7 +1555,7 @@
         <span class="rx-nav-title">🤖 AI 맘운</span>
       </div>
       <p class="rx-custom-hint">💛 오늘 상황이나 궁금한 걸 편하게 적어보세요. 사주 프로필 + 오늘의 운세 + 지금 마음을 합쳐서 답해드릴게요</p>
-      <textarea id="ai-maumun-input" class="rx-custom-input" style="width:100%;min-height:80px;resize:vertical;" maxlength="60" placeholder="예: 오늘 회사에서 발표가 있는데 괜찮을까?"></textarea>
+      <textarea id="ai-maumun-input" class="rx-custom-input" style="width:100%;min-height:80px;resize:vertical;" maxlength="60" placeholder="궁금한 마음을 물어보세요"></textarea>
       <span class="rx-custom-counter" id="ai-maumun-count">0/60</span>
       <button class="action-btn" id="ai-maumun-submit-btn" type="button" style="width:100%;margin-top:10px;">🔮 AI 맘운에게 물어보기</button>
       <div id="ai-maumun-answer"></div>

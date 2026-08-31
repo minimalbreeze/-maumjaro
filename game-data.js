@@ -225,7 +225,7 @@
   const GAME_CONFIG = {
     dailyBaseXp: 10,          // 그날 첫 처방 완료 시
     rarityBonusXp: { normal: 0, rare: 5, epic: 15, legendary: 40 },
-    openTapCount: 5,          // 보상 상자를 여는 데 필요한 탭 수
+    openTapCount: 7,          // 왁뿌볼을 여는 데 필요한 탭 수(style.css의 .tap-1~7과 짝)
     bonusBoxEnabled: true,    // 낮은 확률로 추가 보상 상자
     bonusBoxChance: 0.08,
     bonusBoxXp: 15,

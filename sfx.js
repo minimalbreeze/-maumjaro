@@ -175,26 +175,52 @@
 
   // ---------- 캡슐 열기 ----------
 
-  // 캡슐을 두드리는 소리. 두드릴수록 금이 깊어지도록 단계(step)에 따라 세진다.
+  // 캡슐을 두드리는 소리. 7단계로 늘어났으므로 세기 변화도 그만큼 잘게 나눈다.
+  // 뒤로 갈수록 금이 깊어져 껍질이 얇아지는 느낌 — 음이 높아지고 잔향이 길어진다.
   function capsuleTap(step) {
     const c = audio(); if (!c) return;
     const t = c.currentTime;
-    const s = Math.max(0, Math.min(4, (step || 1) - 1));
-    burst(c, t, 0.05 + s * 0.008, { freq: 2400 + s * 260, q: 2.2, gain: 0.10 + s * 0.022 });
-    blip(c, t, 190 + s * 26, 0.07, { type: 'triangle', gain: 0.07 + s * 0.015, freqTo: 110 });
+    const s = Math.max(0, Math.min(6, (step || 1) - 1)) / 6; // 0~1로 정규화
+    burst(c, t, 0.045 + s * 0.03, { freq: 2300 + s * 1500, q: 2.4, gain: 0.09 + s * 0.07 });
+    blip(c, t, 185 + s * 150, 0.065 + s * 0.05, { type: 'triangle', gain: 0.065 + s * 0.05, freqTo: 105 });
+    // 4번째부터는 금이 자잘하게 번지는 소리를 뒤에 하나 더 붙인다
+    if (s > 0.45) {
+      burst(c, t + 0.05, 0.05 + s * 0.03, { freq: 3600 + s * 1800, q: 1.6, gain: 0.03 + s * 0.05, filter: 'highpass' });
+    }
   }
 
-  // 캡슐이 쩍 갈라지는 소리. 날카로운 크랙 뒤에 조각이 흩어지는 잔향.
+  // 캡슐이 쩍 갈라지는 소리.
+  // 예전엔 노이즈 한 방 + 사각파여서 "삑" 하는 전자음에 가까웠다.
+  // 실제로 단단한 플라스틱이 깨질 때는 (1) 껍질이 버티다 끊기는 저역 "뚝",
+  // (2) 갈라지는 순간의 아주 짧고 날카로운 고역 크랙, (3) 조각이 서로 부딪히며
+  // 튀는 잔해음, (4) 빈 껍데기가 울리는 여운 — 이 네 겹이 겹친다. 그대로 쌓는다.
   function capsuleCrack() {
     const c = audio(); if (!c) return;
     const t = c.currentTime;
-    burst(c, t, 0.09, { freq: 3400, freqTo: 1200, q: 0.9, gain: 0.26, filter: 'highpass' });
-    blip(c, t, 520, 0.12, { type: 'square', gain: 0.10, freqTo: 180 });
-    for (let i = 0; i < 6; i++) {
-      burst(c, t + 0.06 + i * 0.045 + Math.random() * 0.02, 0.05, {
-        freq: 2600 + Math.random() * 2200, q: 2.0, gain: 0.05,
+
+    // 1) 껍질이 끊기는 저역 "뚝" — 아주 짧게, 음정을 급격히 떨군다
+    blip(c, t, 320, 0.09, { type: 'triangle', gain: 0.16, freqTo: 70 });
+    burst(c, t, 0.05, { freq: 420, q: 0.9, gain: 0.12, filter: 'lowpass' });
+
+    // 2) 갈라지는 순간 — 폭이 넓은 고역 노이즈를 아주 짧게(길면 "쉬-"가 된다)
+    burst(c, t + 0.004, 0.035, { freq: 6800, freqTo: 2600, q: 0.5, gain: 0.3, filter: 'highpass', rate: 1.4 });
+    burst(c, t + 0.012, 0.06, { freq: 3000, freqTo: 900, q: 0.8, gain: 0.18 });
+
+    // 3) 조각이 튀며 부딪히는 소리 — 간격과 음색을 매번 흔들어야 기계음이 안 된다
+    const bits = 9;
+    for (let i = 0; i < bits; i++) {
+      const d = 0.035 + i * 0.028 + Math.random() * 0.03;
+      const decay = Math.pow(0.82, i);
+      burst(c, t + d, 0.025 + Math.random() * 0.02, {
+        freq: 2800 + Math.random() * 3400, q: 3.2, gain: 0.075 * decay, rate: 0.9 + Math.random() * 0.5,
       });
+      // 조각 중 몇 개는 딱딱한 알갱이 소리를 함께 낸다
+      if (i % 3 === 0) blip(c, t + d, 760 + Math.random() * 900, 0.035, { type: 'square', gain: 0.03 * decay, freqTo: 300 });
     }
+
+    // 4) 빈 껍데기가 울리는 여운 — 아주 작게 깔아 공간감만 준다
+    blip(c, t + 0.03, 168, 0.5, { type: 'sine', gain: 0.05, freqTo: 96 });
+    burst(c, t + 0.05, 0.4, { freq: 1200, freqTo: 400, q: 0.6, gain: 0.02, filter: 'bandpass' });
   }
 
   // 갓차 캡슐이 열리며 운세가 드러나는 소리. 카드 공개와 같은 계열의 신비로운 톤.
@@ -219,16 +245,28 @@
 
   // ---------- 마음유형 시험지 ----------
 
-  // 시험지를 한 장 넘기는 소리. 종이는 음정이 없고 "사아—악" 하고 스치는 소음이라
-  // 노이즈를 고역에서 저역으로 훑어 내리고, 끝에 종이가 놓이는 "톡"을 짧게 붙인다.
+  // 시험지를 한 장 넘기는 소리.
+  // 한 번의 노이즈 스윕으로는 "쉬-" 하는 바람소리가 되어 종이로 안 들린다.
+  // 실제 종이는 (1) 손가락이 모서리를 집어 드는 짧은 "삭",
+  // (2) 장이 휘면서 공기를 가르는 "샤아—" (고역이 넓게 퍼졌다 좁아짐),
+  // (3) 장이 뒤집혀 반대편에 탁 떨어지는 "타닥" 두 겹으로 들린다.
+  // 그리고 종이는 섬유질이라 스펙트럼이 넓다 — 대역폭(Q)을 아주 낮게 잡아야 한다.
   function pageFlip() {
     const c = audio(); if (!c) return;
     const t = c.currentTime;
-    burst(c, t, 0.19, { freq: 4200, freqTo: 900, q: 0.55, gain: 0.10, filter: 'bandpass', rate: 1.1 });
-    burst(c, t + 0.05, 0.13, { freq: 2600, freqTo: 1400, q: 0.7, gain: 0.055 });
-    // 넘긴 장이 책상에 닿는 소리
-    burst(c, t + 0.17, 0.045, { freq: 1500, q: 1.8, gain: 0.07 });
-    blip(c, t + 0.17, 150, 0.06, { type: 'sine', gain: 0.04, freqTo: 90 });
+
+    // 1) 모서리를 집어 드는 짧은 마찰
+    burst(c, t, 0.045, { freq: 5200, freqTo: 3200, q: 0.35, gain: 0.06, filter: 'highpass', rate: 1.3 });
+
+    // 2) 장이 휘며 공기를 가르는 본체 — 두 겹을 살짝 어긋나게 겹쳐 두께를 만든다
+    burst(c, t + 0.035, 0.16, { freq: 3400, freqTo: 1100, q: 0.3, gain: 0.085, filter: 'bandpass', rate: 1.05 });
+    burst(c, t + 0.055, 0.13, { freq: 6200, freqTo: 2200, q: 0.4, gain: 0.045, filter: 'highpass', rate: 0.95 });
+
+    // 3) 장이 반대편에 떨어지는 "타-닥" (두 번, 아주 짧게)
+    burst(c, t + 0.175, 0.04, { freq: 1700, freqTo: 800, q: 0.9, gain: 0.075, filter: 'bandpass' });
+    burst(c, t + 0.215, 0.055, { freq: 1100, freqTo: 520, q: 0.7, gain: 0.055, filter: 'bandpass' });
+    // 종이 뭉치가 눌리는 아주 낮은 울림(있고 없고가 "얇은 종이 한 장"과 "시험지 묶음"을 가른다)
+    blip(c, t + 0.185, 120, 0.09, { type: 'sine', gain: 0.035, freqTo: 72 });
   }
 
   // 답을 고를 때의 짧은 체크 소리. 넘기는 소리와 겹쳐도 묻히지 않게 또렷한 톤 하나.
