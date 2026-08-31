@@ -22,12 +22,12 @@
      맞춤 처방전을 보냈습니다"는 친구 공유가 아닐 때 거짓이 되고, 한국 메신저에서 "긴급"은
      피싱 신호로 읽혀 오히려 이탈을 키웠다. -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="무료 타로 · 오늘의 운세 · 마음처방 🎴💉" />
+<meta property="og:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
 <meta property="og:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
 <meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image.jpg" />
 <meta property="og:url" content="https://maumjaro.minimalbreeze.com/" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="무료 타로 · 오늘의 운세 · 마음처방 🎴💉" />
+<meta name="twitter:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
 <meta name="twitter:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
 <meta name="twitter:image" content="https://maumjaro.minimalbreeze.com/og-image.jpg" />
 
@@ -75,7 +75,7 @@
     </div>
 
     <div id="friend-tarot-incoming-card" class="custom-incoming-card" hidden>
-      <div class="custom-incoming-emoji">🎴</div>
+      <div class="custom-incoming-emoji">🌙</div>
       <div class="today-rx-body">
         <div class="today-rx-eyebrow">친구가 보낸 타로</div>
         <div class="today-rx-title" id="friend-tarot-incoming-title"></div>
@@ -220,22 +220,40 @@
             <linearGradient id="charShirt" x1="0" y1="0" x2="0.4" y2="1">
               <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#5fb3a3" />
             </linearGradient>
+            <!-- 바닥 그림자: 가운데가 진하고 가장자리로 흩어져야 "떠 있지 않고 서 있다"가 된다 -->
+            <radialGradient id="charGround" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%" stop-color="rgba(90,60,40,0.34)" />
+              <stop offset="60%" stop-color="rgba(90,60,40,0.14)" />
+              <stop offset="100%" stop-color="rgba(90,60,40,0)" />
+            </radialGradient>
           </defs>
+          <!-- 바닥 그림자 -->
+          <ellipse cx="70" cy="114" rx="36" ry="6" fill="url(#charGround)" />
           <!-- 다리 -->
           <rect x="52" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
           <rect x="75" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
           <!-- 몸통(배) -->
           <ellipse cx="70" cy="72" rx="34" ry="29" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
+          <!-- 배 아래쪽에 그늘을 넣어 평평한 타원이 아니라 둥근 배로 보이게 한다 -->
+          <ellipse cx="70" cy="80" rx="30" ry="21" fill="rgba(214,150,96,0.22)" />
+          <ellipse cx="59" cy="66" rx="12" ry="8" fill="rgba(255,255,255,0.42)" />
           <!-- 옷: 배꼽 위쪽만 덮어 배를 내놓은 모습 -->
           <path d="M38 62 a34 29 0 0 1 64 0 z" fill="url(#charShirt)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+          <!-- 옷 주름 한 줄 -->
+          <path d="M50 52 q20 8 40 0" fill="none" stroke="rgba(31,92,80,0.28)" stroke-width="2.2" stroke-linecap="round" />
           <!-- 팔 -->
           <path d="M38 60 q-14 10 -10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
           <path d="M102 60 q14 10 10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
           <!-- 머리 -->
           <circle cx="70" cy="28" r="23" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
+          <!-- 볼록해 보이도록 왼쪽 위 하이라이트 + 턱 밑 그늘 -->
+          <ellipse cx="60" cy="19" rx="9" ry="6" fill="rgba(255,255,255,0.45)" />
+          <path d="M50 33 a23 23 0 0 0 40 0 a23 23 0 0 1 -40 0z" fill="rgba(214,150,96,0.18)" />
           <path d="M52 14 q18 -10 36 0" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
           <circle cx="61" cy="28" r="2.8" fill="#1f5c50" />
           <circle cx="79" cy="28" r="2.8" fill="#1f5c50" />
+          <circle cx="62" cy="27" r="0.9" fill="#fff" />
+          <circle cx="80" cy="27" r="0.9" fill="#fff" />
           <path d="M64 36 q6 5 12 0" fill="none" stroke="#1f5c50" stroke-width="2.6" stroke-linecap="round" />
           <ellipse cx="53" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
           <ellipse cx="87" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
@@ -561,7 +579,7 @@
         <div class="rx-slip-note-input" id="rx-friend-note-input" contenteditable="true" data-placeholder="친구에게 하고 싶은 말을 적어보세요 (선택)"></div>
         <div class="rx-hook-strip">
           <div class="rx-hook-cards" id="rx-hook-cards"></div>
-          <div class="rx-hook-text">🎴 타로 3장 뽑기 · 🔮 오늘의 운세<br /><strong>맘운자로에서 무료로</strong></div>
+          <div class="rx-hook-text">🌙 타로 3장 뽑기 · 🔮 오늘의 운세<br /><strong>맘운자로에서 무료로</strong></div>
         </div>
       </div>
       <p class="rx-friend-link" id="rx-friend-link"></p>

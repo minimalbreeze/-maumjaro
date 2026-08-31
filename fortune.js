@@ -25,6 +25,20 @@
     SIGN_DAY_SEED, SIGN_LUCKY_TIME, SIGN_LUCKY_PLACE, SIGN_LUCKY_ACT,
   } = window.MAUMJARO_ZODIAC_DATA;
 
+  // 타로 아이콘. 예전에는 🌙를 썼는데 그건 유니코드상 "화투(하나후다)" 이모지라
+  // 기기에 따라 화투장 그림으로 그려진다 — 타로와 아무 상관이 없다.
+  // 화면에 자리가 있는 곳은 이 미니 카드 SVG를, 순수 텍스트(공유 문구·토스트)는 🌙을 쓴다.
+  // (🌙은 앱의 타로 카드 뒷면 그림이 초승달이라 결이 맞는다.)
+  const TAROT_ICON_SVG = `
+    <svg class="tarot-icon" viewBox="0 0 26 40" aria-hidden="true">
+      <rect x="1" y="1" width="24" height="38" rx="3.5" fill="#0e0b1c" />
+      <rect x="3" y="3" width="20" height="34" rx="2.2" fill="none" stroke="#d9ab4e" stroke-width="1.1" />
+      <path d="M16.4 14.2a6.2 6.2 0 1 0 0 11.6 7.4 7.4 0 1 1 0-11.6z" fill="#e8c163" />
+      <path d="M9.6 11.6l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7z" fill="#e8c163" />
+      <path d="M18.2 27.4l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="#e8c163" opacity=".8" />
+    </svg>`;
+  const TAROT_TEXT_ICON = '🌙';
+
   const FORTUNE_SEED_BY_CATEGORY = {
     mind: MIND_FORTUNE_SEED, social: SOCIAL_FORTUNE_SEED, wealth: WEALTH_FORTUNE_SEED,
     love: LOVE_FORTUNE_SEED, work: WORK_FORTUNE_SEED,
@@ -473,6 +487,11 @@
           <span class="rx-category-label">월간 운세</span>
           <span class="rx-category-count">이번 달</span>
         </div>
+        <div class="rx-category-tile" data-fortune="tarot">
+          <span class="rx-category-emoji">${TAROT_ICON_SVG}</span>
+          <span class="rx-category-label">타로</span>
+          <span class="rx-category-count">${countTodayTarotDraws() ? `오늘 ${countTodayTarotDraws()}개` : '주제별 3장'}</span>
+        </div>
         <div class="rx-category-tile" data-fortune="zodiac">
           <span class="rx-category-emoji">⭐</span>
           <span class="rx-category-label">별자리 운세</span>
@@ -482,11 +501,6 @@
           <span class="rx-category-emoji">🐯</span>
           <span class="rx-category-label">띠별 운세</span>
           <span class="rx-category-count">오늘</span>
-        </div>
-        <div class="rx-category-tile" data-fortune="tarot">
-          <span class="rx-category-emoji">🎴</span>
-          <span class="rx-category-label">타로</span>
-          <span class="rx-category-count">${countTodayTarotDraws() ? `오늘 ${countTodayTarotDraws()}개` : '주제별 3장'}</span>
         </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
@@ -583,7 +597,16 @@
     // 손맛이 안 산다. 결과는 기존처럼 fortuneContent에 그리므로 buildAndRender는 그대로다.
     const stage = document.createElement('div');
     stage.className = 'gacha-full';
+    // 배경이 그라디언트뿐이라 밋밋했다. 천천히 떠오르는 반짝이를 깔아 공간감을 준다.
+    const motes = Array.from({ length: 14 }, (_, i) => {
+      const x = 4 + (i * 41) % 92;
+      const s = 4 + (i % 4) * 3;
+      return `<span class="gf-mote" style="left:${x}%;width:${s}px;height:${s}px;
+        animation-delay:${(i * 0.63).toFixed(2)}s;animation-duration:${(7 + (i % 5) * 1.4).toFixed(1)}s;"></span>`;
+    }).join('');
+
     stage.innerHTML = `
+      <div class="gf-sky" aria-hidden="true">${motes}</div>
       <button class="gacha-full-back" id="fortune-detail-back" type="button" aria-label="뒤로">‹</button>
       <div class="reveal-stage">
         <p class="gacha-full-title">${title}</p>
@@ -1073,7 +1096,7 @@
     };
     const url = buildMaumunShareUrl(payload);
     // 운세를 보낸 사람에겐 운세 안내가 중복이므로, 타로와 마음 처방 쪽으로 유도한다.
-    const text = `${MAUMUN_SHARE_TEXTS[Math.floor(Math.random() * MAUMUN_SHARE_TEXTS.length)]}\n\n🎴 타로 · 💉 마음 처방도 무료예요!`;
+    const text = `${MAUMUN_SHARE_TEXTS[Math.floor(Math.random() * MAUMUN_SHARE_TEXTS.length)]}\n\n🌙 타로 · 💉 마음 처방도 무료예요!`;
     Rx.shareOrCopy(text, url);
   }
 
@@ -1187,12 +1210,12 @@
     // 구형 링크(주제 키 없이 문구를 통째로 담던 방식)는 실려온 값을 그대로 쓴다.
     const topic = payload.t
       ? tarotTopicOf(payload.t)
-      : { label: payload.tl || '오늘의', emoji: payload.te || '🎴' };
+      : { label: payload.tl || '오늘의', emoji: payload.te || '🌙' };
     const verdict = payload.t
       ? tarotVerdictOf(cards, topic)
       : { stars: payload.s || 3, title: payload.vt, line: payload.vl || '' };
     const topicLabel = topic.label;
-    const topicEmoji = topic.emoji || '🎴';
+    const topicEmoji = topic.emoji || '🌙';
 
     friendTarotIncomingTitle.textContent = payload.fr
       ? `${payload.fr}${nameSubjectParticle(payload.fr)} 본 ${topicLabel} 타로`
@@ -1220,7 +1243,7 @@
           dosage: starsText(verdict.stars),
           color: '#b779ef',
           showMakeOwnBtn: true, // "나도 보기" → 운세/타로 탭으로 이어진다
-          makeOwnLabel: '🎴 나도 타로 보기',
+          makeOwnLabel: '🌙 나도 타로 보기',
         });
         Rx.resetGenericFlowState('확인하기');
       });
@@ -1967,7 +1990,7 @@
     // 주제와 별점을 앞에 세워 "무슨 타로를 봤는지"가 한눈에 보이게 한다(클릭률에 직접 영향).
     // 타로를 공유하는 사람에겐 타로 안내가 의미 없으므로, 운세와 마음 처방 쪽으로 유도한다.
     const text = [
-      `🎴 ${topic.label} 타로 봤는데 ${starsText(verdict.stars)} 나왔어`,
+      `🌙 ${topic.label} 타로 봤는데 ${starsText(verdict.stars)} 나왔어`,
       names,
       '',
       '🔮 오늘의 운세 · 💉 마음 처방도 무료예요!',
@@ -2026,9 +2049,9 @@
       setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
       try {
         await navigator.clipboard.writeText(`${text}\n${url}`);
-        Core.showToast('이미지 저장 + 링크 복사 완료 🎴');
+        Core.showToast('이미지 저장 + 링크 복사 완료 🌙');
       } catch (e) {
-        Core.showToast('타로 이미지를 저장했어요 🎴');
+        Core.showToast('타로 이미지를 저장했어요 🌙');
       }
     } catch (e) {
       if (e && e.name === 'AbortError') return;
@@ -2168,7 +2191,7 @@
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
-        <span class="rx-nav-title">🎴 타로</span>
+        <span class="rx-nav-title">🌙 타로</span>
       </div>
       <p class="tarot-hint">무엇이 궁금한지 골라주세요</p>
       <div class="rx-category-grid">
@@ -2370,7 +2393,7 @@
       category: 'tarot',
       title: `${topic.label} 타로`,
       diagnosis: '카드를 여는 중',
-      emoji: '🎴',
+      emoji: '🌙',
       color: '#b779ef',
     };
     const openBtn = document.getElementById('tarot-open-btn');
@@ -2446,7 +2469,7 @@
         <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">다른 처방도 보기 ›</button>
       </div>
       <button class="action-btn" id="tarot-slip-btn" type="button" style="width:100%;margin-top:12px;">📝 처방전 보기</button>
-      <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🎴 타로 결과 공유하기</button>
+      <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🌙 타로 결과 공유하기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${topic.label} 타로는 오늘 이걸로 고정돼요. 다른 주제는 지금 바로 볼 수 있어요</p>
     `;
 
@@ -2555,7 +2578,7 @@
 
       <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">💫 ${isEdit ? '맘운 프로필 저장하기' : '맘운 프로필 완성하기'}</button>
       ${isEdit ? '' : `
-      <button class="rx-slip-photo-btn" id="fortune-skip-to-tarot" type="button" style="width:100%;margin-top:10px;">🎴 생년월일 없이 타로만 먼저 볼래요</button>
+      <button class="rx-slip-photo-btn" id="fortune-skip-to-tarot" type="button" style="width:100%;margin-top:10px;">🌙 생년월일 없이 타로만 먼저 볼래요</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:6px;">타로는 사주 정보가 필요 없어요</p>`}
 
       <div style="margin-top:24px;">
@@ -3067,7 +3090,7 @@
           <span class="rx-category-count">일/월/년</span>
         </div>
         <div class="rx-category-tile" data-cat="tarot">
-          <span class="rx-category-emoji">🎴</span>
+          <span class="rx-category-emoji">${TAROT_ICON_SVG}</span>
           <span class="rx-category-label">타로</span>
           <span class="rx-category-count">일/월/년</span>
         </div>
@@ -3091,7 +3114,7 @@
         }
         historyCustomArea.hidden = false;
         if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
-        else if (cat === 'tarot') renderHistoryCategoryView(profile, '🎴 타로 기록', loadTarotItems);
+        else if (cat === 'tarot') renderHistoryCategoryView(profile, '🌙 타로 기록', loadTarotItems);
         // 마음약은 "언제 무엇을 처음 얻었는지"가 기록이다. 항목을 누르면 마음약국이 열린다.
         else if (cat === 'medicine') {
           const G = window.MaumjaroGame;
