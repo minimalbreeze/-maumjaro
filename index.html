@@ -406,6 +406,11 @@
       <span>📲 홈 화면에 추가</span>
       <button id="settings-install-btn" class="toggle-btn" type="button">방법 보기</button>
     </div>
+    <!-- 온보딩은 첫 방문에 한 번만 자동으로 뜬다. 다시 보고 싶은 사람을 위한 입구. -->
+    <div class="sound-row">
+      <span>📖 사용법 다시 보기</span>
+      <button id="settings-onboarding-btn" class="toggle-btn" type="button">보기</button>
+    </div>
     <div class="settings-divider"></div>
     <button id="settings-reset-btn" class="settings-reset-btn" type="button">🗑️ 모든 기록 초기화</button>
     <p class="settings-reset-hint">이름/사운드/센서 등 설정은 유지되고, 감정·처방·보낸 기록만 지워져요</p>
@@ -721,6 +726,8 @@
 <!-- 첫 주사를 완주한 뒤 "홈 화면에 추가"를 한 번만 권한다.
      보상 오버레이가 닫히는 것만 지켜보므로 다른 파일에 의존하지 않는다. -->
 <script src="install-prompt.js"></script>
+<!-- 첫 방문 3장 안내. 설정에서 다시 볼 수 있다. -->
+<script src="onboarding.js"></script>
 
 <!-- Cloudflare Web Analytics — 방문/유입 경로만 집계한다.
      쿠키를 쓰지 않으므로 동의 배너가 필요 없고, 감정 기록·사주 정보는 전송되지 않는다

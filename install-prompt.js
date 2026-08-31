@@ -39,8 +39,8 @@
   const COPY = {
     kakao: {
       title: '📱 홈 화면에 두면 내일도 잊지 않아요',
-      body: '카카오톡 안에서는 설치가 안 돼요.<br>먼저 <b>우측 상단 ⋯ → 다른 브라우저로 열기</b>를 눌러주세요.',
-      cta: null,
+      body: '카카오톡 안에서는 설치가 안 돼요.<br>브라우저로 열면 바로 추가할 수 있어요.',
+      cta: '브라우저로 열기',
     },
     ios: {
       title: '📱 홈 화면에 두면 내일도 잊지 않아요',
@@ -114,6 +114,22 @@
     const go = sheet.querySelector('.ip-go');
     if (go) {
       go.addEventListener('click', async () => {
+        // 카카오톡 인앱 브라우저에는 "홈 화면에 추가" 메뉴 자체가 없다.
+        // 카카오가 여는 전용 스킴으로 기본 브라우저에 같은 주소를 띄운다.
+        // (지금 가장 잘 완주하는 유입이 카톡이라 이 한 단계가 특히 중요하다)
+        if (kind === 'kakao') {
+          track('kakao_escape_clicked', {});
+          const target = location.href;
+          location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(target);
+          // 스킴이 막힌 기기도 있다. 잠깐 기다렸다가 아직 이 화면이면 수동 안내로 바꾼다.
+          setTimeout(() => {
+            if (document.visibilityState !== 'visible') return; // 브라우저로 넘어갔다
+            sheet.querySelector('.ip-body').innerHTML =
+              '자동으로 안 열렸어요.<br><b>우측 상단 ⋯ → 다른 브라우저로 열기</b>를 눌러주세요.';
+            go.remove();
+          }, 1200);
+          return;
+        }
         if (!deferredPrompt) {
           // 네이티브 프롬프트를 못 쓰는 상황이면 수동 안내로 바꿔 보여준다.
           sheet.querySelector('.ip-body').innerHTML =

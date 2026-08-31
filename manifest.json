@@ -4,7 +4,7 @@
   "description": "마음에 놓는 오늘의 처방 - 마음 주사 기록 앱",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#23150e",
+  "background_color": "#fdf3ee",
   "theme_color": "#ff9166",
   "orientation": "portrait",
   "icons": [

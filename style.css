@@ -2534,6 +2534,48 @@ body::before {
 }
 .app-trust-install:active { transform: scale(0.96); }
 
+/* ---------- 첫 방문 온보딩 ---------- */
+.ob {
+  position: fixed; inset: 0; z-index: 1400;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(35,20,10,0.5);
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+}
+.ob.show { opacity: 1; pointer-events: auto; }
+.ob-card {
+  width: 100%; max-width: 340px; text-align: center;
+  background: var(--bg-top);
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  padding: 22px 22px calc(16px + env(safe-area-inset-bottom));
+  box-shadow: 0 20px 60px rgba(0,0,0,0.32);
+  transform: translateY(12px); transition: transform .25s ease;
+}
+.ob.show .ob-card { transform: translateY(0); }
+.ob-brand { font-size: 13px; font-weight: 800; color: var(--text-dim); margin-bottom: 14px; }
+.ob-art { height: 104px; display: flex; align-items: center; justify-content: center; }
+.ob-art.in { animation: ob-pop .32s ease; }
+@keyframes ob-pop {
+  from { opacity: 0; transform: translateY(8px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+.ob-title { margin: 12px 0 6px; font-size: 17px; font-weight: 800; color: var(--text); }
+.ob-body { margin: 0 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--text-dim); }
+.ob-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.ob-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(128,128,128,0.28); transition: background .2s ease, width .2s ease;
+}
+.ob-dot.on { width: 18px; border-radius: 4px; background: var(--brand-coral, #ff9166); }
+.ob-next { width: 100%; }
+.ob-skip {
+  width: 100%; margin-top: 8px; padding: 9px; cursor: pointer;
+  border: none; background: none; font-size: 13px; color: var(--text-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ob, .ob-card, .ob-art.in { transition: none; animation: none; }
+}
+
 /* ---------- 홈 화면에 추가 안내 시트 ---------- */
 .install-sheet {
   position: fixed; inset: 0; z-index: 1300;
