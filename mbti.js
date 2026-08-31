@@ -12,7 +12,10 @@
 
   const D = window.MAUMJARO_MBTI_DATA;
   if (!D) return;
-  const { MBTI_QUESTIONS, MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX } = D;
+  const {
+    MBTI_QUESTIONS, MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX,
+    MATCH_AXIS_LINES, MATCH_CAUTION, MATCH_HEADLINES, MATCH_SAME_TYPE,
+  } = D;
 
   const RESULT_KEY = 'maumjaro:mbtiResult';
   const RESULT_VERSION = 1;
@@ -205,7 +208,7 @@
 
     // resultFanfare의 두구두구가 약 1.05초, 그 뒤 정적 0.22초에 팡파르가 터진다.
     setTimeout(() => {
-      el.querySelector('.md-label').textContent = '당신의 마음유형은';
+      el.querySelector('.md-label').textContent = '당신의 MBTI는';
       el.classList.add('reveal');
     }, 1250);
     setTimeout(() => {
@@ -213,6 +216,92 @@
       setTimeout(() => el.remove(), 300);
       done();
     }, 3200);
+  }
+
+  // ---------- 궁합 ----------
+  // 16×16 = 256쌍을 전부 손으로 쓸 수 없으므로 축별 문장을 조합한다.
+  // 점수는 널리 쓰이는 해석을 따랐다: S/N이 같으면 말이 통하고(가장 큼),
+  // E/I·T/F는 다를 때 서로를 채우고, J/P는 같을 때 생활 리듬이 맞는다.
+  const AXES = [
+    { key: 'EI', i: 0 }, { key: 'SN', i: 1 }, { key: 'TF', i: 2 }, { key: 'JP', i: 3 },
+  ];
+
+  function pairAnalysis(mine, other) {
+    const same = AXES.map((a) => mine[a.i] === other[a.i]);
+    let score = 0;
+    score += same[1] ? 2 : 0;      // S/N
+    score += same[0] ? 0.5 : 1;    // E/I
+    score += same[2] ? 0.5 : 1;    // T/F
+    score += same[3] ? 1 : 0.5;    // J/P
+
+    let stars = Math.max(1, Math.min(5, Math.round(score)));
+    // 결과 화면에서 이미 "잘 맞는 유형"이라고 소개한 쌍은 별점도 그에 맞춰야 말이 된다.
+    const m = MBTI_MATCH[mine] || { best: [], grow: [] };
+    if (m.best.indexOf(other) >= 0) stars = Math.max(stars, 5);
+    else if (m.grow.indexOf(other) >= 0) stars = Math.max(stars, 3);
+
+    const lines = AXES.map((a, k) => {
+      const id = same[k] ? `${a.key}-same-${mine[a.i]}` : `${a.key}-diff`;
+      return MATCH_AXIS_LINES[id];
+    }).filter(Boolean);
+
+    const cautions = AXES.filter((a, k) => !same[k]).map((a) => MATCH_CAUTION[a.key]).filter(Boolean);
+    const pool = MATCH_HEADLINES[stars] || MATCH_HEADLINES[3];
+    // 같은 쌍은 늘 같은 문장이 나와야 한다(다시 눌렀는데 바뀌면 신뢰가 떨어진다).
+    let h = 0;
+    const sig = mine + other;
+    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+    const headline = pool[Math.abs(h) % pool.length];
+
+    // 부딪히는 축이 있으면 그 축에 맞는 처방으로 보낸다. 다 같으면 인간관계로.
+    const rxByAxis = { EI: 'social', SN: 'work', TF: 'mind', JP: 'sleep' };
+    const weak = AXES.filter((a, k) => !same[k])[0];
+    const rx = weak ? rxByAxis[weak.key] : 'social';
+
+    return { stars, headline, lines, cautions, rx, isSame: mine === other };
+  }
+
+  function starRow(n) {
+    return `<span class="mbti-stars">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
+  }
+
+  function matchHtml(mine, other) {
+    const a = pairAnalysis(mine, other);
+    const tm = MBTI_TYPES[mine];
+    const to = MBTI_TYPES[other];
+    return `
+      <div class="rx-detail-card mbti-pair">
+        <div class="mbti-pair-row">
+          <span class="mbti-pair-side"><b>${tm.emoji}</b><em>${esc(mine)}</em><i>나</i></span>
+          <span class="mbti-pair-heart">💞</span>
+          <span class="mbti-pair-side"><b>${to.emoji}</b><em>${esc(other)}</em><i>상대</i></span>
+        </div>
+        ${starRow(a.stars)}
+        <div class="rx-detail-title" style="margin-top:6px;">${esc(a.headline)}</div>
+        <p class="rx-detail-symptom">${esc(to.trait)}</p>
+      </div>
+
+      ${a.isSame ? `<p class="rx-custom-hint">🪞 ${esc(MATCH_SAME_TYPE)}</p>` : ''}
+
+      <div class="rx-custom-preview">
+        ${a.lines.map((l) => `<p class="rx-slip-text">· ${esc(l)}</p>`).join('')}
+      </div>
+
+      ${a.cautions.length ? `
+      <div class="rx-detail-card mbti-ache">
+        <div class="rx-detail-emoji">⚠️</div>
+        <div class="rx-detail-title">조심할 지점</div>
+        ${a.cautions.map((c) => `<p class="rx-detail-symptom">${esc(c)}</p>`).join('')}
+      </div>` : `
+      <p class="rx-custom-hint">네 축이 전부 같아요. 부딪힐 일은 적지만, 둘 다 같은 곳에서 막힙니다.</p>`}
+
+      <button class="rx-friend-quick-btn mbti-goto-rx" type="button" data-rxcat="${a.rx}" style="width:100%;margin-top:8px;">
+        우리 사이에 필요한 처방 보러가기 ›
+      </button>
+      <button class="action-btn" id="mbti-match-share" type="button" data-mine="${esc(mine)}" data-other="${esc(other)}" data-stars="${a.stars}" style="width:100%;margin-top:8px;">
+        궁합 결과 보내기 💌
+      </button>
+    `;
   }
 
   // ---------- 결과 화면 ----------
@@ -275,7 +364,8 @@
         </button>
       </div>
 
-      <button class="action-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:6px;">친구에게 내 유형 보내기 💌</button>
+      <button class="action-btn" id="mbti-match-open" type="button" style="width:100%;margin-top:6px;">💞 상대 유형 골라서 궁합 보기</button>
+      <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">친구에게 내 유형 보내기 💌</button>
       <button class="rx-friend-quick-btn" id="mbti-retake-btn" type="button" style="width:100%;margin-top:8px;">🔄 초기화하고 다시 시험 보기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
         재미로 보는 간이 유형 테스트예요. 공식 MBTI® 검사와는 무관합니다.
@@ -287,7 +377,7 @@
     return `
       <div class="rx-detail-card">
         <div class="rx-detail-emoji">📝</div>
-        <div class="rx-detail-title">마음유형 시험지</div>
+        <div class="rx-detail-title">MBTI 시험지</div>
         <div class="rx-detail-diagnosis">${MBTI_QUESTIONS.length}문제 · 약 2분</div>
         <p class="rx-detail-symptom">한 장에 한 문제씩. 정답은 없으니 먼저 손이 가는 쪽을 고르세요.</p>
       </div>
@@ -323,7 +413,7 @@
       mount.innerHTML = `
         <div class="rx-nav-header">
           ${goBack ? '<button class="rx-back-btn" id="mbti-back" type="button">‹</button>' : ''}
-          <span class="rx-nav-title">📝 마음유형</span>
+          <span class="rx-nav-title">📝 MBTI</span>
         </div>
         ${result ? resultHtml(result, blood) : introHtml()}
       `;
@@ -352,6 +442,11 @@
         });
       });
 
+      const matchOpen = mount.querySelector('#mbti-match-open');
+      if (matchOpen && result) {
+        matchOpen.addEventListener('click', () => drawMatch(result.type, null));
+      }
+
       const share = mount.querySelector('#mbti-share-btn');
       if (share && result) {
         share.addEventListener('click', () => {
@@ -376,6 +471,58 @@
           mount.scrollIntoView({ block: 'start', behavior: 'smooth' });
         });
       }, draw);
+    }
+
+    // 궁합 화면: 내 유형은 고정, 상대 유형만 16칸에서 고른다.
+    function drawMatch(mine, other) {
+      const keys = Object.keys(MBTI_TYPES);
+      mount.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="mbti-match-back" type="button">‹</button>
+          <span class="rx-nav-title">💞 MBTI 궁합</span>
+        </div>
+        <p class="rx-custom-hint" style="text-align:center;">
+          내 유형은 <b>${esc(mine)}</b>. 상대 유형을 골라주세요
+        </p>
+        <div class="mbti-pick-grid">
+          ${keys.map((k) => `
+            <button class="mbti-pick${k === other ? ' on' : ''}" type="button" data-t="${k}">
+              <span class="mbti-pick-emoji">${MBTI_TYPES[k].emoji}</span>
+              <span class="mbti-pick-code">${k}</span>
+            </button>`).join('')}
+        </div>
+        <div id="mbti-match-result">${other ? matchHtml(mine, other) : ''}</div>
+      `;
+
+      mount.querySelector('#mbti-match-back').addEventListener('click', draw);
+
+      mount.querySelectorAll('.mbti-pick').forEach((b) => {
+        b.addEventListener('click', () => {
+          sfx('pageMark');
+          drawMatch(mine, b.dataset.t);
+          const res = mount.querySelector('#mbti-match-result');
+          if (res) res.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          track('mbti_match', { mine, other: b.dataset.t });
+        });
+      });
+
+      mount.querySelectorAll('.mbti-goto-rx').forEach((b) => {
+        b.addEventListener('click', () => {
+          const R = Rx();
+          if (R && typeof R.goToRxCategory === 'function') R.goToRxCategory(b.dataset.rxcat);
+        });
+      });
+
+      const ms = mount.querySelector('#mbti-match-share');
+      if (ms) {
+        ms.addEventListener('click', () => {
+          const stars = Number(ms.dataset.stars);
+          const text = `${ms.dataset.mine} × ${ms.dataset.other} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
+          const R = Rx();
+          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/');
+          track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
+        });
+      }
     }
 
     lastDraw = draw;

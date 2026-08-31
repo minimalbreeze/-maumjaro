@@ -2564,6 +2564,44 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mbti-mini b { color: var(--accent-a); }
 .mbti-ache { border-left: 3px solid #b779ef; }
 
+/* ---------- MBTI 궁합 ---------- */
+.mbti-pick-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 4px;
+}
+.mbti-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 9px 2px; border-radius: 11px; cursor: pointer;
+  border: 1px solid var(--card-border); background: var(--card);
+  color: var(--text); font-size: 11px; font-weight: 800; letter-spacing: .5px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease;
+}
+.mbti-pick:active { transform: scale(0.95); }
+.mbti-pick.on {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  box-shadow: 0 4px 12px rgba(183,121,239,0.32);
+}
+.mbti-pick-emoji { font-size: 17px; line-height: 1; }
+.mbti-pick-code { font-size: 10.5px; }
+
+.mbti-pair { text-align: center; }
+.mbti-pair-row {
+  display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 8px;
+}
+.mbti-pair-side { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.mbti-pair-side b { font-size: 30px; line-height: 1; }
+.mbti-pair-side em {
+  font-style: normal; font-size: 14px; font-weight: 900; letter-spacing: 1.5px; color: var(--text);
+}
+.mbti-pair-side i { font-style: normal; font-size: 10.5px; color: var(--text-dim); }
+.mbti-pair-heart { font-size: 20px; }
+.mbti-stars {
+  display: block; font-size: 19px; letter-spacing: 3px;
+  background: linear-gradient(135deg, #ffb347, #ff8fb3);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
 /* 타로 미니 카드 아이콘 — 🎴(화투 이모지) 대신 쓴다 */
 .tarot-icon {
   display: block;
