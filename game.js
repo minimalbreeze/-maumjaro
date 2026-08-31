@@ -136,6 +136,20 @@
     };
   }
 
+  // 캡슐볼의 색과 무늬. 색 8가지 × 무늬 6가지 = 48조합에 46종을 1:1로 넣는다.
+  //
+  // 처음에는 약의 모양(12가지)에서 무늬(6가지)를 끌어다 썼는데, 12를 6으로 접으면서
+  // i와 i+6이 같은 무늬가 되고 색은 12마다 바뀌다 보니 그 둘이 통째로 겹쳤다(46종 중 22건 중복).
+  // 무늬를 먼저 6으로 돌리고 색을 6마다 넘기면 48조합을 순서대로 채워 겹치지 않는다.
+  const CAP_PATTERNS = ['plain', 'dots', 'stripe', 'star', 'ring', 'confetti'];
+  function capVisual(m) {
+    const i = medIndex[m.id] == null ? 0 : medIndex[m.id];
+    return {
+      pattern: CAP_PATTERNS[i % CAP_PATTERNS.length],
+      tint: TINTS[Math.floor(i / CAP_PATTERNS.length) % TINTS.length],
+    };
+  }
+
   // 마음약 한 알을 SVG로 그린다. 이모지(m.icon)는 공유 문구·기록 목록처럼
   // 글자만 들어가는 자리에 그대로 쓰고, 눈에 보이는 자리에는 이 그림을 쓴다.
   function medSvg(m, size) {
@@ -778,7 +792,14 @@
     rewardStage.hidden = false;
     rewardResult.hidden = true;
     // 3·7·14·30일은 상자부터 다르게 보여준다(평소와 같은 화면이면 달성감이 없다).
-    rewardBox.className = 'reward-box' + (result.milestone ? ' is-special' : '');
+    // 캡슐 색과 무늬는 안에 든 마음약을 따라간다. 전부 같은 공이면 "뭐가 나올까"가 없고,
+    // 색이 다르면 열기 전부터 "어, 처음 보는 색인데?" 하는 재미가 생긴다.
+    const cv = capVisual(result.medicine);
+    rewardBox.className = 'reward-box'
+      + (result.milestone ? ' is-special' : '')
+      + ` cap-${cv.pattern}`;
+    rewardBox.style.setProperty('--cap-a', cv.tint[0]);
+    rewardBox.style.setProperty('--cap-b', cv.tint[1]);
     rewardCount.textContent = `0 / ${GAME_CONFIG.openTapCount}`;
     rewardGuide.textContent = '톡톡 두드려 열어보세요!';
     rewardEyebrow.textContent = result.milestone
