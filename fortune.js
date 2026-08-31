@@ -502,11 +502,6 @@
           <span class="rx-category-label">띠별 운세</span>
           <span class="rx-category-count">오늘</span>
         </div>
-        <div class="rx-category-tile" data-fortune="mbti">
-          <span class="rx-category-emoji">📝</span>
-          <span class="rx-category-label">마음유형</span>
-          <span class="rx-category-count">${mbtiSummary() ? `${mbtiSummary().type} · 내 유형` : '시험지 12문항'}</span>
-        </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
           <span class="rx-category-label">토정비결</span>
@@ -532,7 +527,6 @@
         if (type === 'daily') renderFortuneDaily(profile);
         else if (type === 'weekly') renderFortuneWeekly(profile);
         else if (type === 'monthly') renderFortuneMonthly(profile);
-        else if (type === 'mbti') renderMbti(profile);
         else if (type === 'zodiac') renderSignFortune(profile, 'zodiac');
         else if (type === 'animal') renderSignFortune(profile, 'animal');
         else if (type === 'tarot') renderTarotTopics(profile);
@@ -546,22 +540,7 @@
     return '★'.repeat(n) + '☆'.repeat(5 - n);
   }
 
-  // ---------- 마음유형(간이 MBTI) ----------
-  // 실제 구현은 mbti.js에 있다. 여기서는 운세센터 타일에서 넘겨주기만 한다.
-  // mbti.js가 없어도(로드 실패 등) 운세센터가 깨지지 않도록 전부 방어적으로 부른다.
-  function mbtiSummary() {
-    try {
-      return window.MaumjaroMbti ? window.MaumjaroMbti.summary() : null;
-    } catch (e) { return null; }
-  }
-  function renderMbti(profile) {
-    if (!window.MaumjaroMbti) { Core.showToast('마음유형을 불러오지 못했어요'); return; }
-    window.MaumjaroMbti.render({
-      mount: fortuneContent,
-      onBack: () => renderFortuneHub(profile),
-      onEditProfile: () => renderProfileForm(profile),
-    });
-  }
+  // 마음유형(간이 MBTI)은 독립 탭(mbti.js)이 담당한다. 운세센터에서는 다루지 않는다.
 
   // 사주팔자(일주) + 오늘 날짜 + salt로 결정론적 인덱스를 뽑는다.
   // 같은 사람이 같은 날 다시 봐도 같은 결과, salt가 다르면 카테고리별로 다른 결과가 나온다.

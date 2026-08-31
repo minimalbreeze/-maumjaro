@@ -2,8 +2,9 @@
 //
 // 구조 원칙(CLAUDE.md):
 //  - app.js / prescriptions.js는 안 건드린다. 필요한 건 window.MaumjaroRx로만 쓴다.
-//  - 새 탭을 만들지 않는다. 운세/타로 탭 안의 한 화면으로 들어간다.
-//    (탭이 5개가 되면 성격·운세 콘텐츠가 2칸을 차지해 "운세 앱"처럼 보인다)
+//    탭 전환도 app.js 코드를 고치지 않고, prescriptions.js·fortune.js와 똑같이
+//    .tab-btn에 독립 리스너를 하나 더 다는 방식으로 붙인다.
+//  - 홈은 여전히 앱의 기본 목적지다. 마음유형은 홈을 밀어내지 않는 다섯 번째 칸이다.
 //  - 결과 화면은 정보로 끝나지 않고 반드시 처방 → 주사로 이어진다.
 //  - localStorage 키는 maumjaro: 접두사, 기존 키는 건드리지 않는다.
 (() => {
@@ -304,12 +305,16 @@
   }
 
   // ---------- 진입점 ----------
-  // fortune.js가 운세 탭 타일에서 호출한다. mount(그릴 곳)와 back(뒤로 갈 때)을 받는다.
+  // 탭에서 부를 때는 mount만 넘기면 된다(뒤로 버튼 없음).
+  // 다른 화면에서 불러 쓸 때는 onBack을 넘기면 뒤로 버튼이 생긴다.
+  let lastDraw = null;
+  function refresh() { if (lastDraw) lastDraw(); }
+
   function render(opts) {
     const o = opts || {};
-    const mount = o.mount || document.getElementById('fortune-content');
+    const mount = o.mount || document.getElementById('mbti-content');
     if (!mount) return;
-    const goBack = o.onBack || function () {};
+    const goBack = o.onBack || null;
     const editProfile = o.onEditProfile || null;
 
     function draw() {
@@ -317,12 +322,13 @@
       const blood = bloodOf();
       mount.innerHTML = `
         <div class="rx-nav-header">
-          <button class="rx-back-btn" id="mbti-back" type="button">‹</button>
+          ${goBack ? '<button class="rx-back-btn" id="mbti-back" type="button">‹</button>' : ''}
           <span class="rx-nav-title">📝 마음유형</span>
         </div>
         ${result ? resultHtml(result, blood) : introHtml()}
       `;
-      mount.querySelector('#mbti-back').addEventListener('click', goBack);
+      const backBtn = mount.querySelector('#mbti-back');
+      if (backBtn && goBack) backBtn.addEventListener('click', goBack);
 
       const startBtn = mount.querySelector('#mbti-start-btn');
       if (startBtn) startBtn.addEventListener('click', startExam);
@@ -372,13 +378,48 @@
       }, draw);
     }
 
+    lastDraw = draw;
     draw();
   }
 
-  // 운세 타일에 "내 유형 / 아직 안 봄"을 표시하는 데 쓴다.
   function summary() {
     const r = loadResult();
     return r ? { type: r.type, name: MBTI_TYPES[r.type].name, emoji: MBTI_TYPES[r.type].emoji } : null;
+  }
+
+  // ---------- 탭 ----------
+  // app.js의 탭 핸들러는 home/history만 여닫고 나머지는 각 파일이 알아서 한다
+  // (prescriptions.js·fortune.js와 같은 방식). app.js는 손대지 않는다.
+  const viewMbti = document.getElementById('view-mbti');
+  const mbtiContent = document.getElementById('mbti-content');
+  let painted = false;
+
+  if (viewMbti && mbtiContent) {
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.view;
+        viewMbti.hidden = view !== 'mbti';
+        if (view !== 'mbti') return;
+        // 탭을 오갈 때마다 다시 그리면 결과 화면 스크롤이 튄다.
+        // 처음 한 번만 그리고, 이후에는 결과가 바뀌었을 때만(draw 내부에서) 다시 그린다.
+        if (!painted) {
+          painted = true;
+          render({ mount: mbtiContent, onEditProfile: goFortuneProfile });
+        } else {
+          refresh();
+        }
+      });
+    });
+  }
+
+  // 혈액형은 운세 탭의 맘운 프로필에 들어 있다. 거기로 보내준다.
+  function goFortuneProfile() {
+    const tab = document.querySelector('.tab-btn[data-view="fortune"]');
+    if (tab) tab.click();
+    setTimeout(() => {
+      const edit = document.getElementById('fortune-edit-profile-btn');
+      if (edit) edit.click();
+    }, 120);
   }
 
   window.MaumjaroMbti = { render, summary, clearResult };

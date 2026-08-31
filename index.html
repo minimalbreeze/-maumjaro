@@ -329,6 +329,11 @@
     <div id="fortune-content"></div>
   </main>
 
+  <!-- 마음유형(간이 MBTI) 탭. mbti.js가 이 안을 통째로 다시 그린다. -->
+  <main id="view-mbti" class="view" hidden>
+    <div id="mbti-content"></div>
+  </main>
+
   <!-- 보상 개봉 오버레이 -->
   <div id="reward-overlay" class="reward-overlay" hidden>
     <div class="reward-sheet">
@@ -403,6 +408,9 @@
     </button>
     <button class="tab-btn" data-view="fortune">
       <span class="tab-icon">🔮</span><span>운세/타로</span>
+    </button>
+    <button class="tab-btn" data-view="mbti">
+      <span class="tab-icon">📝</span><span>마음유형</span>
     </button>
     <button class="tab-btn" data-view="history">
       <span class="tab-icon">📋</span><span>기록</span>
