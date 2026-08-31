@@ -16,6 +16,7 @@
     MBTI_QUESTIONS, MBTI_TYPES, MBTI_MATCH, BLOOD_TYPES, BLOOD_MBTI_MIX,
     MATCH_AXIS_LINES, MATCH_CAUTION, MATCH_HEADLINES, MATCH_SAME_TYPE,
     BLOOD_MATCH, BLOOD_DAY_LINES,
+    TYPE_TELLS, BLOOD_TELLS, FRIEND_AXIS_QUESTIONS, TYPE_GROUPS,
   } = D;
 
   const RESULT_KEY = 'maumjaro:mbtiResult';
@@ -388,6 +389,106 @@
     `;
   }
 
+  // ---------- 설명서 ----------
+  // "내가 무슨 유형인가"가 아니라 "저 친구가 무슨 유형인가"를 위한 화면이다.
+  // 그래서 자기 서술(trait) 대신 밖에서 보이는 행동(TYPE_TELLS)을 앞에 둔다.
+  function guideTypeCardHtml(key, openKey) {
+    const t = MBTI_TYPES[key];
+    const tells = TYPE_TELLS[key] || [];
+    const open = key === openKey;
+    return `
+      <div class="guide-item${open ? ' open' : ''}">
+        <button class="guide-head" type="button" data-g="${key}">
+          <span class="guide-emoji">${t.emoji}</span>
+          <span class="guide-head-text">
+            <span class="guide-code">${esc(key)}</span>
+            <span class="guide-name">${esc(t.name)}</span>
+          </span>
+          <span class="guide-arrow">${open ? '−' : '+'}</span>
+        </button>
+        ${open ? `
+        <div class="guide-body">
+          <p class="guide-lead">${esc(t.trait)}</p>
+          <p class="guide-sub">👀 이런 게 보이면 이 유형</p>
+          <ul class="guide-tells">${tells.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+          <div class="rx-slip-row"><span class="rx-slip-key">💪 강점</span><span class="rx-slip-value">${esc(t.strong)}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">🫠 약한 지점</span><span class="rx-slip-value">${esc(t.weak)}</span></div>
+          <div class="rx-slip-row"><span class="rx-slip-key">💊 자주 앓는 것</span><span class="rx-slip-value">${esc(t.ache)}</span></div>
+          <button class="rx-friend-quick-btn mbti-goto-rx" type="button" data-rxcat="${t.rx}" style="margin-top:8px;">
+            이 유형에게 좋은 처방 보러가기 ›
+          </button>
+        </div>` : ''}
+      </div>`;
+  }
+
+  function guideHtml(picks, openKey) {
+    // 4축을 다 고르면 유형 하나로 좁혀진다.
+    const done = FRIEND_AXIS_QUESTIONS.every((q) => picks[q.axis]);
+    const guess = done ? FRIEND_AXIS_QUESTIONS.map((q) => picks[q.axis]).join('') : null;
+
+    return `
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">🔎</div>
+        <div class="rx-detail-title">친구 유형 찾기</div>
+        <p class="rx-detail-symptom">그 친구를 떠올리면서 4개만 골라보세요</p>
+      </div>
+
+      ${FRIEND_AXIS_QUESTIONS.map((q) => `
+        <div class="guide-ask">
+          <p class="guide-ask-q">${esc(q.q)}</p>
+          <div class="guide-ask-row">
+            <button class="guide-ask-btn${picks[q.axis] === q.a ? ' on' : ''}" type="button" data-ax="${q.axis}" data-v="${q.a}">${esc(q.ao)}</button>
+            <button class="guide-ask-btn${picks[q.axis] === q.b ? ' on' : ''}" type="button" data-ax="${q.axis}" data-v="${q.b}">${esc(q.bo)}</button>
+          </div>
+        </div>`).join('')}
+
+      ${guess ? `
+        <div class="rx-detail-card mbti-hero">
+          <div class="rx-detail-emoji">${MBTI_TYPES[guess].emoji}</div>
+          <div class="mbti-type-badge">${esc(guess)}</div>
+          <div class="rx-detail-title">${esc(MBTI_TYPES[guess].name)}</div>
+          <p class="rx-detail-symptom">${esc(MBTI_TYPES[guess].trait)}</p>
+          <p class="rx-custom-hint" style="margin-top:8px;">👀 ${esc((TYPE_TELLS[guess] || [''])[0])}</p>
+          <button class="rx-friend-quick-btn" id="guide-open-guess" type="button" data-g="${guess}" style="margin-top:10px;">
+            아래 설명서에서 자세히 보기 ›
+          </button>
+        </div>
+        <button class="rx-slip-photo-btn" id="guide-reset" type="button" style="width:100%;margin-top:8px;">다시 고르기</button>
+      ` : `<p class="rx-custom-hint" style="text-align:center;">4개를 다 고르면 유형이 나와요</p>`}
+
+      <div class="rx-nav-header" style="margin-top:22px;">
+        <span class="rx-nav-title">📖 16유형 설명서</span>
+      </div>
+      ${TYPE_GROUPS.map((g) => `
+        <p class="guide-group">${g.emoji} <b>${esc(g.label)}</b> · ${esc(g.desc)}</p>
+        ${g.types.map((k) => guideTypeCardHtml(k, openKey)).join('')}
+      `).join('')}
+
+      <div class="rx-nav-header" style="margin-top:22px;">
+        <span class="rx-nav-title">🩸 혈액형 설명서</span>
+      </div>
+      ${BLOOD_TYPES.map((b) => `
+        <div class="guide-item open">
+          <div class="guide-head" style="cursor:default;">
+            <span class="guide-emoji">${b.emoji}</span>
+            <span class="guide-head-text">
+              <span class="guide-code">${esc(b.name)}</span>
+              <span class="guide-name">${esc(b.trait)}</span>
+            </span>
+          </div>
+          <div class="guide-body">
+            <p class="guide-sub">👀 이런 게 보이면</p>
+            <ul class="guide-tells">${(BLOOD_TELLS[b.key] || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+            <p class="guide-lead">${esc(b.quirk)}</p>
+          </div>
+        </div>`).join('')}
+
+      <p class="rx-custom-hint" style="text-align:center;margin-top:14px;">
+        사람을 네 글자로 다 알 수는 없어요. 대화의 실마리로만 써주세요.
+      </p>
+    `;
+  }
+
   // ---------- 결과 화면 ----------
   function typeCardHtml(key) {
     const t = MBTI_TYPES[key];
@@ -449,6 +550,7 @@
       </div>
 
       <button class="action-btn" id="mbti-match-open" type="button" style="width:100%;margin-top:6px;">💞 상대 유형 골라서 궁합 보기</button>
+      <button class="rx-slip-photo-btn" id="mbti-guide-open" type="button" style="width:100%;margin-top:8px;">📖 유형 설명서 · 친구 유형 찾기</button>
       <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형으로 더 보기</button>
       <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">친구에게 내 유형 보내기 💌</button>
       <button class="rx-friend-quick-btn" id="mbti-retake-btn" type="button" style="width:100%;margin-top:8px;">🔄 초기화하고 다시 시험 보기</button>
@@ -473,6 +575,7 @@
         <div class="rx-slip-row"><span class="rx-slip-key"></span><span class="rx-slip-value">내 유형에 맞는 마음 처방</span></div>
       </div>
       <button class="action-btn" id="mbti-start-btn" type="button" style="width:100%;margin-top:10px;">✏️ 시험 시작하기</button>
+      <button class="rx-slip-photo-btn" id="mbti-guide-open" type="button" style="width:100%;margin-top:8px;">📖 유형 설명서 · 친구 유형 찾기</button>
       <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형 먼저 볼래요</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
         재미로 보는 간이 유형 테스트예요. 공식 MBTI® 검사와는 무관합니다.
@@ -531,6 +634,14 @@
       const matchOpen = mount.querySelector('#mbti-match-open');
       if (matchOpen && result) {
         matchOpen.addEventListener('click', () => drawMatch(result.type, null));
+      }
+
+      const guideOpen = mount.querySelector('#mbti-guide-open');
+      if (guideOpen) {
+        guideOpen.addEventListener('click', () => {
+          track('mbti_guide', {});
+          drawGuide({}, null);
+        });
       }
 
       const bloodOpen = mount.querySelector('#mbti-blood-open');
@@ -617,6 +728,61 @@
           track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
         });
       }
+    }
+
+    // 설명서 화면: 고른 축(picks)과 펼쳐진 유형(openKey)만 상태로 들고 다시 그린다.
+    function drawGuide(picks, openKey) {
+      const p = picks || {};
+      mount.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="guide-back" type="button">‹</button>
+          <span class="rx-nav-title">📖 유형 설명서</span>
+        </div>
+        ${guideHtml(p, openKey)}
+      `;
+
+      mount.querySelector('#guide-back').addEventListener('click', draw);
+
+      mount.querySelectorAll('.guide-ask-btn').forEach((b) => {
+        b.addEventListener('click', () => {
+          sfx('pageMark');
+          const next = { ...p };
+          // 같은 걸 다시 누르면 선택이 풀린다.
+          next[b.dataset.ax] = next[b.dataset.ax] === b.dataset.v ? null : b.dataset.v;
+          drawGuide(next, openKey);
+        });
+      });
+
+      const reset = mount.querySelector('#guide-reset');
+      if (reset) reset.addEventListener('click', () => drawGuide({}, openKey));
+
+      // 카드 펼치기/접기. 펼친 카드가 화면 밖에 있으면 따라간다.
+      mount.querySelectorAll('.guide-head[data-g]').forEach((b) => {
+        b.addEventListener('click', () => {
+          const next = b.dataset.g === openKey ? null : b.dataset.g;
+          drawGuide(p, next);
+          if (next) {
+            const el = mount.querySelector(`.guide-head[data-g="${next}"]`);
+            if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        });
+      });
+
+      const og = mount.querySelector('#guide-open-guess');
+      if (og) {
+        og.addEventListener('click', () => {
+          drawGuide(p, og.dataset.g);
+          const el = mount.querySelector(`.guide-head[data-g="${og.dataset.g}"]`);
+          if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+      }
+
+      mount.querySelectorAll('.mbti-goto-rx').forEach((x) => {
+        x.addEventListener('click', () => {
+          const R = Rx();
+          if (R && typeof R.goToRxCategory === 'function') R.goToRxCategory(x.dataset.rxcat);
+        });
+      });
     }
 
     // 혈액형 화면: 보고 있는 혈액형(viewKey)과 궁합 상대(otherKey)를 따로 둔다.
