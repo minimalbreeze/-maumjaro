@@ -217,9 +217,64 @@
     burst(c, t, 0.45, { freq: 4800, q: 0.6, gain: 0.014, filter: 'highpass' });
   }
 
+  // ---------- 마음유형 시험지 ----------
+
+  // 시험지를 한 장 넘기는 소리. 종이는 음정이 없고 "사아—악" 하고 스치는 소음이라
+  // 노이즈를 고역에서 저역으로 훑어 내리고, 끝에 종이가 놓이는 "톡"을 짧게 붙인다.
+  function pageFlip() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    burst(c, t, 0.19, { freq: 4200, freqTo: 900, q: 0.55, gain: 0.10, filter: 'bandpass', rate: 1.1 });
+    burst(c, t + 0.05, 0.13, { freq: 2600, freqTo: 1400, q: 0.7, gain: 0.055 });
+    // 넘긴 장이 책상에 닿는 소리
+    burst(c, t + 0.17, 0.045, { freq: 1500, q: 1.8, gain: 0.07 });
+    blip(c, t + 0.17, 150, 0.06, { type: 'sine', gain: 0.04, freqTo: 90 });
+  }
+
+  // 답을 고를 때의 짧은 체크 소리. 넘기는 소리와 겹쳐도 묻히지 않게 또렷한 톤 하나.
+  function pageMark() {
+    const c = audio(); if (!c) return;
+    const t = c.currentTime;
+    burst(c, t, 0.04, { freq: 3000, q: 2.4, gain: 0.07 });
+    blip(c, t, 880, 0.07, { type: 'triangle', gain: 0.06, freqTo: 1320 });
+  }
+
+  // 결과 발표. 두구두구(저역 롤) → 잠깐 정적 → 팡파르(장3화음 상행) → 반짝임.
+  function resultFanfare() {
+    const c = audio(); if (!c) return;
+    const t0 = c.currentTime;
+    // 두구두구: 저역 타격을 점점 빠르고 세게
+    let t = t0;
+    for (let i = 0; i < 18; i++) {
+      const p = i / 17;
+      blip(c, t, 96 - i * 0.8, 0.055, { type: 'sine', gain: 0.05 + p * 0.07, freqTo: 60 });
+      burst(c, t, 0.03, { freq: 320, q: 1.2, gain: 0.03 + p * 0.03, filter: 'lowpass' });
+      t += 0.075 - p * 0.035;
+    }
+    // 정적 뒤에 터지는 팡파르 (도-미-솔-도)
+    const fan = t + 0.22;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const st = fan + i * 0.085;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = i === 3 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(f, st);
+      const dur = i === 3 ? 1.6 : 0.55;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.1 - i * 0.008, st + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(st);
+      osc.stop(st + dur + 0.05);
+    });
+    // 반짝이는 잔향
+    burst(c, fan + 0.24, 0.9, { freq: 5600, q: 0.5, gain: 0.02, filter: 'highpass' });
+  }
+
   window.MaumjaroSfx = {
     cardShuffle, cardDraw, cardFlip, cardReveal,
     gachaCrank, capsuleDrop, gachaReveal,
     capsuleTap, capsuleCrack,
+    pageFlip, pageMark, resultFanfare,
   };
 })();

@@ -502,6 +502,11 @@
           <span class="rx-category-label">띠별 운세</span>
           <span class="rx-category-count">오늘</span>
         </div>
+        <div class="rx-category-tile" data-fortune="mbti">
+          <span class="rx-category-emoji">📝</span>
+          <span class="rx-category-label">마음유형</span>
+          <span class="rx-category-count">${mbtiSummary() ? `${mbtiSummary().type} · 내 유형` : '시험지 12문항'}</span>
+        </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
           <span class="rx-category-label">토정비결</span>
@@ -527,6 +532,7 @@
         if (type === 'daily') renderFortuneDaily(profile);
         else if (type === 'weekly') renderFortuneWeekly(profile);
         else if (type === 'monthly') renderFortuneMonthly(profile);
+        else if (type === 'mbti') renderMbti(profile);
         else if (type === 'zodiac') renderSignFortune(profile, 'zodiac');
         else if (type === 'animal') renderSignFortune(profile, 'animal');
         else if (type === 'tarot') renderTarotTopics(profile);
@@ -538,6 +544,23 @@
 
   function starsText(n) {
     return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  // ---------- 마음유형(간이 MBTI) ----------
+  // 실제 구현은 mbti.js에 있다. 여기서는 운세센터 타일에서 넘겨주기만 한다.
+  // mbti.js가 없어도(로드 실패 등) 운세센터가 깨지지 않도록 전부 방어적으로 부른다.
+  function mbtiSummary() {
+    try {
+      return window.MaumjaroMbti ? window.MaumjaroMbti.summary() : null;
+    } catch (e) { return null; }
+  }
+  function renderMbti(profile) {
+    if (!window.MaumjaroMbti) { Core.showToast('마음유형을 불러오지 못했어요'); return; }
+    window.MaumjaroMbti.render({
+      mount: fortuneContent,
+      onBack: () => renderFortuneHub(profile),
+      onEditProfile: () => renderProfileForm(profile),
+    });
   }
 
   // 사주팔자(일주) + 오늘 날짜 + salt로 결정론적 인덱스를 뽑는다.
@@ -2576,6 +2599,15 @@
         <button class="seg-btn${existingProfile && existingProfile.gender === 'male' ? ' active' : ''}" data-val="male" type="button">남성</button>
       </div>
 
+      <!-- 혈액형: 마음유형(MBTI) × 혈액형 조합 콘텐츠에 쓰인다. 사주 계산과는 무관하므로
+           안 골라도 프로필은 완성된다. -->
+      <p class="rx-custom-hint" style="margin:14px 0 6px;">🩸 혈액형 (마음유형과 엮어서 볼 때 써요 · 선택)</p>
+      <div class="segmented seg-4" id="fortune-blood-toggle">
+        ${['A', 'B', 'O', 'AB'].map((b) => `
+          <button class="seg-btn${existingProfile && existingProfile.bloodType === b ? ' active' : ''}" data-val="${b}" type="button">${b}형</button>
+        `).join('')}
+      </div>
+
       <button class="action-btn" id="fortune-profile-submit" type="button" style="width:100%;margin-top:16px;">💫 ${isEdit ? '맘운 프로필 저장하기' : '맘운 프로필 완성하기'}</button>
       ${isEdit ? '' : `
       <button class="rx-slip-photo-btn" id="fortune-skip-to-tarot" type="button" style="width:100%;margin-top:10px;">🌙 생년월일 없이 타로만 먼저 볼래요</button>
@@ -2644,6 +2676,16 @@
       });
     });
 
+    // 혈액형은 선택 사항이라 기본값이 null이다. 한 번 더 누르면 선택이 풀린다.
+    let bloodType = (existingProfile && existingProfile.bloodType) || null;
+    const bloodToggle = document.getElementById('fortune-blood-toggle');
+    bloodToggle.querySelectorAll('.seg-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        bloodType = bloodType === btn.dataset.val ? null : btn.dataset.val;
+        bloodToggle.querySelectorAll('.seg-btn').forEach((b) => b.classList.toggle('active', b.dataset.val === bloodType));
+      });
+    });
+
     document.getElementById('fortune-profile-submit').addEventListener('click', () => {
       const birthDate = document.getElementById('fortune-birthdate').value;
       if (!birthDate) {
@@ -2671,6 +2713,7 @@
         birthTime: timeUnknown ? null : birthTime,
         timeUnknown,
         gender,
+        bloodType, // 선택 안 하면 null. 마음유형 화면에서만 쓰인다.
         savedAt: Date.now(),
       };
       saveSajuProfile(profile);

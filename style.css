@@ -606,6 +606,8 @@ body::before {
   background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
   color: #fff;
 }
+/* 4칸짜리(혈액형)는 글자가 좁아지므로 폰트만 한 단계 줄인다 */
+.segmented.seg-4 .seg-btn { font-size: 13px; }
 
 #history-content {
   width: 100%;
@@ -2399,6 +2401,168 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------- 마음유형 시험지 (전체 화면, 한 장에 한 문제) ---------- */
+.mbti-exam {
+  position: fixed; inset: 0; z-index: 1260;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(56px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255,255,255,0.7), rgba(255,255,255,0) 62%),
+    linear-gradient(180deg, #efe6da 0%, #e3d7c8 55%, #d8cab8 100%);
+  opacity: 0; transition: opacity .26s ease;
+}
+.mbti-exam.show { opacity: 1; }
+/* 책상 나뭇결 — 종이가 어딘가에 놓여 있다는 느낌을 준다 */
+.mx-desk {
+  position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background:
+    repeating-linear-gradient(96deg, rgba(120,90,60,0.05) 0 3px, rgba(120,90,60,0) 3px 11px),
+    repeating-linear-gradient(4deg, rgba(120,90,60,0.04) 0 2px, rgba(120,90,60,0) 2px 17px);
+}
+.mx-close {
+  position: absolute; right: 12px; top: calc(12px + env(safe-area-inset-top));
+  width: 38px; height: 38px; border-radius: 50%; cursor: pointer; z-index: 3;
+  border: 1px solid rgba(120,90,60,0.25); background: rgba(255,255,255,0.85);
+  font-size: 15px; color: #6b563e;
+}
+.mx-progress {
+  position: absolute; left: 18px; right: 66px; top: calc(24px + env(safe-area-inset-top));
+  height: 6px; border-radius: 99px; background: rgba(120,90,60,0.16); overflow: hidden; z-index: 2;
+}
+.mx-progress-bar {
+  display: block; height: 100%; width: 0;
+  border-radius: 99px; background: linear-gradient(90deg, #ff9166, #ffc66b);
+  transition: width .32s ease;
+}
+
+.mx-sheet-wrap { width: 100%; max-width: 420px; perspective: 1100px; }
+/* 시험지 한 장 */
+.mx-sheet {
+  position: relative;
+  padding: 26px 20px 18px;
+  border-radius: 4px 4px 10px 10px;
+  background: #fffdf7;
+  box-shadow:
+    0 10px 26px rgba(90,66,40,0.22),
+    0 2px 0 rgba(255,255,255,0.9) inset;
+  transform-origin: 50% 0%;
+}
+/* 종이 위쪽 스테이플 자국 + 아래 밑줄 격자 */
+.mx-sheet::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px;
+  border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(90deg,
+    rgba(160,130,95,0.28) 0 6px, rgba(160,130,95,0) 6px 16px);
+}
+.mx-sheet::after {
+  content: ''; position: absolute; left: 20px; right: 20px; bottom: 46px; height: 1px;
+  background: rgba(150,120,85,0.18);
+}
+@keyframes mx-flip-in {
+  0%   { transform: rotateX(-72deg) translateY(-10px); opacity: 0; }
+  60%  { transform: rotateX(6deg) translateY(0); opacity: 1; }
+  100% { transform: rotateX(0) translateY(0); opacity: 1; }
+}
+@keyframes mx-flip-back {
+  0%   { transform: rotateX(58deg) translateY(8px); opacity: 0; }
+  100% { transform: rotateX(0) translateY(0); opacity: 1; }
+}
+.mx-sheet.flip-in { animation: mx-flip-in .42s cubic-bezier(.3,.8,.4,1); }
+.mx-sheet.flip-back { animation: mx-flip-back .36s ease; }
+
+.mx-head { display: flex; align-items: baseline; gap: 5px; margin-bottom: 14px; }
+.mx-no { font-size: 15px; font-weight: 800; color: #b8703f; }
+.mx-total { font-size: 12px; font-weight: 700; color: #a08b6e; }
+.mx-q {
+  margin: 0 0 20px; font-size: 18px; font-weight: 800; line-height: 1.5; color: #3d3324;
+  word-break: keep-all;
+}
+.mx-choices { display: flex; flex-direction: column; gap: 10px; }
+.mx-choice {
+  display: flex; align-items: flex-start; gap: 10px; text-align: left; cursor: pointer;
+  padding: 14px 14px; border-radius: 11px;
+  border: 1.5px solid rgba(150,120,85,0.3); background: #fff;
+  color: #3d3324; font-size: 14.5px; font-weight: 700; line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease;
+  word-break: keep-all;
+}
+.mx-choice:active { transform: scale(0.98); }
+.mx-choice.picked {
+  border-color: #ef6a54; background: #fff2ec;
+  box-shadow: 0 0 0 3px rgba(239,106,84,0.16);
+}
+.mx-bullet { flex-shrink: 0; color: #b8703f; font-weight: 800; }
+.mx-choice.picked .mx-bullet { color: #ef6a54; }
+.mx-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 18px; min-height: 28px;
+}
+.mx-prev {
+  border: none; background: none; cursor: pointer; padding: 4px 2px;
+  font-size: 12.5px; font-weight: 700; color: #8a7355;
+}
+.mx-note { font-size: 11.5px; color: #a08b6e; }
+
+/* ---------- 결과 발표 ---------- */
+.mbti-drum {
+  position: fixed; inset: 0; z-index: 1300;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 45%, rgba(60,40,80,0.82), rgba(30,20,45,0.94));
+  opacity: 0; transition: opacity .3s ease;
+}
+.mbti-drum.show { opacity: 1; }
+.md-inner { text-align: center; padding: 20px; }
+.md-label { margin: 0 0 16px; font-size: 14.5px; font-weight: 700; color: rgba(255,255,255,0.85); }
+.md-dots { display: flex; justify-content: center; gap: 9px; }
+.md-dots span {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: linear-gradient(135deg, #ffc66b, #ff9166);
+  animation: md-bounce .5s ease-in-out infinite alternate;
+}
+.md-dots span:nth-child(2) { animation-delay: .16s; }
+.md-dots span:nth-child(3) { animation-delay: .32s; }
+@keyframes md-bounce { from { transform: translateY(0); opacity: .5; } to { transform: translateY(-11px); opacity: 1; } }
+
+.md-card {
+  margin-top: 22px; padding: 26px 30px; border-radius: 20px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255,255,255,0.24);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.35);
+  opacity: 0; transform: scale(.7) rotateX(-30deg);
+  transition: opacity .45s ease, transform .55s cubic-bezier(.32,1.6,.42,1);
+}
+.mbti-drum.reveal .md-dots { opacity: 0; transition: opacity .3s ease; }
+.mbti-drum.reveal .md-card { opacity: 1; transform: scale(1) rotateX(0); }
+.md-emoji { font-size: 46px; line-height: 1; }
+.md-type {
+  margin-top: 10px; font-size: 34px; font-weight: 900; letter-spacing: 2px;
+  background: linear-gradient(135deg, #ffd79a, #ff9166);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.md-name { margin-top: 4px; font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.92); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mx-sheet.flip-in, .mx-sheet.flip-back { animation: none; }
+  .md-dots span { animation: none; }
+}
+
+/* ---------- 마음유형 결과 화면 ---------- */
+.mbti-hero { text-align: center; }
+.mbti-type-badge {
+  display: inline-block; margin: 2px 0 6px; padding: 4px 14px;
+  border-radius: 99px; font-size: 16px; font-weight: 900; letter-spacing: 2px;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3); color: #fff;
+}
+.mbti-taken { margin: 10px 0 0; font-size: 11.5px; color: var(--text-dim); }
+.mbti-match-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.mbti-mini {
+  padding: 7px 11px; border-radius: 99px; font-size: 12px; font-weight: 700;
+  border: 1px solid var(--card-border); background: var(--card); color: var(--text);
+}
+.mbti-mini b { color: var(--accent-a); }
+.mbti-ache { border-left: 3px solid #b779ef; }
 
 /* 타로 미니 카드 아이콘 — 🎴(화투 이모지) 대신 쓴다 */
 .tarot-icon {
