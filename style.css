@@ -389,11 +389,17 @@ body::before {
 }
 
 #app.state-preparing #syringe-svg,
+#app.rx-preparing #syringe-svg,
+#app.rx-ready #syringe-svg,
+#app.rx-injecting #syringe-svg,
 #app.rx-preparing #syringe-svg {
   animation: syringe-idle-bob 3.2s ease-in-out infinite;
 }
 
 #app.state-preparing #syringe-svg,
+#app.rx-preparing #syringe-svg,
+#app.rx-ready #syringe-svg,
+#app.rx-injecting #syringe-svg,
 #app.state-injecting #syringe-svg,
 #app.rx-preparing #syringe-svg,
 #app.rx-injecting #syringe-svg {
@@ -1925,6 +1931,104 @@ body::before {
   0%, 100% { r: 9; opacity: 0.9; }
   50% { r: 15; opacity: 0.25; }
 }
+/* ===== 주사 액션 전체 화면 =====
+   준비~주사 동안 주사기 무대를 화면 전체로 띄운다.
+   DOM은 그대로 둔다 — app.js가 #syringe-svg·#liquid·#arm-target 같은 id를 직접 잡고
+   있어서 요소를 옮기면 그 코드가 통째로 깨진다. 자리만 CSS로 바꾼다.
+   무대 밖에 있는 처방 설명·안내문·CTA는 아래쪽에 따로 고정해 함께 올린다. */
+#app.state-preparing .syringe-stage,
+#app.rx-preparing .syringe-stage,
+#app.rx-ready .syringe-stage,
+#app.rx-injecting .syringe-stage,
+#app.state-ready .syringe-stage,
+#app.state-injecting .syringe-stage {
+  position: fixed; inset: 0; z-index: 900;
+  width: 100%; min-height: 0; margin: 0;
+  /* 아래쪽은 팔 타깃(26dvh)과 컨트롤(약 150px)이 차지한다.
+     주사기는 그 위에 앉아야 바늘이 팔을 향하는 구도가 된다. */
+  align-items: flex-start;
+  padding: calc(3dvh + env(safe-area-inset-top)) 16px 46dvh;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,222,190,0.34), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, #fff6f0 0%, #ffe9f1 50%, #ece2fb 100%);
+  animation: inject-enter .3s ease;
+}
+@keyframes inject-enter { from { opacity: 0; } to { opacity: 1; } }
+
+/* 전체 화면에서는 주사기를 화면 높이에 맞춰 키운다 */
+#app.state-preparing #syringe-svg,
+#app.rx-preparing #syringe-svg,
+#app.rx-ready #syringe-svg,
+#app.rx-injecting #syringe-svg,
+#app.state-ready #syringe-svg,
+#app.state-injecting #syringe-svg {
+  height: min(46dvh, 380px); width: auto;
+}
+
+/* 팔 타깃은 무대 기준 bottom:2%인데, 무대가 전체 화면이 되면 그 2%가 화면 맨 아래가
+   되어 아래 컨트롤(처방 설명·안내문·CTA)과 겹친다. 컨트롤 위로 올려 준다. */
+#app.state-preparing .arm-target,
+#app.rx-preparing .arm-target,
+#app.rx-ready .arm-target,
+#app.rx-injecting .arm-target,
+#app.state-ready .arm-target,
+#app.state-injecting .arm-target { bottom: calc(26dvh + 16px); }
+
+/* 무대 밖 요소들을 아래쪽에 고정해 같이 올린다 */
+#app.state-preparing #dose-caption,
+#app.rx-preparing #dose-caption,
+#app.rx-ready #dose-caption,
+#app.rx-injecting #dose-caption,
+#app.rx-preparing #status-text,
+#app.rx-ready #status-text,
+#app.rx-injecting #status-text,
+#app.rx-preparing #action-btn,
+#app.rx-ready #action-btn,
+#app.rx-injecting #action-btn,
+#app.state-ready #dose-caption,
+#app.state-injecting #dose-caption,
+#app.state-preparing #status-text,
+#app.state-ready #status-text,
+#app.state-injecting #status-text,
+#app.state-preparing #action-btn,
+#app.state-ready #action-btn,
+#app.state-injecting #action-btn {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 40px); max-width: 420px; z-index: 902; margin: 0;
+}
+#app.state-preparing #dose-caption,
+#app.rx-preparing #dose-caption,
+#app.rx-ready #dose-caption,
+#app.rx-injecting #dose-caption,
+#app.rx-preparing #status-text,
+#app.rx-ready #status-text,
+#app.rx-injecting #status-text,
+#app.rx-preparing #action-btn,
+#app.rx-ready #action-btn,
+#app.rx-injecting #action-btn,
+#app.state-ready #dose-caption,
+#app.state-injecting #dose-caption { bottom: calc(122px + env(safe-area-inset-bottom)); }
+#app.state-preparing #status-text,
+#app.state-ready #status-text,
+#app.state-injecting #status-text { bottom: calc(84px + env(safe-area-inset-bottom)); }
+#app.state-preparing #action-btn,
+#app.state-ready #action-btn,
+#app.state-injecting #action-btn { bottom: calc(24px + env(safe-area-inset-bottom)); }
+
+/* 집중을 위해 이 순간에는 탭바와 헤더를 숨긴다 */
+#app.state-preparing .tabbar, #app.state-ready .tabbar, #app.state-injecting .tabbar,
+#app.rx-preparing .tabbar, #app.rx-ready .tabbar, #app.rx-injecting .tabbar,
+#app.rx-preparing .app-header, #app.rx-ready .app-header, #app.rx-injecting .app-header,
+#app.state-preparing .app-header, #app.state-ready .app-header, #app.state-injecting .app-header {
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app.state-preparing .syringe-stage,
+  #app.state-ready .syringe-stage,
+  #app.state-injecting .syringe-stage { animation: none; }
+}
+
 /* 주사를 준비하는 동안에는 다른 카드를 감춰 화면을 주사기에 집중시킨다.
    집중 효과만이 아니라 자리 문제이기도 하다 — 준비 상태에서는 처방 설명(약 42px)이
    새로 생기는데, 여기에 맘운 카드(약 73px)까지 남아 있으면 CTA가 탭바 밑으로 밀린다.
