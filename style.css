@@ -1,4 +1,12 @@
 :root {
+  /* 주사 전체 화면에서 아래쪽 컨트롤(안내 문구 + 상태 문구 + CTA)이 실제로 쓰는 높이.
+     안내 문구(dose-caption)는 bottom 122px에 높이 약 44px이므로 그 윗선이 166px다.
+     주사기 무대는 딱 여기까지 쓰고, 캐릭터는 이 선 위에 발을 붙인다. */
+  --stage-bottom: calc(172px + env(safe-area-inset-bottom));
+  /* 남는 세로를 전부 주사기에 준다 — dvh 비율로 잡으면 폰마다 주사기가 짤막해진다. */
+  /* 숨쉬기 애니메이션이 살짝 위로 뜨므로(translateY -5px) 위쪽 여유를 조금 남긴다. */
+  --syringe-h: min(calc(100dvh - var(--stage-bottom) - 1dvh - env(safe-area-inset-top) - 12px), 760px);
+
   /* 위에서 아래로 "마음(따뜻한 낮) → 운세·타로(신비로운 밤)"로 넘어가는 3구간 배경.
      밤으로 가되 글자색(--text)이 계속 읽히도록 라벤더 톤에서 멈춘다. */
   --bg-top: #fff8f3;
@@ -1923,6 +1931,17 @@ body::before {
   filter: drop-shadow(0 6px 14px rgba(0,0,0,0.15));
   transition: transform 0.12s ease;
 }
+/* 전체 화면에서는 캐릭터도 같이 커져야 "여기에 놓는다"가 잘 보인다.
+   주사기를 화면 끝까지 키운 탓에 손잡이와 겹치므로, 흰 후광을 둘러 캐릭터가
+   주사기 앞에 서 있는 것처럼 또렷하게 떨어져 보이게 한다. */
+#app.state-preparing .arm-svg, #app.state-ready .arm-svg, #app.state-injecting .arm-svg,
+#app.rx-preparing .arm-svg, #app.rx-ready .arm-svg, #app.rx-injecting .arm-svg {
+  width: min(40vw, 168px);
+  filter:
+    drop-shadow(0 0 5px rgba(255,255,255,0.95))
+    drop-shadow(0 0 11px rgba(255,255,255,0.85))
+    drop-shadow(0 7px 16px rgba(0,0,0,0.18));
+}
 .arm-site-ring {
   fill: rgba(239,106,84,0.28);
   animation: arm-pulse 1.3s ease-in-out infinite;
@@ -1944,16 +1963,33 @@ body::before {
 #app.state-injecting .syringe-stage {
   position: fixed; inset: 0; z-index: 900;
   width: 100%; min-height: 0; margin: 0;
-  /* 아래쪽은 팔 타깃(26dvh)과 컨트롤(약 150px)이 차지한다.
-     주사기는 그 위에 앉아야 바늘이 팔을 향하는 구도가 된다. */
+  /* 주사기가 이 앱의 주인공이라는 게 한눈에 와야 한다.
+     안내 문구(dose-caption) 윗선까지를 전부 주사기에 준다. 캐릭터는 그 위에 겹쳐 놓는다
+     — 주사기를 줄여서 자리를 비우는 것보다 큰 주사기가 우선이다. */
   align-items: flex-start;
-  padding: calc(3dvh + env(safe-area-inset-top)) 16px 46dvh;
+  padding: calc(1dvh + env(safe-area-inset-top)) 12px var(--stage-bottom);
   background:
-    radial-gradient(circle at 50% 42%, rgba(255,222,190,0.34), rgba(255,255,255,0) 60%),
+    radial-gradient(circle at 50% 40%, rgba(255,222,190,0.38), rgba(255,255,255,0) 62%),
     linear-gradient(180deg, #fff6f0 0%, #ffe9f1 50%, #ece2fb 100%);
   animation: inject-enter .3s ease;
+  transition: opacity .9s ease;
 }
 @keyframes inject-enter { from { opacity: 0; } to { opacity: 1; } }
+
+/* 주사가 끝나 위로의 말이 뜨는 동안에도 무대를 그대로 두고, 주사기만 천천히 사라진다.
+   (app.js가 state-injecting을 떼는 순간 무대가 툭 접히면 여운이 끊긴다) */
+body:has(#healing-overlay.show) #app .syringe-stage {
+  position: fixed; inset: 0; z-index: 900;
+  width: 100%; min-height: 0; margin: 0;
+  align-items: flex-start;
+  padding: calc(1dvh + env(safe-area-inset-top)) 12px var(--stage-bottom);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,222,190,0.38), rgba(255,255,255,0) 62%),
+    linear-gradient(180deg, #fff6f0 0%, #ffe9f1 50%, #ece2fb 100%);
+  opacity: 0; transition: opacity 1.6s ease .5s;   /* 0.5초 머문 뒤 1.6초에 걸쳐 사라짐 */
+}
+body:has(#healing-overlay.show) #app .tabbar,
+body:has(#healing-overlay.show) #app .app-header { opacity: 0; pointer-events: none; }
 
 /* 전체 화면에서는 주사기를 화면 높이에 맞춰 키운다 */
 #app.state-preparing #syringe-svg,
@@ -1962,7 +1998,14 @@ body::before {
 #app.rx-injecting #syringe-svg,
 #app.state-ready #syringe-svg,
 #app.state-injecting #syringe-svg {
-  height: min(46dvh, 380px); width: auto;
+  /* 주인공답게 크게. 화면 맨 위부터 안내 문구 윗선까지를 통째로 쓴다.
+     dvh 비율로 잡으면 폰마다 주사기가 짤막해지므로, 아래 컨트롤이 실제로 쓰는
+     픽셀(--stage-bottom)만 빼고 나머지를 전부 준다. */
+  height: var(--syringe-h); width: auto; max-width: 92vw;
+}
+/* 위로의 말이 뜨는 동안에도 같은 크기를 유지해야 툭 줄어들지 않는다 */
+body:has(#healing-overlay.show) #app #syringe-svg {
+  height: var(--syringe-h); width: auto; max-width: 92vw;
 }
 
 /* 팔 타깃은 무대 기준 bottom:2%인데, 무대가 전체 화면이 되면 그 2%가 화면 맨 아래가
@@ -1972,7 +2015,11 @@ body::before {
 #app.rx-ready .arm-target,
 #app.rx-injecting .arm-target,
 #app.state-ready .arm-target,
-#app.state-injecting .arm-target { bottom: calc(26dvh + 16px); }
+#app.state-injecting .arm-target {
+  /* 안내 문구 바로 위에 발을 붙인다. 주사기와 겹치더라도 캐릭터가 위(z-index 4)에
+     그려지므로 "여기를 찌른다"는 안내는 그대로 읽힌다. */
+  bottom: calc(var(--stage-bottom) + 2px);
+}
 
 /* 무대 밖 요소들을 아래쪽에 고정해 같이 올린다 */
 #app.state-preparing #dose-caption,

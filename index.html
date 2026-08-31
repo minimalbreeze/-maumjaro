@@ -210,11 +210,38 @@
       </svg>
 
       <button class="arm-target" id="arm-target" type="button" hidden aria-label="팔에 콕 찔러서 주사 놓기">
-        <svg viewBox="0 0 140 70" class="arm-svg" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="70" cy="40" rx="62" ry="25" fill="#ffd9b8" stroke="#1f5c50" stroke-width="4" />
-          <ellipse cx="45" cy="30" rx="14" ry="7" fill="rgba(255,255,255,0.4)" />
-          <circle cx="70" cy="36" r="9" class="arm-site-ring" />
-          <circle cx="70" cy="36" r="3.5" fill="#ef6a54" />
+        <!-- 팔만 덩그러니 있으면 "여기를 찌르라"는 게 안 읽힌다.
+             배를 내밀고 기다리는 캐릭터로 바꿔서 어디를 겨냥할지 한눈에 보이게 한다. -->
+        <svg viewBox="0 0 140 118" class="arm-svg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="charBody" x1="0" y1="0" x2="0.3" y2="1">
+              <stop offset="0%" stop-color="#ffe9c9" /><stop offset="100%" stop-color="#ffd2a3" />
+            </linearGradient>
+            <linearGradient id="charShirt" x1="0" y1="0" x2="0.4" y2="1">
+              <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#5fb3a3" />
+            </linearGradient>
+          </defs>
+          <!-- 다리 -->
+          <rect x="52" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
+          <rect x="75" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
+          <!-- 몸통(배) -->
+          <ellipse cx="70" cy="72" rx="34" ry="29" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
+          <!-- 옷: 배꼽 위쪽만 덮어 배를 내놓은 모습 -->
+          <path d="M38 62 a34 29 0 0 1 64 0 z" fill="url(#charShirt)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
+          <!-- 팔 -->
+          <path d="M38 60 q-14 10 -10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <path d="M102 60 q14 10 10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <!-- 머리 -->
+          <circle cx="70" cy="28" r="23" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
+          <path d="M52 14 q18 -10 36 0" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <circle cx="61" cy="28" r="2.8" fill="#1f5c50" />
+          <circle cx="79" cy="28" r="2.8" fill="#1f5c50" />
+          <path d="M64 36 q6 5 12 0" fill="none" stroke="#1f5c50" stroke-width="2.6" stroke-linecap="round" />
+          <ellipse cx="53" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
+          <ellipse cx="87" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
+          <!-- 주사 놓을 자리 (배꼽) -->
+          <circle cx="70" cy="78" r="9" class="arm-site-ring" />
+          <circle cx="70" cy="78" r="3.5" fill="#ef6a54" />
         </svg>
         <!-- 글자만으로는 "어느 방향으로 얼마나 세게"를 알 수 없다.
              폰이 콕 찌르는 동작을 문구 바로 옆에서 반복해 보여준다.
