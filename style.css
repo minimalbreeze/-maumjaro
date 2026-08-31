@@ -2912,16 +2912,40 @@ body::before {
 .reveal-guide { font-size: 15px; font-weight: 700; color: var(--text); margin: 0 0 22px; }
 .reveal-note { font-size: 11.5px; color: var(--text-dim); margin: 24px 0 0; }
 
-/* ---------- 갓차 기계 ---------- */
+/* ---------- 갓차 기계 (전체 화면) ---------- */
+/* 뽑는 순간은 화면을 통째로 쓴다. 탭 안에 작게 들어가 있으면 손맛이 안 산다. */
+.gacha-full {
+  position: fixed; inset: 0; z-index: 1250;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255,222,190,0.32), rgba(255,255,255,0) 58%),
+    linear-gradient(180deg, #fff6f0 0%, #ffe9f1 48%, #ece2fb 100%);
+  opacity: 0; transition: opacity .26s ease;
+}
+.gacha-full.show { opacity: 1; }
+.gacha-full-back {
+  position: absolute; left: 10px; top: calc(10px + env(safe-area-inset-top));
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--card-border); background: var(--card);
+  font-size: 20px; line-height: 1; color: var(--text); z-index: 2;
+}
+.gacha-full-title { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: var(--text-dim); }
+.gacha-full .reveal-stage { padding: 0; }
+.gacha-full .reveal-guide { font-size: 18px; margin-bottom: 26px; }
+.gacha-full .reveal-note { margin-top: 26px; font-size: 12.5px; }
+
 /* 돔(캡슐 창) + 본체(손잡이) + 배출구. 캡슐 하나가 배출구에서 나와
-   화면 가운데로 커지며 열리는 순서로 움직인다. */
+   화면 가운데로 커지며 열리는 순서로 움직인다.
+   --gw 하나로 전체 크기를 잡고 나머지는 전부 비율로 따라간다. */
 .gacha {
-  position: relative; width: 190px; height: 250px; margin: 0 auto;
+  --gw: min(62vw, 30dvh, 250px);
+  position: relative; width: var(--gw); height: calc(var(--gw) * 1.32); margin: 0 auto;
 }
 /* 위쪽 유리 돔 */
 .gm-dome {
-  position: absolute; left: 12px; right: 12px; top: 0; height: 132px;
-  border-radius: 84px 84px 22px 22px;
+  position: absolute; left: 6%; right: 6%; top: 0; height: calc(var(--gw) * 0.70);
+  border-radius: 50% 50% 12% 12% / 62% 62% 10% 10%;
   overflow: hidden;
   background:
     radial-gradient(circle at 32% 24%, rgba(255,255,255,0.85), rgba(255,255,255,0.28) 46%, rgba(255,255,255,0.12) 70%),
@@ -2936,7 +2960,7 @@ body::before {
 }
 /* 돔 안에 담긴 캡슐들 */
 .gm-ball {
-  position: absolute; width: 26px; height: 26px; border-radius: 50%;
+  position: absolute; width: calc(var(--gw) * 0.137); height: calc(var(--gw) * 0.137); border-radius: 50%;
   box-shadow: inset 0 -3px 5px rgba(0,0,0,0.12), inset 0 3px 5px rgba(255,255,255,0.5);
 }
 .gacha.is-turning .gm-ball { animation: gm-jiggle .42s ease-in-out 3; }
@@ -2947,14 +2971,14 @@ body::before {
 }
 /* 본체 */
 .gm-body {
-  position: absolute; left: 0; right: 0; top: 126px; height: 96px;
-  border-radius: 14px;
+  position: absolute; left: 0; right: 0; top: calc(var(--gw) * 0.665); height: calc(var(--gw) * 0.505);
+  border-radius: calc(var(--gw) * 0.074);
   background: linear-gradient(180deg, #ff9166, #ef6a5a);
   box-shadow: inset 0 3px 8px rgba(255,255,255,0.35), 0 8px 18px rgba(0,0,0,0.16);
 }
-/* 손잡이(46px) 아래로 충분히 내려야 글자가 안 가린다 */
+/* 손잡이 아래로 충분히 내려야 글자가 안 가린다 (손잡이 바닥 0.326gw) */
 .gm-label {
-  position: absolute; left: 0; right: 0; top: 68px;
+  position: absolute; left: 0; right: 0; top: calc(var(--gw) * 0.358);
   font-size: 10.5px; font-weight: 800; color: rgba(255,255,255,0.95);
   letter-spacing: 0; white-space: nowrap;
   animation: gm-label-pulse 2.6s ease-in-out infinite;
@@ -2966,8 +2990,9 @@ body::before {
 .gacha.is-turning .gm-label { animation: none; opacity: .85; }
 /* 손잡이 */
 .gm-knob {
-  position: absolute; left: 50%; top: 16px; width: 46px; height: 46px;
-  margin-left: -23px; border-radius: 50%; cursor: pointer; padding: 0;
+  position: absolute; left: 50%; top: calc(var(--gw) * 0.084);
+  width: calc(var(--gw) * 0.242); height: calc(var(--gw) * 0.242);
+  margin-left: calc(var(--gw) * -0.121); border-radius: 50%; cursor: pointer; padding: 0;
   border: 3px solid rgba(255,255,255,0.9);
   background: radial-gradient(circle at 35% 30%, #fff6e8, #ffd79a 60%, #f0a12e);
   box-shadow: 0 3px 8px rgba(0,0,0,0.22);
@@ -2990,10 +3015,12 @@ body::before {
 }
 /* 회전 방향을 알려주는 고리 + 화살촉 */
 /* 고리는 손잡이와 중심이 맞아야 한다.
-   손잡이 top 16 + 반지름 23 = 중심 39 → 고리(66) top = 39 - 33 = 6 */
+   손잡이 중심 = top(0.084) + 반지름(0.121) = 0.205gw
+   고리(0.347gw) top = 0.205 - 0.1735 = 0.0315gw */
 .gm-knob-ring {
-  position: absolute; left: 50%; top: 6px; width: 66px; height: 66px;
-  margin-left: -33px; border-radius: 50%; pointer-events: none; z-index: 1;
+  position: absolute; left: 50%; top: calc(var(--gw) * 0.0315);
+  width: calc(var(--gw) * 0.347); height: calc(var(--gw) * 0.347);
+  margin-left: calc(var(--gw) * -0.1735); border-radius: 50%; pointer-events: none; z-index: 1;
   border: 2.5px dashed rgba(255,255,255,0.75);
   border-right-color: transparent;
   animation: gm-ring-spin 3.4s linear infinite;
@@ -3015,8 +3042,9 @@ body::before {
 }
 /* 배출구 */
 .gm-exit {
-  position: absolute; left: 50%; bottom: 0; width: 84px; height: 40px;
-  margin-left: -42px; border-radius: 10px;
+  position: absolute; left: 50%; bottom: 0;
+  width: calc(var(--gw) * 0.442); height: calc(var(--gw) * 0.21);
+  margin-left: calc(var(--gw) * -0.221); border-radius: calc(var(--gw) * 0.053);
   background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.32));
 }
 .gm-exit-hole {
@@ -3026,8 +3054,9 @@ body::before {
 }
 /* 배출구에서 나오는 캡슐 */
 .gm-out {
-  position: absolute; left: 50%; bottom: 12px; width: 44px; height: 44px;
-  margin-left: -22px; opacity: 0; z-index: 5; pointer-events: none;
+  position: absolute; left: 50%; bottom: calc(var(--gw) * 0.063);
+  width: calc(var(--gw) * 0.232); height: calc(var(--gw) * 0.232);
+  margin-left: calc(var(--gw) * -0.116); opacity: 0; z-index: 5; pointer-events: none;
   transition: opacity .2s ease;
 }
 .gm-out-top, .gm-out-bottom {
@@ -3051,15 +3080,16 @@ body::before {
 }
 /* 1) 배출구로 떨어져 나온다 */
 .gacha.is-dropped .gm-out { opacity: 1; animation: gm-out-drop .55s cubic-bezier(.5,0,.7,1); }
+/* 이동 거리도 기계 크기에 비례해야 커진 화면에서 같은 느낌이 난다 */
 @keyframes gm-out-drop {
-  0%   { transform: translateY(-58px) scale(.55); }
-  60%  { transform: translateY(4px) scale(1); }
-  78%  { transform: translateY(-7px) scale(1); }
+  0%   { transform: translateY(calc(var(--gw) * -0.305)) scale(.55); }
+  60%  { transform: translateY(calc(var(--gw) * 0.021)) scale(1); }
+  78%  { transform: translateY(calc(var(--gw) * -0.037)) scale(1); }
   100% { transform: translateY(0) scale(1); }
 }
 /* 2) 화면 가운데로 커지며 열린다 */
 .gacha.is-opening .gm-out { animation: gm-out-rise .5s ease forwards; }
-@keyframes gm-out-rise { to { transform: translateY(-96px) scale(2.3); } }
+@keyframes gm-out-rise { to { transform: translateY(calc(var(--gw) * -0.505)) scale(2.6); } }
 .gacha.is-opening .gm-out-top { transform: translateY(-30px) rotate(-20deg); opacity: 0; }
 .gacha.is-opening .gm-out-bottom { transform: translateY(16px); opacity: 0; }
 .gacha.is-opening .gm-out-band { opacity: 0; }
@@ -3069,16 +3099,11 @@ body::before {
   .gacha .gm-ball, .gacha .gm-knob, .gacha .gm-out { animation: none !important; }
   .gacha.is-dropped .gm-out { opacity: 1; }
 }
-/* 화면이 짧은 폰에서는 기계를 줄여 스크롤이 생기지 않게 한다 */
+/* 크기는 이제 --gw 하나로 정해지고 부품이 전부 비율로 따라간다.
+   예전에는 짧은 화면용으로 각 부품의 px를 따로 덮어썼는데, 그때 고리와 손잡이
+   중심이 어긋나는 문제가 생겼다. 이제는 --gw만 줄이면 전체가 같은 비율로 작아진다. */
 @media (max-height: 720px) {
-  .gacha { width: 158px; height: 208px; }
-  .gm-dome { height: 110px; border-radius: 70px 70px 18px 18px; }
-  .gm-ball { width: 22px; height: 22px; }
-  .gm-body { top: 104px; height: 84px; }
-  .gm-knob { width: 40px; height: 40px; margin-left: -20px; top: 12px; }
-  /* 손잡이 top 12 + 반지름 20 = 중심 32 → 고리(58) top = 32 - 29 = 3 */
-  .gm-knob-ring { width: 58px; height: 58px; margin-left: -29px; top: 3px; }
-  .gm-label { top: 58px; }
+  .gacha { --gw: min(56vw, 27dvh, 210px); }
   .reveal-stage { padding-top: 16px; }
 }
 .reveal-tray {

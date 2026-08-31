@@ -547,12 +547,14 @@
     }).join('');
     const pick = GACHA_BALL_COLORS[Math.floor(Math.random() * GACHA_BALL_COLORS.length)];
 
-    fortuneContent.innerHTML = `
-      <div class="rx-nav-header">
-        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">${title}</span>
-      </div>
+    // 뽑는 순간은 화면을 통째로 쓴다. 탭 안에 작게 들어가 있으면 "기계를 돌린다"는
+    // 손맛이 안 산다. 결과는 기존처럼 fortuneContent에 그리므로 buildAndRender는 그대로다.
+    const stage = document.createElement('div');
+    stage.className = 'gacha-full';
+    stage.innerHTML = `
+      <button class="gacha-full-back" id="fortune-detail-back" type="button" aria-label="뒤로">‹</button>
       <div class="reveal-stage">
+        <p class="gacha-full-title">${title}</p>
         <p class="reveal-guide" id="reveal-guide">손잡이를 돌려 오늘의 운을 뽑아보세요</p>
 
         <div class="gacha" id="gacha">
@@ -579,7 +581,22 @@
         <p class="reveal-note">하루에 한 번, 오늘의 운이 담긴 캡슐이 나와요 🔮</p>
       </div>
     `;
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.body.appendChild(stage);
+    requestAnimationFrame(() => stage.classList.add('show'));
+
+    // 오버레이를 걷어내는 일은 한 곳에서만 한다(두 번 불려도 안전하게).
+    let closed = false;
+    function closeStage() {
+      if (closed) return;
+      closed = true;
+      stage.classList.remove('show');
+      setTimeout(() => stage.remove(), 260);
+    }
+
+    document.getElementById('fortune-detail-back').addEventListener('click', () => {
+      closeStage();
+      renderFortuneHub(profile);
+    });
 
     const gacha = document.getElementById('gacha');
     const knob = document.getElementById('gm-knob');
@@ -606,7 +623,8 @@
         sfx('gachaReveal');
       }, 1500);
 
-      setTimeout(buildAndRender, 2400);
+      // 캡슐이 다 열린 뒤 오버레이를 걷고 결과를 원래 자리에 그린다.
+      setTimeout(() => { closeStage(); buildAndRender(); }, 2400);
     });
   }
 
