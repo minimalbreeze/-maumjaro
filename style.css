@@ -2656,31 +2656,46 @@ body::before {
 }
 
 /* ---------- 보상 개봉 ---------- */
+/* 마음약 개봉은 하루 한 번뿐인 가장 큰 순간이라 화면을 통째로 쓴다.
+   가운데 작은 카드로 띄우면 "알림창" 처럼 보여서 무게가 안 실린다.
+   마크업은 그대로 두고 배치만 전체 화면으로 바꾼다(게임 로직 무수정). */
 .reward-overlay {
   position: fixed; inset: 0; z-index: 1200;
-  background: rgba(38,24,52,0.55); backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255,214,180,0.30), rgba(255,255,255,0) 58%),
+    linear-gradient(180deg, #fff6f0 0%, #ffe9f1 46%, #efe4fb 100%);
+  display: flex; align-items: stretch; justify-content: center; padding: 0;
+  overflow: hidden;
 }
 .reward-overlay[hidden] { display: none; }
-.reward-sheet {
-  width: 100%; max-width: 340px; text-align: center;
-  background: var(--bg-top); border: 1px solid var(--card-border);
-  border-radius: 22px; padding: 26px 20px 18px;
-  max-height: 92dvh; overflow-y: auto;
+/* 배경에 은은한 빛 기둥 — 캡슐이 무대 위에 선 느낌을 만든다 */
+.reward-overlay::before {
+  content: ''; position: absolute; left: 50%; top: -10%;
+  width: 78vw; height: 78vw; max-width: 420px; max-height: 420px;
+  margin-left: -39vw; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,0.85), rgba(255,255,255,0) 66%);
 }
-.reward-eyebrow { font-size: 12.5px; font-weight: 700; color: var(--text-dim); margin: 0 0 6px; }
-.reward-guide { font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 22px; }
+.reward-sheet {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 460px; text-align: center;
+  background: none; border: none; border-radius: 0;
+  padding: calc(26px + env(safe-area-inset-top)) 22px calc(20px + env(safe-area-inset-bottom));
+  max-height: 100dvh; overflow-y: auto;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.reward-eyebrow { font-size: 13.5px; font-weight: 700; color: var(--text-dim); margin: 0 0 8px; }
+.reward-guide { font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 30px; }
 /* 뽑기 상자를 갓차 캡슐(왁뿌볼)로 바꿨다. 클래스 이름은 그대로 둬서
    game.js의 tap-1~4 / is-open 로직을 손대지 않는다.
    body = 아래 반구(반투명), lid = 위 반구(브랜드 색), 둘 사이에 띠가 하나 지난다. */
 .reward-box {
-  width: 132px; height: 132px; margin: 0 auto; display: block;
+  width: var(--cap, 132px); height: var(--cap, 132px); margin: 0 auto; display: block;
   position: relative; border: none; background: none; padding: 0; cursor: pointer;
 }
 /* 아래쪽 반구 — 안이 살짝 비치는 캡슐 느낌 */
 .reward-box-body {
-  position: absolute; left: 8px; right: 8px; top: 50%; height: 58px;
-  border-radius: 0 0 62px 62px;
+  position: absolute; left: 4%; right: 4%; top: 50%; height: 44%;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
   background:
     radial-gradient(circle at 34% 22%, rgba(255,255,255,0.75), rgba(255,255,255,0) 46%),
     linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,236,214,0.92));
@@ -2689,10 +2704,12 @@ body::before {
 /* 위쪽 반구 — 열릴 때 위로 튀어오르며 벗겨진다.
    색(--cap-a/--cap-b)은 안에 든 마음약을 따라간다(game.js가 넣어 준다).
    전부 같은 공이면 "뭐가 나올까"가 없고, 색이 다르면 열기 전부터 재미가 생긴다. */
-.reward-box { --cap-a: #ffb98a; --cap-b: #ff9166; }
+/* 캡슐 크기를 한 곳에서 정한다. 전체 화면이 됐으니 화면 폭을 따라 커지되,
+   너무 커지지 않게 상한을 둔다(작은 폰에서 버튼이 밀리면 안 된다). */
+.reward-box { --cap-a: #ffb98a; --cap-b: #ff9166; --cap: min(58vw, 46dvh, 230px); }
 .reward-box-lid {
-  position: absolute; left: 8px; right: 8px; top: calc(50% - 58px); height: 58px;
-  border-radius: 62px 62px 0 0; overflow: hidden;
+  position: absolute; left: 4%; right: 4%; top: 6%; height: 44%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0; overflow: hidden;
   background:
     radial-gradient(circle at 32% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0) 44%),
     linear-gradient(180deg, var(--cap-a), var(--cap-b));
@@ -2732,8 +2749,8 @@ body::before {
 }
 /* 두 반구가 맞물리는 띠 — 캡슐 색의 진한 쪽을 쓴다 */
 .reward-box::after {
-  content: ''; position: absolute; left: 4px; right: 4px; top: calc(50% - 5px);
-  height: 10px; border-radius: 6px; z-index: 3; pointer-events: none;
+  content: ''; position: absolute; left: 1%; right: 1%; top: calc(50% - 4%);
+  height: 8%; border-radius: 999px; z-index: 3; pointer-events: none;
   background: linear-gradient(180deg, rgba(255,255,255,0.75), var(--cap-b));
   box-shadow: 0 1px 3px rgba(0,0,0,0.18);
 }
@@ -2745,8 +2762,8 @@ body::before {
 /* 두드릴수록 균열이 늘고 빛이 새어 나온다 — 숫자만 오르면 손맛이 없다.
    캡슐 전체(위·아래 반구)에 금이 가야 해서 공 크기에 맞춰 덮는다. */
 .reward-box-crack {
-  position: absolute; left: 8px; right: 8px; top: calc(50% - 58px); height: 116px;
-  border-radius: 62px; pointer-events: none; opacity: 0;
+  position: absolute; left: 4%; right: 4%; top: 6%; height: 88%;
+  border-radius: 50%; pointer-events: none; opacity: 0;
   transition: opacity .25s ease; z-index: 4;
   background:
     linear-gradient(196deg, transparent 44%, rgba(255,255,255,0.95) 45.4%, transparent 46.8%),
@@ -2763,9 +2780,14 @@ body::before {
 .reward-box.tap-4 { animation: box-shake-hard .36s ease; }
 .reward-box.tap-4 .reward-box-crack { opacity: 1; }
 .reward-box.tap-4 .reward-box-glow { opacity: .7; }
-/* 열릴 때: 위 반구가 튀어올라 벗겨지고, 아래 반구는 살짝 내려앉으며 띠도 사라진다 */
-.reward-box.is-open .reward-box-lid { transform: translateY(-62px) rotate(-22deg); opacity: 0; }
-.reward-box.is-open .reward-box-body { transform: translateY(8px); transition: transform .45s ease; }
+/* 열릴 때: 위 반구가 튀어올라 벗겨지고, 아래 반구는 살짝 내려앉으며 띠도 사라진다.
+   튀는 거리는 캡슐 크기에 비례해야 커진 화면에서도 같은 느낌이 난다. */
+.reward-box.is-open .reward-box-lid {
+  transform: translateY(calc(var(--cap, 132px) * -0.5)) rotate(-22deg); opacity: 0;
+}
+.reward-box.is-open .reward-box-body {
+  transform: translateY(calc(var(--cap, 132px) * 0.06)); transition: transform .45s ease;
+}
 .reward-box.is-open::after { opacity: 0; transition: opacity .3s ease; }
 .reward-box.is-open .reward-box-crack { opacity: 0; }
 .reward-box.is-open .reward-box-glow { opacity: 1; }
@@ -2849,12 +2871,15 @@ body::before {
 .med-share-foot { font-size: 10.5px; font-weight: 700; color: #b98a9a; }
 
 /* 결과 화면에 보이는 카드 */
+/* 전체 화면이 되면서 결과 카드도 같이 커진다. 공유 이미지로 그대로 찍히는
+   영역이라 비율은 유지하고 여백과 글자만 키운다. */
 .reward-card {
   background: linear-gradient(180deg, #fffaf3, #ffeef2);
   border: 1px solid rgba(255,150,175,0.28);
-  border-radius: 18px;
-  padding: 20px 16px 14px;
-  margin-bottom: 14px;
+  border-radius: 22px;
+  padding: 26px 18px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 12px 34px rgba(183,121,239,0.14);
 }
 .reward-card-foot {
   margin-top: 12px;
