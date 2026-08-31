@@ -23,6 +23,8 @@
   const {
     ZODIAC_SIGNS, ZODIAC_CUTOFFS, CHINESE_ZODIAC,
     SIGN_DAY_SEED, SIGN_LUCKY_TIME, SIGN_LUCKY_PLACE, SIGN_LUCKY_ACT,
+    ZODIAC_PAIR_LINES, ZODIAC_SAME_SIGN, ZODIAC_OPPOSITE,
+    SAMHAP, YUKHAP, CHUNG, WONJIN, ANIMAL_PAIR_LINES,
   } = window.MAUMJARO_ZODIAC_DATA;
 
   // 타로 아이콘. 예전에는 🌙를 썼는데 그건 유니코드상 "화투(하나후다)" 이모지라
@@ -512,6 +514,11 @@
           <span class="rx-category-label">맘운 처방</span>
           <span class="rx-category-count">마음+운</span>
         </div>
+        <div class="rx-category-tile" data-fortune="match">
+          <span class="rx-category-emoji">💘</span>
+          <span class="rx-category-label">궁합</span>
+          <span class="rx-category-count">별자리·띠</span>
+        </div>
       </div>
     `;
 
@@ -532,6 +539,7 @@
         else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
+        else if (type === 'match') renderMatchCenter(profile, 'zodiac', null);
       });
     });
   }
@@ -971,6 +979,142 @@
     }
 
     withMysticalReveal(profile, title, () => draw(mine.key));
+  }
+
+  // ---------- 별자리 · 띠 궁합 ----------
+  // 점수를 임의로 매기지 않는다. 별자리는 서양 점성술의 원소 관계를,
+  // 띠는 십이지의 삼합·육합·충·원진 규칙을 그대로 쓴다.
+  function pairKey(a, b) { return [a, b].sort().join('-'); }
+  function inPairList(list, a, b) {
+    return list.some((p) => pairKey(p[0], p[1]) === pairKey(a, b));
+  }
+
+  function zodiacPair(mine, other) {
+    const m = ZODIAC_SIGNS.find((s) => s.key === mine);
+    const o = ZODIAC_SIGNS.find((s) => s.key === other);
+    if (!m || !o) return null;
+    const mi = ZODIAC_SIGNS.indexOf(m);
+    const oi = ZODIAC_SIGNS.indexOf(o);
+    // 원소 키는 한글이라 정렬하면 데이터 키('흙-물')와 순서가 뒤집힌다('물-흙').
+    // 정렬하지 말고 양쪽 순서를 다 시도한다.
+    const base = ZODIAC_PAIR_LINES[`${m.element}-${o.element}`]
+      || ZODIAC_PAIR_LINES[`${o.element}-${m.element}`]
+      || ZODIAC_PAIR_LINES['불-불'];
+    let label = `${m.element} × ${o.element}`;
+    let line = base.line;
+    let stars = base.stars;
+    if (mine === other) { label = '같은 별자리'; line = ZODIAC_SAME_SIGN; stars = 4; }
+    else if (Math.abs(mi - oi) === 6) { label = '정반대 자리'; line = ZODIAC_OPPOSITE; stars = 4; }
+    return { stars, label, line, me: m, you: o };
+  }
+
+  function animalPair(mineZhi, otherZhi) {
+    const m = CHINESE_ZODIAC.find((z) => z.zhi === mineZhi);
+    const o = CHINESE_ZODIAC.find((z) => z.zhi === otherZhi);
+    if (!m || !o) return null;
+    let k = 'plain';
+    if (mineZhi === otherZhi) k = 'same';
+    else if (SAMHAP.some((g) => g.indexOf(mineZhi) >= 0 && g.indexOf(otherZhi) >= 0)) k = 'samhap';
+    else if (inPairList(YUKHAP, mineZhi, otherZhi)) k = 'yukhap';
+    else if (inPairList(CHUNG, mineZhi, otherZhi)) k = 'chung';
+    else if (inPairList(WONJIN, mineZhi, otherZhi)) k = 'wonjin';
+    const d = ANIMAL_PAIR_LINES[k];
+    return { stars: d.stars, label: d.label, line: d.line, me: m, you: o, kind: k };
+  }
+
+  function renderMatchCenter(profile, mode, otherKey) {
+    const chart = getOrComputeSajuChart(profile);
+    const myZodiac = zodiacSignOf(profile);
+    const myAnimal = chineseZodiacOf(chart);
+    const isZ = mode !== 'animal';
+    const list = isZ ? ZODIAC_SIGNS : CHINESE_ZODIAC;
+    const mine = isZ ? myZodiac : myAnimal;
+
+    if (!mine) { renderFortuneHub(profile); return; }
+
+    const pair = otherKey
+      ? (isZ ? zodiacPair(mine.key, otherKey) : animalPair(mine.zhi, otherKey))
+      : null;
+
+    fortuneContent.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+        <span class="rx-nav-title">💞 궁합</span>
+      </div>
+
+      <div class="segmented" id="match-mode-toggle">
+        <button class="seg-btn${isZ ? ' active' : ''}" data-val="zodiac" type="button">⭐ 별자리 궁합</button>
+        <button class="seg-btn${isZ ? '' : ' active'}" data-val="animal" type="button">🐯 띠 궁합</button>
+      </div>
+
+      <p class="rx-custom-hint" style="text-align:center;">
+        내 ${isZ ? '별자리' : '띠'}는 <b>${mine.emoji} ${mine.name}</b>. 상대를 골라주세요
+      </p>
+
+      <div class="mbti-pick-grid">
+        ${list.map((s) => {
+          const key = isZ ? s.key : s.zhi;
+          return `
+            <button class="mbti-pick${key === otherKey ? ' on' : ''}" type="button" data-o="${key}">
+              <span class="mbti-pick-emoji">${s.emoji}</span>
+              <span class="mbti-pick-code" style="font-size:11px;letter-spacing:0;">${s.name}</span>
+            </button>`;
+        }).join('')}
+      </div>
+
+      ${pair ? `
+        <div class="rx-detail-card mbti-pair">
+          <div class="mbti-pair-row">
+            <span class="mbti-pair-side"><b>${pair.me.emoji}</b><em style="font-size:12px;letter-spacing:0;">${pair.me.name}</em><i>나</i></span>
+            <span class="mbti-pair-heart">💞</span>
+            <span class="mbti-pair-side"><b>${pair.you.emoji}</b><em style="font-size:12px;letter-spacing:0;">${pair.you.name}</em><i>상대</i></span>
+          </div>
+          <span class="mbti-type-badge" style="margin-top:6px;">${pair.label}</span>
+          <div style="margin-top:6px;">${starsText(pair.stars)}</div>
+          <p class="rx-detail-symptom" style="margin-top:8px;">${pair.line}</p>
+        </div>
+
+        <button class="rx-friend-quick-btn fortune-goto-rx-btn" type="button" data-rxcat="${SOCIAL_FORTUNE_SEED.rxCategory}" style="width:100%;margin-top:8px;">
+          우리 사이에 필요한 처방 보러가기 ›
+        </button>
+        <button class="action-btn" id="match-share-btn" type="button" style="width:100%;margin-top:8px;">궁합 결과 보내기 💌</button>
+      ` : `<p class="rx-custom-hint" style="text-align:center;margin-top:14px;">상대를 고르면 궁합이 나와요</p>`}
+
+      <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:12px;">그래서 오늘은? 💞</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
+        별자리는 원소 관계, 띠는 삼합·육합·충·원진 규칙을 그대로 씁니다. 재미로 봐주세요.
+      </p>
+    `;
+
+    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
+
+    document.getElementById('match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
+      // 모드를 바꾸면 상대 선택은 비운다(별자리 키와 띠 지지는 서로 호환되지 않는다).
+      b.addEventListener('click', () => renderMatchCenter(profile, b.dataset.val, null));
+    });
+
+    fortuneContent.querySelectorAll('.mbti-pick').forEach((b) => {
+      b.addEventListener('click', () => {
+        sfx('cardDraw');
+        renderMatchCenter(profile, mode, b.dataset.o);
+        const card = fortuneContent.querySelector('.mbti-pair');
+        if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        trackEvent('fortune_match', { mode, other: b.dataset.o });
+      });
+    });
+
+    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((b) => {
+      b.addEventListener('click', () => Rx.goToRxCategory(b.dataset.rxcat));
+    });
+
+    const share = document.getElementById('match-share-btn');
+    if (share && pair) {
+      share.addEventListener('click', () => {
+        const text = `${pair.me.name} × ${pair.you.name} 궁합 · ${pair.label}\n${starsText(pair.stars)}\n우리 이렇게 나왔는데 볼래?`;
+        Rx.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/');
+      });
+    }
   }
 
   function renderFortuneTojeong(profile) {
