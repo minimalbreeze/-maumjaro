@@ -191,10 +191,31 @@
         <circle cx="32" cy="32" r="8.5" fill="#fff" opacity=".85"/>
         <circle cx="24" cy="24" r="4" fill="#fff" opacity=".32"/>`,
     }[v.shape] || '';
+    // 그림자와 빛을 모양별로 따로 그리면 12벌을 다 손봐야 한다.
+    // 어떤 모양에도 통하는 두 가지만 얹는다 — 바닥 그림자(떠 있지 않게)와
+    // 위에서 내려오는 빛(왼쪽 위가 밝고 오른쪽 아래가 어둡게). 모양 코드는 그대로 둔다.
     return `<svg class="med-svg" viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
-      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/>
-      </linearGradient></defs>${body}</svg>`;
+      <defs>
+        <linearGradient id="${gid}" x1="0.12" y1="0" x2="0.88" y2="1">
+          <stop offset="0" stop-color="${a}"/>
+          <stop offset="0.52" stop-color="${b}"/>
+          <stop offset="1" stop-color="${b}"/>
+        </linearGradient>
+        <radialGradient id="sh-${gid}" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="rgba(60,40,25,0.34)"/>
+          <stop offset="62%" stop-color="rgba(60,40,25,0.12)"/>
+          <stop offset="100%" stop-color="rgba(60,40,25,0)"/>
+        </radialGradient>
+        <linearGradient id="lt-${gid}" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0" stop-color="rgba(255,255,255,0.30)"/>
+          <stop offset="45%" stop-color="rgba(255,255,255,0)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0.14)"/>
+        </linearGradient>
+        <clipPath id="cp-${gid}"><rect x="0" y="0" width="64" height="64"/></clipPath>
+      </defs>
+      <ellipse cx="32" cy="57" rx="20" ry="4.4" fill="url(#sh-${gid})"/>
+      <g class="med-body">${body}</g>
+      </svg>`;
   }
   function medicineOf(id) { return MEDICINES.find((m) => m.id === id) || null; }
 

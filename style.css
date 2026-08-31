@@ -2585,6 +2585,10 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mbti-pick-emoji { font-size: 17px; line-height: 1; }
 .mbti-pick-code { font-size: 10.5px; }
 
+/* 마음약 아이콘: 바닥 그림자는 SVG 안에서 그리고, 알 자체의 그림자는 여기서 준다.
+   (SVG 안에 필터를 넣으면 12개 모양마다 영역 계산이 달라져 잘리는 것이 생긴다) */
+.med-svg .med-body { filter: drop-shadow(0 2px 3px rgba(70,45,25,0.28)); }
+
 /* 혈액형 칩 4칸 */
 .blood-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 8px 0 4px; }
 .blood-chip {
@@ -3280,6 +3284,21 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .reward-box {
   width: var(--cap, 132px); height: var(--cap, 132px); margin: 0 auto; display: block;
   position: relative; border: none; background: none; padding: 0; cursor: pointer;
+}
+/* 바닥 그림자 — 공이 공중에 떠 있으면 무게가 안 느껴진다.
+   ::after는 이미 가운데 띠가 쓰고 있으므로 별도 요소 없이 body의 그림자로 만든다. */
+.reward-box-body::after {
+  content: ''; position: absolute; left: -8%; right: -8%; bottom: -8%;
+  height: 15%; border-radius: 50%; pointer-events: none; z-index: -1;
+  background: radial-gradient(ellipse, rgba(90,55,30,0.30) 0%, rgba(90,55,30,0.12) 55%, rgba(90,55,30,0) 78%);
+}
+/* 유리에 비친 창문 같은 사선 하이라이트. 이게 있어야 "구슬"로 보인다. */
+.reward-box-lid::after {
+  content: ''; position: absolute; left: 14%; top: 12%;
+  width: 30%; height: 44%; border-radius: 50%; z-index: 4; pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,0.9), rgba(255,255,255,0.15) 62%, rgba(255,255,255,0));
+  transform: rotate(-18deg);
+  filter: blur(0.4px);
 }
 /* 아래쪽 반구 — 안이 살짝 비치는 캡슐 느낌 */
 .reward-box-body {
