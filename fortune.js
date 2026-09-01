@@ -3455,6 +3455,15 @@
   }
 
   // ---------- 기록 탭 진입점: 개인처방/친구처방/운세 3개 카테고리 중 선택 ----------
+  // 행운번호는 lucky.js가 담당한다. 없어도 기록 탭이 깨지지 않게 방어적으로 부른다.
+  function luckySub() {
+    try {
+      const L = window.MaumjaroLucky;
+      if (!L) return '주 1회';
+      return L.summary().drawn ? '이번 주 뽑음' : '주 1회';
+    } catch (e) { return '주 1회'; }
+  }
+
   function renderHistoryHub(profile) {
     if (historyNativeSegmented) historyNativeSegmented.hidden = true;
     if (historyNativeContent) historyNativeContent.hidden = true;
@@ -3495,6 +3504,11 @@
           <span class="rx-category-label">마음약</span>
           <span class="rx-category-count">${medSub}</span>
         </div>
+        <div class="rx-category-tile" data-cat="lucky">
+          <span class="rx-category-emoji">🎰</span>
+          <span class="rx-category-label">행운번호</span>
+          <span class="rx-category-count">${luckySub()}</span>
+        </div>
       </div>
     `;
     historyCustomArea.querySelectorAll('.rx-category-tile').forEach((tile) => {
@@ -3509,6 +3523,11 @@
           return;
         }
         historyCustomArea.hidden = false;
+        if (cat === 'lucky') {
+          if (!window.MaumjaroLucky) { Core.showToast('행운번호를 불러오지 못했어요'); return; }
+          window.MaumjaroLucky.open(historyCustomArea, () => renderHistoryHub(profile));
+          return;
+        }
         if (cat === 'friend') renderHistoryCategoryView(profile, '💌 친구처방 기록', loadFriendSentItems);
         else if (cat === 'tarot') renderHistoryCategoryView(profile, '🌙 타로 기록', loadTarotItems);
         // 마음약은 "언제 무엇을 처음 얻었는지"가 기록이다. 항목을 누르면 마음약국이 열린다.
