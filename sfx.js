@@ -32,6 +32,40 @@
     } catch (e) { return null; }
   }
 
+  // 예약 시각. 그냥 currentTime을 쓰면, 컨텍스트가 막 깨어나는 중일 때
+  // 예약 시점이 이미 지나가 버려 그 소리가 통째로 버려진다(특히 iOS).
+  // 아주 짧은 여유(20ms)를 두면 사람 귀엔 즉시로 들리면서 그 사고를 막는다.
+  function now(c) {
+    // 컨텍스트가 막 만들어진 직후에는 오디오 스레드가 아직 안 도는 구간이 있어서
+    // 20ms로는 부족하다(실측: 이 구간에 예약한 소리는 출력이 0으로 나온다).
+    // 그때만 여유를 더 준다 — 0.12초는 귀로는 여전히 "즉시"로 들린다.
+    return c.currentTime + (c.currentTime < 0.4 ? 0.12 : 0.02);
+  }
+
+  // iOS/모바일 브라우저는 사용자가 화면을 건드리기 전까지 오디오를 막는다.
+  // 클릭 핸들러 안에서 AudioContext를 "만들기만" 해서는 부족하고, 제스처가 살아 있는
+  // 동안 resume()과 무음 재생을 한 번 해줘야 확실히 풀린다.
+  // 이걸 안 해두면 "그 화면에서만 소리가 안 난다"가 된다 — 실제로 MBTI 시험지에서 그랬다.
+  // (앱 어디를 처음 누르든 그 순간 풀리도록 document 전체에서 잡는다)
+  let unlocked = false;
+  function unlock() {
+    if (unlocked) return;
+    if (!on()) return;              // 소리가 꺼져 있으면 다음 제스처에 다시 시도한다
+    const c = audio();
+    if (!c) return;
+    unlocked = true;
+    try {
+      if (c.state === 'suspended') c.resume();
+      const s = c.createBufferSource();
+      s.buffer = c.createBuffer(1, 1, c.sampleRate);
+      s.connect(c.destination);
+      s.start(0);
+    } catch (e) { /* 실패해도 다음 소리에서 다시 시도된다 */ }
+  }
+  ['pointerdown', 'touchend', 'keydown'].forEach((ev) => {
+    document.addEventListener(ev, unlock, { capture: true, passive: true });
+  });
+
   // 1초짜리 화이트노이즈를 한 번만 만들어 두고 재활용한다.
   // 소리마다 새로 만들면 연속 재생 때 끊긴다.
   function noise(c) {
@@ -91,7 +125,7 @@
   // 규칙적으로 내면 기계음처럼 들려서 간격과 음색을 매번 흔든다.
   function cardShuffle() {
     const c = audio(); if (!c) return;
-    const t0 = c.currentTime;
+    const t0 = now(c);
     let t = t0;
     const n = 12 + Math.floor(Math.random() * 5);
     for (let i = 0; i < n; i++) {
@@ -107,7 +141,7 @@
   // 카드 한 장을 뽑아 드는 소리. 스윽 하고 끌리다가 톡 하고 멈춘다.
   function cardDraw() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     burst(c, t, 0.16, { freq: 900, freqTo: 3200, q: 0.7, gain: 0.10 });
     burst(c, t + 0.15, 0.05, { freq: 2600, q: 1.6, gain: 0.09 });
   }
@@ -115,7 +149,7 @@
   // 카드를 뒤집어 공개하는 소리. 뽑기보다 짧고 단단하게.
   function cardFlip() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     burst(c, t, 0.07, { freq: 2200, freqTo: 900, q: 1.0, gain: 0.12 });
     blip(c, t + 0.02, 320, 0.09, { type: 'triangle', gain: 0.07, freqTo: 210 });
   }
@@ -125,7 +159,7 @@
   // 노이즈를 걷어내고 5음계 화음을 아주 부드럽게 위로 쌓는다.
   function cardReveal() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     // 도-미-솔-도-레 (펜타토닉). 어떤 순서로 겹쳐도 불협이 나지 않는다.
     const notes = [523.25, 659.25, 783.99, 1046.5, 1174.7];
     notes.forEach((f, i) => {
@@ -151,7 +185,7 @@
   // 손잡이를 돌리는 드르륵. 일정 간격의 딱딱거림 + 밑에 깔리는 저역 진동.
   function gachaCrank(turns) {
     const c = audio(); if (!c) return;
-    const t0 = c.currentTime;
+    const t0 = now(c);
     const n = turns || 10;
     for (let i = 0; i < n; i++) {
       const t = t0 + i * 0.062;
@@ -164,7 +198,7 @@
   // 캡슐이 굴러 나와 떨어지는 소리. 통 → 통 → 통, 점점 빨라지고 작아진다.
   function capsuleDrop() {
     const c = audio(); if (!c) return;
-    const t0 = c.currentTime;
+    const t0 = now(c);
     const bounces = [0, 0.13, 0.22, 0.28, 0.32];
     bounces.forEach((d, i) => {
       const g = 0.2 * Math.pow(0.62, i);
@@ -179,7 +213,7 @@
   // 뒤로 갈수록 금이 깊어져 껍질이 얇아지는 느낌 — 음이 높아지고 잔향이 길어진다.
   function capsuleTap(step) {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     const s = Math.max(0, Math.min(6, (step || 1) - 1)) / 6; // 0~1로 정규화
     burst(c, t, 0.045 + s * 0.03, { freq: 2300 + s * 1500, q: 2.4, gain: 0.09 + s * 0.07 });
     blip(c, t, 185 + s * 150, 0.065 + s * 0.05, { type: 'triangle', gain: 0.065 + s * 0.05, freqTo: 105 });
@@ -196,7 +230,7 @@
   // 튀는 잔해음, (4) 빈 껍데기가 울리는 여운 — 이 네 겹이 겹친다. 그대로 쌓는다.
   function capsuleCrack() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
 
     // 1) 껍질이 끊기는 저역 "뚝" — 아주 짧게, 음정을 급격히 떨군다
     blip(c, t, 320, 0.09, { type: 'triangle', gain: 0.16, freqTo: 70 });
@@ -226,7 +260,7 @@
   // 갓차 캡슐이 열리며 운세가 드러나는 소리. 카드 공개와 같은 계열의 신비로운 톤.
   function gachaReveal() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     [392.0, 523.25, 659.25, 783.99].forEach((f, i) => {
       const osc = c.createOscillator();
       const g = c.createGain();
@@ -253,7 +287,7 @@
   // 그리고 종이는 섬유질이라 스펙트럼이 넓다 — 대역폭(Q)을 아주 낮게 잡아야 한다.
   function pageFlip() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
 
     // 1) 모서리를 집어 드는 짧은 마찰
     burst(c, t, 0.045, { freq: 5200, freqTo: 3200, q: 0.35, gain: 0.06, filter: 'highpass', rate: 1.3 });
@@ -272,7 +306,7 @@
   // 답을 고를 때의 짧은 체크 소리. 넘기는 소리와 겹쳐도 묻히지 않게 또렷한 톤 하나.
   function pageMark() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
     burst(c, t, 0.04, { freq: 3000, q: 2.4, gain: 0.07 });
     blip(c, t, 880, 0.07, { type: 'triangle', gain: 0.06, freqTo: 1320 });
   }
@@ -280,7 +314,7 @@
   // 결과 발표. 두구두구(저역 롤) → 잠깐 정적 → 팡파르(장3화음 상행) → 반짝임.
   function resultFanfare() {
     const c = audio(); if (!c) return;
-    const t0 = c.currentTime;
+    const t0 = now(c);
     // 두구두구: 저역 타격을 점점 빠르고 세게
     let t = t0;
     for (let i = 0; i < 18; i++) {
@@ -320,7 +354,7 @@
   // 마지막에 작은 종소리 두 방울을 얹어 "반짝"을 만든다.
   function loveReveal() {
     const c = audio(); if (!c) return;
-    const t = c.currentTime;
+    const t = now(c);
 
     // 도-미-솔-라 (C6/A add6). 어떤 순서로 겹쳐도 달콤하게 맞물린다.
     const chord = [523.25, 659.25, 783.99, 880.0];

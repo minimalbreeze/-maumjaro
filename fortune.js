@@ -588,7 +588,36 @@
     ['#2f6f5e', '#8fd694'], ['#e0a83c', '#ffd166'], ['#ef6a5a', '#ffb37a'],
   ];
 
-  function withMysticalReveal(profile, title, buildAndRender) {
+  // 갓차는 "결과를 여는 연출"이지 뽑기가 아니다. 운세 내용은 기간(하루/이번 주/이번 달/올해)
+  // 안에서 이미 정해져 있어서, 다시 들어올 때마다 손잡이를 돌리게 하면 같은 결과를 위해
+  // 같은 동작을 반복시키는 셈이 된다(왁뿌볼이 하루 한 번인 것과도 규칙이 어긋난다).
+  // 그래서 기간마다 한 번만 돌리고, 그 뒤에는 결과를 바로 보여준다.
+  const GACHA_SEEN_KEY = 'maumjaro:gachaSeen';
+
+  function loadGachaSeen() {
+    try { return JSON.parse(localStorage.getItem(GACHA_SEEN_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function gachaAlreadySpun(key) {
+    if (!key) return false;
+    return !!loadGachaSeen()[key];
+  }
+  function markGachaSpun(key) {
+    if (!key) return;
+    try {
+      const seen = loadGachaSeen();
+      seen[key] = Date.now();
+      // 지난 기간 키가 무한정 쌓이지 않게 30일이 넘은 건 버린다.
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      Object.keys(seen).forEach((k) => { if (seen[k] < cutoff) delete seen[k]; });
+      localStorage.setItem(GACHA_SEEN_KEY, JSON.stringify(seen));
+    } catch (e) { /* 저장 실패는 무시 — 연출만 한 번 더 나올 뿐이다 */ }
+  }
+
+  // revealKey는 "이 결과가 언제까지 같은가"를 담는다.
+  //   오늘의 운세/맘운/별자리/띠 → 날짜, 주간 → 이번 주 월요일, 월간 → 이번 달, 토정비결 → 올해
+  function withMysticalReveal(profile, title, revealKey, buildAndRender) {
+    // 이미 이 기간에 돌렸으면 연출을 건너뛰고 결과만 그린다.
+    if (gachaAlreadySpun(revealKey)) { buildAndRender(); return; }
     const loadingLine = MYSTICAL_LOADING_LINES[Math.floor(Math.random() * MYSTICAL_LOADING_LINES.length)];
     // 돔 안을 채울 캡슐들. 위치와 색을 흩어 놓아야 "가득 차 있다"는 느낌이 난다.
     const domeBalls = Array.from({ length: 11 }, (_, i) => {
@@ -696,7 +725,9 @@
       }, 1500);
 
       // 캡슐이 다 열린 뒤 오버레이를 걷고 결과를 원래 자리에 그린다.
-      setTimeout(() => { closeStage(); buildAndRender(); }, 2400);
+      // 여기서 기록한다 — 손잡이를 실제로 돌려 결과를 본 시점이다.
+      // (뒤로 눌러 나간 사람은 기록되지 않아 다음에 다시 돌릴 수 있다)
+      setTimeout(() => { markGachaSpun(revealKey); closeStage(); buildAndRender(); }, 2400);
     });
   }
 
@@ -728,7 +759,7 @@
     const luckyItem = LUCKY_ITEMS[dailyPickIndex(chart, 'item', LUCKY_ITEMS.length)];
     const avoidToday = AVOID_TODAY_SEED[dailyPickIndex(chart, 'avoid', AVOID_TODAY_SEED.length)];
 
-    withMysticalReveal(profile, '🔮 오늘의 운세', () => {
+    withMysticalReveal(profile, '🔮 오늘의 운세', `daily:${todayDateKey()}`, () => {
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
@@ -765,7 +796,7 @@
   }
 
   function renderFortuneWeekly(profile) {
-    withMysticalReveal(profile, '📅 이번 주 전체 흐름', () => {
+    withMysticalReveal(profile, '📅 이번 주 전체 흐름', `weekly:${weekMondayDateKey()}`, () => {
       // 4.1: 새 프로필 없이 기존 5개 카테고리 풀(마음/재물/연애/인간관계/일)을 "이번 주 월요일" 기준
       // 결정론적 시드로 재사용한다 — 요일이 바뀌어도 이번 주 안에서는 결과가 안 바뀐다.
       const chart = getOrComputeSajuChart(profile);
@@ -808,7 +839,7 @@
   }
 
   function renderFortuneMonthly(profile) {
-    withMysticalReveal(profile, '📆 이번 달 전체 흐름', () => {
+    withMysticalReveal(profile, '📆 이번 달 전체 흐름', `monthly:${monthKey()}`, () => {
       // 4.1: 전체운은 4.0-A에서 이미 만든 MONTHLY_FORTUNE_SEED(오행 관계 기반)를 그대로 재사용하고,
       // 나머지 카테고리는 월 단위 결정론적 시드로 기존 5개 풀 중 4개(재물/연애/직장/인간관계)를 재사용한다.
       // "마음"은 별점 대신 한 달 흐름을 서술하는 별도 콘텐츠(마음의 흐름)로 대체한다.
@@ -979,7 +1010,7 @@
       trackEvent('fortune_sign_view', { mode, sign: sign.key, mine: isMine });
     }
 
-    withMysticalReveal(profile, title, () => draw(mine.key));
+    withMysticalReveal(profile, title, `sign-${mode}:${todayDateKey()}`, () => draw(mine.key));
   }
 
   // ---------- 별자리 · 띠 궁합 ----------
@@ -1317,7 +1348,7 @@
   }
 
   function renderFortuneTojeong(profile) {
-    withMysticalReveal(profile, '📜 토정비결', () => {
+    withMysticalReveal(profile, '📜 토정비결', `tojeong:${yearKey()}`, () => {
       // 4.2: 토정비결을 "올해 전체 흐름 한 장"에서 10개 섹션의 연간 가이드로 확장.
       // 전통 토정비결 산출식을 그대로 구현하지 않고, 기존 5개 카테고리 풀(재물/연애/인간관계/일/마음)과
       // 월간 키워드/처방 풀을 "올해" 단위 salt로 재사용해 새 콘텐츠 작성 부담 없이 톤을 통일한다.
@@ -1661,7 +1692,7 @@
     const interp = (MAUMUN_INTERPRETATION[emotion.key] && MAUMUN_INTERPRETATION[emotion.key][tier])
       || MAUMUN_INTERPRETATION.stress.mid;
 
-    withMysticalReveal(profile, '🌞 오늘의 맘운', () => {
+    withMysticalReveal(profile, '🌞 오늘의 맘운', `maumun:${todayDateKey()}`, () => {
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
