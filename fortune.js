@@ -2965,7 +2965,7 @@
       // 타로는 사주 데이터를 한 번도 읽지 않는다. 필요 없는 폼 뒤에 가둬 둘 이유가 없어서
       // 프로필 없이 바로 들어갈 수 있는 길을 연다(profile 자리에 null을 넘긴다).
       document.getElementById('fortune-skip-to-tarot').addEventListener('click', () => {
-        trackEvent('tarot_opened_without_profile', { source: 'profile_form' });
+        trackEvent('tarot_opened_without_profile', { entry: 'profile_form' });
         renderTarotTopics(null);
       });
     }
@@ -3483,7 +3483,7 @@
         // 마음약은 "언제 무엇을 처음 얻었는지"가 기록이다. 항목을 누르면 마음약국이 열린다.
         else if (cat === 'medicine') {
           const G = window.MaumjaroGame;
-          if (G && typeof G.track === 'function') G.track('collection_progress_clicked', { source: 'history' });
+          if (G && typeof G.track === 'function') G.track('collection_progress_clicked', { entry: 'history' });
           renderHistoryCategoryView(profile, '💊 마음약 기록', loadMedicineItems, () => {
             if (G && typeof G.openPharmacy === 'function') G.openPharmacy();
           });
@@ -3560,7 +3560,7 @@
     const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
     if (!fortuneTabBtn) return;
     promoTarotPending = true;  // renderFortuneHome이 이 표시를 보고 타로를 그린다
-    trackEvent('promo_landing_tarot', { source: 'query_param' });
+    trackEvent('promo_landing_tarot', { entry: 'query_param' });
     fortuneTabBtn.click();     // 탭 상태·뷰 전환은 기존 리스너에 맡긴다
   })();
 

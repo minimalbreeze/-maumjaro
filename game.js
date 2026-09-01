@@ -436,6 +436,14 @@
   // ---------- Analytics ----------
   // GA4가 붙어 있으면 이벤트를 보내고, 없으면 아무 일도 하지 않는다.
   // 감정의 자유서술 내용 등 민감한 값은 절대 보내지 않는다(감정 '키'만 보낸다).
+  //
+  // ⚠️ 절대 쓰면 안 되는 파라미터 이름:
+  //   source, medium, campaign, term, content, campaign_id,
+  //   source_platform, creative_format, marketing_tactic
+  // 이건 GA4의 유입경로 예약어라, 이벤트에 실어 보내면 그 세션의 "어디서 왔는지"를
+  // 통째로 덮어쓴다. 실제로 { source: 'emotion' }처럼 보내다가 네이버 블로그에서
+  // 들어온 세션이 전부 'emotion' 유입으로 바뀌어 59세션의 유입 분석이 망가졌다.
+  // "앱 안에서 어디를 눌러 시작했는지"는 entry / from 같은 이름을 쓴다.
   function track(name, params) {
     try {
       if (typeof window.gtag === 'function') window.gtag('event', name, params || {});
@@ -488,7 +496,7 @@
         const key = b.dataset.emo;
         track('home_primary_cta_clicked', { emotion: key }); // 홈의 첫 행동이 무엇인지 본다
         track('emotion_selected', { emotion: key });
-        track('prescription_started', { source: 'home' });
+        track('prescription_started', { entry: 'home' });
         Core.launchEmotionFlow(key); // 여기서부터는 기존 주사 흐름 그대로
       });
     });
@@ -567,7 +575,7 @@
   if (homeCollection) {
     homeCollection.addEventListener('click', () => {
       track('reward_preview_clicked', {});
-      track('collection_progress_clicked', { source: 'home' });
+      track('collection_progress_clicked', { entry: 'home' });
       openPharmacy();
     });
   }
@@ -1082,11 +1090,11 @@
   }
 
   document.addEventListener('maumjaro:emotion-injected', (e) => {
-    track('prescription_completed', { source: 'emotion', emotion: (e.detail && e.detail.key) || '' });
+    track('prescription_completed', { entry: 'emotion', emotion: (e.detail && e.detail.key) || '' });
     onPrescriptionCompleted(3900);
   });
   document.addEventListener('maumjaro:rx-injected', (e) => {
-    track('prescription_completed', { source: (e.detail && e.detail.category) || 'rx' });
+    track('prescription_completed', { entry: (e.detail && e.detail.category) || 'rx' });
     onPrescriptionCompleted(1200);
   });
 
@@ -1146,10 +1154,10 @@
       track('emotion_selected', { emotion: chip.dataset.key || chip.dataset.symptom || '' });
       return;
     }
-    if (t.closest('#symptom-confirm-btn, #prepare-btn')) { track('prescription_started', { source: 'emotion' }); return; }
-    if (t.closest('#today-rx-btn')) { track('prescription_started', { source: 'today_card' }); return; }
+    if (t.closest('#symptom-confirm-btn, #prepare-btn')) { track('prescription_started', { entry: 'emotion' }); return; }
+    if (t.closest('#today-rx-btn')) { track('prescription_started', { entry: 'today_card' }); return; }
     if (t.closest('#rx-friend-share-btn')) { track('friend_prescription_shared', {}); return; }
-    if (t.closest('#tarot-share-btn')) { track('reward_shared', { source: 'tarot' }); }
+    if (t.closest('#tarot-share-btn')) { track('reward_shared', { entry: 'tarot' }); }
   }, true);
 
   // 친구가 보낸 링크로 들어온 경우.
@@ -1159,7 +1167,7 @@
     const q = new URLSearchParams(location.search);
     const kind = q.get('custom') ? 'custom' : q.get('maumun') ? 'maumun' : (q.get('t') || q.get('tarot')) ? 'tarot' : '';
     if (!kind) return;
-    track('friend_invite_opened', { source: kind });
+    track('friend_invite_opened', { entry: kind });
 
     const s = loadState();
     const 처음온사람 = !s.lastCheckInDate && Object.keys(s.collection).length === 0;

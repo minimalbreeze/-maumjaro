@@ -72,10 +72,14 @@
     if (G && typeof G.track === 'function') G.track(name, params);
   }
 
-  // 친구가 보낸 링크로 들어왔는지. 그렇다면 온보딩이 아니라 받은 것부터 보여줘야 한다.
+  // 목적을 갖고 들어온 링크인지. 그렇다면 온보딩이 아니라 그 목적부터 보여줘야 한다.
+  //  - custom/maumun/t/tarot : 친구가 보낸 처방·운세·타로
+  //  - start                 : 페이스북 자동 게시·블로그의 "무료 타로 보기" 착지 링크
+  // start를 빼먹었더니 광고를 눌러 타로 화면까지 온 사람 앞에 온보딩 3장이 덮여 있었다.
+  // 보러 온 것이 가려지면 그 자리에서 나간다.
   function cameFromFriendLink() {
     const q = new URLSearchParams(location.search);
-    return !!(q.get('custom') || q.get('maumun') || q.get('t') || q.get('tarot'));
+    return !!(q.get('custom') || q.get('maumun') || q.get('t') || q.get('tarot') || q.get('start'));
   }
 
   function open(fromSettings) {
