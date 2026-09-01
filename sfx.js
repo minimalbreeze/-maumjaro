@@ -223,38 +223,79 @@
     }
   }
 
-  // 캡슐이 쩍 갈라지는 소리.
-  // 예전엔 노이즈 한 방 + 사각파여서 "삑" 하는 전자음에 가까웠다.
-  // 실제로 단단한 플라스틱이 깨질 때는 (1) 껍질이 버티다 끊기는 저역 "뚝",
-  // (2) 갈라지는 순간의 아주 짧고 날카로운 고역 크랙, (3) 조각이 서로 부딪히며
-  // 튀는 잔해음, (4) 빈 껍데기가 울리는 여운 — 이 네 겹이 겹친다. 그대로 쌓는다.
+  // 캡슐이 "와자작" 부서지는 소리.
+  //
+  // 핵심은 여기다 — 와자작은 크랙 "한 번"이 아니다.
+  // 단단한 껍질은 한 지점이 터지면 금이 사방으로 번지면서 아주 짧은 파열이
+  // 150ms 안에 십수 번 몰아친다. 그 밀도가 "쩍"과 "와자작"을 가른다.
+  // 그래서 (2)를 한 방이 아니라 앞이 촘촘하고 뒤로 성겨지는 무리로 만든다.
+  //
+  // 그리고 이건 하루에 한 번 여는 상자다. 부서지는 데서 끝나면 허전하고,
+  // 부서진 자리에서 뭔가 솟아올라야 "열었다"는 희열이 된다.
+  // 그래서 마지막에 위로 올라가는 밝은 종소리를 얹는다.
   function capsuleCrack() {
     const c = audio(); if (!c) return;
     const t = now(c);
 
-    // 1) 껍질이 끊기는 저역 "뚝" — 아주 짧게, 음정을 급격히 떨군다
-    blip(c, t, 320, 0.09, { type: 'triangle', gain: 0.16, freqTo: 70 });
-    burst(c, t, 0.05, { freq: 420, q: 0.9, gain: 0.12, filter: 'lowpass' });
+    // 1) 껍질이 버티다 끊기는 저역 충격 "쿵" — 무게를 만든다
+    blip(c, t, 340, 0.1, { type: 'triangle', gain: 0.32, freqTo: 62 });
+    burst(c, t, 0.06, { freq: 380, q: 0.8, gain: 0.24, filter: 'lowpass' });
 
-    // 2) 갈라지는 순간 — 폭이 넓은 고역 노이즈를 아주 짧게(길면 "쉬-"가 된다)
-    burst(c, t + 0.004, 0.035, { freq: 6800, freqTo: 2600, q: 0.5, gain: 0.3, filter: 'highpass', rate: 1.4 });
-    burst(c, t + 0.012, 0.06, { freq: 3000, freqTo: 900, q: 0.8, gain: 0.18 });
-
-    // 3) 조각이 튀며 부딪히는 소리 — 간격과 음색을 매번 흔들어야 기계음이 안 된다
-    const bits = 9;
-    for (let i = 0; i < bits; i++) {
-      const d = 0.035 + i * 0.028 + Math.random() * 0.03;
-      const decay = Math.pow(0.82, i);
-      burst(c, t + d, 0.025 + Math.random() * 0.02, {
-        freq: 2800 + Math.random() * 3400, q: 3.2, gain: 0.075 * decay, rate: 0.9 + Math.random() * 0.5,
+    // 2) 와자작 — 금이 번지는 미세 파열 무리.
+    //    앞이 촘촘(간격 8ms)하고 뒤로 갈수록 성겨진다(간격 22ms).
+    //    하나하나는 8~22ms로 아주 짧고 Q를 높여 "딱딱"하게 만든다.
+    const CRACKS = 16;
+    let d = 0.002;
+    for (let i = 0; i < CRACKS; i++) {
+      const p = i / (CRACKS - 1);              // 0 → 1
+      const decay = Math.pow(0.9, i);
+      burst(c, t + d, 0.008 + Math.random() * 0.014, {
+        freq: 2200 + Math.random() * 4800,
+        q: 6 + Math.random() * 6,
+        gain: (0.38 - p * 0.18) * decay,
+        rate: 0.85 + Math.random() * 0.7,
       });
-      // 조각 중 몇 개는 딱딱한 알갱이 소리를 함께 낸다
-      if (i % 3 === 0) blip(c, t + d, 760 + Math.random() * 900, 0.035, { type: 'square', gain: 0.03 * decay, freqTo: 300 });
+      // 중간중간 넓은 대역 파열을 섞어야 "종이 찢는 소리"가 아니라 "깨지는 소리"가 된다
+      if (i % 4 === 1) {
+        burst(c, t + d, 0.03, {
+          freq: 5200 + Math.random() * 2500, freqTo: 1400,
+          q: 0.6, gain: 0.21 * decay, filter: 'highpass', rate: 1.3,
+        });
+      }
+      d += 0.008 + p * 0.014 + Math.random() * 0.006;
     }
 
-    // 4) 빈 껍데기가 울리는 여운 — 아주 작게 깔아 공간감만 준다
-    blip(c, t + 0.03, 168, 0.5, { type: 'sine', gain: 0.05, freqTo: 96 });
-    burst(c, t + 0.05, 0.4, { freq: 1200, freqTo: 400, q: 0.6, gain: 0.02, filter: 'bandpass' });
+    // 3) 파편이 튀어 흩어지는 소리 — 성기고 점점 작아진다
+    for (let i = 0; i < 10; i++) {
+      const dd = 0.16 + i * 0.035 + Math.random() * 0.04;
+      const decay = Math.pow(0.8, i);
+      burst(c, t + dd, 0.02 + Math.random() * 0.02, {
+        freq: 3000 + Math.random() * 3800, q: 4, gain: 0.10 * decay, rate: 0.9 + Math.random() * 0.6,
+      });
+      if (i % 3 === 0) blip(c, t + dd, 820 + Math.random() * 1100, 0.03, { type: 'square', gain: 0.028 * decay, freqTo: 320 });
+    }
+
+    // 4) 희열 — 부서진 자리에서 솟아오르는 밝은 종소리(도-미-솔-도-미).
+    //    위로 올라가는 음형이라야 "열렸다!"가 된다. 아래로 내려가면 부서진 걸로 끝난다.
+    [1046.5, 1318.5, 1568.0, 2093.0, 2637.0].forEach((f, i) => {
+      const st = t + 0.10 + i * 0.055;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, st);
+      const dur = 1.3 - i * 0.15;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.10 - i * 0.010, st + 0.012); // 종이라 어택이 빠르다
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(st); osc.stop(st + dur + 0.05);
+    });
+
+    // 5) 위로 훑고 올라가는 반짝임 — 희열을 한 번 더 밀어 올린다
+    burst(c, t + 0.12, 0.55, { freq: 1800, freqTo: 9000, q: 0.5, gain: 0.075, filter: 'bandpass', rate: 1.2 });
+
+    // 6) 빈 껍데기가 울리는 여운
+    blip(c, t + 0.04, 160, 0.6, { type: 'sine', gain: 0.06, freqTo: 92 });
   }
 
   // 갓차 캡슐이 열리며 운세가 드러나는 소리. 카드 공개와 같은 계열의 신비로운 톤.
