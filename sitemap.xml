@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  이 파일은 스크립트가 갱신한다: node scripts/build-pages.mjs
+  손으로 고치면 다음 생성 때 덮어써진다.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://maumjaro.minimalbreeze.com/</loc>
-    <lastmod>2026-08-15</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-09-03</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 </urlset>
