@@ -373,9 +373,23 @@ async function main() {
   zodiacPages(Z);
   indexPage(M, T, Z);
 
-  // 이전 생성물을 지우고 다시 만든다(데이터에서 항목이 빠지면 페이지도 사라져야 한다)
-  for (const dir of ['mbti', 'tarot', 'zodiac', 'animal', 'guide']) {
-    await rm(join(ROOT, dir), { recursive: true, force: true });
+  // ⚠️ 여기서 폴더를 통째로 지우면 안 된다.
+  //    처음엔 rm('tarot', {recursive:true})로 지웠는데, tarot/ 안에는 앱이 쓰는
+  //    타로 카드 이미지 22장(tarot/fool.jpg …)이 이미 살고 있었다. 그걸 전부 날렸다.
+  //    생성물과 원본 자산이 같은 폴더를 공유할 수 있으므로,
+  //    "지난번에 내가 만든 것"만 정확히 지운다. 그 목록을 매니페스트로 남긴다.
+  const MANIFEST = join(ROOT, 'scripts', '.pages-manifest.json');
+  let prev = [];
+  try { prev = JSON.parse(await readFile(MANIFEST, 'utf8')); } catch (e) { prev = []; }
+
+  const nowUrls = new Set(pages.map((p) => p.url));
+  for (const oldUrl of prev) {
+    if (nowUrls.has(oldUrl)) continue;           // 이번에도 만드는 페이지는 건드리지 않는다
+    const dir = join(ROOT, oldUrl.replace(/^\/|\/$/g, ''));
+    // 우리가 만든 index.html 하나만 지우고, 폴더가 비면 폴더도 지운다.
+    // 다른 파일(이미지 등)이 남아 있으면 폴더는 그대로 둔다.
+    await rm(join(dir, 'index.html'), { force: true });
+    try { await rm(dir, { recursive: false }); } catch (e) { /* 비어 있지 않으면 남긴다 */ }
   }
 
   for (const p of pages) {
@@ -383,6 +397,7 @@ async function main() {
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, 'index.html'), p.html, 'utf8');
   }
+  await writeFile(MANIFEST, JSON.stringify(pages.map((p) => p.url), null, 2), 'utf8');
 
   // 사이트맵도 같이 갱신한다(따로 관리하면 반드시 어긋난다)
   const d = today();

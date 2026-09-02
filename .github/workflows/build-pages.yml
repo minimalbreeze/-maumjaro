@@ -42,7 +42,16 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add mbti tarot zodiac animal guide sitemap.xml
+          git add mbti tarot zodiac animal guide sitemap.xml scripts/.pages-manifest.json
+          # 안전장치: 이 워크플로는 페이지를 "추가"하는 일만 한다.
+          # 삭제가 잡히면(예: tarot/ 안의 카드 이미지) 뭔가 잘못된 것이므로 멈춘다.
+          # 실제로 한 번 tarot/*.jpg 22장을 통째로 날린 적이 있다.
+          DELETED=$(git diff --staged --diff-filter=D --name-only | grep -v '/index\.html$' || true)
+          if [ -n "$DELETED" ]; then
+            echo "::error::생성 스크립트가 페이지가 아닌 파일을 지웠습니다:"
+            echo "$DELETED"
+            exit 1
+          fi
           # 생성 결과가 이전과 같으면 커밋할 것이 없다(빈 커밋을 만들지 않는다).
           if git diff --staged --quiet; then
             echo "바뀐 페이지 없음"
