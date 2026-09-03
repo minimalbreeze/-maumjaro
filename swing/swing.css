@@ -349,3 +349,64 @@ main{padding:18px 16px 0}
 .lbackup>b{font-size:14.5px;font-weight:800;display:block;margin-bottom:4px}
 .lbackup>p{font-size:12.5px;color:var(--dim);margin:0 0 11px;word-break:keep-all;line-height:1.6}
 .lbackup-btns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ── 목표 구질 가이드 ─────────────────────────────── */
+.shape-hero{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:16px 18px;margin-bottom:12px}
+.shape-hero .em{font-size:34px;line-height:1}
+.shape-hero b{display:block;font-size:19px;font-weight:800}
+.shape-hero span{font-size:13px;color:var(--dim);word-break:keep-all}
+.shape-why{font-size:14px;color:var(--dim);margin:0 0 14px;word-break:keep-all;line-height:1.7}
+.shape-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.shape-nums div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.shape-nums span{display:block;font-size:11px;font-weight:700;color:var(--dim)}
+.shape-nums b{display:block;font-size:16px;font-weight:800;color:var(--teal);margin:1px 0}
+.shape-nums em{font-style:normal;font-size:11.5px;color:var(--dim)}
+.shape-face{font-size:13.5px;background:#f1f6f3;border-radius:11px;padding:11px 13px;margin:0 0 6px;
+  word-break:keep-all;line-height:1.65}
+
+.shape-verdict{border-radius:14px;padding:14px 16px;margin:14px 0}
+.shape-verdict b{display:block;font-size:14.5px;margin-bottom:4px}
+.shape-verdict p{margin:0;font-size:13.3px;line-height:1.7;word-break:keep-all}
+.shape-verdict.ok{background:rgba(77,212,172,.14);border:1px solid rgba(47,158,117,.4)}
+.shape-verdict.warn{background:#fff6e8;border:1px solid #f0d3a0}
+.shape-verdict.bad{background:#fdecea;border:1px solid #f2b8b2}
+.shape-verdict.inline{margin:0 0 14px}
+.shape-verdict .sv-h{font-size:11.5px;font-weight:800;letter-spacing:.3px;opacity:.75;margin-bottom:5px}
+.shape-verdict .mini{margin-top:10px}
+
+.steps-num{margin:0 0 12px;padding-left:20px}
+.steps-num li{font-size:14px;margin-bottom:8px;word-break:keep-all;line-height:1.7}
+.tipbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--mint);
+  border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.tipbox.warn{border-left-color:var(--warn);background:#fffaf2}
+.tipbox b{display:block;font-size:13px;font-weight:800;color:var(--teal);margin-bottom:3px}
+.tipbox.warn b{color:#8a6520}
+.tipbox p{margin:0;font-size:13.3px;color:var(--dim);word-break:keep-all;line-height:1.7}
+.setup-row{display:flex;gap:11px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.setup-row span{flex:0 0 58px;font-size:12px;font-weight:800;color:var(--teal);padding-top:1px}
+.setup-row p{margin:0;font-size:13.6px;word-break:keep-all;line-height:1.7}
+
+/* ── 문의 ─────────────────────────────────────────── */
+.asksearch{margin-bottom:14px}
+.asksearch input{width:100%;font-size:15.5px;padding:13px 16px;border:1.5px solid var(--line);
+  border-radius:13px;background:#fff;color:var(--tx);font-family:inherit}
+.asksearch input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,92,80,.1)}
+.card.sym .card-h .tt .hit{color:var(--bad);font-weight:800}
+
+/* ── 설치 ─────────────────────────────────────────── */
+.install{background:linear-gradient(135deg,rgba(183,121,239,.1),rgba(255,143,179,.1));
+  border:1.5px solid rgba(183,121,239,.35);border-radius:16px;padding:16px 18px;margin:26px 0 0}
+.install-h{font-size:16px;font-weight:800;margin-bottom:5px}
+.install>p{font-size:13.3px;color:var(--dim);margin:0 0 12px;word-break:keep-all;line-height:1.65}
+.install .cta.install-btn{margin:0 0 10px;background:linear-gradient(135deg,var(--purple),var(--pink));
+  box-shadow:0 6px 18px rgba(183,121,239,.3)}
+.install .cta.install-btn:disabled{background:#c9d6d0;box-shadow:none}
+.install details>summary{list-style:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--teal)}
+.install details>summary::-webkit-details-marker{display:none}
+.install details>summary span{text-decoration:underline}
+.ist{margin-top:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.ist b{display:block;font-size:13.5px;font-weight:800;color:var(--teal);margin-bottom:2px}
+.ist>p{font-size:12.5px;color:var(--dim);margin:0 0 9px;word-break:keep-all}
+.ist .steps-num li{font-size:13.3px;margin-bottom:6px}

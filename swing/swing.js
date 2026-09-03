@@ -25,6 +25,8 @@
     lastRecordId: null,   // 방금 분석한 회차 — 결과를 여기에 붙인다
     logFilter: null, logMode: 'carry',
     profile: { carries: {} },   // 내 기준 거리
+    shape: 'draw',              // 내가 치고 싶은 구질
+    askOpen: null,              // 펼쳐놓은 증상
     focus: null                 // { faultId, since, club, view }
   };
 
@@ -37,11 +39,13 @@
    'contact-seg','carry','go-fitresult','fitreport','btn-reset','main',
    'stage','stage-slot-mark','stage-slot-report','report-frames',
    'hand-seg','mark-auto','auto-note','btn-log','logbox','outcome-slot',
-   'mydist','mydist-sum','mydist-grid'].forEach(function (id) {
+   'mydist','mydist-sum','mydist-grid',
+   'btn-shape','btn-ask','shape-grid','shape-seg','shapebox','ask-q','askbox',
+   'install-card','install-btn','install-steps','install-steps-b'].forEach(function (id) {
     el[id] = document.getElementById(id);
   });
 
-  var SCREENS = ['setup','video','mark','report','fit','log'];
+  var SCREENS = ['setup','video','mark','report','fit','shape','ask','log'];
   function show(step) {
     SCREENS.forEach(function (s) {
       var n = document.getElementById('s-' + s);
@@ -127,7 +131,7 @@
   function loadProfile() {
     try {
       var p = JSON.parse(localStorage.getItem(LS_PROF) || 'null');
-      if (p && p.carries) S.profile = p;
+      if (p && p.carries) { S.profile = p; if (p.shape) S.shape = p.shape; }
     } catch (e) { /* 무시 */ }
   }
   function saveProfile() {
@@ -153,6 +157,98 @@
     else S.profile.carries[i.dataset.distClub] = Math.round(v);
     saveProfile(); updateMyDistSummary();
   });
+
+  /* ── 목표 구질 ────────────────────────────────────────────────
+   * 고른 구질에 따라 가이드가 달라지고, 다운스윙 플레인 판정도 그쪽으로 살짝 옮긴다.
+   * 드로우를 치려면 인-아웃이 필요하니 약간 안쪽은 문제가 아니라 목표에 부합한다.
+   */
+  function buildShapeGrid() {
+    var SH = window.SwingShot;
+    el['shape-grid'].innerHTML = SH.SHAPE_ORDER.map(function (id) {
+      var x = SH.SHAPES[id];
+      return '<button type="button" class="pick' + (id === S.shape ? ' on' : '') + '" data-shape="' + id + '">' +
+        '<span class="em">' + x.emoji + '</span>' + esc(x.label) +
+        '<span class="sm">' + esc(SH.mirror(x.one, S.handed)) + '</span></button>';
+    }).join('');
+  }
+  el['shape-grid'].addEventListener('click', function (e) {
+    var b = e.target.closest('[data-shape]'); if (!b) return;
+    S.shape = b.dataset.shape;
+    S.profile.shape = S.shape; saveProfile();
+    Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
+  });
+
+  function showShape() {
+    var SH = window.SwingShot;
+    el['shape-seg'].innerHTML = SH.SHAPE_ORDER.map(function (id) {
+      return '<button type="button" data-shape2="' + id + '"' + (id === S.shape ? ' class="on"' : '') + '>' +
+        SH.SHAPES[id].emoji + ' ' + esc(SH.SHAPES[id].label) + '</button>';
+    }).join('');
+    el.shapebox.innerHTML = SH.renderGuide(S.shape, S.handed, S.report);
+    show('shape');
+  }
+  el['shape-seg'].addEventListener('click', function (e) {
+    var b = e.target.closest('[data-shape2]'); if (!b) return;
+    S.shape = b.dataset.shape2;
+    S.profile.shape = S.shape; saveProfile();
+    buildShapeGrid(); showShape();
+  });
+  el['btn-shape'].addEventListener('click', showShape);
+
+  /* ── 증상 문의 ────────────────────────────────────────────────
+   * AI 상담이 아니다. 미리 정리해 둔 증상 사전을 찾아 주고, 마지막 분석에서
+   * 그 원인이 실제로 잡혔는지 대조해 준다.
+   */
+  function showAsk() {
+    el.askbox.innerHTML = window.SwingShot.renderAsk(el['ask-q'].value, S.handed, S.report, S.askOpen);
+    show('ask');
+  }
+  el['btn-ask'].addEventListener('click', function () { S.askOpen = null; showAsk(); });
+  el['ask-q'].addEventListener('input', function () {
+    el.askbox.innerHTML = window.SwingShot.renderAsk(this.value, S.handed, S.report, S.askOpen);
+  });
+  el.askbox.addEventListener('click', function (e) {
+    var head = e.target.closest('[data-sym]'); if (!head) return;
+    var card = head.parentNode, id = head.dataset.sym;
+    S.askOpen = card.classList.contains('open') ? null : id;
+    card.classList.toggle('open');
+  });
+
+  /* ── 바탕화면 바로가기 ────────────────────────────────────────
+   * 아이폰 사파리는 설치 이벤트가 없어서 버튼만 두면 아무 일도 안 일어난다.
+   * 그래서 버튼과 수동 안내를 항상 같이 둔다.
+   */
+  function renderInstall() {
+    var I = window.SwingInstall;
+    if (!I) return;
+    if (I.isStandalone()) { el['install-card'].hidden = true; return; }
+    el['install-card'].hidden = false;
+
+    var plat = I.platform(), st = I.STEPS[plat];
+    var ready = I.canPrompt();
+    el['install-btn'].disabled = !ready;
+    el['install-btn'].textContent = ready ? '바탕화면에 추가'
+      : plat === 'ios' ? '아이폰은 아래 방법으로 추가합니다'
+      : '준비 중… 아래 방법으로도 됩니다';
+    // 아이폰은 버튼이 영영 활성화되지 않으므로 안내를 처음부터 펼쳐 둔다.
+    if (plat === 'ios') el['install-steps'].open = true;
+
+    el['install-steps-b'].innerHTML =
+      '<div class="ist"><b>' + esc(st.title) + '</b><p>' + esc(st.note) + '</p><ol class="steps-num">' +
+      st.steps.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol></div>' +
+      '<p class="hint">설치해도 기록은 그대로 이 기기에 남습니다. 브라우저에서 열던 것과 같은 데이터입니다.</p>';
+  }
+  el['install-btn'].addEventListener('click', function () {
+    window.SwingInstall.install().then(function (r) {
+      if (r === 'accepted') {
+        el['install-card'].innerHTML = '<div class="install-h">✅ 추가했습니다</div>' +
+          '<p>홈 화면(또는 바탕화면)의 스윙자로 아이콘으로 바로 여세요.</p>';
+      } else if (r === 'unavailable') {
+        el['install-steps'].open = true;
+      }
+    });
+  });
+  if (window.SwingInstall) window.SwingInstall.onChange(renderInstall);
 
   el['go-video'].addEventListener('click', function () { show('video'); });
   el['btn-reset'].addEventListener('click', function () {
@@ -566,7 +662,8 @@
     var aspect = (el.video.videoWidth && el.video.videoHeight)
       ? el.video.videoWidth / el.video.videoHeight : 1;
     S.report = A.analyze({ club: S.club, view: S.view, sensitivity: S.sensitivity,
-      marks: marks, aspect: aspect });
+      marks: marks, aspect: aspect,
+      planeShift: (window.SwingShot.SHAPES[S.shape] || {}).planeShift || 0 });
     S.report.autoUsed = S.autoUsed;
     renderReport(S.report);
     S.lastRecordId = saveHistory(S.report);
@@ -672,6 +769,25 @@
         '가설로 받아들이고, 아래 결과 기록으로 본인에게 실제로 맞는지 직접 확인하세요.</p></div>' +
       '</div></details>');
 
+    var SH = window.SwingShot, sh = SH.SHAPES[S.shape];
+    if (sh) {
+      var blocked = R.faults.filter(function (f) { return sh.blockers.indexOf(f.faultId) >= 0; });
+      var watched = R.faults.filter(function (f) { return sh.watch.indexOf(f.faultId) >= 0; });
+      var cls = blocked.length ? 'bad' : watched.length ? 'warn' : 'ok';
+      var msg = blocked.length
+        ? '<b>' + esc(sh.label) + '를 막는 항목이 잡혔습니다.</b> ' +
+          blocked.map(function (f) { return esc(F.FAULTS[f.faultId].title); }).join(', ') +
+          ' — 이 궤도로는 원하는 구질이 안 나옵니다. 그립·볼 위치보다 이게 먼저입니다.'
+        : watched.length
+        ? '<b>방향은 맞는데 과할 수 있습니다.</b> ' +
+          watched.map(function (f) { return esc(F.FAULTS[f.faultId].title); }).join(', ') +
+          ' — ' + esc(sh.label) + '가 나오는 쪽이지만 지나치면 미스가 됩니다.'
+        : '<b>' + esc(sh.label) + '를 막는 항목은 안 잡혔습니다.</b> 셋업을 맞춰 보세요.';
+      h.push('<div class="shape-verdict ' + cls + ' inline"><div class="sv-h">🎯 내 목표 구질: ' +
+        sh.emoji + ' ' + esc(sh.label) + '</div><p>' + msg +
+        '</p><button type="button" class="mini" id="rep-shape">구질 가이드 보기 ›</button></div>');
+    }
+
     var fb = focusBlock();
     if (fb) h.push(fb);
 
@@ -763,6 +879,7 @@
   }
 
   el.report.addEventListener('click', function (e) {
+    if (e.target.id === 'rep-shape') { showShape(); return; }
     var fbtn = e.target.closest('[data-focus]');
     if (fbtn) {
       setFocus(fbtn.dataset.focus || null);
@@ -1022,6 +1139,8 @@
   loadProfile();
   loadFocus();
   buildMyDist();
+  buildShapeGrid();
+  renderInstall();
   buildSetup();
   buildFrames();
   buildFit();

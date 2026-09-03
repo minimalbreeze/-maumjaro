@@ -74,7 +74,7 @@
    * M  : 종횡비 보정된 좌표 — 모든 측정에 쓴다.
    * raw: 원본 정규화 좌표 — 캔버스에 그릴 도형에 쓴다.
    */
-  function analyzeDTL(M, raw, club, k, aspect) {
+  function analyzeDTL(M, raw, club, k, aspect, shift) {
     var m = {}, shapes = [], P1 = M.P1, R1 = raw.P1;
     if (!P1) return { metrics: m, shapes: shapes };
 
@@ -108,10 +108,11 @@
         label: '머리 이동 (어드레스→톱)', ideal: [0, 0.22 * k] };
     }
     if (M.P6) {
+      var sf = shift || 0;
       m.handsPlaneP6 = { v: planeRatio(M.P6.hands), unit: '',
-        label: '다운스윙 손 위치 (플레인 밴드)', ideal: [-1.6 * k, 0.55 * k] };
+        label: '다운스윙 손 위치 (플레인 밴드)', ideal: [-1.6 * k + sf, 0.55 * k + sf] };
       m.clubPlaneP6 = { v: planeRatio(M.P6.clubhead), unit: '',
-        label: '다운스윙 클럽 위치 (플레인 밴드)', ideal: [-1.0 - 1.6 * k, 1.35 * k] };
+        label: '다운스윙 클럽 위치 (플레인 밴드)', ideal: [-1.0 - 1.6 * k + sf, 1.35 * k + sf] };
     }
     if (M.P7) {
       m.spineTiltP7 = { v: tilt(M.P7.hip, M.P7.shoulder), unit: '°', label: '임팩트 척추 기울기' };
@@ -277,7 +278,7 @@
     var aspect = session.aspect > 0 ? session.aspect : 1;   // 영상 가로/세로 비
     var M = toAspect(session.marks, aspect);
     var res = session.view === 'dtl'
-      ? analyzeDTL(M, session.marks, club, k, aspect)
+      ? analyzeDTL(M, session.marks, club, k, aspect, session.planeShift || 0)
       : analyzeFO(M, session.marks, club, k, aspect);
     var faults = findFaults(res.metrics, session.view, k);
 
