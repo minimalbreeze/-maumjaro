@@ -1,6 +1,6 @@
 /* 스윙자로 — 분석 엔진
  *
- * 입력 : 사용자가 찍은 관절 좌표(영상 크기로 나눈 0~1 정규화 좌표)
+ * 입력 : 화면에서 찍은 관절 좌표(영상 크기로 나눈 0~1 정규화 좌표)
  * 출력 : 측정치 + 문제 구간 목록 + 오버레이가 그릴 도형 정의
  *
  * ── 좌표계 ──
@@ -11,7 +11,7 @@
  * ── 좌우 판별 ──
  * 오른손잡이/왼손잡이를 묻지 않는다. 측면은 "엉덩이에서 볼이 있는 쪽",
  * 정면은 "뒤쪽 어깨에서 앞쪽 어깨로 가는 쪽"을 타깃 방향으로 잡는다.
- * 사용자가 찍은 점만으로 방향이 정해지므로 어느 손잡이든 그대로 동작한다.
+ * 찍은 점만으로 방향이 정해지므로 어느 손잡이든 그대로 동작한다.
  */
 (function (global) {
   'use strict';
@@ -318,13 +318,18 @@
     if (input.carry > 0) {
       var clubMph = input.carry / club.carryK;
       var driverMph = clubMph / (SPEED_RATIO[club.id] || 1);
+      // 비교 기준: 내가 넣어둔 내 거리가 있으면 그것, 없으면 아마추어 평균.
+      var mine = input.myCarry > 0;
+      var ref = mine ? input.myCarry : club.refCarry;
       speed = {
         clubMph: Math.round(clubMph * 10) / 10,
         clubMs: Math.round(clubMph * 0.44704 * 10) / 10,
         driverMph: Math.round(driverMph * 10) / 10,
         driverMs: Math.round(driverMph * 0.44704 * 10) / 10,
-        refCarry: club.refCarry,
-        gap: Math.round(input.carry - club.refCarry)
+        refCarry: ref,
+        refIsMine: mine,
+        refLabel: mine ? '내 기준' : '아마추어 평균',
+        gap: Math.round(input.carry - ref)
       };
       var row = FLEX_TABLE[0];
       for (i = 0; i < FLEX_TABLE.length; i++) { if (driverMph <= FLEX_TABLE[i].max) { row = FLEX_TABLE[i]; break; } }
@@ -442,12 +447,14 @@
     if (speed) {
       if (speed.gap <= -20) {
         items.push({ part:'클럽 총 중량', suggest:'현재보다 10~20g 가벼운 세팅 시타',
-          why:'같은 클럽 기준 평균보다 ' + Math.abs(speed.gap) + '야드 짧습니다. 클럽이 무거워 스피드가 눌리고 있을 수 있습니다.' });
+          why:speed.refLabel + '(' + speed.refCarry + '야드)보다 ' + Math.abs(speed.gap) +
+            '야드 짧습니다. 클럽이 무거워 스피드가 눌리고 있을 수 있습니다.' });
         items.push({ part:'볼 압축', suggest:'저압축 볼(컴프레션 50~70)',
           why:'헤드 스피드가 낮을 때 저압축 볼이 초속을 더 잘 만들어 줍니다.' });
       } else if (speed.gap >= 20) {
         items.push({ part:'스윙웨이트', suggest:'D2~D4 쪽으로 조금 무겁게',
-          why:'평균보다 ' + speed.gap + '야드 깁니다. 무게를 조금 더 주면 방향성이 안정됩니다.' });
+          why:speed.refLabel + '(' + speed.refCarry + '야드)보다 ' + speed.gap +
+            '야드 깁니다. 무게를 조금 더 주면 방향성이 안정됩니다.' });
       }
     }
 

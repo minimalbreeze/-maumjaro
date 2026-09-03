@@ -1,7 +1,7 @@
 /* 스윙자로 — 결과 기록과 대조
  *
  * 이 앱은 볼을 보지 않는다. 그래서 "진단대로 고치면 정말 더 멀리·똑바로 가는가"를
- * 앱이 증명해 줄 수 없다. 대신 사용자가 매번 실제 결과를 남기면, 점수와 결과가
+ * 앱이 증명해 줄 수 없다. 대신 매번 실제 결과를 남기면, 점수와 결과가
  * 같이 움직이는지를 본인 데이터로 확인할 수 있다. 이 화면이 그 고리다.
  *
  * 정직하게 지킬 것
@@ -134,7 +134,7 @@
   }
 
   /* ── 화면 ──────────────────────────────────────────────────── */
-  function render(box, hist, filter, mode, clubs) {
+  function render(box, hist, filter, mode, clubs, focusHtml) {
     var rows = hist.filter(function (r) {
       return r.outcome && r.club === filter.club && r.view === filter.view &&
         (mode !== 'carry' || r.outcome.carry > 0);
@@ -142,6 +142,7 @@
 
     var h = [];
     var CL = global.SwingData.CLUBS, VW = global.SwingData.VIEWS;
+    if (focusHtml) h.push(focusHtml);
 
     // 무엇끼리 묶어서 보는지 먼저 밝힌다
     h.push('<div class="lfilter"><span>비교 대상</span>' +
@@ -209,13 +210,22 @@
             esc(dirLabel(x.outcome.dir)) + '</td><td>' + esc(x.outcome.note || '') + '</td></tr>';
         }).join('') + '</tbody></table></details>');
     }
+    h.push('<div class="lbackup"><b>내 기록 관리</b>' +
+      '<p>기록은 이 브라우저 안에만 있습니다. 폰을 바꾸거나 사이트 데이터를 지우면 사라지니 ' +
+      '가끔 파일로 내려받아 두세요.</p>' +
+      '<div class="lbackup-btns">' +
+      '<button type="button" class="mini" id="log-export">⬇ 파일로 내보내기</button>' +
+      '<button type="button" class="mini" id="log-import">⬆ 파일에서 가져오기</button>' +
+      '<button type="button" class="mini" id="log-fill">📋 내 클럽 거리 채우기</button>' +
+      '</div><input type="file" id="log-file" accept="application/json,.json" hidden /></div>');
+
     box.innerHTML = h.join('');
   }
 
   /* 진단 화면 아래에 붙는 결과 입력 폼 */
   function outcomeForm() {
     return '<div class="ocard"><b>오늘 실제로 어땠나요?</b>' +
-      '<p>이걸 남겨야 이 앱의 진단이 당신에게 실제로 맞는지 나중에 확인할 수 있습니다. ' +
+      '<p>이걸 남겨야 이 앱의 진단이 나에게 실제로 맞는지 나중에 확인할 수 있습니다. ' +
       '건너뛰어도 진단 결과는 그대로입니다.</p>' +
       '<div class="orow"><label>이 클럽 캐리</label>' +
       '<input type="number" id="o-carry" inputmode="numeric" placeholder="예: 150" min="10" max="400" /><span>야드</span></div>' +

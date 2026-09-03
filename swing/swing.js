@@ -9,6 +9,8 @@
   var D = window.SwingData, F = window.SwingFaults, A = window.SwingAnalyze;
   var LS_LAST = 'maumjaro:swing:last';
   var LS_HIST = 'maumjaro:swing:history';
+  var LS_PROF = 'maumjaro:swing:profile';   // 내 클럽 거리 등
+  var LS_FOCUS = 'maumjaro:swing:focus';    // 지금 집중해서 고치는 문제 하나
   var FPS = 60; // 프레임 단위 이동에 쓰는 가정값. 대부분의 폰 영상이 30 또는 60이다.
 
   var S = {
@@ -21,7 +23,9 @@
     markQueue: [],       // 남은 관절 목록
     report: null,
     lastRecordId: null,   // 방금 분석한 회차 — 결과를 여기에 붙인다
-    logFilter: null, logMode: 'carry'
+    logFilter: null, logMode: 'carry',
+    profile: { carries: {} },   // 내 기준 거리
+    focus: null                 // { faultId, since, club, view }
   };
 
   var $ = function (s) { return document.querySelector(s); };
@@ -32,7 +36,8 @@
    'mark-clear','mark-done','go-report','mark-need','report','go-fit','flight-grid','traj-seg',
    'contact-seg','carry','go-fitresult','fitreport','btn-reset','main',
    'stage','stage-slot-mark','stage-slot-report','report-frames',
-   'hand-seg','mark-auto','auto-note','btn-log','logbox','outcome-slot'].forEach(function (id) {
+   'hand-seg','mark-auto','auto-note','btn-log','logbox','outcome-slot',
+   'mydist','mydist-sum','mydist-grid'].forEach(function (id) {
     el[id] = document.getElementById(id);
   });
 
@@ -116,6 +121,39 @@
     S.sensitivity = b.dataset.v;
     Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
   });
+  /* ── 내 클럽 거리 ─────────────────────────────────────────────
+   * 혼자 쓰는 앱이니 비교 기준을 "아마추어 평균"이 아니라 내 숫자로 둔다.
+   */
+  function loadProfile() {
+    try {
+      var p = JSON.parse(localStorage.getItem(LS_PROF) || 'null');
+      if (p && p.carries) S.profile = p;
+    } catch (e) { /* 무시 */ }
+  }
+  function saveProfile() {
+    try { localStorage.setItem(LS_PROF, JSON.stringify(S.profile)); } catch (e) { /* 무시 */ }
+  }
+  function buildMyDist() {
+    el['mydist-grid'].innerHTML = D.CLUB_ORDER.map(function (id) {
+      var c = D.CLUBS[id], v = S.profile.carries[id] || '';
+      return '<label class="mdrow"><span>' + c.emoji + ' ' + esc(c.label) + '</span>' +
+        '<input type="number" inputmode="numeric" data-dist-club="' + id + '" value="' + v +
+        '" placeholder="' + c.refCarry + '" min="10" max="400" /><em>yd</em></label>';
+    }).join('');
+    updateMyDistSummary();
+  }
+  function updateMyDistSummary() {
+    var n = Object.keys(S.profile.carries).filter(function (k) { return S.profile.carries[k] > 0; }).length;
+    el['mydist-sum'].textContent = n ? n + '개 클럽 입력됨' : '아직 비어 있음 — 평균값 사용 중';
+  }
+  el['mydist-grid'].addEventListener('change', function (e) {
+    var i = e.target.closest('[data-dist-club]'); if (!i) return;
+    var v = parseFloat(i.value);
+    if (isNaN(v) || v <= 0) delete S.profile.carries[i.dataset.distClub];
+    else S.profile.carries[i.dataset.distClub] = Math.round(v);
+    saveProfile(); updateMyDistSummary();
+  });
+
   el['go-video'].addEventListener('click', function () { show('video'); });
   el['btn-reset'].addEventListener('click', function () {
     if (!confirm('처음부터 다시 시작할까요? 지금 찍은 점들은 사라집니다.')) return;
@@ -556,6 +594,48 @@
     buildReportFrames(); draw();
   });
 
+  /* ── 집중 교정 ────────────────────────────────────────────────
+   * 문제를 한꺼번에 다 고칠 수는 없다. 하나만 정해 놓고, 그 문제가 몇 회 연속
+   * 안 잡혔는지를 센다. 앱이 재는 항목이라 약속이 아니라 측정이다.
+   */
+  function loadFocus() {
+    try { S.focus = JSON.parse(localStorage.getItem(LS_FOCUS) || 'null'); } catch (e) { S.focus = null; }
+  }
+  function setFocus(faultId) {
+    S.focus = faultId ? { faultId: faultId, since: Date.now(), club: S.club, view: S.view } : null;
+    try {
+      if (S.focus) localStorage.setItem(LS_FOCUS, JSON.stringify(S.focus));
+      else localStorage.removeItem(LS_FOCUS);
+    } catch (e) { /* 무시 */ }
+  }
+  // 집중 문제가 최근 몇 회 연속으로 안 잡혔는지. 같은 각도의 분석만 센다.
+  function focusStreak() {
+    if (!S.focus) return null;
+    var rows = readHist().filter(function (r) {
+      return r.at >= S.focus.since && r.view === S.focus.view;
+    }); // readHist 는 최신순
+    var clean = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var hit = (rows[i].faults || []).some(function (f) { return f.id === S.focus.faultId; });
+      if (hit) break;
+      clean++;
+    }
+    return { clean: clean, total: rows.length };
+  }
+  function focusBlock() {
+    if (!S.focus || !F.FAULTS[S.focus.faultId]) return '';
+    var d = F.FAULTS[S.focus.faultId], st = focusStreak();
+    var msg = st.total === 0 ? '이 각도로 아직 분석한 적이 없습니다.'
+      : st.clean === 0 ? '가장 최근 분석에서 또 잡혔습니다. 아직 남아 있습니다.'
+      : st.clean >= 5 ? '연속 ' + st.clean + '회 안 잡혔습니다. 몸에 붙은 것 같습니다 — 다음 문제로 넘어갈 때입니다.'
+      : '연속 ' + st.clean + '회 안 잡혔습니다. 5회까지 이어가 보세요.';
+    return '<div class="focus"><div class="focus-h">🎯 지금 집중 교정</div>' +
+      '<b>' + d.emoji + ' ' + esc(d.title) + '</b>' +
+      '<div class="focus-bar"><i style="width:' + Math.min(100, st.clean / 5 * 100) + '%"></i></div>' +
+      '<span>' + esc(msg) + ' <em>(' + esc(D.VIEWS[S.focus.view].label) + ' 기준)</em></span>' +
+      '<button type="button" class="mini" data-focus="">집중 교정 해제</button></div>';
+  }
+
   function fmt(v, unit) {
     if (v == null || isNaN(v)) return '–';
     var n = Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(2);
@@ -586,11 +666,14 @@
           '손으로 찍은 값과 절대 각도가 몇 도 다를 수 있습니다. 회차끼리 비교하려면 방식을 통일하세요.' : '') +
         '</p></div>' +
       '<div class="basis-row"><b class="warn">② 정상 범위</b><p>코칭에서 흔히 쓰는 범위를 옮겨 적은 것입니다. ' +
-        '실제 스윙 데이터로 학습하거나 검증한 값이 아니고, 체형·유연성·구질 취향에 따라 당신에게 맞는 범위는 다를 수 있습니다.</p></div>' +
+        '실제 스윙 데이터로 학습하거나 검증한 값이 아니고, 체형·유연성·구질 취향에 따라 나에게 맞는 범위는 다를 수 있습니다.</p></div>' +
       '<div class="basis-row"><b class="bad">③ 솔루션·장비 제안</b><p>일반적인 교정 통념입니다. ' +
         '<b>이 앱은 볼을 보지 않습니다.</b> 그래서 "이대로 고치면 더 멀리·똑바로 간다"는 것을 이 앱이 확인해 준 게 아닙니다. ' +
         '가설로 받아들이고, 아래 결과 기록으로 본인에게 실제로 맞는지 직접 확인하세요.</p></div>' +
       '</div></details>');
+
+    var fb = focusBlock();
+    if (fb) h.push(fb);
 
     h.push('<div class="legend">' +
       '<i style="--sw:#4dd4ac">정상 플레인 밴드</i>' +
@@ -668,12 +751,25 @@
           '<span>유튜브에서 "' + esc(y.q) + '" 검색</span></span></a>';
       }).join(''));
     h.push('<p class="basis-note">위 측정값은 실제로 잰 값이고, 원인·교정·드릴은 <b>코칭 통념</b>입니다. ' +
-      '이 앱이 당신의 스윙에서 효과를 확인한 것은 아닙니다. 하나씩 시도한 뒤 결과를 기록해 실제로 맞는지 확인하세요.</p>');
+      '이 앱이 내 스윙에서 효과를 확인한 것은 아닙니다. 하나씩 시도한 뒤 결과를 기록해 실제로 맞는지 확인하세요.</p>');
+    if (!S.focus || S.focus.faultId !== d.id) {
+      h.push('<button type="button" class="mini prim wide" data-focus="' + d.id +
+        '">🎯 이걸 이번 집중 교정으로 정하기</button>');
+    } else {
+      h.push('<p class="basis-note" style="background:rgba(77,212,172,.16)">지금 집중 교정 중인 문제입니다.</p>');
+    }
     h.push('</div></div>');
     return h.join('');
   }
 
   el.report.addEventListener('click', function (e) {
+    var fbtn = e.target.closest('[data-focus]');
+    if (fbtn) {
+      setFocus(fbtn.dataset.focus || null);
+      renderReport(S.report);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     var head = e.target.closest('.card-h'); if (!head) return;
     head.parentNode.classList.toggle('open');
   });
@@ -712,7 +808,8 @@
     var carry = parseFloat(el.carry.value);
     var out = A.fitting({
       club: S.club, flight: FIT.flight, traj: FIT.traj, contact: FIT.contact,
-      carry: isNaN(carry) ? 0 : carry
+      carry: isNaN(carry) ? 0 : carry,
+      myCarry: (S.profile.carries && S.profile.carries[S.club]) || 0
     }, S.report);
     renderFit(out);
     el.fitreport.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -726,7 +823,8 @@
         '<div><span>이 클럽</span><b>' + s.clubMph + '<small style="font-size:11px"> mph</small></b></div>' +
         '<div><span>드라이버 환산</span><b>' + s.driverMph + '<small style="font-size:11px"> mph</small></b></div>' +
         '<div><span>m/s 환산</span><b>' + s.driverMs + '</b></div>' +
-        '<div><span>같은 클럽 평균 대비</span><b>' + (s.gap >= 0 ? '+' : '') + s.gap + '<small style="font-size:11px"> yd</small></b></div>' +
+        '<div><span>' + esc(s.refLabel) + '(' + s.refCarry + 'yd) 대비</span><b>' +
+          (s.gap >= 0 ? '+' : '') + s.gap + '<small style="font-size:11px"> yd</small></b></div>' +
         '</div></div>');
     }
     if (out.flight) {
@@ -814,14 +912,89 @@
       return hist.some(function (r) { return r.club === c; });
     });
     if (clubs.indexOf(S.logFilter.club) < 0) clubs.unshift(S.logFilter.club);
-    window.SwingLog.render(el.logbox, hist, S.logFilter, S.logMode, clubs);
+    window.SwingLog.render(el.logbox, hist, S.logFilter, S.logMode, clubs, focusBlock());
     show('log');
   }
   el['btn-log'].addEventListener('click', showLog);
   el.logbox.addEventListener('click', function (e) {
+    var fbtn = e.target.closest('[data-focus]');
+    if (fbtn) { setFocus(fbtn.dataset.focus || null); showLog(); return; }
+    if (e.target.id === 'log-export') { exportAll(); return; }
+    if (e.target.id === 'log-import') { el.logbox.querySelector('#log-file').click(); return; }
+    if (e.target.id === 'log-fill') { fillFromLog(); return; }
     var b = e.target.closest('[data-m]'); if (!b) return;
     S.logMode = b.dataset.m; showLog();
   });
+  el.logbox.addEventListener('change', function (e) {
+    if (e.target.id !== 'log-file') return;
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    importAll(f);
+  });
+
+  /* ── 내보내기 / 가져오기 ──────────────────────────────────────
+   * 기록은 이 브라우저의 localStorage 에만 있다. 폰을 바꾸거나 사이트 데이터를
+   * 지우면 그냥 사라진다. 혼자 쌓아가는 기록이라 백업 수단이 반드시 있어야 한다.
+   */
+  function exportAll() {
+    var data = { v: 1, at: Date.now(), profile: S.profile, focus: S.focus, history: readHist() };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'swingjaro-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function importAll(file) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      var d;
+      try { d = JSON.parse(fr.result); } catch (e) { alert('읽을 수 없는 파일입니다.'); return; }
+      if (!d || !Array.isArray(d.history)) { alert('스윙자로 백업 파일이 아닙니다.'); return; }
+      // 같은 시각의 기록은 하나로 본다. 기존 기록을 지우지 않고 합친다.
+      var cur = readHist(), seen = {};
+      cur.forEach(function (r) { seen[r.at] = true; });
+      var added = 0;
+      d.history.forEach(function (r) { if (!seen[r.at]) { cur.push(r); added++; } });
+      cur.sort(function (a, b) { return b.at - a.at; });
+      writeHist(cur);
+      if (d.profile && d.profile.carries) { S.profile = d.profile; saveProfile(); buildMyDist(); }
+      if (d.focus) { S.focus = d.focus; try { localStorage.setItem(LS_FOCUS, JSON.stringify(d.focus)); } catch (e) {} }
+      alert('가져왔습니다. 새 기록 ' + added + '회를 더했습니다(기존 기록은 그대로).');
+      showLog();
+    };
+    fr.readAsText(file);
+  }
+  // 실제로 친 기록의 중앙값으로 내 클럽 거리를 채운다
+  function fillFromLog() {
+    var by = {};
+    readHist().forEach(function (r) {
+      if (!r.outcome || !(r.outcome.carry > 0)) return;
+      (by[r.club] = by[r.club] || []).push(r.outcome.carry);
+    });
+    var ready = Object.keys(by).filter(function (c) { return by[c].length >= 3; });
+    if (!ready.length) {
+      alert('아직 3회 이상 기록된 클럽이 없습니다. 조금 더 쌓아주세요.\n(중앙값을 쓰려면 최소 3회가 필요합니다)');
+      return;
+    }
+    // 직접 넣어둔 값이 있으면 말없이 덮어쓰지 않는다.
+    var over = ready.filter(function (c) { return S.profile.carries[c] > 0; });
+    if (over.length) {
+      var lines = over.map(function (c) {
+        var v = by[c].slice().sort(function (a, b) { return a - b; });
+        return '  · ' + D.CLUBS[c].label + ': ' + S.profile.carries[c] + ' → ' +
+          Math.round(v[Math.floor(v.length / 2)]) + 'yd';
+      }).join('\n');
+      if (!confirm('직접 넣어둔 값을 기록의 중앙값으로 바꿉니다.\n\n' + lines + '\n\n계속할까요?')) return;
+    }
+    var n = 0;
+    ready.forEach(function (c) {
+      var v = by[c].slice().sort(function (a, b) { return a - b; });
+      S.profile.carries[c] = Math.round(v[Math.floor(v.length / 2)]);
+      n++;
+    });
+    saveProfile(); buildMyDist();
+    alert(n + '개 클럽을 실제 기록의 중앙값으로 채웠습니다.');
+  }
   el.logbox.addEventListener('change', function (e) {
     if (e.target.id === 'log-club') S.logFilter.club = e.target.value;
     else if (e.target.id === 'log-view') S.logFilter.view = e.target.value;
@@ -846,6 +1019,9 @@
 
   /* ── 시작 ────────────────────────────────────────────────────── */
   restorePrefs();
+  loadProfile();
+  loadFocus();
+  buildMyDist();
   buildSetup();
   buildFrames();
   buildFit();
