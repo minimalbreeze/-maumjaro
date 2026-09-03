@@ -12,13 +12,16 @@
   var FPS = 60; // 프레임 단위 이동에 쓰는 가정값. 대부분의 폰 영상이 30 또는 60이다.
 
   var S = {
-    club: 'mid', view: 'dtl', sensitivity: 'normal',
+    club: 'mid', view: 'dtl', sensitivity: 'normal', handed: 'right',
+    autoUsed: false,   // 이번 분석에 자동 인식이 쓰였는지
     videoURL: null, duration: 0,
     frames: {},          // { P1:{t:초, marks:{head:{x,y},...}}, ... }
     curFrame: null,      // 지금 마킹 중인 프레임 id
     viewFrame: null,     // 지금 화면에 띄워 놓은 프레임 id (진단 화면에서 씀)
     markQueue: [],       // 남은 관절 목록
-    report: null
+    report: null,
+    lastRecordId: null,   // 방금 분석한 회차 — 결과를 여기에 붙인다
+    logFilter: null, logMode: 'carry'
   };
 
   var $ = function (s) { return document.querySelector(s); };
@@ -28,11 +31,12 @@
    'frames','mark-panel','mark-frame','mark-progress','mark-target','mark-undo','mark-copy',
    'mark-clear','mark-done','go-report','mark-need','report','go-fit','flight-grid','traj-seg',
    'contact-seg','carry','go-fitresult','fitreport','btn-reset','main',
-   'stage','stage-slot-mark','stage-slot-report','report-frames'].forEach(function (id) {
+   'stage','stage-slot-mark','stage-slot-report','report-frames',
+   'hand-seg','mark-auto','auto-note','btn-log','logbox','outcome-slot'].forEach(function (id) {
     el[id] = document.getElementById(id);
   });
 
-  var SCREENS = ['setup','video','mark','report','fit'];
+  var SCREENS = ['setup','video','mark','report','fit','log'];
   function show(step) {
     SCREENS.forEach(function (s) {
       var n = document.getElementById('s-' + s);
@@ -101,6 +105,11 @@
     S.view = b.dataset.view;
     Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
     renderGuide(); buildFrames();
+  });
+  el['hand-seg'].addEventListener('click', function (e) {
+    var b = e.target.closest('[data-h]'); if (!b) return;
+    S.handed = b.dataset.h;
+    Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
   });
   el['sens-seg'].addEventListener('click', function (e) {
     var b = e.target.closest('[data-v]'); if (!b) return;
@@ -225,6 +234,7 @@
     var have = S.frames[fid].marks;
     S.markQueue = neededFor(fid).filter(function (j) { return !have[j.id]; });
     el['mark-panel'].hidden = false;
+    autoNote('');
     renderMarkPanel();
     buildFrames();
     draw();
@@ -280,6 +290,54 @@
     S.markQueue = neededFor(S.curFrame).filter(function (j) { return !dst[j.id]; });
     renderMarkPanel(); buildFrames(); draw();
   });
+  /* ── 자동 관절 인식 ──────────────────────────────────────────
+   * 눌렀을 때만 모듈을 내려받는다. 실패해도 직접 찍기는 그대로 쓸 수 있어야 한다.
+   */
+  function autoNote(msg, kind) {
+    el['auto-note'].hidden = !msg;
+    el['auto-note'].textContent = msg || '';
+    el['auto-note'].className = 'auto-note' + (kind ? ' ' + kind : '');
+  }
+  el['mark-auto'].addEventListener('click', function () {
+    var fid = S.curFrame; if (!fid) return;
+    var btn = this;
+    btn.disabled = true;
+    autoNote('자동 인식 준비 중…');
+    global_load().then(function () {
+      var lms = window.SwingPose.detect(el.video);
+      if (!lms) {
+        autoNote('이 프레임에서 사람을 찾지 못했습니다. 몸 전체가 화면에 들어온 프레임인지 확인하고 직접 찍어주세요.', 'bad');
+        return;
+      }
+      var r = window.SwingPose.mapTo(S.view, lms, S.handed);
+      var marks = S.frames[fid].marks, filled = 0;
+      neededFor(fid).forEach(function (j) {
+        if (r.marks[j.id]) { marks[j.id] = r.marks[j.id]; filled++; }
+      });
+      S.markQueue = neededFor(fid).filter(function (j) { return !marks[j.id]; });
+      S.autoUsed = true;
+      var rest = S.markQueue.map(function (j) { return j.label; }).join(', ');
+      var msg = filled + '개를 자동으로 찍었습니다. 관절 "중심"을 잡은 값이라 손으로 찍은 것과 몇 도씩 다를 수 있으니, ' +
+        '점을 끌어 맞춰주세요.';
+      if (rest) msg += ' 클럽과 볼은 사람 관절이 아니라 모델이 못 잡습니다 — ' + rest + '은(는) 직접 찍어주세요.';
+      if (r.weak.length) msg += ' 가려져서 흐릿하게 잡힌 곳: ' + r.weak.join(', ') + '.';
+      autoNote(msg, r.weak.length ? 'warn' : 'ok');
+      renderMarkPanel(); buildFrames(); draw();
+    }).catch(function (e) {
+      // 원문 오류에 URL이 그대로 붙어 나오면 읽기 어렵다. 흔한 원인부터 말한다.
+      var m = (e && e.message) || '';
+      var why = /fetch|network|import|Load|CORS/i.test(m)
+        ? '인터넷에 연결되어 있는지, 사내망·기내 와이파이처럼 외부 접속이 막힌 곳은 아닌지 확인해 주세요.'
+        : '기기가 이 기능을 지원하지 않을 수 있습니다.';
+      autoNote('자동 인식을 불러오지 못했습니다. ' + why +
+        ' 직접 찍으셔도 분석 결과는 똑같으니 그대로 진행하셔도 됩니다.', 'bad');
+    }).then(function () { btn.disabled = false; });
+  });
+  function global_load() {
+    if (!window.SwingPose) return Promise.reject(new Error('모듈 없음'));
+    return window.SwingPose.load(function (st) { autoNote(st); });
+  }
+
   el['mark-done'].addEventListener('click', function () {
     S.viewFrame = S.curFrame;
     S.curFrame = null; S.markQueue = [];
@@ -471,8 +529,10 @@
       ? el.video.videoWidth / el.video.videoHeight : 1;
     S.report = A.analyze({ club: S.club, view: S.view, sensitivity: S.sensitivity,
       marks: marks, aspect: aspect });
+    S.report.autoUsed = S.autoUsed;
     renderReport(S.report);
-    saveHistory(S.report);
+    S.lastRecordId = saveHistory(S.report);
+    renderOutcomeForm();
     S.viewFrame = S.report.framesUsed.indexOf('P7') >= 0 ? 'P7' : S.report.framesUsed[0];
     buildReportFrames();
     seekTo(S.frames[S.viewFrame].t);
@@ -506,12 +566,31 @@
     var club = D.CLUBS[R.club], view = D.VIEWS[R.view];
     var h = [];
 
-    var grade = R.score >= 85 ? '아주 좋습니다' : R.score >= 70 ? '괜찮습니다' : R.score >= 55 ? '고칠 곳이 보입니다' : '기본부터 다시 잡을 때입니다';
+    // "점수"는 잘 친다는 뜻이 아니라 "교과서 범위와 얼마나 겹치는가"다.
+    // 좋은 스코어를 내는 스윙 중에 이 점수가 낮은 것도 얼마든지 있다.
+    var grade = R.score >= 85 ? '기준 범위와 거의 일치' : R.score >= 70 ? '대체로 기준 안'
+              : R.score >= 55 ? '벗어난 구간이 있음' : '벗어난 구간이 많음';
     var col = R.score >= 85 ? 'var(--ok)' : R.score >= 70 ? 'var(--teal)' : R.score >= 55 ? 'var(--warn)' : 'var(--bad)';
-    h.push('<div class="score"><div class="score-n" style="color:' + col + '">' + R.score + '<small>점</small></div>' +
+    h.push('<div class="score"><div class="score-n" style="color:' + col + '">' + R.score +
+      '<small>／100</small></div>' +
       '<div class="score-t"><b>' + esc(club.label) + ' · ' + esc(view.label) + ' — ' + grade + '</b>' +
-      '<span>' + R.framesUsed.length + '개 구간을 기준으로 ' + R.faults.length + '개 문제를 찾았습니다. ' +
-      '2D 영상 기준 추정치입니다.</span></div></div>');
+      '<span>구간 ' + R.framesUsed.length + '개에서 ' + R.faults.length + '개 항목이 기준 밖입니다. ' +
+      '이 숫자는 <b>교과서 범위와의 일치도</b>지 실력이나 비거리 점수가 아닙니다.</span></div></div>');
+
+    // 이 화면의 세 층이 각각 어디까지 믿을 수 있는지 먼저 밝힌다.
+    h.push('<details class="basis"><summary>이 진단은 어디까지 믿을 수 있나 <span>펼쳐보기</span></summary>' +
+      '<div class="basis-b">' +
+      '<div class="basis-row"><b class="ok">① 측정값</b><p>내가 찍은 점으로 실제로 잰 값입니다. ' +
+        '다만 휴대폰 한 대로 재는 2D 추정이라 3D 계측기와는 다릅니다. 카메라 각도가 틀어지면 값도 틀어집니다.' +
+        (R.autoUsed ? ' 이번 분석에는 <b>자동 인식</b>이 쓰였습니다. 자동 인식은 관절 중심을 잡으므로 ' +
+          '손으로 찍은 값과 절대 각도가 몇 도 다를 수 있습니다. 회차끼리 비교하려면 방식을 통일하세요.' : '') +
+        '</p></div>' +
+      '<div class="basis-row"><b class="warn">② 정상 범위</b><p>코칭에서 흔히 쓰는 범위를 옮겨 적은 것입니다. ' +
+        '실제 스윙 데이터로 학습하거나 검증한 값이 아니고, 체형·유연성·구질 취향에 따라 당신에게 맞는 범위는 다를 수 있습니다.</p></div>' +
+      '<div class="basis-row"><b class="bad">③ 솔루션·장비 제안</b><p>일반적인 교정 통념입니다. ' +
+        '<b>이 앱은 볼을 보지 않습니다.</b> 그래서 "이대로 고치면 더 멀리·똑바로 간다"는 것을 이 앱이 확인해 준 게 아닙니다. ' +
+        '가설로 받아들이고, 아래 결과 기록으로 본인에게 실제로 맞는지 직접 확인하세요.</p></div>' +
+      '</div></details>');
 
     h.push('<div class="legend">' +
       '<i style="--sw:#4dd4ac">정상 플레인 밴드</i>' +
@@ -520,6 +599,8 @@
       '<i style="--sw:#ff8fb3">손 궤적</i></div>');
 
     // 측정치 표
+    h.push('<div class="mhead">측정값 <span>내가 찍은 점으로 실제로 잰 값</span>' +
+      '<em>기준 = 코칭 통념 범위</em></div>');
     h.push('<div class="mtable">');
     Object.keys(R.metrics).forEach(function (k) {
       var m = R.metrics[k];
@@ -528,7 +609,7 @@
       if (m.ideal) {
         var ok = m.v >= m.ideal[0] && m.v <= m.ideal[1];
         cls = ok ? ' good' : ' bad';
-        range = '정상 ' + fmt(m.ideal[0]) + '~' + fmt(m.ideal[1]);
+        range = '기준 ' + fmt(m.ideal[0]) + '~' + fmt(m.ideal[1]);
       }
       h.push('<div class="mrow' + cls + '"><span class="k">' + esc(m.label) + '</span>' +
         '<span class="v">' + fmt(m.v, m.unit) + '</span><span class="r">' + esc(range) + '</span></div>');
@@ -536,8 +617,8 @@
     h.push('</div>');
 
     if (!R.faults.length) {
-      h.push('<div class="okbox"><b>이 각도에서는 큰 문제가 잡히지 않았습니다 ⛳</b>' +
-        '<span>반대쪽 각도(' + esc(D.VIEWS[R.view === 'dtl' ? 'fo' : 'dtl'].label) + ')로도 한 번 찍어보세요. ' +
+      h.push('<div class="okbox"><b>이 각도에서는 기준을 벗어난 항목이 없습니다 ⛳</b>' +
+        '<span>잘 친다는 뜻은 아니고, 이 앱이 재는 항목 안에서는 걸린 게 없다는 뜻입니다. 반대쪽 각도(' + esc(D.VIEWS[R.view === 'dtl' ? 'fo' : 'dtl'].label) + ')로도 한 번 찍어보세요. ' +
         '한 각도에서 안 보이는 문제가 다른 각도에서 드러납니다.</span></div>');
     } else {
       // 구간별로 묶어서 출력
@@ -570,10 +651,10 @@
 
     h.push('<p>' + esc(d.symptom) + '</p>');
     if (f.note) h.push('<p style="color:var(--dim)">' + esc(f.note) + '</p>');
-    h.push('<div class="sec-t">이대로 두면</div><p>' + esc(d.impact) + '</p>');
-    h.push('<div class="sec-t">왜 생기나</div><ul>' +
+    h.push('<div class="sec-t">보통 이런 결과로 이어진다고 봅니다</div><p>' + esc(d.impact) + '</p>');
+    h.push('<div class="sec-t">흔히 꼽히는 원인</div><ul>' +
       d.cause.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>');
-    h.push('<div class="sec-t">이렇게 고칩니다</div><ul>' +
+    h.push('<div class="sec-t">일반적인 교정 방향</div><ul>' +
       d.fix.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>');
     h.push('<div class="sec-t">연습 드릴</div>' +
       d.drills.map(function (dr) {
@@ -586,6 +667,8 @@
           '<span class="ico">▶</span><span><b>' + esc(y.title) + '</b>' +
           '<span>유튜브에서 "' + esc(y.q) + '" 검색</span></span></a>';
       }).join(''));
+    h.push('<p class="basis-note">위 측정값은 실제로 잰 값이고, 원인·교정·드릴은 <b>코칭 통념</b>입니다. ' +
+      '이 앱이 당신의 스윙에서 효과를 확인한 것은 아닙니다. 하나씩 시도한 뒤 결과를 기록해 실제로 맞는지 확인하세요.</p>');
     h.push('</div></div>');
     return h.join('');
   }
@@ -655,35 +738,109 @@
       h.push('<div class="warnbox"><p>⚠️ ' + esc(w) + '</p></div>');
     });
     h.push('<h3 class="f-title">장비 세팅 제안</h3>');
+    h.push('<div class="basis-note box">이 제안은 <b>입력하신 구질·탄도·컨택·거리에서 통상 권하는 방향</b>입니다. ' +
+      '볼을 실제로 계측한 값이 아니라 직접 고르신 구질에서 나온 규칙 계산이라, 방향 참고용으로만 쓰시고 ' +
+      '반드시 시타로 확인하세요. 로프트·라이각 조정은 되돌리기 어렵습니다.</div>');
     out.items.forEach(function (it) {
       h.push('<div class="fit-item"><span class="p">' + esc(it.part) + '</span>' +
         '<div class="s">' + esc(it.suggest) + '</div><p class="w">' + esc(it.why) + '</p></div>');
     });
-    h.push('<p class="hint">스펙 변경은 반드시 시타로 확인하세요. 라이각·로프트 조정은 되돌리기 어려운 작업이라 ' +
-      '피팅 전문점에서 임팩트 테이프로 실제 접촉 위치를 확인한 뒤 진행하는 것이 안전합니다.</p>');
+    h.push('<p class="hint">가장 확실한 방법은 런치 모니터로 볼스피드·발사각·스핀·클럽패스를 실제로 재는 것입니다. ' +
+      '이 화면은 그게 없을 때 방향을 좁혀주는 용도이지 피팅을 대신하지 않습니다. ' +
+      '피팅 전문점에서 임팩트 테이프로 실제 접촉 위치를 확인한 뒤 진행하세요.</p>');
     el.fitreport.innerHTML = h.join('');
   }
 
   /* ── 9. 기록 저장 (좌표만, 영상은 저장하지 않는다) ───────────── */
+  function readHist() {
+    try { return JSON.parse(localStorage.getItem(LS_HIST) || '[]'); } catch (e) { return []; }
+  }
+  function writeHist(h) {
+    try { localStorage.setItem(LS_HIST, JSON.stringify(h.slice(0, 200))); } catch (e) { /* 무시 */ }
+  }
   function saveHistory(R) {
+    var id = Date.now();
     try {
       var rec = {
-        at: Date.now(), club: R.club, view: R.view, score: R.score,
-        faults: R.faults.map(function (f) { return { id: f.faultId, sev: f.sev }; })
+        at: id, club: R.club, view: R.view, score: R.score, autoUsed: !!R.autoUsed,
+        faults: R.faults.map(function (f) { return { id: f.faultId, sev: f.sev }; }),
+        outcome: null
       };
-      var hist = JSON.parse(localStorage.getItem(LS_HIST) || '[]');
+      var hist = readHist();
       hist.unshift(rec);
-      localStorage.setItem(LS_HIST, JSON.stringify(hist.slice(0, 40)));
-      localStorage.setItem(LS_LAST, JSON.stringify({ club: R.club, view: R.view, sensitivity: R.sensitivity }));
+      writeHist(hist);
+      localStorage.setItem(LS_LAST, JSON.stringify({ club: R.club, view: R.view,
+        sensitivity: R.sensitivity, handed: S.handed }));
     } catch (e) { /* 저장 실패는 분석을 막지 않는다 */ }
+    return id;
   }
+
+  /* ── 결과 기록 ────────────────────────────────────────────────
+   * 진단이 실제로 맞는지 확인할 수 있는 유일한 고리다. 자기 보고 값이라
+   * 거칠지만, 회차가 쌓이면 점수와 결과가 같이 움직이는지는 보인다.
+   */
+  function renderOutcomeForm() {
+    el['outcome-slot'].innerHTML = window.SwingLog.outcomeForm();
+    var dir = 0;
+    el['outcome-slot'].querySelector('#o-dir').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-d]'); if (!b) return;
+      dir = +b.dataset.d;
+      Array.prototype.forEach.call(this.children, function (n) { n.classList.toggle('on', n === b); });
+    });
+    el['outcome-slot'].querySelector('#o-save').addEventListener('click', function () {
+      var carry = parseFloat(el['outcome-slot'].querySelector('#o-carry').value);
+      var note = el['outcome-slot'].querySelector('#o-note').value.trim();
+      var hist = readHist(), hit = null;
+      hist.forEach(function (r) { if (r.at === S.lastRecordId) hit = r; });
+      if (!hit) { hit = hist[0]; }
+      if (!hit) return;
+      hit.outcome = { carry: isNaN(carry) ? 0 : carry, dir: dir, note: note };
+      writeHist(hist);
+      var saved = el['outcome-slot'].querySelector('#o-saved');
+      saved.hidden = false;
+      saved.textContent = '저장했습니다. 같은 클럽·같은 각도로 ' + window.SwingLog.MIN_N +
+        '회 이상 쌓이면 기록 화면에서 점수와 결과의 관계를 보여드립니다.';
+      this.disabled = true;
+    });
+  }
+
+  function showLog() {
+    if (!S.logFilter) {
+      var last = readHist()[0];
+      S.logFilter = { club: last ? last.club : S.club, view: last ? last.view : S.view };
+    }
+    var hist = readHist();
+    var clubs = D.CLUB_ORDER.filter(function (c) {
+      return hist.some(function (r) { return r.club === c; });
+    });
+    if (clubs.indexOf(S.logFilter.club) < 0) clubs.unshift(S.logFilter.club);
+    window.SwingLog.render(el.logbox, hist, S.logFilter, S.logMode, clubs);
+    show('log');
+  }
+  el['btn-log'].addEventListener('click', showLog);
+  el.logbox.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-m]'); if (!b) return;
+    S.logMode = b.dataset.m; showLog();
+  });
+  el.logbox.addEventListener('change', function (e) {
+    if (e.target.id === 'log-club') S.logFilter.club = e.target.value;
+    else if (e.target.id === 'log-view') S.logFilter.view = e.target.value;
+    else return;
+    showLog();
+  });
   function restorePrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(LS_LAST) || 'null');
-      if (p && D.CLUBS[p.club]) { S.club = p.club; S.view = p.view || 'dtl'; S.sensitivity = p.sensitivity || 'normal'; }
+      if (p && D.CLUBS[p.club]) {
+        S.club = p.club; S.view = p.view || 'dtl';
+        S.sensitivity = p.sensitivity || 'normal'; S.handed = p.handed || 'right';
+      }
     } catch (e) { /* 무시 */ }
     Array.prototype.forEach.call(el['sens-seg'].children, function (n) {
       n.classList.toggle('on', n.dataset.v === S.sensitivity);
+    });
+    Array.prototype.forEach.call(el['hand-seg'].children, function (n) {
+      n.classList.toggle('on', n.dataset.h === S.handed);
     });
   }
 
