@@ -36,6 +36,12 @@ li{margin-bottom:6px;word-break:keep-all}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:14px 0}
 .grid a{display:block;padding:11px 12px;border-radius:12px;background:var(--card);
  border:1px solid var(--line);color:var(--tx);text-decoration:none;font-size:14px;font-weight:600}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--card);
+ border-radius:12px;overflow:hidden}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;word-break:keep-all}
+th{background:#faf5ef;font-weight:800;font-size:13.5px;white-space:nowrap}
+td a{color:var(--tx)}
 .cta{display:block;text-align:center;margin:30px 0 10px;padding:16px;border-radius:14px;
  background:linear-gradient(135deg,var(--a),#ffc66b);color:#fff;font-weight:800;
  text-decoration:none;font-size:17px}
@@ -58,16 +64,36 @@ footer a{color:var(--dim)}
 <h2>개띠 성격</h2>
 <p>개띠는 십이지의 <strong>戌</strong>에 해당합니다. 핵심 키워드는 <strong>의리</strong>이고, 한 번 믿으면 끝까지 가는 사람</p>
 
-<h2>개띠와 잘 맞는 띠</h2>
-<p>띠 궁합은 임의로 정하는 것이 아니라 <strong>삼합·육합</strong>이라는 전통 규칙을 씁니다.</p>
+<h2>띠 궁합은 어떻게 보는가</h2>
+<p>띠 궁합은 기분으로 정하는 게 아닙니다. 십이지에는 <strong>삼합·육합·충·원진</strong>이라는 오래된 규칙이 있고, 맘운자로는 그걸 그대로 씁니다.</p>
+<ul>
+  <li><strong>삼합(三合)</strong> — 열두 지지를 넷씩 묶은 세 무리. 같은 무리끼리는 예로부터 최고 궁합으로 봅니다. 개띠는 호랑이띠·말띠·개띠 무리입니다.</li>
+  <li><strong>육합(六合)</strong> — 둘씩 짝지어 서로를 돕는 여섯 쌍.</li>
+  <li><strong>충(沖)</strong> — 정반대(여섯 칸 차이). 정면으로 부딪힙니다.</li>
+  <li><strong>원진(怨嗔)</strong> — 큰 이유 없이 껄끄럽다고 보는 여섯 쌍.</li>
+</ul>
+
+<h2>개띠 궁합 — 12띠 전부</h2>
+<div class="tw"><table>
+  <thead><tr><th>상대</th><th>관계</th><th>궁합</th></tr></thead>
+  <tbody><tr><td><a href="/animal/rat/">🐭 쥐띠</a></td><td>보통</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/ox/">🐮 소띠</a></td><td>보통</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/tiger/">🐯 호랑이띠</a></td><td>삼합</td><td>★★★★★</td></tr><tr><td><a href="/animal/rabbit/">🐰 토끼띠</a></td><td>육합</td><td>★★★★★</td></tr><tr><td><a href="/animal/dragon/">🐲 용띠</a></td><td>충</td><td>★★☆☆☆</td></tr><tr><td><a href="/animal/snake/">🐍 뱀띠</a></td><td>보통</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/horse/">🐴 말띠</a></td><td>삼합</td><td>★★★★★</td></tr><tr><td><a href="/animal/goat/">🐑 양띠</a></td><td>보통</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/monkey/">🐵 원숭이띠</a></td><td>보통</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/rooster/">🐔 닭띠</a></td><td>원진</td><td>★★☆☆☆</td></tr><tr><td><a href="/animal/dog/">🐶 개띠</a></td><td>같은 띠</td><td>★★★☆☆</td></tr><tr><td><a href="/animal/pig/">🐷 돼지띠</a></td><td>보통</td><td>★★★☆☆</td></tr></tbody>
+</table></div>
+
+<h3>개띠와 잘 맞는 띠</h3>
 <ul><li><a href="/animal/tiger/">호랑이띠</a> (삼합) — 예로부터 최고로 치는 짝입니다. 설명 없이 손발이 맞고, 같이 벌인 일이 잘 굴러가요.</li><li><a href="/animal/rabbit/">토끼띠</a> (육합) — 서로 부족한 자리를 정확히 채웁니다. 오래 붙어 있어도 지치지 않는 조합이에요.</li><li><a href="/animal/horse/">말띠</a> (삼합) — 예로부터 최고로 치는 짝입니다. 설명 없이 손발이 맞고, 같이 벌인 일이 잘 굴러가요.</li></ul>
 
-<h2>개띠가 조심할 띠</h2>
-<p><strong>충</strong>은 정면으로 부딪히는 자리, <strong>원진</strong>은 이유 없이 껄끄러운 자리로 봅니다.</p>
+<h3>개띠가 조심할 띠</h3>
 <ul><li><a href="/animal/dragon/">용띠</a> (충) — 정면으로 부딪히는 자리입니다. 끌림이 강한 만큼 다툼도 크게 붙어요.</li><li><a href="/animal/rooster/">닭띠</a> (원진) — 큰 이유가 없는데 어딘가 껄끄럽습니다. 기대를 낮추면 오히려 편해져요.</li></ul>
+<p>충이나 원진이라고 해서 만나면 안 되는 사이는 아닙니다. 부딪히는 지점이 어디인지 미리 알고 있으면 대부분 넘어갑니다.</p>
 
 <h2>개띠 오늘의 운세</h2>
-<p>맘운자로에서 개띠의 오늘 기운을 무료로 볼 수 있습니다. 생년월일을 넣으면 띠가 자동으로 계산됩니다.</p>
+<p>맘운자로에서 개띠의 오늘 기운을 무료로 볼 수 있습니다. 생년월일을 넣으면 <strong>띠가 자동으로 계산</strong>됩니다. 태어난 시간은 몰라도 됩니다.</p>
+<p>하루의 기운은 14가지 유형 중 하나로 나옵니다.</p>
+<ul><li><strong>🪞 나를 보게 되는 날</strong> — 남 눈치 말고 내 페이스대로 가도 괜찮은 날</li><li><strong>💰 뭔가 들어오는 날</strong> — 미뤄둔 협상이나 결정을 오늘 해도 좋다</li><li><strong>🫧 가벼워지는 날</strong> — 무거웠던 걸 하나 내려놓기. 오늘은 그게 잘 된다</li><li><strong>🔍 디테일이 보이는 날</strong> — 어제 지나친 것을 오늘 다시 보면 답이 있다</li><li><strong>🤝 사람이 붙는 날</strong> — 먼저 연락하는 쪽이 이득인 날. 짧게라도 안부 묻기</li></ul>
+
+<h2>사주 궁합은 또 다릅니다</h2>
+<p>띠 궁합은 태어난 <strong>해</strong>만 봅니다. 더 정확히 보려면 태어난 <strong>날</strong>까지 봐야 합니다. 맘운자로의 생년월일 궁합은 두 사람의 일간(태어난 날의 천간) 오행 관계를 보고, 띠 관계는 보조 점수로만 씁니다.</p>
+<p>서로를 살리는 사이인지, 한쪽이 끌고 가는 사이인지까지 방향을 구분해서 알려줍니다.</p>
 
 <h2>12띠 전체</h2>
 <div class="grid"><a href="/animal/rat/">🐭 쥐띠</a><a href="/animal/ox/">🐮 소띠</a><a href="/animal/tiger/">🐯 호랑이띠</a><a href="/animal/rabbit/">🐰 토끼띠</a><a href="/animal/dragon/">🐲 용띠</a><a href="/animal/snake/">🐍 뱀띠</a><a href="/animal/horse/">🐴 말띠</a><a href="/animal/goat/">🐑 양띠</a><a href="/animal/monkey/">🐵 원숭이띠</a><a href="/animal/rooster/">🐔 닭띠</a><a href="/animal/dog/">🐶 개띠</a><a href="/animal/pig/">🐷 돼지띠</a></div>
