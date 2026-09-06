@@ -313,6 +313,25 @@
     <!-- 게임 레이어: 연속출석 / 오늘 보상 / 컬렉션 진행률 (game.js가 채운다).
          감정 선택과 주사(CTA)가 첫 화면에 다 보이도록 CTA 아래에 둔다. -->
     <div id="game-panel" class="game-panel" hidden></div>
+
+    <!-- 검색엔진이 따라갈 수 있는 링크. 이게 없어서 문제가 났었다:
+         홈에 <a href>가 단 하나도 없었고(전부 JS 버튼), 그래서 /guide/와 그 아래
+         62개 페이지가 구글에서 "발견됨 - 현재 색인이 생성되지 않음"에 묶여 있었다.
+         사이트맵은 "이런 주소가 있다"는 힌트일 뿐이고, 크롤링 우선순위는 내부 링크가
+         정한다. 사이트에서 신뢰도가 가장 높은 홈이 링크를 물려줘야 하위가 크롤링된다.
+
+         지켜야 할 것 세 가지:
+         1) CSS로 숨기지 말 것 — 숨은 링크는 구글이 감점한다. 작게 두되 보이게 둔다.
+         2) 브랜드 원칙(운세를 첫 화면으로 만들지 않는다)상 맨 아래에만 둔다.
+         3) 주사기(.syringe-stage)가 flex:1로 남는 높이를 가져가는 구조라,
+            여기에 높이를 쓰면 주사기가 그만큼 작아진다. 한 줄 크기를 넘기지 말 것. -->
+    <nav class="home-links" aria-label="전체 콘텐츠 목록">
+      <a href="/guide/">전체 목록</a>
+      <a href="/mbti/enfp/">MBTI</a>
+      <a href="/zodiac/aquarius/">별자리</a>
+      <a href="/animal/tiger/">띠</a>
+      <a href="/tarot/the-fool/">타로</a>
+    </nav>
   </main>
 
   <main id="view-history" class="view" hidden>

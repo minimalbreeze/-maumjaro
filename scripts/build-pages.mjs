@@ -43,6 +43,28 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
+// 한국어 조사를 앞말의 받침에 따라 골라 준다. 조사만 돌려주므로
+// `${esc(값)}${josa(값, '은', '는')}` 처럼 esc() 뒤에 붙여 쓴다
+// (esc()를 거친 문자열은 끝이 &quot; 같은 엔티티일 수 있어 받침 판별에 쓰면 안 된다).
+//
+// 이게 없어서 데이터 값마다 조사가 틀려 있었다. 예를 들어 별자리 소개문은
+// `${s.trait}는` 으로 고정돼 있어서 trait이 전부 "…사람"으로 끝나는 탓에
+// 12개 페이지 모두 "…하는 사람는 강점이지만"이 나왔다. 타로도 "교황가",
+// "연인는", "힘와", "새 시작가"처럼 카드 이름과 키워드에서 같은 문제가 났다.
+//
+// 새로 문장을 쓸 때도 데이터 값 뒤에는 조사를 직접 박지 말고 이걸 쓸 것.
+function josa(word, withBatchim, withoutBatchim) {
+  const last = String(word == null ? '' : word).trim().slice(-1);
+  if (!last) return withoutBatchim;
+  const code = last.charCodeAt(0);
+  const isHangulSyllable = code >= 0xac00 && code <= 0xd7a3;
+  // 한글 음절이 아니면(숫자·영문·기호) 받침 없는 쪽을 쓴다.
+  // 이 리포의 값 중에는 MBTI 코드(ENFP 등)가 여기 해당하는데, 마지막 글자가
+  // 항상 J("제이") 아니면 P("피")라 받침 없는 쪽이 실제 발음과도 맞는다.
+  if (!isHangulSyllable) return withoutBatchim;
+  return (code - 0xac00) % 28 !== 0 ? withBatchim : withoutBatchim;
+}
+
 const today = () => new Date().toISOString().slice(0, 10);
 
 // ---------- 페이지 껍데기 ----------
@@ -176,7 +198,7 @@ ${g ? `<p>${esc(k)}는 <strong>${esc(g.emoji)} ${esc(g.label)}</strong> 기질�
   <li><strong>강점</strong> — ${esc(t.strong)}</li>
   <li><strong>약한 지점</strong> — ${esc(t.weak)}</li>
 </ul>
-<p>강점과 약점은 따로 있는 게 아닙니다. ${esc(t.strong)}는 성격이 잘 작동할 때의 모습이고, ${esc(t.weak)}는 같은 성격이 과하게 돌 때의 모습입니다. 하나를 없애려 하면 다른 하나도 같이 사라집니다.</p>
+<p>강점과 약점은 따로 있는 게 아닙니다. ${esc(t.strong)}${josa(t.strong, '은', '는')} 성격이 잘 작동할 때의 모습이고, ${esc(t.weak)}${josa(t.weak, '은', '는')} 같은 성격이 과하게 돌 때의 모습입니다. 하나를 없애려 하면 다른 하나도 같이 사라집니다.</p>
 
 <h2>${esc(k)} 네 글자 뜻</h2>
 <p>${esc(k)}를 한 글자씩 뜯어보면 이 유형이 왜 그렇게 움직이는지가 보입니다.</p>
@@ -193,7 +215,7 @@ ${letters.map((c, i) => {
 
 <h2>${esc(k)}가 자주 앓는 것</h2>
 <p>${esc(t.ache)}</p>
-<p>${esc(t.name)}에게 이 지점은 병이라기보다 <strong>성격의 부작용</strong>에 가깝습니다. ${esc(t.strong)}가 세게 작동하는 날일수록 같이 따라옵니다. 맘운자로에서는 이럴 때 어떤 마음 처방이 맞는지까지 이어서 알려줍니다.</p>
+<p>${esc(t.name)}에게 이 지점은 병이라기보다 <strong>성격의 부작용</strong>에 가깝습니다. ${esc(t.strong)}${josa(t.strong, '이', '가')} 세게 작동하는 날일수록 같이 따라옵니다. 맘운자로에서는 이럴 때 어떤 마음 처방이 맞는지까지 이어서 알려줍니다.</p>
 
 <h2>${esc(k)} 궁합 — 16유형 전부</h2>
 <p><strong>가장 잘 맞는 유형</strong>은 ${m.best.map((x) => `<a href="/mbti/${x.toLowerCase()}/">${esc(x)}</a>(${esc(MBTI_TYPES[x].name)})`).join(', ')}입니다. ${m.best[0] ? esc(MBTI_TYPES[m.best[0]].trait) : ''}</p>
@@ -270,7 +292,7 @@ function tarotPages(D) {
 
 <h2>${esc(c.name)} 정방향 의미 — ${esc(up.keyword)}</h2>
 <p>${esc(up.line)}</p>
-<p>${esc(c.name)}가 바로 선 채로 나왔다면 <strong>${esc(up.keyword)}</strong>이 지금 상황의 열쇠라는 뜻입니다. 카드가 재촉하는 쪽으로 한 걸음만 옮겨보라는 신호로 읽습니다.</p>
+<p>${esc(c.name)}${josa(c.name, '이', '가')} 바로 선 채로 나왔다면 <strong>${esc(up.keyword)}</strong>${josa(up.keyword, '이', '가')} 지금 상황의 열쇠라는 뜻입니다. 카드가 재촉하는 쪽으로 한 걸음만 옮겨보라는 신호로 읽습니다.</p>
 
 <h2>${esc(c.name)} 역방향 의미 — ${esc(rev.keyword)}</h2>
 <p>${esc(rev.line)}</p>
@@ -279,7 +301,7 @@ function tarotPages(D) {
 <h2>세 자리 중 어디에 나왔는가</h2>
 <p>타로는 한 장으로 답을 내지 않습니다. 맘운자로는 <strong>3장</strong>을 뽑아 자리별로 읽습니다. 같은 ${esc(c.name)}라도 어느 자리에 오느냐에 따라 뜻이 달라집니다.</p>
 <h3>첫째 자리 — 지금 내 마음</h3>
-<p>여기에 ${esc(c.name)}가 왔다면, 지금 내 안에서 <strong>${esc(up.keyword)}</strong>이 이미 작동하고 있다는 뜻입니다. 스스로는 아직 이름을 못 붙였을 수 있습니다.</p>
+<p>여기에 ${esc(c.name)}${josa(c.name, '이', '가')} 왔다면, 지금 내 안에서 <strong>${esc(up.keyword)}</strong>${josa(up.keyword, '이', '가')} 이미 작동하고 있다는 뜻입니다. 스스로는 아직 이름을 못 붙였을 수 있습니다.</p>
 <h3>둘째 자리 — 우리 사이의 흐름</h3>
 <p>상황이나 관계가 <strong>${esc(up.keyword)}</strong> 쪽으로 흐르고 있습니다. 내가 만든 흐름이 아니라 이미 굴러가고 있는 것이라, 막기보다 올라타는 편이 낫습니다.</p>
 <h3>셋째 자리 — 내가 할 수 있는 것</h3>
@@ -288,18 +310,18 @@ function tarotPages(D) {
 <h2>주제별로 ${esc(c.name)} 읽기</h2>
 <p>맘운자로에서는 ${TAROT_TOPICS.length}가지 주제 중에 골라 카드를 뽑습니다. 같은 카드도 무엇을 물었는지에 따라 초점이 달라집니다.</p>
 <ul>
-  <li><strong>연애</strong> — ${esc(up.keyword)}가 관계에서 어떻게 드러나는지를 봅니다. ${esc(up.line)}</li>
+  <li><strong>연애</strong> — ${esc(up.keyword)}${josa(up.keyword, '이', '가')} 관계에서 어떻게 드러나는지를 봅니다. ${esc(up.line)}</li>
   <li><strong>직업</strong> — 일에서의 ${esc(up.keyword)}입니다. 역방향이면 ${esc(rev.keyword)} 쪽을 점검할 때입니다.</li>
   <li><strong>재물</strong> — 돈의 흐름을 ${esc(up.keyword)}의 관점으로 봅니다.</li>
   <li><strong>마음</strong> — 지금 감정 상태 그 자체에 대한 답입니다.</li>
 </ul>
 <p>전체 주제는 ${esc(TAROT_TOPICS.map((t) => t.label).join(' · '))}입니다.</p>
 
-<h2>${esc(c.name)}와 마음 처방</h2>
-<p>맘운자로는 타로를 보고 끝내지 않습니다. ${esc(c.name)}가 세 번째 자리에 오면 <strong>${esc(RX_LABEL[c.rxCategory] || '오늘의')}</strong> 쓰는 마음 처방으로 이어집니다. 카드가 말한 것을 오늘 실제로 해볼 수 있는 한 가지로 바꿔주는 단계입니다.</p>
+<h2>${esc(c.name)}${josa(c.name, '과', '와')} 마음 처방</h2>
+<p>맘운자로는 타로를 보고 끝내지 않습니다. ${esc(c.name)}${josa(c.name, '이', '가')} 세 번째 자리에 오면 <strong>${esc(RX_LABEL[c.rxCategory] || '오늘의')}</strong> 쓰는 마음 처방으로 이어집니다. 카드가 말한 것을 오늘 실제로 해볼 수 있는 한 가지로 바꿔주는 단계입니다.</p>
 
 <h2>타로를 처음 보신다면</h2>
-<p>메이저 아르카나는 22장으로, 인생의 큰 흐름을 다루는 카드들입니다. 0번 바보에서 시작해 21번 세계로 끝나는 하나의 이야기로 읽기도 합니다. ${esc(c.name)}는 그중 <strong>${c.id}번</strong>입니다.</p>
+<p>메이저 아르카나는 22장으로, 인생의 큰 흐름을 다루는 카드들입니다. 0번 바보에서 시작해 21번 세계로 끝나는 하나의 이야기로 읽기도 합니다. ${esc(c.name)}${josa(c.name, '은', '는')} 그중 <strong>${c.id}번</strong>입니다.</p>
 <p>맘운자로에서는 카드를 <strong>3번 섞고</strong>, 부채꼴로 펼쳐진 9장 중에서 <strong>직접 3장을 고릅니다</strong>. 고른 카드는 봉인되어 있다가 주사를 놓으면 열립니다. 무료이고 가입도 필요 없습니다.</p>
 
 <h2>다른 카드 보기</h2>
@@ -365,7 +387,8 @@ function zodiacPages(Z) {
   }).join('')}</tbody>
 </table></div>
 <h3>가장 잘 맞는 조합</h3>
-<ul>${best.map((p) => `<li><a href="/zodiac/${p.o.key}/">${esc(p.o.name)}</a> — ${esc(p.l.line)}</li>`).join('')}</ul>
+${best.length ? `<p>${esc(best[0].l.line)}</p>
+<ul>${best.map((p) => `<li><a href="/zodiac/${p.o.key}/">${esc(p.o.name)}</a> — ${esc(p.o.trait)}. ${esc(s.keyword)}${josa(s.keyword, '과', '와')} ${esc(p.o.keyword)}${josa(p.o.keyword, '이', '가')} 만나는 자리입니다.</li>`).join('')}</ul>` : ''}
 
 <h2>${esc(s.name)} 오늘의 운세</h2>
 <p>맘운자로에서 ${esc(s.name)}의 오늘 기운을 무료로 볼 수 있습니다. 생년월일만 한 번 넣으면 되고, <strong>태어난 시간은 몰라도 됩니다</strong>. 다른 별자리도 눌러서 비교할 수 있습니다.</p>
@@ -374,7 +397,7 @@ function zodiacPages(Z) {
 <p>같은 별자리인 사람은 같은 날 같은 결과를 봅니다. 그래야 "나도 ${esc(s.name)}인데!" 하고 서로 얘기가 되기 때문입니다.</p>
 
 <h2>${esc(s.name)}에게 맞는 마음 처방</h2>
-<p>맘운자로는 운세를 보여주고 끝내지 않습니다. 오늘의 기운과 지금 마음을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 처방으로 줍니다. ${esc(s.trait)}는 강점이지만, 그게 과하게 도는 날에 필요한 것도 함께 알려줍니다.</p>
+<p>맘운자로는 운세를 보여주고 끝내지 않습니다. 오늘의 기운과 지금 마음을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 처방으로 줍니다. ${esc(s.trait)}${josa(s.trait, '은', '는')} 강점이지만, 그게 과하게 도는 날에 필요한 것도 함께 알려줍니다.</p>
 
 <h2>12별자리 전체</h2>
 <div class="grid">${ZODIAC_SIGNS.map((x) => `<a href="/zodiac/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>`;
@@ -446,10 +469,11 @@ function zodiacPages(Z) {
   }).join('')}</tbody>
 </table></div>
 
-<h3>${esc(z.name)}와 잘 맞는 띠</h3>
-<ul>${good.map((r) => `<li><a href="/animal/${r.o.key}/">${esc(r.o.name)}</a> (${esc(r.d.label)}) — ${esc(r.d.line)}</li>`).join('')}</ul>
+<h3>${esc(z.name)}${josa(z.name, '과', '와')} 잘 맞는 띠</h3>
+<ul>${good.map((r) => `<li><a href="/animal/${r.o.key}/">${esc(r.o.name)}</a> (${esc(r.d.label)}) — ${esc(r.o.trait)}. ${esc(z.keyword)}${josa(z.keyword, '과', '와')} ${esc(r.o.keyword)}${josa(r.o.keyword, '이', '가')} 만나는 자리입니다.</li>`).join('')}</ul>
+${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 
-<h3>${esc(z.name)}가 조심할 띠</h3>
+<h3>${esc(z.name)}${josa(z.name, '이', '가')} 조심할 띠</h3>
 <ul>${bad.map((r) => `<li><a href="/animal/${r.o.key}/">${esc(r.o.name)}</a> (${esc(r.d.label)}) — ${esc(r.d.line)}</li>`).join('')}</ul>
 <p>충이나 원진이라고 해서 만나면 안 되는 사이는 아닙니다. 부딪히는 지점이 어디인지 미리 알고 있으면 대부분 넘어갑니다.</p>
 
