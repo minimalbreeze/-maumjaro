@@ -42,7 +42,12 @@
 <link rel="apple-touch-icon" href="icon-180.png" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192" />
-<link rel="stylesheet" href="style.css" />
+<!-- ?v= 를 붙이는 이유: 브라우저는 style.css를 주소로 캐시한다. 파일 내용만 바꾸면
+     HTML은 새로 받아도 CSS는 옛날 것을 그대로 쓴다. 실제로 홈 하단 링크를 추가했을 때
+     링크는 새로 나오는데 스타일이 안 먹어서 파란 밑줄 기본 링크로 보였다.
+     (og-image를 -v2로 올린 것과 같은 문제다 — 그쪽 사정은 위 og:image 주석 참고)
+     CSS를 눈에 띄게 바꿀 때는 이 숫자를 올릴 것. 올리면 새 주소라 캐시가 있을 수 없다. -->
+<link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
 <div id="app">
