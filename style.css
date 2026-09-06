@@ -4288,3 +4288,32 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   color: var(--text);
   line-height: 1.55;
 }
+
+/* ---------- 홈 맨 아래 검색엔진용 링크 ---------- */
+/* 왜 있는지는 index.html의 .home-links 주석 참고.
+   주사기(.syringe-stage)가 flex:1로 남는 높이를 다 가져가는 구조라,
+   여기서 높이를 쓰면 그만큼 주사기가 작아진다. 한 줄로 유지할 것. */
+.home-links {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 12px;
+  margin-top: 6px;
+  padding-bottom: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.home-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.home-links a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.home-links a:focus-visible {
+  outline: 2px solid var(--accent-a);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
