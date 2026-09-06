@@ -62,7 +62,7 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}" />` : ''}
 <meta property="og:title" content="${esc(title)}" />
 <meta property="og:description" content="${esc(desc)}" />
 <meta property="og:url" content="${SITE}${url}" />
-<meta property="og:image" content="${SITE}/og-image.jpg" />
+<meta property="og:image" content="${SITE}/og-image-v2.jpg" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <style>

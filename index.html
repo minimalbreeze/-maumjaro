@@ -20,16 +20,23 @@
 <!-- OG 태그는 정적이라 "모든" 공유(친구 처방전·블로그 링크·페이스북 자동 게시)에 똑같이 붙는다.
      그래서 어떤 경로로 들어와도 사실인 문구여야 한다. 예전의 "🚨 긴급! 누군가 당신을 위한
      맞춤 처방전을 보냈습니다"는 친구 공유가 아닐 때 거짓이 되고, 한국 메신저에서 "긴급"은
-     피싱 신호로 읽혀 오히려 이탈을 키웠다. -->
+     피싱 신호로 읽혀 오히려 이탈을 키웠다.
+
+     og:image 파일명에 -v2가 붙은 이유: 카카오·X 같은 스크래퍼는 이미지를 "이미지 URL"을
+     키로 자기 서버에 복사해두고 오래 재확인하지 않는다. 그래서 og-image.jpg의 내용만
+     바꾸면 공유 카드는 몇 주 동안 옛날 그림 그대로다(실제로 그렇게 됐다). 페이지 URL에
+     쿼리를 붙여도 소용없다 — 이미지 URL이 그대로면 캐시가 그대로 쓰인다.
+     그림을 바꿔야 할 때는 내용만 갈아끼우지 말고 파일명을 -v3, -v4로 올릴 것.
+     옛 og-image.jpg도 남겨둔다(이미 퍼진 카톡 대화의 링크가 깨지지 않도록). -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
 <meta property="og:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
-<meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image.jpg" />
+<meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 <meta property="og:url" content="https://maumjaro.minimalbreeze.com/" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
 <meta name="twitter:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
-<meta name="twitter:image" content="https://maumjaro.minimalbreeze.com/og-image.jpg" />
+<meta name="twitter:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icon-180.png" />
