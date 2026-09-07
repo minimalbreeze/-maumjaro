@@ -1,0 +1,16 @@
+{
+  "name": "sports-news-draft",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "최신 스포츠 뉴스를 수집·검증해 워프양식으로 작성하고 워드프레스 임시글(draft)로 저장한다.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "news": "node src/main.mjs",
+    "wp:check": "node src/wordpress/probe.mjs",
+    "rss:test": "node src/news/fetch-rss.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.0"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "_설명": "검색할 종목과 키워드. 종목을 추가하려면 topics 배열에 항목 하나를 복사해 붙여넣고 고치면 된다. enabled를 false로 두면 그 종목은 건너뛴다.",
+
+  "defaults": {
+    "hoursWindow": 72,
+    "minSources": 2,
+    "maxItemsPerQuery": 25,
+    "maxCandidatesPerTopic": 40
+  },
+
+  "feeds": {
+    "googleNewsKo": "https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko"
+  },
+
+  "topics": [
+    {
+      "name": "KLPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": ["KLPGA", "한국여자프로골프", "KLPGA 대회"],
+      "longTermHints": ["대회 프리뷰", "시즌 일정", "상금랭킹", "대상 경쟁"]
+    },
+    {
+      "name": "JLPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": ["JLPGA", "일본여자프로골프", "JLPGA 한국선수"],
+      "longTermHints": ["대회 일정", "출전 선수", "상금랭킹"]
+    },
+    {
+      "name": "LPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": ["LPGA", "LPGA 한국선수", "LPGA 대회"],
+      "longTermHints": ["메이저 대회", "시즌 일정", "CME 레이스"]
+    },
+    {
+      "name": "PGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": ["PGA 투어", "PGA 챔피언십", "PGA 한국선수"],
+      "longTermHints": ["메이저 대회", "페덱스컵", "라이더컵"]
+    },
+    {
+      "name": "파크골프",
+      "enabled": true,
+      "category": "파크골프",
+      "queries": ["파크골프", "파크골프 대회", "파크골프장"],
+      "longTermHints": ["대회 일정", "구장 개장", "규칙", "동호회"]
+    },
+    {
+      "name": "KBO",
+      "enabled": true,
+      "category": "야구",
+      "queries": ["KBO 리그", "프로야구 KBO", "KBO 순위"],
+      "longTermHints": ["시즌 일정", "포스트시즌", "FA", "신인드래프트"]
+    },
+    {
+      "name": "배드민턴",
+      "enabled": true,
+      "category": "스포츠",
+      "queries": ["배드민턴 안세영", "BWF 배드민턴", "배드민턴 대표팀"],
+      "longTermHints": ["세계선수권", "BWF 투어 일정", "세계랭킹"]
+    },
+    {
+      "name": "당구",
+      "enabled": true,
+      "category": "스포츠",
+      "queries": ["PBA 당구", "3쿠션 월드컵", "당구 프로당구"],
+      "longTermHints": ["투어 일정", "랭킹", "월드컵"]
+    },
+    {
+      "name": "바둑",
+      "enabled": true,
+      "category": "스포츠",
+      "queries": ["바둑 신진서", "바둑 국가대표", "바둑 기전"],
+      "longTermHints": ["기전 일정", "세계대회", "랭킹"]
+    },
+    {
+      "name": "골프일반",
+      "enabled": false,
+      "category": "골프",
+      "queries": ["골프 대회", "골프 규칙"],
+      "longTermHints": ["규칙 개정", "장비", "코스 공략"]
+    }
+  ]
+}
