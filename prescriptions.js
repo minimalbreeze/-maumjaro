@@ -524,10 +524,10 @@
     const hasNote = rxFriendNoteInput.textContent.trim().length > 0;
     const hasVideo = !!pickedVideoFile;
 
-    if (!hasPhoto && !hasNote && !hasVideo) {
-      shareOrCopy(pickedShareText, pickedShareUrl);
-      return;
-    }
+    // 예전에는 사진·메모·영상 중 아무것도 안 붙이면 텍스트+링크만 나갔다.
+    // 그러면 화면에서 본 처방전 카드가 상대에게는 안 보여서, 링크를 누르기 전까지
+    // 무엇을 받았는지 알 수 없었다. 이제는 첨부가 없어도 카드 이미지를 같이 보낸다
+    // (메모 입력칸의 안내 문구는 아래에서 캡처 순간만 숨긴다).
     // 동영상만 있고 사진/메모가 없으면 슬립 이미지를 합성할 필요 없이 영상 파일 자체를 바로 공유한다.
     if (hasVideo && !hasPhoto && !hasNote) {
       rxFriendShareBtn.disabled = true;
@@ -1385,11 +1385,14 @@
 
       const filename = `맘운자로_처방_${p.title}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
-      // 텍스트에 주소를 같이 실어야 X·카톡에서 링크가 살아 바로 눌린다.
-      // (인스타는 이미지만 가져가지만, 그쪽은 카드 하단 주소가 대신한다)
+      // 이미지 "하나만" 넘긴다. 텍스트를 같이 실으면 iOS 공유 시트가 여러 항목으로
+      // 취급해서, 인스타그램이 스토리 대신 일반 공유로만 받는 경우가 생긴다.
+      // 주소는 카드 하단에 찍혀 있으므로 링크가 빠져도 어디서 왔는지 알 수 있다.
+      // 링크가 눌려야 하는 곳(카톡·X)은 "💌 친구에게 보내기"가 담당한다.
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], text: `${text}\n${SITE_URL}`, title: '맘운자로 처방' });
+          await navigator.share({ files: [file], title: '맘운자로 처방' });
+          Core.showToast('인스타는 "스토리에 추가"를 골라보세요 📸');
         } catch (e) {
           if (!e || e.name !== 'AbortError') shareOrCopy(text, SITE_URL);
         }
