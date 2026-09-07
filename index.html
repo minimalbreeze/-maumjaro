@@ -714,17 +714,32 @@
   </div>
 </div>
 
+<!-- 9:16 공유 이미지 전용 컨테이너(화면 밖). 두 곳이 같이 쓴다:
+     ① 친구에게 보내는 저격 처방전  ② 처방센터 처방을 SNS에 올리는 카드
+     ②는 남의 타임라인에 올라가므로 배지·하단 문구가 ①과 달라야 한다
+     ("🚨 긴급"은 받는 사람이 정해진 ①에서만 맞는 말이고, 공개 게시물에서는
+      한국 메신저에서 피싱 신호로 읽힌다 — 위 og:title 주석과 같은 이유).
+     그래서 배지·배너 이모지·하단 문구에 id를 달아 채우는 쪽이 정하게 했다.
+     증상·부작용 칸은 ②에서만 쓰므로 기본은 hidden이다. -->
 <div id="rx-story-capture" class="rx-story-capture">
-  <div class="rx-story-badge">🚨 긴급 처방전 도착</div>
+  <div class="rx-story-badge" id="rx-story-badge">🚨 긴급 처방전 도착</div>
   <div class="rx-story-card">
     <div class="rx-story-banner">
-      <div class="rx-story-banner-emoji">🎯</div>
+      <div class="rx-story-banner-emoji" id="rx-story-banner-emoji">🎯</div>
       <div class="rx-story-banner-diagnosis" id="rx-story-diagnosis"></div>
     </div>
     <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-story-patient"></span></div>
+    <div class="rx-slip-block" id="rx-story-symptom-block" hidden>
+      <span class="rx-slip-key">증상</span>
+      <p class="rx-slip-text" id="rx-story-symptom"></p>
+    </div>
     <div class="rx-slip-block">
       <span class="rx-slip-key">처방</span>
       <p class="rx-slip-text" id="rx-story-prescription"></p>
+    </div>
+    <div class="rx-slip-block" id="rx-story-side-block" hidden>
+      <span class="rx-slip-key">부작용</span>
+      <p class="rx-slip-text" id="rx-story-side"></p>
     </div>
     <div class="rx-slip-block">
       <span class="rx-slip-key">주의사항</span>
@@ -732,7 +747,7 @@
     </div>
     <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value" id="rx-story-doctor"></span></div>
   </div>
-  <div class="rx-story-footer">📱 검색창에 '맘운자로' 검색 · maumjaro</div>
+  <div class="rx-story-footer" id="rx-story-footer">📱 검색창에 '맘운자로' 검색 · maumjaro</div>
 </div>
 
 <div id="toast" class="toast"></div>
