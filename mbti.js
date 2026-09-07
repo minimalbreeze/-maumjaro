@@ -580,6 +580,33 @@
     return `<span class="mbti-mini"><b>${t.emoji} ${esc(key)}</b> ${esc(t.name)}</span>`;
   }
 
+  // 공유 카드(9:16 이미지)에 들어갈 내용.
+  // 결과 화면에 이미 나와 있는 것만 옮긴다 — 공유용으로 따로 지어내지 않는다.
+  function shareSpec(result, blood) {
+    const t = MBTI_TYPES[result.type];
+    const match = MBTI_MATCH[result.type] || { best: [], grow: [] };
+    // 화면에서는 '🫠 약한 지점'이지만 카드에서는 💧를 쓴다.
+    // 🫠는 2021년에 추가된 이모지라 구형 안드로이드 폰트에 없어서 □(두부)로 찍힌다
+    // (실측 확인). 화면은 내 폰에서만 보이지만 공유 카드는 남의 폰에서 열리므로
+    // 카드에는 오래된 이모지만 쓴다.
+    const rows = [
+      { k: '💪 강점', v: t.strong },
+      { k: '💧 약한 지점', v: t.weak },
+      { k: '💞 잘 맞는', v: match.best.join(' · ') },
+    ];
+    // 혈액형을 넣은 사람에게만 한 줄 더. 안 넣었으면 그 줄 자체가 없다.
+    if (blood) rows.push({ k: `${blood.emoji} ${blood.name}형`, v: blood.trait });
+    return {
+      badge: '맘운자로 · MBTI',
+      emoji: t.emoji,
+      headline: result.type,
+      subhead: t.name,
+      lead: t.trait,
+      rows,
+      note: '재미로 보는 간이 유형 테스트예요',
+    };
+  }
+
   function resultHtml(result, blood) {
     const t = MBTI_TYPES[result.type];
     const match = MBTI_MATCH[result.type] || { best: [], grow: [] };
@@ -636,7 +663,7 @@
 
       <button class="action-btn" id="mbti-match-open" type="button" style="width:100%;margin-top:6px;">💞 상대 유형 골라서 궁합 보기</button>
       <button class="rx-slip-photo-btn" id="mbti-blood-open" type="button" style="width:100%;margin-top:8px;">🩸 혈액형으로 더 보기</button>
-      <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">친구에게 내 유형 보내기 💌</button>
+      <button class="rx-slip-photo-btn" id="mbti-share-btn" type="button" style="width:100%;margin-top:8px;">💌 내 유형 카드 공유하기</button>
       <button class="rx-friend-quick-btn" id="mbti-retake-btn" type="button" style="width:100%;margin-top:8px;">🔄 초기화하고 다시 시험 보기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
         재미로 보는 간이 유형 테스트예요. 공식 MBTI® 검사와는 무관합니다.
@@ -746,15 +773,32 @@
         });
       }
 
+      // 공유 이미지는 결과가 그려지는 즉시 미리 만들어 둔다.
+      // iOS는 버튼을 누른 "직후"에만 공유 시트를 열어주는데, 누른 뒤에 캡처를 시작하면
+      // 그 사이 제스처 권한이 만료돼 시트가 아예 안 뜬다(타로 공유에서 겪은 것과 같다).
+      if (result && window.MaumjaroShare) {
+        window.MaumjaroShare.prepare(shareSpec(result, blood));
+      }
+
       const share = mount.querySelector('#mbti-share-btn');
       if (share && result) {
         share.addEventListener('click', () => {
           const t = MBTI_TYPES[result.type];
           const text = `나 ${result.type} · ${t.name}이래 ${t.emoji}\n너는 무슨 유형이야?`;
-          const R = Rx();
           const url = 'https://maumjaro.minimalbreeze.com/';
-          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
           track('mbti_share', { type: result.type });
+          const S = window.MaumjaroShare;
+          if (S) {
+            // 이미지가 있어야 인스타 스토리·릴스에 올라간다. 실패하면 안에서 텍스트로 폴백한다.
+            S.share({
+              spec: shareSpec(result, blood),
+              filename: `맘운자로_MBTI_${result.type}.png`,
+              text, url, title: '내 MBTI 결과', btn: share,
+            });
+            return;
+          }
+          const R = Rx();
+          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
         });
       }
     }
