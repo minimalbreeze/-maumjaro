@@ -129,11 +129,21 @@
   // 미리 만들어 두기. 결과 화면을 그린 직후에 부른다.
   let pending = null;   // Promise<Blob|null>
   let ready = null;     // Blob|null
+  // prepare()가 연달아 불릴 때 "가장 마지막 것"만 인정하기 위한 표.
+  // MBTI·행운번호는 결과 화면마다 한 번만 불러서 문제가 없었지만, 처방센터는
+  // 상세를 열 때마다 부른다. 표가 없으면 A를 열었다 닫고 B를 연 뒤 바로 공유할 때,
+  // 늦게 끝난 A의 이미지가 ready 자리를 덮어써서 B 화면인데 A 그림이 나간다.
+  let token = 0;
 
   function prepare(spec) {
     ready = null;
+    const mine = ++token;
     pending = buildBlob(spec)
-      .then((b) => { ready = b; return b; })
+      .then((b) => {
+        if (mine !== token) return null; // 그새 다른 카드를 준비하기 시작했다
+        ready = b;
+        return b;
+      })
       .catch(() => null);
     return pending;
   }

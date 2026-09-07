@@ -1294,6 +1294,42 @@
   const rxCenterContent = document.getElementById('rx-center-content');
   const RARITY_LABEL = { common: '흔함', rare: '레어', epic: '에픽' };
 
+  // ---------- 처방을 9:16 공유 카드로 (share-card.js 재사용) ----------
+  // 왜 필요한가: 지금까지 처방 공유는 shareOrCopy()의 텍스트+링크뿐이었는데,
+  // 인스타그램은 이미지가 없으면 스토리·피드에 아예 못 올린다. X는 올라가긴 해도
+  // 링크만으로는 눈에 띄지 않는다. 처방은 원래 진단서 형식이라 카드로 구우면
+  // 그 자체가 그림이 된다.
+  //
+  // 카드 생성기는 새로 만들지 않고 mbti.js·lucky.js가 쓰는 share-card.js를 그대로 쓴다.
+  // 여기서 하는 일은 처방 하나를 그 spec 형태로 옮기는 것뿐이다.
+
+  // 공유 카드에는 오래된 이모지만 쓴다. 카드는 html2canvas가 "이 폰의 글꼴"을
+  // 그림으로 굽는 것이라, 글꼴에 없는 이모지는 두부(□)로 박힌 채 남의 타임라인에
+  // 올라간다. 🫠는 2021년(Emoji 14.0)에 추가돼 구형 안드로이드에 없다.
+  // 화면(rx-detail-emoji)은 원래 이모지를 그대로 쓰고, 카드에서만 바꾼다.
+  const CARD_EMOJI_FALLBACK = { '🫠': '😩' };
+
+  function rxShareSpec(p) {
+    const cat = getCategoryMeta(p.category);
+    return {
+      badge: cat ? `맘운자로 · ${cat.emoji} ${cat.label}` : '맘운자로 · 마음처방',
+      emoji: CARD_EMOJI_FALLBACK[p.emoji] || p.emoji,
+      headline: p.title,
+      subhead: p.diagnosis,
+      lead: p.prescription,
+      // 행 라벨에는 이모지를 붙이지 않는다. 위와 같은 이유이고, 큰 이모지가
+      // 이미 위에 하나 있어서 여기까지 붙이면 카드가 산만해진다.
+      rows: [
+        { k: '증상', v: p.symptom },
+        { k: '부작용', v: p.sideEffect },
+        { k: '주의사항', v: p.warning },
+      ],
+      note: RARITY_LABEL[p.rarity]
+        ? `${RARITY_LABEL[p.rarity]} 처방 · 재미로 보는 콘텐츠예요`
+        : '재미로 보는 콘텐츠예요',
+    };
+  }
+
   function rxCategoryCount(catId) {
     return ALL_PRESCRIPTIONS.filter((p) => p.category === catId).length;
   }
@@ -1582,6 +1618,7 @@
         <p class="rx-detail-symptom">${p.symptom}</p>
         <button class="action-btn rx-detail-action-btn" id="rx-detail-action-btn" type="button">처방받기</button>
         <button class="rx-friend-quick-btn" id="rx-detail-friend-btn" type="button" style="width:100%;margin-top:10px;">💌 친구에게 보내기</button>
+        <button class="rx-friend-quick-btn" id="rx-detail-card-btn" type="button" style="width:100%;margin-top:8px;">📸 이미지로 공유</button>
       </div>`;
 
     document.getElementById('rx-detail-back').addEventListener('click', () => {
@@ -1592,6 +1629,29 @@
     wireGenericTrigger(detailBtn, p);
     syncOtherTriggerButtons();
     document.getElementById('rx-detail-friend-btn').addEventListener('click', () => openFriendShareOverlay(p));
+
+    // 이미지는 굽는 데 시간이 걸린다. 상세를 여는 순간 미리 시작해 두면
+    // 버튼을 눌렀을 때 기다림 없이 바로 공유 시트가 뜬다(mbti.js와 같은 방식).
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(rxShareSpec(p));
+
+    const cardBtn = document.getElementById('rx-detail-card-btn');
+    cardBtn.addEventListener('click', () => {
+      const text = p.shareText + FORTUNE_HOOK_LINE;
+      const url = 'https://maumjaro.minimalbreeze.com/';
+      const S = window.MaumjaroShare;
+      if (S) {
+        // 이미지가 있어야 인스타 스토리·피드에 올라간다.
+        // 실패하거나 파일 공유를 못 쓰는 환경이면 share() 안에서 텍스트로 폴백한다.
+        S.share({
+          spec: rxShareSpec(p),
+          filename: `맘운자로_처방_${p.title}.png`,
+          text, url, title: '맘운자로 처방', btn: cardBtn,
+        });
+        return;
+      }
+      // share-card.js가 아직 안 붙었으면 예전처럼 텍스트+링크로 나간다.
+      shareOrCopy(text, url);
+    });
   }
 
   // ---------- 랜덤 처방 (슬롯머신) ----------
