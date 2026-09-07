@@ -62,12 +62,17 @@
       '위로하되 가르치려 들지 않는다. 조언·해결책·질문을 하지 않는다.',
       '의학적·심리학적 진단명은 절대 쓰지 않는다.',
       '"당신"이라는 단어는 쓰지 않는다.',
+      // 맥락이 있을 때만 살짝 반영하라고 해둔다. 매번 "요즘 반복되네요"로
+      // 시작하면 금세 지겨워지고, 반복을 지적당하는 느낌도 준다.
+      '아래 "요즘 상태"가 주어지면 그 결을 은근히 반영하되, 그 사실을 직접 말하거나 지적하지 않는다.',
     ].join(' ');
+    const ctx = window.MaumjaroAiContext ? window.MaumjaroAiContext.contextBlock() : '';
     const userPrompt = [
       `지금 시간대: ${timeBand()}`,
       `방금 처방한 감정: ${label}`,
       count > 1 ? `오늘 ${count}번째 주사입니다` : '오늘 첫 주사입니다',
-    ].join('\n');
+      ctx ? `요즘 상태:\n${ctx}` : '',
+    ].filter(Boolean).join('\n');
     return { systemPrompt, userPrompt };
   }
 

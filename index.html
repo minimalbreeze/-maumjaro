@@ -804,6 +804,10 @@
 <script src="sfx.js"></script>
 <script src="app.js"></script>
 <script src="prescriptions.js"></script>
+<!-- AI 프롬프트에 붙일 "요즘 상태" 요약. prescriptions.js가 쌓는 maumjaro:rxRecords를
+     읽기만 하므로 그 뒤에 오고, fortune.js·heal-ai.js·rx-ai.js가 쓰므로 그 앞에 온다.
+     이 파일이 없어도 세 곳 모두 맥락 없이 예전처럼 동작한다(전부 존재 여부를 확인한다). -->
+<script src="ai-context.js"></script>
 <!-- 마음유형(간이 MBTI) 시험지·결과. fortune.js가 window.MaumjaroMbti를 찾아 쓰므로
      fortune.js보다 먼저 와야 한다(fortune.js는 클릭 시점에 참조하므로 순서가 바뀌어도
      동작하지만, 먼저 두는 편이 의존 방향이 명확하다). -->
