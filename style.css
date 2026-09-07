@@ -4291,29 +4291,40 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 
 /* ---------- 홈 맨 아래 검색엔진용 링크 ---------- */
 /* 왜 있는지는 index.html의 .home-links 주석 참고.
-   주사기(.syringe-stage)가 flex:1로 남는 높이를 다 가져가는 구조라,
-   여기서 높이를 쓰면 그만큼 주사기가 작아진다. 한 줄로 유지할 것. */
+   생김새는 헤더의 무료/설치 없이/30초 칩(.app-trust span)을 그대로 따른다 —
+   화면마다 새 스타일을 만들지 않는다는 원칙이고, 맨 처음엔 링크만 나열해 뒀더니
+   탭바 위에 글자가 떠 있는 꼴이라 "덜 만든 화면"처럼 보였다.
+   위쪽 경계선도 탭바와 같은 --card-border를 써서 한 세트로 읽히게 한다.
+
+   주사기(.syringe-stage)가 flex:1로 남는 높이를 가져가지만, 이미 min-height
+   하한에 걸려 있어 여기서 쓰는 높이는 스크롤 길이만 늘린다(주사기는 안 줄어든다). */
 .home-links {
   flex-shrink: 0;
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2px 12px;
-  margin-top: 6px;
-  padding-bottom: 2px;
-  font-size: 12px;
-  line-height: 1.5;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 13px 0 4px;
+  border-top: 1px solid var(--card-border);
 }
 .home-links a {
+  font-size: 12px;
+  font-weight: 700;
   color: var(--text-dim);
+  background: rgba(128, 128, 128, 0.12);
+  border-radius: 999px;
+  /* 세로 5px은 칩(3px)보다 키운 값이다 — 여기는 실제로 누르는 링크라
+     손가락이 닿을 높이가 필요하다. */
+  padding: 5px 12px;
+  white-space: nowrap;
   text-decoration: none;
 }
 .home-links a:hover {
   color: var(--text);
-  text-decoration: underline;
 }
 .home-links a:focus-visible {
   outline: 2px solid var(--accent-a);
   outline-offset: 2px;
-  border-radius: 4px;
 }
