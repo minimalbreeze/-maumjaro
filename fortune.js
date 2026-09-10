@@ -566,10 +566,15 @@
     '별자리와 마음을 함께 살피는 중...',
     '조용히 점괘를 살피는 중...',
   ];
+  // 답변을 길게 쓰게 바꾼 뒤로 생성에 10~25초가 걸린다. 문구가 하나로 멈춰 있으면
+  // 사람은 "먹통이 됐나" 하고 나가버리므로, 기다리는 동안 순서대로 넘긴다.
+  // 뒤로 갈수록 "지금 뭘 하고 있는지"를 알려주는 문구를 둬서 기다림에 이유를 준다.
   const AI_MAUMUN_LOADING_LINES = [
     '질문을 곱씹어 보는 중...',
     '사주와 오늘의 마음을 함께 짚어보는 중...',
     '오늘의 기운에 질문을 겹쳐보는 중...',
+    '적어주신 사정을 다시 읽어보는 중...',
+    '조금만요, 제대로 답하고 싶어서요...',
   ];
   // 결과가 나오기 전 대기 구간. 그냥 기다리게 두면 지루하므로 캡슐을 직접 열게 한다.
   //
@@ -1975,9 +1980,21 @@
       // 맥락은 "알아봐 주는 느낌"을 주라고 넣는 것이지, 사용자를 분석하라고 넣는 게 아니다.
       // 매번 언급하면 감시당하는 느낌이 되므로 자연스러울 때만 쓰게 한다.
       '"이 사람의 요즘 상태"가 주어지면 그 결을 답변에 자연스럽게 녹인다. 억지로 끼워넣지 말고, 어울리지 않으면 언급하지 않는다. 상태를 그대로 읊거나 분석하듯 설명하지 않는다.',
-      '답변은 다음 순서를 지키되 항목 번호나 제목은 쓰지 않는다: 질문에 대한 직접적인 답 한두 문장(위트 포함 가능) → 오늘 전체 흐름 한 문장 → "💉 오늘의 처방:" 뒤에 짧은 확언 한 문장(따옴표로 감싸기).',
-      // 길게 답하면 아래 처방/주사 흐름이 화면 밖으로 밀린다.
-      '문단 사이는 줄바꿈 두 번으로 구분한다. 문단은 최대 3개, 전체 180자 이내로 짧게 답한다. 장황한 설명이나 목록은 절대 쓰지 않는다.',
+      // 사람들이 여기에 적는 건 대부분 진짜 고민이다. 세 줄로 끊어 보내면
+      // "읽어주긴 했나" 싶은 답이 되고, 그러면 다시 오지 않는다. 길이보다 중요한 건
+      // 사용자가 쓴 그 사정을 실제로 짚어주는 것이라, 그걸 규칙으로 못박는다.
+      '이 사람은 지금 진지한 고민을 털어놓은 것일 수 있다. 짧게 요약하고 넘어가지 말고, 충분히 읽고 충분히 답한다.',
+      '가장 먼저 지킬 것: 사용자가 적은 구체적인 사정(등장인물, 상황, 시점, 감정)을 답변 안에서 실제로 짚어준다. 일반론만 늘어놓으면 실패한 답이다.',
+      '답변은 아래 흐름을 따르되 번호나 소제목은 절대 쓰지 않는다. 자연스러운 문단으로만 쓴다.',
+      '  (1) 질문에 대한 직접적인 답 — 첫 문단에서 바로 결론을 말한다. 뜸들이지 않는다.',
+      '  (2) 왜 그렇게 보는지 — 사용자가 적은 상황을 구체적으로 짚으면서 두세 문단으로 풀어준다. 사주 오행 관계와 오늘의 운 힌트를 여기에 자연스럽게 섞는다.',
+      '  (3) 오늘 당장 해볼 수 있는 것 — 아주 작고 구체적인 행동 하나를 권한다. "마음을 편히 가지세요" 같은 막연한 말은 금지.',
+      '  (4) 마지막 줄에 "💉 오늘의 처방:" 뒤에 확언 한 문장을 따옴표로 감싸서 쓴다.',
+      '전체 600~900자, 문단 4~6개로 쓴다. 문단 사이는 줄바꿈 두 번으로 구분한다. 항목 기호(-, *, 1.)는 쓰지 않는다.',
+      '길게 쓰라고 해서 같은 말을 바꿔 반복하지 않는다. 한 문단에는 새로운 이야기가 하나씩 있어야 한다.',
+      // 길고 진지한 질문을 받게 되면 진짜로 위험한 이야기가 섞여 들어온다.
+      // 그때 운세로만 받아치면 안 된다. 겁주지 않되 도움 받을 곳은 알려준다.
+      '만약 자해, 자살, 폭력, 학대처럼 실제 안전이 걱정되는 이야기가 보이면 운세 이야기로 넘기지 않는다. 먼저 진심으로 걱정을 전하고, 혼자 감당하지 말고 주변 사람이나 전문 상담(자살예방 상담전화 109, 24시간 무료)에 꼭 연락해보라고 부드럽게 권한다. 그 뒤에 따뜻한 한마디로 마무리한다. 겁주거나 다그치지 않는다.',
     ].join(' ');
 
     // 이 앱만 할 수 있는 말을 하게 해주는 재료다. 감정 이름·횟수는 넘어가지 않고
@@ -1995,7 +2012,9 @@
     return fetch(AI_MAUMUN_PROXY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemPrompt, userPrompt }),
+      // 프록시 기본값(320)은 짧은 문구용이다. 여기는 길게 답해야 하므로 따로 올려 부른다.
+      // 프록시가 상한 안으로 깎아주므로 이 값이 그대로 과금이 되지는 않는다.
+      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens: 1400 }),
     })
       .then((r) => { if (!r.ok) throw new Error('proxy error'); return r.json(); })
       .then((data) => {
@@ -2059,9 +2078,9 @@
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
         <span class="rx-nav-title">🤖 AI 맘운</span>
       </div>
-      <p class="rx-custom-hint">💛 오늘 상황이나 궁금한 걸 편하게 적어보세요. 사주 프로필 + 오늘의 운세 + 지금 마음을 합쳐서 답해드릴게요</p>
-      <textarea id="ai-maumun-input" class="rx-custom-input" style="width:100%;min-height:80px;resize:vertical;" maxlength="60" placeholder="궁금한 마음을 물어보세요"></textarea>
-      <span class="rx-custom-counter" id="ai-maumun-count">0/60</span>
+      <p class="rx-custom-hint">💛 오늘 상황이나 궁금한 걸 편하게 적어보세요. 길게 적을수록 더 자세히 답해드려요. 사주 프로필 + 오늘의 운세 + 지금 마음을 합쳐서 답해드릴게요</p>
+      <textarea id="ai-maumun-input" class="rx-custom-input" style="width:100%;min-height:150px;resize:vertical;line-height:1.6;" maxlength="800" placeholder="예: 3년 다닌 회사를 그만둘까 고민 중이에요. 팀은 좋은데 하는 일이 계속 줄어드는 느낌이고, 이직 자리는 연봉이 조금 낮아요. 지금 옮기는 게 맞을까요?"></textarea>
+      <span class="rx-custom-counter" id="ai-maumun-count">0/800</span>
       <button class="action-btn" id="ai-maumun-submit-btn" type="button" style="width:100%;margin-top:10px;">🔮 AI 맘운에게 물어보기</button>
       <div id="ai-maumun-answer"></div>
     `;
@@ -2070,7 +2089,7 @@
     const input = document.getElementById('ai-maumun-input');
     const count = document.getElementById('ai-maumun-count');
     input.addEventListener('input', () => {
-      count.textContent = `${input.value.length}/60`;
+      count.textContent = `${input.value.length}/800`;
     });
 
     const submitBtn = document.getElementById('ai-maumun-submit-btn');
@@ -2081,26 +2100,35 @@
         return;
       }
       const answerEl = document.getElementById('ai-maumun-answer');
-      const loadingLine = AI_MAUMUN_LOADING_LINES[Math.floor(Math.random() * AI_MAUMUN_LOADING_LINES.length)];
+      let lineIdx = 0;
       submitBtn.disabled = true;
       answerEl.innerHTML = `
         <div class="fortune-loading" style="padding:50px 20px;">
           <div class="fortune-loading-orb">🔮</div>
-          <p class="fortune-loading-text">${loadingLine}</p>
+          <p class="fortune-loading-text" id="ai-maumun-loading-text">${AI_MAUMUN_LOADING_LINES[0]}</p>
         </div>`;
       answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const loadingTimer = setInterval(() => {
+        const el = document.getElementById('ai-maumun-loading-text');
+        if (!el) { clearInterval(loadingTimer); return; }
+        lineIdx = Math.min(lineIdx + 1, AI_MAUMUN_LOADING_LINES.length - 1);
+        el.textContent = AI_MAUMUN_LOADING_LINES[lineIdx];
+      }, 4500);
+      // 어떤 경로로 끝나든 타이머는 반드시 멈춘다. 안 그러면 화면을 떠난 뒤에도 계속 돈다.
+      function stopLoading() { clearInterval(loadingTimer); submitBtn.disabled = false; }
 
       function fallBackToTemplate() {
         const answer = buildAiMaumunAnswer(profile, emotion, question);
         renderAiMaumunAnswer(answer);
-        submitBtn.disabled = false;
+        stopLoading();
       }
 
       if (AI_MAUMUN_PROXY_URL) {
         fetchAiMaumunFromProxy(profile, emotion, question)
           .then(({ text, rxCategory }) => {
             renderAiMaumunRawAnswer(text, rxCategory);
-            submitBtn.disabled = false;
+            stopLoading();
           })
           .catch(fallBackToTemplate); // 프록시가 아직 없거나 응답에 실패해도 앱이 멈추지 않는다
       } else {
