@@ -88,14 +88,19 @@
       '문체: 상냥한 존댓말, 가볍고 다정한 톤. 45자 이내 한 문장. 따옴표나 이모지는 쓰지 않는다.',
       '의학적·심리학적 진단명은 쓰지 않는다. 불안을 조장하지 않는다.',
       '"오늘 당신에게 이 처방이 온 이유"를 말하듯 쓴다.',
+      // 여기는 한 문장뿐이라 맥락까지 욱여넣으면 별자리 이야기가 밀린다.
+      // 어울릴 때만 쓰라고 해두고, 안 쓰면 원래대로 나온다.
+      '"요즘 상태"가 주어지고 자연스럽게 어울릴 때만 그 결을 반영한다. 억지로 넣지 않는다.',
     ].join('\n');
 
+    const ctx = window.MaumjaroAiContext ? window.MaumjaroAiContext.contextBlock() : '';
     const userPrompt = [
       `오늘 날짜: ${todayKey()}`,
       bits.join(' / '),
       `오늘 뽑힌 처방: ${rxTitle} (${rxDiagnosis})`,
+      ctx ? `요즘 상태:\n${ctx}` : '',
       '위 정보를 엮어 한 문장으로 설명해줘.',
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     return { systemPrompt, userPrompt };
   }

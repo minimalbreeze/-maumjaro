@@ -407,6 +407,10 @@
         <button class="pharmacy-close" id="pharmacy-close" type="button">✕</button>
       </div>
       <p class="pharmacy-progress" id="pharmacy-progress"></p>
+      <!-- 모은 걸 자랑하는 버튼. 컬렉션은 "보여주고 싶은" 결과물이라
+           공유가 곧 홍보가 된다(카드 하단에 주소가 찍힌다). -->
+      <button class="rx-friend-quick-btn" id="pharmacy-share-btn" type="button"
+              style="width:100%;margin:4px 0 10px;">📸 내 약국 자랑하기</button>
       <div class="pharmacy-filters" id="pharmacy-filters"></div>
       <div class="pharmacy-grid" id="pharmacy-grid"></div>
     </div>
@@ -714,17 +718,32 @@
   </div>
 </div>
 
+<!-- 9:16 공유 이미지 전용 컨테이너(화면 밖). 두 곳이 같이 쓴다:
+     ① 친구에게 보내는 저격 처방전  ② 처방센터 처방을 SNS에 올리는 카드
+     ②는 남의 타임라인에 올라가므로 배지·하단 문구가 ①과 달라야 한다
+     ("🚨 긴급"은 받는 사람이 정해진 ①에서만 맞는 말이고, 공개 게시물에서는
+      한국 메신저에서 피싱 신호로 읽힌다 — 위 og:title 주석과 같은 이유).
+     그래서 배지·배너 이모지·하단 문구에 id를 달아 채우는 쪽이 정하게 했다.
+     증상·부작용 칸은 ②에서만 쓰므로 기본은 hidden이다. -->
 <div id="rx-story-capture" class="rx-story-capture">
-  <div class="rx-story-badge">🚨 긴급 처방전 도착</div>
+  <div class="rx-story-badge" id="rx-story-badge">🚨 긴급 처방전 도착</div>
   <div class="rx-story-card">
     <div class="rx-story-banner">
-      <div class="rx-story-banner-emoji">🎯</div>
+      <div class="rx-story-banner-emoji" id="rx-story-banner-emoji">🎯</div>
       <div class="rx-story-banner-diagnosis" id="rx-story-diagnosis"></div>
     </div>
     <div class="rx-slip-row"><span class="rx-slip-key">환자명</span><span class="rx-slip-value" id="rx-story-patient"></span></div>
+    <div class="rx-slip-block" id="rx-story-symptom-block" hidden>
+      <span class="rx-slip-key">증상</span>
+      <p class="rx-slip-text" id="rx-story-symptom"></p>
+    </div>
     <div class="rx-slip-block">
       <span class="rx-slip-key">처방</span>
       <p class="rx-slip-text" id="rx-story-prescription"></p>
+    </div>
+    <div class="rx-slip-block" id="rx-story-side-block" hidden>
+      <span class="rx-slip-key">부작용</span>
+      <p class="rx-slip-text" id="rx-story-side"></p>
     </div>
     <div class="rx-slip-block">
       <span class="rx-slip-key">주의사항</span>
@@ -732,7 +751,7 @@
     </div>
     <div class="rx-slip-row"><span class="rx-slip-key">처방의</span><span class="rx-slip-value" id="rx-story-doctor"></span></div>
   </div>
-  <div class="rx-story-footer">📱 검색창에 '맘운자로' 검색 · maumjaro</div>
+  <div class="rx-story-footer" id="rx-story-footer">📱 검색창에 '맘운자로' 검색 · maumjaro</div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -803,10 +822,18 @@
 <!-- 카드·갓차·캡슐 효과음. app.js보다 먼저 둬서 다른 파일들이 바로 쓸 수 있게 한다. -->
 <script src="sfx.js"></script>
 <script src="app.js"></script>
+<!-- 공유 링크에 유입 표(utm)를 붙인다. prescriptions.js의 shareOrCopy와
+     share-card.js가 부르므로 둘보다 먼저 와야 한다. 없어도 공유는 그대로
+     동작하고 표만 안 붙는다(전부 존재 여부를 확인한 뒤 쓴다). -->
+<script src="share-utm.js"></script>
 <script src="prescriptions.js"></script>
 <!-- 9:16 공유 카드 생성기. mbti.js·lucky.js가 window.MaumjaroShare로 쓴다.
      Rx.shareOrCopy를 폴백으로 쓰므로 prescriptions.js 뒤에 온다. -->
 <script src="share-card.js"></script>
+<!-- AI 프롬프트에 붙일 "요즘 상태" 요약. prescriptions.js가 쌓는 maumjaro:rxRecords를
+     읽기만 하므로 그 뒤에 오고, fortune.js·heal-ai.js·rx-ai.js가 쓰므로 그 앞에 온다.
+     이 파일이 없어도 세 곳 모두 맥락 없이 예전처럼 동작한다(전부 존재 여부를 확인한다). -->
+<script src="ai-context.js"></script>
 <!-- 마음유형(간이 MBTI) 시험지·결과. fortune.js가 window.MaumjaroMbti를 찾아 쓰므로
      fortune.js보다 먼저 와야 한다(fortune.js는 클릭 시점에 참조하므로 순서가 바뀌어도
      동작하지만, 먼저 두는 편이 의존 방향이 명확하다). -->
@@ -814,6 +841,10 @@
 <!-- 주간 행운번호. fortune.js의 기록 탭 타일에서 window.MaumjaroLucky로 불린다. -->
 <script src="lucky.js"></script>
 <script src="fortune.js"></script>
+<!-- 스레드용 "글로 공유"(이미지 없이 텍스트+링크). 문구를 만들 때 fortune.js가 가진
+     AI 프록시 주소를 빌려 쓰므로 그 뒤에 온다. 버튼은 화면을 그릴 때 붙으므로
+     prescriptions.js·game.js보다 뒤에 있어도 되고, 이 파일이 없으면 버튼만 안 생긴다. -->
+<script src="threads-share.js"></script>
 <script src="game.js"></script>
 <!-- 주사 직후 문구를 AI로 바꿔치기한다. app.js가 쏘는 이벤트만 듣기 때문에
      맨 뒤에 와야 하고, 이 파일이 없거나 실패해도 기본 문구가 그대로 뜬다. -->

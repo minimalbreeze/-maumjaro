@@ -793,12 +793,20 @@
             S.share({
               spec: shareSpec(result, blood),
               filename: `맘운자로_MBTI_${result.type}.png`,
-              text, url, title: '내 MBTI 결과', btn: share,
+              text, url, medium: 'mbti', title: '내 MBTI 결과', btn: share,
             });
             return;
           }
           const R = Rx();
           if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
+        });
+      }
+
+      // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+      if (share && result && window.MaumjaroThreads) {
+        const t = MBTI_TYPES[result.type];
+        window.MaumjaroThreads.mountButton({
+          after: share, kind: 'mbti', fact: `${result.type} · ${t.name}`,
         });
       }
     }
@@ -868,9 +876,16 @@
           const stars = Number(ms.dataset.stars);
           const text = `${ms.dataset.mine} × ${ms.dataset.other} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
           const R = Rx();
-          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/');
+          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/', 'match');
           track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
         });
+        // 위 버튼은 상대에게 1:1로 보내는 것이고, 이건 스레드에 올리는 글 공유다.
+        if (window.MaumjaroThreads) {
+          window.MaumjaroThreads.mountButton({
+            after: ms, kind: 'match',
+            fact: `${ms.dataset.mine} × ${ms.dataset.other} 궁합`,
+          });
+        }
       }
     }
 

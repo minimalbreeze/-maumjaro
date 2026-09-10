@@ -109,11 +109,18 @@
   const rxRevealCloseBtn = document.getElementById('rx-reveal-close');
 
   const rxStoryCapture = document.getElementById('rx-story-capture');
+  const rxStoryBadge = document.getElementById('rx-story-badge');
+  const rxStoryBannerEmoji = document.getElementById('rx-story-banner-emoji');
   const rxStoryDiagnosis = document.getElementById('rx-story-diagnosis');
   const rxStoryPatient = document.getElementById('rx-story-patient');
+  const rxStorySymptomBlock = document.getElementById('rx-story-symptom-block');
+  const rxStorySymptom = document.getElementById('rx-story-symptom');
   const rxStoryPrescription = document.getElementById('rx-story-prescription');
+  const rxStorySideBlock = document.getElementById('rx-story-side-block');
+  const rxStorySide = document.getElementById('rx-story-side');
   const rxStoryWarning = document.getElementById('rx-story-warning');
   const rxStoryDoctor = document.getElementById('rx-story-doctor');
+  const rxStoryFooter = document.getElementById('rx-story-footer');
 
   const RX_LS_KEY = 'maumjaro:rxRecords';
   const RX_SCHEMA_KEY = 'maumjaro:rxSchemaVersion';
@@ -408,7 +415,10 @@
   let pickedShareText = '';
   let pickedShareUrl = '';
   let pickedPrescription = null;
-  async function shareOrCopy(text, url) {
+  // medium: 어느 화면의 공유인지(rx / fortune / tarot ...). 안 넘기면 'sns'.
+  // 링크에 표를 붙이는 이유는 share-utm.js 주석 참고.
+  async function shareOrCopy(text, rawUrl, medium) {
+    const url = window.MaumjaroUtm ? window.MaumjaroUtm.tag(rawUrl, medium) : rawUrl;
     if (navigator.share) {
       try {
         await navigator.share({ text, url });
@@ -517,10 +527,10 @@
     const hasNote = rxFriendNoteInput.textContent.trim().length > 0;
     const hasVideo = !!pickedVideoFile;
 
-    if (!hasPhoto && !hasNote && !hasVideo) {
-      shareOrCopy(pickedShareText, pickedShareUrl);
-      return;
-    }
+    // 예전에는 사진·메모·영상 중 아무것도 안 붙이면 텍스트+링크만 나갔다.
+    // 그러면 화면에서 본 처방전 카드가 상대에게는 안 보여서, 링크를 누르기 전까지
+    // 무엇을 받았는지 알 수 없었다. 이제는 첨부가 없어도 카드 이미지를 같이 보낸다
+    // (메모 입력칸의 안내 문구는 아래에서 캡처 순간만 숨긴다).
     // 동영상만 있고 사진/메모가 없으면 슬립 이미지를 합성할 필요 없이 영상 파일 자체를 바로 공유한다.
     if (hasVideo && !hasPhoto && !hasNote) {
       rxFriendShareBtn.disabled = true;
@@ -1294,6 +1304,125 @@
   const rxCenterContent = document.getElementById('rx-center-content');
   const RARITY_LABEL = { common: '흔함', rare: '레어', epic: '에픽' };
 
+  // ---------- 처방을 9:16 처방전 이미지로 (친구 저격 처방전과 같은 서식) ----------
+  // 왜 필요한가: 처방 공유는 shareOrCopy()의 텍스트+링크뿐이었는데, 인스타그램은
+  // 이미지가 없으면 스토리·피드에 아예 못 올린다. X는 올라가도 링크만으로는 안 띈다.
+  //
+  // 서식은 새로 만들지 않고 #rx-story-capture(친구 저격 처방전)를 그대로 쓴다.
+  // 처방은 원래 진단서라 이 처방전 서식에 그대로 들어맞고, 이미 검증된 레이아웃이다.
+  //
+  // 다만 공개 게시물이라 두 곳을 바꾼다:
+  //   배지   "🚨 긴급 처방전 도착"(받는 사람이 정해진 말) → "💊 오늘의 처방"
+  //   하단   "검색창에 '맘운자로' 검색"                  → 실제 주소
+  // 그리고 저격 처방전에는 없는 증상·부작용 칸을 연다. 처방에서 제일 재미있는
+  // 부분이 거기라 빼면 카드가 심심해진다.
+
+  const SITE_URL = 'https://maumjaro.minimalbreeze.com/';
+
+  // 공유 이미지에는 오래된 이모지만 쓴다. html2canvas는 "이 폰의 글꼴"을 그림으로
+  // 굽기 때문에, 글꼴에 없는 이모지는 두부(□)로 박힌 채 남의 타임라인에 올라간다.
+  // 🫠는 2021년(Emoji 14.0)에 추가돼 구형 안드로이드에 없다. 앱 화면은 원래대로 둔다.
+  const CARD_EMOJI_FALLBACK = { '🫠': '😩' };
+
+  // #rx-story-capture 한 벌을 두 용도가 나눠 쓰므로, 채우는 일은 여기 한 곳에 모은다.
+  // 안 넘긴 칸은 이전 호출의 값이 남지 않도록 매번 명시적으로 비우거나 감춘다.
+  function fillStoryCard(o) {
+    rxStoryBadge.textContent = o.badge;
+    rxStoryBannerEmoji.textContent = o.bannerEmoji;
+    rxStoryDiagnosis.textContent = o.diagnosis || '';
+    rxStoryPatient.textContent = o.patient || '';
+    rxStoryPrescription.textContent = o.prescription || '';
+    rxStoryWarning.textContent = o.warning || '개인차가 있을 수 있어요';
+    rxStoryDoctor.textContent = o.doctor || '';
+    rxStoryFooter.textContent = o.footer;
+
+    rxStorySymptom.textContent = o.symptom || '';
+    rxStorySymptomBlock.hidden = !o.symptom;
+    rxStorySide.textContent = o.sideEffect || '';
+    rxStorySideBlock.hidden = !o.sideEffect;
+  }
+
+  // 채워둔 #rx-story-capture를 PNG로 굽는다. 실패하면 null.
+  async function captureStoryBlob() {
+    // 캡처 라이브러리는 첫 화면 이후에 받으므로 여기서 준비를 기다린다.
+    if (typeof window.html2canvas !== 'function' && window.MaumjaroLib) {
+      try { await window.MaumjaroLib.html2canvas(); } catch (e) { /* 아래에서 걸러진다 */ }
+    }
+    if (typeof window.html2canvas !== 'function') return null;
+    // 이모지 글꼴이 늦게 붙으면 두부(□)로 찍힌다. 한 프레임 양보해 레이아웃을 확정시킨다.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    try {
+      const canvas = await window.html2canvas(rxStoryCapture, {
+        width: 540, height: 960, scale: 2, backgroundColor: '#fffdf9',
+      });
+      return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 처방 하나를 처방전 이미지로 공유한다.
+  // 이미지가 안 만들어지거나 파일 공유를 못 쓰는 환경이면 예전처럼 텍스트+링크로 나간다.
+  async function shareRxAsImage(p, btnEl) {
+    const myName = (localStorage.getItem('maumjaro:username') || '').trim();
+    fillStoryCard({
+      badge: '💊 오늘의 처방',
+      bannerEmoji: CARD_EMOJI_FALLBACK[p.emoji] || p.emoji,
+      diagnosis: p.diagnosis,
+      patient: myName || '나',
+      symptom: p.symptom,
+      prescription: p.prescription,
+      sideEffect: p.sideEffect,
+      warning: p.warning,
+      doctor: '맘운자로',
+      footer: 'maumjaro.minimalbreeze.com',
+    });
+
+    const text = p.shareText + FORTUNE_HOOK_LINE;
+    const label = btnEl.textContent;
+    btnEl.disabled = true;
+    btnEl.textContent = '준비 중...';
+    try {
+      const blob = await captureStoryBlob();
+      if (!blob) { shareOrCopy(text, SITE_URL, 'rx'); return; }
+
+      const filename = `맘운자로_처방_${p.title}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+      // 이미지와 함께 본문·링크를 싣는다.
+      //
+      // 한때 이미지만 넘겼다. 텍스트를 같이 실으면 iOS가 여러 항목으로 취급해
+      // 인스타가 스토리 대신 일반 공유로만 받는다는 추정 때문이었는데, 확인되지 않은
+      // 추정이었고 대가가 확실했다 — 스레드·X·카톡은 링크가 없으면 눌러서 들어올
+      // 방법이 사라진다. 공유로 사람을 데려오는 게 목적인 앱에서 이건 치명적이다.
+      // 인스타는 어차피 이미지만 가져가고, 그쪽은 카드 하단 주소가 대신한다.
+      // 즉 링크를 넣어서 잃는 것은 불확실하고, 빼서 잃는 것은 확실하다.
+      const shareUrl = window.MaumjaroUtm ? window.MaumjaroUtm.tag(SITE_URL, 'rx') : SITE_URL;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text: `${text}\n${shareUrl}`, title: '맘운자로 처방' });
+        } catch (e) {
+          if (!e || e.name !== 'AbortError') shareOrCopy(text, SITE_URL, 'rx');
+        }
+        return;
+      }
+
+      // 파일 공유 미지원(주로 데스크톱): 이미지를 내려받고 텍스트는 따로 처리한다.
+      const objUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = objUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
+      Core.showToast('이미지를 저장했어요 🖼️');
+      shareOrCopy(text, SITE_URL, 'rx');
+    } finally {
+      btnEl.disabled = false;
+      btnEl.textContent = label;
+    }
+  }
+
   function rxCategoryCount(catId) {
     return ALL_PRESCRIPTIONS.filter((p) => p.category === catId).length;
   }
@@ -1463,11 +1592,18 @@
       Core.showToast('이미지 저장을 사용할 수 없어요. 화면을 캡처해주세요');
       return;
     }
-    rxStoryDiagnosis.textContent = payload.d;
-    rxStoryPatient.textContent = payload.p;
-    rxStoryPrescription.textContent = payload.rx;
-    rxStoryWarning.textContent = payload.w || '개인차가 있을 수 있어요';
-    rxStoryDoctor.textContent = payload.dr;
+    // 이 컨테이너는 처방센터 공유와 함께 쓰므로, 이쪽 값도 fillStoryCard로 채운다.
+    // 그래야 저쪽이 열어둔 증상·부작용 칸이 여기 남아 있지 않는다.
+    fillStoryCard({
+      badge: '🚨 긴급 처방전 도착',
+      bannerEmoji: '🎯',
+      diagnosis: payload.d,
+      patient: payload.p,
+      prescription: payload.rx,
+      warning: payload.w,
+      doctor: payload.dr,
+      footer: "📱 검색창에 '맘운자로' 검색 · maumjaro",
+    });
 
     const originalLabel = btnEl.textContent;
     btnEl.disabled = true;
@@ -1525,7 +1661,16 @@
     `;
 
     document.getElementById('rx-custom-share-back').addEventListener('click', renderRxGrid);
-    document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url));
+    document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url, 'custom'));
+    // 위 세 버튼은 전부 "내가 만든 처방전을 특정한 사람에게 보내는" 경로다.
+    // 스레드처럼 여러 사람이 보는 곳에 올리는 글 공유는 성격이 달라 따로 둔다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        after: document.getElementById('rx-custom-share-copy-btn'),
+        kind: 'custom',
+        fact: '직접 만든 처방전',
+      });
+    }
     document.getElementById('rx-custom-share-story-btn').addEventListener('click', (e) => {
       saveCustomStoryImage(payload, e.currentTarget);
     });
@@ -1582,6 +1727,7 @@
         <p class="rx-detail-symptom">${p.symptom}</p>
         <button class="action-btn rx-detail-action-btn" id="rx-detail-action-btn" type="button">처방받기</button>
         <button class="rx-friend-quick-btn" id="rx-detail-friend-btn" type="button" style="width:100%;margin-top:10px;">💌 친구에게 보내기</button>
+        <button class="rx-friend-quick-btn" id="rx-detail-card-btn" type="button" style="width:100%;margin-top:8px;">📸 이미지로 공유</button>
       </div>`;
 
     document.getElementById('rx-detail-back').addEventListener('click', () => {
@@ -1592,6 +1738,19 @@
     wireGenericTrigger(detailBtn, p);
     syncOtherTriggerButtons();
     document.getElementById('rx-detail-friend-btn').addEventListener('click', () => openFriendShareOverlay(p));
+
+    const cardBtn = document.getElementById('rx-detail-card-btn');
+    cardBtn.addEventListener('click', () => shareRxAsImage(p, cardBtn));
+
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 처방 제목과 진단명이 "오늘 나온 결과 한 줄"이라 그대로 문구 재료로 넘긴다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        anchor: rxCenterContent.querySelector('.rx-detail-card'),
+        kind: 'rx',
+        fact: `${p.title} · ${p.diagnosis}`,
+      });
+    }
   }
 
   // ---------- 랜덤 처방 (슬롯머신) ----------

@@ -296,12 +296,20 @@
           S.share({
             spec: luckyShareSpec(),
             filename: `맘운자로_행운번호_${weekKey}.png`,
-            text, url, title: '이번 주 행운번호', btn: share,
+            text, url, medium: 'lucky', title: '이번 주 행운번호', btn: share,
           });
           return;
         }
         const R = Rx();
         if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
+      });
+    }
+
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 번호를 그대로 재료로 넘기면 문구에 숫자가 섞여 길어지므로 몇 세트인지만 넘긴다.
+    if (share && mine && window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        after: share, kind: 'lucky', fact: `이번 주 행운번호 ${mine.sets.length}세트를 받았다`,
       });
     }
 

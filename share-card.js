@@ -129,11 +129,21 @@
   // 미리 만들어 두기. 결과 화면을 그린 직후에 부른다.
   let pending = null;   // Promise<Blob|null>
   let ready = null;     // Blob|null
+  // prepare()가 연달아 불릴 때 "가장 마지막 것"만 인정하기 위한 표.
+  // MBTI·행운번호는 결과 화면마다 한 번만 불러서 문제가 없었지만, 처방센터는
+  // 상세를 열 때마다 부른다. 표가 없으면 A를 열었다 닫고 B를 연 뒤 바로 공유할 때,
+  // 늦게 끝난 A의 이미지가 ready 자리를 덮어써서 B 화면인데 A 그림이 나간다.
+  let token = 0;
 
   function prepare(spec) {
     ready = null;
+    const mine = ++token;
     pending = buildBlob(spec)
-      .then((b) => { ready = b; return b; })
+      .then((b) => {
+        if (mine !== token) return null; // 그새 다른 카드를 준비하기 시작했다
+        ready = b;
+        return b;
+      })
       .catch(() => null);
     return pending;
   }
@@ -146,6 +156,11 @@
     return navigator.share({ files: [file], text: `${text}\n${url}`, title });
   }
 
+  // 링크에 유입 표를 붙인다(share-utm.js 주석 참고). 실패해도 원본을 그대로 쓴다.
+  function tagged(url, medium) {
+    return window.MaumjaroUtm ? window.MaumjaroUtm.tag(url, medium) : url;
+  }
+
   function textFallback(text, url) {
     const R = Rx();
     if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
@@ -154,7 +169,8 @@
   /* opts: { spec, filename, text, url, title, btn }
    * spec은 prepare()를 못 했거나 결과가 없을 때 다시 만들기 위한 것이다. */
   async function share(opts) {
-    const { spec, filename, text, url, title, btn } = opts;
+    const { spec, filename, text, title, btn, medium } = opts;
+    const url = tagged(opts.url, medium);
 
     // 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
     if (ready) {

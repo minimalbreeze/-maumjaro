@@ -56,8 +56,21 @@ export default {
       });
     }
 
-    const systemPrompt = typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 2000) : '';
-    const userPrompt = typeof body.userPrompt === 'string' ? body.userPrompt.slice(0, 1500) : '';
+    const systemPrompt = typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 4000) : '';
+    // 심각한 고민은 길게 적힌다. 1500자에서 끊으면 질문 끝(정작 중요한 부분)이 잘린 채
+    // 답이 나가므로 늘렸다. 상한 자체는 남겨둔다 — 없으면 과금이 요청 하나로 터진다.
+    const userPrompt = typeof body.userPrompt === 'string' ? body.userPrompt.slice(0, 4000) : '';
+
+    // 길이를 호출하는 쪽이 정하게 한다. 스레드 문구는 짧아야 하고(320), AI 맘운은
+    // 길게 답해야 한다(1400). 한 값으로 묶어두면 둘 중 하나가 반드시 망가진다.
+    // 다만 값을 그대로 믿지는 않는다 — 주소를 알아낸 사람이 100000을 보내면 과금이 터진다.
+    function clamp(v, lo, hi, dflt) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) return dflt;
+      return Math.min(hi, Math.max(lo, Math.round(n)));
+    }
+    const maxTokens = clamp(body.maxTokens, 64, 1400, 320);
+    const temperature = clamp(body.temperature * 100, 0, 150, 80) / 100;
     if (!userPrompt) {
       return new Response(JSON.stringify({ error: 'userPrompt required' }), {
         status: 400,
@@ -79,10 +92,10 @@ export default {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
-          // 답변이 길어지면 처방/주사 흐름을 가려버리므로 짧게 끊는다.
           // 실제 길이 조절은 시스템 프롬프트에서 하고, 여기는 안전장치 겸 비용 상한이다.
-          max_tokens: 320,
-          temperature: 0.8,
+          // 호출한 쪽이 보낸 값은 위에서 이미 범위 안으로 깎았다.
+          max_tokens: maxTokens,
+          temperature,
         }),
       });
     } catch (e) {
