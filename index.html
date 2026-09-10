@@ -430,6 +430,7 @@
   <div id="report-overlay" class="report-overlay" hidden>
     <div class="report-sheet">
       <div id="report-body"></div>
+      <button class="action-btn" id="report-share-btn" type="button" style="width:100%;">📸 이미지로 공유</button>
       <button class="reward-close" id="report-close" type="button">닫기</button>
     </div>
   </div>
@@ -562,6 +563,9 @@
       <button id="rx-cta-slip" class="rx-cta-btn" type="button">📝 처방전 발급하기</button>
       <button id="rx-cta-friend" class="rx-cta-btn" type="button">💌 친구에게 처방하기</button>
       <button id="rx-cta-another" class="rx-cta-btn" type="button">🎰 오늘의 다른 처방 보기</button>
+      <!-- 주사를 맞은 직후가 이 앱에서 가장 기분이 좋은 순간이다. 공유 버튼이 여기
+           없으면 사람들은 그 순간을 그냥 닫아버린다(글 공유 버튼은 JS가 이 밑에 붙인다). -->
+      <button id="rx-result-share-btn" class="rx-cta-btn" type="button">📸 이미지로 공유</button>
     </div>
   </div>
 </div>
@@ -599,6 +603,8 @@
     <input type="file" id="rx-slip-photo-input" accept="image/*" hidden />
     <p class="rx-slip-hint" id="rx-slip-hint">이미지로 저장하거나 화면을 캡처해서 공유해보세요</p>
     <button id="rx-slip-save" class="action-btn rx-slip-save-btn" type="button">🖼️ 이미지로 저장</button>
+    <!-- 저장은 공유가 아니다. 저장한 뒤 앨범을 열어 다시 올리는 사람은 거의 없다. -->
+    <button id="rx-slip-share-btn" class="rx-slip-photo-btn" type="button">📸 이미지로 공유</button>
     <button id="rx-slip-close" class="settings-close" type="button">닫기</button>
   </div>
 </div>
@@ -714,6 +720,9 @@
       </div>
     </div>
     <button id="maumun-reveal-make-btn" class="action-btn rx-custom-submit-btn" type="button" hidden>🔮 나도 오늘의 맘운 보기</button>
+    <!-- 받은 맘운을 열어본 사람에게는 "나도 해보기"가, 내 맘운을 연 사람에게는
+         공유가 다음 행동이다. 둘 다 여기서 갈라진다. -->
+    <button id="maumun-reveal-share-btn" class="rx-slip-photo-btn" type="button" hidden>📸 이미지로 공유</button>
     <button id="maumun-reveal-close" class="settings-close" type="button">닫기</button>
   </div>
 </div>

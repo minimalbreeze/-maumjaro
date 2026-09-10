@@ -77,6 +77,58 @@
     maumunRevealMakeBtn.hidden = !showMakeOwnBtn;
     if (showMakeOwnBtn) maumunRevealMakeBtn.textContent = makeOwnLabel || '🔮 나도 오늘의 맘운 보기';
     maumunRevealOverlay.classList.add('show');
+    // 친구가 보낸 맘운을 열어본 화면(showMakeOwnBtn)에서는 공유를 권하지 않는다.
+    // 남의 결과를 내 것처럼 올리게 되고, 그 사람에게 필요한 다음 행동은 "나도 해보기"다.
+    wireMaumunRevealShare({ emoji, diagnosis, interpretation, prescription, dosage }, !showMakeOwnBtn);
+  }
+
+  // ---------- 맘운 처방전 공유 ----------
+  // 오버레이는 열 때마다 다시 그려지지 않으므로 리스너는 한 번만 걸고 내용만 갈아 끼운다.
+  let maumunShareEntry = null;
+  let maumunThreadsBtn = null;
+  function maumunRevealSpec(e) {
+    return {
+      badge: '맘운자로 · 오늘의 맘운',
+      emoji: e.emoji || '💞',
+      headline: e.diagnosis,
+      subhead: e.dosage || '',
+      lead: e.interpretation,
+      rows: [{ k: '오늘의 처방', v: e.prescription }],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+  function wireMaumunRevealShare(entry, shareable) {
+    maumunShareEntry = entry;
+    const btn = document.getElementById('maumun-reveal-share-btn');
+    if (!btn) return;
+    btn.hidden = !shareable;
+    if (maumunThreadsBtn) maumunThreadsBtn.hidden = !shareable;
+    if (!shareable) return;
+
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(maumunRevealSpec(entry));
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        const e = maumunShareEntry;
+        if (!e) return;
+        const text = `오늘 내 맘운은 "${e.diagnosis}"`;
+        const S = window.MaumjaroShare;
+        if (S) {
+          S.share({
+            spec: maumunRevealSpec(e), filename: '맘운자로_오늘의맘운.png',
+            text, url: 'https://maumjaro.minimalbreeze.com/',
+            title: '오늘의 맘운', btn, medium: 'maumun',
+          });
+          return;
+        }
+        Rx.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/', 'maumun');
+      });
+    }
+    if (window.MaumjaroThreads) {
+      const fact = `${entry.diagnosis} · ${entry.prescription}`;
+      if (maumunThreadsBtn) maumunThreadsBtn.setFact(fact);
+      else maumunThreadsBtn = window.MaumjaroThreads.mountButton({ after: btn, kind: 'maumun', fact });
+    }
   }
   maumunRevealClose.addEventListener('click', closeMaumunReveal);
   maumunRevealMakeBtn.addEventListener('click', () => {

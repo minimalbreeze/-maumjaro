@@ -776,7 +776,65 @@
       <p class="report-quote">“${요약}”</p>
     `;
     ov.hidden = false;
+    wireReportShare(r);
     track('monthly_report_viewed', { total: r.total });
+  }
+
+  // ---------- 마음 리포트 공유 ----------
+  // 한 달치 통계는 "내가 이만큼 챙겼다"는 자랑거리라 공유가 잘 붙는 종류다.
+  // 오버레이라 리스너는 한 번만 걸고 내용만 갈아 끼운다.
+  let reportShareR = null;
+  let reportThreadsBtn = null;
+  function reportShareSpec(r) {
+    return {
+      badge: '맘운자로 · 마음 리포트',
+      emoji: r.top && r.top[0] ? r.top[0].emoji : '📊',
+      headline: `${r.month}월의 나`,
+      subhead: r.top && r.top[0] ? `가장 많이 고른 마음 · ${r.top[0].label}` : '',
+      rows: [
+        { k: '이번 달 처방', v: `${r.total}번` },
+        { k: '최장 연속', v: `${r.longestStreak}일` },
+        { k: '새 마음약', v: `${r.newMedicines}종` },
+      ],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+  function wireReportShare(r) {
+    reportShareR = r;
+    const btn = document.getElementById('report-share-btn');
+    if (!btn) return;
+    // 기록이 없으면 자랑할 것도 없다. 빈 리포트를 공유하게 두지 않는다.
+    const shareable = r.total > 0;
+    btn.hidden = !shareable;
+    if (reportThreadsBtn) reportThreadsBtn.hidden = !shareable;
+    if (!shareable) return;
+
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(reportShareSpec(r));
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        const cur = reportShareR;
+        if (!cur) return;
+        const text = `${cur.month}월엔 마음에 ${cur.total}번 주사를 놨어요 💉`;
+        const url = 'https://maumjaro.minimalbreeze.com/';
+        track('monthly_report_shared', { total: cur.total });
+        const S = window.MaumjaroShare;
+        if (S) {
+          S.share({
+            spec: reportShareSpec(cur), filename: `맘운자로_${cur.month}월리포트.png`,
+            text, url, title: '내 마음 리포트', btn, medium: 'report',
+          });
+          return;
+        }
+        const R = window.MaumjaroRx;
+        if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'report');
+      });
+    }
+    if (window.MaumjaroThreads) {
+      const fact = `${r.month}월에 마음 처방 ${r.total}번, 최장 연속 ${r.longestStreak}일`;
+      if (reportThreadsBtn) reportThreadsBtn.setFact(fact);
+      else reportThreadsBtn = window.MaumjaroThreads.mountButton({ after: btn, kind: 'report', fact });
+    }
   }
 
   // ---------- 보상 개봉 ----------
@@ -790,6 +848,7 @@
   const rewardSkip = document.getElementById('reward-skip');
   const rewardClose = document.getElementById('reward-close');
   const rewardShareBtn = document.getElementById('reward-share-btn');
+  let rewardThreadsBtn = null;
 
   let taps = 0;
   let opening = false;
@@ -909,6 +968,16 @@
     if (shareable) rewardShareBtn.textContent = r.rarity.shareLabel || '📤 자랑하기';
     const copyBtn = document.getElementById('reward-copy-btn');
     if (copyBtn) copyBtn.hidden = !shareable; // 메인 CTA 하나 + 보조 하나만 둔다
+    // 스레드용 글 공유. 자랑할 만한 등급일 때만 함께 보인다.
+    if (window.MaumjaroThreads) {
+      const fact = `${r.rarity.label} 등급 마음약 "${r.medicine.name}"을 얻었다`;
+      if (rewardThreadsBtn) { rewardThreadsBtn.setFact(fact); rewardThreadsBtn.hidden = !shareable; }
+      else if (shareable) {
+        rewardThreadsBtn = window.MaumjaroThreads.mountButton({
+          after: rewardShareBtn, kind: 'reward', fact,
+        });
+      }
+    }
 
     sound('playHealingChime');
     renderPanel();
