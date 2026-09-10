@@ -1,8 +1,11 @@
 User-agent: *
 Allow: /
+# 스포츠 뉴스 자동화 도구 소스. 콘텐츠가 아니므로 색인 대상이 아니다.
+Disallow: /sports-news/
 
 # 네이버 검색로봇
 User-agent: Yeti
 Allow: /
+Disallow: /sports-news/
 
 Sitemap: https://maumjaro.minimalbreeze.com/sitemap.xml
