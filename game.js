@@ -776,7 +776,65 @@
       <p class="report-quote">“${요약}”</p>
     `;
     ov.hidden = false;
+    wireReportShare(r);
     track('monthly_report_viewed', { total: r.total });
+  }
+
+  // ---------- 마음 리포트 공유 ----------
+  // 한 달치 통계는 "내가 이만큼 챙겼다"는 자랑거리라 공유가 잘 붙는 종류다.
+  // 오버레이라 리스너는 한 번만 걸고 내용만 갈아 끼운다.
+  let reportShareR = null;
+  let reportThreadsBtn = null;
+  function reportShareSpec(r) {
+    return {
+      badge: '맘운자로 · 마음 리포트',
+      emoji: r.top && r.top[0] ? r.top[0].emoji : '📊',
+      headline: `${r.month}월의 나`,
+      subhead: r.top && r.top[0] ? `가장 많이 고른 마음 · ${r.top[0].label}` : '',
+      rows: [
+        { k: '이번 달 처방', v: `${r.total}번` },
+        { k: '최장 연속', v: `${r.longestStreak}일` },
+        { k: '새 마음약', v: `${r.newMedicines}종` },
+      ],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+  function wireReportShare(r) {
+    reportShareR = r;
+    const btn = document.getElementById('report-share-btn');
+    if (!btn) return;
+    // 기록이 없으면 자랑할 것도 없다. 빈 리포트를 공유하게 두지 않는다.
+    const shareable = r.total > 0;
+    btn.hidden = !shareable;
+    if (reportThreadsBtn) reportThreadsBtn.hidden = !shareable;
+    if (!shareable) return;
+
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(reportShareSpec(r));
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        const cur = reportShareR;
+        if (!cur) return;
+        const text = `${cur.month}월엔 마음에 ${cur.total}번 주사를 놨어요 💉`;
+        const url = 'https://maumjaro.minimalbreeze.com/';
+        track('monthly_report_shared', { total: cur.total });
+        const S = window.MaumjaroShare;
+        if (S) {
+          S.share({
+            spec: reportShareSpec(cur), filename: `맘운자로_${cur.month}월리포트.png`,
+            text, url, title: '내 마음 리포트', btn, medium: 'report',
+          });
+          return;
+        }
+        const R = window.MaumjaroRx;
+        if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'report');
+      });
+    }
+    if (window.MaumjaroThreads) {
+      const fact = `${r.month}월에 마음 처방 ${r.total}번, 최장 연속 ${r.longestStreak}일`;
+      if (reportThreadsBtn) reportThreadsBtn.setFact(fact);
+      else reportThreadsBtn = window.MaumjaroThreads.mountButton({ after: btn, kind: 'report', fact });
+    }
   }
 
   // ---------- 보상 개봉 ----------
@@ -790,6 +848,7 @@
   const rewardSkip = document.getElementById('reward-skip');
   const rewardClose = document.getElementById('reward-close');
   const rewardShareBtn = document.getElementById('reward-share-btn');
+  let rewardThreadsBtn = null;
 
   let taps = 0;
   let opening = false;
@@ -909,6 +968,16 @@
     if (shareable) rewardShareBtn.textContent = r.rarity.shareLabel || '📤 자랑하기';
     const copyBtn = document.getElementById('reward-copy-btn');
     if (copyBtn) copyBtn.hidden = !shareable; // 메인 CTA 하나 + 보조 하나만 둔다
+    // 스레드용 글 공유. 자랑할 만한 등급일 때만 함께 보인다.
+    if (window.MaumjaroThreads) {
+      const fact = `${r.rarity.label} 등급 마음약 "${r.medicine.name}"을 얻었다`;
+      if (rewardThreadsBtn) { rewardThreadsBtn.setFact(fact); rewardThreadsBtn.hidden = !shareable; }
+      else if (shareable) {
+        rewardThreadsBtn = window.MaumjaroThreads.mountButton({
+          after: rewardShareBtn, kind: 'reward', fact,
+        });
+      }
+    }
 
     sound('playHealingChime');
     renderPanel();
@@ -1024,10 +1093,74 @@
   const pharmacyOverlay = document.getElementById('pharmacy-overlay');
   let pharmacyFilter = 'all';
 
+  // ---------- 마음약국 자랑하기 (share-card.js 재사용) ----------
+  // 컬렉션은 "모은 것"이라 보여주고 싶은 결과물이다. 공유 카드에 주소가 찍히므로
+  // 자랑이 그대로 홍보가 된다. 카드 생성기는 mbti.js·lucky.js가 쓰는 것을 그대로 쓴다.
+  function pharmacyShareSpec() {
+    const list = getCollection();
+    const owned = list.filter((m) => m.owned);
+    const pct = list.length ? Math.round((owned.length / list.length) * 100) : 0;
+    // RARE 이상만 따로 센다. 'NORMAL 30종'보다 'RARE 이상 4종'이 자랑거리다.
+    const rareUp = owned.filter((m) => rarityOrder(m.rarity) >= rarityOrder('rare')).length;
+    const p = previewToday();
+    return {
+      badge: '맘운자로 · 내 마음약국',
+      emoji: '💊',
+      headline: `마음약 ${owned.length}종`,
+      subhead: `Lv.${p.level} ${p.levelTitle}`,
+      lead: '마음에 주사를 놓을 때마다 마음약이 하나씩 쌓여요',
+      rows: [
+        { k: '수집률', v: `${owned.length} / ${list.length} · ${pct}%` },
+        { k: 'RARE 이상', v: `${rareUp}종` },
+        { k: '연속 출석', v: `${p.streak}일` },
+        { k: '누적 처방', v: `${p.totalCheckIns}번` },
+      ],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+
+  function sharePharmacy(btn) {
+    const spec = pharmacyShareSpec();
+    const text = `내 마음약국에 마음약 ${spec.rows[0].v.split(' /')[0]}종 모았어요 💊\n너도 한 번 모아볼래?`;
+    const url = 'https://maumjaro.minimalbreeze.com/';
+    const S = window.MaumjaroShare;
+    track('collection_shared', {});
+    if (S) {
+      S.share({ spec, filename: '맘운자로_내마음약국.png', text, url, title: '내 마음약국', btn, medium: 'pharmacy' });
+      return;
+    }
+    // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
+    const R = window.MaumjaroRx;
+    if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'pharmacy');
+  }
+
+  // 스레드용 글 공유 버튼. 약국은 오버레이라 열 때마다 다시 그리지 않으므로
+  // 버튼은 한 번만 붙이고, 열 때마다 재료(모은 개수)만 갈아 끼운다.
+  let pharmacyThreadsBtn = null;
+  function pharmacyThreadsFact() {
+    const spec = pharmacyShareSpec();
+    const rareUp = (spec.rows.find((r) => r.k === 'RARE 이상') || {}).v || '';
+    return `${spec.headline} 수집 (RARE 이상 ${rareUp}), ${spec.subhead}`;
+  }
+
   function openPharmacy() {
     if (!pharmacyOverlay) return;
     pharmacyOverlay.hidden = false;
     renderPharmacy();
+    // 이미지는 굽는 데 시간이 걸린다. 약국을 여는 순간 미리 시작해 둔다.
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(pharmacyShareSpec());
+    if (window.MaumjaroThreads) {
+      if (pharmacyThreadsBtn) pharmacyThreadsBtn.setFact(pharmacyThreadsFact());
+      else {
+        const anchorBtn = document.getElementById('pharmacy-share-btn');
+        if (anchorBtn) {
+          pharmacyThreadsBtn = window.MaumjaroThreads.mountButton({
+            after: anchorBtn, kind: 'pharmacy', fact: pharmacyThreadsFact(),
+          });
+          if (pharmacyThreadsBtn) pharmacyThreadsBtn.style.cssText = 'width:100%;margin:0 0 10px;';
+        }
+      }
+    }
     track('collection_viewed', {});
   }
   function renderPharmacy() {
@@ -1076,6 +1209,8 @@
   });
   const pharmacyCloseBtn = document.getElementById('pharmacy-close');
   if (pharmacyCloseBtn) pharmacyCloseBtn.addEventListener('click', () => { pharmacyOverlay.hidden = true; });
+  const pharmacyShareBtn = document.getElementById('pharmacy-share-btn');
+  if (pharmacyShareBtn) pharmacyShareBtn.addEventListener('click', () => sharePharmacy(pharmacyShareBtn));
 
   // ---------- 처방 완료 → 출석 ----------
   // 별도의 출석 버튼은 만들지 않는다. 그날 첫 처방이 끝나는 순간이 곧 출석이다.

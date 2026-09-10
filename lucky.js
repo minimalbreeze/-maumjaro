@@ -269,13 +269,47 @@
     const back = mount.querySelector('#lk-back');
     if (back) back.addEventListener('click', () => { if (onBack) onBack(); });
 
+    // 공유 카드(9:16 이미지). 화면에 있는 번호를 그대로 옮기고, 경고 문구도 같이 싣는다 —
+    // 이미지는 앱 밖으로 혼자 돌아다니므로 "당첨 보장 아님"이 카드 안에 있어야 한다.
+    function luckyShareSpec() {
+      return {
+        badge: '맘운자로 · 행운번호',
+        emoji: '🍀',
+        headline: '이번 주 행운번호',
+        subhead: weekLabel(weekKey),
+        balls: mine.sets.map((s, i) => ({ label: String.fromCharCode(65 + i), nums: s })),
+        note: '재미로 보는 번호예요 · 당첨을 보장하지 않습니다',
+      };
+    }
+
+    // iOS는 버튼을 누른 "직후"에만 공유 시트를 열어준다. 미리 만들어 둔다.
+    if (mine && window.MaumjaroShare) window.MaumjaroShare.prepare(luckyShareSpec());
+
     const share = mount.querySelector('#lk-share');
     if (share && mine) {
       share.addEventListener('click', () => {
         const text = `이번 주 내 행운번호 🍀\n${mine.sets.map((s, i) => `${String.fromCharCode(65 + i)}  ${s.join(', ')}`).join('\n')}\n\n너도 뽑아볼래?`;
-        const R = Rx();
-        if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/');
+        const url = 'https://maumjaro.minimalbreeze.com/';
         track('lucky_shared', { week: weekKey });
+        const S = window.MaumjaroShare;
+        if (S) {
+          S.share({
+            spec: luckyShareSpec(),
+            filename: `맘운자로_행운번호_${weekKey}.png`,
+            text, url, medium: 'lucky', title: '이번 주 행운번호', btn: share,
+          });
+          return;
+        }
+        const R = Rx();
+        if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
+      });
+    }
+
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 번호를 그대로 재료로 넘기면 문구에 숫자가 섞여 길어지므로 몇 세트인지만 넘긴다.
+    if (share && mine && window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        after: share, kind: 'lucky', fact: `이번 주 행운번호 ${mine.sets.length}세트를 받았다`,
       });
     }
 

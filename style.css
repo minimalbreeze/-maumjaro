@@ -4328,3 +4328,132 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   outline: 2px solid var(--accent-a);
   outline-offset: 2px;
 }
+/* ---------- 공유 카드 (share-card.js) ----------
+   9:16(540x960) 세로 이미지. 인스타 스토리·릴스에 그대로 올라가는 비율이다.
+   화면 밖에 두고 html2canvas로만 찍는다 — 사용자에게는 절대 보이지 않는다.
+   색은 브랜드 기본값인 딥틸 배경 + 코랄~옐로 강조를 쓴다(앱 아이콘·OG 카드와 같은 조합).
+   처방전 공유 카드(.rx-story-capture)의 보라~핑크는 "긴급 처방" 톤이라 여기엔 쓰지 않는다. */
+.mj-share-card {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 540px;
+  height: 960px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 56px 44px 48px;
+  background: linear-gradient(160deg, #1b544a, #31745f);
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: #fffcf6;
+}
+.mj-share-badge {
+  align-self: flex-start;
+  padding: 11px 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff9166, #ffc66b);
+  color: #1b544a;
+  font-size: 21px;
+  font-weight: 800;
+}
+.mj-share-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.mj-share-emoji {
+  font-size: 92px;
+  line-height: 1;
+  margin-bottom: 18px;
+}
+.mj-share-headline {
+  font-size: 62px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+.mj-share-subhead {
+  margin-top: 10px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #a8dbc8;
+}
+.mj-share-lead {
+  margin: 16px 0 0;
+  font-size: 22px;
+  line-height: 1.5;
+  color: rgba(255, 252, 246, 0.86);
+}
+.mj-share-panel {
+  width: 100%;
+  margin-top: 30px;
+  padding: 26px 24px;
+  border-radius: 22px;
+  background: #fffdf9;
+  color: #244a42;
+  text-align: left;
+}
+.mj-share-row {
+  display: flex;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid #e8efe9;
+}
+.mj-share-row:last-child { border-bottom: 0; }
+.mj-share-k {
+  flex: 0 0 auto;
+  font-size: 19px;
+  font-weight: 800;
+  color: #2f6f5e;
+}
+.mj-share-v {
+  flex: 1;
+  font-size: 19px;
+  line-height: 1.45;
+  text-align: right;
+}
+/* 행운번호: 숫자는 줄글보다 공으로 보여줘야 한눈에 읽힌다 */
+.mj-share-ballrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 0;
+}
+.mj-share-ballno {
+  flex: 0 0 auto;
+  width: 30px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #7d9a90;
+}
+.mj-share-ball {
+  flex: 1;
+  height: 52px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff9166, #ffc66b);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mj-share-foot {
+  text-align: center;
+}
+.mj-share-url {
+  font-size: 23px;
+  font-weight: 800;
+  color: rgba(255, 252, 246, 0.92);
+}
+.mj-share-note {
+  margin-top: 9px;
+  font-size: 16px;
+  color: rgba(255, 252, 246, 0.6);
+}
+/* 헤드라인 길이에 따라 크기를 줄인다 — 'ENFP'(4자)와 '이번 주 행운번호'(9자)를
+   같은 크기로 두면 긴 쪽이 줄바꿈돼 마지막 글자만 다음 줄로 떨어진다(실측 확인). */
+.mj-share-headline.is-mid { font-size: 44px; }
+.mj-share-headline.is-long { font-size: 34px; }
