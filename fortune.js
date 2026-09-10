@@ -1447,8 +1447,16 @@
     const share = document.getElementById('match-share-btn');
     if (share) {
       share.addEventListener('click', () => {
-        Rx.shareOrCopy(share.dataset.txt, 'https://maumjaro.minimalbreeze.com/');
+        Rx.shareOrCopy(share.dataset.txt, 'https://maumjaro.minimalbreeze.com/', 'match');
       });
+      // 위 "궁합 결과 보내기"는 상대에게 1:1로 보내는 버튼이라, 여러 사람이 보는
+      // 스레드에 올리는 글 공유는 따로 둔다(threads-share.js).
+      if (window.MaumjaroThreads) {
+        window.MaumjaroThreads.mountButton({
+          after: share, kind: 'match',
+          fact: String(share.dataset.txt || '').split('\n')[0],
+        });
+      }
     }
   }
 

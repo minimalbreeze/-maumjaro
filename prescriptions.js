@@ -1661,7 +1661,16 @@
     `;
 
     document.getElementById('rx-custom-share-back').addEventListener('click', renderRxGrid);
-    document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url));
+    document.getElementById('rx-custom-share-send-btn').addEventListener('click', () => shareOrCopy(shareText, url, 'custom'));
+    // 위 세 버튼은 전부 "내가 만든 처방전을 특정한 사람에게 보내는" 경로다.
+    // 스레드처럼 여러 사람이 보는 곳에 올리는 글 공유는 성격이 달라 따로 둔다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        after: document.getElementById('rx-custom-share-copy-btn'),
+        kind: 'custom',
+        fact: '직접 만든 처방전',
+      });
+    }
     document.getElementById('rx-custom-share-story-btn').addEventListener('click', (e) => {
       saveCustomStoryImage(payload, e.currentTarget);
     });
