@@ -58,7 +58,7 @@ export async function wpFetch(pathOrUrl, { method = 'GET', body, query, timeoutM
 
       if (!res.ok) {
         throw new WordPressError(
-          wpErrorMessage(res.status, json),
+          wpErrorMessage(res.status, json, text),
           { status: res.status, code: json?.code, endpoint: url.pathname }
         );
       }
@@ -69,12 +69,42 @@ export async function wpFetch(pathOrUrl, { method = 'GET', body, query, timeoutM
   }, { tries: 3, label: `워드프레스 ${method} ${url.pathname}` });
 }
 
-function wpErrorMessage(status, json) {
+/**
+ * 오류 메시지를 만든다.
+ *
+ * 중요: 워드프레스가 낸 오류인지부터 가린다. 401/403은 방화벽·보안 플러그인·
+ * 호스팅 WAF·회사 프록시도 낸다. 그걸 전부 "계정 권한 문제"라고 안내하면
+ * 사용자가 멀쩡한 계정을 붙잡고 헤매게 된다.
+ *
+ * 워드프레스 REST API는 오류도 JSON({code, message})으로 돌려준다.
+ * JSON이 아니면 워드프레스까지 요청이 닿지도 않았다는 뜻이다.
+ */
+function wpErrorMessage(status, json, rawText = '') {
   const detail = json?.message ? ` — ${json.message}` : '';
-  if (status === 401) return `인증 실패(401). 사용자명 또는 애플리케이션 비밀번호를 확인하세요${detail}`;
+  const fromWordPress = Boolean(json?.code || json?.message);
+
+  if (!fromWordPress) {
+    const hint = describeNonWordPressBody(rawText);
+    return `워드프레스가 아닌 곳에서 ${status} 응답이 왔습니다. 요청이 워드프레스까지 닿지 못했습니다.${hint}
+   확인 순서: ① WORDPRESS_URL이 맞는지 ② 보안 플러그인(Wordfence 등)이 REST API를 막고 있는지 ③ 호스팅 방화벽 ④ 회사·공용 네트워크 차단`;
+  }
+
+  if (status === 401) return `인증 실패(401). 사용자명 또는 애플리케이션 비밀번호를 확인하세요${detail}
+   아이디에 이메일을 넣으셨다면 로그인 아이디(사용자명)로 바꿔보세요.`;
   if (status === 403) return `권한 없음(403). 이 계정에 글 작성 권한이 있는지 확인하세요${detail}`;
   if (status === 404) return `경로를 찾을 수 없음(404). WORDPRESS_URL이 맞는지, REST API가 켜져 있는지 확인하세요${detail}`;
   return `워드프레스 오류(${status})${detail}`;
+}
+
+/** 응답 본문이 무엇인지 한 줄로 알려준다 — 어디서 막혔는지 짐작하는 단서가 된다. */
+function describeNonWordPressBody(rawText) {
+  const t = String(rawText || '').trim();
+  if (!t) return ' (응답 본문 없음)';
+  if (/allowlist|egress|not in allow/i.test(t)) return ' (네트워크 정책이 이 주소를 막았습니다)';
+  if (/cloudflare|attention required/i.test(t)) return ' (Cloudflare가 차단했습니다)';
+  if (/wordfence|blocked by/i.test(t)) return ' (보안 플러그인이 차단했습니다)';
+  if (/^</.test(t)) return ' (HTML 페이지가 왔습니다 — 보통 차단 안내 화면입니다)';
+  return ` (응답: ${t.slice(0, 80)})`;
 }
 
 /** 페이지네이션을 따라가며 전부 가져온다 (카테고리·태그 목록용). */
