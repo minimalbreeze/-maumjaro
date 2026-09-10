@@ -296,7 +296,7 @@
           S.share({
             spec: luckyShareSpec(),
             filename: `맘운자로_행운번호_${weekKey}.png`,
-            text, url, title: '이번 주 행운번호', btn: share,
+            text, url, medium: 'lucky', title: '이번 주 행운번호', btn: share,
           });
           return;
         }

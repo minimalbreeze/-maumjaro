@@ -415,7 +415,10 @@
   let pickedShareText = '';
   let pickedShareUrl = '';
   let pickedPrescription = null;
-  async function shareOrCopy(text, url) {
+  // medium: 어느 화면의 공유인지(rx / fortune / tarot ...). 안 넘기면 'sns'.
+  // 링크에 표를 붙이는 이유는 share-utm.js 주석 참고.
+  async function shareOrCopy(text, rawUrl, medium) {
+    const url = window.MaumjaroUtm ? window.MaumjaroUtm.tag(rawUrl, medium) : rawUrl;
     if (navigator.share) {
       try {
         await navigator.share({ text, url });
@@ -1381,7 +1384,7 @@
     btnEl.textContent = '준비 중...';
     try {
       const blob = await captureStoryBlob();
-      if (!blob) { shareOrCopy(text, SITE_URL); return; }
+      if (!blob) { shareOrCopy(text, SITE_URL, 'rx'); return; }
 
       const filename = `맘운자로_처방_${p.title}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
@@ -1394,7 +1397,7 @@
           await navigator.share({ files: [file], title: '맘운자로 처방' });
           Core.showToast('인스타는 "스토리에 추가"를 골라보세요 📸');
         } catch (e) {
-          if (!e || e.name !== 'AbortError') shareOrCopy(text, SITE_URL);
+          if (!e || e.name !== 'AbortError') shareOrCopy(text, SITE_URL, 'rx');
         }
         return;
       }
@@ -1409,7 +1412,7 @@
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(objUrl), 5000);
       Core.showToast('이미지를 저장했어요 🖼️');
-      shareOrCopy(text, SITE_URL);
+      shareOrCopy(text, SITE_URL, 'rx');
     } finally {
       btnEl.disabled = false;
       btnEl.textContent = label;

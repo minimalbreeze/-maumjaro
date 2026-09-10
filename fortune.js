@@ -754,7 +754,7 @@
     return '★'.repeat(s) + '☆'.repeat(5 - s);
   }
 
-  function mountFortuneShare(spec, filename, text) {
+  function mountFortuneShare(spec, filename, text, medium) {
     if (!fortuneContent) return;
     const btn = document.createElement('button');
     btn.className = 'rx-friend-quick-btn';
@@ -770,11 +770,11 @@
     btn.addEventListener('click', () => {
       const url = 'https://maumjaro.minimalbreeze.com/';
       if (S) {
-        S.share({ spec, filename, text, url, title: '맘운자로', btn });
+        S.share({ spec, filename, text, url, title: '맘운자로', btn, medium: medium || 'fortune' });
         return;
       }
       // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
-      Rx.shareOrCopy(text, url);
+      Rx.shareOrCopy(text, url, medium || 'fortune');
     });
   }
   function renderFortuneDaily(profile) {
@@ -1771,7 +1771,7 @@
         lead: todayEntry.interpretation,
         rows: [{ k: '오늘의 처방', v: todayEntry.prescription }],
         note: '재미로 보는 콘텐츠예요',
-      }, '맘운자로_오늘의맘운.png', `오늘 내 맘운은 "${todayEntry.diagnosis}"`);
+      }, '맘운자로_오늘의맘운.png', `오늘 내 맘운은 "${todayEntry.diagnosis}"`, 'maumun');
       document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => openHistoryCategory('maumun'));
       return;
     }
@@ -2479,7 +2479,8 @@
   function shareTarotBlobNow(blob, text, url) {
     const file = new File([blob], '맘운자로_타로.png', { type: 'image/png' });
     if (!(navigator.canShare && navigator.canShare({ files: [file] }))) return null;
-    return navigator.share({ files: [file], text: `${text}\n${url}`, title: '오늘의 타로' });
+    const tagged = window.MaumjaroUtm ? window.MaumjaroUtm.tag(url, 'tarot') : url;
+    return navigator.share({ files: [file], text: `${text}\n${tagged}`, title: '오늘의 타로' });
   }
 
   // 공유: 3장을 이미지로 만들어 보낸다. html2canvas가 없거나 실패하면 텍스트+링크로 폴백한다.

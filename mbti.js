@@ -793,7 +793,7 @@
             S.share({
               spec: shareSpec(result, blood),
               filename: `맘운자로_MBTI_${result.type}.png`,
-              text, url, title: '내 MBTI 결과', btn: share,
+              text, url, medium: 'mbti', title: '내 MBTI 결과', btn: share,
             });
             return;
           }

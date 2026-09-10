@@ -156,6 +156,11 @@
     return navigator.share({ files: [file], text: `${text}\n${url}`, title });
   }
 
+  // 링크에 유입 표를 붙인다(share-utm.js 주석 참고). 실패해도 원본을 그대로 쓴다.
+  function tagged(url, medium) {
+    return window.MaumjaroUtm ? window.MaumjaroUtm.tag(url, medium) : url;
+  }
+
   function textFallback(text, url) {
     const R = Rx();
     if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
@@ -164,7 +169,8 @@
   /* opts: { spec, filename, text, url, title, btn }
    * spec은 prepare()를 못 했거나 결과가 없을 때 다시 만들기 위한 것이다. */
   async function share(opts) {
-    const { spec, filename, text, url, title, btn } = opts;
+    const { spec, filename, text, title, btn, medium } = opts;
+    const url = tagged(opts.url, medium);
 
     // 준비된 이미지가 있으면 기다리지 않고 곧바로 공유 시트를 연다.
     if (ready) {

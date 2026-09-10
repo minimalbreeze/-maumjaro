@@ -1057,12 +1057,12 @@
     const S = window.MaumjaroShare;
     track('collection_shared', {});
     if (S) {
-      S.share({ spec, filename: '맘운자로_내마음약국.png', text, url, title: '내 마음약국', btn });
+      S.share({ spec, filename: '맘운자로_내마음약국.png', text, url, title: '내 마음약국', btn, medium: 'pharmacy' });
       return;
     }
     // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
     const R = window.MaumjaroRx;
-    if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
+    if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'pharmacy');
   }
 
   function openPharmacy() {
