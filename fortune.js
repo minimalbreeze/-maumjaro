@@ -741,6 +741,42 @@
       </div>`;
   }
 
+
+  // ---------- 운세 화면 공유 카드 (share-card.js 재사용) ----------
+  // 왜 이렇게 붙이는가: 각 화면의 innerHTML 템플릿에 버튼 마크업을 심으면 5곳이
+  // 제각각 어긋나기 쉽다. 그려진 뒤에 여기서 한 가지 모양으로 덧붙인다.
+  //
+  // 카드 생성기는 mbti.js·lucky.js가 쓰는 share-card.js를 그대로 쓴다.
+  // 텍스트+링크를 함께 넘기는 기본 동작을 유지한다 — 스레드·X는 글이 본문이고
+  // 링크가 눌려야 하는 곳이라, 이미지만 보내면 오히려 손해다.
+  function starRow(n) {
+    const s = Math.max(0, Math.min(5, Number(n) || 0));
+    return '★'.repeat(s) + '☆'.repeat(5 - s);
+  }
+
+  function mountFortuneShare(spec, filename, text) {
+    if (!fortuneContent) return;
+    const btn = document.createElement('button');
+    btn.className = 'rx-friend-quick-btn';
+    btn.type = 'button';
+    btn.style.cssText = 'width:100%;margin-top:10px;';
+    btn.textContent = '📸 이미지로 공유';
+    fortuneContent.appendChild(btn);
+
+    const S = window.MaumjaroShare;
+    // 이미지는 굽는 데 시간이 걸린다. 화면이 뜨는 순간 미리 시작해 두면
+    // 버튼을 눌렀을 때 기다림 없이 공유 시트가 열린다.
+    if (S) S.prepare(spec);
+    btn.addEventListener('click', () => {
+      const url = 'https://maumjaro.minimalbreeze.com/';
+      if (S) {
+        S.share({ spec, filename, text, url, title: '맘운자로', btn });
+        return;
+      }
+      // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
+      Rx.shareOrCopy(text, url);
+    });
+  }
   function renderFortuneDaily(profile) {
     // 캡슐 색을 정하려면 등급이 먼저 필요하므로, 결과 계산을 연출보다 앞으로 옮겼다.
     // (계산은 사주와 날짜만 쓰는 결정론이라 언제 계산하든 결과는 같다.)
@@ -792,6 +828,20 @@
       fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
       });
+      mountFortuneShare({
+        badge: '맘운자로 · 오늘의 운세',
+        emoji: seed.emoji,
+        headline: seed.title,
+        subhead: seed.diagnosis,
+        lead: oneLine,
+        rows: [
+          { k: '마음운', v: starRow(mindItem.stars) },
+          { k: '인간관계운', v: starRow(socialItem.stars) },
+          { k: '재물운', v: starRow(wealthItem.stars) },
+          { k: '연애운', v: starRow(loveItem.stars) },
+        ],
+        note: `행운의 색 ${luckyColor} · 행운의 숫자 ${luckyNumber}`,
+      }, '맘운자로_오늘의운세.png', `오늘 내 운세는 "${seed.title}"\n${oneLine}`);
     });
   }
 
@@ -835,6 +885,20 @@
       fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
       });
+      mountFortuneShare({
+        badge: '맘운자로 · 이번 주 운세',
+        emoji: '📅',
+        headline: '이번 주 흐름',
+        subhead: `행운의 날 · ${WEEKDAY_LABELS[luckyDayIdx]}`,
+        lead: mindItem.quip,
+        rows: [
+          { k: '마음운', v: starRow(mindItem.stars) },
+          { k: '재물운', v: starRow(wealthItem.stars) },
+          { k: '연애운', v: starRow(loveItem.stars) },
+          { k: '일·직장운', v: starRow(workItem.stars) },
+        ],
+        note: '재미로 보는 콘텐츠예요',
+      }, '맘운자로_이번주운세.png', `이번 주 행운의 날은 ${WEEKDAY_LABELS[luckyDayIdx]}`);
     });
   }
 
@@ -894,6 +958,20 @@
       fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
       });
+      mountFortuneShare({
+        badge: '맘운자로 · 이번 달 운세',
+        emoji: overall.emoji,
+        headline: overall.title,
+        subhead: overall.diagnosis,
+        lead: overall.advice,
+        rows: [
+          { k: '재물운', v: starRow(wealthItem.stars) },
+          { k: '연애운', v: starRow(loveItem.stars) },
+          { k: '일·직장운', v: starRow(workItem.stars) },
+          { k: '인간관계운', v: starRow(socialItem.stars) },
+        ],
+        note: `이번 달 키워드 · ${keyword}`,
+      }, '맘운자로_이번달운세.png', `이번 달 내 운세: ${overall.title}`);
     });
   }
 
@@ -1000,6 +1078,20 @@
       fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
       });
+      mountFortuneShare({
+        badge: `맘운자로 · ${mode === 'zodiac' ? '별자리 운세' : '띠별 운세'}`,
+        emoji: sign.emoji,
+        headline: sign.name,
+        subhead: day.title,
+        lead: day.advice,
+        rows: [
+          { k: '마음운', v: starRow(mindItem.stars) },
+          { k: '인간관계운', v: starRow(socialItem.stars) },
+          { k: '재물운', v: starRow(wealthItem.stars) },
+          { k: '행운의 시간', v: luckyTime },
+        ],
+        note: `행운의 장소 ${luckyPlace} · ${luckyAct}`,
+      }, `맘운자로_${sign.name}운세.png`, `오늘 ${sign.name} 운세: ${day.title}`);
       fortuneContent.querySelectorAll('.sign-chip').forEach((btn) => {
         btn.addEventListener('click', () => {
           sfx('capsuleTap');
@@ -1417,6 +1509,19 @@
         <button class="action-btn" id="fortune-goto-maumun-btn" type="button" style="width:100%;margin-top:6px;">그래서 오늘은? 💞</button>
       `;
       document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      mountFortuneShare({
+        badge: '맘운자로 · 토정비결',
+        emoji: overall.emoji,
+        headline: overall.title,
+        subhead: overall.summary,
+        lead: overall.detail,
+        rows: [
+          { k: '상반기', v: firstHalf.title },
+          { k: '하반기', v: secondHalf.title },
+          { k: '올해의 키워드', v: keyword },
+        ],
+        note: '재미로 보는 콘텐츠예요',
+      }, '맘운자로_토정비결.png', `올해 내 토정비결: ${overall.title}\n${overall.summary}`);
       document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
       fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
         btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
@@ -1656,6 +1761,17 @@
         openMaumunReveal(maumunEntryToReveal(todayEntry));
       });
       document.getElementById('fortune-maumun-share-btn').addEventListener('click', () => shareMaumunEntry(todayEntry));
+      // 오늘의 맘운은 이 앱의 핵심 결과물이라 이미지 공유를 함께 둔다.
+      // 위 "친구에게 보내기"는 링크로 상대를 앱에 데려오는 경로라 역할이 다르다.
+      mountFortuneShare({
+        badge: '맘운자로 · 오늘의 맘운',
+        emoji: todayEntry.emotionEmoji || '🌞',
+        headline: todayEntry.diagnosis,
+        subhead: todayEntry.dosage || '',
+        lead: todayEntry.interpretation,
+        rows: [{ k: '오늘의 처방', v: todayEntry.prescription }],
+        note: '재미로 보는 콘텐츠예요',
+      }, '맘운자로_오늘의맘운.png', `오늘 내 맘운은 "${todayEntry.diagnosis}"`);
       document.getElementById('fortune-maumun-history-btn').addEventListener('click', () => openHistoryCategory('maumun'));
       return;
     }

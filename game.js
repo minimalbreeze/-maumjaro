@@ -1024,10 +1024,53 @@
   const pharmacyOverlay = document.getElementById('pharmacy-overlay');
   let pharmacyFilter = 'all';
 
+  // ---------- 마음약국 자랑하기 (share-card.js 재사용) ----------
+  // 컬렉션은 "모은 것"이라 보여주고 싶은 결과물이다. 공유 카드에 주소가 찍히므로
+  // 자랑이 그대로 홍보가 된다. 카드 생성기는 mbti.js·lucky.js가 쓰는 것을 그대로 쓴다.
+  function pharmacyShareSpec() {
+    const list = getCollection();
+    const owned = list.filter((m) => m.owned);
+    const pct = list.length ? Math.round((owned.length / list.length) * 100) : 0;
+    // RARE 이상만 따로 센다. 'NORMAL 30종'보다 'RARE 이상 4종'이 자랑거리다.
+    const rareUp = owned.filter((m) => rarityOrder(m.rarity) >= rarityOrder('rare')).length;
+    const p = previewToday();
+    return {
+      badge: '맘운자로 · 내 마음약국',
+      emoji: '💊',
+      headline: `마음약 ${owned.length}종`,
+      subhead: `Lv.${p.level} ${p.levelTitle}`,
+      lead: '마음에 주사를 놓을 때마다 마음약이 하나씩 쌓여요',
+      rows: [
+        { k: '수집률', v: `${owned.length} / ${list.length} · ${pct}%` },
+        { k: 'RARE 이상', v: `${rareUp}종` },
+        { k: '연속 출석', v: `${p.streak}일` },
+        { k: '누적 처방', v: `${p.totalCheckIns}번` },
+      ],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+
+  function sharePharmacy(btn) {
+    const spec = pharmacyShareSpec();
+    const text = `내 마음약국에 마음약 ${spec.rows[0].v.split(' /')[0]}종 모았어요 💊\n너도 한 번 모아볼래?`;
+    const url = 'https://maumjaro.minimalbreeze.com/';
+    const S = window.MaumjaroShare;
+    track('collection_shared', {});
+    if (S) {
+      S.share({ spec, filename: '맘운자로_내마음약국.png', text, url, title: '내 마음약국', btn });
+      return;
+    }
+    // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
+    const R = window.MaumjaroRx;
+    if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
+  }
+
   function openPharmacy() {
     if (!pharmacyOverlay) return;
     pharmacyOverlay.hidden = false;
     renderPharmacy();
+    // 이미지는 굽는 데 시간이 걸린다. 약국을 여는 순간 미리 시작해 둔다.
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(pharmacyShareSpec());
     track('collection_viewed', {});
   }
   function renderPharmacy() {
@@ -1076,6 +1119,8 @@
   });
   const pharmacyCloseBtn = document.getElementById('pharmacy-close');
   if (pharmacyCloseBtn) pharmacyCloseBtn.addEventListener('click', () => { pharmacyOverlay.hidden = true; });
+  const pharmacyShareBtn = document.getElementById('pharmacy-share-btn');
+  if (pharmacyShareBtn) pharmacyShareBtn.addEventListener('click', () => sharePharmacy(pharmacyShareBtn));
 
   // ---------- 처방 완료 → 출석 ----------
   // 별도의 출석 버튼은 만들지 않는다. 그날 첫 처방이 끝나는 순간이 곧 출석이다.
