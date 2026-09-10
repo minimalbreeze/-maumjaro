@@ -1388,14 +1388,18 @@
 
       const filename = `맘운자로_처방_${p.title}.png`;
       const file = new File([blob], filename, { type: 'image/png' });
-      // 이미지 "하나만" 넘긴다. 텍스트를 같이 실으면 iOS 공유 시트가 여러 항목으로
-      // 취급해서, 인스타그램이 스토리 대신 일반 공유로만 받는 경우가 생긴다.
-      // 주소는 카드 하단에 찍혀 있으므로 링크가 빠져도 어디서 왔는지 알 수 있다.
-      // 링크가 눌려야 하는 곳(카톡·X)은 "💌 친구에게 보내기"가 담당한다.
+      // 이미지와 함께 본문·링크를 싣는다.
+      //
+      // 한때 이미지만 넘겼다. 텍스트를 같이 실으면 iOS가 여러 항목으로 취급해
+      // 인스타가 스토리 대신 일반 공유로만 받는다는 추정 때문이었는데, 확인되지 않은
+      // 추정이었고 대가가 확실했다 — 스레드·X·카톡은 링크가 없으면 눌러서 들어올
+      // 방법이 사라진다. 공유로 사람을 데려오는 게 목적인 앱에서 이건 치명적이다.
+      // 인스타는 어차피 이미지만 가져가고, 그쪽은 카드 하단 주소가 대신한다.
+      // 즉 링크를 넣어서 잃는 것은 불확실하고, 빼서 잃는 것은 확실하다.
+      const shareUrl = window.MaumjaroUtm ? window.MaumjaroUtm.tag(SITE_URL, 'rx') : SITE_URL;
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], title: '맘운자로 처방' });
-          Core.showToast('인스타는 "스토리에 추가"를 골라보세요 📸');
+          await navigator.share({ files: [file], text: `${text}\n${shareUrl}`, title: '맘운자로 처방' });
         } catch (e) {
           if (!e || e.name !== 'AbortError') shareOrCopy(text, SITE_URL, 'rx');
         }
