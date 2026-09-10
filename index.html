@@ -841,6 +841,10 @@
 <!-- 주간 행운번호. fortune.js의 기록 탭 타일에서 window.MaumjaroLucky로 불린다. -->
 <script src="lucky.js"></script>
 <script src="fortune.js"></script>
+<!-- 스레드용 "글로 공유"(이미지 없이 텍스트+링크). 문구를 만들 때 fortune.js가 가진
+     AI 프록시 주소를 빌려 쓰므로 그 뒤에 온다. 버튼은 화면을 그릴 때 붙으므로
+     prescriptions.js·game.js보다 뒤에 있어도 되고, 이 파일이 없으면 버튼만 안 생긴다. -->
+<script src="threads-share.js"></script>
 <script src="game.js"></script>
 <!-- 주사 직후 문구를 AI로 바꿔치기한다. app.js가 쏘는 이벤트만 듣기 때문에
      맨 뒤에 와야 하고, 이 파일이 없거나 실패해도 기본 문구가 그대로 뜬다. -->

@@ -801,6 +801,14 @@
           if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url);
         });
       }
+
+      // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+      if (share && result && window.MaumjaroThreads) {
+        const t = MBTI_TYPES[result.type];
+        window.MaumjaroThreads.mountButton({
+          after: share, kind: 'mbti', fact: `${result.type} · ${t.name}`,
+        });
+      }
     }
 
     function startExam() {

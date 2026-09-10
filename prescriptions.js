@@ -1732,6 +1732,16 @@
 
     const cardBtn = document.getElementById('rx-detail-card-btn');
     cardBtn.addEventListener('click', () => shareRxAsImage(p, cardBtn));
+
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 처방 제목과 진단명이 "오늘 나온 결과 한 줄"이라 그대로 문구 재료로 넘긴다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        anchor: rxCenterContent.querySelector('.rx-detail-card'),
+        kind: 'rx',
+        fact: `${p.title} · ${p.diagnosis}`,
+      });
+    }
   }
 
   // ---------- 랜덤 처방 (슬롯머신) ----------

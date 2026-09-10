@@ -1065,12 +1065,33 @@
     if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'pharmacy');
   }
 
+  // 스레드용 글 공유 버튼. 약국은 오버레이라 열 때마다 다시 그리지 않으므로
+  // 버튼은 한 번만 붙이고, 열 때마다 재료(모은 개수)만 갈아 끼운다.
+  let pharmacyThreadsBtn = null;
+  function pharmacyThreadsFact() {
+    const spec = pharmacyShareSpec();
+    const rareUp = (spec.rows.find((r) => r.k === 'RARE 이상') || {}).v || '';
+    return `${spec.headline} 수집 (RARE 이상 ${rareUp}), ${spec.subhead}`;
+  }
+
   function openPharmacy() {
     if (!pharmacyOverlay) return;
     pharmacyOverlay.hidden = false;
     renderPharmacy();
     // 이미지는 굽는 데 시간이 걸린다. 약국을 여는 순간 미리 시작해 둔다.
     if (window.MaumjaroShare) window.MaumjaroShare.prepare(pharmacyShareSpec());
+    if (window.MaumjaroThreads) {
+      if (pharmacyThreadsBtn) pharmacyThreadsBtn.setFact(pharmacyThreadsFact());
+      else {
+        const anchorBtn = document.getElementById('pharmacy-share-btn');
+        if (anchorBtn) {
+          pharmacyThreadsBtn = window.MaumjaroThreads.mountButton({
+            after: anchorBtn, kind: 'pharmacy', fact: pharmacyThreadsFact(),
+          });
+          if (pharmacyThreadsBtn) pharmacyThreadsBtn.style.cssText = 'width:100%;margin:0 0 10px;';
+        }
+      }
+    }
     track('collection_viewed', {});
   }
   function renderPharmacy() {

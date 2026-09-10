@@ -776,6 +776,14 @@
       // share-card.js가 없으면 예전처럼 텍스트+링크로 나간다.
       Rx.shareOrCopy(text, url, medium || 'fortune');
     });
+
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 위 text가 이미 "오늘 나온 결과 한 줄"이라 그대로 문구 재료로 넘긴다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        anchor: fortuneContent, kind: medium || 'fortune', fact: text,
+      });
+    }
   }
   function renderFortuneDaily(profile) {
     // 캡슐 색을 정하려면 등급이 먼저 필요하므로, 결과 계산을 연출보다 앞으로 옮겼다.
@@ -2982,6 +2990,13 @@
     wireTarotReading(profile, entry, cards, topic, verdict);
     const shareBtn = document.getElementById('tarot-share-btn');
     shareBtn.addEventListener('click', () => shareTarotDraw(entry, cards, shareBtn, topic, verdict));
+    // 스레드는 글이 본문인 플랫폼이라 이미지 없는 글 공유를 따로 둔다(threads-share.js).
+    // 카드 이름 세 장을 다 넘기면 문구가 카드 설명이 돼버리므로, 주제와 종합 결과만 넘긴다.
+    if (window.MaumjaroThreads) {
+      window.MaumjaroThreads.mountButton({
+        after: shareBtn, kind: 'tarot', fact: `${topic.label} 타로 · ${verdict.title}`,
+      });
+    }
     // 사용자가 결과를 읽는 동안 공유 이미지를 미리 만들어 둔다.
     // 그래야 공유 버튼을 눌렀을 때 기다림 없이 바로 공유 시트가 열린다(iOS 제스처 유지).
     startTarotShareImage();
