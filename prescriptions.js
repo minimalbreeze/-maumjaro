@@ -212,6 +212,55 @@
   }
 
   // ---------- 처방 결과 화면 렌더 ----------
+  // ---------- 감정 처방 결과 공유 ----------
+  // 오버레이는 열 때마다 다시 그려지지 않으므로, 리스너는 한 번만 걸고
+  // 무엇을 공유할지(현재 처방)만 바꿔 끼운다. 매번 걸면 클릭 한 번에 여러 번 열린다.
+  let resultShareP = null;
+  let resultThreadsBtn = null;
+  function resultShareSpec(p) {
+    return {
+      badge: '맘운자로 · 오늘의 처방',
+      emoji: p.emoji,
+      headline: p.title,
+      subhead: p.diagnosis,
+      lead: p.symptom,
+      rows: [{ k: '오늘의 부작용', v: p.sideEffect }],
+      note: '재미로 보는 콘텐츠예요',
+    };
+  }
+  function wireResultShare(p) {
+    resultShareP = p;
+    const btn = document.getElementById('rx-result-share-btn');
+    if (!btn) return;
+    // 이미지는 굽는 데 시간이 걸린다. 결과가 뜨는 순간 미리 시작해 둔다(iOS 제스처 유지).
+    if (window.MaumjaroShare) window.MaumjaroShare.prepare(resultShareSpec(p));
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        const cur = resultShareP;
+        if (!cur) return;
+        const text = `오늘 내 처방은 "${cur.title}"\n${cur.diagnosis}`;
+        const S = window.MaumjaroShare;
+        if (S) {
+          S.share({
+            spec: resultShareSpec(cur), filename: '맘운자로_오늘의처방.png',
+            text, url: SITE_URL, title: '오늘의 처방', btn, medium: 'result',
+          });
+          return;
+        }
+        shareOrCopy(text, SITE_URL, 'result');
+      });
+    }
+    if (window.MaumjaroThreads) {
+      if (resultThreadsBtn) resultThreadsBtn.setFact(`${p.title} · ${p.diagnosis}`);
+      else {
+        resultThreadsBtn = window.MaumjaroThreads.mountButton({
+          after: btn, kind: 'result', fact: `${p.title} · ${p.diagnosis}`,
+        });
+      }
+    }
+  }
+
   function showResultScreen(p, ts) {
     const [stat1Label, stat2Label] = STAT_TEMPLATES[p.category] || STAT_TEMPLATES.default;
     const stat1 = statPercent(p.id, 1);
@@ -225,6 +274,10 @@
     rxStat2Label.textContent = stat2Label;
     rxStat2Value.textContent = `${stat2}%`;
     rxResultSideeffect.textContent = `오늘의 부작용: ${p.sideEffect}`;
+
+    // 주사 직후가 이 앱에서 가장 기분이 좋은 순간이다. 그 자리에서 바로 공유할 수
+    // 있어야 한다 — 처방전까지 두 번 더 눌러 들어가야 하면 대부분 그냥 닫는다.
+    wireResultShare(p);
 
     rxResultOverlay.classList.add('show');
     // 바 애니메이션을 위해 한 프레임 뒤에 width를 채운다 (0% -> 실제값 트랜지션)
@@ -311,6 +364,65 @@
     rxSlipNoteInput.textContent = '';
 
     rxSlipOverlay.classList.add('show');
+    wireSlipShare(p);
+  }
+
+  // ---------- 처방전 공유 ----------
+  // 기존 "🖼️ 이미지로 저장"은 파일만 넘긴다(본문·링크 없음). 저장한 뒤 앨범을 열어
+  // 다시 올리는 사람은 거의 없고, 올리더라도 링크가 없어 아무도 앱으로 오지 않는다.
+  // 그래서 "이미지 + 문구 + 링크"를 한 번에 넘기는 공유를 따로 둔다.
+  let slipShareP = null;
+  let slipThreadsBtn = null;
+  async function captureSlipBlob() {
+    if (typeof window.html2canvas !== 'function' && window.MaumjaroLib) {
+      await window.MaumjaroLib.html2canvas();
+    }
+    if (typeof window.html2canvas !== 'function') return null;
+    try {
+      const canvas = await window.html2canvas(rxSlipContent, { backgroundColor: '#fffdf9', scale: 2 });
+      return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function shareSlipAsImage(btn) {
+    const p = slipShareP;
+    if (!p) return;
+    const text = `오늘 내 처방전\n"${p.diagnosis}"`;
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '준비 중...';
+    try {
+      const blob = await captureSlipBlob();
+      const url = window.MaumjaroUtm ? window.MaumjaroUtm.tag(SITE_URL, 'slip') : SITE_URL;
+      if (!blob) { shareOrCopy(text, SITE_URL, 'slip'); return; }
+      const file = new File([blob], '맘운자로_처방전.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: `${text}\n${url}`, title: '맘운자로 처방전' });
+        return;
+      }
+      shareOrCopy(text, SITE_URL, 'slip');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // 사용자가 취소함
+      shareOrCopy(text, SITE_URL, 'slip');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = label;
+    }
+  }
+  function wireSlipShare(p) {
+    slipShareP = p;
+    const btn = document.getElementById('rx-slip-share-btn');
+    if (!btn) return;
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => shareSlipAsImage(btn));
+    }
+    if (window.MaumjaroThreads) {
+      const fact = `${p.diagnosis} · ${p.prescription}`;
+      if (slipThreadsBtn) slipThreadsBtn.setFact(fact);
+      else slipThreadsBtn = window.MaumjaroThreads.mountButton({ after: btn, kind: 'slip', fact });
+    }
   }
   function closeSlipScreen() {
     rxSlipOverlay.classList.remove('show');
