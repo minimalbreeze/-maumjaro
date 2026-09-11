@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "schematic": true,
+  "schematicNote": "공식 좌석도를 복제한 것이 아니라, 등급 배치를 나타낸 개략도입니다. 블록 번호와 정확한 경계는 공식 좌석도 확인 후 보정합니다.",
+  "viewBox": "185 268 630 700",
+  "home": {
+    "x": 500,
+    "y": 700
+  },
+  "field": {
+    "wallRadius": 330,
+    "baseRadius": 150
+  },
+  "note": "angle 0 = 중견수 방향, 90 = 1루측, 180 = 홈 뒤, 270 = 3루측. r 단위는 viewBox 좌표.",
+  "zones": [
+    {
+      "id": "champion",
+      "name": "챔피언석",
+      "a0": 168,
+      "a1": 192,
+      "r0": 115,
+      "r1": 152,
+      "verified": false,
+      "confidence": "corroborated",
+      "why": "홈플레이트 바로 뒤 프리미엄석으로 복수 출처에서 설명됨"
+    },
+    {
+      "id": "k9",
+      "name": "K9석",
+      "a0": 152,
+      "a1": 208,
+      "r0": 152,
+      "r1": 198,
+      "verified": false,
+      "confidence": "corroborated",
+      "why": "홈플레이트 뒤편 구역으로 복수 출처에서 설명됨"
+    },
+    {
+      "id": "table",
+      "name": "테이블석",
+      "a0": 138,
+      "a1": 222,
+      "r0": 198,
+      "r1": 244,
+      "verified": false,
+      "confidence": "unplaced",
+      "why": "등급 존재만 확인. 위치는 공식 좌석도 확인 필요"
+    },
+    {
+      "id": "k8",
+      "name": "K8석 (응원석)",
+      "a0": 225,
+      "a1": 285,
+      "r0": 125,
+      "r1": 252,
+      "verified": false,
+      "confidence": "corroborated",
+      "why": "3루측 응원단상 앞 구역으로 복수 출처에서 설명됨",
+      "mapLabel": "K8석"
+    },
+    {
+      "id": "k5",
+      "name": "K5석",
+      "a0": 75,
+      "a1": 135,
+      "r0": 125,
+      "r1": 252,
+      "verified": false,
+      "confidence": "unplaced",
+      "why": "등급 존재만 확인. 1루측 여부는 공식 좌석도 확인 필요"
+    },
+    {
+      "id": "ev-3b",
+      "name": "EV석",
+      "a0": 285,
+      "a1": 315,
+      "r0": 150,
+      "r1": 292,
+      "verified": false,
+      "confidence": "unplaced",
+      "why": "등급 존재만 확인. 위치 미확인"
+    },
+    {
+      "id": "ev-1b",
+      "name": "EV석",
+      "a0": 45,
+      "a1": 75,
+      "r0": 150,
+      "r1": 292,
+      "verified": false,
+      "confidence": "unplaced",
+      "why": "등급 존재만 확인. 위치 미확인"
+    },
+    {
+      "id": "outfield",
+      "name": "외야 자유석",
+      "a0": 322,
+      "a1": 38,
+      "r0": 344,
+      "r1": 414,
+      "verified": false,
+      "confidence": "corroborated",
+      "why": "외야는 지정좌석 없는 자유석으로 복수 출처에서 설명됨"
+    }
+  ],
+  "facilities": [],
+  "facilitiesNote": "화장실·매점·굿즈샵 핀은 실제 위치가 확인된 뒤에만 올립니다. 추정 위치를 찍지 않습니다.",
+  "mapLabelNote": "mapLabel이 있으면 지도 위에는 그 글자를 쓴다(띠를 넘치는 긴 이름용)."
+}
