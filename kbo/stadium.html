@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>구장 좌석 지도 | KBO 명당지도</title>
+<meta name="description" content="구장 좌석 지도에서 구역을 눌러 시야·평가·가격을 확인하세요. 직관 날씨와 경기 상태, 먹거리·굿즈샵·편의시설까지 한 지도에서." />
+<!-- 앱 본체. 검색엔진용 정적 페이지(/stadium/gwangju/)는 따로 만들어 여기로 보낸다. -->
+<meta name="robots" content="noindex,follow" />
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/map.css" />
+</head>
+<body class="map-page">
+
+<div class="map-shell">
+
+  <!-- 지도가 화면 전부다. 목록·탭을 앞에 세우지 않는다. -->
+  <div id="seat-map" aria-label="좌석 지도"></div>
+
+  <header class="map-top">
+    <div class="row">
+      <a class="back" href="./" aria-label="홈으로">‹</a>
+      <div class="name" id="stadium-name">불러오는 중…</div>
+      <button class="wx" id="wx-chip" type="button">날씨 확인</button>
+    </div>
+  </header>
+
+  <div class="map-controls">
+    <button class="ghost" id="reset-btn" type="button">⤢ 전체보기</button>
+    <button id="report-btn" type="button">📍 정보 제보</button>
+  </div>
+
+  <div class="legend" id="legend">
+    <b>좌석 정보 신뢰도</b>
+    <div><span class="sw sw-v"></span>확인됨</div>
+    <div><span class="sw sw-c"></span>확인 중 (여러 곳 일치)</div>
+    <div><span class="sw sw-u"></span>위치 미확인</div>
+  </div>
+
+  <!-- 구역을 누르면 올라오는 시트 -->
+  <section class="sheet" id="sheet" data-open="false" aria-live="polite">
+    <div class="grab"></div>
+    <button class="close" id="sheet-close" type="button" aria-label="닫기">✕</button>
+    <div class="inner" id="sheet-body"></div>
+  </section>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/services/dataService.js"></script>
+<script src="js/services/gameService.js"></script>
+<script src="js/services/weatherService.js"></script>
+<script src="js/services/shareService.js"></script>
+<script src="js/recommend.js"></script>
+<script src="js/ui/render.js"></script>
+<script src="js/ui/seatMap.js"></script>
+<script src="js/ui/report.js"></script>
+<script src="js/stadium.js"></script>
+</body>
+</html>

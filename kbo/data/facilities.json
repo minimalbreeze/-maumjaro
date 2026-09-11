@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "note": "화장실·편의점·ATM·물품보관함·게이트 등. 좌표가 있을 때만 거리 표시를 허용한다.",
+  "types": {
+    "toilet":  { "emoji": "🚻", "label": "화장실" },
+    "store":   { "emoji": "🏪", "label": "편의점" },
+    "atm":     { "emoji": "🏧", "label": "ATM" },
+    "locker":  { "emoji": "🧳", "label": "물품보관함" },
+    "smoking": { "emoji": "🚬", "label": "흡연구역" },
+    "gate":    { "emoji": "🚪", "label": "출입구" },
+    "parking": { "emoji": "🅿️", "label": "주차장" }
+  },
+  "stadiums": { "gwangju": [] }
+}
