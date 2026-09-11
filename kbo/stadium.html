@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>구장 상세 | KBO 명당지도</title>
+<meta name="description" content="구장별 좌석 명당과 시야, 직관 날씨와 경기 상태, 먹거리·굿즈샵·편의시설·교통 정보." />
+<!-- 이 화면은 앱 본체다. 검색엔진용 정적 페이지(/stadium/gwangju/)는
+     scripts/build-pages.mjs가 따로 만들어 여기로 보낸다. -->
+<meta name="robots" content="noindex,follow" />
+<link rel="stylesheet" href="css/base.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <h1><a href="./">⚾ KBO 명당지도</a></h1>
+    <p class="tagline" id="stadium-name">불러오는 중…</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 1) 오늘 경기 -->
+  <div id="game-box"></div>
+
+  <!-- 2) 날씨 · 3) 경기 상태 -->
+  <div id="weather-box"></div>
+
+  <!-- 4) 핵심 메뉴 -->
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="panel" role="tabpanel" aria-live="polite"></div>
+
+  <div id="stadium-meta"></div>
+</div>
+
+<div class="sticky-cta">
+  <div class="inner">
+    <button class="btn btn-ghost" id="share-btn" type="button">🔗 공유</button>
+    <a class="btn btn-primary btn-block" id="ticket-btn" href="#">🎟️ 예매하기</a>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/services/dataService.js"></script>
+<script src="js/services/gameService.js"></script>
+<script src="js/services/weatherService.js"></script>
+<script src="js/services/shareService.js"></script>
+<script src="js/recommend.js"></script>
+<script src="js/ui/render.js"></script>
+<script src="js/stadium.js"></script>
+</body>
+</html>
