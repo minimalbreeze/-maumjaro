@@ -239,3 +239,19 @@ body {
 /* 추천 순위 */
 .rank { display: flex; align-items: center; gap: 10px; }
 .rank .medal { font-size: 22px; }
+
+/* ---------- 폼(제보) ---------- */
+.fld { display: block; margin: 14px 0; border: 0; padding: 0; }
+.fld > span, .fld > legend {
+  display: block; font-size: 14px; font-weight: 700; margin-bottom: 6px; padding: 0;
+}
+.fld em { font-weight: 400; color: var(--dim); font-style: normal; }
+.fld select, .fld textarea, .fld input[type="text"] {
+  width: 100%; min-height: var(--tap); padding: 11px 12px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: #fff; color: var(--tx);
+  font: inherit; font-size: 16px;   /* iOS가 16px 미만이면 입력 시 화면을 확대한다 */
+}
+.fld textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+.fld .chips { margin-top: 2px; }
+.fld .chip { min-height: 42px; font-size: 14px; padding: 8px 14px; }

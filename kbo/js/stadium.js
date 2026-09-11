@@ -91,22 +91,17 @@
   }
 
   /* ---------- 제보 ----------
-     불꽃축제 지도는 사용자 제보와 집단 검증으로 데이터를 채웠다.
-     그 방식을 쓰려면 쓰기 가능한 백엔드가 필요하므로, 먼저 접수 창구만 연다.
-     config.reportUrl이 비어 있으면 아직 준비 중이라고 정직하게 말한다. */
+     불꽃축제 지도는 사용자 제보로 데이터를 채웠다. 우리도 같은 길을 가되,
+     서버 없이 오늘 동작하는 방법으로 시작한다(js/ui/report.js). */
   function openReport(zone) {
-    let html = '<h2>📍 정보 제보</h2>';
-    if (zone) html += '<p class="meta">' + R.esc(zone.name) + '</p>';
-    if (CFG.reportUrl) {
-      html += '<p>이 구역의 시야 사진, 실제 가격, 앉아본 후기를 보내주시면 지도에 반영합니다.</p>' +
-        '<p><a class="btn btn-primary btn-block" href="' + R.esc(CFG.reportUrl) +
-        '" target="_blank" rel="noopener">제보하러 가기 ›</a></p>';
-    } else {
-      html += R.emptyBox('제보 창구 준비 중입니다.');
-      html += '<p class="meta">제보받은 정보는 공식 정보와 구분해 "사용자 제보"로 표시하고, ' +
-        '여러 명이 확인한 뒤에 "확인됨"으로 올립니다.</p>';
-    }
-    openSheet(html);
+    const ctx = {
+      stadiumId: stadium.id,
+      stadiumName: stadium.name,
+      zone: zone || null,
+      zones: (mapData && mapData.zones) || []
+    };
+    openSheet(window.KboReport.render(ctx));
+    window.KboReport.wire(body(), ctx);
   }
 
   /* ---------- 오늘의 직관(경기 + 날씨 + 구장 정보) ---------- */

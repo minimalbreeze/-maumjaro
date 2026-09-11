@@ -4,7 +4,7 @@
   const EVENTS = [
     'stadium_view', 'game_view', 'weather_view', 'seat_view', 'seat_share',
     'seat_recommend', 'ticket_click', 'food_view', 'shop_view',
-    'facility_view', 'transport_view'
+    'facility_view', 'transport_view', 'seat_report'
   ];
   function track(name, params) {
     if (!EVENTS.includes(name)) return;           // 오타를 조용히 흘려보내지 않기 위한 화이트리스트
