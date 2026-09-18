@@ -373,19 +373,24 @@
     '요즘 왜 이렇게 지치지\n여러분은 스트레스 어떻게 푸세요?',
   ];
 
-  function pickFallback(fallbacks, kind) {
+  function pickFallback(fallbacks, kind, used) {
     const list = (fallbacks && fallbacks.length) ? fallbacks.filter(Boolean)
       : (FALLBACKS_BY_KIND[kind] || FALLBACKS_COMMON);
     if (!list.length) return '';
-    // 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 고른다. 그래야 AI가 죽은 날에도
-    // 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
-    return list[seedFor(kind) % list.length];
+    // 시작점은 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 잡는다. 그래야 AI가 죽은
+    // 날에도 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
+    //
+    // 거기에 "오늘 이 종류로 몇 번 올렸는지"를 더해 한 칸씩 옮긴다. 하루 1회 제한을
+    // 떼면서 필요해진 부분이다 — 고정된 자리만 쓰면 연달아 눌렀을 때 글자 하나까지
+    // 같은 글이 반복해서 나가고, 그게 계정이 막혔던 바로 그 신호다.
+    return list[(seedFor(kind) + (Number(used) || 0)) % list.length];
   }
 
-  // 하루에 종류당 몇 개까지 새로 만들지. 한 번 누르고 마는 사람이 대부분이라 1개면
-  // 충분하지만, 같은 날 두 번 공유하는 사람에게 같은 글이 또 나가면 티가 난다.
-  // 3개까지만 만들고 그 뒤로는 만들어 둔 것을 돌려쓴다.
-  const VARIANTS_PER_DAY = 3;
+  // 하루에 종류당 몇 개까지 새로 만들지. 그 뒤로는 만들어 둔 것을 순서대로 돌려쓴다.
+  // 하루 1회 제한이 있을 때는 3개로 충분했다. 제한을 떼면서 같은 화면에서 연달아
+  // 누르는 경우가 생기므로, 같은 글이 돌아오기까지의 거리를 늘려 5개로 잡는다.
+  // (종류당 하루 최대 5번의 AI 호출이다.)
+  const VARIANTS_PER_DAY = 5;
 
   function bumpUsed(kind) {
     const c = loadCache();
@@ -420,7 +425,8 @@
     } catch (e) {
       // 오늘 만들어 둔 게 있으면 미리 써둔 문구보다 그게 낫다(오늘 소재에 맞는 글이므로).
       if (made.length) { bumpUsed(kind); return made[used % made.length]; }
-      return pickFallback(fallbacks, kind);
+      bumpUsed(kind);
+      return pickFallback(fallbacks, kind, used);
     }
   }
 
@@ -463,14 +469,13 @@
    *   fact      오늘 나온 결과 한 줄 — 이걸 재료로 문구를 만든다
    *   fallbacks AI가 실패했을 때 쓸 미리 써둔 문구들
    */
-  // 하루 1회 제한.
+  // 오늘 몇 번 올렸는지 세기만 한다. 막지는 않는다.
   //
-  // 짧은 시간에 여러 번 올리는 것이 "사람이 아님"의 두 번째 신호다. 링크를 뺐어도
-  // 같은 계정에서 비슷한 결의 글이 연달아 나가면 같은 판정을 받을 수 있다.
-  // 기록은 localStorage라서 지우면 풀린다 — 보안 장치가 아니라, 무심코 연타하는
-  // 것을 막는 난간이다.
+  // 계정이 막혔던 실제 원인은 "같은 URL이 본문에 반복해서 나가는 것"이었고, 그건
+  // 링크를 본문에서 빼면서 이미 없앴다. 횟수 자체를 막던 난간은 그때 같이 걸어둔
+  // 것이라 이제 떼어낸다. 글 내용은 (날짜 + 종류)로 매번 달라지므로, 여러 번
+  // 올려도 똑같은 문장이 연달아 나가지는 않는다(VARIANTS_PER_DAY).
   const POST_LOG_KEY = 'maumjaro:threadsPostLog';
-  const MAX_PER_DAY = 1;
 
   function postsToday() {
     try {
@@ -503,15 +508,10 @@
     const hint = document.createElement('p');
     hint.className = 'rx-custom-hint';
     hint.style.cssText = 'text-align:center;margin-top:6px;font-size:12px;';
-    hint.textContent = '글만 올라가요. 링크는 스레드 프로필에 걸어두세요 · 하루 1번';
+    hint.textContent = '글만 올라가요. 링크는 스레드 프로필에 걸어두세요';
     btn.parentNode.insertBefore(hint, btn.nextSibling);
 
     btn.addEventListener('click', async () => {
-      const C = window.MaumjaroCore;
-      if (postsToday() >= MAX_PER_DAY) {
-        if (C && C.showToast) C.showToast('오늘은 이미 한 번 올렸어요. 연달아 올리면 계정이 막힐 수 있어요 🙏');
-        return;
-      }
       const label = btn.textContent;
       btn.disabled = true;
       btn.textContent = '문구 만드는 중...';
@@ -535,5 +535,5 @@
 
     // threadsUrl은 이제 "글에 붙이는 링크"가 아니라 "프로필에 걸어둘 주소"다.
   // 설정 화면 등에서 복사해 쓸 수 있게 그대로 내보낸다.
-  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl, postsToday, MAX_PER_DAY };
+  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl, postsToday };
 })();
