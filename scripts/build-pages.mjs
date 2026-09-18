@@ -111,6 +111,9 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}" />` : ''}
   (function () {
     var h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
+    // 내 방문 빼기(?noga=1). 홈에서 한 번 켜두면 localStorage가 같은 origin이라
+    // 이 페이지들에도 그대로 적용된다. 여기서는 표시만 읽고, 켜고 끄는 건 홈이 한다.
+    try { if (localStorage.getItem('maumjaro:noAnalytics') === '1') return; } catch (e) {}
     var id = 'G-TPJ8FPW0W0';
     var s = document.createElement('script');
     s.async = true;
