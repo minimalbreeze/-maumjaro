@@ -605,9 +605,22 @@
 
   // 사주팔자(일주) + 오늘 날짜 + salt로 결정론적 인덱스를 뽑는다.
   // 같은 사람이 같은 날 다시 봐도 같은 결과, salt가 다르면 카테고리별로 다른 결과가 나온다.
+  //
+  // 날짜는 반드시 todayDateKey()(로컬)를 쓴다. 여기만 toISOString()(UTC)으로 남아 있어서,
+  // 한국에서 자정부터 오전 9시까지는 화면은 "오늘의 운세"인데 내용은 어제 것이 나왔다.
+  // (화면을 여는 쪽은 870행에서 이미 todayDateKey()를 쓰고 있었다.)
+  //
+  // 뒤쪽 보정은 "어제와 오늘이 똑같이 나오는" 경우를 막는다. 풀을 늘려도 해시가
+  // 연달아 같은 칸을 고를 확률은 1/풀크기만큼 남는데, 매일 보는 화면에서 어제와
+  // 오늘이 글자까지 같으면 그 한 번이 "또 똑같네"로 기억된다. 한 칸 밀어 피한다.
   function dailyPickIndex(chart, salt, length) {
-    const dateKey = new Date().toISOString().slice(0, 10);
-    return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${dateKey}:${salt}`) % length;
+    const key = `${chart.pillars.day.gan}${chart.pillars.day.zhi}`;
+    const at = (d) => hashStr(`${key}:${dateKeyOf(d)}:${salt}`) % length;
+    const today = new Date();
+    const idx = at(today);
+    if (length < 2) return idx;
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    return idx === at(yesterday) ? (idx + 1) % length : idx;
   }
 
   // 운세가 "즉석에서 뚝딱" 나오면 가벼워 보이니, 결과를 보여주기 전에 짧게 읽는 시늉을 한다.
@@ -847,7 +860,14 @@
     // (계산은 사주와 날짜만 쓰는 결정론이라 언제 계산하든 결과는 같다.)
     const chart = getOrComputeSajuChart(profile);
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    // 오행 관계가 이모지와 변형 묶음을 정하고, 그 안에서 날짜+사람으로 하나를 고른다.
+    // 관계 자체는 사주 계산 결과라 흔들지 않는다 — 흔들면 "사주에 맞춘 운세"가 거짓이 된다.
+    const group = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    const variants = group.variants || [group];
+    const seed = Object.assign(
+      { emoji: group.emoji },
+      variants[dailyPickIndex(chart, 'daily', variants.length)]
+    );
 
     const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
     const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
@@ -3133,7 +3153,7 @@
     const defaultName = (existingProfile && existingProfile.name)
       || (localStorage.getItem('maumjaro:username') || '').trim()
       || '';
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = todayDateKey();
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
