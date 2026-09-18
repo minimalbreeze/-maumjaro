@@ -14,6 +14,22 @@
 <meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<!-- 구조화 데이터. 이 페이지들은 "크롤링은 됐는데 색인이 안 되는" 상태에 있다.
+     본문이 짧고 서로 비슷한 생성 페이지라, 검색엔진이 각 페이지의 정체와 위치를
+     스스로 알아내기 어렵다. 어떤 글이고 사이트 어디에 속하는지를 명시해 준다. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Article","headline":"사자자리 성격과 궁합 (7/23~8/22) | 맘운자로","description":"사자자리(7/23~8/22)의 성격 특징과 잘 맞는 별자리. 무료 오늘의 운세도 함께.",
+ "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/zodiac/leo/"},
+ "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
+ "publisher":{"@type":"Organization","name":"minimalbreeze","url":"https://minimalbreeze.com/"},
+ "isPartOf":{"@type":"WebSite","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"}},
+{"@type":"BreadcrumbList","itemListElement":[
+ {"@type":"ListItem","position":1,"name":"맘운자로","item":"https://maumjaro.minimalbreeze.com/"},
+ {"@type":"ListItem","position":2,"name":"전체 목록","item":"https://maumjaro.minimalbreeze.com/guide/"},
+ {"@type":"ListItem","position":3,"name":"♌ 사자자리","item":"https://maumjaro.minimalbreeze.com/zodiac/leo/"}]}
+]}
+</script>
 <!-- GA4. 이게 없어서 63개 페이지의 방문이 통째로 집계에서 빠져 있었다(2026-09).
      "페이지 조회수"에 홈 하나만 잡히던 이유다 — 검색으로 사람이 들어와도 보이지 않으니
      SEO를 해놓고 성과를 확인할 수단이 없었다. index.html의 스니펫과 같은 동작을 하되,

@@ -47,6 +47,39 @@
      링크는 새로 나오는데 스타일이 안 먹어서 파란 밑줄 기본 링크로 보였다.
      (og-image를 -v2로 올린 것과 같은 문제다 — 그쪽 사정은 위 og:image 주석 참고)
      CSS를 눈에 띄게 바꿀 때는 이 숫자를 올릴 것. 올리면 새 주소라 캐시가 있을 수 없다. -->
+<!-- 구조화 데이터(JSON-LD).
+     왜 넣는가: 홈이 크롤링은 되는데 색인이 안 되고 있다("크롤링됨 - 현재 색인이
+     생성되지 않음", 2026-09). 이 앱은 화면 대부분을 JS로 그려서, 검색로봇이 받는
+     정적 HTML만 보면 "이게 뭐하는 페이지인지" 판단할 근거가 얇다. JSON-LD는 그
+     판단 근거를 명시적으로 준다 — 무료 웹앱이고, 어떤 기능이 있고, 누가 만들었는지.
+     이것만으로 색인이 뚫리지는 않는다(외부 링크가 더 크다). 다만 비용이 없고,
+     검색 결과에 앱 정보가 풍부하게 표시될 여지를 만든다. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "맘운자로",
+  "alternateName": "Maumjaro",
+  "url": "https://maumjaro.minimalbreeze.com/",
+  "description": "오늘의 감정을 고르고 마음에 주사를 놓아 처방을 받는 무료 감정 기록 웹앱. 사주·오늘의 운세·타로·MBTI도 함께.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "설치 없이 브라우저에서 바로 사용",
+  "inLanguage": "ko",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "featureList": [
+    "오늘의 감정 기록과 마음 처방",
+    "오늘의 맘운 (사주 기반 운세)",
+    "타로 3장 뽑기",
+    "간이 MBTI 유형 검사와 궁합",
+    "별자리·띠 운세",
+    "마음약 수집 (마음약국)"
+  ],
+  "screenshot": "https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
+  "publisher": { "@type": "Organization", "name": "minimalbreeze", "url": "https://minimalbreeze.com/" }
+}
+</script>
 <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
