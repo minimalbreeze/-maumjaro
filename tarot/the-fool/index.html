@@ -14,6 +14,25 @@
 <meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<!-- GA4. 이게 없어서 63개 페이지의 방문이 통째로 집계에서 빠져 있었다(2026-09).
+     "페이지 조회수"에 홈 하나만 잡히던 이유다 — 검색으로 사람이 들어와도 보이지 않으니
+     SEO를 해놓고 성과를 확인할 수단이 없었다. index.html의 스니펫과 같은 동작을 하되,
+     이 페이지들은 정적이라 로컬 서버 예외 처리만 남기고 최소한으로 넣는다. -->
+<script>
+  (function () {
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
+    var id = 'G-TPJ8FPW0W0';
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', id, { anonymize_ip: true });
+  })();
+</script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
 *{box-sizing:border-box}
