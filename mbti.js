@@ -352,6 +352,30 @@
     return `<span class="mbti-stars">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
   }
 
+  // 궁합 공유 카드(9:16 이미지). 내 유형 카드(shareSpec)와 같은 규칙을 따른다 —
+  // 화면에 이미 나와 있는 것만 옮기고, 카드에는 오래된 이모지만 쓴다(구형 안드로이드 두부 방지).
+  function matchShareSpec(mine, other) {
+    const a = pairAnalysis(mine, other);
+    const tm = MBTI_TYPES[mine];
+    const to = MBTI_TYPES[other];
+    const rows = [
+      { k: `${tm.emoji} 나`, v: `${mine} · ${tm.name}` },
+      { k: `${to.emoji} 상대`, v: `${other} · ${to.name}` },
+      { k: '💬 우리는', v: a.lines[0] || '' },
+    ];
+    // 네 축이 전부 같으면 조심할 지점이 없다 — 그 줄은 아예 넣지 않는다.
+    if (a.cautions.length) rows.push({ k: '⚠️ 조심할 점', v: a.cautions[0] });
+    return {
+      badge: '맘운자로 · MBTI 궁합',
+      emoji: '💞',
+      headline: `${mine} × ${other}`,
+      subhead: `${'★'.repeat(a.stars)}${'☆'.repeat(5 - a.stars)}`,
+      lead: a.headline,
+      rows,
+      note: '재미로 보는 간이 궁합이에요',
+    };
+  }
+
   function matchHtml(mine, other) {
     const a = pairAnalysis(mine, other);
     const tm = MBTI_TYPES[mine];
@@ -386,7 +410,7 @@
         우리 사이에 필요한 처방 보러가기 ›
       </button>
       <button class="action-btn" id="mbti-match-share" type="button" data-mine="${esc(mine)}" data-other="${esc(other)}" data-stars="${a.stars}" style="width:100%;margin-top:8px;">
-        궁합 결과 보내기 💌
+        궁합 카드 공유하기 💌
       </button>
     `;
   }
@@ -853,6 +877,12 @@
 
       mount.querySelector('#mbti-match-back').addEventListener('click', draw);
 
+      // 내 유형 카드와 같은 이유로 결과가 그려지는 즉시 이미지를 만들어 둔다.
+      // iOS는 버튼을 누른 직후에만 공유 시트를 열어주므로 누른 뒤에 캡처하면 시트가 안 뜬다.
+      if (other && window.MaumjaroShare) {
+        window.MaumjaroShare.prepare(matchShareSpec(mine, other));
+      }
+
       mount.querySelectorAll('.mbti-pick').forEach((b) => {
         b.addEventListener('click', () => {
           sfx('pageMark');
@@ -873,11 +903,24 @@
       const ms = mount.querySelector('#mbti-match-share');
       if (ms) {
         ms.addEventListener('click', () => {
+          const a = ms.dataset.mine;
+          const b = ms.dataset.other;
           const stars = Number(ms.dataset.stars);
-          const text = `${ms.dataset.mine} × ${ms.dataset.other} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
+          const text = `${a} × ${b} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
+          const url = 'https://maumjaro.minimalbreeze.com/';
+          track('mbti_match_share', { mine: a, other: b });
+          const S = window.MaumjaroShare;
+          if (S) {
+            // 이미지가 있어야 인스타 스토리·릴스에 올라간다. 실패하면 안에서 텍스트로 폴백한다.
+            S.share({
+              spec: matchShareSpec(a, b),
+              filename: `맘운자로_궁합_${a}_${b}.png`,
+              text, url, medium: 'mbti-match', title: 'MBTI 궁합 결과', btn: ms,
+            });
+            return;
+          }
           const R = Rx();
-          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/', 'match');
-          track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
+          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'match');
         });
         // 위 버튼은 상대에게 1:1로 보내는 것이고, 이건 스레드에 올리는 글 공유다.
         if (window.MaumjaroThreads) {
