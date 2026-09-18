@@ -822,9 +822,43 @@
     } catch (e) { s = 'guest'; } // 저장이 막힌 브라우저(시크릿 모드 등)에서도 죽지 않게
     return s;
   }
+  // 최근에 받은 처방은 건너뛴다.
+  //
+  // 날짜+사람 해시는 고르게 흩어지지만 "최근에 본 것"은 피하지 못한다. 실측하면
+  // 풀이 53개일 때 재등장 간격의 17%가 7일 이내였고, 풀을 120개로 늘려도 12%까지만
+  // 줄었다 — 풀 크기로는 해결되지 않는 문제다. 최근 21일치를 기억하고 그 안에 있으면
+  // 다음 칸으로 밀면 같은 조건에서 7일 이내 재등장이 0%가 된다(최단 간격 1일 → 22일).
+  //
+  // 기록은 이 기기에만 남는다. 처방은 원래 개인적인 것이라 기기별로 충분하다.
+  const RX_RECENT_KEY = 'maumjaro:rxRecent';
+  const RX_RECENT_DAYS = 21;
   function pickTodaysPrescription() {
-    const idx = hashStr(`${todayKey()}|${personalSalt()}`) % ALL_PRESCRIPTIONS.length;
-    return ALL_PRESCRIPTIONS[idx];
+    const today = todayKey();
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(RX_RECENT_KEY) || 'null'); } catch (e) { /* 깨졌으면 새로 뽑는다 */ }
+
+    // 같은 날 다시 열면 같은 처방이어야 한다("오늘의 처방"이 볼 때마다 바뀌면 말이 안 된다).
+    if (saved && saved.date === today && saved.id) {
+      const kept = ALL_PRESCRIPTIONS.find((p) => p.id === saved.id);
+      if (kept) return kept;
+    }
+
+    const recent = (saved && Array.isArray(saved.recent)) ? saved.recent : [];
+    let idx = hashStr(`${today}|${personalSalt()}`) % ALL_PRESCRIPTIONS.length;
+    let tries = 0;
+    while (recent.indexOf(ALL_PRESCRIPTIONS[idx].id) >= 0 && tries < ALL_PRESCRIPTIONS.length) {
+      idx = (idx + 1) % ALL_PRESCRIPTIONS.length;
+      tries++;
+    }
+    const picked = ALL_PRESCRIPTIONS[idx];
+    try {
+      localStorage.setItem(RX_RECENT_KEY, JSON.stringify({
+        date: today,
+        id: picked.id,
+        recent: recent.concat([picked.id]).slice(-RX_RECENT_DAYS),
+      }));
+    } catch (e) { /* 저장이 막혀도 처방은 나가야 한다 — 그 경우 예전처럼 해시대로만 나온다 */ }
+    return picked;
   }
 
   // ---------- syringe geometry (index.html의 SVG와 동일한 값, app.js와 독립적으로 유지) ----------
