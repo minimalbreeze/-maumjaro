@@ -313,6 +313,26 @@
     { key: 'EI', i: 0 }, { key: 'SN', i: 1 }, { key: 'TF', i: 2 }, { key: 'JP', i: 3 },
   ];
 
+  // 문자열을 고르게 흩뜨리는 해시(FNV-1a + 마무리 섞기).
+  //
+  // 예전에는 h = h * 31 + charCode 를 썼는데, 31이 홀수라 해시의 홀짝이 글자 코드
+  // 합의 홀짝과 그대로 같아진다. MBTI 글자는 E·I가 홀수, T·F·J·P가 짝수라 결국
+  // S/N 두 글자만 홀짝을 결정하는데, 하필 S/N이 같은지가 별점을 +2 하는 축이다.
+  // 그래서 해시가 별점과 연동돼 버려, 별점이 정해지면 문구 인덱스도 따라 정해졌다
+  // (문구를 2개씩 써두고 실제로는 구간마다 1개만 나갔다). 마지막 xor-shift가
+  // 그 연결을 끊는다.
+  function spreadHash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    return h >>> 0;
+  }
+
   function pairAnalysis(mine, other) {
     const same = AXES.map((a) => mine[a.i] === other[a.i]);
     let score = 0;
@@ -335,10 +355,7 @@
     const cautions = AXES.filter((a, k) => !same[k]).map((a) => MATCH_CAUTION[a.key]).filter(Boolean);
     const pool = MATCH_HEADLINES[stars] || MATCH_HEADLINES[3];
     // 같은 쌍은 늘 같은 문장이 나와야 한다(다시 눌렀는데 바뀌면 신뢰가 떨어진다).
-    let h = 0;
-    const sig = mine + other;
-    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-    const headline = pool[Math.abs(h) % pool.length];
+    const headline = pool[spreadHash(mine + other) % pool.length];
 
     // 부딪히는 축이 있으면 그 축에 맞는 처방으로 보낸다. 다 같으면 인간관계로.
     const rxByAxis = { EI: 'social', SN: 'work', TF: 'mind', JP: 'sleep' };
@@ -420,9 +437,7 @@
   function bloodDayLine(key) {
     const d = new Date();
     const sig = `${key}:${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    let h = 0;
-    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-    return BLOOD_DAY_LINES[Math.abs(h) % BLOOD_DAY_LINES.length];
+    return BLOOD_DAY_LINES[spreadHash(sig) % BLOOD_DAY_LINES.length];
   }
 
   function bloodHtml(mineKey, viewKey, otherKey, myType) {
