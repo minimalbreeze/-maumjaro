@@ -546,6 +546,8 @@ function indexPage(M, T, Z) {
   const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const body = `
 <p>맘운자로가 다루는 내용을 한곳에 모았습니다. 전부 앱에서 무료로 직접 볼 수 있습니다.</p>
+<p class="sub">이름이 낯설다면 — <strong>맘운자로</strong>는 <strong>마운자로</strong>에서 따온 말장난입니다.
+몸에 놓는 주사가 아니라 <strong>마음에 놓는 주사</strong>라는 뜻이에요. 의약품과는 아무 관계가 없습니다.</p>
 
 <h2>MBTI 16유형</h2>
 <div class="grid">${Object.keys(M.MBTI_TYPES).map((k) => `<a href="/mbti/${k.toLowerCase()}/">${esc(k)} ${esc(M.MBTI_TYPES[k].name)}</a>`).join('')}</div>
@@ -564,8 +566,8 @@ function indexPage(M, T, Z) {
     html: shell({
       url,
       title: '무료 타로·MBTI·별자리·띠 전체 목록 | 맘운자로',
-      desc: 'MBTI 16유형, 타로 메이저 아르카나, 별자리 12, 띠 12 전체 목록. 전부 무료로 볼 수 있습니다.',
-      keywords: '무료 타로, MBTI 테스트, 별자리 운세, 띠별 운세, 무료 운세, 타로카드 의미',
+      desc: 'MBTI 16유형, 타로 메이저 아르카나, 별자리 12, 띠 12 전체 목록. 전부 무료로 볼 수 있습니다. 맘운자로는 마운자로에서 따온 말장난이에요.',
+      keywords: '맘운자로, 마운자로 패러디, 무료 타로, MBTI 테스트, 별자리 운세, 띠별 운세, 무료 운세, 타로카드 의미',
       h1: '전체 목록',
       sub: 'MBTI · 타로 · 별자리 · 띠',
       breadcrumb: '<a href="/">맘운자로</a> › 전체 목록',
