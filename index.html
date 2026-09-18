@@ -853,10 +853,32 @@
   (function () {
     var id = window.MAUMJARO_GA4_ID;
     if (!id) return;
+
     // 개발용 로컬 서버에서 나오는 트래픽은 보내지 않는다.
     // 안 막으면 테스트 방문이 실제 지표에 섞여 초기 데이터가 지저분해진다.
     var h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
+
+    // 내 방문 빼기 스위치 (?noga=1 로 한 번 접속하면 이 기기에서 영구히 꺼진다)
+    //
+    // 왜 GA4의 내부 트래픽 필터로 안 되는가
+    //   그 필터는 IP 기준인데, 모바일 IP는 접속할 때마다 바뀐다. 운영자가 주로 폰으로
+    //   확인하는 이 앱에서는 IP를 등록해도 자기 방문이 계속 집계된다. 실제로 30일
+    //   사용자 131명에 운영자 접속이 얼마나 섞였는지 알 수 없는 상태였다.
+    //   기기에 표시를 남기면 IP가 바뀌어도 계속 제외된다.
+    //
+    // 해제는 ?noga=0. 표시가 남은 걸 잊으면 "내 앱이 집계가 안 된다"고 오해하게 되므로
+    //   켜고 끌 때 화면에 알려준다(폰에서는 콘솔을 볼 수 없다).
+    var KEY = 'maumjaro:noAnalytics';
+    var off = false;
+    try {
+      var q = new URLSearchParams(location.search).get('noga');
+      if (q === '1') { localStorage.setItem(KEY, '1'); notice('이 기기는 방문 집계에서 제외됩니다'); }
+      else if (q === '0') { localStorage.removeItem(KEY); notice('이 기기의 방문 집계를 다시 켰습니다'); }
+      off = localStorage.getItem(KEY) === '1';
+    } catch (e) { /* 저장소를 못 쓰는 브라우저면 그냥 평소대로 집계한다 */ }
+    if (off) return;
+
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
@@ -865,6 +887,23 @@
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
+
+    // 앱 스타일(style.css)이 아직 안 붙었을 수도 있어 이 배너는 스스로 그린다.
+    function notice(msg) {
+      function show() {
+        var el = document.createElement('div');
+        el.textContent = msg;
+        el.setAttribute('role', 'status');
+        el.style.cssText = 'position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;'
+          + 'max-width:90vw;padding:10px 16px;border-radius:999px;font-size:13px;line-height:1.4;'
+          + 'background:#1f5c50;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);'
+          + 'font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;';
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 4000);
+      }
+      if (document.body) show();
+      else document.addEventListener('DOMContentLoaded', show);
+    }
   })();
 </script>
 
