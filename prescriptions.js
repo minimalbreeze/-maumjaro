@@ -1979,6 +1979,27 @@
   let motionOn = localStorage.getItem('maumjaro:motionOn') !== 'off';
   let imageFadeOn = localStorage.getItem('maumjaro:imageFadeOn') !== 'off';
 
+  // 방문 집계 제외. index.html의 GA4 스니펫과 같은 키를 쓴다(?noga=1로도 켜진다).
+  // 다른 토글과 반대로 "켜짐 = 집계 안 함"이라, 라벨을 상태 그대로 적어 헷갈리지 않게 한다.
+  const nogaToggleBtn = document.getElementById('noga-toggle');
+  const NOGA_KEY = 'maumjaro:noAnalytics';
+  let nogaOn = false;
+  try { nogaOn = localStorage.getItem(NOGA_KEY) === '1'; } catch (e) { /* 저장소 못 쓰면 집계한다 */ }
+
+  // 이미 켜진 GA4를 이번 방문부터 멈추는 공식 방법.
+  // 이게 없으면 스위치를 켜도 "다음에 들어올 때부터" 적용돼, 껐는데 왜 잡히냐는 오해가 생긴다.
+  function applyNoga(on) {
+    const id = window.MAUMJARO_GA4_ID;
+    if (id) window['ga-disable-' + id] = on;
+  }
+  applyNoga(nogaOn);
+
+  function updateNogaToggleUI() {
+    if (!nogaToggleBtn) return;
+    nogaToggleBtn.textContent = nogaOn ? '🚫 제외함' : '📊 집계함';
+    nogaToggleBtn.setAttribute('aria-pressed', String(nogaOn));
+  }
+
   function updateMotionToggleUI() {
     motionToggleBtn.textContent = motionOn ? '📳 켜짐' : '📴 꺼짐';
     motionToggleBtn.setAttribute('aria-pressed', String(motionOn));
@@ -1989,12 +2010,27 @@
   }
   updateMotionToggleUI();
   updateFadeToggleUI();
+  updateNogaToggleUI();
 
   motionToggleBtn.addEventListener('click', () => {
     motionOn = !motionOn;
     localStorage.setItem('maumjaro:motionOn', motionOn ? 'on' : 'off');
     updateMotionToggleUI();
   });
+  if (nogaToggleBtn) {
+    nogaToggleBtn.addEventListener('click', () => {
+      nogaOn = !nogaOn;
+      try {
+        if (nogaOn) localStorage.setItem(NOGA_KEY, '1');
+        else localStorage.removeItem(NOGA_KEY);
+      } catch (e) { /* 저장 실패는 무시 — UI만 바뀌고 다음 방문엔 원래대로다 */ }
+      applyNoga(nogaOn);
+      updateNogaToggleUI();
+      Core.showToast(nogaOn
+        ? '이 기기의 방문은 집계에서 빠져요 🚫'
+        : '이 기기의 방문을 다시 집계해요 📊');
+    });
+  }
   fadeToggleBtn.addEventListener('click', () => {
     imageFadeOn = !imageFadeOn;
     localStorage.setItem('maumjaro:imageFadeOn', imageFadeOn ? 'on' : 'off');
