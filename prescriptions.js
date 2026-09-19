@@ -178,7 +178,11 @@
       title: `${s.label} 처방`,
       diagnosis: `${s.label} ${s.mg}`,
       symptom: s.caption,
-      prescription: s.messages[0],
+      // 예전에는 messages[0]만 썼다. 주사 흐름(app.js)은 같은 배열을 무작위로 돌려쓰는데
+      // 처방 카드만 첫 문장에 고정돼 있어서, 감정 처방은 몇 번을 받아도 늘 같은 말이었다.
+      // 가방에서 하루에 하나씩 꺼내 쓴다 — 열흘에 걸쳐 열 문장이 전부 한 번씩 나온다.
+      // dailyBagPick·personalSalt는 아래에 선언돼 있지만 함수 선언이라 여기서 부를 수 있다.
+      prescription: s.messages[dailyBagPick(`emotion:${key}:${personalSalt()}`, s.messages.length)],
       sideEffect: '개인차가 있을 수 있어요',
       warning: '실제 의약품이 아닙니다',
       emoji: s.emoji,
@@ -790,12 +794,68 @@
     const d = new Date();
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   }
+  // 문자열을 고르게 흩뜨리는 해시(FNV-1a + 마무리 섞기).
+  //
+  // 예전에는 h = h * 31 + charCode 였다. 31의 거듭제곱은 5·6·10·15·30으로 나누면
+  // 전부 나머지가 1이라, 그 크기로 %를 하면 결과가 "글자 코드의 합"과 똑같아진다.
+  // 날짜 문자열은 하루에 한두 글자만 바뀌므로 합도 조금씩만 움직이고, 고르게
+  // 흩어져야 할 자리에서 몇 개 값으로 뭉쳤다(풀 10개에서 14일간 3종만 나왔다).
+  // 마지막 xor-shift가 그 구조를 끊는다.
   function hashStr(s) {
-    let h = 0;
+    let h = 2166136261;
     for (let i = 0; i < s.length; i++) {
-      h = (h * 31 + s.charCodeAt(i)) | 0;
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
     }
-    return Math.abs(h);
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    return h >>> 0;
+  }
+
+  // 하루 단위 일련번호. 로컬 날짜만 쓰므로 표준시가 달라도 흔들리지 않는다.
+  function dayNumberOf(d) {
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+
+  // seed로 고정된 0..n-1 순열(Fisher-Yates). 같은 seed면 언제 불러도 같은 순서다.
+  function shuffledBag(n, seed) {
+    const bag = [];
+    for (let i = 0; i < n; i++) bag.push(i);
+    let x = hashStr(seed) || 1;
+    for (let i = n - 1; i > 0; i--) {
+      x = hashStr(`${seed}#${x}`);
+      const j = x % (i + 1);
+      const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+    }
+    return bag;
+  }
+
+  // "하루에 하나씩 꺼내는 가방". length일을 한 블록으로 묶어 그 안에서 전부 한 번씩
+  // 나오게 하므로, 같은 것이 다시 나오려면 최소 length일이 걸린다. 날짜마다 해시로
+  // 뽑으면 고르게 흩어져도 어제와 같은 칸이 1/length 확률로 계속 나오는데, 매일 보는
+  // 화면에서는 그 한 번이 "또 똑같네"로 기억되므로 확률에 맡기지 않는다.
+  // fortune.js의 dailyPickIndex와 같은 방식이다.
+  function dailyBagPick(seed, length) {
+    if (length < 2) return 0;
+    const dayNum = dayNumberOf(new Date());
+    const block = Math.floor(dayNum / length);
+    const pos = dayNum - block * length;
+    const bag = shuffledBag(length, `${seed}:${block}`);
+    const prev = shuffledBag(length, `${seed}:${block - 1}`);
+    // 블록 경계에서 하루~이틀 만에 같은 것이 돌아오지 않도록 앞쪽 두 자리만 보정한다.
+    const guard = Math.min(2, length - 1);
+    for (let i = 0; i < guard; i++) {
+      const forbidden = prev.slice(length - (guard - i));
+      if (forbidden.indexOf(bag[i]) < 0) continue;
+      for (let j = i + 1; j < length; j++) {
+        if (forbidden.indexOf(bag[j]) < 0) {
+          const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+          break;
+        }
+      }
+    }
+    return bag[pos];
   }
   // 예전에는 날짜만으로 골랐다 — 그러면 같은 날 모든 사용자가 똑같은 처방을 받는다.
   // "월요일이라 다 같은 처방"이면 오늘의 처방이라는 말이 무색해지므로 사람마다 다르게 만든다.
