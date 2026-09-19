@@ -406,10 +406,23 @@
     return GAN_ELEMENT[ec.getMonthGan()];
   }
 
+  // 문자열을 고르게 흩뜨리는 해시(FNV-1a + 마무리 섞기).
+  //
+  // 예전에는 h = h * 31 + charCode 였다. 31의 거듭제곱은 5·6·10·15·30으로 나누면
+  // 전부 나머지가 1이라, 그 크기로 %를 하면 결과가 "글자 코드의 합"과 똑같아진다.
+  // 날짜 문자열은 하루에 한두 글자만 바뀌므로 합도 조금씩만 움직이고, 고르게
+  // 흩어져야 할 자리에서 몇 개 값으로 뭉쳤다(풀 10개에서 14일간 3종만 나왔다).
+  // 마지막 xor-shift가 그 구조를 끊는다.
   function hashStr(s) {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-    return Math.abs(h);
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    return h >>> 0;
   }
 
   // 4.1: 주/월 단위로 "그 주/그 달 내내 안 바뀌는" salt 키. 요일이 바뀌어도 같은 주면 같은 값을 낸다.
@@ -605,9 +618,68 @@
 
   // 사주팔자(일주) + 오늘 날짜 + salt로 결정론적 인덱스를 뽑는다.
   // 같은 사람이 같은 날 다시 봐도 같은 결과, salt가 다르면 카테고리별로 다른 결과가 나온다.
+  //
+  // 날짜는 반드시 todayDateKey()(로컬)를 쓴다. 여기만 toISOString()(UTC)으로 남아 있어서,
+  // 한국에서 자정부터 오전 9시까지는 화면은 "오늘의 운세"인데 내용은 어제 것이 나왔다.
+  // (화면을 여는 쪽은 870행에서 이미 todayDateKey()를 쓰고 있었다.)
+  //
+  // 뒤쪽 보정은 "어제와 오늘이 똑같이 나오는" 경우를 막는다. 풀을 늘려도 해시가
+  // 연달아 같은 칸을 고를 확률은 1/풀크기만큼 남는데, 매일 보는 화면에서 어제와
+  // 오늘이 글자까지 같으면 그 한 번이 "또 똑같네"로 기억된다. 한 칸 밀어 피한다.
+  // 하루 단위 일련번호. 로컬 날짜(y/m/d)만 쓰므로 표준시가 달라도 값이 흔들리지 않는다.
+  function dayNumberOf(d) {
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+
+  // seed로 고정된 0..n-1 순열. 같은 seed면 언제 불러도 같은 순서가 나온다.
+  function shuffledBag(n, seed) {
+    const bag = [];
+    for (let i = 0; i < n; i++) bag.push(i);
+    // 해시를 한 번씩 더 돌려 쓰는 간단한 난수열. Fisher-Yates로 섞는다.
+    let x = hashStr(seed) || 1;
+    for (let i = n - 1; i > 0; i--) {
+      x = hashStr(`${seed}#${x}`);
+      const j = x % (i + 1);
+      const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+    }
+    return bag;
+  }
+
   function dailyPickIndex(chart, salt, length) {
-    const dateKey = new Date().toISOString().slice(0, 10);
-    return hashStr(`${chart.pillars.day.gan}${chart.pillars.day.zhi}:${dateKey}:${salt}`) % length;
+    if (length < 2) return 0;
+    const key = `${chart.pillars.day.gan}${chart.pillars.day.zhi}:${salt}`;
+
+    // 날짜마다 해시로 한 칸씩 뽑으면, 고르게 흩어져도 "어제와 같은 칸"이 1/풀크기
+    // 확률로 계속 나온다. 매일 보는 화면에서 어제와 글자까지 같으면 그 한 번이
+    // "또 똑같네"로 기억되므로 확률에 맡길 수 없다.
+    //
+    // 그래서 뽑기가 아니라 "가방"을 쓴다. length일을 한 블록으로 묶고, 블록마다
+    // 0..length-1을 섞어 하루에 하나씩 꺼낸다. 한 바퀴 도는 동안 모든 문구가 정확히
+    // 한 번씩 나오고, 같은 것이 다시 나오려면 최소 length일이 걸린다. 저장이 필요
+    // 없고 결정론이라 같은 사람이 같은 날 다시 봐도 결과가 같다.
+    const dayNum = dayNumberOf(new Date());
+    const block = Math.floor(dayNum / length);
+    const pos = dayNum - block * length;
+
+    const bag = shuffledBag(length, `${key}:${block}`);
+
+    // 블록이 바뀌는 자리에서만 가까운 재등장이 생긴다. 이 블록의 앞쪽 몇 개가 앞
+    // 블록의 꼬리와 겹치면 하루~이틀 만에 같은 문구가 돌아온다. 그 자리들만 뒤쪽
+    // 원소와 바꿔 끊는다(가방 안의 값들이라 한 바퀴에 한 번씩 나오는 성질은 유지된다).
+    //   bag[0]은 앞 블록의 마지막 2개와, bag[1]은 마지막 1개와 겹치면 안 된다.
+    const prev = shuffledBag(length, `${key}:${block - 1}`);
+    const guard = Math.min(2, length - 1);
+    for (let i = 0; i < guard; i++) {
+      const forbidden = prev.slice(length - (guard - i));
+      if (forbidden.indexOf(bag[i]) < 0) continue;
+      for (let j = i + 1; j < length; j++) {
+        if (forbidden.indexOf(bag[j]) < 0) {
+          const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+          break;
+        }
+      }
+    }
+    return bag[pos];
   }
 
   // 운세가 "즉석에서 뚝딱" 나오면 가벼워 보이니, 결과를 보여주기 전에 짧게 읽는 시늉을 한다.
@@ -847,7 +919,14 @@
     // (계산은 사주와 날짜만 쓰는 결정론이라 언제 계산하든 결과는 같다.)
     const chart = getOrComputeSajuChart(profile);
     const relation = elementRelation(chart.dayMasterElement, todayDayMasterElement());
-    const seed = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    // 오행 관계가 이모지와 변형 묶음을 정하고, 그 안에서 날짜+사람으로 하나를 고른다.
+    // 관계 자체는 사주 계산 결과라 흔들지 않는다 — 흔들면 "사주에 맞춘 운세"가 거짓이 된다.
+    const group = DAILY_FORTUNE_SEED.find((s) => s.relation === relation) || DAILY_FORTUNE_SEED[0];
+    const variants = group.variants || [group];
+    const seed = Object.assign(
+      { emoji: group.emoji },
+      variants[dailyPickIndex(chart, 'daily', variants.length)]
+    );
 
     const mindItem = MIND_FORTUNE_SEED.items[dailyPickIndex(chart, 'mind', MIND_FORTUNE_SEED.items.length)];
     const socialItem = SOCIAL_FORTUNE_SEED.items[dailyPickIndex(chart, 'social', SOCIAL_FORTUNE_SEED.items.length)];
@@ -2263,9 +2342,7 @@
     const pool = seed.filter((p) => p.category === catId);
     if (!pool.length) return null;
     const key = `${todayDateKey()}-${topic.key}-${cards.map((c) => c.card.id).join('-')}`;
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 100000;
-    return pool[h % pool.length];
+    return pool[hashStr(key) % pool.length];
   }
 
   function tarotCardOf(id) {
@@ -3133,7 +3210,7 @@
     const defaultName = (existingProfile && existingProfile.name)
       || (localStorage.getItem('maumjaro:username') || '').trim()
       || '';
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = todayDateKey();
 
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">

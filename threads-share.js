@@ -62,8 +62,11 @@
   // 링크는 한 줄로 깔끔하게 끝나야 한다. 파라미터를 여러 개 달면 글 끝이 지저분해지고
   // 스레드에서 링크 미리보기도 어수선해진다. 이 버튼은 대상이 스레드로 정해져 있으므로
   // utm_source 하나로 충분하다(GA4가 이것만으로 유입원을 분류한다).
-  function threadsUrl() {
-    return 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+  function threadsUrl(kind) {
+    const base = 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+    // 종류를 붙이면 (1) 어떤 공유가 유입을 만드는지 GA4에서 갈라 보이고,
+    // (2) 매번 글자 하나까지 같은 주소가 반복되지는 않는다.
+    return kind ? `${base}&utm_content=${encodeURIComponent(kind)}` : base;
   }
 
   // 소재 풀 — 콘텐츠 종류마다 따로 둔다.
@@ -373,19 +376,24 @@
     '요즘 왜 이렇게 지치지\n여러분은 스트레스 어떻게 푸세요?',
   ];
 
-  function pickFallback(fallbacks, kind) {
+  function pickFallback(fallbacks, kind, used) {
     const list = (fallbacks && fallbacks.length) ? fallbacks.filter(Boolean)
       : (FALLBACKS_BY_KIND[kind] || FALLBACKS_COMMON);
     if (!list.length) return '';
-    // 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 고른다. 그래야 AI가 죽은 날에도
-    // 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
-    return list[seedFor(kind) % list.length];
+    // 시작점은 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 잡는다. 그래야 AI가 죽은
+    // 날에도 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
+    //
+    // 거기에 "오늘 이 종류로 몇 번 올렸는지"를 더해 한 칸씩 옮긴다. 하루 1회 제한을
+    // 떼면서 필요해진 부분이다 — 고정된 자리만 쓰면 연달아 눌렀을 때 글자 하나까지
+    // 같은 글이 반복해서 나가고, 그게 계정이 막혔던 바로 그 신호다.
+    return list[(seedFor(kind) + (Number(used) || 0)) % list.length];
   }
 
-  // 하루에 종류당 몇 개까지 새로 만들지. 한 번 누르고 마는 사람이 대부분이라 1개면
-  // 충분하지만, 같은 날 두 번 공유하는 사람에게 같은 글이 또 나가면 티가 난다.
-  // 3개까지만 만들고 그 뒤로는 만들어 둔 것을 돌려쓴다.
-  const VARIANTS_PER_DAY = 3;
+  // 하루에 종류당 몇 개까지 새로 만들지. 그 뒤로는 만들어 둔 것을 순서대로 돌려쓴다.
+  // 올리는 횟수 자체에는 제한이 없다 — 이건 "같은 글이 다시 돌아오기까지의 거리"이고,
+  // 동시에 AI 호출 상한이다(종류당 하루 최대 10번). 한 화면에서 열 번을 눌러도
+  // 열 번 다 다른 글이 나간다.
+  const VARIANTS_PER_DAY = 10;
 
   function bumpUsed(kind) {
     const c = loadCache();
@@ -420,32 +428,35 @@
     } catch (e) {
       // 오늘 만들어 둔 게 있으면 미리 써둔 문구보다 그게 낫다(오늘 소재에 맞는 글이므로).
       if (made.length) { bumpUsed(kind); return made[used % made.length]; }
-      return pickFallback(fallbacks, kind);
+      bumpUsed(kind);
+      return pickFallback(fallbacks, kind, used);
     }
   }
 
-  // 본문에 링크를 붙이지 않는다.
+  // 본문에 링크를 붙인다.
   //
-  // 왜 뺐나 (2026-09-11)
-  //   매 글 끝에 똑같은 주소를 붙여 보냈더니 스레드가 계정을 자동화된 것으로 보고
-  //   막았다("로봇이 아님을 증명하라" → 계정 비활성화). 글자 하나까지 같은 URL이
-  //   반복되는 건 사람이 쓴 글에서는 나오지 않는 모양이라, 스팸 분류의 가장 강한
-  //   신호가 된다. 문구를 아무리 다르게 만들어도 링크가 같으면 같은 판정을 받는다.
+  // 경과
+  //   2026-09-11에 링크를 뺐었다. 매 글 끝에 똑같은 주소를 붙여 보냈더니 스레드가
+  //   계정을 자동화된 것으로 보고 막았기 때문이다("로봇이 아님을 증명하라" →
+  //   계정 비활성화). 글자 하나까지 같은 URL이 반복되는 건 스팸 분류의 강한 신호다.
   //
-  //   그래서 링크는 스레드 프로필(bio)에 걸어두고, 글에는 넣지 않는다. 실제
-  //   크리에이터들이 쓰는 방식이고, 링크 없는 글이 노출도 더 잘 된다.
-  //   관심이 생긴 사람은 프로필을 눌러 들어온다.
+  //   그 뒤 링크를 프로필(bio)에만 두었더니 글은 올라가도 유입이 만들어지지 않아,
+  //   운영자 판단으로 본문에 다시 넣는다. 대신 그때와 똑같이 되돌리지는 않는다 —
+  //   주소에 종류(utm_content)를 붙여 공유마다 갈리게 하고, 글 자체도 종류당
+  //   하루 10개까지 서로 다른 문구가 나가도록 이미 바꿔두었다.
   //
-  //   유입 표(utm)는 프로필 링크 쪽에 붙여야 한다 — threadsUrl()이 그 주소다.
-  function shareText(text) {
+  //   남는 위험: 같은 종류를 하루에 여러 번 올리면 그 주소는 같다. 짧은 시간에
+  //   몰아서 올리지 않는 것이 여전히 안전하다.
+  function shareText(text, url) {
+    const full = url ? `${text}\n\n${url}` : text;
     if (navigator.share) {
       // files를 주지 않는 것이 이 버튼의 핵심이다. 이미지가 붙으면 사진 게시물이 된다.
-      return navigator.share({ text }).catch((e) => {
+      return navigator.share({ text: full }).catch((e) => {
         if (e && e.name === 'AbortError') return;   // 사용자가 취소함
-        return copyToClipboard(text);
+        return copyToClipboard(full);
       });
     }
-    return copyToClipboard(text);
+    return copyToClipboard(full);
   }
 
   function copyToClipboard(full) {
@@ -463,14 +474,13 @@
    *   fact      오늘 나온 결과 한 줄 — 이걸 재료로 문구를 만든다
    *   fallbacks AI가 실패했을 때 쓸 미리 써둔 문구들
    */
-  // 하루 1회 제한.
+  // 오늘 몇 번 올렸는지 세기만 한다. 막지는 않는다.
   //
-  // 짧은 시간에 여러 번 올리는 것이 "사람이 아님"의 두 번째 신호다. 링크를 뺐어도
-  // 같은 계정에서 비슷한 결의 글이 연달아 나가면 같은 판정을 받을 수 있다.
-  // 기록은 localStorage라서 지우면 풀린다 — 보안 장치가 아니라, 무심코 연타하는
-  // 것을 막는 난간이다.
+  // 계정이 막혔던 실제 원인은 "같은 URL이 본문에 반복해서 나가는 것"이었고, 그건
+  // 링크를 본문에서 빼면서 이미 없앴다. 횟수 자체를 막던 난간은 그때 같이 걸어둔
+  // 것이라 이제 떼어낸다. 글 내용은 (날짜 + 종류)로 매번 달라지므로, 여러 번
+  // 올려도 똑같은 문장이 연달아 나가지는 않는다(VARIANTS_PER_DAY).
   const POST_LOG_KEY = 'maumjaro:threadsPostLog';
-  const MAX_PER_DAY = 1;
 
   function postsToday() {
     try {
@@ -503,22 +513,17 @@
     const hint = document.createElement('p');
     hint.className = 'rx-custom-hint';
     hint.style.cssText = 'text-align:center;margin-top:6px;font-size:12px;';
-    hint.textContent = '글만 올라가요. 링크는 스레드 프로필에 걸어두세요 · 하루 1번';
+    hint.textContent = '글 끝에 맘운자로 주소가 함께 붙어요';
     btn.parentNode.insertBefore(hint, btn.nextSibling);
 
     btn.addEventListener('click', async () => {
-      const C = window.MaumjaroCore;
-      if (postsToday() >= MAX_PER_DAY) {
-        if (C && C.showToast) C.showToast('오늘은 이미 한 번 올렸어요. 연달아 올리면 계정이 막힐 수 있어요 🙏');
-        return;
-      }
       const label = btn.textContent;
       btn.disabled = true;
       btn.textContent = '문구 만드는 중...';
       try {
         const text = await copyFor(opts.kind, opts.fact, opts.fallbacks);
         if (!text) return;
-        await shareText(text);
+        await shareText(text, threadsUrl(opts.kind));
         notePost();
         const G = window.MaumjaroGame;
         if (G && typeof G.track === 'function') G.track('threads_text_shared', { kind: opts.kind });
@@ -535,5 +540,5 @@
 
     // threadsUrl은 이제 "글에 붙이는 링크"가 아니라 "프로필에 걸어둘 주소"다.
   // 설정 화면 등에서 복사해 쓸 수 있게 그대로 내보낸다.
-  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl, postsToday, MAX_PER_DAY };
+  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl, postsToday };
 })();

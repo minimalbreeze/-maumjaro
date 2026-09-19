@@ -313,6 +313,26 @@
     { key: 'EI', i: 0 }, { key: 'SN', i: 1 }, { key: 'TF', i: 2 }, { key: 'JP', i: 3 },
   ];
 
+  // 문자열을 고르게 흩뜨리는 해시(FNV-1a + 마무리 섞기).
+  //
+  // 예전에는 h = h * 31 + charCode 를 썼는데, 31이 홀수라 해시의 홀짝이 글자 코드
+  // 합의 홀짝과 그대로 같아진다. MBTI 글자는 E·I가 홀수, T·F·J·P가 짝수라 결국
+  // S/N 두 글자만 홀짝을 결정하는데, 하필 S/N이 같은지가 별점을 +2 하는 축이다.
+  // 그래서 해시가 별점과 연동돼 버려, 별점이 정해지면 문구 인덱스도 따라 정해졌다
+  // (문구를 2개씩 써두고 실제로는 구간마다 1개만 나갔다). 마지막 xor-shift가
+  // 그 연결을 끊는다.
+  function spreadHash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    return h >>> 0;
+  }
+
   function pairAnalysis(mine, other) {
     const same = AXES.map((a) => mine[a.i] === other[a.i]);
     let score = 0;
@@ -335,10 +355,7 @@
     const cautions = AXES.filter((a, k) => !same[k]).map((a) => MATCH_CAUTION[a.key]).filter(Boolean);
     const pool = MATCH_HEADLINES[stars] || MATCH_HEADLINES[3];
     // 같은 쌍은 늘 같은 문장이 나와야 한다(다시 눌렀는데 바뀌면 신뢰가 떨어진다).
-    let h = 0;
-    const sig = mine + other;
-    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-    const headline = pool[Math.abs(h) % pool.length];
+    const headline = pool[spreadHash(mine + other) % pool.length];
 
     // 부딪히는 축이 있으면 그 축에 맞는 처방으로 보낸다. 다 같으면 인간관계로.
     const rxByAxis = { EI: 'social', SN: 'work', TF: 'mind', JP: 'sleep' };
@@ -350,6 +367,30 @@
 
   function starRow(n) {
     return `<span class="mbti-stars">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>`;
+  }
+
+  // 궁합 공유 카드(9:16 이미지). 내 유형 카드(shareSpec)와 같은 규칙을 따른다 —
+  // 화면에 이미 나와 있는 것만 옮기고, 카드에는 오래된 이모지만 쓴다(구형 안드로이드 두부 방지).
+  function matchShareSpec(mine, other) {
+    const a = pairAnalysis(mine, other);
+    const tm = MBTI_TYPES[mine];
+    const to = MBTI_TYPES[other];
+    const rows = [
+      { k: `${tm.emoji} 나`, v: `${mine} · ${tm.name}` },
+      { k: `${to.emoji} 상대`, v: `${other} · ${to.name}` },
+      { k: '💬 우리는', v: a.lines[0] || '' },
+    ];
+    // 네 축이 전부 같으면 조심할 지점이 없다 — 그 줄은 아예 넣지 않는다.
+    if (a.cautions.length) rows.push({ k: '⚠️ 조심할 점', v: a.cautions[0] });
+    return {
+      badge: '맘운자로 · MBTI 궁합',
+      emoji: '💞',
+      headline: `${mine} × ${other}`,
+      subhead: `${'★'.repeat(a.stars)}${'☆'.repeat(5 - a.stars)}`,
+      lead: a.headline,
+      rows,
+      note: '재미로 보는 간이 궁합이에요',
+    };
   }
 
   function matchHtml(mine, other) {
@@ -386,7 +427,7 @@
         우리 사이에 필요한 처방 보러가기 ›
       </button>
       <button class="action-btn" id="mbti-match-share" type="button" data-mine="${esc(mine)}" data-other="${esc(other)}" data-stars="${a.stars}" style="width:100%;margin-top:8px;">
-        궁합 결과 보내기 💌
+        궁합 카드 공유하기 💌
       </button>
     `;
   }
@@ -396,9 +437,7 @@
   function bloodDayLine(key) {
     const d = new Date();
     const sig = `${key}:${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    let h = 0;
-    for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
-    return BLOOD_DAY_LINES[Math.abs(h) % BLOOD_DAY_LINES.length];
+    return BLOOD_DAY_LINES[spreadHash(sig) % BLOOD_DAY_LINES.length];
   }
 
   function bloodHtml(mineKey, viewKey, otherKey, myType) {
@@ -853,6 +892,12 @@
 
       mount.querySelector('#mbti-match-back').addEventListener('click', draw);
 
+      // 내 유형 카드와 같은 이유로 결과가 그려지는 즉시 이미지를 만들어 둔다.
+      // iOS는 버튼을 누른 직후에만 공유 시트를 열어주므로 누른 뒤에 캡처하면 시트가 안 뜬다.
+      if (other && window.MaumjaroShare) {
+        window.MaumjaroShare.prepare(matchShareSpec(mine, other));
+      }
+
       mount.querySelectorAll('.mbti-pick').forEach((b) => {
         b.addEventListener('click', () => {
           sfx('pageMark');
@@ -873,11 +918,24 @@
       const ms = mount.querySelector('#mbti-match-share');
       if (ms) {
         ms.addEventListener('click', () => {
+          const a = ms.dataset.mine;
+          const b = ms.dataset.other;
           const stars = Number(ms.dataset.stars);
-          const text = `${ms.dataset.mine} × ${ms.dataset.other} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
+          const text = `${a} × ${b} 궁합 ${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}\n우리 이렇게 나왔는데 볼래?`;
+          const url = 'https://maumjaro.minimalbreeze.com/';
+          track('mbti_match_share', { mine: a, other: b });
+          const S = window.MaumjaroShare;
+          if (S) {
+            // 이미지가 있어야 인스타 스토리·릴스에 올라간다. 실패하면 안에서 텍스트로 폴백한다.
+            S.share({
+              spec: matchShareSpec(a, b),
+              filename: `맘운자로_궁합_${a}_${b}.png`,
+              text, url, medium: 'mbti-match', title: 'MBTI 궁합 결과', btn: ms,
+            });
+            return;
+          }
           const R = Rx();
-          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, 'https://maumjaro.minimalbreeze.com/', 'match');
-          track('mbti_match_share', { mine: ms.dataset.mine, other: ms.dataset.other });
+          if (R && typeof R.shareOrCopy === 'function') R.shareOrCopy(text, url, 'match');
         });
         // 위 버튼은 상대에게 1:1로 보내는 것이고, 이건 스레드에 올리는 글 공유다.
         if (window.MaumjaroThreads) {

@@ -178,7 +178,11 @@
       title: `${s.label} 처방`,
       diagnosis: `${s.label} ${s.mg}`,
       symptom: s.caption,
-      prescription: s.messages[0],
+      // 예전에는 messages[0]만 썼다. 주사 흐름(app.js)은 같은 배열을 무작위로 돌려쓰는데
+      // 처방 카드만 첫 문장에 고정돼 있어서, 감정 처방은 몇 번을 받아도 늘 같은 말이었다.
+      // 가방에서 하루에 하나씩 꺼내 쓴다 — 열흘에 걸쳐 열 문장이 전부 한 번씩 나온다.
+      // dailyBagPick·personalSalt는 아래에 선언돼 있지만 함수 선언이라 여기서 부를 수 있다.
+      prescription: s.messages[dailyBagPick(`emotion:${key}:${personalSalt()}`, s.messages.length)],
       sideEffect: '개인차가 있을 수 있어요',
       warning: '실제 의약품이 아닙니다',
       emoji: s.emoji,
@@ -790,12 +794,68 @@
     const d = new Date();
     return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
   }
+  // 문자열을 고르게 흩뜨리는 해시(FNV-1a + 마무리 섞기).
+  //
+  // 예전에는 h = h * 31 + charCode 였다. 31의 거듭제곱은 5·6·10·15·30으로 나누면
+  // 전부 나머지가 1이라, 그 크기로 %를 하면 결과가 "글자 코드의 합"과 똑같아진다.
+  // 날짜 문자열은 하루에 한두 글자만 바뀌므로 합도 조금씩만 움직이고, 고르게
+  // 흩어져야 할 자리에서 몇 개 값으로 뭉쳤다(풀 10개에서 14일간 3종만 나왔다).
+  // 마지막 xor-shift가 그 구조를 끊는다.
   function hashStr(s) {
-    let h = 0;
+    let h = 2166136261;
     for (let i = 0; i < s.length; i++) {
-      h = (h * 31 + s.charCodeAt(i)) | 0;
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
     }
-    return Math.abs(h);
+    h ^= h >>> 15;
+    h = Math.imul(h, 2246822507);
+    h ^= h >>> 13;
+    return h >>> 0;
+  }
+
+  // 하루 단위 일련번호. 로컬 날짜만 쓰므로 표준시가 달라도 흔들리지 않는다.
+  function dayNumberOf(d) {
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  }
+
+  // seed로 고정된 0..n-1 순열(Fisher-Yates). 같은 seed면 언제 불러도 같은 순서다.
+  function shuffledBag(n, seed) {
+    const bag = [];
+    for (let i = 0; i < n; i++) bag.push(i);
+    let x = hashStr(seed) || 1;
+    for (let i = n - 1; i > 0; i--) {
+      x = hashStr(`${seed}#${x}`);
+      const j = x % (i + 1);
+      const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+    }
+    return bag;
+  }
+
+  // "하루에 하나씩 꺼내는 가방". length일을 한 블록으로 묶어 그 안에서 전부 한 번씩
+  // 나오게 하므로, 같은 것이 다시 나오려면 최소 length일이 걸린다. 날짜마다 해시로
+  // 뽑으면 고르게 흩어져도 어제와 같은 칸이 1/length 확률로 계속 나오는데, 매일 보는
+  // 화면에서는 그 한 번이 "또 똑같네"로 기억되므로 확률에 맡기지 않는다.
+  // fortune.js의 dailyPickIndex와 같은 방식이다.
+  function dailyBagPick(seed, length) {
+    if (length < 2) return 0;
+    const dayNum = dayNumberOf(new Date());
+    const block = Math.floor(dayNum / length);
+    const pos = dayNum - block * length;
+    const bag = shuffledBag(length, `${seed}:${block}`);
+    const prev = shuffledBag(length, `${seed}:${block - 1}`);
+    // 블록 경계에서 하루~이틀 만에 같은 것이 돌아오지 않도록 앞쪽 두 자리만 보정한다.
+    const guard = Math.min(2, length - 1);
+    for (let i = 0; i < guard; i++) {
+      const forbidden = prev.slice(length - (guard - i));
+      if (forbidden.indexOf(bag[i]) < 0) continue;
+      for (let j = i + 1; j < length; j++) {
+        if (forbidden.indexOf(bag[j]) < 0) {
+          const t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+          break;
+        }
+      }
+    }
+    return bag[pos];
   }
   // 예전에는 날짜만으로 골랐다 — 그러면 같은 날 모든 사용자가 똑같은 처방을 받는다.
   // "월요일이라 다 같은 처방"이면 오늘의 처방이라는 말이 무색해지므로 사람마다 다르게 만든다.
@@ -822,9 +882,43 @@
     } catch (e) { s = 'guest'; } // 저장이 막힌 브라우저(시크릿 모드 등)에서도 죽지 않게
     return s;
   }
+  // 최근에 받은 처방은 건너뛴다.
+  //
+  // 날짜+사람 해시는 고르게 흩어지지만 "최근에 본 것"은 피하지 못한다. 실측하면
+  // 풀이 53개일 때 재등장 간격의 17%가 7일 이내였고, 풀을 120개로 늘려도 12%까지만
+  // 줄었다 — 풀 크기로는 해결되지 않는 문제다. 최근 21일치를 기억하고 그 안에 있으면
+  // 다음 칸으로 밀면 같은 조건에서 7일 이내 재등장이 0%가 된다(최단 간격 1일 → 22일).
+  //
+  // 기록은 이 기기에만 남는다. 처방은 원래 개인적인 것이라 기기별로 충분하다.
+  const RX_RECENT_KEY = 'maumjaro:rxRecent';
+  const RX_RECENT_DAYS = 21;
   function pickTodaysPrescription() {
-    const idx = hashStr(`${todayKey()}|${personalSalt()}`) % ALL_PRESCRIPTIONS.length;
-    return ALL_PRESCRIPTIONS[idx];
+    const today = todayKey();
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(RX_RECENT_KEY) || 'null'); } catch (e) { /* 깨졌으면 새로 뽑는다 */ }
+
+    // 같은 날 다시 열면 같은 처방이어야 한다("오늘의 처방"이 볼 때마다 바뀌면 말이 안 된다).
+    if (saved && saved.date === today && saved.id) {
+      const kept = ALL_PRESCRIPTIONS.find((p) => p.id === saved.id);
+      if (kept) return kept;
+    }
+
+    const recent = (saved && Array.isArray(saved.recent)) ? saved.recent : [];
+    let idx = hashStr(`${today}|${personalSalt()}`) % ALL_PRESCRIPTIONS.length;
+    let tries = 0;
+    while (recent.indexOf(ALL_PRESCRIPTIONS[idx].id) >= 0 && tries < ALL_PRESCRIPTIONS.length) {
+      idx = (idx + 1) % ALL_PRESCRIPTIONS.length;
+      tries++;
+    }
+    const picked = ALL_PRESCRIPTIONS[idx];
+    try {
+      localStorage.setItem(RX_RECENT_KEY, JSON.stringify({
+        date: today,
+        id: picked.id,
+        recent: recent.concat([picked.id]).slice(-RX_RECENT_DAYS),
+      }));
+    } catch (e) { /* 저장이 막혀도 처방은 나가야 한다 — 그 경우 예전처럼 해시대로만 나온다 */ }
+    return picked;
   }
 
   // ---------- syringe geometry (index.html의 SVG와 동일한 값, app.js와 독립적으로 유지) ----------
