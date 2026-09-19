@@ -62,8 +62,11 @@
   // 링크는 한 줄로 깔끔하게 끝나야 한다. 파라미터를 여러 개 달면 글 끝이 지저분해지고
   // 스레드에서 링크 미리보기도 어수선해진다. 이 버튼은 대상이 스레드로 정해져 있으므로
   // utm_source 하나로 충분하다(GA4가 이것만으로 유입원을 분류한다).
-  function threadsUrl() {
-    return 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+  function threadsUrl(kind) {
+    const base = 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+    // 종류를 붙이면 (1) 어떤 공유가 유입을 만드는지 GA4에서 갈라 보이고,
+    // (2) 매번 글자 하나까지 같은 주소가 반복되지는 않는다.
+    return kind ? `${base}&utm_content=${encodeURIComponent(kind)}` : base;
   }
 
   // 소재 풀 — 콘텐츠 종류마다 따로 둔다.
@@ -430,28 +433,30 @@
     }
   }
 
-  // 본문에 링크를 붙이지 않는다.
+  // 본문에 링크를 붙인다.
   //
-  // 왜 뺐나 (2026-09-11)
-  //   매 글 끝에 똑같은 주소를 붙여 보냈더니 스레드가 계정을 자동화된 것으로 보고
-  //   막았다("로봇이 아님을 증명하라" → 계정 비활성화). 글자 하나까지 같은 URL이
-  //   반복되는 건 사람이 쓴 글에서는 나오지 않는 모양이라, 스팸 분류의 가장 강한
-  //   신호가 된다. 문구를 아무리 다르게 만들어도 링크가 같으면 같은 판정을 받는다.
+  // 경과
+  //   2026-09-11에 링크를 뺐었다. 매 글 끝에 똑같은 주소를 붙여 보냈더니 스레드가
+  //   계정을 자동화된 것으로 보고 막았기 때문이다("로봇이 아님을 증명하라" →
+  //   계정 비활성화). 글자 하나까지 같은 URL이 반복되는 건 스팸 분류의 강한 신호다.
   //
-  //   그래서 링크는 스레드 프로필(bio)에 걸어두고, 글에는 넣지 않는다. 실제
-  //   크리에이터들이 쓰는 방식이고, 링크 없는 글이 노출도 더 잘 된다.
-  //   관심이 생긴 사람은 프로필을 눌러 들어온다.
+  //   그 뒤 링크를 프로필(bio)에만 두었더니 글은 올라가도 유입이 만들어지지 않아,
+  //   운영자 판단으로 본문에 다시 넣는다. 대신 그때와 똑같이 되돌리지는 않는다 —
+  //   주소에 종류(utm_content)를 붙여 공유마다 갈리게 하고, 글 자체도 종류당
+  //   하루 10개까지 서로 다른 문구가 나가도록 이미 바꿔두었다.
   //
-  //   유입 표(utm)는 프로필 링크 쪽에 붙여야 한다 — threadsUrl()이 그 주소다.
-  function shareText(text) {
+  //   남는 위험: 같은 종류를 하루에 여러 번 올리면 그 주소는 같다. 짧은 시간에
+  //   몰아서 올리지 않는 것이 여전히 안전하다.
+  function shareText(text, url) {
+    const full = url ? `${text}\n\n${url}` : text;
     if (navigator.share) {
       // files를 주지 않는 것이 이 버튼의 핵심이다. 이미지가 붙으면 사진 게시물이 된다.
-      return navigator.share({ text }).catch((e) => {
+      return navigator.share({ text: full }).catch((e) => {
         if (e && e.name === 'AbortError') return;   // 사용자가 취소함
-        return copyToClipboard(text);
+        return copyToClipboard(full);
       });
     }
-    return copyToClipboard(text);
+    return copyToClipboard(full);
   }
 
   function copyToClipboard(full) {
@@ -508,7 +513,7 @@
     const hint = document.createElement('p');
     hint.className = 'rx-custom-hint';
     hint.style.cssText = 'text-align:center;margin-top:6px;font-size:12px;';
-    hint.textContent = '글만 올라가요. 링크는 스레드 프로필에 걸어두세요';
+    hint.textContent = '글 끝에 맘운자로 주소가 함께 붙어요';
     btn.parentNode.insertBefore(hint, btn.nextSibling);
 
     btn.addEventListener('click', async () => {
@@ -518,7 +523,7 @@
       try {
         const text = await copyFor(opts.kind, opts.fact, opts.fallbacks);
         if (!text) return;
-        await shareText(text);
+        await shareText(text, threadsUrl(opts.kind));
         notePost();
         const G = window.MaumjaroGame;
         if (G && typeof G.track === 'function') G.track('threads_text_shared', { kind: opts.kind });
