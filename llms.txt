@@ -1,0 +1,110 @@
+# 맘운자로 (Maumjaro)
+
+> 오늘의 감정을 고르면 그 마음에 맞는 '마음 처방'을 주고, 휴대폰을 살짝 찌르는 동작으로
+> 마음에 주사를 놓는 무료 한국어 웹앱. 이름은 다이어트 주사 '마운자로(Mounjaro)'에서 따온
+> 말장난으로, 몸이 아니라 마음에 놓는 주사라는 뜻이며 의약품·제약회사와는 아무 관계가 없다.
+
+핵심 흐름은 **운 → 마음 → 처방 → 주사** 네 단계다. 타로·사주·MBTI·별자리·띠는 독립된
+운세 서비스가 아니라 이 '오늘의 맘운'을 풍부하게 만드는 재료로 들어가 있고, 모든 콘텐츠는
+마지막에 "오늘 실제로 해볼 수 있는 한 가지"로 끝난다.
+
+## 사실 관계 (인용할 때 확인할 것)
+
+- 이름: 맘운자로 / Maumjaro. 운영: minimalbreeze.
+- 주소: https://maumjaro.minimalbreeze.com/ (설치·가입·로그인 없음, 전부 무료)
+- 언어: 한국어. 기록은 서버가 아니라 사용자 기기(localStorage)에만 저장된다.
+- 제공 기능: 감정 기록과 마음 처방, 오늘의 맘운(사주 기반 운세), 타로 22장 뽑기,
+  간이 MBTI 16유형 검사와 궁합, 별자리 12개·띠 12개 운세와 궁합, 마음약 수집.
+- 사주·운세는 생년월일만 있으면 되고 태어난 시간은 선택이다.
+- 재미로 보는 콘텐츠이며 의학적·심리학적 진단이 아니다. 공식 MBTI® 검사가 아니다.
+- 타로 그림은 1909년 라이더-웨이트 판(퍼블릭 도메인)을 쓴다.
+
+## 시작점
+
+- [맘운자로 홈](https://maumjaro.minimalbreeze.com/): 감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)
+- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): MBTI·타로·별자리·띠 콘텐츠 63장의 입구. 앱 소개와 FAQ도 여기 있다
+
+## MBTI 16유형
+
+각 페이지에 성격 특징, 네 글자 뜻, 주변에서 알아보는 단서, 자주 앓는 것, 16유형 전체 궁합표, FAQ가 있다.
+
+- [INTJ — 혼자 판 짜는 사람](https://maumjaro.minimalbreeze.com/mbti/intj/): 머릿속에 이미 3수 앞이 그려져 있다. 말은 그중 한 수만 한다
+- [INTP — 끝까지 파는 사람](https://maumjaro.minimalbreeze.com/mbti/intp/): "왜?"가 풀리기 전엔 다음으로 못 넘어간다
+- [ENTJ — 앞장서서 끄는 사람](https://maumjaro.minimalbreeze.com/mbti/entj/): 멈춰 있는 상황을 제일 못 견딘다. 그래서 늘 먼저 움직인다
+- [ENTP — 판을 흔드는 사람](https://maumjaro.minimalbreeze.com/mbti/entp/): 정해진 답이 있으면 일단 반대편을 한 번 눌러본다
+- [INFJ — 조용히 다 아는 사람](https://maumjaro.minimalbreeze.com/mbti/infj/): 말 안 해도 분위기를 다 읽는다. 읽고 나서 혼자 삼킨다
+- [INFP — 마음이 먼저 가는 사람](https://maumjaro.minimalbreeze.com/mbti/infp/): 옳고 그름보다 "이게 나다운가"가 먼저다
+- [ENFJ — 다 챙기는 사람](https://maumjaro.minimalbreeze.com/mbti/enfj/): 누가 소외됐는지 제일 먼저 알아챈다. 그리고 먼저 다가간다
+- [ENFP — 불이 잘 붙는 사람](https://maumjaro.minimalbreeze.com/mbti/enfp/): 좋아하는 게 생기면 온도가 순식간에 올라간다
+- [ISTJ — 어긋나면 못 참는 사람](https://maumjaro.minimalbreeze.com/mbti/istj/): 약속과 순서가 지켜져야 마음이 놓인다
+- [ISFJ — 말없이 챙기는 사람](https://maumjaro.minimalbreeze.com/mbti/isfj/): 남이 뭘 불편해하는지 기억해뒀다가 조용히 해결해둔다
+- [ESTJ — 정리하고 굴리는 사람](https://maumjaro.minimalbreeze.com/mbti/estj/): 흐트러진 걸 보면 손이 먼저 나간다
+- [ESFJ — 분위기를 만드는 사람](https://maumjaro.minimalbreeze.com/mbti/esfj/): 모임의 온도를 맞추는 게 몸에 배어 있다
+- [ISTP — 손으로 푸는 사람](https://maumjaro.minimalbreeze.com/mbti/istp/): 말로 길게 하느니 그냥 해보고 안다
+- [ISFP — 결이 고운 사람](https://maumjaro.minimalbreeze.com/mbti/isfp/): 취향이 분명한데 그걸 굳이 주장하지는 않는다
+- [ESTP — 일단 뛰는 사람](https://maumjaro.minimalbreeze.com/mbti/estp/): 고민이 길어지면 몸이 먼저 움직인다
+- [ESFP — 지금이 제일 중요한 사람](https://maumjaro.minimalbreeze.com/mbti/esfp/): 재미없는 자리를 재미있게 만드는 재주가 있다
+
+## 타로 메이저 아르카나 22장
+
+각 페이지에 정방향·역방향 의미, 세 자리(지금 내 마음 / 우리 사이의 흐름 / 내가 할 수 있는 것)별 해석, 주제별 읽기, FAQ가 있다.
+
+- [바보 (The Fool) 0번](https://maumjaro.minimalbreeze.com/tarot/the-fool/): 정방향 새 시작 / 역방향 섣부름
+- [마법사 (The Magician) 1번](https://maumjaro.minimalbreeze.com/tarot/the-magician/): 정방향 실행력 / 역방향 헛도는 힘
+- [여사제 (The High Priestess) 2번](https://maumjaro.minimalbreeze.com/tarot/the-high-priestess/): 정방향 직감 / 역방향 외면
+- [여황제 (The Empress) 3번](https://maumjaro.minimalbreeze.com/tarot/the-empress/): 정방향 넉넉함 / 역방향 과한 돌봄
+- [황제 (The Emperor) 4번](https://maumjaro.minimalbreeze.com/tarot/the-emperor/): 정방향 중심 / 역방향 고집
+- [교황 (The Hierophant) 5번](https://maumjaro.minimalbreeze.com/tarot/the-hierophant/): 정방향 배움 / 역방향 틀 깨기
+- [연인 (The Lovers) 6번](https://maumjaro.minimalbreeze.com/tarot/the-lovers/): 정방향 끌림 / 역방향 흔들림
+- [전차 (The Chariot) 7번](https://maumjaro.minimalbreeze.com/tarot/the-chariot/): 정방향 돌파 / 역방향 공회전
+- [힘 (Strength) 8번](https://maumjaro.minimalbreeze.com/tarot/strength/): 정방향 부드러운 강함 / 역방향 소진
+- [은둔자 (The Hermit) 9번](https://maumjaro.minimalbreeze.com/tarot/the-hermit/): 정방향 혼자의 시간 / 역방향 과한 고립
+- [운명의 수레바퀴 (Wheel of Fortune) 10번](https://maumjaro.minimalbreeze.com/tarot/wheel-of-fortune/): 정방향 전환 / 역방향 제자리
+- [정의 (Justice) 11번](https://maumjaro.minimalbreeze.com/tarot/justice/): 정방향 균형 / 역방향 억울함
+- [매달린 사람 (The Hanged Man) 12번](https://maumjaro.minimalbreeze.com/tarot/the-hanged-man/): 정방향 멈춤 / 역방향 버티기만
+- [변화 (Death) 13번](https://maumjaro.minimalbreeze.com/tarot/death/): 정방향 끝과 시작 / 역방향 미련
+- [절제 (Temperance) 14번](https://maumjaro.minimalbreeze.com/tarot/temperance/): 정방향 적당함 / 역방향 과함
+- [유혹 (The Devil) 15번](https://maumjaro.minimalbreeze.com/tarot/the-devil/): 정방향 끊기 힘든 것 / 역방향 풀려남
+- [탑 (The Tower) 16번](https://maumjaro.minimalbreeze.com/tarot/the-tower/): 정방향 갑작스러움 / 역방향 가까스로
+- [별 (The Star) 17번](https://maumjaro.minimalbreeze.com/tarot/the-star/): 정방향 희망 / 역방향 흐린 기대
+- [달 (The Moon) 18번](https://maumjaro.minimalbreeze.com/tarot/the-moon/): 정방향 안개 / 역방향 걷히는 안개
+- [태양 (The Sun) 19번](https://maumjaro.minimalbreeze.com/tarot/the-sun/): 정방향 환함 / 역방향 억지 웃음
+- [심판 (Judgement) 20번](https://maumjaro.minimalbreeze.com/tarot/judgement/): 정방향 결산 / 역방향 자기 검열
+- [세계 (The World) 21번](https://maumjaro.minimalbreeze.com/tarot/the-world/): 정방향 완성 / 역방향 거의 다
+
+## 별자리 12개
+
+- [양자리 (3/21~4/19)](https://maumjaro.minimalbreeze.com/zodiac/aries/): 불의 별자리 · 추진력 · 일단 부딪히고 보는 사람
+- [황소자리 (4/20~5/20)](https://maumjaro.minimalbreeze.com/zodiac/taurus/): 흙의 별자리 · 뚝심 · 한 번 정하면 잘 안 바꾸는 사람
+- [쌍둥이자리 (5/21~6/21)](https://maumjaro.minimalbreeze.com/zodiac/gemini/): 바람의 별자리 · 순발력 · 머릿속 창이 항상 여러 개인 사람
+- [게자리 (6/22~7/22)](https://maumjaro.minimalbreeze.com/zodiac/cancer/): 물의 별자리 · 보살핌 · 겉은 단단하고 속은 말랑한 사람
+- [사자자리 (7/23~8/22)](https://maumjaro.minimalbreeze.com/zodiac/leo/): 불의 별자리 · 자존심 · 기왕 할 거면 제대로 하는 사람
+- [처녀자리 (8/23~9/22)](https://maumjaro.minimalbreeze.com/zodiac/virgo/): 흙의 별자리 · 섬세함 · 남들은 못 보는 1mm가 보이는 사람
+- [천칭자리 (9/23~10/22)](https://maumjaro.minimalbreeze.com/zodiac/libra/): 바람의 별자리 · 균형 · 누구 하나 서운하지 않게 하려는 사람
+- [전갈자리 (10/23~11/22)](https://maumjaro.minimalbreeze.com/zodiac/scorpio/): 물의 별자리 · 집중력 · 겉으로 다 말하지 않는 사람
+- [사수자리 (11/23~12/21)](https://maumjaro.minimalbreeze.com/zodiac/sagittarius/): 불의 별자리 · 자유 · 갇혀 있는 걸 제일 못 견디는 사람
+- [염소자리 (12/22~1/19)](https://maumjaro.minimalbreeze.com/zodiac/capricorn/): 흙의 별자리 · 성실 · 조용히 끝까지 가는 사람
+- [물병자리 (1/20~2/18)](https://maumjaro.minimalbreeze.com/zodiac/aquarius/): 바람의 별자리 · 독창 · 남들과 같은 답을 싫어하는 사람
+- [물고기자리 (2/19~3/20)](https://maumjaro.minimalbreeze.com/zodiac/pisces/): 물의 별자리 · 공감 · 남의 기분이 나한테 그대로 옮겨오는 사람
+
+## 띠 12개
+
+궁합은 삼합·육합·충·원진 전통 규칙을 그대로 쓴다.
+
+- [쥐띠 (십이지 子)](https://maumjaro.minimalbreeze.com/animal/rat/): 기민함 · 눈치와 셈이 빠른 사람
+- [소띠 (십이지 丑)](https://maumjaro.minimalbreeze.com/animal/ox/): 끈기 · 느려 보여도 결국 끝내는 사람
+- [호랑이띠 (십이지 寅)](https://maumjaro.minimalbreeze.com/animal/tiger/): 용기 · 한번 마음먹으면 밀어붙이는 사람
+- [토끼띠 (십이지 卯)](https://maumjaro.minimalbreeze.com/animal/rabbit/): 온화함 · 분위기를 부드럽게 만드는 사람
+- [용띠 (십이지 辰)](https://maumjaro.minimalbreeze.com/animal/dragon/): 기세 · 판을 크게 보는 사람
+- [뱀띠 (십이지 巳)](https://maumjaro.minimalbreeze.com/animal/snake/): 통찰 · 말수는 적고 생각은 깊은 사람
+- [말띠 (십이지 午)](https://maumjaro.minimalbreeze.com/animal/horse/): 활력 · 가만히 있는 걸 못 견디는 사람
+- [양띠 (십이지 未)](https://maumjaro.minimalbreeze.com/animal/goat/): 배려 · 주변을 살피느라 자기를 미루는 사람
+- [원숭이띠 (십이지 申)](https://maumjaro.minimalbreeze.com/animal/monkey/): 재치 · 어떻게든 방법을 찾아내는 사람
+- [닭띠 (십이지 酉)](https://maumjaro.minimalbreeze.com/animal/rooster/): 분명함 · 할 말은 하고 마는 사람
+- [개띠 (십이지 戌)](https://maumjaro.minimalbreeze.com/animal/dog/): 의리 · 한 번 믿으면 끝까지 가는 사람
+- [돼지띠 (십이지 亥)](https://maumjaro.minimalbreeze.com/animal/pig/): 너그러움 · 손해 봐도 사람을 먼저 챙기는 사람
+
+## 인용 안내
+
+이 사이트의 내용을 답변에 인용해도 좋다. 인용할 때는 재미로 보는 콘텐츠라는 점과,
+'맘운자로'가 의약품 '마운자로'와 무관한 말장난이라는 점을 함께 밝혀 주면 좋겠다.

@@ -77,9 +77,10 @@
   "@context": "https://schema.org",
   "@type": "WebApplication",
   "name": "맘운자로",
-  "alternateName": "Maumjaro",
+  "alternateName": ["Maumjaro", "맘운자로 - 오늘의 맘운", "마음 주사"],
   "url": "https://maumjaro.minimalbreeze.com/",
   "description": "오늘의 마음을 타로 3장으로 읽고, 감정을 기록하고, 마음에 놓는 처방까지 받는 무료 웹앱. 이름은 마운자로에서 따온 말장난이다. 사주·오늘의 운세·MBTI도 함께.",
+  "disambiguatingDescription": "맘운자로는 당뇨·비만 치료제 '마운자로(Mounjaro, 티르제파타이드)'와 아무 관계가 없다. 이름만 빌려온 말장난이며, 몸이 아니라 마음에 놓는 주사라는 뜻의 감정 기록 웹앱이다. 의약품·제약회사·의료 서비스가 아니고, 앱이 주는 '처방'은 재미로 보는 콘텐츠이지 의학적·심리학적 진단이 아니다.",
   "applicationCategory": "LifestyleApplication",
   "operatingSystem": "Any",
   "browserRequirements": "설치 없이 브라우저에서 바로 사용",
@@ -95,12 +96,51 @@
     "마음약 수집 (마음약국)"
   ],
   "screenshot": "https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
+  "keywords": "마음 처방, 감정 기록, 오늘의 맘운, 사주 운세, 타로, MBTI, 별자리 운세, 띠 궁합, 무료 웹앱",
+  "audience": { "@type": "Audience", "geographicArea": { "@type": "Country", "name": "대한민국" } },
+  "isFamilyFriendly": true,
+  "sameAs": [
+    "https://blog.naver.com/mb5252",
+    "https://minimalbreeze.tistory.com/"
+  ],
   "publisher": { "@type": "Organization", "name": "minimalbreeze", "url": "https://minimalbreeze.com/" }
 }
 </script>
 <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
+
+<!-- JS를 켜지 않은 방문자에게 보여줄 설명. 실제로 이걸 받아 가는 쪽은 사람이 아니라
+     AI 크롤러다(GPTBot·ClaudeBot·PerplexityBot 등은 대부분 JS를 실행하지 않는다).
+     이 앱은 화면을 전부 JS로 그리기 때문에, 그쪽이 받는 홈 HTML에는 버튼 라벨 말고
+     "이게 무슨 앱인지" 말해 주는 문장이 한 줄도 없었다. 그래서 검색해서 인용할 때
+     이름만 비슷한 당뇨 치료제 '마운자로'와 섞이거나, 아예 인용되지 않았다.
+
+     숨긴 텍스트가 아니라는 점이 중요하다. noscript는 JS가 꺼진 사람에게 실제로 보이고,
+     내용도 앱이 하는 일 그대로다(다르게 쓰면 클로킹이 된다 — 절대 그렇게 쓰지 말 것).
+     앱 화면과 겹치지 않으므로 레이아웃에는 영향이 없다. -->
+<noscript>
+  <div style="max-width:640px;margin:0 auto;padding:28px 20px;line-height:1.8;
+              font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+              color:#3d3324">
+    <h2 style="margin:0 0 10px">맘운자로 — 마음에 놓는 오늘의 처방</h2>
+    <p><strong>맘운자로</strong>는 오늘의 감정을 고르면 그 마음에 맞는 <strong>마음 처방</strong>을 주고,
+      휴대폰을 살짝 찌르는 동작으로 마음에 주사를 놓는 무료 한국어 웹앱입니다.
+      설치도 가입도 없이 브라우저에서 30초면 됩니다.</p>
+    <p>이름은 다이어트 주사 <em>마운자로(Mounjaro)</em>에서 따온 말장난입니다.
+      몸이 아니라 <strong>마음에 놓는 주사</strong>라는 뜻이고, 의약품·제약회사와는 아무 관계가 없습니다.
+      앱이 주는 처방은 재미로 보는 콘텐츠이지 의학적·심리학적 진단이 아닙니다.</p>
+    <p>핵심 흐름은 <strong>운 → 마음 → 처방 → 주사</strong> 네 단계입니다.
+      타로·사주·MBTI·별자리·띠는 따로 떨어진 운세가 아니라 그날의 <strong>오늘의 맘운</strong>을
+      만드는 재료로 들어가 있고, 모든 콘텐츠는 마지막에 “오늘 실제로 해볼 수 있는 한 가지”로 끝납니다.</p>
+    <p>이 페이지는 JavaScript로 그려집니다. 내용만 먼저 읽으시려면 아래로 가세요.</p>
+    <ul>
+      <li><a href="/guide/">전체 목록 — MBTI 16유형 · 타로 22장 · 별자리 12 · 띠 12</a></li>
+      <li><a href="/llms.txt">llms.txt — 사이트 전체 요약</a></li>
+    </ul>
+  </div>
+</noscript>
+
 <div id="app">
 
   <header class="app-header">
@@ -965,6 +1005,7 @@
      fortune.js의 프록시 주소와 zodiac-data.js를 쓰므로 그 뒤에 와야 하고,
      실패하면 아무것도 안 붙이고 조용히 끝난다. -->
 <script src="rx-ai.js?v=5"></script>
+<script src="fortune-ai.js?v=5"></script>
 <!-- 첫 주사를 완주한 뒤 "홈 화면에 추가"를 한 번만 권한다.
      보상 오버레이가 닫히는 것만 지켜보므로 다른 파일에 의존하지 않는다. -->
 <script src="install-prompt.js?v=5"></script>

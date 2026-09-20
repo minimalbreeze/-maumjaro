@@ -1,3 +1,11 @@
+# 맘운자로 — https://maumjaro.minimalbreeze.com/
+#
+# 아래 AI 크롤러들은 User-agent: * 로도 이미 허용된다. 그래도 이름을 따로 적는 이유:
+#  1) 사이트가 AI 인용을 거부하지 않는다는 걸 명시적으로 남기기 위해서다.
+#     (요즘은 "막지 않았다"보다 "허락했다"가 분명한 쪽을 선호하는 크롤러가 있다)
+#  2) 나중에 특정 봇만 막고 싶어질 때, 이미 자리가 잡혀 있어야 실수 없이 고친다.
+# 막고 싶어지면 해당 블록의 Allow: / 를 Disallow: / 로 바꾸면 된다.
+
 User-agent: *
 Allow: /
 
@@ -5,4 +13,53 @@ Allow: /
 User-agent: Yeti
 Allow: /
 
+# ── AI 답변엔진 (검색해서 인용하는 쪽) ──────────────────────────
+# 여기를 막으면 ChatGPT·Perplexity·Claude가 답변에 맘운자로를 인용하지 못한다.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ── AI 학습 크롤러 (모델에 내용을 넣는 쪽) ─────────────────────
+# 인용과는 별개다. 지금은 허용한다 — 모델이 "맘운자로"라는 이름을 알고 있어야
+# 검색 없이도 추천에 떠오른다. 생각이 바뀌면 이 블록만 Disallow로 바꾼다.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
 Sitemap: https://maumjaro.minimalbreeze.com/sitemap.xml
+
+# LLM용 사이트 요약(llms.txt 관례): https://maumjaro.minimalbreeze.com/llms.txt
