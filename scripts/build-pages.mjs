@@ -37,6 +37,21 @@ async function loadData(file, key) {
   return data;
 }
 
+// app.js는 최상단에서 document를 만지기 때문에 loadData()처럼 통째로 실행할 수 없다.
+// 그래서 SYMPTOMS 객체 리터럴만 잘라내 평가한다. 내용을 여기 베껴 쓰지 않는다는
+// 원칙은 그대로다 — 값은 전부 app.js에서 온다.
+async function loadSymptoms() {
+  const src = await readFile(join(ROOT, 'app.js'), 'utf8');
+  const head = 'const SYMPTOMS = ';
+  const start = src.indexOf(head);
+  const end = src.indexOf('\n  };', start);
+  if (start < 0 || end < 0) throw new Error('app.js에서 SYMPTOMS를 찾지 못했습니다.');
+  const lit = src.slice(start + head.length, end + 4);
+  const data = new Function('return ' + lit)();
+  if (!data || !Object.keys(data).length) throw new Error('SYMPTOMS가 비어 있습니다.');
+  return data;
+}
+
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -684,14 +699,114 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
   });
 }
 
+// 감정 페이지.
+//
+// 왜 필요한가: 생성 페이지 63장이 전부 MBTI·타로·별자리·띠였다. 즉 검색엔진과
+// AI가 보는 맘운자로는 통째로 "운세 사이트"였다. 정작 이 앱의 핵심 경험인
+// 감정 → 처방 → 주사는 크롤러에게 한 글자도 보이지 않았다(홈이 전부 JS라서).
+// 브랜드 원칙 1("운세 앱으로 보이지 않기")이 바깥에서는 지켜지지 않고 있었던 셈이다.
+//
+// 그리고 사람들이 AI에게 실제로 던지는 질문은 "INFP 특징"보다
+// "기분 안 좋을 때 뭐 하면 좋아?" 쪽이다. 이 페이지들이 그 질문을 받는다.
+//
+// 긍정 감정에는 "힘들 때" 같은 말을 쓰면 안 되므로 결만 나눠 둔다(내용이 아니라 어조용).
+const POSITIVE_EMOTIONS = ['joy', 'ordinary', 'excitement', 'gratitude', 'proud', 'comfort', 'affection', 'relief'];
+
+function emotionPages(S) {
+  const keys = Object.keys(S);
+  const tile = (k) => `<a href="/emotion/${k}/">${esc(S[k].emoji)} ${esc(S[k].label)}</a>`;
+
+  keys.forEach((k) => {
+    const e = S[k];
+    const url = `/emotion/${k}/`;
+    const warm = POSITIVE_EMOTIONS.indexOf(k) >= 0;
+    const others = keys.filter((x) => x !== k);
+    // "비슷한 결"은 같은 편(긍정/그 외)에서 앞뒤로 몇 개만 고른다. 임의 분류를 새로 만들지 않는다.
+    const kin = others.filter((x) => (POSITIVE_EMOTIONS.indexOf(x) >= 0) === warm).slice(0, 6);
+
+    const answer = `${e.label}${josa(e.label, '은', '는')} 맘운자로에서 ${e.mg}짜리 '마음 주사'로 다루는 감정입니다. `
+      + `앱에서 ${e.label}${josa(e.label, '을', '를')} 고르면 그 마음에 맞는 한 줄이 나오고, 휴대폰을 살짝 찌르면 주사가 놓입니다. `
+      + `아래 10가지가 ${e.label}${josa(e.label, '을', '를')} 골랐을 때 실제로 나오는 말입니다.`;
+
+    const faq = [
+      { q: `${e.label}일 때 뭘 하면 좋을까요?`,
+        a: `맘운자로는 이럴 때 "${noDot(e.messages[0])}", "${noDot(e.messages[3] || e.messages[1])}" 같은 말을 건넵니다. `
+           + `그다음 오늘 실제로 해볼 수 있는 한 가지를 '마음 처방'으로 이어줍니다. 보고 끝나지 않는다는 게 이 앱의 방식입니다.` },
+      { q: `${e.mg}은 무슨 뜻인가요?`,
+        a: `감정의 무게를 주사 용량에 빗댄 표시입니다. 맘운자로는 ${keys.length}가지 감정에 각각 다른 용량을 매겨두었고, `
+           + `${e.label}${josa(e.label, '은', '는')} ${e.mg}입니다. 실제 의약품이 아니고 의학적 의미도 없습니다.` },
+      { q: `기록이 남나요? 다른 사람이 볼 수 있나요?`,
+        a: `기록은 서버가 아니라 사용자 기기 안에만 저장됩니다. 다른 사람은 볼 수 없고, 직접 공유하지 않는 한 밖으로 나가지 않습니다. `
+           + `쌓이면 달력과 그래프로 감정의 흐름을 볼 수 있습니다.` },
+      { q: `맘운자로는 무료인가요? 설치가 필요한가요?`,
+        a: `전부 무료이고 설치도 회원가입도 없습니다. 브라우저에서 주소를 열면 바로 쓸 수 있고, 30초면 됩니다. `
+           + `재미로 보는 콘텐츠이며 의학적·심리학적 진단이 아닙니다.` },
+    ];
+
+    const body = `
+<div class="card">
+  <p class="k">${esc(e.emoji)} ${esc(e.label)} · ${esc(e.mg)}</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">${esc(e.caption)}</p>
+</div>
+
+<h2>${esc(e.label)}, 어떤 마음인가요</h2>
+<p>맘운자로는 감정을 고쳐야 할 것으로 보지 않습니다. ${warm
+    ? `${esc(e.label)}${josa(e.label, '은', '는')} 오래 붙잡아둘 만한 마음이고, 이 앱은 그 순간을 기록해 두었다가 나중에 다시 꺼내 볼 수 있게 합니다.`
+    : `${esc(e.label)}${josa(e.label, '도', '도')} 그냥 오늘 여기 있는 마음입니다. 없애는 게 아니라 이름을 붙이고 잠시 내려놓는 쪽으로 다룹니다.`}</p>
+<p>앱에서는 ${esc(e.label)}${josa(e.label, '에', '에')} <strong>${esc(e.mg)}</strong>이 매겨져 있습니다. 감정의 무게를 주사 용량에 빗댄 표시일 뿐이고 의학적 의미는 없습니다.</p>
+
+<h2>${esc(e.label)}일 때 맘운자로가 건네는 10가지</h2>
+<p>감정을 고르면 아래 중 하나가 나옵니다. 매번 같은 문장이 나오지 않도록 열흘에 걸쳐 열 개가 한 번씩 돌아갑니다.</p>
+<div class="tells"><ul style="margin:0">${e.messages.map((m) => `<li>${esc(m)}</li>`).join('')}</ul></div>
+
+<h2>그다음에 무엇을 하나요</h2>
+<p>맘운자로의 흐름은 네 단계입니다. <strong>운 → 마음 → 처방 → 주사</strong>.</p>
+<ul>
+  <li><strong>운</strong> — 사주로 계산한 오늘의 기운을 봅니다(생년월일만 있으면 되고, 태어난 시간은 몰라도 됩니다).</li>
+  <li><strong>마음</strong> — 지금 감정을 고릅니다. ${esc(e.label)}${josa(e.label, '이', '가')} 여기에 해당합니다.</li>
+  <li><strong>처방</strong> — 오늘의 기운과 지금 마음을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 줍니다.</li>
+  <li><strong>주사</strong> — 휴대폰을 살짝 찌르면 그 처방이 마음에 놓입니다. 친구에게 보낼 수도 있습니다.</li>
+</ul>
+<p>운세나 타로도 결국 이 흐름으로 들어옵니다. 보고 끝나는 화면을 만들지 않는다는 게 이 앱의 원칙입니다.</p>
+
+<h2>비슷한 결의 감정</h2>
+<div class="grid">${kin.map(tile).join('')}</div>
+
+<h2>감정 ${keys.length}가지 전체</h2>
+<div class="grid">${keys.map(tile).join('')}</div>
+
+<p class="note">재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다. 마음이 오래 힘드시면 전문가의 도움을 받으시길 권합니다.</p>`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer,
+        faq,
+        title: `${e.label} — 이럴 때 듣고 싶은 말 10가지 | 맘운자로`,
+        desc: `${e.label}${josa(e.label, '을', '를')} 고르면 맘운자로가 건네는 말 10가지와 오늘의 마음 처방. 설치도 가입도 없이 30초, 무료입니다.`,
+        keywords: `${e.label}, ${e.label} 극복, 기분 안 좋을 때, 감정 기록, 마음 처방, 위로되는 말, 맘운자로, 무료 감정일기`,
+        h1: `${e.emoji} ${e.label}`,
+        sub: e.caption,
+        breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 감정 › ${esc(e.label)}`,
+        body,
+      }),
+    });
+  });
+}
+
 // 전체 목록 페이지 — 크롤러가 66장을 한 번에 발견하는 입구
-function indexPage(M, T, Z) {
+function indexPage(M, T, Z, S) {
   const url = '/guide/';
   const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const body = `
 <p>맘운자로가 다루는 내용을 한곳에 모았습니다. 전부 앱에서 무료로 직접 볼 수 있습니다.</p>
 <p class="sub">이름이 낯설다면 — <strong>맘운자로</strong>는 <strong>마운자로</strong>에서 따온 말장난입니다.
 몸에 놓는 주사가 아니라 <strong>마음에 놓는 주사</strong>라는 뜻이에요. 의약품과는 아무 관계가 없습니다.</p>
+
+<h2>감정 ${Object.keys(S).length}가지</h2>
+<p>맘운자로의 출발점입니다. 오늘 기분을 하나 고르면 그 마음에 맞는 처방이 나옵니다.</p>
+<div class="grid">${Object.keys(S).map((k) => `<a href="/emotion/${k}/">${esc(S[k].emoji)} ${esc(S[k].label)}</a>`).join('')}</div>
 
 <h2>MBTI 16유형</h2>
 <div class="grid">${Object.keys(M.MBTI_TYPES).map((k) => `<a href="/mbti/${k.toLowerCase()}/">${esc(k)} ${esc(M.MBTI_TYPES[k].name)}</a>`).join('')}</div>
@@ -755,7 +870,7 @@ function indexPage(M, T, Z) {
 // llms.txt는 첫 1KB 안에 정체를 밝혀 그 간극을 메운다.
 //
 // 사이트맵과 마찬가지로 페이지 목록에서 자동 생성한다. 손으로 관리하면 반드시 어긋난다.
-function buildLlmsTxt(M, T, Z) {
+function buildLlmsTxt(M, T, Z, S) {
   const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const line = (u, name, note) => `- [${name}](${SITE}${u})${note ? `: ${note}` : ''}`;
 
@@ -783,7 +898,15 @@ function buildLlmsTxt(M, T, Z) {
 ## 시작점
 
 ${line('/', '맘운자로 홈', '감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)')}
-${line('/guide/', '전체 목록', 'MBTI·타로·별자리·띠 콘텐츠 ' + pages.length + '장의 입구. 앱 소개와 FAQ도 여기 있다')}
+${line('/guide/', '전체 목록', '감정·MBTI·타로·별자리·띠 콘텐츠 ' + pages.length + '장의 입구. 앱 소개와 FAQ도 여기 있다')}
+
+## 감정 ${Object.keys(S).length}가지 (앱의 출발점)
+
+오늘 기분을 하나 고르면 그 마음에 맞는 '마음 처방'이 나온다. 각 페이지에 그 감정일 때
+앱이 건네는 문장 10개와 네 단계 흐름 설명, FAQ가 있다. 괄호 안은 감정의 무게를 주사
+용량에 빗댄 표시로, 실제 의약품이 아니다.
+
+${Object.keys(S).map((k) => line(`/emotion/${k}/`, `${S[k].label} (${S[k].mg})`, noDot(S[k].caption))).join('\n')}
 
 ## MBTI ${Object.keys(M.MBTI_TYPES).length}유형
 
@@ -820,10 +943,14 @@ async function main() {
   const T = await loadData('tarot-data.js', 'MAUMJARO_TAROT_DATA');
   const Z = await loadData('zodiac-data.js', 'MAUMJARO_ZODIAC_DATA');
 
+  const S = await loadSymptoms();
+
+  // 감정을 맨 앞에 만든다. 목록·사이트맵에서 앞에 오도록 — 이게 앱의 핵심 경험이다.
+  emotionPages(S);
   mbtiPages(M);
   tarotPages(T);
   zodiacPages(Z);
-  indexPage(M, T, Z);
+  indexPage(M, T, Z, S);
 
   // ⚠️ 여기서 폴더를 통째로 지우면 안 된다.
   //    처음엔 rm('tarot', {recursive:true})로 지웠는데, tarot/ 안에는 앱이 쓰는
@@ -864,7 +991,7 @@ async function main() {
     `<?xml version="1.0" encoding="UTF-8"?>\n<!--\n  이 파일은 scripts/build-pages.mjs가 생성한다. 손으로 고치면 덮어써진다.\n-->\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
     'utf8');
 
-  await writeFile(join(ROOT, 'llms.txt'), buildLlmsTxt(M, T, Z), 'utf8');
+  await writeFile(join(ROOT, 'llms.txt'), buildLlmsTxt(M, T, Z, S), 'utf8');
 
   console.log(`페이지 ${pages.length}장 생성 + 사이트맵 ${pages.length + 1}개 URL + llms.txt`);
   const byKind = {};
