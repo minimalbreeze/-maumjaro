@@ -247,6 +247,17 @@
         { label: '이번 주의 처방', emoji: '💉' },
       ],
     },
+    // 맨 뒤에 붙였다. 공유 URL이 주제를 배열 인덱스로 인코딩하므로(fortune.js의 tarotShareUrl)
+    // 중간에 끼우면 이미 공유된 링크가 전부 엉뚱한 주제로 열린다. 추가는 항상 append.
+    {
+      key: 'cheer', label: '응원·경기', emoji: '🏟️', rxCategory: 'fun',
+      question: '오늘 그 경기, 어떤 흐름으로 흘러갈까요?',
+      positions: [
+        { label: '지금 내 마음', emoji: '💗' },
+        { label: '오늘 경기의 결', emoji: '🌊' },
+        { label: '내가 할 수 있는 것', emoji: '💉' },
+      ],
+    },
   ];
 
   // 종합 결과: 정방향은 +1, 역방향은 -1로 더해 -3~+3 점수를 낸 뒤 다섯 단계로 읽는다.
