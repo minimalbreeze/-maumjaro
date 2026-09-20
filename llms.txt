@@ -22,7 +22,37 @@
 ## 시작점
 
 - [맘운자로 홈](https://maumjaro.minimalbreeze.com/): 감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)
-- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): MBTI·타로·별자리·띠 콘텐츠 63장의 입구. 앱 소개와 FAQ도 여기 있다
+- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): 감정·MBTI·타로·별자리·띠 콘텐츠 86장의 입구. 앱 소개와 FAQ도 여기 있다
+
+## 감정 23가지 (앱의 출발점)
+
+오늘 기분을 하나 고르면 그 마음에 맞는 '마음 처방'이 나온다. 각 페이지에 그 감정일 때
+앱이 건네는 문장 10개와 네 단계 흐름 설명, FAQ가 있다. 괄호 안은 감정의 무게를 주사
+용량에 빗댄 표시로, 실제 의약품이 아니다.
+
+- [스트레스 (3mg)](https://maumjaro.minimalbreeze.com/emotion/stress/): 가볍게 눌린 마음, 살짝 풀어드릴게요
+- [불안 (5.5mg)](https://maumjaro.minimalbreeze.com/emotion/anxiety/): 두근거리는 마음을 다독여드릴게요
+- [우울 (8mg)](https://maumjaro.minimalbreeze.com/emotion/depression/): 가라앉은 마음에 온기를 더해드릴게요
+- [무기력 (10.5mg)](https://maumjaro.minimalbreeze.com/emotion/lethargy/): 멈춰버린 마음에 작은 시동을 걸어드릴게요
+- [외로움 (13mg)](https://maumjaro.minimalbreeze.com/emotion/loneliness/): 혼자라는 마음 곁에 살짝 앉아드릴게요
+- [분노 (15.5mg)](https://maumjaro.minimalbreeze.com/emotion/anger/): 끓어오른 마음을 가라앉혀드릴게요
+- [기쁨 (2mg)](https://maumjaro.minimalbreeze.com/emotion/joy/): 좋은 기분, 오늘 더 오래 느끼게 해드릴게요
+- [평범 (1mg)](https://maumjaro.minimalbreeze.com/emotion/ordinary/): 평범한 하루에 작은 의미를 더해드릴게요
+- [설렘 (4mg)](https://maumjaro.minimalbreeze.com/emotion/excitement/): 설레는 마음을 더 두근거리게 해드릴게요
+- [서운함 (6mg)](https://maumjaro.minimalbreeze.com/emotion/hurt/): 서운한 마음을 가만히 안아드릴게요
+- [질투 (7mg)](https://maumjaro.minimalbreeze.com/emotion/jealousy/): 비교하는 마음을 잠시 내려놓게 해드릴게요
+- [긴장 (5mg)](https://maumjaro.minimalbreeze.com/emotion/nervous/): 긴장한 마음을 살짝 풀어드릴게요
+- [지침 (11mg)](https://maumjaro.minimalbreeze.com/emotion/exhausted/): 다 써버린 에너지를 조금 채워드릴게요
+- [감사 (2.5mg)](https://maumjaro.minimalbreeze.com/emotion/gratitude/): 감사한 마음을 더 오래 간직하게 해드릴게요
+- [뿌듯함 (3mg)](https://maumjaro.minimalbreeze.com/emotion/proud/): 오늘 해낸 나를 마음껏 칭찬해드릴게요
+- [편안함 (1.5mg)](https://maumjaro.minimalbreeze.com/emotion/comfort/): 편안한 마음을 더 오래 느끼게 해드릴게요
+- [그리움 (9mg)](https://maumjaro.minimalbreeze.com/emotion/longing/): 그리운 마음을 잠시 함께 느껴드릴게요
+- [사랑 (3.5mg)](https://maumjaro.minimalbreeze.com/emotion/affection/): 사랑하는 마음을 더 깊게 느끼게 해드릴게요
+- [답답함 (12mg)](https://maumjaro.minimalbreeze.com/emotion/stuffy/): 가슴에 얹힌 답답함, 조금 내려드릴게요
+- [홀가분 (1.8mg)](https://maumjaro.minimalbreeze.com/emotion/relief/): 가벼워진 마음을 그대로 담아드릴게요
+- [허탈함 (9.5mg)](https://maumjaro.minimalbreeze.com/emotion/deflated/): 힘이 쭉 빠진 마음, 천천히 채워드릴게요
+- [식욕 폭발 (4.5mg)](https://maumjaro.minimalbreeze.com/emotion/craving/): 당기는 마음, 그대로 인정해드릴게요
+- [자책 (8.5mg)](https://maumjaro.minimalbreeze.com/emotion/selfblame/): 스스로를 너무 모질게 대하는 마음, 말려드릴게요
 
 ## MBTI 16유형
 

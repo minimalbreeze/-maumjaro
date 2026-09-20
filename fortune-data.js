@@ -389,6 +389,8 @@
     stuffy: 'work',
     relief: 'mind',
     deflated: 'mind',
+    craving: 'mind',
+    selfblame: 'mind',
   };
 
   const FORTUNE_CATEGORY_LABELS = {
@@ -566,6 +568,25 @@
         diagnosis: '반쯤 빠진 힘 증후군', prescription: '기운이 다 돌아오길 기다리지 말고, 할 수 있는 작은 것부터 하기.', dosage: '10분만 걷고 오기.' },
       high: { interpretation: '오늘은 빠졌던 기운이 생각보다 빨리 돌아올 수 있는 날이에요.',
         diagnosis: '회복 탄력 상승증', prescription: '허탈했던 마음이 오늘 안에 꽤 정리될 수 있어요. 다음 계획을 살짝 떠올려봐도 좋아요.', dosage: '다음에 기대되는 일정 하나 적어두기.' },
+    },
+    // 아래 둘은 절제를 권하지 않는다(SYMPTOMS의 craving 주석 참고).
+    // prescription/dosage에 "참기"나 양 이야기를 넣지 않는다 — 먹는 것과 자기 가치를
+    // 떼어놓는 쪽으로만 쓴다.
+    craving: {
+      low: { interpretation: '오늘은 먹고 싶은 마음이 유난히 크게 올라올 수 있는 날이에요. 의지가 약한 게 아니라 그런 날이에요.',
+        diagnosis: '입이 심심한 날 증후군', prescription: '먹고 싶은 걸 나쁜 걸로 만들지 않기. 그러면 먹고 나서 한 번 더 힘들어져요.', dosage: '먹을 때 첫 세 입만 천천히 맛보기.' },
+      mid: { interpretation: '오늘은 당기는 마음과 적당히 지낼 수 있는 날이에요. 싸우지 않아도 됩니다.',
+        diagnosis: '적당히 당김증', prescription: '참는 쪽과 먹는 쪽 중에 덜 후회할 쪽을 고르세요. 어느 쪽이든 괜찮습니다.', dosage: '먹기 전에 물 한 잔, 그게 전부.' },
+      high: { interpretation: '오늘은 몸이 원하는 것과 마음이 원하는 것이 잘 맞아떨어지는 날이에요.',
+        diagnosis: '입맛 균형증', prescription: '오늘 먹는 건 오늘의 몫이에요. 계산하지 않고 드셔도 좋아요.', dosage: '좋아하는 걸 좋아하는 사람과 먹기.' },
+    },
+    selfblame: {
+      low: { interpretation: '오늘은 스스로를 유난히 모질게 대하게 되는 날일 수 있어요. 그 기준을 남에게는 안 들이대잖아요.',
+        diagnosis: '자기 검열 과다증', prescription: '반성은 한 번이면 충분해요. 두 번째부터는 반성이 아니라 자책입니다.', dosage: '오늘 잘한 것 하나만 억지로라도 떠올리기.' },
+      mid: { interpretation: '오늘은 마음에 걸리는 게 있어도 하루는 굴러가는 날이에요.',
+        diagnosis: '찜찜함 잔존증', prescription: '걸리는 일이 있으면 자책 말고 한 가지 행동으로 바꿔보세요.', dosage: '미안한 사람에게 한 줄만 보내기.' },
+      high: { interpretation: '오늘은 스스로에게 조금 너그러워질 수 있는 날이에요. 그래도 되는 날입니다.',
+        diagnosis: '자기 사면 가능증', prescription: '오래 들고 있던 자책 하나를 오늘 내려놔도 좋아요.', dosage: '거울 보고 "그럴 수 있지" 한 번 말하기.' },
     },
   };
 
