@@ -504,7 +504,11 @@
     btn.className = 'rx-friend-quick-btn';
     btn.type = 'button';
     btn.style.cssText = 'width:100%;margin-top:8px;';
-    btn.textContent = '💬 글로 공유 (스레드)';
+    // 라벨은 호출부가 정할 수 있다. 한 탭 안에 스레드 버튼이 둘 이상 있는 화면(MBTI의
+    // 내 유형 / 궁합)에서 라벨이 같으면 어느 쪽을 누른 건지 구분이 안 된다 — 실제로
+    // 궁합 화면에서 눌렀다고 생각했는데 내 유형 글이 나간 일이 있었다.
+    const label = opts.label ? `💬 ${opts.label} (스레드)` : '💬 글로 공유 (스레드)';
+    btn.textContent = label;
     if (after && after.parentNode) after.parentNode.insertBefore(btn, after.nextSibling);
     else opts.anchor.appendChild(btn);
 
@@ -517,7 +521,7 @@
     btn.parentNode.insertBefore(hint, btn.nextSibling);
 
     btn.addEventListener('click', async () => {
-      const label = btn.textContent;
+      const restore = btn.textContent;
       btn.disabled = true;
       btn.textContent = '문구 만드는 중...';
       try {
@@ -529,7 +533,7 @@
         if (G && typeof G.track === 'function') G.track('threads_text_shared', { kind: opts.kind });
       } finally {
         btn.disabled = false;
-        btn.textContent = label;
+        btn.textContent = restore;
       }
     });
     // 약국처럼 버튼을 한 번만 붙이고 내용은 열 때마다 바뀌는 화면을 위해,

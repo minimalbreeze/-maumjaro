@@ -845,7 +845,8 @@
       if (share && result && window.MaumjaroThreads) {
         const t = MBTI_TYPES[result.type];
         window.MaumjaroThreads.mountButton({
-          after: share, kind: 'mbti', fact: `${result.type} · ${t.name}`,
+          after: share, kind: 'mbti', label: '내 유형 글로 공유',
+          fact: `${result.type} · ${t.name}`,
         });
       }
     }
@@ -939,9 +940,14 @@
         });
         // 위 버튼은 상대에게 1:1로 보내는 것이고, 이건 스레드에 올리는 글 공유다.
         if (window.MaumjaroThreads) {
+          // fact가 빈약하면 AI가 쓸 게 없어 "궁합"이라는 말만 맴도는 글이 나간다.
+          // 내 유형 쪽은 "ESTJ · 혼자 판 짜는 사람"처럼 재료를 줘서 글이 살았는데
+          // 궁합은 쌍 이름만 줬다. 별점과 한 줄 해석까지 넘긴다.
+          const pa = pairAnalysis(ms.dataset.mine, ms.dataset.other);
+          const starText = `${'★'.repeat(pa.stars)}${'☆'.repeat(5 - pa.stars)}`;
           window.MaumjaroThreads.mountButton({
-            after: ms, kind: 'match',
-            fact: `${ms.dataset.mine} × ${ms.dataset.other} 궁합`,
+            after: ms, kind: 'match', label: '궁합 글로 공유',
+            fact: `${ms.dataset.mine} × ${ms.dataset.other} 궁합 ${starText} · ${pa.headline}`,
           });
         }
       }
