@@ -9,6 +9,7 @@
     MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
+    CHEER_FORTUNE_SEED,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
     MAUMUN_SHARE_TEXTS,
@@ -570,6 +571,11 @@
           <span class="rx-category-label">띠별 운세</span>
           <span class="rx-category-count">오늘</span>
         </div>
+        <div class="rx-category-tile" data-fortune="cheer">
+          <span class="rx-category-emoji">🏟️</span>
+          <span class="rx-category-label">오늘의 응원운</span>
+          <span class="rx-category-count">경기 보는 날</span>
+        </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
           <span class="rx-category-label">토정비결</span>
@@ -603,6 +609,7 @@
         else if (type === 'zodiac') renderSignFortune(profile, 'zodiac');
         else if (type === 'animal') renderSignFortune(profile, 'animal');
         else if (type === 'tarot') renderTarotTopics(profile);
+        else if (type === 'cheer') renderCheerFortune(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
         else if (type === 'match') renderMatchCenter(profile, 'saju', null);
@@ -986,6 +993,62 @@
         ],
         note: `행운의 색 ${luckyColor} · 행운의 숫자 ${luckyNumber}`,
       }, '맘운자로_오늘의운세.png', `오늘 내 운세는 "${seed.title}"\n${oneLine}`);
+    });
+  }
+
+  // ---------- 오늘의 응원운 ----------
+  // 경기 결과는 점치지 않는다(CHEER_FORTUNE_SEED 주석 참고). 오늘 내가 경기를
+  // 어떤 마음으로 보게 될지를 읽고, 마지막에 처방으로 떨어뜨린다.
+  // 선택은 다른 운세와 같은 dailyPickIndex — 같은 사람이 같은 날 다시 봐도 같은 결과다.
+  function renderCheerFortune(profile) {
+    const chart = getOrComputeSajuChart(profile);
+    const seed = CHEER_FORTUNE_SEED[dailyPickIndex(chart, 'cheer', CHEER_FORTUNE_SEED.length)];
+
+    withMysticalReveal(profile, '🏟️ 오늘의 응원운', `cheer:${todayDateKey()}`, () => {
+      fortuneContent.innerHTML = `
+        <div class="rx-nav-header">
+          <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
+          <span class="rx-nav-title">🏟️ 오늘의 응원운</span>
+        </div>
+        <div class="rx-detail-card">
+          <div class="rx-detail-emoji">${seed.emoji}</div>
+          <div class="rx-detail-title">오늘의 응원운 · ${seed.title}</div>
+          <div class="rx-detail-diagnosis">${seed.diagnosis} · ${starsText(seed.stars)}</div>
+          <p class="rx-detail-symptom">${seed.advice}</p>
+        </div>
+        <p class="rx-custom-hint">👀 ${seed.watch}</p>
+
+        <div class="rx-custom-preview" style="margin-bottom:10px;">
+          <div class="rx-slip-row"><span class="rx-slip-key">오늘의 응원 처방</span><span class="rx-slip-value">${starsText(seed.stars)}</span></div>
+          <p class="rx-slip-text">${seed.advice}</p>
+          <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">🎏 ${seed.sooyo}</p>
+          <button class="rx-friend-quick-btn fortune-goto-rx-btn" type="button" data-rxcat="${seed.rxCategory}" style="margin-top:6px;">처방 후보 보러가기 ›</button>
+        </div>
+
+        <p class="rx-custom-hint" style="font-size:12px;">
+          재미로 보는 콘텐츠예요. <strong>경기 결과를 점치지 않습니다</strong> —
+          오늘 내가 경기를 어떤 마음으로 보게 될지를 읽어요.
+        </p>
+
+        ${pillarsBlockHtml(chart)}
+      `;
+      document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+      fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((btn) => {
+        btn.addEventListener('click', () => Rx.goToRxCategory(btn.dataset.rxcat));
+      });
+      mountFortuneShare({
+        badge: '맘운자로 · 오늘의 응원운',
+        emoji: seed.emoji,
+        headline: seed.title,
+        subhead: seed.diagnosis,
+        lead: seed.advice,
+        rows: [
+          { k: '응원운', v: starRow(seed.stars) },
+          { k: '관전 포인트', v: seed.watch },
+          { k: '승요 지수', v: seed.sooyo.replace(/^승요 지수 /, '') },
+        ],
+        note: '경기 결과가 아니라 오늘 내 마음을 봅니다',
+      }, '맘운자로_오늘의응원운.png', `오늘 내 응원운은 "${seed.title}"\n${seed.watch}`);
     });
   }
 

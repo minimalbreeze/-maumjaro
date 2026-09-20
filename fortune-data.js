@@ -384,6 +384,11 @@
     comfort: 'mind',
     longing: 'love',
     affection: 'love',
+    // 아래 셋은 등록이 빠져 있었다. 폴백(|| 'mind')이 있어서 터지지는 않았지만,
+    // 답답함이 '마음운'으로 읽히고 있었다 — 답답함은 일이 안 풀릴 때의 감정이라 일/직장운이 맞다.
+    stuffy: 'work',
+    relief: 'mind',
+    deflated: 'mind',
   };
 
   const FORTUNE_CATEGORY_LABELS = {
@@ -537,6 +542,30 @@
         diagnosis: '잔잔한 애정 지속증', prescription: '그 마음을 굳이 크게 표현하지 않아도 충분히 전해지고 있어요.', dosage: '사랑하는 사람에게 짧은 안부 전하기.' },
       high: { interpretation: '오늘은 사랑하는 마음이 크게 차오르는, 표현하기 좋은 날이에요.',
         diagnosis: '애정 만개증', prescription: '그 마음, 오늘은 아낌없이 표현해도 좋아요.', dosage: '사랑하는 마음을 직접 말로 전해보기.' },
+    },
+    stuffy: {
+      low: { interpretation: '오늘은 말해도 안 통하는 것 같은 답답함이 유난히 크게 느껴질 수 있는 날이에요.',
+        diagnosis: '벽 보고 말하기 증후군', prescription: '오늘 안에 풀려고 하지 않아도 괜찮아요. 내일의 몫으로 넘겨도 돼요.', dosage: '창문 열고 바깥 공기 3분 쐬기.' },
+      mid: { interpretation: '오늘은 막힌 데가 있어도 조금씩은 움직이는 날이에요. 속도가 느릴 뿐이에요.',
+        diagnosis: '반쯤 막힌 관 증후군', prescription: '한 번에 뚫으려 하지 말고 제일 작은 구멍부터 건드려보기.', dosage: '지금 막힌 일 중에 제일 쉬운 것 하나만 끝내기.' },
+      high: { interpretation: '오늘은 답답했던 게 생각보다 쉽게 풀릴 수 있는 날이에요. 미뤄둔 걸 꺼내볼 만해요.',
+        diagnosis: '갑자기 뚫림증', prescription: '오래 막혀 있던 이야기를 오늘 꺼내면 의외로 잘 통할 수 있어요.', dosage: '미뤄둔 연락 하나만 오늘 보내기.' },
+    },
+    relief: {
+      low: { interpretation: '오늘은 홀가분한 것 같으면서도 어딘가 허전한 마음이 함께 올라올 수 있어요.',
+        diagnosis: '끝나고 나면 허전증', prescription: '끝났다는 사실만 충분히 누려도 괜찮아요. 다음은 아직 정하지 않아도 돼요.', dosage: '오늘은 새 일을 시작하지 않기.' },
+      mid: { interpretation: '오늘은 내려놓은 자리가 가볍게 느껴지는 날이에요. 그 가벼움을 그대로 두세요.',
+        diagnosis: '어깨 가벼움증', prescription: '비워둔 자리를 서둘러 채우지 않아도 괜찮아요.', dosage: '오늘 하루 일정 하나 비워두기.' },
+      high: { interpretation: '오늘은 가벼워진 마음으로 새로 시작하기에 좋은 날이에요. 흐름이 열려 있어요.',
+        diagnosis: '새 출발 적기증', prescription: '미뤄뒀던 것 중 하나를 오늘 가볍게 시작해봐도 좋아요.', dosage: '해보고 싶었던 것 하나 딱 10분만 해보기.' },
+    },
+    deflated: {
+      low: { interpretation: '오늘은 기대한 만큼 힘이 빠지는 날일 수 있어요. 애쓴 게 없어진 건 아니에요.',
+        diagnosis: '김빠짐 증후군', prescription: '오늘은 회복만 하는 날로 정해도 괜찮아요. 복기는 내일 해도 늦지 않아요.', dosage: '좋아하는 것 하나만 챙겨 먹기.' },
+      mid: { interpretation: '오늘은 허탈한 마음이 남아 있어도 하루는 그럭저럭 굴러가는 날이에요.',
+        diagnosis: '반쯤 빠진 힘 증후군', prescription: '기운이 다 돌아오길 기다리지 말고, 할 수 있는 작은 것부터 하기.', dosage: '10분만 걷고 오기.' },
+      high: { interpretation: '오늘은 빠졌던 기운이 생각보다 빨리 돌아올 수 있는 날이에요.',
+        diagnosis: '회복 탄력 상승증', prescription: '허탈했던 마음이 오늘 안에 꽤 정리될 수 있어요. 다음 계획을 살짝 떠올려봐도 좋아요.', dosage: '다음에 기대되는 일정 하나 적어두기.' },
     },
   };
 
@@ -719,12 +748,72 @@
     '맘운자로에서 네 운세를 확인해봤어.',
   ];
 
+  // ---------- 오늘의 응원운 ----------
+  // 이건 "우리 팀이 이기는가"를 점치지 않는다. 그건 세 시간 뒤에 반이 틀리고,
+  // 틀리는 순간 앱 전체의 신뢰도를 같이 깎는다. 더 나쁜 건 책임이 사용자에게 간다는 점이다
+  // ("오늘 당신 승요였는데요"를 진 날 저녁에 보여주는 꼴이 된다).
+  //
+  // 그래서 대상을 팀이 아니라 "나"로 둔다 — 오늘 내가 경기를 어떤 마음으로 보게 될지다.
+  // 반증이 불가능하고, 경기 전에도 후에도 읽히고, 마지막이 처방으로 떨어진다.
+  // rxCategory는 항목마다 다르게 둬서 같은 처방으로 몰리지 않게 한다.
+  const CHEER_FORTUNE_SEED = [
+    { emoji: '🔥', stars: 5, title: '끝까지 보게 되는 날', diagnosis: '완주 확정증',
+      advice: '중간에 채널 돌리지 마세요. 오늘은 끝까지 볼 기운이 있는 날이에요.',
+      watch: '후반에 마음이 제일 크게 움직입니다.',
+      sooyo: '승요 지수 100% — 자리 뜨지 마세요', rxCategory: 'fun' },
+    { emoji: '😤', stars: 3, title: '과몰입 주의보', diagnosis: '심박수 동기화증',
+      advice: '경기랑 내 심장이 같이 뜁니다. 한 번씩 화면에서 눈을 떼주세요.',
+      watch: '판정 장면에서 제일 크게 흔들립니다.',
+      sooyo: '승요 지수 측정 불가 — 너무 뜨거움', rxCategory: 'emotion' },
+    { emoji: '🧘', stars: 4, title: '담담하게 보게 되는 날', diagnosis: '어른 관전증',
+      advice: '오늘은 결과에 덜 휘둘립니다. 경기 자체를 즐기기 좋은 날이에요.',
+      watch: '평소 안 보이던 선수 움직임이 보입니다.',
+      sooyo: '승요 지수 안정권 — 평정심 유지', rxCategory: 'daily' },
+    { emoji: '😴', stars: 2, title: '체력이 먼저 떨어지는 날', diagnosis: '전반 소진증',
+      advice: '무리해서 끝까지 보지 않아도 괜찮아요. 하이라이트도 경기입니다.',
+      watch: '졸리면 자는 게 이깁니다.',
+      sooyo: '승요 지수 배터리 부족', rxCategory: 'sleep' },
+    { emoji: '📣', stars: 4, title: '소리부터 나오는 날', diagnosis: '자동 함성증',
+      advice: '오늘은 참지 말고 소리 내서 응원하세요. 그게 오늘의 처방입니다.',
+      watch: '이웃집 벽 두께만 한 번 생각해주세요.',
+      sooyo: '승요 지수 데시벨 초과', rxCategory: 'fun' },
+    { emoji: '🫣', stars: 3, title: '못 보고 결과만 확인하는 날', diagnosis: '직관 회피증',
+      advice: '떨려서 못 보겠으면 안 봐도 됩니다. 결과만 확인하는 것도 응원이에요.',
+      watch: '손가락 사이로 보는 것도 보는 겁니다.',
+      sooyo: '승요 지수 숨어서 측정 중', rxCategory: 'emotion' },
+    { emoji: '🍗', stars: 4, title: '먹으면서 봐야 하는 날', diagnosis: '입이 심심증',
+      advice: '오늘은 뭘 하나 시켜놓고 보세요. 경기보다 그게 더 기억에 남을 수 있어요.',
+      watch: '먹는 속도가 경기 속도를 따라갑니다.',
+      sooyo: '승요 지수 배부름 비례', rxCategory: 'food' },
+    { emoji: '👥', stars: 5, title: '같이 봐야 하는 날', diagnosis: '혼자 보면 아쉬움증',
+      advice: '오늘은 누구든 불러서 같이 보세요. 혼자 보면 두 배로 아쉬운 날이에요.',
+      watch: '같이 본 사람이 오래 기억에 남습니다.',
+      sooyo: '승요 지수 인원수 비례', rxCategory: 'social' },
+    { emoji: '🙈', stars: 3, title: '혼자 봐야 하는 날', diagnosis: '감정 노출 부담증',
+      advice: '오늘은 혼자 보는 게 편합니다. 표정 관리 안 해도 되는 자리를 고르세요.',
+      watch: '혼잣말이 평소보다 많아집니다.',
+      sooyo: '승요 지수 조용히 상승 중', rxCategory: 'emotion' },
+    { emoji: '📊', stars: 4, title: '분석하게 되는 날', diagnosis: '감독 빙의증',
+      advice: '오늘은 머리로 보는 날이에요. 아는 만큼 더 재미있을 겁니다.',
+      watch: '교체 타이밍이 유난히 눈에 들어옵니다.',
+      sooyo: '승요 지수 전술적 우위', rxCategory: 'study' },
+    { emoji: '🎢', stars: 3, title: '감정 기복이 큰 날', diagnosis: '롤러코스터 탑승증',
+      advice: '올라갔다 내려갔다 할 겁니다. 경기 끝나고 10분은 비워두세요.',
+      watch: '결과와 무관하게 여운이 깁니다.',
+      sooyo: '승요 지수 변동성 높음', rxCategory: 'emotion' },
+    { emoji: '💤', stars: 2, title: '일찍 자는 게 나은 날', diagnosis: '내일이 더 중요증',
+      advice: '오늘은 결과를 내일 아침에 확인하는 쪽이 낫습니다. 경기는 도망 안 가요.',
+      watch: '잠을 이기는 응원은 없습니다.',
+      sooyo: '승요 지수 내일로 이월', rxCategory: 'sleep' },
+  ];
+
   window.MAUMJARO_FORTUNE_DATA = {
     STEM_KO, BRANCH_KO, GAN_ELEMENT, BRANCH_ELEMENT,
     DAILY_FORTUNE_SEED, WEEKLY_FORTUNE_SEED, MONTHLY_FORTUNE_SEED, TOJEONG_SEED,
     MIND_FORTUNE_SEED, SOCIAL_FORTUNE_SEED, WEALTH_FORTUNE_SEED, LOVE_FORTUNE_SEED, WORK_FORTUNE_SEED,
     TODAY_ONELINE_SEED, LUCKY_COLORS, LUCKY_ITEMS, AVOID_TODAY_SEED,
     MAUMUN_EMOTION_CATEGORY, FORTUNE_CATEGORY_LABELS, MAUMUN_INTERPRETATION,
+    CHEER_FORTUNE_SEED,
     WEEKDAY_LABELS, MONTH_KEYWORDS, MONTHLY_MIND_FLOW_SEED, MONTHLY_PRESCRIPTION_SEED,
     FIRST_HALF_FORTUNE_SEED, SECOND_HALF_FORTUNE_SEED, YEARLY_PRESCRIPTION_SEED,
     MAUMUN_SHARE_TEXTS,
