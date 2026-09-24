@@ -17,6 +17,12 @@ on:
       - 'tarot-data.js'
       - 'zodiac-data.js'
       - 'scripts/build-pages.mjs'
+      # scripts/data/ 아래 전부. 파일 하나씩 적었다가 네 번 연속으로 빠뜨렸다
+      # (llms.txt, app.js, emotion/, 그리고 emotion-copy.mjs). 새 데이터 파일을
+      # 여기 추가하는 걸 잊으면, 그 파일을 고쳐도 페이지는 옛날 내용 그대로 남는다.
+      # 통째로 잡아서 다시는 이 실수가 안 나게 한다.
+      - 'scripts/data/**'
+      - 'scripts/lib/**'
       - '.github/workflows/build-pages.yml'
   workflow_dispatch:
 
