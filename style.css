@@ -4457,3 +4457,109 @@ body:has(#healing-overlay.show) #app #syringe-svg {
    같은 크기로 두면 긴 쪽이 줄바꿈돼 마지막 글자만 다음 줄로 떨어진다(실측 확인). */
 .mj-share-headline.is-mid { font-size: 44px; }
 .mj-share-headline.is-long { font-size: 34px; }
+
+/* ── 개발자에게 한마디 ─────────────────────────────────────────
+   설정 카드의 기존 언어(.settings-card / .settings-close / .action-btn)를 그대로 쓰고,
+   입력칸 두 개와 안내 문구만 더한다. 새 팔레트를 만들지 않는다. */
+.feedback-card {
+  max-width: 360px;
+}
+.feedback-sub {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: -8px 0 14px;
+}
+.feedback-text {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 108px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  font-family: inherit;
+}
+.feedback-text::placeholder,
+.feedback-contact::placeholder {
+  color: var(--text-dim);
+}
+.feedback-meter {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 5px 2px 14px;
+  font-variant-numeric: tabular-nums;
+}
+.feedback-contact {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  font-family: inherit;
+}
+.feedback-note {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin: 10px 2px 14px;
+}
+.feedback-status {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ef6a54;
+  margin: 0 2px 12px;
+}
+.feedback-send {
+  display: block;
+  width: 100%;
+  padding: 13px 0;
+  margin-bottom: 8px;
+}
+.feedback-done-emoji {
+  font-size: 40px;
+  text-align: center;
+  margin: 6px 0 10px;
+}
+#feedback-done {
+  text-align: center;
+}
+#feedback-done .feedback-sub {
+  margin: -6px 0 18px;
+}
+
+/* 기록 탭 맨 아래의 한마디 입구. 카드로 만들지 않는다 —
+   위의 기록 카드들과 같은 무게로 보이면 기록의 일부처럼 읽힌다. */
+.history-feedback {
+  text-align: center;
+  padding: 22px 0 8px;
+  margin-top: 6px;
+  border-top: 1px solid var(--card-border);
+}
+.history-feedback-text {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+.history-feedback-btn {
+  border: 1px solid var(--card-border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.history-feedback-btn:active {
+  transform: scale(0.97);
+}
