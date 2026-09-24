@@ -17,11 +17,18 @@
 //   - 생성물은 리포에 커밋되어 GitHub Pages가 그대로 서빙한다. 빌드 도구 없음.
 //
 // 실행: node scripts/build-pages.mjs
+//
+// 예외 하나: scripts/data/emotion-copy.mjs
+//   "내용을 여기에 베껴 쓰지 않는다"는 위 원칙의 유일한 예외다. 감정 페이지 23장이
+//   서로 85% 똑같아서 구글이 "크롤링됨 – 색인 생성 안 됨"으로 묶어버렸고, 앱 데이터만으로는
+//   그 이상 달라질 수가 없었다. 앱에 없는 내용이므로 앱과 어긋날 일도 없다.
+//   자세한 사정은 그 파일 머리말에 적어뒀다.
 
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { loadSymptoms } from './lib/symptoms.mjs';
+import { EMOTION_COPY } from './data/emotion-copy.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -709,6 +716,10 @@ function emotionPages(S) {
     const others = keys.filter((x) => x !== k);
     // "비슷한 결"은 같은 편(긍정/그 외)에서 앞뒤로 몇 개만 고른다. 임의 분류를 새로 만들지 않는다.
     const kin = others.filter((x) => (POSITIVE_EMOTIONS.indexOf(x) >= 0) === warm).slice(0, 6);
+    // 감정마다 손으로 쓴 고유 내용. 빠진 감정이 있으면 생성을 멈춘다 —
+    // 조용히 건너뛰면 그 페이지만 옛날처럼 얇아져서 또 색인이 안 된다.
+    const c = EMOTION_COPY[k];
+    if (!c) throw new Error(`emotion-copy.mjs에 '${k}'가 없습니다. 감정을 추가했다면 그 파일에도 추가하세요.`);
 
     const answer = `${e.label}${josa(e.label, '은', '는')} 맘운자로에서 ${e.mg}짜리 '마음 주사'로 다루는 감정입니다. `
       + `앱에서 ${e.label}${josa(e.label, '을', '를')} 고르면 그 마음에 맞는 한 줄이 나오고, 휴대폰을 살짝 찌르면 주사가 놓입니다. `
@@ -721,9 +732,12 @@ function emotionPages(S) {
       { q: `${e.mg}은 무슨 뜻인가요?`,
         a: `감정의 무게를 주사 용량에 빗댄 표시입니다. 맘운자로는 ${keys.length}가지 감정에 각각 다른 용량을 매겨두었고, `
            + `${e.label}${josa(e.label, '은', '는')} ${e.mg}입니다. 실제 의약품이 아니고 의학적 의미도 없습니다.` },
-      { q: `기록이 남나요? 다른 사람이 볼 수 있나요?`,
-        a: `기록은 서버가 아니라 사용자 기기 안에만 저장됩니다. 다른 사람은 볼 수 없고, 직접 공유하지 않는 한 밖으로 나가지 않습니다. `
-           + `쌓이면 달력과 그래프로 감정의 흐름을 볼 수 있습니다.` },
+      // 이 질문만 감정마다 다르다. 검색해서 들어오는 사람이 실제로 많이 묻는 형태이고,
+      // 23장이 서로 다른 페이지가 되게 하는 데도 이게 제일 크게 기여한다.
+      { q: `${e.label}${josa(e.label, '과', '와')} ${c.vs.other}${josa(c.vs.other, '은', '는')} 어떻게 다른가요?`,
+        a: `${noDot(c.vs.text)}.` },
+      { q: `${e.label}일 때 오늘 뭘 해보면 될까요?`,
+        a: `${c.try.map(noDot).join(', ')} — 맘운자로는 이 중 하나를 '오늘의 처방'으로 건네고, 휴대폰을 찌르면 그 처방이 놓입니다.` },
       { q: `맘운자로는 무료인가요? 설치가 필요한가요?`,
         a: `전부 무료이고 설치도 회원가입도 없습니다. 브라우저에서 주소를 열면 바로 쓸 수 있고, 30초면 됩니다. `
            + `재미로 보는 콘텐츠이며 의학적·심리학적 진단이 아닙니다.` },
@@ -735,31 +749,32 @@ function emotionPages(S) {
   <p style="margin:0;font-size:17px;font-weight:700;">${esc(e.caption)}</p>
 </div>
 
-<h2>${esc(e.label)}, 어떤 마음인가요</h2>
+<h2>${esc(e.label)}${josa(e.label, '은', '는')} 언제 오나요</h2>
+<p>${esc(c.when)}</p>
 <p>맘운자로는 감정을 고쳐야 할 것으로 보지 않습니다. ${warm
     ? `${esc(e.label)}${josa(e.label, '은', '는')} 오래 붙잡아둘 만한 마음이고, 이 앱은 그 순간을 기록해 두었다가 나중에 다시 꺼내 볼 수 있게 합니다.`
-    : `${esc(e.label)}${josa(e.label, '도', '도')} 그냥 오늘 여기 있는 마음입니다. 없애는 게 아니라 이름을 붙이고 잠시 내려놓는 쪽으로 다룹니다.`}</p>
-<p>앱에서는 ${esc(e.label)}${josa(e.label, '에', '에')} <strong>${esc(e.mg)}</strong>이 매겨져 있습니다. 감정의 무게를 주사 용량에 빗댄 표시일 뿐이고 의학적 의미는 없습니다.</p>
+    : `${esc(e.label)}${josa(e.label, '도', '도')} 그냥 오늘 여기 있는 마음입니다. 없애는 게 아니라 이름을 붙이고 잠시 내려놓는 쪽으로 다룹니다.`} 앱에서는 <strong>${esc(e.mg)}</strong>이 매겨져 있는데, 감정의 무게를 주사 용량에 빗댄 표시일 뿐이고 의학적 의미는 없습니다.</p>
+
+<h2>${esc(e.label)}${josa(e.label, '과', '와')} ${esc(c.vs.other)}, 어떻게 다른가요</h2>
+<p>${esc(c.vs.text)}</p>
+
+<h2>${esc(e.label)}일 때 오늘 해볼 수 있는 것</h2>
+<ul>${c.try.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+${c.note ? `<p class="note">${esc(c.note)}</p>` : ''}
 
 <h2>${esc(e.label)}일 때 맘운자로가 건네는 10가지</h2>
 <p>감정을 고르면 아래 중 하나가 나옵니다. 매번 같은 문장이 나오지 않도록 열흘에 걸쳐 열 개가 한 번씩 돌아갑니다.</p>
 <div class="tells"><ul style="margin:0">${e.messages.map((m) => `<li>${esc(m)}</li>`).join('')}</ul></div>
 
 <h2>그다음에 무엇을 하나요</h2>
-<p>맘운자로의 흐름은 네 단계입니다. <strong>운 → 마음 → 처방 → 주사</strong>.</p>
-<ul>
-  <li><strong>운</strong> — 사주로 계산한 오늘의 기운을 봅니다(생년월일만 있으면 되고, 태어난 시간은 몰라도 됩니다).</li>
-  <li><strong>마음</strong> — 지금 감정을 고릅니다. ${esc(e.label)}${josa(e.label, '이', '가')} 여기에 해당합니다.</li>
-  <li><strong>처방</strong> — 오늘의 기운과 지금 마음을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 줍니다.</li>
-  <li><strong>주사</strong> — 휴대폰을 살짝 찌르면 그 처방이 마음에 놓입니다. 친구에게 보낼 수도 있습니다.</li>
-</ul>
-<p>운세나 타로도 결국 이 흐름으로 들어옵니다. 보고 끝나는 화면을 만들지 않는다는 게 이 앱의 원칙입니다.</p>
+<p>맘운자로의 흐름은 <strong>운 → 마음 → 처방 → 주사</strong> 네 단계입니다.
+오늘의 기운과 지금 고른 마음(여기서는 ${esc(e.label)})을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 주고,
+휴대폰을 살짝 찌르면 그 처방이 놓입니다. 친구에게 보낼 수도 있습니다.
+보고 끝나는 화면을 만들지 않는다는 게 이 앱의 원칙입니다.</p>
 
 <h2>비슷한 결의 감정</h2>
 <div class="grid">${kin.map(tile).join('')}</div>
-
-<h2>감정 ${keys.length}가지 전체</h2>
-<div class="grid">${keys.map(tile).join('')}</div>
+<p class="sub">감정 ${keys.length}가지를 한 번에 보려면 <a href="/guide/">전체 목록</a>으로.</p>
 
 <p class="note">재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다. 마음이 오래 힘드시면 전문가의 도움을 받으시길 권합니다.</p>`;
 
