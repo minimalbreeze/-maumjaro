@@ -31,9 +31,13 @@ const ROOT = join(HERE, '..');
 const SITE = 'https://maumjaro.minimalbreeze.com';
 
 const CHANNELS = [
-  { key: 'naver',   label: '네이버 블로그', medium: 'blog' },
+  // medium은 GA4가 기본 채널로 인정하는 값만 쓴다. 그 밖의 값(blog, sns, rx …)은
+  // 전부 Unassigned로 떨어져서 채널 보고서가 무용지물이 된다.
+  // 인정값: organic · cpc · email · social · paid-social · referral · affiliate · display
+  // 블로그에서 넘어오는 링크는 말 그대로 referral이 맞다.
+  { key: 'naver',   label: '네이버 블로그', medium: 'referral' },
   { key: 'threads', label: '스레드',        medium: 'social' },
-  { key: 'tistory', label: '티스토리',      medium: 'blog' },
+  { key: 'tistory', label: '티스토리',      medium: 'referral' },
 ];
 
 // 글의 종류. 새로 만들고 싶은 유형이 생기면 여기에만 추가한다.
@@ -92,12 +96,12 @@ async function main() {
   out.push('');
   out.push('그 감정 하나만 다룬 글이라면 홈 대신 아래를 쓰세요. 글과 도착 화면이 맞아떨어져서');
   out.push('바로 나가는 사람이 줄어듭니다. 채널은 네이버 블로그 기준이고, 스레드에 쓸 때는');
-  out.push('`utm_source=naver`를 `threads`로, `utm_medium=blog`를 `social`로 바꾸면 됩니다.');
+  out.push('`utm_source=naver`를 `threads`로, `utm_medium=referral`을 `social`로 바꾸면 됩니다.');
   out.push('');
   out.push('| 감정 | 링크 |');
   out.push('|---|---|');
   Object.keys(S).forEach((k) => {
-    out.push(`| ${S[k].emoji} ${S[k].label} | \`${link(`/emotion/${k}/`, 'naver', 'blog', 'empathy')}\` |`);
+    out.push(`| ${S[k].emoji} ${S[k].label} | \`${link(`/emotion/${k}/`, 'naver', 'referral', 'empathy')}\` |`);
   });
   out.push('');
 

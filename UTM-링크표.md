@@ -24,13 +24,13 @@
 
 | 글의 종류 | 붙여넣을 링크 |
 |---|---|
-| 감정 공감형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 체크리스트형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=checklist` |
-| 운세형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=fortune` |
-| 타로형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=tarot` |
-| 참여형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=quiz` |
-| 스포츠 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=sports` |
-| 다이어트 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=blog&utm_content=diet` |
+| 감정 공감형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 체크리스트형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=checklist` |
+| 운세형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=fortune` |
+| 타로형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=tarot` |
+| 참여형 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=quiz` |
+| 스포츠 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=sports` |
+| 다이어트 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=naver&utm_medium=referral&utm_content=diet` |
 
 ## 스레드
 
@@ -48,45 +48,45 @@
 
 | 글의 종류 | 붙여넣을 링크 |
 |---|---|
-| 감정 공감형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=empathy` |
-| 체크리스트형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=checklist` |
-| 운세형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=fortune` |
-| 타로형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=tarot` |
-| 참여형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=quiz` |
-| 스포츠 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=sports` |
-| 다이어트 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=blog&utm_content=diet` |
+| 감정 공감형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=empathy` |
+| 체크리스트형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=checklist` |
+| 운세형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=fortune` |
+| 타로형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=tarot` |
+| 참여형 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=quiz` |
+| 스포츠 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=sports` |
+| 다이어트 멘탈 | `https://maumjaro.minimalbreeze.com/?utm_source=tistory&utm_medium=referral&utm_content=diet` |
 
 ## 특정 감정을 주제로 쓴 글
 
 그 감정 하나만 다룬 글이라면 홈 대신 아래를 쓰세요. 글과 도착 화면이 맞아떨어져서
 바로 나가는 사람이 줄어듭니다. 채널은 네이버 블로그 기준이고, 스레드에 쓸 때는
-`utm_source=naver`를 `threads`로, `utm_medium=blog`를 `social`로 바꾸면 됩니다.
+`utm_source=naver`를 `threads`로, `utm_medium=referral`을 `social`로 바꾸면 됩니다.
 
 | 감정 | 링크 |
 |---|---|
-| 😣 스트레스 | `https://maumjaro.minimalbreeze.com/emotion/stress/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😰 불안 | `https://maumjaro.minimalbreeze.com/emotion/anxiety/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😔 우울 | `https://maumjaro.minimalbreeze.com/emotion/depression/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😪 무기력 | `https://maumjaro.minimalbreeze.com/emotion/lethargy/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🥺 외로움 | `https://maumjaro.minimalbreeze.com/emotion/loneliness/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😤 분노 | `https://maumjaro.minimalbreeze.com/emotion/anger/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😊 기쁨 | `https://maumjaro.minimalbreeze.com/emotion/joy/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😌 평범 | `https://maumjaro.minimalbreeze.com/emotion/ordinary/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🤩 설렘 | `https://maumjaro.minimalbreeze.com/emotion/excitement/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😞 서운함 | `https://maumjaro.minimalbreeze.com/emotion/hurt/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😒 질투 | `https://maumjaro.minimalbreeze.com/emotion/jealousy/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😬 긴장 | `https://maumjaro.minimalbreeze.com/emotion/nervous/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🥱 지침 | `https://maumjaro.minimalbreeze.com/emotion/exhausted/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🙏 감사 | `https://maumjaro.minimalbreeze.com/emotion/gratitude/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😎 뿌듯함 | `https://maumjaro.minimalbreeze.com/emotion/proud/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🧘 편안함 | `https://maumjaro.minimalbreeze.com/emotion/comfort/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🌙 그리움 | `https://maumjaro.minimalbreeze.com/emotion/longing/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🥰 사랑 | `https://maumjaro.minimalbreeze.com/emotion/affection/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😖 답답함 | `https://maumjaro.minimalbreeze.com/emotion/stuffy/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🎈 홀가분 | `https://maumjaro.minimalbreeze.com/emotion/relief/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 😮‍💨 허탈함 | `https://maumjaro.minimalbreeze.com/emotion/deflated/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🍕 식욕 폭발 | `https://maumjaro.minimalbreeze.com/emotion/craving/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
-| 🫠 자책 | `https://maumjaro.minimalbreeze.com/emotion/selfblame/?utm_source=naver&utm_medium=blog&utm_content=empathy` |
+| 😣 스트레스 | `https://maumjaro.minimalbreeze.com/emotion/stress/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😰 불안 | `https://maumjaro.minimalbreeze.com/emotion/anxiety/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😔 우울 | `https://maumjaro.minimalbreeze.com/emotion/depression/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😪 무기력 | `https://maumjaro.minimalbreeze.com/emotion/lethargy/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🥺 외로움 | `https://maumjaro.minimalbreeze.com/emotion/loneliness/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😤 분노 | `https://maumjaro.minimalbreeze.com/emotion/anger/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😊 기쁨 | `https://maumjaro.minimalbreeze.com/emotion/joy/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😌 평범 | `https://maumjaro.minimalbreeze.com/emotion/ordinary/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🤩 설렘 | `https://maumjaro.minimalbreeze.com/emotion/excitement/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😞 서운함 | `https://maumjaro.minimalbreeze.com/emotion/hurt/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😒 질투 | `https://maumjaro.minimalbreeze.com/emotion/jealousy/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😬 긴장 | `https://maumjaro.minimalbreeze.com/emotion/nervous/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🥱 지침 | `https://maumjaro.minimalbreeze.com/emotion/exhausted/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🙏 감사 | `https://maumjaro.minimalbreeze.com/emotion/gratitude/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😎 뿌듯함 | `https://maumjaro.minimalbreeze.com/emotion/proud/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🧘 편안함 | `https://maumjaro.minimalbreeze.com/emotion/comfort/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🌙 그리움 | `https://maumjaro.minimalbreeze.com/emotion/longing/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🥰 사랑 | `https://maumjaro.minimalbreeze.com/emotion/affection/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😖 답답함 | `https://maumjaro.minimalbreeze.com/emotion/stuffy/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🎈 홀가분 | `https://maumjaro.minimalbreeze.com/emotion/relief/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 😮‍💨 허탈함 | `https://maumjaro.minimalbreeze.com/emotion/deflated/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🍕 식욕 폭발 | `https://maumjaro.minimalbreeze.com/emotion/craving/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
+| 🫠 자책 | `https://maumjaro.minimalbreeze.com/emotion/selfblame/?utm_source=naver&utm_medium=referral&utm_content=empathy` |
 
 ## GA4에서 어디를 보나
 
