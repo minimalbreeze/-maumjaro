@@ -24,6 +24,11 @@
 // 직접 호출하는 걸 막는다(완벽한 보안은 아니지만 기본적인 오남용 방지책).
 const ALLOWED_ORIGIN = 'https://maumjaro.minimalbreeze.com';
 
+// 이 Worker는 손으로 붙여넣어 배포한다. 그래서 "지금 올라가 있는 게 어느 코드인지"를
+// 알 방법이 없었고, 기능이 안 보일 때 붙여넣기가 잘못된 건지 다른 문제인지 구분이 안 됐다.
+// 운영자 화면 맨 아래에 이 값을 찍는다. 코드를 고칠 때마다 날짜를 올린다.
+const BUILD = '2026-09-24 · 답글 삭제 포함';
+
 function corsHeaders(origin) {
   const allow = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;
   return {
@@ -362,6 +367,7 @@ textarea{flex:1;min-width:0;resize:vertical;min-height:46px;border:1px solid var
 button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;color:#fff;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--a),var(--b))}
 .meta{font-size:10.5px;color:var(--dim);margin:9px 0 0;word-break:break-all}
 .empty{color:var(--dim);text-align:center;padding:40px 0}
+.build{text-align:center;font-size:10px;color:var(--dim);margin:18px 0 0}
 .setup{background:#fff;border:1px solid var(--a);border-radius:14px;padding:14px 16px;margin-bottom:16px}
 .setup h2{font-size:14px;margin:0 0 8px}
 .setup ul{margin:0;padding-left:18px}
@@ -459,7 +465,7 @@ setInterval(function () {
     .map((k) => ({ tid: k.name.slice('thread:'.length), md: k.metadata || {} }))
     .sort((a, b) => String(b.md.updatedAt || '').localeCompare(String(a.md.updatedAt || '')));
 
-  if (!rows.length) return html('<h1>맘운자로 한마디</h1><p class="empty">아직 온 말이 없습니다.</p>', 200, 0);
+  if (!rows.length) return html(`<h1>맘운자로 한마디</h1><p class="empty">아직 온 말이 없습니다.</p><p class="build">${adminEsc(BUILD)}</p>`, 200, 0);
 
   // 목록은 metadata만으로 정렬하고, 본문은 최근 12개만 펼친다.
   // 대화가 수백 개로 늘어도 KV 읽기가 12회를 넘지 않는다.
@@ -519,5 +525,6 @@ setInterval(function () {
   <p class="top">대화 ${rows.length}개 · <strong>답장 차례 ${waiting}개</strong>${rows.length > open.length ? ` · 최근 ${open.length}개만 펼침` : ''}</p>
   <form method="GET" action="/admin"><input type="hidden" name="key" value="${adminEsc(env.ADMIN_KEY)}"><button class="refresh" type="submit">새로고침</button></form>
 </div>
-${cards}`, 200, waiting);
+${cards}
+<p class="build">${adminEsc(BUILD)}</p>`, 200, waiting);
 }
