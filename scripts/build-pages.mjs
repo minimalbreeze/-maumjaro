@@ -21,6 +21,7 @@
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { loadSymptoms } from './lib/symptoms.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -34,21 +35,6 @@ async function loadData(file, key) {
   new Function('window', src)(w);
   const data = w[key];
   if (!data) throw new Error(`${file}에서 ${key}를 읽지 못했습니다.`);
-  return data;
-}
-
-// app.js는 최상단에서 document를 만지기 때문에 loadData()처럼 통째로 실행할 수 없다.
-// 그래서 SYMPTOMS 객체 리터럴만 잘라내 평가한다. 내용을 여기 베껴 쓰지 않는다는
-// 원칙은 그대로다 — 값은 전부 app.js에서 온다.
-async function loadSymptoms() {
-  const src = await readFile(join(ROOT, 'app.js'), 'utf8');
-  const head = 'const SYMPTOMS = ';
-  const start = src.indexOf(head);
-  const end = src.indexOf('\n  };', start);
-  if (start < 0 || end < 0) throw new Error('app.js에서 SYMPTOMS를 찾지 못했습니다.');
-  const lit = src.slice(start + head.length, end + 4);
-  const data = new Function('return ' + lit)();
-  if (!data || !Object.keys(data).length) throw new Error('SYMPTOMS가 비어 있습니다.');
   return data;
 }
 
@@ -943,7 +929,7 @@ async function main() {
   const T = await loadData('tarot-data.js', 'MAUMJARO_TAROT_DATA');
   const Z = await loadData('zodiac-data.js', 'MAUMJARO_ZODIAC_DATA');
 
-  const S = await loadSymptoms();
+  const S = await loadSymptoms(ROOT);
 
   // 감정을 맨 앞에 만든다. 목록·사이트맵에서 앞에 오도록 — 이게 앱의 핵심 경험이다.
   emotionPages(S);
