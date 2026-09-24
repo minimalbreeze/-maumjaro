@@ -7,11 +7,12 @@
 //
 // 경로가 다섯이다.
 //   POST /               → DeepSeek 프록시 (기존 동작, 그대로)
-//   POST /feedback       → "개발자에게 한마디" 한 줄 쓰기. 운영자 카톡으로 즉시 간다.
+//   POST /feedback       → "개발자에게 한마디" 한 줄 쓰기
 //   POST /feedback/edit  → 본인이 쓴 글 고치기
 //   POST /feedback/delete→ 본인이 쓴 글 지우기
 //   GET  /feedback?thread= → 그 대화의 말풍선 전부 (앱이 답장을 가져갈 때)
-//   GET  /admin?key=     → 운영자 화면. 카톡에 온 링크를 누르면 여기가 열린다.
+//   GET  /admin?key=     → 운영자 화면. 여기가 알림을 대신한다 — 운영자가 직접 들어와
+//                          쌓인 한마디를 보고 답한다. 그래서 설정이 덜 된 것도 여기서 알려준다.
 //   POST /admin/reply    → 운영자가 그 화면에서 답장을 쓴다.
 // 기존 클라이언트는 전부 루트로 호출하므로 이 분기 때문에 깨지는 것은 없다.
 // 자세한 설정은 FEEDBACK_SETUP.md 참고.
@@ -84,13 +85,13 @@ export default {
     }
 
     if (path === '/feedback') {
-      return handleFeedback(body, env, headers, url.origin);
+      return handleFeedback(body, env, headers);
     }
     // 고치기·지우기는 쓴 사람만 할 수 있어야 한다. 로그인이 없으므로 대화 ID가
     // 곧 신분증이다 — 그 ID를 아는 기기만 그 대화의 글을 건드릴 수 있고,
     // from이 'user'인 말풍선만 대상으로 삼는다(개발자 답장은 앱에서 못 건드린다).
     if (path === '/feedback/edit' || path === '/feedback/delete') {
-      return handleAmend(path.endsWith('/edit') ? 'edit' : 'delete', body, env, headers, url.origin);
+      return handleAmend(path.endsWith('/edit') ? 'edit' : 'delete', body, env, headers);
     }
 
     const systemPrompt = typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 4000) : '';
@@ -216,7 +217,7 @@ async function writeThread(env, thread) {
 }
 
 // ── 앱: 한 줄 쓰기 ────────────────────────────────────────────────
-async function handleFeedback(body, env, headers, selfOrigin) {
+async function handleFeedback(body, env, headers) {
   const tid = typeof body.thread === 'string' ? body.thread : '';
   if (!TID_RE.test(tid)) return jsonRes({ error: 'bad thread' }, 400, headers);
 
@@ -241,11 +242,9 @@ async function handleFeedback(body, env, headers, selfOrigin) {
   }
   await writeThread(env, thread);
 
-  // 카톡은 보내다 실패해도 저장은 이미 끝났다. 앱에 실패라고 답하면 같은 글이
-  // 또 들어온다 — 알림이 늦는 것보다 글이 겹치는 쪽이 나쁘다.
-  const turn = thread.messages.filter((m) => m.from === 'user').length;
-  const notified = await notifyOwner({ text, meta, tid, turn }, env, selfOrigin);
-  return jsonRes({ ok: true, notified }, 200, headers);
+  // 알림은 보내지 않는다. 운영자가 /admin 을 직접 열어서 본다 —
+  // 그래서 그 화면이 "답장 차례"를 눈에 띄게 세어 보여주는 게 중요하다.
+  return jsonRes({ ok: true }, 200, headers);
 }
 
 // ── 앱: 대화 가져가기 ─────────────────────────────────────────────
@@ -269,7 +268,7 @@ async function handleThreadGet(url, env, headers) {
 // 운영자가 이미 읽고 답까지 한 말이 흔적 없이 사라지면 대화가 앞뒤로 안 맞는다.
 //
 // 이미 나간 카톡 알림은 되돌릴 수 없다. 그래서 앱도 그렇게 알린다(없앴다고 말하지 않는다).
-async function handleAmend(op, body, env, headers, selfOrigin) {
+async function handleAmend(op, body, env, headers) {
   const tid = typeof body.thread === 'string' ? body.thread : '';
   const id = typeof body.id === 'string' ? body.id.slice(0, 64) : '';
   if (!TID_RE.test(tid) || !id) return jsonRes({ error: 'bad request' }, 400, headers);
@@ -283,7 +282,6 @@ async function handleAmend(op, body, env, headers, selfOrigin) {
   if (!msg || msg.from !== 'user' || msg.deleted) return jsonRes({ error: 'not editable' }, 403, headers);
 
   const now = new Date().toISOString();
-  let notify = null;
 
   if (op === 'delete') {
     msg.text = '';
@@ -295,121 +293,20 @@ async function handleAmend(op, body, env, headers, selfOrigin) {
     if (text === msg.text) return jsonRes({ ok: true, unchanged: 1 }, 200, headers);
     msg.text = text;
     msg.editedAt = now;
-
-    // 고칠 때마다 카톡을 보내면 오타 고치는 것까지 다 울린다. 반대로 한 번도 안
-    // 보내면, 운영자가 옛 글을 보고 엉뚱한 답을 한다. 그래서 "운영자가 이미 봤을
-    // 만한 때"에만 다시 알린다 — 5분이 지났거나, 이미 답장이 오간 대화일 때.
-    const aged = Date.now() - new Date(msg.at).getTime() > 5 * 60 * 1000;
-    const answered = thread.messages.some((m) => m.from === 'dev');
-    if (aged || answered) notify = text;
   }
 
+  // 고친 글은 목록에서 위로 올라온다(updatedAt). 운영자가 옛 내용을 보고 엉뚱한
+  // 답을 하는 걸 막아주는 건 그것과 말풍선의 "수정됨" 표시다.
   thread.updatedAt = now;
   await writeThread(env, thread);
-
-  if (notify) {
-    const turn = thread.messages.filter((m) => m.from === 'user' && !m.deleted).length;
-    await notifyOwner({ text: notify, meta: thread.meta || {}, tid, turn, edited: 1 }, env, selfOrigin);
-  }
   return jsonRes({ ok: true }, 200, headers);
-}
-
-// ── 운영자에게 알리기 ─────────────────────────────────────────────
-async function notifyOwner(info, env, selfOrigin) {
-  const via = [];
-  const head = info.edited
-    ? '✏️ 맘운자로 한마디 (고쳤어요)'
-    : (info.turn > 1 ? `💬 맘운자로 한마디 (${info.turn}번째)` : '💬 맘운자로 한마디 (새 대화)');
-  const m = info.meta || {};
-  const metaLine = [
-    m.uses != null ? `주사 ${m.uses}회` : '',
-    m.days != null ? `${m.days}일` : '',
-    m.standalone ? '홈화면앱' : '브라우저',
-  ].filter(Boolean).join(' · ');
-  const replyUrl = env.ADMIN_KEY
-    ? `${selfOrigin}/admin?key=${encodeURIComponent(env.ADMIN_KEY)}#t-${info.tid}`
-    : ALLOWED_ORIGIN;
-
-  if (env.KAKAO_REST_API_KEY) {
-    try { if (await sendKakaoMemo(head, info.text, metaLine, replyUrl, env)) via.push('kakao'); }
-    catch (e) { /* 다음 채널로 */ }
-  }
-  if (env.FEEDBACK_WEBHOOK_URL) {
-    try {
-      const full = `${head}\n\n${info.text}\n\n${metaLine}\n${replyUrl}`;
-      // content는 디스코드, text는 슬랙이 읽는 키다. Make 같은 곳은 통째로 받는다.
-      const res = await fetch(env.FEEDBACK_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: full, text: full, feedback: info, reply_url: replyUrl }),
-      });
-      if (res.ok) via.push('webhook');
-    } catch (e) { /* 저장은 이미 끝났다 */ }
-  }
-  return via;
-}
-
-// 카카오톡 "나에게 보내기".
-//
-// 기본 텍스트 템플릿의 text는 200자가 상한이라, 넘으면 API가 통째로 거절한다.
-// 그래서 본문을 잘라 넣고, 답장 링크는 text가 아니라 버튼(link)으로 붙인다.
-//
-// 리프레시 토큰은 쓸 때마다 만료가 미뤄지지만, 남은 기간이 1개월 아래로 떨어지면
-// 카카오가 새 리프레시 토큰을 같이 내려준다. Worker는 자기 Secret을 실행 중에 못 고치므로
-// KV에 갈아 끼운다(KV 값이 Secret보다 우선). 그래서 60일 넘게 한마디가 없어도 안 끊긴다.
-async function sendKakaoMemo(head, text, metaLine, replyUrl, env) {
-  const KV_KEY = 'kakao:refresh_token';
-  let refresh = env.KAKAO_REFRESH_TOKEN || '';
-  if (env.FEEDBACK_KV) {
-    const stored = await env.FEEDBACK_KV.get(KV_KEY);
-    if (stored) refresh = stored;
-  }
-  if (!refresh) return false;
-
-  const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: env.KAKAO_REST_API_KEY,
-      refresh_token: refresh,
-      ...(env.KAKAO_CLIENT_SECRET ? { client_secret: env.KAKAO_CLIENT_SECRET } : {}),
-    }),
-  });
-  if (!tokenRes.ok) return false;
-  const token = await tokenRes.json();
-  if (!token || !token.access_token) return false;
-  if (token.refresh_token && env.FEEDBACK_KV) {
-    try { await env.FEEDBACK_KV.put(KV_KEY, token.refresh_token); } catch (e) { /* 다음 기회에 */ }
-  }
-
-  // 200자에 맞춰 본문부터 줄인다. 머리말과 꼬리말은 짧으므로 남는 만큼을 본문에 준다.
-  const tail = metaLine ? `\n\n${metaLine}` : '';
-  const room = 200 - head.length - tail.length - 2;
-  const bodyText = text.length > room ? `${text.slice(0, Math.max(0, room - 1))}…` : text;
-
-  const memoRes = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token.access_token}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      template_object: JSON.stringify({
-        object_type: 'text',
-        text: `${head}\n\n${bodyText}${tail}`,
-        link: { web_url: replyUrl, mobile_web_url: replyUrl },
-        button_title: '답장하기',
-      }),
-    }),
-  });
-  return memoRes.ok;
 }
 
 // ── 운영자 화면 ───────────────────────────────────────────────────
 //
-// 카톡에 온 "답장하기" 버튼이 여기로 온다. 폰에서 열리므로 한 화면에 다 넣는다.
-// 열쇠(ADMIN_KEY)가 주소에 들어가지만, 그 주소는 운영자 본인 카톡에만 있다.
+// 알림을 따로 보내지 않기로 했으므로(운영자가 직접 들어와서 본다) 이 화면이
+// 창구 전부다. 폰에서 즐겨찾기로 열리므로 한 화면에 다 넣고, 답할 차례가 몇 개인지
+// 제목(탭)에까지 띄운다.
 function adminEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -417,11 +314,13 @@ function adminEsc(s) {
 }
 
 async function handleAdmin(request, url, env) {
-  const html = (body, status) => new Response(
+  // 알림이 없으니 탭 제목이 알림 역할을 한다. 즐겨찾기/홈 화면에 걸어두면
+  // 열지 않아도 "(2)"가 보인다.
+  const html = (body, status, waiting) => new Response(
     `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>맘운자로 한마디</title>
+<title>${waiting ? `(${waiting}) ` : ''}맘운자로 한마디</title>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:rgba(255,150,175,0.28);--text:#6b4657;--dim:#9c6b7d;--a:#ff9166;--b:#ffc66b}
 *{box-sizing:border-box}
@@ -444,12 +343,35 @@ textarea{flex:1;min-width:0;resize:vertical;min-height:46px;border:1px solid var
 button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;color:#fff;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--a),var(--b))}
 .meta{font-size:10.5px;color:var(--dim);margin:9px 0 0;word-break:break-all}
 .empty{color:var(--dim);text-align:center;padding:40px 0}
-</style></head><body>${body}</body></html>`,
+.setup{background:#fff;border:1px solid var(--a);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.setup h2{font-size:14px;margin:0 0 8px}
+.setup ul{margin:0;padding-left:18px}
+.setup li{margin-bottom:5px;font-size:12.5px}
+.setup code{background:#f4ecf3;border-radius:5px;padding:1px 5px;font-size:11.5px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 18px}
+.bar .top{margin:0}
+.refresh{height:32px;padding:0 14px;font-size:12px}
+</style></head><body>${body}
+<script>
+// 답장을 쓰다 말고 새로고침되면 쓰던 글이 날아간다. 빈 칸일 때만 갱신한다.
+setInterval(function () {
+  var typing = [].some.call(document.querySelectorAll('textarea'), function (t) { return t.value.trim(); });
+  if (!typing && document.visibilityState === 'visible') location.reload();
+}, 60000);
+</script></body></html>`,
     { status: status || 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } },
   );
 
-  if (!env.ADMIN_KEY) return html('<p class="empty">ADMIN_KEY가 설정되지 않았습니다.<br>FEEDBACK_SETUP.md를 확인하세요.</p>', 503);
-  if (!env.FEEDBACK_KV) return html('<p class="empty">FEEDBACK_KV 바인딩이 없습니다.<br>FEEDBACK_SETUP.md를 확인하세요.</p>', 503);
+  // 설정이 덜 된 채로 열면 "왜 아무것도 없지?"가 된다. 무엇이 빠졌고 어디서
+  // 고치는지를 이 화면이 직접 말해준다 — 알림이 없으니 물어볼 데도 여기뿐이다.
+  const missing = [];
+  if (!env.ADMIN_KEY) missing.push('<code>ADMIN_KEY</code> — Worker → Settings → Variables and Secrets → Add (Secret으로 저장)');
+  if (!env.FEEDBACK_KV) missing.push('<code>FEEDBACK_KV</code> — KV namespace를 만들고 Worker → Settings → Bindings 에서 이 이름으로 연결');
+  if (missing.length) {
+    return html(`<h1>맘운자로 한마디</h1>
+<div class="setup"><h2>설정이 아직 끝나지 않았어요</h2><ul>${missing.map((x) => `<li>${x}</li>`).join('')}</ul></div>
+<p class="empty">자세한 순서는 저장소의 FEEDBACK_SETUP.md에 있어요.<br>그 전까지 사용자가 쓴 글은 각자 폰에 보관되고, 설정이 끝나면 자동으로 들어옵니다.</p>`, 503);
+  }
 
   // 답장 쓰기. 폼은 일반 form POST라 자바스크립트가 없어도 된다.
   if (url.pathname.replace(/\/+$/, '') === '/admin/reply') {
@@ -480,7 +402,7 @@ button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;col
     .map((k) => ({ tid: k.name.slice('thread:'.length), md: k.metadata || {} }))
     .sort((a, b) => String(b.md.updatedAt || '').localeCompare(String(a.md.updatedAt || '')));
 
-  if (!rows.length) return html('<h1>맘운자로 한마디</h1><p class="empty">아직 온 말이 없습니다.</p>');
+  if (!rows.length) return html('<h1>맘운자로 한마디</h1><p class="empty">아직 온 말이 없습니다.</p>', 200, 0);
 
   // 목록은 metadata만으로 정렬하고, 본문은 최근 12개만 펼친다.
   // 대화가 수백 개로 늘어도 KV 읽기가 12회를 넘지 않는다.
@@ -521,6 +443,9 @@ button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;col
   }).join('');
 
   return html(`<h1>맘운자로 한마디</h1>
-<p class="top">대화 ${rows.length}개 · 답장 차례 ${waiting}개${rows.length > open.length ? ` · 최근 ${open.length}개만 펼침` : ''}</p>
-${cards}`);
+<div class="bar">
+  <p class="top">대화 ${rows.length}개 · <strong>답장 차례 ${waiting}개</strong>${rows.length > open.length ? ` · 최근 ${open.length}개만 펼침` : ''}</p>
+  <form method="GET" action="/admin"><input type="hidden" name="key" value="${adminEsc(env.ADMIN_KEY)}"><button class="refresh" type="submit">새로고침</button></form>
+</div>
+${cards}`, 200, waiting);
 }
