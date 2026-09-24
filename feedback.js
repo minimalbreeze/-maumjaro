@@ -1,40 +1,94 @@
-// 개발자에게 한마디 — 사용자가 남긴 말을 운영자 폰으로 바로 보낸다.
+// 개발자에게 한마디 — 끊기지 않고 이어지는 1:1 대화
 //
 // 왜 만들었나 (2026-09)
 //   GA4로는 "몇 명이 들어와서 몇 초 있다 나갔다"까지만 보인다. 하루 활성 4명,
 //   주사 완주 22% 같은 숫자는 무엇을 고쳐야 하는지 한 마디도 알려주지 않는다.
 //   이 규모에서는 통계보다 한 사람의 문장 하나가 정보량이 훨씬 크다.
-//   "앱이 별로인가" 하는 불안은 데이터가 없어서 생기는 것이지, 데이터가 나빠서
-//   생기는 게 아니다. 그래서 말을 받을 창구를 만든다.
+//
+// 왜 "보내고 끝"이 아니라 대화인가
+//   한 번 보내고 끝나는 건의함은 두 번째 글이 안 온다 — 보낸 사람 입장에서
+//   허공에 대고 말한 것과 구분이 안 되기 때문이다. 답이 돌아오는 걸 본 사람만
+//   다음 말을 한다. 그래서 SNS 댓글처럼 계속 이어지게 만든다.
+//   운영자에게는 카톡으로 즉시 가고, 운영자가 답하면 여기 말풍선으로 붙는다.
 //
 // 설계 원칙
-//  - 실패해도 사용자가 쓴 글을 잃지 않는다. 전송이 안 되면 기기에 보관(outbox)했다가
+//  - 누구인지 묻지 않는다. 기기마다 임의의 대화 ID 하나를 만들어 쓴다.
+//    이메일·연락처를 받지 않는다 — 답은 이 화면 안에서만 한다.
+//  - 대화 ID는 추측할 수 없는 난수다. 이 ID를 아는 것 자체가 열쇠이므로
+//    로그인 없이도 남의 대화를 볼 수 없다.
+//  - 실패해도 사용자가 쓴 글을 잃지 않는다. 전송이 안 되면 기기에 보관했다가
 //    다음에 앱을 열 때 자동으로 다시 보낸다. 폰은 지하철에서도 열린다.
-//  - 서버 주소(Worker)가 없으면 설정에 항목 자체를 띄우지 않는다.
-//    눌렀는데 아무 데도 안 가는 버튼이 제일 나쁘다.
-//  - 보내는 정보는 화면에 적어둔 것이 전부다. 몰래 붙여 보내지 않는다.
+//  - 내가 쓴 말은 서버와 무관하게 항상 화면에 남는다(로컬 사본).
+//  - 서버 주소가 없으면 입구 자체를 띄우지 않는다.
 //  - 끝나면 핵심 경험(주사)으로 돌려보낸다 — 정보만 보여주고 끝나는 화면을 만들지 않는다.
 (() => {
   'use strict';
 
+  const TID_KEY = 'maumjaro:feedbackThreadId';
+  const THREAD_KEY = 'maumjaro:feedbackThread';   // { messages: [], seenAt: '' }
   const OUTBOX_KEY = 'maumjaro:feedbackOutbox';
-  const LAST_SENT_KEY = 'maumjaro:feedbackLastAt';
   const MAX_LEN = 500;
-  const MAX_CONTACT = 60;
+  const MAX_KEEP = 60;         // 기기에 남기는 말풍선 수
   const MAX_OUTBOX = 20;
-  const COOLDOWN_MS = 20000;   // 연타로 같은 글이 여러 번 날아가는 걸 막는다
+  const COOLDOWN_MS = 5000;    // 대화니까 짧게. 연타로 같은 글이 겹치는 것만 막는다.
   const TIMEOUT_MS = 8000;
+  const POLL_MS = 15000;       // 대화창을 열어둔 동안에만 돈다
 
-  function endpoint() {
+  let lastSentAt = 0;
+  let pollTimer = null;
+
+  function base() {
     // 주소는 fortune.js가 하나만 갖고 있다. 여기서 또 적으면 둘이 어긋난다.
     const F = window.MaumjaroFortune;
-    const base = (F && F.AI_PROXY_URL) || '';
-    return base ? base.replace(/\/+$/, '') + '/feedback' : '';
+    const u = (F && F.AI_PROXY_URL) || '';
+    return u ? u.replace(/\/+$/, '') : '';
   }
 
   function track(name, params) {
     const G = window.MaumjaroGame;
     if (G && typeof G.track === 'function') G.track(name, params);
+  }
+
+  // 기기마다 하나. 한 번 만들면 안 바꾼다 — 바꾸면 그동안의 대화가 끊긴다.
+  function threadId() {
+    try {
+      let t = localStorage.getItem(TID_KEY);
+      if (t && /^[a-f0-9]{24,64}$/.test(t)) return t;
+      const a = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(a);
+      t = [...a].map((n) => n.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(TID_KEY, t);
+      return t;
+    } catch (e) {
+      // localStorage가 막힌 브라우저(사생활 보호 모드 등). 이번 세션 동안만 쓴다.
+      if (!threadId._mem) threadId._mem = String(Date.now()).padStart(24, '0').slice(0, 24) + '0000';
+      return threadId._mem;
+    }
+  }
+
+  function loadThread() {
+    try {
+      const t = JSON.parse(localStorage.getItem(THREAD_KEY) || '{}');
+      return { messages: Array.isArray(t.messages) ? t.messages : [], seenAt: t.seenAt || '' };
+    } catch (e) { return { messages: [], seenAt: '' }; }
+  }
+  function saveThread(t) {
+    try {
+      localStorage.setItem(THREAD_KEY, JSON.stringify({
+        messages: t.messages.slice(-MAX_KEEP),
+        seenAt: t.seenAt || '',
+      }));
+    } catch (e) { /* 저장 실패는 무시 */ }
+  }
+
+  // 같은 말풍선이 두 번 붙지 않도록 id로 합친다. 서버에 올라간 내 글은
+  // 로컬 사본과 id가 같으므로 자연스럽게 하나로 겹쳐진다.
+  function merge(local, incoming) {
+    const byId = new Map();
+    [...local, ...incoming].forEach((m) => {
+      if (m && m.id && typeof m.text === 'string') byId.set(m.id, m);
+    });
+    return [...byId.values()].sort((a, b) => String(a.at).localeCompare(String(b.at)));
   }
 
   function loadOutbox() {
@@ -44,11 +98,11 @@
     } catch (e) { return []; }
   }
   function saveOutbox(list) {
-    try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(list.slice(-MAX_OUTBOX))); } catch (e) { /* 저장 실패는 무시 */ }
+    try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(list.slice(-MAX_OUTBOX))); } catch (e) { /* 무시 */ }
   }
 
   // 화면에 "함께 전달돼요"라고 적어둔 것과 정확히 같아야 한다. 여기에 뭘 더 넣으려면
-  // 안내 문구도 같이 고친다.
+  // 안내 문구(.feedback-note)도 같이 고친다.
   function meta() {
     let uses = 0;
     let days = 0;
@@ -73,86 +127,164 @@
     };
   }
 
-  async function post(item) {
-    const url = endpoint();
-    if (!url) return false;
+  async function call(path, opts) {
+    const url = base();
+    if (!url) return null;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: item.text, contact: item.contact || '', at: item.at, meta: item.meta || {} }),
-        signal: ctrl.signal,
-      });
-      return res.ok;
+      const res = await fetch(url + path, { ...opts, signal: ctrl.signal });
+      if (!res.ok) return null;
+      return await res.json();
     } catch (e) {
-      return false;
+      return null;
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  function postMessage(item) {
+    return call('/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        thread: threadId(),
+        id: item.id,
+        text: item.text,
+        at: item.at,
+        meta: item.meta || {},
+      }),
+    });
+  }
+
+  // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 개발자 답장 수를 돌려준다.
+  async function sync() {
+    if (!base()) return 0;
+    const data = await call(`/feedback?thread=${encodeURIComponent(threadId())}`, { method: 'GET' });
+    if (!data || !Array.isArray(data.messages)) return 0;
+    const t = loadThread();
+    const before = new Set(t.messages.map((m) => m.id));
+    t.messages = merge(t.messages, data.messages);
+    saveThread(t);
+    return t.messages.filter((m) => m.from === 'dev' && !before.has(m.id)).length;
+  }
+
+  function unreadCount() {
+    const t = loadThread();
+    return t.messages.filter((m) => m.from === 'dev' && String(m.at) > String(t.seenAt || '')).length;
+  }
+
+  function markRead() {
+    const t = loadThread();
+    const devs = t.messages.filter((m) => m.from === 'dev');
+    if (devs.length) t.seenAt = devs[devs.length - 1].at;
+    saveThread(t);
+    paintBadges();
+  }
+
+  // 답장이 와 있다는 걸 알리는 빨간 점. 설정 버튼과 기록 탭 입구 두 곳에 붙인다.
+  function paintBadges() {
+    const n = unreadCount();
+    document.querySelectorAll('.fb-badge').forEach((el) => { el.hidden = n === 0; });
+    const hint = document.getElementById('history-feedback-text');
+    if (hint) {
+      hint.textContent = n
+        ? `개발자 답장이 ${n}개 도착했어요`
+        : '쓰면서 불편한 곳, 있었으면 하는 기능 있으셨나요?';
     }
   }
 
   // 보관해둔 글을 조용히 다시 보낸다. 하나라도 실패하면 거기서 멈춘다 —
   // 서버가 죽어 있는데 20개를 연달아 두드릴 이유가 없다.
   async function flush() {
-    if (!endpoint()) return;
-    let box = loadOutbox();
+    if (!base()) return;
+    const box = loadOutbox();
     if (!box.length) return;
     const left = [];
     let stop = false;
     for (const item of box) {
       if (stop) { left.push(item); continue; }
-      const ok = await post(item);
+      const ok = await postMessage(item);
       if (!ok) { stop = true; left.push(item); }
     }
     saveOutbox(left);
     if (left.length < box.length) track('feedback_flushed', { sent: box.length - left.length });
   }
 
-  function queue(item) {
-    const box = loadOutbox();
-    box.push(item);
-    saveOutbox(box);
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function when(at) {
+    const d = new Date(at);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return sameDay ? hm : `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
+  }
+
+  function render() {
+    const box = document.getElementById('feedback-thread');
+    const empty = document.getElementById('feedback-empty');
+    if (!box) return;
+    const t = loadThread();
+    const pending = new Set(loadOutbox().map((m) => m.id));
+    empty.hidden = t.messages.length > 0;
+    box.innerHTML = t.messages.map((m) => {
+      const mine = m.from !== 'dev';
+      return `<div class="fb-msg ${mine ? 'mine' : 'dev'}">
+        ${mine ? '' : '<div class="fb-who">💉 맘운자로 개발자</div>'}
+        <div class="fb-bubble">${esc(m.text).replace(/\n/g, '<br>')}</div>
+        <div class="fb-time">${when(m.at)}${mine && pending.has(m.id) ? ' · 보내는 중' : ''}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function refresh() {
+    const got = await sync();
+    render();
+    if (document.getElementById('feedback-overlay').classList.contains('show')) markRead();
+    else paintBadges();
+    return got;
   }
 
   function open(from) {
     const ov = document.getElementById('feedback-overlay');
     if (!ov) return;
-    const form = document.getElementById('feedback-form');
-    const done = document.getElementById('feedback-done');
     const ta = document.getElementById('feedback-text');
-    const contact = document.getElementById('feedback-contact');
-    const count = document.getElementById('feedback-count');
-    const sendBtn = document.getElementById('feedback-send-btn');
     const status = document.getElementById('feedback-status');
-
-    form.hidden = false;
-    done.hidden = true;
     status.textContent = '';
     status.hidden = true;
-    sendBtn.disabled = !ta.value.trim();
-    count.textContent = `${ta.value.length}/${MAX_LEN}`;
+    document.getElementById('feedback-send-btn').disabled = !ta.value.trim();
 
+    render();
     ov.classList.add('show');
+    markRead();
     setTimeout(() => ta.focus(), 260);
-    track('feedback_opened', { from: from || 'settings' });
+    track('feedback_opened', { from: from || 'settings', messages: loadThread().messages.length });
+
+    refresh();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(refresh, POLL_MS);
   }
 
   function close() {
     const ov = document.getElementById('feedback-overlay');
     if (ov) ov.classList.remove('show');
+    clearInterval(pollTimer);
+    pollTimer = null;
   }
 
   function wire() {
     const ov = document.getElementById('feedback-overlay');
     const row = document.getElementById('settings-feedback-row');
+    const histBlock = document.getElementById('history-feedback');
     if (!ov) return;
 
-    const histBlock = document.getElementById('history-feedback');
-
     // 보낼 곳이 없으면 입구를 만들지 않는다.
-    if (!endpoint()) {
+    if (!base()) {
       if (row) row.hidden = true;
       if (histBlock) histBlock.hidden = true;
       return;
@@ -160,17 +292,12 @@
     if (row) row.hidden = false;
     if (histBlock) histBlock.hidden = false;
 
-    const histBtn = document.getElementById('history-feedback-btn');
-    if (histBtn) histBtn.addEventListener('click', () => open('history'));
-
     const openBtn = document.getElementById('settings-feedback-btn');
+    const histBtn = document.getElementById('history-feedback-btn');
     const ta = document.getElementById('feedback-text');
-    const contact = document.getElementById('feedback-contact');
     const count = document.getElementById('feedback-count');
     const sendBtn = document.getElementById('feedback-send-btn');
     const status = document.getElementById('feedback-status');
-    const form = document.getElementById('feedback-form');
-    const done = document.getElementById('feedback-done');
 
     if (openBtn) {
       openBtn.addEventListener('click', () => {
@@ -179,6 +306,7 @@
         setTimeout(() => open('settings'), 220);
       });
     }
+    if (histBtn) histBtn.addEventListener('click', () => open('history'));
 
     ta.addEventListener('input', () => {
       if (ta.value.length > MAX_LEN) ta.value = ta.value.slice(0, MAX_LEN);
@@ -189,47 +317,58 @@
     async function send() {
       const text = ta.value.trim();
       if (!text) return;
-
-      const last = Number(localStorage.getItem(LAST_SENT_KEY) || 0);
-      if (Date.now() - last < COOLDOWN_MS) {
+      if (Date.now() - lastSentAt < COOLDOWN_MS) {
         status.hidden = false;
-        status.textContent = '방금 보내주셨어요. 잠시 뒤에 한 번 더 보내주세요.';
+        status.textContent = '조금만 천천히 보내주세요.';
         return;
       }
-
-      sendBtn.disabled = true;
-      sendBtn.textContent = '보내는 중…';
-      status.hidden = true;
+      lastSentAt = Date.now();
 
       const item = {
+        id: `${threadId().slice(0, 8)}-${Date.now().toString(36)}`,
         at: new Date().toISOString(),
+        from: 'user',
         text,
-        contact: (contact.value || '').trim().slice(0, MAX_CONTACT),
         meta: meta(),
       };
-      const ok = await post(item);
-      if (!ok) queue(item);
 
-      try { localStorage.setItem(LAST_SENT_KEY, String(Date.now())); } catch (e) { /* 무시 */ }
+      // 내 말은 먼저 화면에 붙인다. 전송 결과와 무관하게 남는다.
+      const t = loadThread();
+      t.messages = merge(t.messages, [{ id: item.id, at: item.at, from: 'user', text }]);
+      saveThread(t);
+      ta.value = '';
+      count.textContent = `0/${MAX_LEN}`;
+      sendBtn.disabled = true;
+      status.hidden = true;
+
+      const box = loadOutbox();
+      box.push(item);
+      saveOutbox(box);
+      render();
+
+      const ok = await postMessage(item);
+      if (ok) {
+        saveOutbox(loadOutbox().filter((m) => m.id !== item.id));
+      } else {
+        status.hidden = false;
+        status.textContent = '지금은 연결이 안 돼서 폰에 보관해뒀어요. 다음에 앱을 열 때 자동으로 다시 보낼게요.';
+      }
       track(ok ? 'feedback_sent' : 'feedback_queued', {
         length: text.length,
-        has_contact: item.contact ? 1 : 0,
+        turn: t.messages.filter((m) => m.from === 'user').length,
       });
-
-      ta.value = '';
-      contact.value = '';
-      count.textContent = `0/${MAX_LEN}`;
-      sendBtn.textContent = '보내기 💌';
-
-      // 실패해도 글은 기기에 남아 있다. 그 사실을 숨기지 않고 그대로 말한다.
-      document.getElementById('feedback-done-sub').textContent = ok
-        ? '읽고 하나하나 반영할게요. 답장이 필요하면 남겨주신 곳으로 연락드려요.'
-        : '지금은 연결이 안 돼서 폰에 보관해뒀어요. 다음에 앱을 열 때 자동으로 다시 보낼게요.';
-      form.hidden = true;
-      done.hidden = false;
+      render();
     }
 
     sendBtn.addEventListener('click', send);
+    // 데스크톱에서는 Enter로 보내고 Shift+Enter로 줄바꿈한다. 폰은 줄바꿈이 기본이다.
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) {
+        e.preventDefault();
+        send();
+      }
+    });
+
     document.getElementById('feedback-close-btn').addEventListener('click', close);
     ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
 
@@ -239,11 +378,27 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    flush();
+    // 앱을 열거나 다시 앞으로 가져왔을 때 답장이 와 있는지 본다.
+    // 대화창이 닫혀 있으면 빨간 점만 켜고, 새 답장이 있으면 한 번만 알려준다.
+    async function checkQuietly() {
+      await flush();
+      const got = await sync();
+      paintBadges();
+      if (got > 0 && !ov.classList.contains('show')) {
+        const C = window.MaumjaroCore;
+        if (C && typeof C.showToast === 'function') C.showToast('개발자 답장이 도착했어요 💬');
+        track('feedback_reply_received', { count: got });
+      }
+    }
+    paintBadges();
+    checkQuietly();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !ov.classList.contains('show')) checkQuietly();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
   else wire();
 
-  window.MaumjaroFeedback = { open, close, flush, pending: () => loadOutbox().length };
+  window.MaumjaroFeedback = { open, close, refresh, unread: unreadCount, pending: () => loadOutbox().length };
 })();
