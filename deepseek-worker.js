@@ -14,6 +14,8 @@
 //   GET  /admin?key=     → 운영자 화면. 여기가 알림을 대신한다 — 운영자가 직접 들어와
 //                          쌓인 한마디를 보고 답한다. 그래서 설정이 덜 된 것도 여기서 알려준다.
 //   POST /admin/reply    → 운영자가 그 화면에서 답장을 쓴다.
+//   POST /admin/delete   → 운영자가 자기 답글을 지운다
+//   POST /admin/purge    → 대화 하나를 통째로 없앤다(테스트 흔적 정리·악용 대응)
 // 기존 클라이언트는 전부 루트로 호출하므로 이 분기 때문에 깨지는 것은 없다.
 // 자세한 설정은 FEEDBACK_SETUP.md 참고.
 
@@ -47,7 +49,7 @@ export default {
     // 운영자 화면은 카톡에 온 링크를 눌러서 연다 — 브라우저 주소창으로 들어오므로
     // Origin 헤더가 아예 없다. 그래서 아래 origin 검사보다 앞에 둔다.
     // 대신 ADMIN_KEY를 모르면 아무것도 못 본다.
-    if (path === '/admin' || path === '/admin/reply') {
+    if (path === '/admin' || path.startsWith('/admin/')) {
       return handleAdmin(request, url, env);
     }
 
@@ -313,6 +315,16 @@ function adminEsc(s) {
   ));
 }
 
+// 쓰기 작업을 마치면 목록으로 돌려보낸다(303). 그래야 새로고침해도 같은 글이 또
+// 올라가지 않는다. tid를 주면 그 대화 자리로 바로 내려간다.
+function backToAdmin(env, tid) {
+  const hash = tid ? `#t-${tid}` : '';
+  return new Response(null, {
+    status: 303,
+    headers: { Location: `/admin?key=${encodeURIComponent(env.ADMIN_KEY)}${hash}`, 'Cache-Control': 'no-store' },
+  });
+}
+
 async function handleAdmin(request, url, env) {
   // 알림이 없으니 탭 제목이 알림 역할을 한다. 즐겨찾기/홈 화면에 걸어두면
   // 열지 않아도 "(2)"가 보인다.
@@ -337,7 +349,14 @@ h1{font-size:17px;margin:0 0 4px}
 .m.user{align-self:flex-start;background:#f4ecf3;border-bottom-left-radius:5px}
 .m.gone{color:var(--dim);font-style:italic;background:transparent;border:1px dashed var(--line)}
 .m.dev{align-self:flex-end;color:#fff;background:linear-gradient(135deg,var(--a),var(--b));border-bottom-right-radius:5px}
-.w{font-size:10px;color:var(--dim);margin-top:3px}
+.w{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--dim);margin-top:3px}
+.row{display:flex;flex-direction:column}
+.row.right{align-items:flex-end}
+.mini{display:inline}
+.link{height:auto;padding:0;background:none;color:var(--dim);font-size:10px;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.link:hover{color:var(--text)}
+.link.danger{color:#c0392b}
+.purge{justify-content:flex-end;margin-top:10px}
 form{display:flex;gap:7px;align-items:flex-end}
 textarea{flex:1;min-width:0;resize:vertical;min-height:46px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--text)}
 button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;color:#fff;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--a),var(--b))}
@@ -353,6 +372,11 @@ button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;col
 .refresh{height:32px;padding:0 14px;font-size:12px}
 </style></head><body>${body}
 <script>
+// 되돌릴 수 없는 삭제는 한 번 묻는다. data-confirm이 붙은 폼에만 걸린다.
+document.addEventListener('submit', function (e) {
+  var msg = e.target.getAttribute && e.target.getAttribute('data-confirm');
+  if (msg && !confirm(msg)) e.preventDefault();
+});
 // 답장을 쓰다 말고 새로고침되면 쓰던 글이 날아간다. 빈 칸일 때만 갱신한다.
 setInterval(function () {
   var typing = [].some.call(document.querySelectorAll('textarea'), function (t) { return t.value.trim(); });
@@ -373,8 +397,10 @@ setInterval(function () {
 <p class="empty">자세한 순서는 저장소의 FEEDBACK_SETUP.md에 있어요.<br>그 전까지 사용자가 쓴 글은 각자 폰에 보관되고, 설정이 끝나면 자동으로 들어옵니다.</p>`, 503);
   }
 
+  const adminPath = url.pathname.replace(/\/+$/, '');
+
   // 답장 쓰기. 폼은 일반 form POST라 자바스크립트가 없어도 된다.
-  if (url.pathname.replace(/\/+$/, '') === '/admin/reply') {
+  if (adminPath === '/admin/reply') {
     if (request.method !== 'POST') return html('<p class="empty">잘못된 요청입니다.</p>', 405);
     const form = await request.formData();
     if (form.get('key') !== env.ADMIN_KEY) return html('<p class="empty">열쇠가 맞지 않습니다.</p>', 403);
@@ -388,11 +414,42 @@ setInterval(function () {
     thread.messages.push({ id: `dev-${Date.now().toString(36)}`, at: now, from: 'dev', text });
     thread.updatedAt = now;
     await writeThread(env, thread);
-    // 보낸 뒤 목록으로 돌아가고, 방금 답한 대화로 바로 내려간다.
-    return new Response(null, {
-      status: 303,
-      headers: { Location: `/admin?key=${encodeURIComponent(env.ADMIN_KEY)}#t-${tid}`, 'Cache-Control': 'no-store' },
-    });
+    return backToAdmin(env, tid);
+  }
+
+  // 운영자가 자기 답글을 지운다. 사용자 쪽과 같은 규칙으로 자리는 "지운 메시지"로
+  // 남긴다 — 상대가 이미 읽었을 수 있는데 흔적 없이 사라지면 대화가 앞뒤로 안 맞는다.
+  if (adminPath === '/admin/delete') {
+    if (request.method !== 'POST') return html('<p class="empty">잘못된 요청입니다.</p>', 405);
+    const form = await request.formData();
+    if (form.get('key') !== env.ADMIN_KEY) return html('<p class="empty">열쇠가 맞지 않습니다.</p>', 403);
+    const tid = String(form.get('thread') || '');
+    const id = String(form.get('id') || '');
+    if (!TID_RE.test(tid) || !id) return html('<p class="empty">잘못된 요청입니다.</p>', 400);
+
+    const thread = await readThread(env, tid);
+    if (!thread) return html('<p class="empty">없는 대화입니다.</p>', 404);
+    const msg = thread.messages.find((m) => m.id === id);
+    // 운영자는 자기 답글만 지운다. 사용자가 쓴 글은 그 사람 것이라 건드리지 않는다
+    // (대화 전체를 없애야 할 때는 아래 purge를 쓴다).
+    if (!msg || msg.from !== 'dev' || msg.deleted) return html('<p class="empty">지울 수 없는 글입니다.</p>', 403);
+    msg.text = '';
+    msg.deleted = 1;
+    delete msg.editedAt;
+    thread.updatedAt = new Date().toISOString();
+    await writeThread(env, thread);
+    return backToAdmin(env, tid);
+  }
+
+  // 대화 하나를 통째로 없앤다. 테스트하고 남은 흔적을 치우거나, 욕설·스팸이 들어왔을 때 쓴다.
+  if (adminPath === '/admin/purge') {
+    if (request.method !== 'POST') return html('<p class="empty">잘못된 요청입니다.</p>', 405);
+    const form = await request.formData();
+    if (form.get('key') !== env.ADMIN_KEY) return html('<p class="empty">열쇠가 맞지 않습니다.</p>', 403);
+    const tid = String(form.get('thread') || '');
+    if (!TID_RE.test(tid)) return html('<p class="empty">잘못된 요청입니다.</p>', 400);
+    await env.FEEDBACK_KV.delete(threadKey(tid));
+    return backToAdmin(env, '');
   }
 
   if (url.searchParams.get('key') !== env.ADMIN_KEY) return html('<p class="empty">열쇠가 맞지 않습니다.</p>', 403);
@@ -420,7 +477,17 @@ setInterval(function () {
       // 지운 글은 본문이 KV에 없다. 자리만 남겨서 대화의 앞뒤가 맞게 한다.
       const cls = x.deleted ? 'user gone' : (x.from === 'dev' ? 'dev' : 'user');
       const bubble = x.deleted ? '지운 메시지' : adminEsc(x.text);
-      return `<div><div class="m ${cls}">${bubble}</div><div class="w">${w}${x.editedAt ? ' · 수정됨' : ''}</div></div>`;
+      // 내가 쓴 답글에만 지우기를 단다. 사용자 글은 그 사람 것이라 여기서 안 건드린다
+      // (대화 전체를 없애야 할 때는 카드 아래의 "대화 전체 삭제"를 쓴다).
+      const del = (x.from === 'dev' && !x.deleted)
+        ? `<form method="POST" action="/admin/delete" class="mini">
+             <input type="hidden" name="key" value="${adminEsc(env.ADMIN_KEY)}">
+             <input type="hidden" name="thread" value="${adminEsc(t.id)}">
+             <input type="hidden" name="id" value="${adminEsc(x.id)}">
+             <button type="submit" class="link">지우기</button>
+           </form>`
+        : '';
+      return `<div class="row ${x.from === 'dev' ? 'right' : ''}"><div class="m ${cls}">${bubble}</div><div class="w">${w}${x.editedAt ? ' · 수정됨' : ''}${del}</div></div>`;
     }).join('');
     const metaLine = [
       m.uses != null ? `주사 ${m.uses}회` : '',
@@ -439,6 +506,11 @@ setInterval(function () {
         <button type="submit">보내기</button>
       </form>
       <p class="meta">${adminEsc(metaLine)}</p>
+      <form method="POST" action="/admin/purge" class="purge" data-confirm="이 대화를 통째로 지울까요? 되돌릴 수 없습니다.">
+        <input type="hidden" name="key" value="${adminEsc(env.ADMIN_KEY)}">
+        <input type="hidden" name="thread" value="${adminEsc(r.tid)}">
+        <button type="submit" class="link danger">대화 전체 삭제</button>
+      </form>
     </div>`;
   }).join('');
 
