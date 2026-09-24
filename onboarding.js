@@ -1,7 +1,18 @@
-// 첫 방문 온보딩 (3장)
+// 첫 방문 온보딩 (1장)
 //
-// "앱이 어떤 앱인지 모르겠다"는 피드백에 대한 답이다.
-// 로고 인트로가 아니라 "무엇을 하는 곳인지"를 세 장으로 보여준다.
+// 왜 3장에서 1장으로 줄였나 (2026-09)
+//   GA4 7일치를 보니 신규 49명 중 주사를 끝까지 놓은 건 11번(22%)이었고,
+//   활성 사용자당 평균 참여 시간이 35초였다. 즉 78%가 아무것도 안 하고 즉시 나간다.
+//   그런데 끝까지 간 사람은 공유까지 한다(완주 11 / 공유 26). 물건이 나쁜 게 아니라
+//   문 앞에서 돌아가는 것이다.
+//
+//   옛 3장은 전부 "어떻게 쓰는지"였다 — 고른다 / 찌른다 / 받는다.
+//   처음 온 사람의 질문은 "어떻게 쓰나"가 아니라 "이걸 왜 하지"다.
+//   아직 원하지도 않는 물건의 사용법을 3장에 걸쳐 가르치고 있었던 셈이다.
+//   게다가 주사 한 대까지 탭이 7번이었고 그중 앞 4번은 아무 일도 일어나지 않았다.
+//
+//   그래서 한 장만 남기고 그 한 장을 "왜"로 바꿨다. 조작법은 빼도 된다 —
+//   찌르는 법은 화면 안에 "콕! 찔러서 놓기"로 이미 안내되고, 마음약은 받아보면 안다.
 //
 // 원칙
 //  - 첫 방문에만 자동으로 뜨고, 한 번 보면 다시 안 뜬다.
@@ -29,35 +40,10 @@
         <path d="M18 56 l0 10" stroke="#ff9166" stroke-width="3" stroke-linecap="round"/>
         <path d="M13 62 l5 6 5-6" fill="none" stroke="#ff9166" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`,
-      title: '오늘 기분을 하나 고르면',
-      body: '스트레스·불안·기쁨까지 20가지 중에서<br>지금 마음과 가장 가까운 걸 고릅니다.',
-    },
-    {
-      art: `<svg viewBox="0 0 120 90" width="132" height="99" aria-hidden="true">
-        <rect x="50" y="10" width="20" height="46" rx="4" fill="#fdfbf6" stroke="#1f5c50" stroke-width="3"/>
-        <rect x="53" y="30" width="14" height="24" rx="3" fill="#ff9166"/>
-        <rect x="46" y="6" width="28" height="7" rx="3.5" fill="#ef6a54" stroke="#1f5c50" stroke-width="2.5"/>
-        <path d="M60 56 v10" stroke="#1f5c50" stroke-width="3" stroke-linecap="round"/>
-        <ellipse cx="60" cy="76" rx="34" ry="10" fill="#ffd9b8" stroke="#1f5c50" stroke-width="3"/>
-        <circle cx="60" cy="74" r="4" fill="#ef6a54"/>
-        <path d="M92 62 q10 6 0 12" fill="none" stroke="#ff9166" stroke-width="3" stroke-linecap="round"/>
-        <path d="M22 62 q-10 6 0 12" fill="none" stroke="#ff9166" stroke-width="3" stroke-linecap="round"/>
-      </svg>`,
-      title: '폰을 콕 찌르면 주사가 놓여요',
-      body: '화면을 눌러도 되고,<br>폰을 찌르듯 움직여도 됩니다.',
-    },
-    {
-      art: `<svg viewBox="0 0 120 90" width="132" height="99" aria-hidden="true">
-        <path d="M30 45 a22 22 0 0 1 44 0 z" transform="translate(8,0)" fill="#ff9166"/>
-        <path d="M30 45 a22 22 0 0 0 44 0 z" transform="translate(8,0)" fill="#fff5e8" stroke="#f0c9a8" stroke-width="1.5"/>
-        <rect x="35" y="42" width="46" height="6" rx="3" fill="#f0a12e"/>
-        <rect x="88" y="26" width="22" height="12" rx="6" fill="#b779ef"/>
-        <circle cx="16" cy="32" r="8" fill="#4f86e8"/>
-        <path d="M12 62 l4 8 4-8z" fill="#8fd694"/>
-        <text x="60" y="82" font-size="11" text-anchor="middle" fill="#7a6a75">46종</text>
-      </svg>`,
-      title: '마음약이 하나 나옵니다',
-      body: '전부 다르게 생긴 46종.<br>모으고, 친구에게 보낼 수도 있어요.',
+      // 슬로건을 그대로 쓴다. 이 앱이 무엇을 약속하는지가 여기 다 들어 있는데
+      // 정작 옛 온보딩 세 장에는 한 번도 안 나왔다.
+      title: '오늘도 마음에 한 대 놓고 갑니다',
+      body: '기분을 하나 고르면, 오늘 해볼 수 있는<br>한 가지를 처방해드려요. 30초면 됩니다.',
     },
   ];
 
@@ -94,9 +80,9 @@
         <div class="ob-art" id="ob-art"></div>
         <p class="ob-title" id="ob-title"></p>
         <p class="ob-body" id="ob-body"></p>
-        <div class="ob-dots" id="ob-dots">
+        ${SLIDES.length > 1 ? `<div class="ob-dots" id="ob-dots">
           ${SLIDES.map((_, n) => `<span class="ob-dot${n === 0 ? ' on' : ''}"></span>`).join('')}
-        </div>
+        </div>` : ''}
         <button class="action-btn ob-next" id="ob-next" type="button">다음</button>
         <button class="ob-skip" id="ob-skip" type="button">${fromSettings ? '닫기' : '건너뛰기'}</button>
       </div>`;
