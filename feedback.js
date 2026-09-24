@@ -31,6 +31,10 @@
 (() => {
   'use strict';
 
+  // 답글을 다는 쪽의 이름. "개발자"로 못 박아두면 다른 사람이 답할 때 거짓말이 된다.
+  // 브랜드 이름으로 두면 누가 답하든 맞는 말이 된다. 바꾸려면 여기 한 줄만 고친다.
+  const REPLIER = '맘운자로';
+
   const TID_KEY = 'maumjaro:feedbackThreadId';
   const THREAD_KEY = 'maumjaro:feedbackThread';   // { messages: [], seenAt: '' }
   const OUTBOX_KEY = 'maumjaro:feedbackOutbox';
@@ -178,7 +182,7 @@
     return loadOutbox().some((m) => m.id === id);
   }
 
-  // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 개발자 답장 수를 돌려준다.
+  // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 답장 수를 돌려준다.
   async function sync() {
     if (!base()) return 0;
     const data = await call(`/feedback?thread=${encodeURIComponent(threadId())}`, { method: 'GET' });
@@ -210,7 +214,7 @@
     const hint = document.getElementById('history-feedback-text');
     if (hint) {
       hint.textContent = n
-        ? `개발자 답장이 ${n}개 도착했어요`
+        ? `${REPLIER} 답장이 ${n}개 도착했어요`
         : '쓰면서 불편한 곳, 있었으면 하는 기능 있으셨나요?';
     }
   }
@@ -282,7 +286,7 @@
         <span class="fb-ava ${mine ? 'me' : 'dev'}" aria-hidden="true">${mine ? '🙂' : '💉'}</span>
         <div class="fb-col">
           <div class="fb-line">
-            <span class="fb-name">${mine ? '나' : '맘운자로 개발자'}</span>
+            <span class="fb-name">${mine ? '나' : REPLIER}</span>
             <span class="fb-time">${marks}</span>
           </div>
           ${gone
@@ -560,7 +564,7 @@
       paintBadges();
       if (got > 0 && !ov.classList.contains('show')) {
         const C = window.MaumjaroCore;
-        if (C && typeof C.showToast === 'function') C.showToast('개발자 답장이 도착했어요 💬');
+        if (C && typeof C.showToast === 'function') C.showToast(`${REPLIER} 답장이 도착했어요 💬`);
         track('feedback_reply_received', { count: got });
       }
     }
