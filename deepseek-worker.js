@@ -8,6 +8,8 @@
 // 경로가 다섯이다.
 //   POST /               → DeepSeek 프록시 (기존 동작, 그대로)
 //   POST /feedback       → "개발자에게 한마디" 한 줄 쓰기. 운영자 카톡으로 즉시 간다.
+//   POST /feedback/edit  → 본인이 쓴 글 고치기
+//   POST /feedback/delete→ 본인이 쓴 글 지우기
 //   GET  /feedback?thread= → 그 대화의 말풍선 전부 (앱이 답장을 가져갈 때)
 //   GET  /admin?key=     → 운영자 화면. 카톡에 온 링크를 누르면 여기가 열린다.
 //   POST /admin/reply    → 운영자가 그 화면에서 답장을 쓴다.
@@ -83,6 +85,12 @@ export default {
 
     if (path === '/feedback') {
       return handleFeedback(body, env, headers, url.origin);
+    }
+    // 고치기·지우기는 쓴 사람만 할 수 있어야 한다. 로그인이 없으므로 대화 ID가
+    // 곧 신분증이다 — 그 ID를 아는 기기만 그 대화의 글을 건드릴 수 있고,
+    // from이 'user'인 말풍선만 대상으로 삼는다(개발자 답장은 앱에서 못 건드린다).
+    if (path === '/feedback/edit' || path === '/feedback/delete') {
+      return handleAmend(path.endsWith('/edit') ? 'edit' : 'delete', body, env, headers, url.origin);
     }
 
     const systemPrompt = typeof body.systemPrompt === 'string' ? body.systemPrompt.slice(0, 4000) : '';
@@ -180,7 +188,10 @@ function jsonRes(obj, status, headers) {
 function threadKey(tid) { return `thread:${tid}`; }
 
 function metaFor(thread) {
-  const last = thread.messages[thread.messages.length - 1];
+  // 지운 말풍선은 셈에서 뺀다 — 마지막 글을 지웠는데 "답장 차례"로 남아 있으면
+  // 운영자가 빈 말풍선에 대고 답을 쓰게 된다.
+  const live = thread.messages.filter((m) => !m.deleted);
+  const last = live[live.length - 1];
   return {
     updatedAt: thread.updatedAt,
     preview: last ? String(last.text).slice(0, 60) : '',
@@ -244,14 +255,71 @@ async function handleThreadGet(url, env, headers) {
   if (!env.FEEDBACK_KV) return jsonRes({ messages: [] }, 200, headers);
   const thread = await readThread(env, tid);
   // 없는 대화도 빈 목록으로 답한다 — 있는지 없는지를 알려주지 않기 위해서다.
-  const messages = thread ? thread.messages.map((m) => ({ id: m.id, at: m.at, from: m.from, text: m.text })) : [];
+  const messages = thread ? thread.messages.map((m) => ({
+    id: m.id, at: m.at, from: m.from, text: m.text,
+    ...(m.editedAt ? { editedAt: m.editedAt } : {}),
+    ...(m.deleted ? { deleted: 1 } : {}),
+  })) : [];
   return jsonRes({ messages }, 200, headers);
+}
+
+// ── 앱: 본인이 쓴 글 고치기 / 지우기 ──────────────────────────────
+//
+// 지우면 KV에서 본문을 실제로 없앤다. 다만 말풍선 자리는 "지운 메시지"로 남긴다 —
+// 운영자가 이미 읽고 답까지 한 말이 흔적 없이 사라지면 대화가 앞뒤로 안 맞는다.
+//
+// 이미 나간 카톡 알림은 되돌릴 수 없다. 그래서 앱도 그렇게 알린다(없앴다고 말하지 않는다).
+async function handleAmend(op, body, env, headers, selfOrigin) {
+  const tid = typeof body.thread === 'string' ? body.thread : '';
+  const id = typeof body.id === 'string' ? body.id.slice(0, 64) : '';
+  if (!TID_RE.test(tid) || !id) return jsonRes({ error: 'bad request' }, 400, headers);
+  if (!env.FEEDBACK_KV) return jsonRes({ error: 'storage not configured' }, 500, headers);
+
+  const thread = await readThread(env, tid);
+  if (!thread) return jsonRes({ error: 'not found' }, 404, headers);
+
+  const msg = thread.messages.find((m) => m.id === id);
+  // 개발자 답장과 이미 지운 글은 건드릴 수 없다.
+  if (!msg || msg.from !== 'user' || msg.deleted) return jsonRes({ error: 'not editable' }, 403, headers);
+
+  const now = new Date().toISOString();
+  let notify = null;
+
+  if (op === 'delete') {
+    msg.text = '';
+    msg.deleted = 1;
+    delete msg.editedAt;
+  } else {
+    const text = typeof body.text === 'string' ? body.text.trim().slice(0, MAX_TEXT) : '';
+    if (!text) return jsonRes({ error: 'text required' }, 400, headers);
+    if (text === msg.text) return jsonRes({ ok: true, unchanged: 1 }, 200, headers);
+    msg.text = text;
+    msg.editedAt = now;
+
+    // 고칠 때마다 카톡을 보내면 오타 고치는 것까지 다 울린다. 반대로 한 번도 안
+    // 보내면, 운영자가 옛 글을 보고 엉뚱한 답을 한다. 그래서 "운영자가 이미 봤을
+    // 만한 때"에만 다시 알린다 — 5분이 지났거나, 이미 답장이 오간 대화일 때.
+    const aged = Date.now() - new Date(msg.at).getTime() > 5 * 60 * 1000;
+    const answered = thread.messages.some((m) => m.from === 'dev');
+    if (aged || answered) notify = text;
+  }
+
+  thread.updatedAt = now;
+  await writeThread(env, thread);
+
+  if (notify) {
+    const turn = thread.messages.filter((m) => m.from === 'user' && !m.deleted).length;
+    await notifyOwner({ text: notify, meta: thread.meta || {}, tid, turn, edited: 1 }, env, selfOrigin);
+  }
+  return jsonRes({ ok: true }, 200, headers);
 }
 
 // ── 운영자에게 알리기 ─────────────────────────────────────────────
 async function notifyOwner(info, env, selfOrigin) {
   const via = [];
-  const head = info.turn > 1 ? `💬 맘운자로 한마디 (${info.turn}번째)` : '💬 맘운자로 한마디 (새 대화)';
+  const head = info.edited
+    ? '✏️ 맘운자로 한마디 (고쳤어요)'
+    : (info.turn > 1 ? `💬 맘운자로 한마디 (${info.turn}번째)` : '💬 맘운자로 한마디 (새 대화)');
   const m = info.meta || {};
   const metaLine = [
     m.uses != null ? `주사 ${m.uses}회` : '',
@@ -368,6 +436,7 @@ h1{font-size:17px;margin:0 0 4px}
 .msgs{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
 .m{max-width:86%;padding:9px 12px;border-radius:15px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
 .m.user{align-self:flex-start;background:#f4ecf3;border-bottom-left-radius:5px}
+.m.gone{color:var(--dim);font-style:italic;background:transparent;border:1px dashed var(--line)}
 .m.dev{align-self:flex-end;color:#fff;background:linear-gradient(135deg,var(--a),var(--b));border-bottom-right-radius:5px}
 .w{font-size:10px;color:var(--dim);margin-top:3px}
 form{display:flex;gap:7px;align-items:flex-end}
@@ -426,7 +495,10 @@ button{flex-shrink:0;height:44px;border:0;border-radius:999px;padding:0 18px;col
     const msgs = t.messages.map((x) => {
       const d = new Date(x.at);
       const w = Number.isNaN(d.getTime()) ? '' : `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-      return `<div><div class="m ${x.from === 'dev' ? 'dev' : 'user'}">${adminEsc(x.text)}</div><div class="w">${w}</div></div>`;
+      // 지운 글은 본문이 KV에 없다. 자리만 남겨서 대화의 앞뒤가 맞게 한다.
+      const cls = x.deleted ? 'user gone' : (x.from === 'dev' ? 'dev' : 'user');
+      const bubble = x.deleted ? '지운 메시지' : adminEsc(x.text);
+      return `<div><div class="m ${cls}">${bubble}</div><div class="w">${w}${x.editedAt ? ' · 수정됨' : ''}</div></div>`;
     }).join('');
     const metaLine = [
       m.uses != null ? `주사 ${m.uses}회` : '',

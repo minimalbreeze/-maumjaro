@@ -19,6 +19,10 @@
 //  - 실패해도 사용자가 쓴 글을 잃지 않는다. 전송이 안 되면 기기에 보관했다가
 //    다음에 앱을 열 때 자동으로 다시 보낸다. 폰은 지하철에서도 열린다.
 //  - 내가 쓴 말은 서버와 무관하게 항상 화면에 남는다(로컬 사본).
+//  - 내가 쓴 말은 내가 고치고 지울 수 있다. 개발자 답장은 앱에서 건드리지 않는다.
+//    지운 자리는 "지운 메시지"로 남긴다 — 이미 답까지 받은 말이 흔적 없이
+//    사라지면 대화가 앞뒤로 안 맞는다. 이미 나간 카톡 알림도 되돌릴 수 없으므로
+//    "없앴다"고 말하지 않는다.
 //  - 서버 주소가 없으면 입구 자체를 띄우지 않는다.
 //  - 끝나면 핵심 경험(주사)으로 돌려보낸다 — 정보만 보여주고 끝나는 화면을 만들지 않는다.
 (() => {
@@ -36,6 +40,9 @@
 
   let lastSentAt = 0;
   let pollTimer = null;
+  let editingId = null;   // 지금 고치고 있는 말풍선
+  let menuFor = null;     // ⋯ 를 눌러 펼친 말풍선
+  let confirmFor = null;  // "정말 지울까요?" 를 띄운 말풍선
 
   function base() {
     // 주소는 fortune.js가 하나만 갖고 있다. 여기서 또 적으면 둘이 어긋난다.
@@ -157,6 +164,18 @@
     });
   }
 
+  function amend(op, payload) {
+    return call(`/feedback/${op}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ thread: threadId(), ...payload }),
+    });
+  }
+
+  function isPending(id) {
+    return loadOutbox().some((m) => m.id === id);
+  }
+
   // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 개발자 답장 수를 돌려준다.
   async function sync() {
     if (!base()) return 0;
@@ -233,10 +252,33 @@
     empty.hidden = t.messages.length > 0;
     box.innerHTML = t.messages.map((m) => {
       const mine = m.from !== 'dev';
-      return `<div class="fb-msg ${mine ? 'mine' : 'dev'}">
+      const gone = !!m.deleted;
+      // 고치고 지울 수 있는 건 내 글뿐이다. 이미 지운 글은 다시 건드리지 않는다.
+      const editable = mine && !gone;
+      const bubble = gone
+        ? '<div class="fb-bubble gone">지운 메시지</div>'
+        : `<div class="fb-bubble">${esc(m.text).replace(/\n/g, '<br>')}</div>`;
+      const marks = [
+        when(m.at),
+        m.editedAt ? '수정됨' : '',
+        mine && pending.has(m.id) ? '보내는 중' : '',
+      ].filter(Boolean).join(' · ');
+      let tail = '';
+      if (editable && confirmFor === m.id) {
+        tail = `<div class="fb-acts">정말 지울까요?
+          <button type="button" data-act="del-yes">지우기</button>
+          <button type="button" data-act="cancel">취소</button></div>`;
+      } else if (editable && menuFor === m.id) {
+        tail = `<div class="fb-acts">
+          <button type="button" data-act="edit">수정</button>
+          <button type="button" data-act="del">삭제</button>
+          <button type="button" data-act="cancel">취소</button></div>`;
+      }
+      return `<div class="fb-msg ${mine ? 'mine' : 'dev'}${editingId === m.id ? ' editing' : ''}" data-id="${esc(m.id)}">
         ${mine ? '' : '<div class="fb-who">💉 맘운자로 개발자</div>'}
-        <div class="fb-bubble">${esc(m.text).replace(/\n/g, '<br>')}</div>
-        <div class="fb-time">${when(m.at)}${mine && pending.has(m.id) ? ' · 보내는 중' : ''}</div>
+        ${bubble}
+        <div class="fb-time">${marks}${editable ? ' <button type="button" class="fb-more" data-act="menu" aria-label="이 메시지 수정·삭제">⋯</button>' : ''}</div>
+        ${tail}
       </div>`;
     }).join('');
     box.scrollTop = box.scrollHeight;
@@ -257,7 +299,7 @@
     const status = document.getElementById('feedback-status');
     status.textContent = '';
     status.hidden = true;
-    document.getElementById('feedback-send-btn').disabled = !ta.value.trim();
+    stopEditing();
 
     render();
     ov.classList.add('show');
@@ -273,8 +315,109 @@
   function close() {
     const ov = document.getElementById('feedback-overlay');
     if (ov) ov.classList.remove('show');
+    menuFor = null;
+    confirmFor = null;
+    stopEditing();
     clearInterval(pollTimer);
     pollTimer = null;
+  }
+
+  // 고치는 동안에는 아래 입력칸이 그 말풍선의 입력칸이 된다.
+  // 칸을 하나 더 만들지 않는 이유: 폰에서는 키보드가 화면 절반을 덮어서,
+  // 말풍선 자리에 칸이 생기면 그 칸이 키보드 밑으로 들어가 버린다.
+  function startEditing(id, text) {
+    const ta = document.getElementById('feedback-text');
+    const bar = document.getElementById('feedback-editing');
+    const send = document.getElementById('feedback-send-btn');
+    editingId = id;
+    menuFor = null;
+    confirmFor = null;
+    ta.value = text;
+    document.getElementById('feedback-count').textContent = `${text.length}/${MAX_LEN}`;
+    send.textContent = '수정';
+    send.disabled = !text.trim();
+    if (bar) bar.hidden = false;
+    render();
+    ta.focus();
+    ta.setSelectionRange(text.length, text.length);
+  }
+
+  function stopEditing(clearText) {
+    const ta = document.getElementById('feedback-text');
+    const bar = document.getElementById('feedback-editing');
+    const send = document.getElementById('feedback-send-btn');
+    editingId = null;
+    if (bar) bar.hidden = true;
+    if (send) send.textContent = '보내기';
+    if (clearText && ta) {
+      ta.value = '';
+      document.getElementById('feedback-count').textContent = `0/${MAX_LEN}`;
+    }
+    if (send && ta) send.disabled = !ta.value.trim();
+  }
+
+  function say(msg) {
+    const status = document.getElementById('feedback-status');
+    if (!status) return;
+    status.hidden = !msg;
+    status.textContent = msg || '';
+  }
+
+  async function saveEdit(id, text) {
+    const t = loadThread();
+    const msg = t.messages.find((m) => m.id === id);
+    if (!msg) return;
+    if (text === msg.text) { stopEditing(true); render(); return; }
+
+    // 아직 서버에 못 올라간 글이면 보관함 쪽만 고치면 된다. 서버는 나중에
+    // 고쳐진 내용으로 받게 된다.
+    if (isPending(id)) {
+      saveOutbox(loadOutbox().map((m) => (m.id === id ? { ...m, text } : m)));
+      msg.text = text;
+      saveThread(t);
+      stopEditing(true);
+      render();
+      flush();
+      return;
+    }
+
+    const ok = await amend('edit', { id, text });
+    if (!ok) { say('지금은 연결이 안 돼서 고치지 못했어요. 잠시 뒤 다시 해주세요.'); return; }
+    msg.text = text;
+    msg.editedAt = new Date().toISOString();
+    saveThread(t);
+    stopEditing(true);
+    say('');
+    track('feedback_edited', { length: text.length });
+    render();
+  }
+
+  async function doDelete(id) {
+    const t = loadThread();
+    const msg = t.messages.find((m) => m.id === id);
+    if (!msg) return;
+
+    // 아직 안 보낸 글은 흔적을 남길 이유가 없다 — 통째로 뺀다.
+    if (isPending(id)) {
+      saveOutbox(loadOutbox().filter((m) => m.id !== id));
+      t.messages = t.messages.filter((m) => m.id !== id);
+      saveThread(t);
+      confirmFor = null;
+      render();
+      return;
+    }
+
+    const ok = await amend('delete', { id });
+    if (!ok) { say('지금은 연결이 안 돼서 지우지 못했어요. 잠시 뒤 다시 해주세요.'); return; }
+    msg.text = '';
+    msg.deleted = 1;
+    delete msg.editedAt;
+    saveThread(t);
+    confirmFor = null;
+    if (editingId === id) stopEditing(true);
+    say('');
+    track('feedback_deleted', {});
+    render();
   }
 
   function wire() {
@@ -317,6 +460,8 @@
     async function send() {
       const text = ta.value.trim();
       if (!text) return;
+      // 고치는 중이면 새 글이 아니라 그 말풍선을 바꾼다.
+      if (editingId) { await saveEdit(editingId, text); return; }
       if (Date.now() - lastSentAt < COOLDOWN_MS) {
         status.hidden = false;
         status.textContent = '조금만 천천히 보내주세요.';
@@ -359,6 +504,27 @@
       });
       render();
     }
+
+    // 말풍선은 다시 그려지므로 개별 버튼에 붙이지 않고 목록에서 한 번만 받는다.
+    document.getElementById('feedback-thread').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      const wrap = btn.closest('.fb-msg');
+      if (!wrap) return;
+      const id = wrap.dataset.id;
+      const act = btn.dataset.act;
+      if (act === 'menu') { menuFor = menuFor === id ? null : id; confirmFor = null; render(); return; }
+      if (act === 'cancel') { menuFor = null; confirmFor = null; render(); return; }
+      if (act === 'del') { confirmFor = id; menuFor = null; render(); return; }
+      if (act === 'del-yes') { doDelete(id); return; }
+      if (act === 'edit') {
+        const m = loadThread().messages.find((x) => x.id === id);
+        if (m) startEditing(id, m.text);
+      }
+    });
+
+    const cancelEdit = document.getElementById('feedback-edit-cancel');
+    if (cancelEdit) cancelEdit.addEventListener('click', () => { stopEditing(true); say(''); render(); });
 
     sendBtn.addEventListener('click', send);
     // 데스크톱에서는 Enter로 보내고 Shift+Enter로 줄바꿈한다. 폰은 줄바꿈이 기본이다.
