@@ -4458,12 +4458,14 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mj-share-headline.is-mid { font-size: 44px; }
 .mj-share-headline.is-long { font-size: 34px; }
 
-/* ── 개발자에게 한마디 (1:1 대화) ─────────────────────────────
-   설정 카드의 기존 언어(.settings-card / .action-btn)를 그대로 쓰고,
-   말풍선만 더한다. 새 팔레트를 만들지 않는다 —
-   내 말은 브랜드 그라디언트, 개발자 답은 흰 카드로 구분한다. */
+/* ── 개발자에게 한마디 ────────────────────────────────────────
+   스레드(Threads)의 피드 결을 따른다. 말풍선을 좌우로 가르지 않고
+   동그란 프로필 + 왼쪽 정렬 + 얇은 구분선으로 간다.
+   왜: 이건 둘이 주고받는 대화지만 화면은 게시판에 가깝다. 좌우로 갈라 놓으면
+   글이 길어질수록 읽기 어렵고, 한 사람이 여러 줄을 쓰면 더 그렇다.
+   색은 기존 팔레트만 쓴다 — 스레드 흉내를 낸다고 흑백으로 가지 않는다. */
 .feedback-card {
-  max-width: 360px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
 }
@@ -4497,111 +4499,165 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   font-weight: 700;
 }
 
-/* 말풍선 목록. 대화가 길어져도 카드가 화면을 넘지 않도록 여기서만 스크롤한다. */
+/* 피드. 길어져도 카드가 화면을 넘지 않도록 여기서만 스크롤한다. */
 .feedback-thread {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 42vh;
+  max-height: 46vh;
   overflow-y: auto;
-  margin-bottom: 12px;
-}
-.feedback-thread:empty {
-  display: none;
-}
-.fb-msg {
-  display: flex;
-  flex-direction: column;
-  max-width: 84%;
-}
-.fb-msg.mine {
-  align-self: flex-end;
-  align-items: flex-end;
-}
-.fb-msg.dev {
-  align-self: flex-start;
-  align-items: flex-start;
-}
-.fb-who {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--text-dim);
   margin-bottom: 4px;
 }
-.fb-bubble {
-  font-size: 13.5px;
-  line-height: 1.55;
-  padding: 10px 13px;
-  border-radius: 16px;
-  word-break: break-word;
+.feedback-thread:empty { display: none; }
+
+/* 글 한 편 = 프로필 + 본문. 구분선은 글 사이에만(마지막 글 밑에는 안 긋는다). */
+.fb-post {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--card-border);
 }
-.fb-msg.mine .fb-bubble {
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
-  border-bottom-right-radius: 5px;
-}
-.fb-msg.dev .fb-bubble {
-  color: var(--text);
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-bottom-left-radius: 5px;
-}
-.fb-time {
+.fb-post:last-child { border-bottom: none; }
+.fb-ava {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--text-dim);
-  margin-top: 4px;
+  justify-content: center;
+  font-size: 15px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
 }
-/* 지운 자리. 비우지 않고 남긴다 — 이미 답까지 받은 말이 흔적 없이 사라지면
-   대화가 앞뒤로 안 맞는다. */
-.fb-bubble.gone {
+/* 개발자 글만 브랜드 그라디언트를 두른다 — 누가 쓴 글인지 한눈에 갈린다. */
+.fb-ava.dev {
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  border-color: transparent;
+}
+.fb-col {
+  flex: 1;
+  min-width: 0;
+}
+.fb-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.fb-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.fb-time {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.fb-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+/* 지운 자리. 비우지 않고 남긴다 — 이미 답까지 받은 글이 흔적 없이 사라지면
+   앞뒤가 안 맞는다. */
+.fb-text.gone {
   color: var(--text-dim);
   font-style: italic;
-  background: none;
-  border: 1px dashed var(--card-border);
 }
-.fb-msg.mine .fb-bubble.gone {
-  color: var(--text-dim);
-}
-/* 내 말풍선에만 붙는 ⋯. 손가락이 닿을 만큼은 키우되 눈에 띄지는 않게 둔다. */
-.fb-more {
-  border: none;
-  background: none;
-  color: var(--text-dim);
-  font-size: 13px;
-  line-height: 1;
-  padding: 2px 5px;
-  margin: -2px 0;
-  cursor: pointer;
-}
+/* 수정·삭제는 늘 보인다(스레드의 답글·좋아요 줄과 같은 자리).
+   ⋯ 뒤에 숨겨두면 한 번 더 눌러야 하고, 있는 줄도 모른다. */
 .fb-acts {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  gap: 10px;
+  margin-top: 7px;
+  font-size: 11.5px;
   color: var(--text-dim);
-  margin-top: 6px;
 }
 .fb-acts button {
-  border: 1px solid var(--card-border);
-  background: var(--card);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 5px 11px;
+  border: none;
+  background: none;
+  padding: 2px 0;
   font-size: 11.5px;
   font-weight: 600;
+  color: var(--text-dim);
   cursor: pointer;
 }
-.fb-acts button[data-act="del-yes"] {
-  color: #ef6a54;
-  border-color: rgba(239,106,84,0.4);
-  background: rgba(239,106,84,0.08);
+.fb-acts button:hover { color: var(--text); }
+.fb-acts button[data-act="del-yes"] { color: #ef6a54; }
+/* 고치는 중인 글은 흐리게 — 아래 입력칸의 글이 이 자리로 간다는 표시다. */
+.fb-post.editing .fb-text { opacity: 0.4; }
+
+/* 답글 입력줄. 스레드와 같은 모양: 프로필 + 한 줄 입력 + 보내기. */
+.feedback-compose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border);
 }
-/* 고치는 중인 말풍선은 흐리게 — 아래 입력칸의 글이 이 자리로 간다는 표시다. */
-.fb-msg.editing .fb-bubble {
-  opacity: 0.45;
+.feedback-text {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  resize: none;
+  max-height: 96px;
+  background: none;
+  border: none;
+  padding: 7px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  font-family: inherit;
+}
+.feedback-text:focus { outline: none; }
+.feedback-text::placeholder { color: var(--text-dim); }
+.feedback-send {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 15px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  cursor: pointer;
+}
+.feedback-send:disabled { opacity: 0.4; cursor: default; }
+.feedback-send:active:not(:disabled) { transform: scale(0.97); }
+
+/* 글자수와 안내를 한 줄에 둔다. 예전엔 안내문 세 줄이 화면 아래를 덮고 있었다. */
+.feedback-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 7px 0 14px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.feedback-info summary {
+  cursor: pointer;
+  list-style: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.feedback-info summary::-webkit-details-marker { display: none; }
+.feedback-info p {
+  margin: 8px 0 0;
+  line-height: 1.6;
+  text-align: left;
+}
+.feedback-info strong { color: var(--text); }
+.feedback-status {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #ef6a54;
+  margin: 8px 2px 0;
 }
 .feedback-editing[hidden] { display: none; }
 .feedback-editing {
@@ -4616,7 +4672,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   border: 1px solid rgba(255,145,102,0.3);
   border-radius: 10px;
   padding: 7px 8px 7px 11px;
-  margin-bottom: 8px;
+  margin: 8px 0 0;
 }
 .feedback-editing button {
   flex-shrink: 0;
@@ -4627,68 +4683,6 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   font-weight: 600;
   padding: 3px 6px;
   cursor: pointer;
-}
-
-/* 입력줄. 보내기 버튼은 한 줄 높이에 맞춰 옆에 붙인다. */
-.feedback-compose {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-.feedback-text {
-  flex: 1;
-  min-width: 0;
-  box-sizing: border-box;
-  resize: none;
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 11px 13px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--text);
-  font-family: inherit;
-}
-.feedback-text::placeholder {
-  color: var(--text-dim);
-}
-.feedback-send {
-  flex-shrink: 0;
-  border: none;
-  border-radius: 999px;
-  padding: 11px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
-  cursor: pointer;
-}
-.feedback-send:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.feedback-send:active:not(:disabled) {
-  transform: scale(0.97);
-}
-.feedback-meter {
-  display: flex;
-  justify-content: flex-end;
-  font-size: 11px;
-  color: var(--text-dim);
-  margin: 5px 4px 0;
-  font-variant-numeric: tabular-nums;
-}
-.feedback-note {
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: var(--text-dim);
-  margin: 8px 2px 14px;
-}
-.feedback-status {
-  font-size: 12px;
-  line-height: 1.5;
-  color: #ef6a54;
-  margin: 0 2px 10px;
 }
 .feedback-back {
   display: block;

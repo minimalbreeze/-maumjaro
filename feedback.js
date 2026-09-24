@@ -31,6 +31,10 @@
 (() => {
   'use strict';
 
+  // 답글을 다는 쪽의 이름. "개발자"로 못 박아두면 다른 사람이 답할 때 거짓말이 된다.
+  // 브랜드 이름으로 두면 누가 답하든 맞는 말이 된다. 바꾸려면 여기 한 줄만 고친다.
+  const REPLIER = '맘운자로';
+
   const TID_KEY = 'maumjaro:feedbackThreadId';
   const THREAD_KEY = 'maumjaro:feedbackThread';   // { messages: [], seenAt: '' }
   const OUTBOX_KEY = 'maumjaro:feedbackOutbox';
@@ -43,9 +47,8 @@
 
   let lastSentAt = 0;
   let pollTimer = null;
-  let editingId = null;   // 지금 고치고 있는 말풍선
-  let menuFor = null;     // ⋯ 를 눌러 펼친 말풍선
-  let confirmFor = null;  // "정말 지울까요?" 를 띄운 말풍선
+  let editingId = null;   // 지금 고치고 있는 글
+  let confirmFor = null;  // "정말 지울까요?" 를 띄운 글
 
   function base() {
     // 주소는 fortune.js가 하나만 갖고 있다. 여기서 또 적으면 둘이 어긋난다.
@@ -179,7 +182,7 @@
     return loadOutbox().some((m) => m.id === id);
   }
 
-  // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 개발자 답장 수를 돌려준다.
+  // 서버에서 대화를 받아와 로컬과 합친다. 새로 온 답장 수를 돌려준다.
   async function sync() {
     if (!base()) return 0;
     const data = await call(`/feedback?thread=${encodeURIComponent(threadId())}`, { method: 'GET' });
@@ -211,7 +214,7 @@
     const hint = document.getElementById('history-feedback-text');
     if (hint) {
       hint.textContent = n
-        ? `개발자 답장이 ${n}개 도착했어요`
+        ? `${REPLIER} 답장이 ${n}개 도착했어요`
         : '쓰면서 불편한 곳, 있었으면 하는 기능 있으셨나요?';
     }
   }
@@ -246,6 +249,10 @@
     return sameDay ? hm : `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
   }
 
+  // 스레드처럼 그린다 — 말풍선이 아니라 피드.
+  //   동그란 프로필 · 굵은 이름 · 오른쪽에 시간 · 그 아래 글 · 그 아래 작은 동작줄.
+  // 카톡식 말풍선에서 바꾼 이유: 이건 둘이 주고받는 대화지만 화면은 게시판에 가깝다.
+  // 좌우로 갈라 놓으면 글이 길어질수록 읽기 어렵고, 한 사람이 여러 줄을 쓰면 더 그렇다.
   function render() {
     const box = document.getElementById('feedback-thread');
     const empty = document.getElementById('feedback-empty');
@@ -258,31 +265,36 @@
       const gone = !!m.deleted;
       // 고치고 지울 수 있는 건 내 글뿐이다. 이미 지운 글은 다시 건드리지 않는다.
       const editable = mine && !gone;
-      const bubble = gone
-        ? '<div class="fb-bubble gone">지운 메시지</div>'
-        : `<div class="fb-bubble">${esc(m.text).replace(/\n/g, '<br>')}</div>`;
       const marks = [
         when(m.at),
         m.editedAt ? '수정됨' : '',
         mine && pending.has(m.id) ? '보내는 중' : '',
       ].filter(Boolean).join(' · ');
-      let tail = '';
+
+      let acts = '';
       if (editable && confirmFor === m.id) {
-        tail = `<div class="fb-acts">정말 지울까요?
+        acts = `<div class="fb-acts">정말 지울까요?
           <button type="button" data-act="del-yes">지우기</button>
           <button type="button" data-act="cancel">취소</button></div>`;
-      } else if (editable && menuFor === m.id) {
-        tail = `<div class="fb-acts">
+      } else if (editable) {
+        acts = `<div class="fb-acts">
           <button type="button" data-act="edit">수정</button>
-          <button type="button" data-act="del">삭제</button>
-          <button type="button" data-act="cancel">취소</button></div>`;
+          <button type="button" data-act="del">삭제</button></div>`;
       }
-      return `<div class="fb-msg ${mine ? 'mine' : 'dev'}${editingId === m.id ? ' editing' : ''}" data-id="${esc(m.id)}">
-        ${mine ? '' : '<div class="fb-who">💉 맘운자로 개발자</div>'}
-        ${bubble}
-        <div class="fb-time">${marks}${editable ? ' <button type="button" class="fb-more" data-act="menu" aria-label="이 메시지 수정·삭제">⋯</button>' : ''}</div>
-        ${tail}
-      </div>`;
+
+      return `<article class="fb-post ${mine ? 'mine' : 'dev'}${editingId === m.id ? ' editing' : ''}" data-id="${esc(m.id)}">
+        <span class="fb-ava ${mine ? 'me' : 'dev'}" aria-hidden="true">${mine ? '🙂' : '💉'}</span>
+        <div class="fb-col">
+          <div class="fb-line">
+            <span class="fb-name">${mine ? '나' : REPLIER}</span>
+            <span class="fb-time">${marks}</span>
+          </div>
+          ${gone
+            ? '<p class="fb-text gone">지운 글이에요</p>'
+            : `<p class="fb-text">${esc(m.text).replace(/\n/g, '<br>')}</p>`}
+          ${acts}
+        </div>
+      </article>`;
     }).join('');
     box.scrollTop = box.scrollHeight;
   }
@@ -318,7 +330,6 @@
   function close() {
     const ov = document.getElementById('feedback-overlay');
     if (ov) ov.classList.remove('show');
-    menuFor = null;
     confirmFor = null;
     stopEditing();
     clearInterval(pollTimer);
@@ -333,7 +344,6 @@
     const bar = document.getElementById('feedback-editing');
     const send = document.getElementById('feedback-send-btn');
     editingId = id;
-    menuFor = null;
     confirmFor = null;
     ta.value = text;
     document.getElementById('feedback-count').textContent = `${text.length}/${MAX_LEN}`;
@@ -512,13 +522,12 @@
     document.getElementById('feedback-thread').addEventListener('click', (e) => {
       const btn = e.target.closest('[data-act]');
       if (!btn) return;
-      const wrap = btn.closest('.fb-msg');
+      const wrap = btn.closest('.fb-post');
       if (!wrap) return;
       const id = wrap.dataset.id;
       const act = btn.dataset.act;
-      if (act === 'menu') { menuFor = menuFor === id ? null : id; confirmFor = null; render(); return; }
-      if (act === 'cancel') { menuFor = null; confirmFor = null; render(); return; }
-      if (act === 'del') { confirmFor = id; menuFor = null; render(); return; }
+      if (act === 'cancel') { confirmFor = null; render(); return; }
+      if (act === 'del') { confirmFor = id; render(); return; }
       if (act === 'del-yes') { doDelete(id); return; }
       if (act === 'edit') {
         const m = loadThread().messages.find((x) => x.id === id);
@@ -555,7 +564,7 @@
       paintBadges();
       if (got > 0 && !ov.classList.contains('show')) {
         const C = window.MaumjaroCore;
-        if (C && typeof C.showToast === 'function') C.showToast('개발자 답장이 도착했어요 💬');
+        if (C && typeof C.showToast === 'function') C.showToast(`${REPLIER} 답장이 도착했어요 💬`);
         track('feedback_reply_received', { count: got });
       }
     }
