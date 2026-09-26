@@ -36,57 +36,71 @@
       //   숨겨둔 셈이었다.
       //   그림도 제목("마음에 한 대 놓고 갑니다")과 맞는다 — 배를 내밀고 기다리는 모습이
       //   감정 칩 나열보다 슬로건을 직접 보여준다.
-      // 주의: index.html의 #arm-target SVG와 같은 문서에 있으므로 gradient id가 겹치면
-      //   한쪽이 상대 그라디언트를 쓴다. 그래서 ob 접두사를 붙여뒀다.
-      art: `<svg viewBox="0 0 140 118" width="150" height="126" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="obcharBody" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stop-color="#ffe9c9" /><stop offset="100%" stop-color="#ffd2a3" />
-            </linearGradient>
-            <linearGradient id="obcharShirt" x1="0" y1="0" x2="0.4" y2="1">
-              <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#5fb3a3" />
-            </linearGradient>
-            <!-- 바닥 그림자: 가운데가 진하고 가장자리로 흩어져야 "떠 있지 않고 서 있다"가 된다 -->
-            <radialGradient id="obcharGround" cx="0.5" cy="0.5" r="0.5">
-              <stop offset="0%" stop-color="rgba(90,60,40,0.34)" />
-              <stop offset="60%" stop-color="rgba(90,60,40,0.14)" />
-              <stop offset="100%" stop-color="rgba(90,60,40,0)" />
-            </radialGradient>
-          </defs>
-          <!-- 바닥 그림자 -->
-          <ellipse cx="70" cy="114" rx="36" ry="6" fill="url(#obcharGround)" />
-          <!-- 다리 -->
-          <rect x="52" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
-          <rect x="75" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
-          <!-- 몸통(배) -->
-          <ellipse cx="70" cy="72" rx="34" ry="29" fill="url(#obcharBody)" stroke="#1f5c50" stroke-width="3.5" />
-          <!-- 배 아래쪽에 그늘을 넣어 평평한 타원이 아니라 둥근 배로 보이게 한다 -->
-          <ellipse cx="70" cy="80" rx="30" ry="21" fill="rgba(214,150,96,0.22)" />
-          <ellipse cx="59" cy="66" rx="12" ry="8" fill="rgba(255,255,255,0.42)" />
-          <!-- 옷: 배꼽 위쪽만 덮어 배를 내놓은 모습 -->
-          <path d="M38 62 a34 29 0 0 1 64 0 z" fill="url(#obcharShirt)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
-          <!-- 옷 주름 한 줄 -->
-          <path d="M50 52 q20 8 40 0" fill="none" stroke="rgba(31,92,80,0.28)" stroke-width="2.2" stroke-linecap="round" />
-          <!-- 팔 -->
-          <path d="M38 60 q-14 10 -10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <path d="M102 60 q14 10 10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <!-- 머리 -->
-          <circle cx="70" cy="28" r="23" fill="url(#obcharBody)" stroke="#1f5c50" stroke-width="3.5" />
-          <!-- 볼록해 보이도록 왼쪽 위 하이라이트 + 턱 밑 그늘 -->
-          <ellipse cx="60" cy="19" rx="9" ry="6" fill="rgba(255,255,255,0.45)" />
-          <path d="M50 33 a23 23 0 0 0 40 0 a23 23 0 0 1 -40 0z" fill="rgba(214,150,96,0.18)" />
-          <path d="M52 14 q18 -10 36 0" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <circle cx="61" cy="28" r="2.8" fill="#1f5c50" />
-          <circle cx="79" cy="28" r="2.8" fill="#1f5c50" />
-          <circle cx="62" cy="27" r="0.9" fill="#fff" />
-          <circle cx="80" cy="27" r="0.9" fill="#fff" />
-          <path d="M64 36 q6 5 12 0" fill="none" stroke="#1f5c50" stroke-width="2.6" stroke-linecap="round" />
-          <ellipse cx="53" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
-          <ellipse cx="87" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
-          <!-- 주사 놓을 자리 (배꼽) -->
-          <circle cx="70" cy="78" r="9" class="arm-site-ring" />
-          <circle cx="70" cy="78" r="3.5" fill="#ef6a54" />
-        </svg>`,
+      //   (2026-09-26) 스플래시·주사 화면과 같은 후드 캐릭터로 통일했다. 후드가 머리를
+      //   감싸면 머리가 몸보다 커 보이고, 그게 아기 비율이 된다 — 귀여움은 거기서 온다.
+      //   여기는 맞이하는 자리라 스플래시와 같은 표정(눈 감은 웃음 + 하트)을 쓴다.
+      //   주사 화면만 눈을 뜬 채로 두었다. 기다리는 자리에서 눈을 감으면 자는 것처럼 보인다.
+      // 주의: index.html의 #arm-target(char*)·스플래시(sp*) SVG와 같은 문서에 있으므로
+      //   gradient id가 겹치면 한쪽이 상대 그라디언트를 쓴다. 그래서 ob 접두사를 붙여뒀다.
+      art: `  <svg viewBox="0 0 150 162" width="159" height="172" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="obSkin" x1="0" y1="0" x2="0.3" y2="1">
+        <stop offset="0%" stop-color="#fff1da" /><stop offset="100%" stop-color="#ffd9ab" />
+      </linearGradient>
+      <linearGradient id="obHood" x1="0.2" y1="0" x2="0.6" y2="1">
+        <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#4fa392" />
+      </linearGradient>
+      <radialGradient id="obGround" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0%" stop-color="rgba(90,60,40,0.30)" />
+        <stop offset="60%" stop-color="rgba(90,60,40,0.12)" />
+        <stop offset="100%" stop-color="rgba(90,60,40,0)" />
+      </radialGradient>
+    </defs>
+    <ellipse cx="75" cy="154" rx="44" ry="7" fill="url(#obGround)" />
+    <g>
+      <!-- 몸통: 앉은 자세. 아래가 넓은 종 모양이라 서 있는 것보다 안정돼 보이고,
+           안정된 실루엣이 곧 "순하다"로 읽힌다. -->
+      <path d="M75 78 c27 0 41 19 41 40 c0 17 -9 28 -41 28 s-41 -11 -41 -28 c0 -21 14 -40 41 -40 z"
+            fill="url(#obHood)" stroke="#1f5c50" stroke-width="4" stroke-linejoin="round" />
+      <!-- 배: 후드 밖으로 나온 맨살. 옷과 살의 대비가 있어야 옷을 입은 걸로 보인다. -->
+      <ellipse cx="75" cy="124" rx="31" ry="22" fill="url(#obSkin)" />
+      <ellipse cx="75" cy="130" rx="27" ry="16" fill="rgba(214,150,96,0.16)" />
+      <ellipse cx="64" cy="116" rx="10" ry="6" fill="rgba(255,255,255,0.45)" />
+      <!-- 발 -->
+      <ellipse cx="57" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4" />
+      <ellipse cx="93" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4" />
+      <!-- 후드: 머리를 통째로 감싼다. 이 앱 캐릭터가 귀여워 보이는 건 여기서 온다 —
+           머리가 몸보다 크고, 그 큰 머리가 둥글게 감싸여 있으면 아기 비율이 된다. -->
+      <circle cx="75" cy="52" r="43" fill="url(#obHood)" stroke="#1f5c50" stroke-width="4" />
+      <!-- 후드 안쪽 그늘: 얼굴이 후드 안에 "들어가 있게" 만든다. 없으면 초록 원 위에
+           얼굴을 얹어놓은 것처럼 납작해 보인다. -->
+      <ellipse cx="75" cy="58" rx="33.5" ry="31.5" fill="rgba(20,70,60,0.28)" />
+      <!-- 얼굴 -->
+      <ellipse cx="75" cy="57" rx="31" ry="29" fill="url(#obSkin)" stroke="#1f5c50" stroke-width="3.6" />
+      <ellipse cx="63" cy="44" rx="12" ry="7.5" fill="rgba(255,255,255,0.5)" />
+      <!-- 눈을 감은 웃음. 위로 휜 선이라야 웃는 눈이 된다 — 아래로 휘면 우는 눈이다. -->
+      <path d="M58 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round" />
+      <path d="M78 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round" />
+      <!-- 볼: 크고 진할수록 어려 보인다. -->
+      <ellipse cx="52" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85" />
+      <ellipse cx="98" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85" />
+      <path d="M67 69 q8 8 16 0" fill="none" stroke="#1f5c50" stroke-width="3.2" stroke-linecap="round" />
+      <!-- 팔이 앞으로 모인다. 바깥으로 늘어진 팔은 "서 있다", 모은 팔은 "건네준다"가 된다. -->
+      <path d="M39 106 q3 14 17 16" fill="none" stroke="#1f5c50" stroke-width="4" stroke-linecap="round" />
+      <path d="M111 106 q-3 14 -17 16" fill="none" stroke="#1f5c50" stroke-width="4" stroke-linecap="round" />
+    </g>
+    <!-- 품에 안긴 하트 -->
+    <path d="M75 131 c-10.5 -7.5 -14 -12 -14 -16.5 a7 7 0 0 1 14 -3.4 a7 7 0 0 1 14 3.4 c0 4.5 -3.5 9 -14 16.5 z"
+          fill="#ff8fb3" stroke="#1f5c50" stroke-width="3" stroke-linejoin="round" />
+    <!-- 손은 하트 위에 그린다 — 그래야 "들고 있다"가 된다. -->
+    <g>
+      <circle cx="58" cy="122" r="8" fill="url(#obSkin)" stroke="#1f5c50" stroke-width="3.4" />
+      <circle cx="92" cy="122" r="8" fill="url(#obSkin)" stroke="#1f5c50" stroke-width="3.4" />
+    </g>
+    <!-- 떠오르는 하트 둘. 처음부터 있으면 배경 장식이지만, 나중에 뜨면 캐릭터의 반응이 된다. -->
+    <path d="M18 62 a5.6 5.6 0 0 1 9.4 -3.8 a5.6 5.6 0 0 1 9.4 3.8 c0 6 -9.4 11.4 -9.4 11.4 s-9.4 -5.4 -9.4 -11.4 z" fill="#ff8fb3" />
+    <path d="M120 40 a4.2 4.2 0 0 1 7 -2.8 a4.2 4.2 0 0 1 7 2.8 c0 4.5 -7 8.5 -7 8.5 s-7 -4 -7 -8.5 z" fill="#ffb3c9" />
+  </svg>`,
       // 슬로건을 그대로 쓴다. 이 앱이 무엇을 약속하는지가 여기 다 들어 있는데
       // 정작 옛 온보딩 세 장에는 한 번도 안 나왔다.
       title: '오늘도 마음에 한 대 놓고 갑니다',
