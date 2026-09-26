@@ -4782,3 +4782,72 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .history-feedback-btn:active {
   transform: scale(0.97);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   실행 스플래시 — 앱을 켤 때 로고가 먼저, 그 다음 홈
+   웹앱은 주소를 누르면 콘텐츠가 그냥 나온다. 그래서 "앱에 들어왔다"는 감각이 없고,
+   같은 값을 하는 네이티브 운세 앱보다 만듦새가 떨어져 보인다. 이 한 장이 그 간격을 메운다.
+   지키는 선: 1.1초. 측정된 문제가 "8초 이탈"이므로 여기서 시간을 더 쓰면 안 된다.
+   그래서 (1) 자동으로 빠지고 (2) 탭하면 즉시 건너뛰고 (3) 목적 링크에는 아예 안 뜬다.
+   ═══════════════════════════════════════════════════════════════════════ */
+.mj-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 4000; /* 앱에서 가장 높은 레이어(1400)보다 위 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  /* manifest.json의 background_color와 같은 값. 홈 화면 아이콘으로 켜면 OS가
+     이 색 위에 아이콘을 먼저 띄우므로, 같은 색이어야 두 화면이 이어져 보인다.
+     한쪽을 바꿀 때는 반드시 다른 쪽도 같이 바꾼다. */
+  background: #fdf3ee;
+  /* 사라지는 일은 CSS가 한다 — splash.js가 없거나 늦어도 앱을 막지 않는다.
+     forwards로 끝 상태를 붙잡아 두므로 되돌아오지 않는다. */
+  animation: mj-splash-out 300ms ease 820ms forwards;
+}
+.mj-nosplash .mj-splash { display: none; }
+
+@keyframes mj-splash-out {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+
+.mj-splash-mark {
+  /* 눌린 아이콘이 손에서 화면으로 커져 들어오는 느낌. 살짝 넘겼다 제자리로 온다. */
+  animation: mj-splash-pop 460ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  filter: drop-shadow(0 12px 26px rgba(196, 108, 62, 0.28));
+  line-height: 0;
+}
+@keyframes mj-splash-pop {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.mj-splash-word {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  /* 브랜드 딥틸. 코랄 아이콘 아래에서 글자가 색으로 싸우지 않게 한다. */
+  color: #1f5c50;
+  animation: mj-splash-rise 360ms ease 150ms both;
+}
+.mj-splash-tag {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #9c6b7d;
+  text-align: center;
+  padding: 0 24px;
+  animation: mj-splash-rise 360ms ease 290ms both;
+}
+@keyframes mj-splash-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 움직임을 줄여 달라고 설정한 사람: 로고는 가만히 두고, 대기 시간도 짧게 끝낸다.
+   그래도 한 장은 보여준다 — 이 화면의 목적이 "앱을 켠 느낌"이라 아예 없으면 의미가 없다. */
+@media (prefers-reduced-motion: reduce) {
+  .mj-splash { animation: mj-splash-out 1ms linear 480ms forwards; }
+  .mj-splash-mark, .mj-splash-word, .mj-splash-tag { animation: none; opacity: 1; transform: none; }
+}
