@@ -196,6 +196,14 @@
   function init() {
     wireSettings();
     if (seen() || cameFromFriendLink()) return;
+    // 실행 스플래시가 떠 있으면 그것이 끝난 뒤에 띄운다. 둘이 겹치면 로고를 한 번도
+    // 못 보고, 무엇이 닫히는 중인지도 알 수 없다. 기다린 다음에는 260ms만 둔다 —
+    // 스플래시가 이미 1초를 썼으므로 여기서 또 600ms를 더하면 문 앞이 너무 길어진다.
+    const S = window.MaumjaroSplash;
+    if (S && typeof S.whenDone === 'function' && S.shown) {
+      S.whenDone(() => setTimeout(() => open(false), 260));
+      return;
+    }
     // 첫 화면이 그려진 뒤에 띄운다(빈 화면 위에 뜨면 무엇에 대한 설명인지 모른다).
     setTimeout(() => open(false), 600);
   }
