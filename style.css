@@ -4874,11 +4874,14 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 }
 
 /* ② 500–880ms 품에 안긴 하트가 톡. 착지가 끝난 뒤라야 "받았다"로 읽힌다. */
-.mj-splash-mark .sp-hold {
+.mj-splash-mark .sp-hold,
+.mj-splash-mark .sp-hands {
   transform-box: fill-box;
   transform-origin: 50% 60%;
   animation: mj-splash-pop 380ms cubic-bezier(0.2, 1.5, 0.4, 1) 500ms both;
 }
+/* 손은 하트보다 아주 살짝 늦게 — 하트가 먼저 나타나고 손이 감싸는 순서다. */
+.mj-splash-mark .sp-hands { animation-delay: 560ms; transform-origin: 50% 50%; }
 @keyframes mj-splash-pop {
   from { opacity: 0; transform: scale(0.2); }
   to { opacity: 1; transform: none; }
@@ -4899,13 +4902,13 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 
 /* ③ 700–1060ms */
 .mj-splash-word {
-  font-size: 30px;
+  font-size: 38px;
   font-weight: 800;
   letter-spacing: -0.5px;
   /* 브랜드 그린. 캐릭터 외곽선(#1f5c50)보다 한 단계 밝은 팔레트 색이라
      글자가 그림에 묻히지 않으면서 같은 계열로 읽힌다. */
   color: #2f6f5e;
-  margin-top: 2px;
+  margin-top: 6px;
   animation: mj-splash-rise 360ms ease 700ms both;
 }
 
@@ -4914,16 +4917,16 @@ body:has(#healing-overlay.show) #app #syringe-svg {
    말풍선은 꼬리 쪽에서 부풀어야 자연스럽다 — 가운데서 커지면 그냥 팝업이다. */
 .mj-splash-tag {
   position: relative;
-  max-width: 300px;
-  margin-top: 8px;
-  padding: 12px 22px;
-  border-radius: 20px;
+  max-width: 320px;
+  margin-top: 14px;
+  padding: 16px 28px;
+  border-radius: 24px;
   /* 홈 배경의 중간색. 새 색을 만들지 않고 앱이 이미 쓰는 분홍을 그대로 쓴다. */
   background: #ffe6ef;
   color: #6b4657;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.5;
   text-align: center;
   transform-origin: 50% 0;
   animation: mj-splash-bubble 420ms cubic-bezier(0.2, 1.3, 0.4, 1) 900ms both;
@@ -4931,12 +4934,12 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mj-splash-tag::before {
   content: '';
   position: absolute;
-  top: -8px;
+  top: -10px;
   left: 50%;
-  margin-left: -9px;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-bottom: 9px solid #ffe6ef;
+  margin-left: -11px;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 11px solid #ffe6ef;
 }
 @keyframes mj-splash-bubble {
   from { opacity: 0; transform: translateY(-6px) scale(0.86); }
@@ -4950,28 +4953,29 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 9px;
   width: 100%;
-  max-width: 232px;
-  margin-top: 16px;
+  max-width: 296px;
+  margin-top: 26px;
 }
 .mj-splash-step {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 15px;
+  gap: 12px;
+  padding: 13px 22px;
   border-radius: 99px;
   background: #fff;
-  border: 1.5px solid rgba(47, 111, 94, 0.16);
+  border: 2px solid rgba(47, 111, 94, 0.16);
   color: #2f6f5e;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   /* 세 줄의 이모지가 같은 세로선에 서야 목록으로 읽힌다. 폭이 제각각이면
      글자 시작점이 흔들려서 세 줄이 한 덩어리로 안 보인다. */
 }
 .mj-splash-step i {
   font-style: normal;
-  width: 17px;
+  width: 21px;
+  font-size: 18px;
   text-align: center;
   flex: none;
 }
@@ -4987,11 +4991,11 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 /* ⑦ 1900–2260ms 처음 온 사람이 제일 먼저 재는 것 — 가입? 돈? 시간?
    셋 다 아니라고 먼저 말해두면 그다음 화면을 경계하지 않고 본다. */
 .mj-splash-note {
-  margin-top: 12px;
-  font-size: 11.5px;
+  margin-top: 20px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.2px;
-  color: #b09a92;
+  color: #ab948c;
   animation: mj-splash-rise 360ms ease 1900ms both;
 }
 
@@ -5008,6 +5012,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   .mj-splash-mark .sp-body,
   .mj-splash-mark .sp-shadow,
   .mj-splash-mark .sp-hold,
+  .mj-splash-mark .sp-hands,
   .mj-splash-mark .sp-heart,
   .mj-splash-word,
   .mj-splash-tag,
@@ -5017,11 +5022,22 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 
 /* 작은 화면(iPhone SE 세로 568px)에서 설명 줄까지 다 들어가게 한 단계 줄인다.
    여기서 넘치면 아래쪽 글이 잘리는데, 잘린 설명은 없는 것보다 나쁘다. */
-@media (max-height: 700px) {
-  .mj-splash-mark svg { width: 150px; height: 133px; }
-  .mj-splash-word { font-size: 25px; }
-  .mj-splash-tag { font-size: 13.5px; padding: 10px 18px; }
-  .mj-splash-steps { margin-top: 11px; gap: 5px; max-width: 214px; }
-  .mj-splash-step { font-size: 12px; padding: 6.5px 13px; }
-  .mj-splash-note { margin-top: 9px; }
+/* 화면이 짧으면 한 단계씩 줄인다. 여기서 넘치면 아래쪽 글이 잘리는데,
+   잘린 설명은 없는 것보다 나쁘다. 두 단계로 나눠 잡는다. */
+@media (max-height: 800px) {
+  .mj-splash-mark svg { width: 222px; height: 240px; }
+  .mj-splash-word { font-size: 33px; }
+  .mj-splash-tag { font-size: 16.5px; margin-top: 11px; padding: 14px 24px; }
+  .mj-splash-steps { margin-top: 20px; gap: 7px; max-width: 278px; }
+  .mj-splash-step { font-size: 15px; padding: 11px 19px; }
+  .mj-splash-note { margin-top: 15px; }
+}
+@media (max-height: 660px) {
+  .mj-splash-mark svg { width: 174px; height: 188px; }
+  .mj-splash-word { font-size: 27px; }
+  .mj-splash-tag { font-size: 14.5px; margin-top: 8px; padding: 11px 19px; }
+  .mj-splash-steps { margin-top: 14px; gap: 6px; max-width: 248px; }
+  .mj-splash-step { font-size: 13.5px; padding: 9px 16px; gap: 10px; }
+  .mj-splash-step i { width: 18px; font-size: 16px; }
+  .mj-splash-note { margin-top: 11px; font-size: 12.5px; }
 }
