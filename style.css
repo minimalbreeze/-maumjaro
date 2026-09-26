@@ -4788,11 +4788,18 @@ body:has(#healing-overlay.show) #app #syringe-svg {
    웹앱은 주소를 누르면 콘텐츠가 그냥 나온다. 그게 웹의 장점이지만, 같은 값을 하는
    네이티브 운세 앱 옆에 놓으면 만듦새가 떨어져 보이는 지점이기도 하다. 켜는 순간이
    없으니 "이 앱에 들어왔다"가 아니라 "웹페이지를 열었다"가 된다.
-   주인공은 앱 아이콘(주사기)이 아니라 캐릭터다. 아이콘은 방금 눌러서 이미 봤고,
-   같은 그림을 1초 더 보여주는 건 정보가 0이다. 이 앱의 약한 고리는 첫인상의 온도이고
-   그걸 한 장으로 말할 수 있는 건 캐릭터뿐이다.
-   지키는 선: 1.2초. 측정된 문제가 "8초 이탈"이므로 여기서 시간을 더 쓰면 안 된다.
-   그래서 (1) 자동으로 빠지고 (2) 탭하면 즉시 건너뛰고 (3) 목적 링크에는 아예 안 뜬다.
+
+   길이 3.5초 (2026-09-26. 1.2초 → 2.4초 → 3.5초로 두 번 늘렸다)
+     1.2초는 마지막 요소가 자리를 잡는 순간 페이드가 시작돼서, 완성된 화면이 아니라
+     그리다 만 화면만 보고 끝났다. 2.4초도 "보기도 전에 지나간다"는 말을 들었다.
+     3.5초는 넷플릭스 인트로와 비슷한 길이다. 그 정도는 돼야 "기다렸다"가 아니라
+     "보여줬다"가 된다.
+     대신 시간을 비워두지 않는다. 일곱 박자로 채우고 마지막 0.8초만 정지다 —
+     멈춰 있는 3.5초는 고장이고, 움직이는 3.5초는 연출이다.
+
+   이 길이는 싼 값이 아니다. 측정된 문제가 "참여 8초"이기 때문이다. 그래서
+   (1) 탭하면 즉시 건너뛰고 (2) 목적 링크에는 아예 안 뜨고 (3) 30분 안 재방문에는
+   안 뜬다. 이 셋이 없으면 이 화면은 순이익이 아니라 순손실이다.
    ═══════════════════════════════════════════════════════════════════════ */
 .mj-splash {
   position: fixed;
@@ -4802,14 +4809,20 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 0 20px;
   /* manifest.json의 background_color와 같은 값. 홈 화면 아이콘으로 켜면 OS가
      이 색 위에 앱 아이콘을 먼저 띄우므로, 같은 색이어야 두 화면이 이어져 보인다.
      한쪽을 바꿀 때는 반드시 다른 쪽도 같이 바꾼다. */
   background: #fdf3ee;
+  /* 이 화면의 총 길이(ms). 아래 animation의 지연 3100 + 길이 400과 같아야 한다.
+     splash.js가 이 값을 읽어서 안전망 타이머를 잡는다 — 예전에는 JS에 2600을
+     따로 써뒀다가, 여기를 2400 → 3500으로 늘렸을 때 JS가 먼저 터져서 마지막
+     0.9초가 잘렸다. 길이를 바꿀 때 고칠 곳을 한 군데로 모은 이유다. */
+  --mj-splash-ms: 3500;
   /* 사라지는 일은 CSS가 한다 — splash.js가 없거나 늦어도 앱을 막지 않는다.
      forwards로 끝 상태를 붙잡아 두므로 되돌아오지 않는다. */
-  animation: mj-splash-out 300ms ease 900ms forwards;
+  animation: mj-splash-out 400ms ease 3100ms forwards;
 }
 .mj-nosplash .mj-splash { display: none; }
 
@@ -4823,20 +4836,28 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 }
 @keyframes mj-splash-appear { from { opacity: 0; } to { opacity: 1; } }
 
-/* 캐릭터가 위에서 톡 내려와 한 번 눌렸다 편다.
+/* ① 0–560ms 캐릭터가 내려와 착지한 뒤, 끝까지 가만히 숨을 쉰다.
    transform-origin을 발밑(50% 100%)에 두어야 눌리는 방향이 "착지"로 읽힌다.
-   가운데에 두면 제자리에서 부풀었다 꺼지는, 정체 모를 움직임이 된다.
-   SVG 안에서는 사용자 좌표가 기준이라 transform-box: fill-box가 꼭 필요하다. */
+   가운데면 제자리에서 부푸는 정체 모를 움직임이 된다.
+   SVG 안에서는 사용자 좌표가 기준이라 transform-box: fill-box가 꼭 필요하다.
+   숨쉬기: 3.5초 중 뒤쪽은 새로 뜨는 게 없다. 그동안 완전히 멈춰 있으면 화면이
+   굳은 것처럼 보이고, 사람은 굳은 화면을 오류로 읽는다. */
 .mj-splash-mark .sp-body {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: mj-splash-land 500ms cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation:
+    mj-splash-land 560ms cubic-bezier(0.22, 1, 0.3, 1) both,
+    mj-splash-breathe 2.8s ease-in-out 660ms infinite;
 }
 @keyframes mj-splash-land {
-  0% { opacity: 0; transform: translateY(-16px) scale(1.03, 0.95); }
+  0% { opacity: 0; transform: translateY(-18px) scale(1.03, 0.95); }
   45% { opacity: 1; transform: translateY(0) scale(1.06, 0.92); }
   72% { transform: translateY(-3px) scale(0.98, 1.03); }
   100% { transform: none; }
+}
+@keyframes mj-splash-breathe {
+  0%, 100% { transform: none; }
+  50% { transform: translateY(-2.5px) scale(1.012); }
 }
 
 /* 그림자는 캐릭터와 따로 움직인다. 같이 뜨면 종이 인형처럼 보인다 —
@@ -4844,7 +4865,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .mj-splash-mark .sp-shadow {
   transform-box: fill-box;
   transform-origin: 50% 50%;
-  animation: mj-splash-shadow 500ms cubic-bezier(0.22, 1, 0.3, 1) both;
+  animation: mj-splash-shadow 560ms cubic-bezier(0.22, 1, 0.3, 1) both;
 }
 @keyframes mj-splash-shadow {
   0% { opacity: 0.3; transform: scaleX(0.58); }
@@ -4852,36 +4873,128 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   100% { opacity: 1; transform: none; }
 }
 
-/* 하트는 캐릭터가 자리를 잡은 뒤 차례로 떠오른다.
-   처음부터 같이 있으면 배경 장식이지만, 나중에 뜨면 캐릭터의 반응이 된다. */
+/* ② 500–880ms 품에 안긴 하트가 톡. 착지가 끝난 뒤라야 "받았다"로 읽힌다. */
+.mj-splash-mark .sp-hold {
+  transform-box: fill-box;
+  transform-origin: 50% 60%;
+  animation: mj-splash-pop 380ms cubic-bezier(0.2, 1.5, 0.4, 1) 500ms both;
+}
+@keyframes mj-splash-pop {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ⑥ 1700–2260ms 떠오르는 하트 둘. 설명이 다 뜬 뒤 마지막으로 온다. */
 .mj-splash-mark .sp-heart {
   transform-box: fill-box;
   transform-origin: 50% 100%;
 }
-.mj-splash-mark .sp-heart.a { animation: mj-splash-heart 330ms ease 330ms both; }
-.mj-splash-mark .sp-heart.b { animation: mj-splash-heart 330ms ease 430ms both; }
+.mj-splash-mark .sp-heart.a { animation: mj-splash-heart 420ms ease 1700ms both; }
+.mj-splash-mark .sp-heart.b { animation: mj-splash-heart 420ms ease 1840ms both; }
 @keyframes mj-splash-heart {
-  0% { opacity: 0; transform: translateY(7px) scale(0.55); }
-  65% { opacity: 1; transform: translateY(-2px) scale(1.1); }
+  0% { opacity: 0; transform: translateY(8px) scale(0.5); }
+  65% { opacity: 1; transform: translateY(-3px) scale(1.12); }
   100% { opacity: 1; transform: none; }
 }
 
+/* ③ 700–1060ms */
 .mj-splash-word {
-  font-size: 27px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  /* 브랜드 딥틸. 캐릭터의 외곽선과 같은 색이라 한 덩어리로 읽힌다. */
-  color: #1f5c50;
-  animation: mj-splash-rise 340ms ease 400ms both;
+  /* 브랜드 그린. 캐릭터 외곽선(#1f5c50)보다 한 단계 밝은 팔레트 색이라
+     글자가 그림에 묻히지 않으면서 같은 계열로 읽힌다. */
+  color: #2f6f5e;
+  margin-top: 2px;
+  animation: mj-splash-rise 360ms ease 700ms both;
 }
+
+/* ④ 900–1320ms 말풍선. 같은 문장이라도 네모난 글줄이면 안내문이고,
+   말풍선이면 건네는 말이다. 꼬리가 캐릭터 쪽(위)을 향해야 "이 캐릭터가 하는 말"이 된다.
+   말풍선은 꼬리 쪽에서 부풀어야 자연스럽다 — 가운데서 커지면 그냥 팝업이다. */
 .mj-splash-tag {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #9c6b7d;
+  position: relative;
+  max-width: 300px;
+  margin-top: 8px;
+  padding: 12px 22px;
+  border-radius: 20px;
+  /* 홈 배경의 중간색. 새 색을 만들지 않고 앱이 이미 쓰는 분홍을 그대로 쓴다. */
+  background: #ffe6ef;
+  color: #6b4657;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.55;
   text-align: center;
-  padding: 0 24px;
-  animation: mj-splash-rise 340ms ease 480ms both;
+  transform-origin: 50% 0;
+  animation: mj-splash-bubble 420ms cubic-bezier(0.2, 1.3, 0.4, 1) 900ms both;
 }
+.mj-splash-tag::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  margin-left: -9px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 9px solid #ffe6ef;
+}
+@keyframes mj-splash-bubble {
+  from { opacity: 0; transform: translateY(-6px) scale(0.86); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ⑤ 1300–1940ms 뭐 하는 앱인지. 세 칸이 순서대로 켜져서 흐름 자체를 보여준다.
+   한 덩어리 문장으로 쓰면 읽는 데 시간이 걸리는데, 스플래시의 글은 읽히는 게 아니라
+   스쳐 지나간다. 끊어 놓으면 읽지 않고 알아본다. */
+.mj-splash-steps {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  max-width: 232px;
+  margin-top: 16px;
+}
+.mj-splash-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 15px;
+  border-radius: 99px;
+  background: #fff;
+  border: 1.5px solid rgba(47, 111, 94, 0.16);
+  color: #2f6f5e;
+  font-size: 13px;
+  font-weight: 700;
+  /* 세 줄의 이모지가 같은 세로선에 서야 목록으로 읽힌다. 폭이 제각각이면
+     글자 시작점이 흔들려서 세 줄이 한 덩어리로 안 보인다. */
+}
+.mj-splash-step i {
+  font-style: normal;
+  width: 17px;
+  text-align: center;
+  flex: none;
+}
+.mj-splash-step { animation: mj-splash-step 360ms cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+.mj-splash-step.s1 { animation-delay: 1300ms; }
+.mj-splash-step.s2 { animation-delay: 1430ms; }
+.mj-splash-step.s3 { animation-delay: 1560ms; }
+@keyframes mj-splash-step {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ⑦ 1900–2260ms 처음 온 사람이 제일 먼저 재는 것 — 가입? 돈? 시간?
+   셋 다 아니라고 먼저 말해두면 그다음 화면을 경계하지 않고 본다. */
+.mj-splash-note {
+  margin-top: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #b09a92;
+  animation: mj-splash-rise 360ms ease 1900ms both;
+}
+
 @keyframes mj-splash-rise {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
@@ -4890,11 +5003,25 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 /* 움직임을 줄여 달라고 설정한 사람: 전부 제자리에 두고 대기 시간도 짧게 끝낸다.
    그래도 한 장은 보여준다 — 이 화면의 목적이 "앱을 켠 느낌"이라 아예 없으면 의미가 없다. */
 @media (prefers-reduced-motion: reduce) {
-  .mj-splash { animation: mj-splash-out 1ms linear 520ms forwards; }
+  .mj-splash { animation: mj-splash-out 1ms linear 1100ms forwards; }
   .mj-splash-mark,
   .mj-splash-mark .sp-body,
   .mj-splash-mark .sp-shadow,
+  .mj-splash-mark .sp-hold,
   .mj-splash-mark .sp-heart,
   .mj-splash-word,
-  .mj-splash-tag { animation: none; opacity: 1; transform: none; }
+  .mj-splash-tag,
+  .mj-splash-step,
+  .mj-splash-note { animation: none; opacity: 1; transform: none; }
+}
+
+/* 작은 화면(iPhone SE 세로 568px)에서 설명 줄까지 다 들어가게 한 단계 줄인다.
+   여기서 넘치면 아래쪽 글이 잘리는데, 잘린 설명은 없는 것보다 나쁘다. */
+@media (max-height: 700px) {
+  .mj-splash-mark svg { width: 150px; height: 133px; }
+  .mj-splash-word { font-size: 25px; }
+  .mj-splash-tag { font-size: 13.5px; padding: 10px 18px; }
+  .mj-splash-steps { margin-top: 11px; gap: 5px; max-width: 214px; }
+  .mj-splash-step { font-size: 12px; padding: 6.5px 13px; }
+  .mj-splash-note { margin-top: 9px; }
 }
