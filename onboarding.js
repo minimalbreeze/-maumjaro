@@ -201,7 +201,10 @@
     // 스플래시가 이미 1초를 썼으므로 여기서 또 600ms를 더하면 문 앞이 너무 길어진다.
     const S = window.MaumjaroSplash;
     if (S && typeof S.whenDone === 'function' && S.shown) {
-      S.whenDone(() => setTimeout(() => open(false), 260));
+      // 스플래시가 이미 2.4초를 썼다. 여기서 또 600ms를 더하면 첫 방문자가 문 앞에서
+      // 3초를 기다린다 — 지금 이 앱의 문제가 정확히 "8초 만에 나간다"이므로 그건 못 한다.
+      // 사라지는 연출은 스플래시의 페이드가 이미 해줬으니 홈을 한 번만 스치게 두고 띄운다.
+      S.whenDone(() => setTimeout(() => open(false), 150));
       return;
     }
     // 첫 화면이 그려진 뒤에 띄운다(빈 화면 위에 뜨면 무엇에 대한 설명인지 모른다).
