@@ -60,7 +60,16 @@
   // 화면 전체(el)에서 난 것만 "끝"으로 본다.
   el.addEventListener('animationend', (e) => { if (e.target === el) finish(); });
   // 안전망. 백그라운드 탭처럼 애니메이션 이벤트가 오지 않는 상황에서도 반드시 치운다.
-  setTimeout(finish, 2600);
+  // 길이를 여기에 따로 적어두지 않는다 — 2600으로 박아뒀다가 CSS를 2.4초에서 3.5초로
+  // 늘렸을 때 이 타이머가 먼저 터져서 마지막 0.9초가 잘렸다. 화면은 다 그려졌는데
+  // 보여주기 직전에 치워버린 셈이다. CSS가 한 군데(--mj-splash-ms)에서 길이를 말하고
+  // 여기서는 읽기만 한다. 못 읽으면 넉넉한 기본값을 쓴다.
+  var total = 3500;
+  try {
+    var v = parseInt(getComputedStyle(el).getPropertyValue('--mj-splash-ms'), 10);
+    if (v > 0) total = v;
+  } catch (e) { /* 무시 */ }
+  setTimeout(finish, total + 1200);
 
   const G = window.MaumjaroGame;
   if (G && typeof G.track === 'function') {
