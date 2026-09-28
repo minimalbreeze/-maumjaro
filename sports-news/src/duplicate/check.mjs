@@ -10,15 +10,21 @@
 // 코드만으로 B를 확정하면 "같은 대회의 다음 라운드 소식"까지 막아버린다.
 
 import { wpFetch } from '../wordpress/client.mjs';
-import { tokenize, jaccard } from '../news/normalize.mjs';
+import { tokenize, mainTokens, jaccard } from '../news/normalize.mjs';
 
 // 이 값들은 경험적으로 정한 선이다. README에 조정 방법을 적어둔다.
 const NEAR_DUPLICATE = 0.75; // 이 이상이면 사실상 같은 글
 const RELATED = 0.35;        // 이 이상이면 같은 주제를 다룬 글
 
-/** 클러스터에서 워드프레스 검색에 쓸 핵심어를 뽑는다. */
+/**
+ * 클러스터에서 워드프레스 검색에 쓸 핵심어를 뽑는다.
+ *
+ * 여기서는 mainTokens를 쓴다. tokenize는 군집화를 위해 조사를 뗀 변형까지
+ * 함께 만드는데, 그걸 검색어로 쓰면 "신진서" 대신 "신진"으로 검색해
+ * 엉뚱한 글이 걸리거나 정작 찾아야 할 글을 놓친다.
+ */
 export function searchTermsFor(cluster) {
-  const tokens = [...tokenize(cluster.label)];
+  const tokens = [...mainTokens(cluster.label)];
   // 대회명·선수명 같은 고유명사는 대체로 길다. 긴 토큰 우선.
   const ranked = tokens.sort((a, b) => b.length - a.length).slice(0, 4);
   const terms = new Set(ranked);

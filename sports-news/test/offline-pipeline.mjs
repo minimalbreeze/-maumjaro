@@ -182,8 +182,29 @@ check("코드에 'publish' 상태가 존재하지 않는다", () => {
 });
 check('상태는 draft 상수로 고정되어 있다', () => assert.ok(/const DRAFT_STATUS = 'draft';/.test(draftSrc)));
 
-const mainSrc = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
-check('--draft 없이는 저장 단계가 실행되지 않는다', () => assert.ok(/if \(!args\.draft\) args\.dryRun = true;/.test(mainSrc)));
+const { parseArgs } = await import('../src/main.mjs');
+check('--draft 없이는 저장하지 않는다', () => {
+  assert.equal(parseArgs([]).dryRun, true);
+  assert.equal(parseArgs(['--topic=KBO']).dryRun, true);
+});
+check('--draft를 붙여야 저장 모드가 된다', () => {
+  const a = parseArgs(['--draft']);
+  assert.equal(a.draft, true);
+  assert.equal(a.dryRun, false);
+});
+check('DRY_RUN=true는 --draft보다 우선한다', () => {
+  process.env.DRY_RUN = 'true';
+  const a = parseArgs(['--draft']);
+  delete process.env.DRY_RUN;
+  assert.equal(a.dryRun, true, 'DRY_RUN이 켜졌는데 저장 모드입니다');
+  assert.equal(a.draft, false);
+});
+check('옵션을 제대로 읽는다', () => {
+  const a = parseArgs(['--topic="JLPGA"', '--limit=3', '--fixture=x.json']);
+  assert.deepEqual(a.topics, ['JLPGA']);
+  assert.equal(a.limit, 3);
+  assert.equal(a.fixture, 'x.json');
+});
 
 Date.now = realNow;
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ 전체 ${passed}개 항목 통과`}\n`);
