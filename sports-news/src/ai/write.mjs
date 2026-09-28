@@ -117,6 +117,34 @@ export function splitTitleAndBody(raw) {
   return { title, body };
 }
 
+/**
+ * AI가 쓴 티가 나는 표현과, 글 전체에서 허용하는 횟수.
+ *
+ * 0이면 한 번도 쓰지 않는다. 숫자가 있으면 그만큼까지는 봐준다 —
+ * 한국어에서 자연스럽게 쓰이는 말까지 전부 막으면 글이 어색해진다.
+ * 글투를 바꾸고 싶으면 config/style-warp.md와 이 표를 함께 고친다.
+ */
+export const AI_TELLS = {
+  // 사람이 블로그에 거의 쓰지 않는 말들
+  '결론적으로': 0,
+  '귀추가 주목됩니다': 0,
+  '다시 한번 강조하지만': 0,
+  '앞서 언급했듯이': 0,
+  '지금까지 살펴본 바와 같이': 0,
+  '라고 할 수 있습니다': 0,
+  '라고 볼 수 있습니다': 0,
+  // 한 번까지는 자연스럽지만 반복되면 티가 난다
+  '살펴보겠습니다': 1,
+  '알아보겠습니다': 1,
+  '기대됩니다': 1,
+  '주목됩니다': 1,
+  '흥미진진합니다': 1,
+  '다양한': 1,
+  '뿐만 아니라': 1,
+  // 접속어 남용이 기계가 쓴 느낌을 가장 크게 만든다
+  '또한': 2,
+};
+
 /** 지시서가 금지한 것들이 실제로 안 들어갔는지 코드로 확인한다. */
 export function lintArticle({ title, body }) {
   const issues = [];
@@ -139,10 +167,18 @@ export function lintArticle({ title, body }) {
     .filter((para) => (para.match(/[.!?…](\s|$)/g) || []).length > 4);
   if (wall.length) issues.push(`문단 ${wall.length}개가 너무 깁니다 (2~3문장마다 빈 줄로 끊으세요)`);
 
-  // [9] 반복 금지 표현
-  for (const phrase of ['살펴보겠습니다', '알아보겠습니다', '기대됩니다', '주목됩니다', '흥미진진합니다']) {
+  // AI가 쓴 티가 나는 표현을 잡는다.
+  //
+  // 운영자가 정한 첫 번째 원칙이 "AI가 쓴 글처럼 보이지 않는다"이다.
+  // 문서로만 적어두면 지켜지지 않으므로 셀 수 있는 것은 센다.
+  // limit은 "글 전체에서 이만큼까지 봐준다"는 뜻이다.
+  for (const [phrase, limit] of Object.entries(AI_TELLS)) {
     const count = body.split(phrase).length - 1;
-    if (count > 1) issues.push(`"${phrase}"가 ${count}회 반복됩니다`);
+    if (count > limit) {
+      issues.push(limit === 0
+        ? `AI 티가 나는 표현 "${phrase}"가 들어 있습니다`
+        : `"${phrase}"가 ${count}회 나옵니다 (${limit}회까지)`);
+    }
   }
 
   // 형식 규칙
