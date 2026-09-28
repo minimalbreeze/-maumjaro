@@ -29,6 +29,7 @@ on:
         options:
           - '미리보기 (워드프레스에 저장 안 함)'
           - '임시글로 저장 (draft)'
+          - '사이트 조사만 (글 안 씀 · 비용 0원)'
       count:
         description: '한 종목당 만들 글 수'
         required: false
@@ -99,6 +100,9 @@ jobs:
         run: npm run wp:check
 
       - name: 실행
+        # 사이트 조사만 고르면 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
+        # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
+        if: ${{ !contains(inputs.mode, '사이트 조사만') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
