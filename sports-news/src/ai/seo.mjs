@@ -5,6 +5,7 @@
 
 import { callForJson } from './client.mjs';
 import { normalizeTags } from '../wordpress/taxonomy.mjs';
+import { buildSlug } from '../seo/rankmath.mjs';
 
 const SYSTEM = `당신은 한국어 블로그 SEO 담당자입니다.
 
@@ -42,7 +43,7 @@ const SEO_SCHEMA = {
     },
     slug: {
       type: 'string',
-      description: '영문 소문자와 하이픈으로 된 URL 슬러그. 한글을 쓰지 않는다.',
+      description: '주소에 쓸 슬러그. 대표 키워드를 그대로 쓰되 공백은 하이픈으로. 이 블로그는 한글 슬러그를 쓴다(예: 야구-타율-3할).',
     },
   },
   required: ['seoTitle', 'metaDescription', 'focusKeyword', 'keywords', 'tags', 'slug'],
@@ -74,7 +75,7 @@ ${body.slice(0, 12000)}
     tags: normalizeTags(result.tags),
     metaDescription: clamp(result.metaDescription, 160),
     seoTitle: clamp(result.seoTitle, 70),
-    slug: sanitizeSlug(result.slug, topic),
+    slug: buildSlug({ focusKeyword: result.focusKeyword, title: result.slug, fallback: topic }),
   };
 }
 
@@ -87,11 +88,3 @@ function clamp(s, max) {
   return (lastStop > max * 0.6 ? cut.slice(0, lastStop) : cut).trim();
 }
 
-function sanitizeSlug(slug, fallback) {
-  const s = String(slug || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return s || `${String(fallback).toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
-}

@@ -28,6 +28,7 @@ import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.m
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
+import { checkRankMath } from './seo/rankmath.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
 
@@ -214,9 +215,14 @@ async function processCluster(cluster, ctx) {
     return result;
   }
 
-  // 2-3. 본문 작성
+  // 2-3. SEO 키워드를 먼저 잡는다.
+  // 글을 다 쓴 뒤에 키워드를 정하면 본문에 그 말이 없어 검색에 안 걸린다.
+  // 사실 확인 결과만으로 키워드를 먼저 정하고, 그 말을 넣어 쓰게 한다.
+  const provisionalKeyword = guessKeyword(cluster, verification);
+
+  // 2-4. 본문 작성
   log.step('  워프양식으로 작성 중');
-  const article = await writeArticle({ cluster, verification, today });
+  const article = await writeArticle({ cluster, verification, today, focusKeyword: provisionalKeyword });
   const lint = lintArticle(article);
   result.article = article;
   result.lint = lint;
@@ -224,18 +230,31 @@ async function processCluster(cluster, ctx) {
   log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
   if (!lint.ok) for (const i of lint.issues) log.warn(`    양식 확인 필요: ${i}`);
 
-  // 2-4. SEO
+  // 2-5. SEO
   log.step('  SEO 생성 중');
   const seo = await generateSeo({ title: article.title, body: article.body, topic: cluster.topic, category: cluster.category });
   result.seo = seo;
   log.info(`    SEO 제목: ${seo.seoTitle}`);
+  log.info(`    대표 키워드: ${seo.focusKeyword} · 슬러그: ${seo.slug}`);
   log.info(`    태그(${seo.tags.length}): ${seo.tags.join(', ')}`);
 
-  // 2-5. 이미지 — 대표 이미지 1장 + 본문 카드 1장
+  // 2-6. 이미지 — 대표 이미지 1장 + 본문 카드 1장
   const media = await attachImages({ article, seo, cluster, dryRun: dryRun || localOnly });
   result.images = media.summary;
 
-  // 2-6. 카테고리
+  // SEO 항목 점검. 실제 점수는 Rank Math가 매기지만, 우리가 지킬 수 있는
+  // 항목이 빠졌으면 여기서 미리 알려준다.
+  const seoCheck = checkRankMath({
+    title: article.title, seoTitle: seo.seoTitle, body: article.body,
+    metaDescription: seo.metaDescription, focusKeyword: seo.focusKeyword, slug: seo.slug,
+    imageCount: media.summary.length || (dryRun || localOnly ? 2 : 0),
+    imageAlts: media.summary.map((i) => i.alt),
+  });
+  result.seoCheck = seoCheck;
+  log.info(`    SEO 항목 ${seoCheck.score}점 (${seoCheck.items.length - seoCheck.missing.length}/${seoCheck.items.length})`);
+  for (const m of seoCheck.missing) log.warn(`      빠짐: ${m.label} — ${m.fix}`);
+
+  // 2-7. 카테고리
   const cat = siteCategories.length
     ? resolveCategory(cluster.category, siteCategories)
     : { id: null, name: cluster.category, matched: 'no-site-data' };
@@ -243,7 +262,7 @@ async function processCluster(cluster, ctx) {
   log.info(`    카테고리: ${cat.name || cluster.category} (${cat.matched})`);
   if (cat.matched === 'fallback') log.warn(`    "${cluster.category}" 카테고리가 없어 "${cat.name}"로 넣습니다.`);
 
-  // 2-7. 저장
+  // 2-8. 저장
   if (dryRun || localOnly) {
     const file = writeDryRunFile(result);
     result.savedTo = file;
@@ -283,6 +302,18 @@ async function processCluster(cluster, ctx) {
   const file = writeDryRunFile(result);
   log.info(`    사본: ${path.relative(process.cwd(), file)}`);
   return result;
+}
+
+/**
+ * 글을 쓰기 전에 대표 검색 키워드를 정한다.
+ *
+ * 순서가 중요하다. 글을 먼저 쓰고 키워드를 나중에 정하면, 정작 본문에 그 말이
+ * 없어서 검색에 안 걸린다. 확인된 사실 중 대회명을 우선으로 잡는다.
+ */
+function guessKeyword(cluster, verification) {
+  const byField = (name) => verification.confirmed?.find((c) => c.field.includes(name))?.value;
+  const raw = byField('대회명') || byField('대회') || cluster.label;
+  return String(raw).replace(/\s+/g, ' ').trim().split(/[(\[|—·]/)[0].trim().slice(0, 30);
 }
 
 /** 미리보기에서 글 전문을 로그에 찍는다. */
