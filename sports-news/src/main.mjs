@@ -1,0 +1,444 @@
+#!/usr/bin/env node
+// 파이프라인 전체 실행.
+//
+//   npm run news -- --dry-run                    저장 없이 결과만 확인
+//   npm run news -- --topic="JLPGA" --dry-run    한 종목만
+//   npm run news -- --topic="JLPGA" --draft      워드프레스에 임시글 저장
+//
+// 안전 규칙: --draft 플래그가 없으면 저장 단계 자체가 실행되지 않는다.
+// 기본값은 "저장 안 함"이다.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { ROOT, env } from './utils/env.mjs';
+import { log, logHeader } from './utils/logger.mjs';
+import { settleAll } from './utils/retry.mjs';
+
+import { fetchFeed, parseFeed, buildQueryUrl, filterRecent, dedupeItems } from './news/fetch-rss.mjs';
+import { clusterArticles, splitBySourceCount } from './news/normalize.mjs';
+import { rankClusters } from './news/rank.mjs';
+
+import { findRelatedPosts, judgeDuplication, VERDICT_LABEL } from './duplicate/check.mjs';
+import { loadSiteCategories, resolveCategory, resolveTagIds } from './wordpress/taxonomy.mjs';
+import { saveDraft } from './wordpress/draft.mjs';
+
+import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
+import { writeArticle, lintArticle } from './ai/write.mjs';
+import { generateSeo } from './ai/seo.mjs';
+
+/* ── CLI ────────────────────────────────────────────────── */
+
+export function parseArgs(argv) {
+  const args = { topics: [], draft: false, dryRun: false, limit: null };
+  for (const a of argv) {
+    let m;
+    if ((m = /^--topic=(.+)$/.exec(a))) args.topics.push(m[1].replace(/^["']|["']$/g, ''));
+    else if ((m = /^--limit=(\d+)$/.exec(a))) args.limit = Number(m[1]);
+    else if ((m = /^--fixture=(.+)$/.exec(a))) args.fixture = m[1].replace(/^["']|["']$/g, '');
+    else if (a === '--draft') args.draft = true;
+    else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
+  }
+  // 사양 [16]의 DRY_RUN=true 도 지원한다. 환경변수로 켜면 --draft가 있어도 저장하지 않는다.
+  if (/^(1|true|yes)$/i.test(process.env.DRY_RUN || '')) {
+    args.dryRun = true;
+    args.draft = false;
+    args.dryRunReason = 'DRY_RUN 환경변수';
+  }
+  // --draft를 명시하지 않으면 무조건 dry-run이다.
+  if (!args.draft) {
+    args.dryRun = true;
+    args.dryRunReason ??= '--draft 플래그 없음';
+  }
+  return args;
+}
+
+function loadTopics(filter) {
+  const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'topics.json'), 'utf8'));
+  let topics = cfg.topics.filter((t) => t.enabled !== false);
+  if (filter.length) {
+    const want = filter.map((f) => f.toLowerCase());
+    topics = cfg.topics.filter((t) => want.includes(t.name.toLowerCase()));
+    if (!topics.length) throw new Error(`topics.json에 없는 종목입니다: ${filter.join(', ')}`);
+  }
+  return { cfg, topics };
+}
+
+function loadSiteReport() {
+  const file = path.join(ROOT, 'config', 'site.json');
+  if (!fs.existsSync(file)) return null;
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
+}
+
+const todayKST = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+/* ── 1단계: 수집 ─────────────────────────────────────────── */
+
+async function collectTopic(topic, cfg, { fixture } = {}) {
+  const { hoursWindow, maxItemsPerQuery, minSources, maxCandidatesPerTopic } = cfg.defaults;
+  const raw = [];
+
+  // --fixture: 뉴스를 네트워크 대신 파일에서 읽는다.
+  // 뉴스 수집이 막혀 있을 때 이후 단계(사실확인·작성·저장)를 점검하는 용도다.
+  if (fixture) {
+    const items = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+    const forTopic = Array.isArray(items)
+      ? items.filter((it) => !it.topic || it.topic === topic.name)
+      : (items[topic.name] || []);
+    raw.push(...forTopic);
+    log.info(`  샘플 파일에서 ${forTopic.length}건 (네트워크를 쓰지 않습니다)`);
+  }
+
+  // 검색 피드를 위에서부터 시도한다. 한 곳이 막혀도(구글뉴스 403 등) 다음 곳으로 넘어간다.
+  // 소스가 하나뿐이면 그 한 곳이 막히는 순간 시스템 전체가 멈춘다.
+  const searchFeeds = fixture ? [] : (cfg.feeds?.searchFeeds || []);
+  for (const feed of searchFeeds) {
+    const results = await settleAll(topic.queries, async (q) => {
+      const xml = await fetchFeed(buildQueryUrl(feed.url, q));
+      return parseFeed(xml, { sourceLabel: '' }).slice(0, maxItemsPerQuery);
+    });
+
+    const got = [];
+    let failed = 0;
+    for (const r of results) {
+      if (r.ok) got.push(...r.value);
+      else failed++;
+    }
+
+    if (got.length) {
+      raw.push(...got);
+      log.info(`  ${feed.name}: ${got.length}건${failed ? ` (검색어 ${failed}개 실패)` : ''}`);
+      if (cfg.defaults.stopAfterFirstWorkingFeed) break;
+    } else {
+      log.warn(`  ${feed.name}: 수집 실패 — 다음 소스로 넘어갑니다`);
+    }
+  }
+
+  // 종목별 고정 피드(언론사 섹션 등). 검색 피드와 함께 쓰고, 중복은 뒤에서 걸러진다.
+  for (const feed of fixture ? [] : (topic.staticFeeds || [])) {
+    try {
+      const xml = await fetchFeed(typeof feed === 'string' ? feed : feed.url);
+      const items = parseFeed(xml, { sourceLabel: feed.name || '' }).slice(0, maxItemsPerQuery);
+      raw.push(...items);
+      log.info(`  ${feed.name || '고정 피드'}: ${items.length}건`);
+    } catch (err) {
+      log.warn(`  고정 피드 실패: ${err.message}`);
+    }
+  }
+
+  if (!raw.length) {
+    log.warn('  모든 뉴스 소스에서 수집하지 못했습니다.');
+    log.info('    → 네트워크 차단이거나 피드 주소가 바뀐 경우입니다. config/topics.json의 feeds를 확인하세요.');
+  }
+
+  if (!raw.length) return { clusters: [], stats: { raw: 0, fresh: 0, clusters: 0, thin: 0 } };
+
+  const deduped = dedupeItems(raw);
+  const { fresh, undated } = filterRecent(deduped, hoursWindow);
+  const clusters = clusterArticles(fresh);
+  const { enough, thin } = splitBySourceCount(clusters, minSources);
+  const ranked = rankClusters(enough, topic).slice(0, maxCandidatesPerTopic);
+
+  return {
+    clusters: ranked,
+    stats: { raw: raw.length, deduped: deduped.length, fresh: fresh.length, undated: undated.length, clusters: clusters.length, thin: thin.length },
+  };
+}
+
+/* ── 2단계: 한 건 처리 ───────────────────────────────────── */
+
+async function processCluster(cluster, ctx) {
+  const { dryRun, siteCategories, seoFields, today } = ctx;
+  const result = { topic: cluster.topic, label: cluster.label, score: cluster.score };
+
+  // 2-1. 중복 검사
+  let related = [];
+  if (ctx.wpAvailable) {
+    try {
+      related = await findRelatedPosts(cluster);
+    } catch (err) {
+      log.warn(`  중복 검사 건너뜀: ${err.message}`);
+    }
+  }
+  const dup = judgeDuplication(cluster, related);
+  result.duplicate = dup;
+  log.info(`  중복 판정: ${dup.verdict} — ${VERDICT_LABEL[dup.verdict]}`);
+  log.info(`    ${dup.reason}`);
+
+  if (dup.verdict === 'B') {
+    result.skipped = '중복 가능성 높음';
+    log.warn('  ⇒ 중복 가능성 높음. 글을 만들지 않습니다.');
+    return result;
+  }
+  // C는 "새 글 대신 기존 글을 고치는 게 맞다"는 판정이다. 그래서 워드프레스에는
+  // 저장하지 않는다 — 저장하면 결국 비슷한 글이 두 개가 된다.
+  // 대신 참고용 원고를 파일로 만들어 둔다. 기존 글을 손볼 때 재료로 쓰시면 된다.
+  let localOnly = false;
+  if (dup.verdict === 'C') {
+    result.updateCandidate = dup.updateCandidate;
+    localOnly = true;
+    log.warn(`  ⇒ 기존 글 업데이트 후보: ${dup.updateCandidate?.title}`);
+    log.info(`     ${dup.updateCandidate?.link || ''}`);
+    log.info('     워드프레스에 새 글을 만들지 않습니다. 참고용 원고만 파일로 남깁니다.');
+  }
+
+  // 2-2. 사실 확인 (웹검색)
+  log.step('  사실 확인 중 (웹검색)');
+  const verification = await verifyCluster(cluster, { relatedPosts: dup.related, today });
+  result.verification = verification;
+  log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
+  log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
+
+  if (verification.isDuplicateOfExisting) {
+    result.skipped = `AI 중복 판정: ${verification.duplicateReason}`;
+    log.warn(`  ⇒ AI가 기존 글과 중복이라고 판단했습니다: ${verification.duplicateReason}`);
+    return result;
+  }
+  if (!verification.worthWriting || !hasEnoughFacts(verification)) {
+    result.skipped = `사실 근거 부족: ${verification.worthWritingReason}`;
+    log.warn(`  ⇒ 확인된 사실이 부족합니다: ${verification.worthWritingReason}`);
+    return result;
+  }
+
+  // 2-3. 본문 작성
+  log.step('  워프양식으로 작성 중');
+  const article = await writeArticle({ cluster, verification, today });
+  const lint = lintArticle(article);
+  result.article = article;
+  result.lint = lint;
+  log.info(`    제목: ${article.title}`);
+  log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
+  if (!lint.ok) for (const i of lint.issues) log.warn(`    양식 확인 필요: ${i}`);
+
+  // 2-4. SEO
+  log.step('  SEO 생성 중');
+  const seo = await generateSeo({ title: article.title, body: article.body, topic: cluster.topic, category: cluster.category });
+  result.seo = seo;
+  log.info(`    SEO 제목: ${seo.seoTitle}`);
+  log.info(`    태그(${seo.tags.length}): ${seo.tags.join(', ')}`);
+
+  // 2-5. 카테고리
+  const cat = siteCategories.length
+    ? resolveCategory(cluster.category, siteCategories)
+    : { id: null, name: cluster.category, matched: 'no-site-data' };
+  result.category = cat;
+  log.info(`    카테고리: ${cat.name || cluster.category} (${cat.matched})`);
+  if (cat.matched === 'fallback') log.warn(`    "${cluster.category}" 카테고리가 없어 "${cat.name}"로 넣습니다.`);
+
+  // 2-6. 저장
+  if (dryRun || localOnly) {
+    const file = writeDryRunFile(result);
+    result.savedTo = file;
+    result.localOnly = localOnly;
+    log.ok(`  ${localOnly ? '참고용 원고' : '초안 파일'} 저장: ${path.relative(process.cwd(), file)}`);
+    return result;
+  }
+
+  log.step('  워드프레스 임시글 저장 중');
+  const tagIds = await resolveTagIds(seo.tags);
+  const saved = await saveDraft({
+    title: article.title,
+    body: article.body,
+    categoryId: cat.id,
+    tagIds,
+    seo,
+    seoFields,
+  });
+  result.wordpress = saved;
+  log.ok(`  임시글 저장 완료 (ID ${saved.id}, 상태 ${saved.status})`);
+  if (saved.adminUrl) log.info(`    편집: ${saved.adminUrl}`);
+
+  if (saved.savedMeta.length) {
+    log.info(`    SEO 필드 저장됨: ${saved.savedMeta.join(', ')}`);
+  } else {
+    // Rank Math가 REST 쓰기를 열어두지 않은 경우가 기본이다.
+    // 파일을 열어 찾게 하지 말고, 붙여넣을 값을 여기 바로 띄운다.
+    printSeoToCopy(seo);
+  }
+
+  const file = writeDryRunFile(result);
+  log.info(`    사본: ${path.relative(process.cwd(), file)}`);
+  return result;
+}
+
+/**
+ * 워드프레스에 SEO 값을 못 넣은 경우, 손으로 붙여넣을 값을 화면에 띄운다.
+ * 파일을 열어 찾게 만들면 결국 안 하게 된다.
+ */
+function printSeoToCopy(seo) {
+  log.raw('');
+  log.raw('    ┌─ Rank Math에 붙여넣을 값 ────────────────────────');
+  log.raw(`    │ SEO 제목   : ${seo.seoTitle}`);
+  log.raw(`    │ 설명       : ${seo.metaDescription}`);
+  log.raw(`    │ 대표 키워드 : ${seo.focusKeyword}`);
+  log.raw('    └──────────────────────────────────────────────────');
+  log.raw('      편집 화면 아래 Rank Math 칸에 넣으시면 됩니다.');
+  log.raw('');
+}
+
+function writeDryRunFile(result) {
+  const dir = path.join(ROOT, 'out', todayKST());
+  fs.mkdirSync(dir, { recursive: true });
+  const base = `${result.topic}-${slugish(result.article?.title || result.label)}`.slice(0, 80);
+
+  const seo = result.seo || {};
+  const md = [
+    `# ${result.article?.title || '(제목 없음)'}`,
+    '',
+    '## 📋 워드프레스에 넣을 값',
+    '',
+    `**카테고리**: ${result.category?.name || '-'}`,
+    `**태그**: ${(seo.tags || []).join(', ')}`,
+    `**슬러그**: ${seo.slug || '-'}`,
+    '',
+    '### Rank Math 칸에 붙여넣기',
+    '',
+    `**SEO 제목**`,
+    '```',
+    seo.seoTitle || '-',
+    '```',
+    '',
+    `**설명**`,
+    '```',
+    seo.metaDescription || '-',
+    '```',
+    '',
+    `**대표 키워드**`,
+    '```',
+    seo.focusKeyword || '-',
+    '```',
+    '',
+    '### 처리 기록',
+    '',
+    `- 종목: ${result.topic}`,
+    `- 중복 판정: ${result.duplicate?.verdict} — ${result.duplicate?.reason}`,
+    result.updateCandidate ? `- 고칠 기존 글: ${result.updateCandidate.title} ${result.updateCandidate.link || ''}` : null,
+    `- 상태: ${result.wordpress ? `워드프레스 임시글 ID ${result.wordpress.id}` : '파일만 생성 (워드프레스 저장 안 함)'}`,
+    result.wordpress?.adminUrl ? `- 편집 링크: ${result.wordpress.adminUrl}` : null,
+    '',
+    '---',
+    '',
+    '## ✍️ 본문',
+    '',
+    result.article?.body || '',
+  ].filter((l) => l !== null).join('\n');
+
+  fs.writeFileSync(path.join(dir, `${base}.md`), md);
+  fs.writeFileSync(path.join(dir, `${base}.json`), JSON.stringify(result, null, 2));
+  return path.join(dir, `${base}.md`);
+}
+
+const slugish = (s) => String(s).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 50);
+
+/* ── 실행 ───────────────────────────────────────────────── */
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const { cfg, topics } = loadTopics(args.topics);
+  const today = todayKST();
+
+  logHeader(
+    args.dryRun
+      ? `🧪 DRY RUN — 워드프레스에 저장하지 않습니다 (${args.dryRunReason})`
+      : '💾 임시글 저장 모드 (status=draft)',
+    topics.map((t) => t.name)
+  );
+
+  // 워드프레스 연결은 선택이다. 없으면 중복 검사와 카테고리 매칭만 건너뛴다.
+  let siteCategories = [];
+  let wpAvailable = false;
+  const siteReport = loadSiteReport();
+  const seoFields = siteReport?.seoFields || { writable: [] };
+
+  try {
+    siteCategories = await loadSiteCategories();
+    wpAvailable = true;
+    log.ok(`워드프레스 연결됨 · 카테고리 ${siteCategories.length}개`);
+  } catch (err) {
+    if (!args.dryRun) throw err;
+    log.warn(`워드프레스에 연결하지 못했습니다: ${err.message}`);
+    log.info('  → 중복 검사와 카테고리 매칭을 건너뛰고 계속합니다.');
+    if (siteReport?.categories) {
+      siteCategories = siteReport.categories;
+      log.info(`  → config/site.json의 카테고리 ${siteCategories.length}개를 대신 씁니다.`);
+    }
+  }
+
+  const perTopic = [];
+  for (const topic of topics) {
+    log.section(`📰 ${topic.name}`);
+    try {
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture });
+      log.info(`수집 ${stats.raw}건 → 중복제거 ${stats.deduped ?? 0}건 → 최근 ${stats.fresh ?? 0}건 → 묶음 ${stats.clusters}개 (출처부족 ${stats.thin}개 제외)`);
+
+      if (!clusters.length) {
+        log.warn('글감 후보가 없습니다. 다음 종목으로 넘어갑니다.');
+        perTopic.push({ topic: topic.name, candidates: 0, results: [] });
+        continue;
+      }
+
+      const take = args.limit ?? Number(env('CANDIDATES_PER_TOPIC', '1'));
+      const picked = clusters.slice(0, take);
+      log.info(`후보 ${clusters.length}개 중 상위 ${picked.length}개 처리`);
+      clusters.slice(0, 5).forEach((c, i) => log.info(`  ${i + 1}. [${c.score}점] ${c.label.slice(0, 46)}`));
+
+      const results = [];
+      for (const cluster of picked) {
+        log.raw('');
+        log.step(`처리: ${cluster.label.slice(0, 50)}`);
+        try {
+          results.push(await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable }));
+        } catch (err) {
+          // 한 건이 실패해도 다음 건으로 계속한다.
+          log.fail('  이 글감 처리 실패', err);
+          results.push({ topic: topic.name, label: cluster.label, error: err.message });
+        }
+      }
+      perTopic.push({ topic: topic.name, candidates: clusters.length, results });
+    } catch (err) {
+      log.fail(`${topic.name} 처리 실패`, err);
+      perTopic.push({ topic: topic.name, error: err.message, results: [] });
+    }
+  }
+
+  printSummary(perTopic, args);
+}
+
+function printSummary(perTopic, args) {
+  log.section('📋 실행 요약');
+  let saved = 0, skipped = 0, failed = 0, updateCandidates = 0;
+
+  for (const t of perTopic) {
+    if (t.error) { log.error(`${t.topic}: ${t.error}`); failed++; continue; }
+    if (!t.results.length) { log.info(`${t.topic}: 글감 없음`); continue; }
+    for (const r of t.results) {
+      if (r.error) { log.error(`${t.topic}: 실패 — ${r.error}`); failed++; }
+      else if (r.skipped) { log.warn(`${t.topic}: 건너뜀 — ${r.skipped}`); skipped++; }
+      else if (r.wordpress) { log.ok(`${t.topic}: 임시글 저장 (ID ${r.wordpress.id}) — ${r.article.title}`); saved++; }
+      else if (r.localOnly) {
+        log.warn(`${t.topic}: 기존 글 업데이트 후보 — ${r.article?.title}`);
+        log.info(`   고칠 글: ${r.updateCandidate?.title} ${r.updateCandidate?.link || ''}`);
+        log.info(`   참고 원고: ${r.savedTo ? path.relative(process.cwd(), r.savedTo) : '-'}`);
+        updateCandidates++;
+      }
+      else { log.ok(`${t.topic}: 초안 생성 — ${r.article?.title}`); saved++; }
+    }
+  }
+
+  log.raw('');
+  log.info(`생성 ${saved}건 · 업데이트 후보 ${updateCandidates}건 · 건너뜀 ${skipped}건 · 실패 ${failed}건`);
+  if (args.dryRun) {
+    log.raw('');
+    log.info('🧪 DRY RUN이었습니다. 워드프레스에는 아무것도 저장되지 않았습니다.');
+    log.info('   결과물은 sports-news/out/ 폴더에 있습니다.');
+    log.info('   실제 임시글로 저장하려면: npm run news -- --topic="종목명" --draft');
+  }
+}
+
+const isDirectRun = import.meta.url === `file://${process.argv[1]}`;
+if (isDirectRun) main().catch((err) => {
+  log.fail('실행 실패', err);
+  if (err.code === 'ENV_MISSING') {
+    log.info('sports-news/.env 파일을 만들고 .env.example의 항목을 채워주세요.');
+  }
+  process.exitCode = 1;
+});

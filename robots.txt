@@ -8,10 +8,13 @@
 
 User-agent: *
 Allow: /
+# 스포츠 뉴스 자동화 도구 소스. 콘텐츠가 아니므로 색인 대상이 아니다.
+Disallow: /sports-news/
 
 # 네이버 검색로봇
 User-agent: Yeti
 Allow: /
+Disallow: /sports-news/
 
 # ── AI 답변엔진 (검색해서 인용하는 쪽) ──────────────────────────
 # 여기를 막으면 ChatGPT·Perplexity·Claude가 답변에 맘운자로를 인용하지 못한다.

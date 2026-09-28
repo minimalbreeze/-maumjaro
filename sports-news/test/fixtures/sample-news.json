@@ -1,0 +1,34 @@
+[
+  {
+    "topic": "바둑",
+    "title": "2026 삼성화재배 8강 대진 확정, 신진서 vs 커제 성사",
+    "link": "https://media-a.example/1",
+    "source": "A일보",
+    "publishedAt": "2026-09-27T23:00:00Z",
+    "summary": "오는 10월 서울에서 열리는 삼성화재배 8강 대진이 확정됐다. 대회 일정과 대진표 공개."
+  },
+  {
+    "topic": "바둑",
+    "title": "삼성화재배 8강 신진서-커제 맞대결 확정… 10월 서울",
+    "link": "https://media-b.example/2",
+    "source": "B신문",
+    "publishedAt": "2026-09-27T21:00:00Z",
+    "summary": "한중 최강자의 재대결. 상금 규모와 중계 일정도 함께 발표됐다."
+  },
+  {
+    "topic": "바둑",
+    "title": "신진서, 삼성화재배 8강서 커제와… 대진 확정",
+    "link": "https://media-c.example/3",
+    "source": "C스포츠",
+    "publishedAt": "2026-09-27T18:00:00Z",
+    "summary": "디펜딩 챔피언 신진서의 8강 상대가 결정됐다."
+  },
+  {
+    "topic": "바둑",
+    "title": "프로기사 근황 화제",
+    "link": "https://media-d.example/4",
+    "source": "D매체",
+    "publishedAt": "2026-09-28T01:00:00Z",
+    "summary": "SNS 소식"
+  }
+]

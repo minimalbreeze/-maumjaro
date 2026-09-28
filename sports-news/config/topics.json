@@ -1,0 +1,308 @@
+{
+  "_설명": "검색할 종목과 키워드. 종목을 추가하려면 topics 배열에 항목 하나를 복사해 붙여넣고 고치면 된다. enabled를 false로 두면 그 종목은 건너뛴다.",
+  "defaults": {
+    "hoursWindow": 72,
+    "minSources": 2,
+    "maxItemsPerQuery": 25,
+    "maxCandidatesPerTopic": 40,
+    "stopAfterFirstWorkingFeed": true
+  },
+  "feeds": {
+    "_설명": "searchFeeds는 검색어가 들어가는 피드다. 위에서부터 순서대로 시도한다. 한 곳이 막혀도 다음 곳으로 넘어간다. staticFeeds는 종목별로 topics에 직접 적는 고정 주소 피드다(언론사 스포츠 섹션 등).",
+    "searchFeeds": [
+      {
+        "name": "구글뉴스(한국)",
+        "url": "https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko"
+      },
+      {
+        "name": "빙뉴스(한국)",
+        "url": "https://www.bing.com/news/search?q={query}&format=RSS&setmkt=ko-KR"
+      }
+    ]
+  },
+  "topics": [
+    {
+      "name": "KLPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": [
+        "KLPGA",
+        "한국여자프로골프",
+        "KLPGA 대회"
+      ],
+      "longTermHints": [
+        "대회 프리뷰",
+        "시즌 일정",
+        "상금랭킹",
+        "대상 경쟁"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "JLPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": [
+        "JLPGA",
+        "일본여자프로골프",
+        "JLPGA 한국선수"
+      ],
+      "longTermHints": [
+        "대회 일정",
+        "출전 선수",
+        "상금랭킹"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "LPGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": [
+        "LPGA",
+        "LPGA 한국선수",
+        "LPGA 대회"
+      ],
+      "longTermHints": [
+        "메이저 대회",
+        "시즌 일정",
+        "CME 레이스"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "PGA",
+      "enabled": true,
+      "category": "골프",
+      "queries": [
+        "PGA 투어",
+        "PGA 챔피언십",
+        "PGA 한국선수"
+      ],
+      "longTermHints": [
+        "메이저 대회",
+        "페덱스컵",
+        "라이더컵"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "파크골프",
+      "enabled": true,
+      "category": "파크골프",
+      "queries": [
+        "파크골프",
+        "파크골프 대회",
+        "파크골프장"
+      ],
+      "longTermHints": [
+        "대회 일정",
+        "구장 개장",
+        "규칙",
+        "동호회"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "KBO",
+      "enabled": true,
+      "category": "야구",
+      "queries": [
+        "KBO 리그",
+        "프로야구 KBO",
+        "KBO 순위"
+      ],
+      "longTermHints": [
+        "시즌 일정",
+        "포스트시즌",
+        "FA",
+        "신인드래프트"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "배드민턴",
+      "enabled": true,
+      "category": "배드민턴",
+      "queries": [
+        "배드민턴 안세영",
+        "BWF 배드민턴",
+        "배드민턴 대표팀"
+      ],
+      "longTermHints": [
+        "세계선수권",
+        "BWF 투어 일정",
+        "세계랭킹"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "당구",
+      "enabled": true,
+      "category": "당구",
+      "queries": [
+        "PBA 당구",
+        "3쿠션 월드컵",
+        "당구 프로당구"
+      ],
+      "longTermHints": [
+        "투어 일정",
+        "랭킹",
+        "월드컵"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "바둑",
+      "enabled": true,
+      "category": "바둑",
+      "queries": [
+        "바둑 신진서",
+        "바둑 국가대표",
+        "바둑 기전"
+      ],
+      "longTermHints": [
+        "기전 일정",
+        "세계대회",
+        "랭킹"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "골프일반",
+      "enabled": false,
+      "category": "골프",
+      "queries": [
+        "골프 대회",
+        "골프 규칙"
+      ],
+      "longTermHints": [
+        "규칙 개정",
+        "장비",
+        "코스 공략"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "축구",
+      "enabled": false,
+      "category": "축구",
+      "queries": [
+        "K리그",
+        "축구 국가대표",
+        "손흥민"
+      ],
+      "longTermHints": [
+        "리그 일정",
+        "대표팀 명단",
+        "순위",
+        "중계"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "농구",
+      "enabled": false,
+      "category": "농구",
+      "queries": [
+        "KBL 농구",
+        "프로농구 순위",
+        "NBA 한국"
+      ],
+      "longTermHints": [
+        "시즌 일정",
+        "플레이오프",
+        "순위"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "배구",
+      "enabled": false,
+      "category": "배구",
+      "queries": [
+        "V리그 배구",
+        "프로배구 순위",
+        "배구 국가대표"
+      ],
+      "longTermHints": [
+        "시즌 일정",
+        "순위",
+        "대표팀"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "볼링",
+      "enabled": false,
+      "category": "볼링",
+      "queries": [
+        "볼링 대회",
+        "프로볼링"
+      ],
+      "longTermHints": [
+        "대회 일정",
+        "규칙",
+        "기록"
+      ],
+      "staticFeeds": []
+    }
+  ],
+  "knownCategories": {
+    "_설명": "2026-09-28 기준 실제 워드프레스 카테고리. npm run wp:check를 돌리면 실제 ID까지 조회한다. 카테고리를 사이트에서 바꾸면 여기도 고쳐두면 좋다(안 고쳐도 동작은 한다).",
+    "list": [
+      {
+        "name": "골프",
+        "parent": null
+      },
+      {
+        "name": "골프 스윙",
+        "parent": "골프"
+      },
+      {
+        "name": "생활정보",
+        "parent": null
+      },
+      {
+        "name": "스포츠",
+        "parent": null
+      },
+      {
+        "name": "농구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "당구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "바둑",
+        "parent": "스포츠"
+      },
+      {
+        "name": "배구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "배드민턴",
+        "parent": "스포츠"
+      },
+      {
+        "name": "볼링",
+        "parent": "스포츠"
+      },
+      {
+        "name": "야구",
+        "parent": null
+      },
+      {
+        "name": "축구",
+        "parent": null
+      },
+      {
+        "name": "파크골프",
+        "parent": null
+      }
+    ]
+  }
+}
