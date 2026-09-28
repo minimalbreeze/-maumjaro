@@ -170,6 +170,38 @@ check('B 판정이면 AI 작성 단계로 넘어가지 않는다', () => {
   assert.ok(!/워프양식으로 작성 중/.test(r4.out), '중복인데 글을 썼습니다');
 });
 
+// ── 1순위가 막히면 다음 후보로 ──────────────────────────────────
+// 예전에는 1순위 글감이 중복이면 그 종목은 그대로 빈손이었다.
+// 후보가 더 있는데도 아무것도 안 만드는 건 아깝다.
+console.log('\n[1순위가 막히면 다음 후보로]');
+const wp5 = await startMockWordPress({
+  existingPosts: [{
+    id: 77, title: { rendered: '2026 삼성화재배 8강 대진 확정, 신진서 vs 커제 성사' },
+    link: 'http://example.test/?p=77', date: new Date().toISOString(),
+    modified: new Date().toISOString(), status: 'publish',
+  }],
+});
+const r5 = await run(['--topic=바둑', '--draft', '--fixture=test/fixtures/two-clusters.json'], {
+  ...probeEnv, WORDPRESS_URL: `http://127.0.0.1:${wp5.port}`,
+});
+check('1순위가 중복이면 다음 후보를 처리한다', () => {
+  assert.ok(/다음 후보로 넘어갑니다/.test(r5.out), r5.out.slice(-800));
+});
+check('다음 후보로 임시글 1건을 만든다', () => {
+  assert.equal(r5.code, 0, r5.out.slice(-600));
+  assert.equal(wp5.state.created.length, 1, `${wp5.state.created.length}건 저장됨`);
+  assert.equal(wp5.state.created[0].status, 'draft');
+});
+// 모의 AI는 어떤 글감을 줘도 같은 원고를 돌려주므로 저장된 제목으로는
+// 어느 글감이었는지 가릴 수 없다. 로그에 찍힌 처리 순서로 확인한다.
+check('중복 글감이 아니라 2순위 글감을 처리한다', () => {
+  const order = [...r5.out.matchAll(/처리: (.+)/g)].map((m) => m[1]);
+  assert.equal(order.length, 2, `처리한 글감 ${order.length}개: ${order.join(' / ')}`);
+  assert.ok(/삼성화재배/.test(order[0]), order[0]);
+  assert.ok(/LG배/.test(order[1]), order[1]);
+});
+wp5.server.close();
+
 if (siteBackup !== null) fs.writeFileSync(sitePath, siteBackup); else fs.rmSync(sitePath, { force: true });
 ai.server.close(); wp.server.close(); wp2.server.close(); wp3.server.close(); wp4.server.close();
 

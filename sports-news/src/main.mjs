@@ -542,20 +542,42 @@ async function main() {
       }
 
       const take = args.limit ?? Number(env('CANDIDATES_PER_TOPIC', '1'));
-      const picked = clusters.slice(0, take);
-      log.info(`후보 ${clusters.length}개 중 상위 ${picked.length}개 처리`);
+      log.info(`후보 ${clusters.length}개 중 ${take}개 목표`);
       clusters.slice(0, 5).forEach((c, i) => log.info(`  ${i + 1}. [${c.score}점] ${c.label.slice(0, 46)}`));
 
+      // 1순위 글감이 중복이거나 사실 근거가 부족하면 그대로 끝내지 않고
+      // 다음 후보로 내려간다. 예전에는 1순위가 걸리면 그 종목은 빈손이었다.
+      // 다만 후보를 무한정 훑으면 사실확인 비용이 계속 붙으므로, 건너뛴 만큼만
+      // 몇 번 더 시도한다.
+      const maxExtra = Number(env('MAX_EXTRA_CANDIDATES', '2'));
       const results = [];
-      for (const cluster of picked) {
+      let produced = 0;
+      let extra = 0;
+
+      for (const cluster of clusters) {
+        if (produced >= take) break;
+        if (extra > maxExtra) {
+          log.warn(`  다음 후보 시도를 ${maxExtra}번까지만 합니다. 여기서 멈춥니다.`);
+          break;
+        }
+
         log.raw('');
         log.step(`처리: ${cluster.label.slice(0, 50)}`);
+        let r;
         try {
-          results.push(await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable }));
+          r = await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable });
         } catch (err) {
           // 한 건이 실패해도 다음 건으로 계속한다.
           log.fail('  이 글감 처리 실패', err);
-          results.push({ topic: topic.name, label: cluster.label, error: err.message });
+          r = { topic: topic.name, label: cluster.label, error: err.message };
+        }
+        results.push(r);
+
+        if (r.skipped || r.error) {
+          extra++;
+          if (extra <= maxExtra && produced < take) log.info('  다음 후보로 넘어갑니다.');
+        } else {
+          produced++;
         }
       }
       perTopic.push({ topic: topic.name, candidates: clusters.length, results });
