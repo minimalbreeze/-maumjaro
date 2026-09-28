@@ -29,6 +29,7 @@ import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { checkRankMath } from './seo/rankmath.mjs';
+import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
 
@@ -567,6 +568,47 @@ async function main() {
   printSummary(perTopic, args);
 }
 
+/**
+ * 이번 실행에 얼마나 썼는지 보여준다.
+ *
+ * 비용이 보이지 않으면 어디를 줄여야 할지 알 수 없다. 단계마다 모델이 다르므로
+ * 모델별로 나눠 보여준다. 요금표는 config/pricing.json에 있고 바뀌면 거기를 고친다.
+ */
+function printUsage() {
+  const rows = usageSummary();
+  if (!rows.length) return;
+
+  let pricing = null;
+  try {
+    pricing = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'pricing.json'), 'utf8'));
+  } catch { /* 요금표가 없으면 토큰만 보여준다 */ }
+
+  log.raw('');
+  log.raw('💰 이번 실행에 쓴 양');
+  let usd = 0;
+  let searches = 0;
+  for (const r of rows) {
+    const rate = pricing?.models?.[r.model];
+    let line = `   ${r.model}: 호출 ${r.calls}회 · 입력 ${fmt(r.input)} · 출력 ${fmt(r.output)}`;
+    if (r.cacheRead) line += ` · 캐시재사용 ${fmt(r.cacheRead)}`;
+    if (r.searches) line += ` · 웹검색 ${r.searches}회`;
+    searches += r.searches;
+    if (rate) {
+      const cost = (r.input / 1e6) * rate.input + (r.output / 1e6) * rate.output;
+      usd += cost;
+      line += `  ≈ $${cost.toFixed(3)}`;
+    }
+    log.raw(line);
+  }
+  if (usd > 0) {
+    const krw = Math.round(usd * (pricing?.usdToKrw || 1400));
+    log.raw(`   합계 ≈ $${usd.toFixed(3)} (약 ${krw.toLocaleString('ko-KR')}원)${searches ? ` + 웹검색 ${searches}회 별도` : ''}`);
+    log.raw('   * 토큰 요금만 계산한 값입니다. 웹검색은 별도 과금이라 횟수만 표시합니다.');
+  }
+}
+
+const fmt = (n) => n.toLocaleString('ko-KR');
+
 function printSummary(perTopic, args) {
   log.section('📋 실행 요약');
   let saved = 0, skipped = 0, failed = 0, updateCandidates = 0;
@@ -590,6 +632,7 @@ function printSummary(perTopic, args) {
 
   log.raw('');
   log.info(`생성 ${saved}건 · 업데이트 후보 ${updateCandidates}건 · 건너뜀 ${skipped}건 · 실패 ${failed}건`);
+  printUsage();
   if (args.dryRun) {
     log.raw('');
     log.info('🧪 DRY RUN이었습니다. 워드프레스에는 아무것도 저장되지 않았습니다.');
