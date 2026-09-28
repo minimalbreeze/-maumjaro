@@ -309,8 +309,21 @@ check('키워드 사이 공백이 달라도 센다', () => {
   assert.equal(keywordDensity('바둑춘향   선발대회 소식', '바둑춘향 선발대회').count, 1);
 });
 check('목표 횟수는 분량에 비례한다', () => {
-  assert.ok(targetKeywordCount(3500) >= 12, targetKeywordCount(3500));
-  assert.ok(targetKeywordCount(3500) <= 20);
+  assert.ok(targetKeywordCount(3000) < targetKeywordCount(4500));
+  assert.ok(targetKeywordCount(4200) <= 20);
+});
+
+// 실제로 당한 일: 3,500자를 기준으로 목표를 잡았는데 글이 4,159자로 나와
+// 밀도가 1.07%에 그쳤다. 분량이 규격(3,000~4,500자) 어디에 떨어지든
+// 1.25~2.5% 안에 들어야 한다.
+check('규격 분량 어디에 떨어져도 권장 구간 안에 든다', () => {
+  const n = targetKeywordCount();
+  for (const chars of [3000, 3500, 4000, 4500]) {
+    const words = Math.round(chars / 3.5);
+    const density = (n / words) * 100;
+    assert.ok(density >= 1.25, `${chars}자에서 ${density.toFixed(2)}% — 너무 낮습니다`);
+    assert.ok(density <= 2.5, `${chars}자에서 ${density.toFixed(2)}% — 남용입니다`);
+  }
 });
 
 // ── 실행 진입점이 .env 없이도 도는가 ───────────────────────

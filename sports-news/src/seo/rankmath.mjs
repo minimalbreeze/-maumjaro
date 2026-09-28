@@ -46,8 +46,15 @@ export function keywordDensity(body, keyword) {
   return { words, count, density: (count / words) * 100 };
 }
 
-/** 목표 분량에서 대표 키워드를 몇 번 써야 1.25%가 되는지 알려준다. */
-export function targetKeywordCount(targetChars = 3500) {
+/**
+ * 목표 분량에서 대표 키워드를 몇 번 써야 1.25%가 되는지 알려준다.
+ *
+ * 기준은 분량 상한(4,500자)으로 잡는다. 3,500자로 잡았더니 실제로 4,159자짜리
+ * 글이 나와 밀도가 1.07%에 그쳤다. 글이 길어질수록 같은 횟수로는 밀도가 떨어지므로
+ * 가장 긴 경우를 기준으로 잡아야 어느 길이로 나와도 1.25% 아래로 떨어지지 않는다.
+ * 짧게 나와도 2.5%를 넘지 않는 선이다.
+ */
+export function targetKeywordCount(targetChars = 4500) {
   // 한국어는 공백 기준 한 단어가 대략 3.5자다.
   const words = Math.round(targetChars / 3.5);
   return Math.min(20, Math.max(8, Math.ceil(words * 0.0125)));
