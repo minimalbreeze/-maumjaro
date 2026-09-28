@@ -313,6 +313,30 @@ check('목표 횟수는 분량에 비례한다', () => {
   assert.ok(targetKeywordCount(3500) <= 20);
 });
 
+// ── 실행 진입점이 .env 없이도 도는가 ───────────────────────
+// 실제로 당한 일: 새로 만든 명령이 process.loadEnvFile('.env')를 직접 불러
+// GitHub Actions에서 ENOENT로 0초 만에 죽었다. 거기엔 .env가 없고 비밀값이
+// 환경변수로 들어온다. .env 로딩은 utils/env.mjs의 loadEnv() 한 곳만 한다.
+console.log('\n[.env 없이도 도는가]');
+
+check('utils/env.mjs 말고는 .env를 직접 읽지 않는다', () => {
+  const srcDir = path.join(HERE, "..", "src");
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (fs.statSync(full).isDirectory()) { walk(full); continue; }
+      if (!name.endsWith('.mjs')) continue;
+      if (full.endsWith(path.join('utils', 'env.mjs'))) continue;
+      if (/process\.loadEnvFile/.test(fs.readFileSync(full, 'utf8'))) {
+        offenders.push(path.relative(path.join(HERE, ".."), full));
+      }
+    }
+  };
+  walk(srcDir);
+  assert.deepEqual(offenders, [], `loadEnv()를 쓰세요: ${offenders.join(', ')}`);
+});
+
 Date.now = realNow;
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ 전체 ${passed}개 항목 통과`}\n`);
 

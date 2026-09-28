@@ -380,13 +380,19 @@ async function attachImages({ article, seo, cluster, dryRun }) {
   const body = insertMarks(article.body, plan);
   const out = { body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '', featuredId: null, summary: [] };
 
+  // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
+  // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")
+  // 카드 라벨로는 못 쓴다. 카테고리("야구")를 쓴다 — 짧고, 같은 카테고리끼리
+  // 색이 같아져서 시리즈처럼 보인다.
+  const cardLabel = cluster.category || cluster.topic;
+
   const wanted = [
     { role: 'hero', make: () => createHeroImage({
-        title: article.title, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+        title: article.title, topic: cluster.topic, label: cardLabel, focusKeyword: seo.focusKeyword,
         onFallback: (why) => log.warn(`    AI 이미지 생성 실패 — 텍스트 카드로 대체합니다: ${why}`),
       }) },
     ...plan.sections.map((h) => ({ role: 'section', make: () => createSectionImage({
-        heading: h.text, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+        heading: h.text, topic: cluster.topic, label: cardLabel, focusKeyword: seo.focusKeyword,
       }) })),
   ];
 

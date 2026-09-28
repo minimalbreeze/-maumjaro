@@ -88,7 +88,7 @@ async function generateWithOpenAI({ topic, title }) {
  * 대표 이미지를 만든다. 무슨 일이 있어도 이미지를 돌려준다.
  * @returns {{ buffer: Buffer, kind: 'ai'|'card', alt: string, note: string }}
  */
-export async function createHeroImage({ title, topic, focusKeyword, onFallback }) {
+export async function createHeroImage({ title, topic, focusKeyword, label = '', onFallback }) {
   const alt = buildAlt({ focusKeyword, topic, title });
 
   if (hasAiImage()) {
@@ -101,14 +101,14 @@ export async function createHeroImage({ title, topic, focusKeyword, onFallback }
     }
   }
 
-  const buffer = await renderCard({ title, label: topic, kind: 'hero', seed: topic });
+  const buffer = await renderCard({ title, label: label || topic, kind: 'hero', seed: label || topic });
   return { buffer, kind: 'card', alt, note: hasAiImage() ? '생성 실패 → 텍스트 카드' : '텍스트 카드' };
 }
 
 /** 본문 중간에 넣을 카드. 소제목을 그대로 쓴다. */
-export async function createSectionImage({ heading, topic, focusKeyword }) {
+export async function createSectionImage({ heading, topic, focusKeyword, label = '' }) {
   const clean = String(heading).replace(/^#+\s*/, '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
-  const buffer = await renderCard({ title: clean, kind: 'section', seed: topic });
+  const buffer = await renderCard({ title: clean, kind: 'section', seed: label || topic });
   return { buffer, kind: 'card', alt: buildAlt({ focusKeyword, topic, title: clean }), note: '텍스트 카드' };
 }
 

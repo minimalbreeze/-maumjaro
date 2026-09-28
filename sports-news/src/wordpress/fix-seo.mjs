@@ -12,6 +12,7 @@
 import { wpFetch } from './client.mjs';
 import { chooseFocusKeyword, keywordDensity, buildSlug } from '../seo/rankmath.mjs';
 import { log } from '../utils/logger.mjs';
+import { loadEnv } from '../utils/env.mjs';
 
 /** 워드프레스 블록 HTML에서 사람이 읽는 글만 남긴다. */
 export function htmlToText(html) {
@@ -109,6 +110,9 @@ async function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.loadEnvFile?.('.env');
+  // .env 로딩은 loadEnv() 한 곳에만 맡긴다. 노드의 환경파일 로더를 직접 부르면
+  // .env가 없는 곳(GitHub Actions처럼 비밀값이 환경변수로 들어오는 곳)에서
+  // ENOENT로 죽는다. 실제로 그렇게 0초 만에 실패했다.
+  loadEnv();
   await main();
 }
