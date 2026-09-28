@@ -14,13 +14,26 @@ const BULLET = /^(?:[-*]\s+|[✅✔•]\s*)/;
  * 마크다운 본문을 워드프레스 블록 에디터가 알아듣는 HTML로 바꾼다.
  * 클래식 에디터에서도 그대로 보이도록 표준 태그만 쓴다.
  */
-export function markdownToBlocks(md) {
+export function markdownToBlocks(md, { images = [], adHtml: ad = '' } = {}) {
   const out = [];
   const blocks = md.replace(/\r/g, '').split(/\n{2,}/);
 
   for (const raw of blocks) {
     const block = raw.trim();
     if (!block) continue;
+
+    // 이미지·광고 자리표시자를 실제 블록으로 바꾼다.
+    // 이미지를 못 올렸으면 자리표시자만 조용히 사라진다 — 글은 그대로 나간다.
+    const imgMark = /^<!--IMG:(\d+)-->$/.exec(block);
+    if (imgMark) {
+      const img = images[Number(imgMark[1])];
+      if (img?.html) out.push(img.html);
+      continue;
+    }
+    if (block === '<!--AD-->') {
+      if (ad) out.push(ad);
+      continue;
+    }
 
     const h2 = /^##\s+(.+)$/.exec(block);
     if (h2) {
@@ -64,16 +77,17 @@ function escapeHtml(s) {
  * seoFields는 wp:check가 "REST로 쓸 수 있다"고 확인한 키만 들어온다.
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
  */
-export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields }) {
+export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', featuredMediaId = null }) {
   const payload = {
     title,
-    content: markdownToBlocks(body),
+    content: markdownToBlocks(body, { images, adHtml }),
     status: DRAFT_STATUS,
     categories: categoryId ? [categoryId] : [],
     tags: tagIds || [],
     excerpt: seo?.metaDescription || '',
   };
   if (seo?.slug) payload.slug = seo.slug;
+  if (featuredMediaId) payload.featured_media = featuredMediaId;
 
   const meta = buildSeoMeta(seo, seoFields);
   if (Object.keys(meta).length) payload.meta = meta;

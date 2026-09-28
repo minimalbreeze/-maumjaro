@@ -52,15 +52,16 @@ export function parseFeed(xml, { sourceLabel = '' } = {}) {
 
   const items = [];
   for (const b of blocks) {
-    const title = stripTags(tag(b, 'title'));
-    if (!title) continue;
+    const rawTitle = stripTags(tag(b, 'title'));
+    if (!rawTitle) continue;
+    const { title, trailingSource } = splitSourceSuffix(rawTitle);
 
     const link = tag(b, 'link') || attr(b, 'link', 'href');
     const dateRaw = tag(b, 'pubDate') || tag(b, 'published') || tag(b, 'updated') || tag(b, 'dc:date');
     const published = parseDate(dateRaw);
 
     // 구글뉴스 피드는 <source>에 원매체명이 들어온다. 없으면 링크 도메인으로 대체.
-    const source = stripTags(tag(b, 'source')) || sourceLabel || hostOf(link);
+    const source = stripTags(tag(b, 'source')) || trailingSource || sourceLabel || hostOf(link);
 
     items.push({
       title,
@@ -72,6 +73,27 @@ export function parseFeed(xml, { sourceLabel = '' } = {}) {
     });
   }
   return items;
+}
+
+/**
+ * 구글뉴스는 제목 끝에 " - 매체명"을 붙인다.
+ *
+ * 이게 붙어 있으면 같은 사건을 다룬 기사끼리도 매체명이 달라 유사도가 떨어진다.
+ * 실측: 같은 사건 3건이 꼬리표를 떼면 0.36~0.70, 붙은 채로는 0.25~0.47.
+ * 임계값 0.34 기준으로 일부가 묶이지 못해 "출처 부족"으로 탈락한다.
+ *
+ * 떼어낸 매체명은 버리지 않고 source가 비었을 때 쓴다.
+ */
+export function splitSourceSuffix(title) {
+  // 마지막 " - " 뒤가 짧고 줄바꿈 없는 조각이면 매체명으로 본다.
+  // 제목 본문에 하이픈이 쓰이는 경우(예: "3-0 승리")를 건드리지 않도록
+  // 앞뒤 공백이 있는 " - "만 본다.
+  const m = /^(.*\S)\s+-\s+([^\s-][^-]{0,24})$/.exec(title);
+  if (!m) return { title, trailingSource: '' };
+  const [, head, tail] = m;
+  // 본문이 너무 짧아지면 잘못 자른 것이다.
+  if (head.length < 8) return { title, trailingSource: '' };
+  return { title: head.trim(), trailingSource: tail.trim() };
 }
 
 export function parseDate(raw) {

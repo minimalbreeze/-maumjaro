@@ -22,6 +22,9 @@ import { findRelatedPosts, judgeDuplication, VERDICT_LABEL } from './duplicate/c
 import { loadSiteCategories, resolveCategory, resolveTagIds } from './wordpress/taxonomy.mjs';
 import { saveDraft } from './wordpress/draft.mjs';
 
+import { createHeroImage, createSectionImage, hasAiImage } from './images/provider.mjs';
+import { uploadMedia, safeFileName } from './images/upload.mjs';
+import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.mjs';
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
@@ -68,6 +71,12 @@ function loadSiteReport() {
   if (!fs.existsSync(file)) return null;
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
 }
+
+/** 쿠팡 파트너스 광고. config/ad-coupang.html을 고치면 바뀐다. 파일을 지우면 광고가 빠진다. */
+const AD_SNIPPET = (() => {
+  const f = path.join(ROOT, 'config', 'ad-coupang.html');
+  try { return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : ''; } catch { return ''; }
+})();
 
 const todayKST = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 
@@ -222,7 +231,11 @@ async function processCluster(cluster, ctx) {
   log.info(`    SEO 제목: ${seo.seoTitle}`);
   log.info(`    태그(${seo.tags.length}): ${seo.tags.join(', ')}`);
 
-  // 2-5. 카테고리
+  // 2-5. 이미지 — 대표 이미지 1장 + 본문 카드 1장
+  const media = await attachImages({ article, seo, cluster, dryRun: dryRun || localOnly });
+  result.images = media.summary;
+
+  // 2-6. 카테고리
   const cat = siteCategories.length
     ? resolveCategory(cluster.category, siteCategories)
     : { id: null, name: cluster.category, matched: 'no-site-data' };
@@ -230,12 +243,15 @@ async function processCluster(cluster, ctx) {
   log.info(`    카테고리: ${cat.name || cluster.category} (${cat.matched})`);
   if (cat.matched === 'fallback') log.warn(`    "${cluster.category}" 카테고리가 없어 "${cat.name}"로 넣습니다.`);
 
-  // 2-6. 저장
+  // 2-7. 저장
   if (dryRun || localOnly) {
     const file = writeDryRunFile(result);
     result.savedTo = file;
     result.localOnly = localOnly;
     log.ok(`  ${localOnly ? '참고용 원고' : '초안 파일'} 저장: ${path.relative(process.cwd(), file)}`);
+    // 미리보기는 결과를 눈으로 보려고 돌리는 것이다. 파일을 따로 받지 않아도
+    // 바로 읽을 수 있게 글 전문을 그대로 찍는다.
+    printArticle(result);
     return result;
   }
 
@@ -243,11 +259,14 @@ async function processCluster(cluster, ctx) {
   const tagIds = await resolveTagIds(seo.tags);
   const saved = await saveDraft({
     title: article.title,
-    body: article.body,
+    body: media.body,
     categoryId: cat.id,
     tagIds,
     seo,
     seoFields,
+    images: media.blocks,
+    adHtml: media.ad,
+    featuredMediaId: media.featuredId,
   });
   result.wordpress = saved;
   log.ok(`  임시글 저장 완료 (ID ${saved.id}, 상태 ${saved.status})`);
@@ -264,6 +283,89 @@ async function processCluster(cluster, ctx) {
   const file = writeDryRunFile(result);
   log.info(`    사본: ${path.relative(process.cwd(), file)}`);
   return result;
+}
+
+/** 미리보기에서 글 전문을 로그에 찍는다. */
+function printArticle(result) {
+  const seo = result.seo || {};
+  log.raw('');
+  log.raw('━'.repeat(60));
+  log.raw(`📄 ${result.article?.title || ''}`);
+  log.raw('━'.repeat(60));
+  log.raw(`카테고리: ${result.category?.name || '-'}`);
+  log.raw(`태그: ${(seo.tags || []).join(', ')}`);
+  log.raw(`SEO 제목: ${seo.seoTitle || '-'}`);
+  log.raw(`메타 설명: ${seo.metaDescription || '-'}`);
+  log.raw(`대표 키워드: ${seo.focusKeyword || '-'}`);
+  log.raw(`슬러그: ${seo.slug || '-'}`);
+  if (result.images?.length) {
+    log.raw(`이미지: ${result.images.map((i) => `${i.role}(${i.note})`).join(', ')}`);
+  }
+  log.raw('─'.repeat(60));
+  log.raw(result.article?.body || '');
+  log.raw('━'.repeat(60));
+  log.raw('');
+}
+
+/**
+ * 이미지를 만들어 올리고, 본문에 들어갈 자리를 잡는다.
+ *
+ * 이미지는 글의 부속물이다. 만들기에 실패하든 올리기에 실패하든
+ * 글 자체는 그대로 나가야 한다. 그래서 모든 실패를 안에서 삼키고
+ * 무엇이 안 됐는지만 로그에 남긴다.
+ */
+async function attachImages({ article, seo, cluster, dryRun }) {
+  const plan = planPlacements(article.body, { sectionImages: 1, withAd: Boolean(AD_SNIPPET) });
+  const body = insertMarks(article.body, plan);
+  const out = { body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '', featuredId: null, summary: [] };
+
+  const wanted = [
+    { role: 'hero', make: () => createHeroImage({
+        title: article.title, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+        onFallback: (why) => log.warn(`    AI 이미지 생성 실패 — 텍스트 카드로 대체합니다: ${why}`),
+      }) },
+    ...plan.sections.map((h) => ({ role: 'section', make: () => createSectionImage({
+        heading: h.text, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+      }) })),
+  ];
+
+  log.step(`  이미지 ${wanted.length}장 준비 중${hasAiImage() ? ' (AI 생성)' : ' (텍스트 카드)'}`);
+
+  for (const [i, w] of wanted.entries()) {
+    let img;
+    try {
+      img = await w.make();
+    } catch (err) {
+      log.warn(`    ${w.role} 이미지를 만들지 못했습니다: ${err.message}`);
+      out.blocks.push(null);
+      continue;
+    }
+
+    if (dryRun) {
+      // 저장하지 않는 실행에서는 워드프레스에 올리지 않는다. 파일로만 남긴다.
+      out.blocks.push(null);
+      out.summary.push({ role: w.role, kind: img.kind, note: img.note, alt: img.alt, bytes: img.buffer.length });
+      log.info(`    ${w.role}: ${img.note} (${Math.round(img.buffer.length / 1024)}KB) — 미리보기라 업로드하지 않습니다`);
+      continue;
+    }
+
+    try {
+      const up = await uploadMedia({
+        buffer: img.buffer,
+        fileName: safeFileName(`${cluster.topic}-${seo.slug || article.title}`),
+        alt: img.alt,
+      });
+      out.blocks.push({ html: imageHtml({ url: up.url, alt: img.alt }) });
+      if (i === 0) out.featuredId = up.id;
+      out.summary.push({ role: w.role, kind: img.kind, note: img.note, alt: img.alt, url: up.url });
+      log.info(`    ${w.role}: ${img.note} → 업로드 완료 (미디어 ID ${up.id})`);
+    } catch (err) {
+      out.blocks.push(null);
+      log.warn(`    ${w.role} 이미지 업로드 실패 — 글은 이미지 없이 저장합니다: ${err.message}`);
+    }
+  }
+
+  return out;
 }
 
 /**
