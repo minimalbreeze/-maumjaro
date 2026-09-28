@@ -113,11 +113,22 @@ export function filterRecent(items, hoursWindow) {
   const cutoff = Date.now() - hoursWindow * 3600 * 1000;
   const fresh = [];
   const undated = [];
+  const stale = [];
   for (const it of items) {
     if (!it.publishedAt) { undated.push({ ...it, dateUnknown: true }); continue; }
     if (new Date(it.publishedAt).getTime() >= cutoff) fresh.push({ ...it, dateUnknown: false });
+    else stale.push(it);
   }
-  return { fresh, undated };
+  // stale을 따로 세는 이유: "수집은 75건인데 최근 1건"만 보면 원인을 알 수 없다.
+  // 오래된 기사가 많은 건지, 날짜를 못 읽은 건지 구분돼야 손을 쓸 수 있다.
+  return { fresh, undated, stale };
+}
+
+/** 기간 제한 검색어를 만든다. 구글뉴스의 when: 연산자 등. */
+export function applyQuerySuffix(query, suffixTemplate, hoursWindow) {
+  if (!suffixTemplate) return query;
+  const days = Math.max(1, Math.ceil(hoursWindow / 24));
+  return query + suffixTemplate.replace('{days}', String(days));
 }
 
 /** 같은 기사가 여러 검색어에 걸리므로 링크 기준으로 중복을 없앤다. */
