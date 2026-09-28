@@ -52,6 +52,11 @@ jobs:
           cache: npm
           cache-dependency-path: sports-news/package-lock.json
 
+      # 텍스트 카드 이미지에 한글을 그리려면 한글 폰트가 있어야 한다.
+      # 러너 기본 폰트로는 중국어체나 비트맵으로 그려져 썸네일 모양이 나쁘다.
+      - name: 한글 폰트 설치
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+
       - name: 설치
         working-directory: sports-news
         run: npm ci
