@@ -68,12 +68,14 @@ export async function probeSite() {
   log.step('SEO 필드 쓰기 가능 여부 확인 (OPTIONS 스키마 조회)');
   report.seoFields = await probeSeoFields();
   if (report.seoFields.writable.length) {
-    log.ok(`REST로 쓸 수 있는 SEO 필드: ${report.seoFields.writable.join(', ')}`);
+    log.ok(`SEO 메타 필드 ${report.seoFields.writable.length}개를 REST로 쓸 수 있습니다`);
+    log.info(`     ${report.seoFields.writable.join(', ')}`);
+    log.info('  → 대표 키워드·SEO 제목·메타 설명이 임시글에 자동으로 채워집니다.');
   } else {
     log.warn('REST로 쓸 수 있는 SEO 메타 필드가 없습니다.');
     log.info('  → SEO 제목/설명은 워드프레스에 저장하지 않고 out/ 파일에만 남깁니다.');
     log.info('  → 임시글을 열어 Rank Math 칸에 복사해 넣으시면 됩니다.');
-    log.info('  → 자동 저장을 원하시면 README의 "SEO 필드 열어주기" 항목을 참고하세요.');
+    log.info('  → 자동으로 채우려면 sports-news/wordpress-plugin/ 의 플러그인을 한 번만 설치하세요.');
   }
 
   return report;

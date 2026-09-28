@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { callForText } from './client.mjs';
 import { ROOT } from '../utils/env.mjs';
+import { targetKeywordCount } from '../seo/rankmath.mjs';
 
 let styleCache = null;
 export function loadStyle() {
@@ -72,12 +73,20 @@ ${style}
 ${focusKeyword ? `## 🔑 검색 키워드 배치
 
 이 글의 대표 검색 키워드는 **"${focusKeyword}"** 입니다.
-검색에 걸리려면 이 말이 아래 자리에 자연스럽게 들어가야 합니다.
-억지로 반복하지 말고, 원래 그 자리에 있을 말처럼 쓰세요.
 
+반드시 들어가야 할 자리:
 - 제목 (앞쪽에)
-- 도입부 첫 문단
+- 글 맨 앞 핵심 요약의 **첫 문장**
 - 소제목 중 최소 하나
+- 자주 묻는 질문의 질문 문장 중 하나
+
+그리고 본문 전체에서 **"${focusKeyword}"를 ${targetKeywordCount(3500)}회 이상** 씁니다.
+검색엔진이 키워드 밀도 1.25% 이상을 요구하기 때문입니다.
+
+억지로 끼워 넣으라는 뜻이 아닙니다. "이 대회", "그 선수" 같은 대명사로 받을
+자리에 이름을 그대로 한 번 더 쓰면 자연스럽게 채워집니다. 어차피 AI가 문단을
+떼어 인용할 때도 대명사보다 이름이 들어 있는 문장이 인용됩니다.
+다만 한 문단에 세 번 넣는 식으로 몰아 쓰지는 마세요.
 ` : ''}
 출력 형식:
 - 첫 줄에 제목만 씁니다 (앞에 "제목:" 같은 라벨을 붙이지 않습니다).
@@ -113,12 +122,22 @@ export function lintArticle({ title, body }) {
   const issues = [];
 
   if (!title) issues.push('제목이 비어 있습니다');
-  if (body.length < 500) issues.push(`본문이 너무 짧습니다 (${body.length}자)`);
+  if (body.length < 2400) issues.push(`본문이 너무 짧습니다 (${body.length}자, 3,000자 이상 권장)`);
 
   // [8]-⑧ 마지막 소제목에 "마무리" 금지
   const headings = [...body.matchAll(/^##\s*(.+)$/gm)].map((m) => m[1].trim());
   if (headings.some((h) => h.includes('마무리'))) issues.push('소제목에 "마무리"가 들어 있습니다');
-  if (headings.length < 4) issues.push(`소제목이 ${headings.length}개뿐입니다 (5~6개 권장)`);
+  if (headings.length < 6) issues.push(`소제목이 ${headings.length}개뿐입니다 (7~9개 권장)`);
+  if (!/^##\s*[^\n]*(자주 묻는|Q&A|궁금)/m.test(body) && !/\*\*Q\./.test(body)) {
+    issues.push('자주 묻는 질문 섹션이 없습니다');
+  }
+
+  // 문단이 길면 모바일에서 글이 벽처럼 보인다. 문장 수로 센다.
+  const wall = body
+    .split(/\n\s*\n/)
+    .filter((para) => !/^\s*(#|\*\*Q\.|[-*✅✔•])/.test(para))
+    .filter((para) => (para.match(/[.!?…](\s|$)/g) || []).length > 4);
+  if (wall.length) issues.push(`문단 ${wall.length}개가 너무 깁니다 (2~3문장마다 빈 줄로 끊으세요)`);
 
   // [9] 반복 금지 표현
   for (const phrase of ['살펴보겠습니다', '알아보겠습니다', '기대됩니다', '주목됩니다', '흥미진진합니다']) {

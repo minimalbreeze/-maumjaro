@@ -28,6 +28,7 @@ import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.m
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
+import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { checkRankMath } from './seo/rankmath.mjs';
 import { usageSummary } from './ai/client.mjs';
 
@@ -40,6 +41,9 @@ export function parseArgs(argv) {
     if ((m = /^--topic=(.+)$/.exec(a))) args.topics.push(m[1].replace(/^["']|["']$/g, ''));
     else if ((m = /^--limit=(\d+)$/.exec(a))) args.limit = Number(m[1]);
     else if ((m = /^--fixture=(.+)$/.exec(a))) args.fixture = m[1].replace(/^["']|["']$/g, '');
+    // --subject: 종목 목록을 훑지 않고, 적어 준 주제 하나만 쓴다.
+    // 매일 전 종목을 도는 것보다 훨씬 싸다.
+    else if ((m = /^--subject=([\s\S]+)$/.exec(a))) args.subject = m[1].replace(/^["']|["']$/g, '').trim();
     else if (a === '--draft') args.draft = true;
     else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
   }
@@ -92,9 +96,11 @@ async function collectTopic(topic, cfg, { fixture } = {}) {
   // 뉴스 수집이 막혀 있을 때 이후 단계(사실확인·작성·저장)를 점검하는 용도다.
   if (fixture) {
     const items = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+    // 주제를 직접 지정한 경우(adHoc)에는 종목 이름으로 거르지 않는다.
+    // 그 이름은 사용자가 적어 준 문장이지 샘플 파일의 종목 이름이 아니다.
     const forTopic = Array.isArray(items)
-      ? items.filter((it) => !it.topic || it.topic === topic.name)
-      : (items[topic.name] || []);
+      ? items.filter((it) => topic.adHoc || !it.topic || it.topic === topic.name)
+      : (items[topic.name] || Object.values(items).flat());
     raw.push(...forTopic);
     log.info(`  샘플 파일에서 ${forTopic.length}건 (네트워크를 쓰지 않습니다)`);
   }
@@ -495,14 +501,16 @@ const slugish = (s) => String(s).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const { cfg, topics } = loadTopics(args.topics);
+  // --subject를 쓰면 종목 목록은 읽기만 하고 실제로 돌지는 않는다.
+  const { cfg, topics: configuredTopics } = loadTopics(args.subject ? [] : args.topics);
+  let topics = configuredTopics;
   const today = todayKST();
 
   logHeader(
     args.dryRun
       ? `🧪 DRY RUN — 워드프레스에 저장하지 않습니다 (${args.dryRunReason})`
       : '💾 임시글 저장 모드 (status=draft)',
-    topics.map((t) => t.name)
+    args.subject ? [args.subject] : topics.map((t) => t.name)
   );
 
   // 워드프레스 연결은 선택이다. 없으면 중복 검사와 카테고리 매칭만 건너뛴다.
@@ -523,6 +531,19 @@ async function main() {
       siteCategories = siteReport.categories;
       log.info(`  → config/site.json의 카테고리 ${siteCategories.length}개를 대신 씁니다.`);
     }
+  }
+
+  // 주제를 직접 지정했으면 여기서 카테고리를 정하고 임시 종목을 만든다.
+  // 카테고리 목록을 먼저 읽어야 하므로 워드프레스 연결 뒤에 한다.
+  if (args.subject) {
+    const names = (siteCategories.length ? siteCategories : (cfg.knownCategories?.list || []))
+      .map((c) => c.name).filter(Boolean);
+    log.step(`주제 분류 중: "${args.subject}"`);
+    const classified = await classifySubject(args.subject, names);
+    log.info(`  카테고리: ${classified.category} — ${classified.reason}`);
+    log.info(`  검색어: ${classified.queries.join(', ')}`);
+    topics = [subjectAsTopic(args.subject, classified)];
+    args.limit ??= 1;
   }
 
   const perTopic = [];

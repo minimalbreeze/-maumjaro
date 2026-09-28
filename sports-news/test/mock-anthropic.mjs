@@ -29,11 +29,9 @@ const VERIFICATION = {
 
 const ARTICLE = `2026 삼성화재배 8강 (신진서 vs 커제! 한중 최강 재대결 성사)
 
-안녕하세요, 스포츠 팬 여러분! 😊
+2026 삼성화재배 8강에서 신진서와 커제가 맞붙습니다. 대국은 2026년 10월 서울에서 열립니다. 신진서는 이 대회 디펜딩 챔피언입니다.
 
-기다리던 대진이 나왔습니다. 올해 삼성화재배 8강에서 신진서와 커제가 만납니다.
-
-두 기사의 맞대결은 늘 화제였는데, 이번엔 무대가 8강입니다. 지면 바로 끝입니다.
+삼성화재배 8강은 단판 승부입니다. 지면 그 자리에서 끝나기 때문에 두 기사 모두 물러설 곳이 없습니다.
 
 ## ✨ 대회 개요
 
@@ -63,6 +61,12 @@ const ARTICLE = `2026 삼성화재배 8강 (신진서 vs 커제! 한중 최강 �
 
 주목할 부분은 초반 포석입니다. 둘 다 AI 연구를 깊게 하는 기사라, 초반 30수에서 이미 승부의 결이 드러날 가능성이 있습니다.
 
+## 📌 삼성화재배 8강이 주목받는 이유
+
+삼성화재배는 한국에서 열리는 세계 바둑 대회 중 역사가 긴 편에 속합니다. 역대 우승자 명단이 곧 그 시대 최강자 목록으로 읽히는 대회입니다.
+
+한국과 중국의 최강자가 8강에서 만나는 구도는 드뭅니다. 보통은 4강이나 결승에서 만나기 때문입니다.
+
 ## 👀 관전 포인트
 
 ✅ 디펜딩 챔피언 신진서의 타이틀 방어 출발점
@@ -70,6 +74,24 @@ const ARTICLE = `2026 삼성화재배 8강 (신진서 vs 커제! 한중 최강 �
 ✅ 초반 포석에서 갈릴 주도권
 ✅ 서울에서 열리는 홈 어드밴티지
 ✅ 패자는 곧바로 탈락하는 단판 승부
+
+## ❓ 자주 묻는 질문
+
+**Q. 삼성화재배 8강은 언제 열리나요?**
+
+2026년 10월에 열립니다. 정확한 대국일은 보도에 따라 10월 초와 중순으로 조금씩 다르게 전해지고 있습니다.
+
+**Q. 삼성화재배 8강은 어디에서 열리나요?**
+
+서울에서 열립니다. 한국에서 열리는 세계 바둑 대회입니다.
+
+**Q. 신진서와 커제의 상대전적은 어떻게 되나요?**
+
+상대전적에서는 신진서가 앞서 있습니다. 다만 그건 과거의 기록이고 이번 판과는 별개입니다.
+
+**Q. 삼성화재배 8강 중계는 어디서 볼 수 있나요?**
+
+중계 채널은 아직 공식 발표를 기다리는 중입니다. 확정되면 다시 정리해 드리겠습니다.
 
 ## 🔥 이 판을 이기는 쪽은 누구일까?
 
@@ -95,6 +117,13 @@ function msg(content, stopReason = 'end_turn') {
     usage: { input_tokens: 1200, output_tokens: 800 },
   };
 }
+
+const CLASSIFY = {
+  category: '바둑',
+  reason: '바둑 대회 소식이라 바둑 카테고리가 맞습니다.',
+  queries: ['삼성화재배', '신진서 커제'],
+  focusKeyword: '삼성화재배 8강',
+};
 
 export function startMockServer({ simulatePauseTurn = false } = {}) {
   let verifyCalls = 0;
@@ -140,6 +169,8 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
             { type: 'tool_use', id: 'tu_1', name: 'report_verification', input: VERIFICATION },
           ], 'tool_use');
         }
+      } else if (toolNames.includes('classify_subject')) {
+        out = msg([{ type: 'tool_use', id: 'tu_3', name: 'classify_subject', input: CLASSIFY }], 'tool_use');
       } else if (toolNames.includes('generate_seo')) {
         out = msg([{ type: 'tool_use', id: 'tu_2', name: 'generate_seo', input: SEO }], 'tool_use');
       } else {
@@ -173,4 +204,4 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
   });
 }
 
-export { VERIFICATION, ARTICLE, SEO };
+export { VERIFICATION, ARTICLE, SEO, CLASSIFY };

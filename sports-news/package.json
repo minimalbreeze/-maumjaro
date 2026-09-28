@@ -13,7 +13,8 @@
     "rss:test": "node src/news/fetch-rss.mjs",
     "test": "node test/offline-pipeline.mjs && node test/error-messages.mjs && node test/workflow-syntax.mjs && node test/textcard.mjs && node test/rankmath.mjs && node test/from-file.mjs && node test/e2e-draft.mjs",
     "news:sample": "node src/main.mjs --dry-run --fixture=test/fixtures/sample-news.json --topic=바둑",
-    "wp:publish": "node src/wordpress/from-file.mjs"
+    "wp:publish": "node src/wordpress/from-file.mjs",
+    "write": "node src/main.mjs --draft --subject"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.0",

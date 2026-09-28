@@ -202,6 +202,34 @@ check('중복 글감이 아니라 2순위 글감을 처리한다', () => {
 });
 wp5.server.close();
 
+// ── 주제를 직접 지정해 한 편만 쓰기 ─────────────────────────
+// 매일 전 종목을 훑는 것보다 훨씬 싸다. 요청한 주제를 카테고리로 분류하고
+// 그 한 편만 만든다.
+console.log('\n[주제 지정 — 1편만]');
+const wp6 = await startMockWordPress();
+const r6 = await run(
+  ['--subject=삼성화재배 8강 신진서 커제', '--draft', '--fixture=test/fixtures/sample-news.json'],
+  { ...probeEnv, WORDPRESS_URL: `http://127.0.0.1:${wp6.port}` },
+);
+check('주제를 카테고리로 분류한다', () => {
+  assert.equal(r6.code, 0, r6.out.slice(-800));
+  assert.ok(/주제 분류 중/.test(r6.out), r6.out.slice(-600));
+  assert.ok(/카테고리: 바둑/.test(r6.out), r6.out.slice(-600));
+});
+check('주제 모드에서도 임시글로 저장한다', () => {
+  assert.equal(wp6.state.created.length, 1, `${wp6.state.created.length}건`);
+  assert.equal(wp6.state.created[0].status, 'draft');
+});
+check('주제 모드는 1편만 만든다', () => {
+  assert.ok(/생성 1건/.test(r6.out), r6.out.slice(-400));
+});
+check('자주 묻는 질문 구조화 데이터가 본문에 붙는다', () => {
+  const content = wp6.state.created[0].content || '';
+  assert.ok(/application\/ld\+json/.test(content), '구조화 데이터가 없습니다');
+  assert.ok(/"@type":\s*"FAQPage"/.test(content), content.slice(-300));
+});
+wp6.server.close();
+
 if (siteBackup !== null) fs.writeFileSync(sitePath, siteBackup); else fs.rmSync(sitePath, { force: true });
 ai.server.close(); wp.server.close(); wp2.server.close(); wp3.server.close(); wp4.server.close();
 

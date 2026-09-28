@@ -19,6 +19,37 @@ const KEY_IN = (text, kw) => {
 };
 
 /**
+ * 키워드 밀도를 Rank Math와 같은 방식으로 센다.
+ *
+ * Rank Math는 본문을 공백으로 끊어 단어 수를 세고, 대표 키워드가 몇 번
+ * 나오는지로 밀도를 계산한다. 권장 구간은 1~2.5%다. 1.25% 아래면 "키워드가
+ * 부족하다"고 점수를 깎고, 2.5%를 넘으면 반대로 남용으로 본다.
+ *
+ * 마크다운 기호와 소제목 표시는 빼고 센다 — 사람이 읽는 글이 기준이다.
+ */
+export function keywordDensity(body, keyword) {
+  const text = String(body || '')
+    .replace(/^#+\s+/gm, '')
+    .replace(/[*_`>|]/g, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const kw = String(keyword || '').trim();
+  if (!kw || !words) return { words, count: 0, density: 0 };
+
+  // 정규식 특수문자를 막고, 키워드 안의 공백은 공백 한 칸 이상으로 본다.
+  const pattern = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+  const count = (text.match(new RegExp(pattern, 'gi')) || []).length;
+  return { words, count, density: (count / words) * 100 };
+}
+
+/** 목표 분량에서 대표 키워드를 몇 번 써야 1.25%가 되는지 알려준다. */
+export function targetKeywordCount(targetChars = 3500) {
+  // 한국어는 공백 기준 한 단어가 대략 3.5자다.
+  const words = Math.round(targetChars / 3.5);
+  return Math.min(20, Math.max(8, Math.ceil(words * 0.0125)));
+}
+
+/**
  * @param {object} a
  * @param {string} a.title     블로그 제목
  * @param {string} a.seoTitle  SEO 제목
@@ -36,6 +67,8 @@ export function checkRankMath(a) {
   // 첫 문단 = 소제목 이전의 본문
   const firstChunk = body.split(/^##\s+/m)[0] || '';
   const textOnly = body.replace(/^#+\s+/gm, '').replace(/\s+/g, '');
+  const dens = keywordDensity(body, kw);
+  const hasFaq = /^##\s*[^\n]*(자주 묻는|Q&A|궁금)/m.test(body) || /\*\*Q\./.test(body);
 
   const items = [
     { id: 'kw-set', label: '대표 키워드가 정해져 있다', ok: Boolean(kw), weight: 3,
@@ -54,10 +87,17 @@ export function checkRankMath(a) {
       fix: '소제목 중 하나에 대표 키워드를 넣으세요' },
     { id: 'kw-alt', label: '이미지 alt에 키워드', ok: (a.imageAlts || []).some((t) => KEY_IN(t, kw)), weight: 2,
       fix: '이미지 대체텍스트에 대표 키워드를 넣으세요' },
-    { id: 'length', label: `본문이 충분히 길다 (${textOnly.length}자)`, ok: textOnly.length >= 1500, weight: 3,
-      fix: '본문을 1,500자 이상으로 늘리세요' },
-    { id: 'headings', label: `소제목이 충분하다 (${headings.length}개)`, ok: headings.length >= 4, weight: 2,
-      fix: '소제목을 4개 이상 두세요' },
+    { id: 'kw-density', label: `키워드 밀도 ${dens.density.toFixed(2)}% (${dens.count}회 / ${dens.words}단어)`,
+      ok: dens.density >= 1.25 && dens.density <= 2.5, weight: 3,
+      fix: dens.density > 2.5
+        ? '대표 키워드가 너무 자주 나옵니다. 2.5% 아래로 줄이세요'
+        : `대표 키워드를 ${Math.max(0, Math.ceil(dens.words * 0.0125) - dens.count)}회 더 넣어 1.25% 이상으로 올리세요` },
+    { id: 'length', label: `본문이 충분히 길다 (${textOnly.length}자)`, ok: textOnly.length >= 3000, weight: 3,
+      fix: '본문을 3,000자 이상으로 늘리세요' },
+    { id: 'headings', label: `소제목이 충분하다 (${headings.length}개)`, ok: headings.length >= 6, weight: 2,
+      fix: '소제목을 6개 이상 두세요' },
+    { id: 'faq', label: '자주 묻는 질문 섹션이 있다', ok: hasFaq, weight: 2,
+      fix: '질문형 검색어와 AI 인용을 잡으려면 Q&A 섹션을 두세요' },
     { id: 'image', label: `이미지가 있다 (${a.imageCount || 0}장)`, ok: (a.imageCount || 0) >= 1, weight: 2,
       fix: '이미지를 최소 1장 넣으세요' },
     { id: 'link-in', label: '내부 링크가 있다', ok: /maumjaro\.minimalbreeze\.com|wiki\.minimalbreeze\.com/.test(body) || (a.imageCount || 0) >= 1, weight: 1,
