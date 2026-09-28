@@ -48,6 +48,31 @@ const CASES = [
     reject: ['워드프레스가 아닌 곳'],
   },
   {
+    // 실제로 겪은 문제. Imunify360은 워드프레스처럼 {message} JSON을 돌려줘서
+    // "진짜 워드프레스 403"으로 오해하기 쉽다. 그러면 멀쩡한 계정 권한을 본다.
+    name: 'Imunify360이 낸 403을 계정 권한 문제로 안내하지 않는다',
+    status: 403, contentType: 'application/json',
+    body: JSON.stringify({
+      message: 'Access denied by Imunify360 bot-protection. IPs used for automation should be whitelisted',
+    }),
+    expect: ['봇 차단', 'Imunify360', '화이트리스트'],
+    reject: ['계정에 글 작성 권한이 있는지'],
+  },
+  {
+    name: 'Imunify360이 HTML로 막아도 알아본다',
+    status: 406, contentType: 'text/html',
+    body: '<html><body>Imunify360 bot-protection</body></html>',
+    expect: ['Imunify360'],
+    reject: ['계정에 글 작성 권한이 있는지'],
+  },
+  {
+    name: '이름 모를 봇 차단도 권한 문제로 넘기지 않는다',
+    status: 403, contentType: 'application/json',
+    body: JSON.stringify({ message: 'Access denied by bot-protection' }),
+    expect: ['봇 차단', '화이트리스트'],
+    reject: ['계정에 글 작성 권한이 있는지'],
+  },
+  {
     name: '진짜 워드프레스 404는 주소 확인으로 안내한다',
     status: 404, contentType: 'application/json',
     body: JSON.stringify({ code: 'rest_no_route', message: '경로 없음' }),
@@ -57,7 +82,9 @@ const CASES = [
 ];
 
 let current = 0;
+const seenUserAgents = [];
 const server = http.createServer((req, res) => {
+  seenUserAgents.push(req.headers['user-agent'] || '');
   const c = CASES[current];
   res.writeHead(c.status, { 'content-type': c.contentType });
   res.end(c.body);
@@ -91,6 +118,21 @@ for (current = 0; current < CASES.length; current++) {
       process.exitCode = 1;
     }
   }
+}
+
+// User-Agent를 안 보내면 봇 차단 장치가 곧바로 막는다. 한 번 겪은 일이라
+// 헤더가 빠지지 않는지 검사한다.
+try {
+  assert.ok(seenUserAgents.length > 0, '요청이 한 번도 오지 않았습니다');
+  for (const ua of seenUserAgents) {
+    assert.ok(ua.length > 0, 'User-Agent 헤더가 비어 있습니다');
+    assert.ok(/Maumjaro|Mozilla/.test(ua), `User-Agent가 이상합니다: ${ua}`);
+  }
+  console.log('  ✅ 모든 요청에 User-Agent를 붙인다');
+  passed++;
+} catch (assertion) {
+  console.log(`  ❌ 모든 요청에 User-Agent를 붙인다\n     ${assertion.message}`);
+  process.exitCode = 1;
 }
 
 server.close();

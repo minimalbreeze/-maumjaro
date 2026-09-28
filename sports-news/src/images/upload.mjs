@@ -3,7 +3,7 @@
 // REST /wp/v2/media는 JSON이 아니라 파일 본문을 그대로 받는다.
 // 파일 이름은 Content-Disposition 헤더로 넘긴다.
 
-import { wpConfig, WordPressError } from '../wordpress/client.mjs';
+import { wpConfig, wpUserAgent, WordPressError } from '../wordpress/client.mjs';
 import { withRetry } from '../utils/retry.mjs';
 
 /**
@@ -59,6 +59,7 @@ export async function uploadMedia({ buffer, fileName, alt, caption = '', timeout
           'content-type': 'image/png',
           'content-disposition': `attachment; filename="${fileName}"`,
           accept: 'application/json',
+          'user-agent': wpUserAgent(),
         },
         body: buffer,
         signal: ctrl.signal,
