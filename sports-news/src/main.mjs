@@ -246,11 +246,33 @@ async function processCluster(cluster, ctx) {
   result.wordpress = saved;
   log.ok(`  임시글 저장 완료 (ID ${saved.id}, 상태 ${saved.status})`);
   if (saved.adminUrl) log.info(`    편집: ${saved.adminUrl}`);
-  if (saved.savedMeta.length) log.info(`    SEO 필드 저장: ${saved.savedMeta.join(', ')}`);
-  else log.info('    SEO 제목/설명은 워드프레스에 저장하지 않았습니다 (아래 파일 참고).');
+
+  if (saved.savedMeta.length) {
+    log.info(`    SEO 필드 저장됨: ${saved.savedMeta.join(', ')}`);
+  } else {
+    // Rank Math가 REST 쓰기를 열어두지 않은 경우가 기본이다.
+    // 파일을 열어 찾게 하지 말고, 붙여넣을 값을 여기 바로 띄운다.
+    printSeoToCopy(seo);
+  }
+
   const file = writeDryRunFile(result);
   log.info(`    사본: ${path.relative(process.cwd(), file)}`);
   return result;
+}
+
+/**
+ * 워드프레스에 SEO 값을 못 넣은 경우, 손으로 붙여넣을 값을 화면에 띄운다.
+ * 파일을 열어 찾게 만들면 결국 안 하게 된다.
+ */
+function printSeoToCopy(seo) {
+  log.raw('');
+  log.raw('    ┌─ Rank Math에 붙여넣을 값 ────────────────────────');
+  log.raw(`    │ SEO 제목   : ${seo.seoTitle}`);
+  log.raw(`    │ 설명       : ${seo.metaDescription}`);
+  log.raw(`    │ 대표 키워드 : ${seo.focusKeyword}`);
+  log.raw('    └──────────────────────────────────────────────────');
+  log.raw('      편집 화면 아래 Rank Math 칸에 넣으시면 됩니다.');
+  log.raw('');
 }
 
 function writeDryRunFile(result) {
@@ -258,23 +280,47 @@ function writeDryRunFile(result) {
   fs.mkdirSync(dir, { recursive: true });
   const base = `${result.topic}-${slugish(result.article?.title || result.label)}`.slice(0, 80);
 
+  const seo = result.seo || {};
   const md = [
     `# ${result.article?.title || '(제목 없음)'}`,
     '',
+    '## 📋 워드프레스에 넣을 값',
+    '',
+    `**카테고리**: ${result.category?.name || '-'}`,
+    `**태그**: ${(seo.tags || []).join(', ')}`,
+    `**슬러그**: ${seo.slug || '-'}`,
+    '',
+    '### Rank Math 칸에 붙여넣기',
+    '',
+    `**SEO 제목**`,
+    '```',
+    seo.seoTitle || '-',
+    '```',
+    '',
+    `**설명**`,
+    '```',
+    seo.metaDescription || '-',
+    '```',
+    '',
+    `**대표 키워드**`,
+    '```',
+    seo.focusKeyword || '-',
+    '```',
+    '',
+    '### 처리 기록',
+    '',
     `- 종목: ${result.topic}`,
-    `- 카테고리: ${result.category?.name || '-'}`,
-    `- 태그: ${(result.seo?.tags || []).join(', ')}`,
-    `- SEO 제목: ${result.seo?.seoTitle || '-'}`,
-    `- 메타 설명: ${result.seo?.metaDescription || '-'}`,
-    `- 대표 키워드: ${result.seo?.focusKeyword || '-'}`,
-    `- 슬러그: ${result.seo?.slug || '-'}`,
-    `- 중복 판정: ${result.duplicate?.verdict} (${result.duplicate?.reason})`,
+    `- 중복 판정: ${result.duplicate?.verdict} — ${result.duplicate?.reason}`,
+    result.updateCandidate ? `- 고칠 기존 글: ${result.updateCandidate.title} ${result.updateCandidate.link || ''}` : null,
     `- 상태: ${result.wordpress ? `워드프레스 임시글 ID ${result.wordpress.id}` : '파일만 생성 (워드프레스 저장 안 함)'}`,
+    result.wordpress?.adminUrl ? `- 편집 링크: ${result.wordpress.adminUrl}` : null,
     '',
     '---',
     '',
+    '## ✍️ 본문',
+    '',
     result.article?.body || '',
-  ].join('\n');
+  ].filter((l) => l !== null).join('\n');
 
   fs.writeFileSync(path.join(dir, `${base}.md`), md);
   fs.writeFileSync(path.join(dir, `${base}.json`), JSON.stringify(result, null, 2));
