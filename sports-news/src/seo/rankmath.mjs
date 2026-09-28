@@ -9,12 +9,16 @@
 
 /**
  * 키워드가 들어 있는지 본다.
- * 공백과 하이픈을 없애고 비교한다 — 슬러그는 공백이 하이픈으로 바뀌므로
- * 그대로 비교하면 "KBO 신인 드래프트"가 "kbo-신인-드래프트" 안에 없다고 나온다.
+ *
+ * 공백·하이픈·구두점을 없애고 비교한다. 이유가 둘 있다.
+ *  - 슬러그는 공백이 하이픈으로 바뀐다. 그대로 비교하면 "KBO 신인 드래프트"가
+ *    "kbo-신인-드래프트" 안에 없다고 나온다.
+ *  - 제목에는 쉼표가 끼어든다. "피트 알론소, 양대 리그 타점왕"은 사람 눈에는
+ *    키워드가 들어 있지만, 쉼표 하나 때문에 없다고 판정된 적이 있다.
  */
 const KEY_IN = (text, kw) => {
   if (!kw) return false;
-  const norm = (s) => String(s).toLowerCase().replace(/[\s\-_]+/g, '');
+  const norm = (s) => String(s).toLowerCase().replace(/[\s\-_,.·‧、，'"'"「」()[\]!?]+/gu, '');
   return norm(text).includes(norm(kw));
 };
 
@@ -130,4 +134,49 @@ export function buildSlug({ focusKeyword, title, fallback = '' }) {
     .slice(0, 60)
     .replace(/-$/, '');
   return s || `${String(fallback).toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
+}
+
+/**
+ * 본문에 실제로 들어 있는 대표 키워드를 고른다.
+ *
+ * 왜 필요한가 (실제로 당한 일)
+ *   본문은 A라는 키워드를 염두에 두고 썼는데, SEO 단계가 본문을 읽고 제 나름대로
+ *   더 긴 B("피트 알론소 양대 리그 타점왕")를 골랐다. B는 본문에 그 형태로 단 한 번도
+ *   나오지 않는 말이라 키워드 밀도가 0.00%가 됐다. Rank Math는 대표 키워드를
+ *   "있는 그대로" 찾기 때문에, 본문에 없는 말을 대표 키워드로 정하면 점수가 0이다.
+ *
+ * 그래서 후보들을 실제 본문에 대고 세어 보고 가장 나은 것을 고른다.
+ * 긴 후보는 앞에서부터 잘라 짧은 형태도 후보에 넣는다 — 긴 구절은 통째로
+ * 반복되지 않지만 그 앞머리(사람 이름, 대회명)는 반복되기 때문이다.
+ */
+export function chooseFocusKeyword(body, candidates = []) {
+  const seen = new Set();
+  const pool = [];
+
+  for (const c of candidates) {
+    const kw = String(c || '').replace(/\s+/g, ' ').trim();
+    if (!kw) continue;
+    const words = kw.split(' ');
+    // 원래 형태부터 두 낱말까지 앞에서부터 줄여가며 후보로 넣는다.
+    for (let n = words.length; n >= Math.min(2, words.length); n--) {
+      const form = words.slice(0, n).join(' ');
+      if (form.length < 2 || seen.has(form)) continue;
+      seen.add(form);
+      pool.push(form);
+    }
+  }
+  if (!pool.length) return { keyword: '', density: 0, candidates: [] };
+
+  const scored = pool
+    .map((kw) => ({ keyword: kw, ...keywordDensity(body, kw) }))
+    .sort((a, b) => {
+      // 1.25~2.5% 안에 드는 것이 최우선. 그중에서는 긴 쪽(더 구체적인 쪽)을 쓴다.
+      const inRange = (x) => x.density >= 1.25 && x.density <= 2.5;
+      if (inRange(a) !== inRange(b)) return inRange(a) ? -1 : 1;
+      if (inRange(a) && inRange(b)) return b.keyword.length - a.keyword.length;
+      // 아무도 범위에 못 들면 밀도가 높은 쪽.
+      return b.density - a.density;
+    });
+
+  return { ...scored[0], candidates: scored };
 }

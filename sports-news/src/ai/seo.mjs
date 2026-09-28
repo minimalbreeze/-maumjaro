@@ -30,7 +30,7 @@ const SEO_SCHEMA = {
     },
     focusKeyword: {
       type: 'string',
-      description: '이 글의 대표 검색 키워드 하나',
+      description: '이 글의 대표 검색 키워드 하나. 반드시 본문에 그대로 여러 번 나오는 짧은 말(2~4 낱말)로 고른다. 긴 구절은 본문에 그 형태로 나오지 않아 검색 점수가 0이 된다.',
     },
     keywords: {
       type: 'array',
@@ -51,10 +51,10 @@ const SEO_SCHEMA = {
   additionalProperties: false,
 };
 
-export async function generateSeo({ title, body, topic, category }) {
+export async function generateSeo({ title, body, topic, category, provisionalKeyword = '' }) {
   let result;
   try {
-    result = await callSeoModel({ title, body, topic, category });
+    result = await callSeoModel({ title, body, topic, category, provisionalKeyword });
   } catch (err) {
     // 여기서 던지면 다 써 놓은 본문이 통째로 사라진다. 실제로 한 번 그랬다.
     // SEO는 나중에 손으로 고칠 수 있지만 본문은 다시 만들려면 돈이 또 든다.
@@ -72,7 +72,7 @@ export async function generateSeo({ title, body, topic, category }) {
   };
 }
 
-async function callSeoModel({ title, body, topic, category }) {
+async function callSeoModel({ title, body, topic, category, provisionalKeyword = '' }) {
   return callForJson({
     system: SYSTEM,
     prompt: `다음은 방금 작성한 블로그 글입니다.
@@ -84,7 +84,11 @@ async function callSeoModel({ title, body, topic, category }) {
 본문:
 ${body.slice(0, 12000)}
 
-이 글에 맞는 SEO 정보를 generate_seo 도구로 만들어주세요.`,
+${provisionalKeyword ? `이 글은 대표 키워드를 "${provisionalKeyword}"로 잡고 썼습니다.
+특별한 이유가 없으면 이것을 그대로 쓰세요. 바꾸려면 본문에 그대로 여러 번
+나오는 짧은 말로만 바꾸세요 — 본문에 없는 말을 고르면 검색 점수가 0이 됩니다.
+
+` : ''}이 글에 맞는 SEO 정보를 generate_seo 도구로 만들어주세요.`,
     toolName: 'generate_seo',
     description: '블로그 글의 SEO 제목·메타 설명·키워드·태그를 생성합니다.',
     schema: SEO_SCHEMA,

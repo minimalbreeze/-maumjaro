@@ -29,7 +29,7 @@ import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
-import { checkRankMath } from './seo/rankmath.mjs';
+import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
@@ -239,10 +239,28 @@ async function processCluster(cluster, ctx) {
 
   // 2-5. SEO
   log.step('  SEO 생성 중');
-  const seo = await generateSeo({ title: article.title, body: article.body, topic: cluster.topic, category: cluster.category });
+  const seo = await generateSeo({
+    title: article.title, body: article.body,
+    topic: cluster.topic, category: cluster.category,
+    provisionalKeyword,
+  });
+
+  // 대표 키워드가 본문에 실제로 들어 있는지 확인한다.
+  //
+  // SEO 단계가 본문을 읽고 제 나름의 긴 구절을 고르면, 그 말이 본문에 그대로는
+  // 한 번도 나오지 않아 키워드 밀도가 0%가 된다. Rank Math는 대표 키워드를
+  // 있는 그대로 찾으므로 그러면 점수가 0이다. 실제로 그렇게 나온 적이 있다.
+  const picked = chooseFocusKeyword(article.body, [seo.focusKeyword, provisionalKeyword, cluster.topic]);
+  if (picked.keyword && picked.keyword !== seo.focusKeyword) {
+    log.warn(`    대표 키워드를 "${seo.focusKeyword}" → "${picked.keyword}"로 바꿉니다`);
+    log.info(`      원래 키워드는 본문에 ${keywordCountOf(picked, seo.focusKeyword)}회 나옵니다 (밀도 0에 가까우면 점수가 0이 됩니다)`);
+    seo.focusKeyword = picked.keyword;
+    seo.slug = buildSlug({ focusKeyword: picked.keyword, title: article.title, fallback: cluster.topic });
+  }
+
   result.seo = seo;
   log.info(`    SEO 제목: ${seo.seoTitle}`);
-  log.info(`    대표 키워드: ${seo.focusKeyword} · 슬러그: ${seo.slug}`);
+  log.info(`    대표 키워드: ${seo.focusKeyword} (본문 ${picked.density.toFixed(2)}%) · 슬러그: ${seo.slug}`);
   log.info(`    태그(${seo.tags.length}): ${seo.tags.join(', ')}`);
 
   // 2-6. 이미지 — 대표 이미지 1장 + 본문 카드 1장
@@ -317,6 +335,11 @@ async function processCluster(cluster, ctx) {
  * 순서가 중요하다. 글을 먼저 쓰고 키워드를 나중에 정하면, 정작 본문에 그 말이
  * 없어서 검색에 안 걸린다. 확인된 사실 중 대회명을 우선으로 잡는다.
  */
+/** 바뀌기 전 키워드가 본문에 몇 번 나왔는지 — 왜 바꿨는지 보여주려고 쓴다. */
+function keywordCountOf(picked, keyword) {
+  return picked.candidates?.find((c) => c.keyword === keyword)?.count ?? 0;
+}
+
 function guessKeyword(cluster, verification) {
   const byField = (name) => verification.confirmed?.find((c) => c.field.includes(name))?.value;
   const raw = byField('대회명') || byField('대회') || cluster.label;
