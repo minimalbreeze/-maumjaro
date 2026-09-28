@@ -1,22 +1,24 @@
 {
   "_설명": "검색할 종목과 키워드. 종목을 추가하려면 topics 배열에 항목 하나를 복사해 붙여넣고 고치면 된다. enabled를 false로 두면 그 종목은 건너뛴다.",
   "defaults": {
-    "hoursWindow": 72,
+    "hoursWindow": 168,
     "minSources": 2,
     "maxItemsPerQuery": 25,
     "maxCandidatesPerTopic": 40,
-    "stopAfterFirstWorkingFeed": true
+    "stopAfterFirstWorkingFeed": true,
+    "_hoursWindow설명": "며칠 전 기사까지 볼지(시간). 168 = 7일. 기사가 적은 종목은 늘리고, 속보성을 원하면 줄인다."
   },
   "feeds": {
-    "_설명": "searchFeeds는 검색어가 들어가는 피드다. 위에서부터 순서대로 시도한다. 한 곳이 막혀도 다음 곳으로 넘어간다. staticFeeds는 종목별로 topics에 직접 적는 고정 주소 피드다(언론사 스포츠 섹션 등).",
+    "_설명": "searchFeeds는 검색어가 들어가는 피드다. 위에서부터 순서대로 시도하고 한 곳이 막혀도 다음 곳으로 넘어간다. querySuffix는 검색어 뒤에 붙는 기간 제한이며 {days}에 hoursWindow를 날짜로 환산한 값이 들어간다. 구글뉴스 검색은 최신순이 아니라 관련도순이라, 이걸 안 붙이면 몇 달 전 기사까지 섞여 온다. staticFeeds는 종목별로 topics에 직접 적는 고정 주소 피드다.",
     "searchFeeds": [
       {
         "name": "구글뉴스(한국)",
-        "url": "https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko"
+        "url": "https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko",
+        "querySuffix": " when:{days}d"
       },
       {
         "name": "빙뉴스(한국)",
-        "url": "https://www.bing.com/news/search?q={query}&format=RSS&setmkt=ko-KR"
+        "url": "https://www.bing.com/news/search?q={query}&format=RSS&setmkt=ko-KR&qft=sortbydate%3d%221%22"
       }
     ]
   },
@@ -27,8 +29,8 @@
       "category": "골프",
       "queries": [
         "KLPGA",
-        "한국여자프로골프",
-        "KLPGA 대회"
+        "여자골프",
+        "한국여자프로골프"
       ],
       "longTermHints": [
         "대회 프리뷰",
@@ -44,7 +46,7 @@
       "category": "골프",
       "queries": [
         "JLPGA",
-        "일본여자프로골프",
+        "일본여자골프",
         "JLPGA 한국선수"
       ],
       "longTermHints": [
@@ -77,7 +79,7 @@
       "queries": [
         "PGA 투어",
         "PGA 챔피언십",
-        "PGA 한국선수"
+        "PGA 골프"
       ],
       "longTermHints": [
         "메이저 대회",
@@ -108,9 +110,10 @@
       "enabled": true,
       "category": "야구",
       "queries": [
-        "KBO 리그",
-        "프로야구 KBO",
-        "KBO 순위"
+        "KBO",
+        "프로야구",
+        "KBO 순위",
+        "KBO 리그"
       ],
       "longTermHints": [
         "시즌 일정",
@@ -125,7 +128,8 @@
       "enabled": true,
       "category": "배드민턴",
       "queries": [
-        "배드민턴 안세영",
+        "배드민턴",
+        "안세영",
         "BWF 배드민턴",
         "배드민턴 대표팀"
       ],
@@ -141,9 +145,10 @@
       "enabled": true,
       "category": "당구",
       "queries": [
+        "당구",
         "PBA 당구",
-        "3쿠션 월드컵",
-        "당구 프로당구"
+        "3쿠션",
+        "프로당구"
       ],
       "longTermHints": [
         "투어 일정",
@@ -157,9 +162,10 @@
       "enabled": true,
       "category": "바둑",
       "queries": [
-        "바둑 신진서",
-        "바둑 국가대표",
-        "바둑 기전"
+        "바둑",
+        "바둑 대회",
+        "신진서",
+        "한국기원"
       ],
       "longTermHints": [
         "기전 일정",

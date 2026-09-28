@@ -14,7 +14,7 @@ import { ROOT, env } from './utils/env.mjs';
 import { log, logHeader } from './utils/logger.mjs';
 import { settleAll } from './utils/retry.mjs';
 
-import { fetchFeed, parseFeed, buildQueryUrl, filterRecent, dedupeItems } from './news/fetch-rss.mjs';
+import { fetchFeed, parseFeed, buildQueryUrl, filterRecent, dedupeItems, applyQuerySuffix } from './news/fetch-rss.mjs';
 import { clusterArticles, splitBySourceCount } from './news/normalize.mjs';
 import { rankClusters } from './news/rank.mjs';
 
@@ -93,7 +93,9 @@ async function collectTopic(topic, cfg, { fixture } = {}) {
   const searchFeeds = fixture ? [] : (cfg.feeds?.searchFeeds || []);
   for (const feed of searchFeeds) {
     const results = await settleAll(topic.queries, async (q) => {
-      const xml = await fetchFeed(buildQueryUrl(feed.url, q));
+      // 구글뉴스 검색은 관련도순이라 기간 제한을 걸지 않으면 몇 달 전 기사까지 섞여 온다.
+      const scoped = applyQuerySuffix(q, feed.querySuffix, hoursWindow);
+      const xml = await fetchFeed(buildQueryUrl(feed.url, scoped));
       return parseFeed(xml, { sourceLabel: '' }).slice(0, maxItemsPerQuery);
     });
 
@@ -133,14 +135,18 @@ async function collectTopic(topic, cfg, { fixture } = {}) {
   if (!raw.length) return { clusters: [], stats: { raw: 0, fresh: 0, clusters: 0, thin: 0 } };
 
   const deduped = dedupeItems(raw);
-  const { fresh, undated } = filterRecent(deduped, hoursWindow);
+  const { fresh, undated, stale } = filterRecent(deduped, hoursWindow);
   const clusters = clusterArticles(fresh);
   const { enough, thin } = splitBySourceCount(clusters, minSources);
   const ranked = rankClusters(enough, topic).slice(0, maxCandidatesPerTopic);
 
   return {
     clusters: ranked,
-    stats: { raw: raw.length, deduped: deduped.length, fresh: fresh.length, undated: undated.length, clusters: clusters.length, thin: thin.length },
+    stats: {
+      raw: raw.length, deduped: deduped.length, fresh: fresh.length,
+      undated: undated.length, stale: stale.length,
+      clusters: clusters.length, thin: thin.length, hoursWindow,
+    },
   };
 }
 
@@ -275,6 +281,28 @@ function printSeoToCopy(seo) {
   log.raw('');
 }
 
+/**
+ * "글감 후보가 없습니다"만 보면 손을 쓸 수 없다.
+ * 어느 단계에서 다 빠졌는지에 따라 고칠 곳이 다르므로 그것까지 알려준다.
+ */
+function explainNoCandidates(stats, cfg) {
+  if (!stats.raw) {
+    log.info('  → 뉴스를 한 건도 못 가져왔습니다. 네트워크나 피드 주소 문제입니다.');
+    return;
+  }
+  if (!stats.fresh) {
+    log.info(`  → 가져온 ${stats.deduped}건이 모두 ${stats.hoursWindow}시간보다 오래됐습니다.`);
+    log.info('     config/topics.json의 defaults.hoursWindow를 늘리거나, 검색어를 바꿔보세요.');
+    return;
+  }
+  if (stats.thin && !stats.clusters) return;
+  if (stats.thin) {
+    log.info(`  → 최근 기사 ${stats.fresh}건이 있지만, 같은 사건을 ${cfg.defaults.minSources}곳 이상이`);
+    log.info('     함께 다룬 경우가 없습니다. 한 매체 단독 보도만으로는 글을 만들지 않습니다.');
+    log.info('     검색어를 더 넓히거나(예: "바둑" 단독), hoursWindow를 늘려보세요.');
+  }
+}
+
 function writeDryRunFile(result) {
   const dir = path.join(ROOT, 'out', todayKST());
   fs.mkdirSync(dir, { recursive: true });
@@ -368,10 +396,13 @@ async function main() {
     log.section(`📰 ${topic.name}`);
     try {
       const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture });
-      log.info(`수집 ${stats.raw}건 → 중복제거 ${stats.deduped ?? 0}건 → 최근 ${stats.fresh ?? 0}건 → 묶음 ${stats.clusters}개 (출처부족 ${stats.thin}개 제외)`);
+      log.info(`수집 ${stats.raw}건 → 중복 제거 후 ${stats.deduped ?? 0}건`);
+      log.info(`  최근 ${stats.hoursWindow}시간 이내 ${stats.fresh ?? 0}건 · 그보다 오래됨 ${stats.stale ?? 0}건 · 날짜미상 ${stats.undated ?? 0}건`);
+      log.info(`  묶음 ${stats.clusters}개 (출처 ${cfg.defaults.minSources}곳 미만이라 제외된 묶음 ${stats.thin}개)`);
 
       if (!clusters.length) {
         log.warn('글감 후보가 없습니다. 다음 종목으로 넘어갑니다.');
+        explainNoCandidates(stats, cfg);
         perTopic.push({ topic: topic.name, candidates: 0, results: [] });
         continue;
       }
