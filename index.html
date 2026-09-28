@@ -3,8 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-<title>맘운자로 – 마음에 놓는 오늘의 처방 | 무료 감정기록·운세</title>
-<meta name="description" content="설치 없이 바로 쓰는 무료 감정 기록 앱. 오늘의 감정을 고르고 마음에 주사를 놓아 처방을 받아보세요. 무료 사주·오늘의 운세도 함께." />
+<!-- 제목 앞머리를 "오늘의 마음 타로"로 잡은 이유(2026-09):
+     네이버 서치어드바이저를 보니 이 사이트가 실제로 노출되는 검색어 중 의도에 맞는
+     것은 "오늘의 마음 타로" 계열(18회)과 브랜드명(maumjaro, 15회) 둘뿐이었다.
+     그런데 정작 <title>과 description에 "타로"가 한 글자도 없었다(og:title에만 있었다).
+     검색되는 말이 제목에 없으면 순위를 못 받는다. 네이버는 제목 앞쪽을 더 무겁게 보므로
+     브랜드명을 뒤로 뺐다 — "맘운자로" 단독 검색은 어차피 "마운자로"로 교정돼 잡히지 않고,
+     사람이 실제로 치는 말은 "오늘의 마음 타로" 쪽이다. -->
+<title>오늘의 마음 타로 · 운세 · 감정기록 | 맘운자로</title>
+<!-- "마운자로"를 여기 적는 이유(2026-09):
+     네이버가 "맘운자로" 검색을 "마운자로" 오타로 교정해 버려서 앱이 검색에 안 잡힌다.
+     앱 HTML 어디에도 마운자로가 없어서 두 단어를 이어줄 단서가 하나도 없었던 탓이다.
+     이름의 유래만 밝히고, 효능·체중감량 같은 의약품 관련 표현은 쓰지 않는다
+     (남의 상표이고, 이 앱은 의약품과 아무 관계가 없다). -->
+<meta name="description" content="맘운자로에서 오늘의 마음을 타로 3장으로 읽고, 감정을 기록하고, 마음에 놓는 처방까지. 설치도 가입도 없이 무료. 사주·오늘의 운세·MBTI도 함께. 맘운자로라는 이름은 '마운자로'에서 따온 말장난이에요." />
+<meta name="keywords" content="오늘의 마음 타로, 오늘의마음타로, 마음 타로, 무료 타로, 맘운자로, 마운자로 패러디, 감정기록 앱, 오늘의 운세, 무료 운세, 마음 처방" />
 <link rel="canonical" href="https://maumjaro.minimalbreeze.com/" />
 
 <!-- 검색엔진 사이트 소유 확인. 확인이 끝난 뒤에도 지우면 소유 상태가 풀리므로 그대로 둔다.
@@ -30,26 +43,266 @@
      옛 og-image.jpg도 남겨둔다(이미 퍼진 카톡 대화의 링크가 깨지지 않도록). -->
 <meta property="og:type" content="website" />
 <meta property="og:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
-<meta property="og:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
+<meta property="og:description" content="설치도 가입도 없이 30초. 몸엔 마운자로, 마음엔 맘운자로 — 카드 3장 뽑고 오늘 내 마음에 필요한 처방까지." />
 <meta property="og:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 <meta property="og:url" content="https://maumjaro.minimalbreeze.com/" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="무료 타로 · 오늘의 운세 · 마음처방 🌙💉" />
-<meta name="twitter:description" content="설치도 가입도 없이 30초. 카드 3장 뽑고, 오늘 내 마음에 필요한 처방까지 받아보세요." />
+<meta name="twitter:description" content="설치도 가입도 없이 30초. 몸엔 마운자로, 마음엔 맘운자로 — 카드 3장 뽑고 오늘 내 마음에 필요한 처방까지." />
 <meta name="twitter:image" content="https://maumjaro.minimalbreeze.com/og-image-v2.jpg" />
 
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icon-180.png" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="icon" href="icon-192.png" type="image/png" sizes="192x192" />
-<!-- ?v= 를 붙이는 이유: 브라우저는 style.css를 주소로 캐시한다. 파일 내용만 바꾸면
-     HTML은 새로 받아도 CSS는 옛날 것을 그대로 쓴다. 실제로 홈 하단 링크를 추가했을 때
-     링크는 새로 나오는데 스타일이 안 먹어서 파란 밑줄 기본 링크로 보였다.
+<!-- ?v= 를 붙이는 이유: 브라우저는 파일을 "주소"로 캐시한다. 내용만 바꾸고 주소가
+     그대로면 HTML은 새로 받아도 CSS·JS는 옛것을 그대로 쓴다. 실제로 홈 하단 링크를
+     추가했을 때 링크는 새로 나오는데 스타일이 안 먹어 파란 밑줄 기본 링크로 보였고,
+     스레드 하루 1회 제한을 떼는 코드를 배포했을 때는 threads-share.js의 ?v= 를
+     올리지 않아 폰이 계속 옛 파일을 돌려 제한이 남아 있는 것처럼 보였다.
      (og-image를 -v2로 올린 것과 같은 문제다 — 그쪽 사정은 위 og:image 주석 참고)
-     CSS를 눈에 띄게 바꿀 때는 이 숫자를 올릴 것. 올리면 새 주소라 캐시가 있을 수 없다. -->
-<link rel="stylesheet" href="style.css?v=3" />
+
+     그래서 CSS 하나만이 아니라 우리가 만든 파일 전부에 같은 번호를 붙인다. 배포로
+     동작이 바뀌면 이 숫자 하나만 올리면 된다(전부 새 주소가 되어 캐시가 있을 수 없다).
+     외부 CDN 스크립트는 그쪽이 버전을 주소에 갖고 있으므로 건드리지 않는다. -->
+<!-- 구조화 데이터(JSON-LD).
+     왜 넣는가: 홈이 크롤링은 되는데 색인이 안 되고 있다("크롤링됨 - 현재 색인이
+     생성되지 않음", 2026-09). 이 앱은 화면 대부분을 JS로 그려서, 검색로봇이 받는
+     정적 HTML만 보면 "이게 뭐하는 페이지인지" 판단할 근거가 얇다. JSON-LD는 그
+     판단 근거를 명시적으로 준다 — 무료 웹앱이고, 어떤 기능이 있고, 누가 만들었는지.
+     이것만으로 색인이 뚫리지는 않는다(외부 링크가 더 크다). 다만 비용이 없고,
+     검색 결과에 앱 정보가 풍부하게 표시될 여지를 만든다. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "맘운자로",
+  "alternateName": ["Maumjaro", "맘운자로 - 오늘의 맘운", "마음 주사"],
+  "url": "https://maumjaro.minimalbreeze.com/",
+  "description": "오늘의 마음을 타로 3장으로 읽고, 감정을 기록하고, 마음에 놓는 처방까지 받는 무료 웹앱. 이름은 마운자로에서 따온 말장난이다. 사주·오늘의 운세·MBTI도 함께.",
+  "disambiguatingDescription": "맘운자로는 당뇨·비만 치료제 '마운자로(Mounjaro, 티르제파타이드)'와 아무 관계가 없다. 이름만 빌려온 말장난이며, 몸이 아니라 마음에 놓는 주사라는 뜻의 감정 기록 웹앱이다. 의약품·제약회사·의료 서비스가 아니고, 앱이 주는 '처방'은 재미로 보는 콘텐츠이지 의학적·심리학적 진단이 아니다.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "설치 없이 브라우저에서 바로 사용",
+  "inLanguage": "ko",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "featureList": [
+    "오늘의 감정 기록과 마음 처방",
+    "오늘의 맘운 (사주 기반 운세)",
+    "타로 3장 뽑기",
+    "간이 MBTI 유형 검사와 궁합",
+    "별자리·띠 운세",
+    "마음약 수집 (마음약국)"
+  ],
+  "screenshot": "https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
+  "keywords": "마음 처방, 감정 기록, 오늘의 맘운, 사주 운세, 타로, MBTI, 별자리 운세, 띠 궁합, 무료 웹앱",
+  "audience": { "@type": "Audience", "geographicArea": { "@type": "Country", "name": "대한민국" } },
+  "isFamilyFriendly": true,
+  "sameAs": [
+    "https://blog.naver.com/mb5252",
+    "https://minimalbreeze.tistory.com/"
+  ],
+  "publisher": { "@type": "Organization", "name": "minimalbreeze", "url": "https://minimalbreeze.com/" }
+}
+</script>
+<link rel="stylesheet" href="style.css?v=25" />
 </head>
 <body>
+
+<!-- ───────────────────────────────────────────────────────────────────────
+     실행 스플래시 (앱을 켤 때 로고 → 홈)
+     왜 여기(index.html 안)에 직접 넣었나
+       이 화면의 목적은 "첫 프레임부터 브랜드가 보이는 것"이다. 외부 JS가 그리면
+       홈이 먼저 한 번 보였다가 그 위에 로고가 덮이는데, 그건 앱을 켠 느낌이 아니라
+       화면이 깜빡이는 버그로 보인다. 그래서 마크업은 문서에 박아두고(첫 페인트에 포함),
+       치우는 일만 splash.js가 맡는다.
+     왜 배경이 #fdf3ee인가
+       manifest.json의 background_color와 같은 값이다. 홈 화면 아이콘으로 실행하면
+       OS가 먼저 이 색 위에 앱 아이콘을 띄우는데(네이티브 스플래시), 그 색을 그대로
+       이어받아야 두 화면이 한 장면으로 이어진다. 한쪽만 바꾸면 켤 때 색이 튄다.
+     JS 없이도 사라진다
+       사라지는 동작은 CSS 애니메이션(mj-splash-out)이 한다. splash.js가 안 읽히거나
+       느려도 1.1초 뒤 스스로 투명·visibility:hidden·pointer-events:none이 되므로
+       앱을 가로막는 일이 없다. splash.js는 그 뒤 DOM에서 빼고 탭으로 건너뛰게 해줄 뿐이다.
+     ─────────────────────────────────────────────────────────────────────── -->
+<script>
+  // 첫 페인트 전에 "이번 방문에 스플래시를 띄울지"를 정한다. 아래 div보다 먼저 실행되므로
+  // 조건에 맞으면 캐릭터가 한 프레임도 보이지 않는다.
+  //
+  // 왜 sessionStorage를 버렸나 (2026-09-26)
+  //   처음엔 "같은 세션이면 두 번째부터 안 띄운다"로 만들었다. 데스크톱 브라우저 기준으론
+  //   맞는 말인데, 홈 화면에 추가한 앱에서는 틀렸다. iOS는 그 웹뷰를 며칠씩 살려두기 때문에
+  //   sessionStorage가 안 지워지고, 그래서 한 번 본 사람은 그 뒤로 영영 못 본다.
+  //   실제로 폰에서 안 뜬다는 제보를 받고 알았다.
+  //
+  //   그래서 "마지막으로 띄운 시각"을 localStorage에 남기고 30분이 지났으면 다시 띄운다.
+  //   이게 "앱을 켠다"에 훨씬 가깝다 — 공유하려고 새로고침하는 건 켜는 게 아니고,
+  //   두 시간 뒤에 다시 들어오는 건 켜는 것이다.
+  //
+  // 규칙
+  //  - ?splash=1 이면 무조건 띄운다. 확인할 방법이 없으면 고칠 수도 없다.
+  //  - ?splash=0 이면 무조건 안 띄운다.
+  //  - 목적을 갖고 들어온 링크(친구 처방·타로·광고 착지)에는 띄우지 않는다.
+  //    보러 온 것 앞을 1초라도 가리면 그 자리에서 나간다. onboarding.js와 같은 규칙이다.
+  (function () {
+    var off = function () { document.documentElement.classList.add('mj-nosplash'); };
+    try {
+      var q = location.search;
+      if (/[?&]splash=1/.test(q)) return;          // 강제로 보기
+      if (/[?&]splash=0/.test(q)) { off(); return; }
+      if (/[?&](custom|maumun|t|tarot|start)=/.test(q)) { off(); return; }
+
+      // 30분. 이 값을 줄이면 앱을 쓰는 중에도 자꾸 뜨고, 늘리면 켠 느낌이 사라진다.
+      var GAP = 30 * 60 * 1000;
+      var now = Date.now();
+      var last = 0;
+      try { last = parseInt(localStorage.getItem('maumjaro:splashAt'), 10) || 0; } catch (e) { /* 시크릿 창 */ }
+      // 시계를 과거로 돌린 기기에서 영영 안 뜨는 일이 없도록 미래 값은 버린다.
+      if (last > now) last = 0;
+      if (now - last < GAP) { off(); return; }
+      try { localStorage.setItem('maumjaro:splashAt', String(now)); } catch (e) { /* 무시 */ }
+    } catch (e) {
+      // 무슨 일이 있어도 스플래시 때문에 앱이 안 뜨는 일은 없어야 한다.
+      off();
+    }
+  })();
+</script>
+<div class="mj-splash" id="mj-splash" aria-hidden="true">
+  <div class="mj-splash-mark">
+    <!-- 마스코트. 앱 아이콘(주사기)이 아니라 캐릭터를 켜는 화면의 주인공으로 둔다.
+         이유: 아이콘은 방금 눌러서 이미 봤다. 같은 그림을 더 보여주는 건 정보가 0이다.
+         반면 캐릭터는 "이 앱이 나한테 어떤 말투로 굴지"를 한 장으로 말한다 — 지금 이 앱의
+         약한 고리가 정확히 그 첫인상이다.
+
+         앱 안의 마스코트(#arm-target, 온보딩 obchar*)와 같은 캐릭터다. 같은 얼굴·같은 옷·
+         같은 외곽선을 쓰고 여기서만 표정을 바꿨다. 정체성은 고정, 표정은 상황에 따라.
+          - 눈을 감은 웃음(^ ^): 인사하는 표정이다. 뜬 눈은 "대기 중"으로 보이고
+            감은 눈은 "반가워"로 보인다. 켜는 화면에 필요한 건 후자다.
+          - 하트를 안겼다: 팔이 양옆으로 늘어져 있으면 서 있기만 한 그림이 된다.
+            뭔가를 들고 있어야 건네주는 자세가 된다.
+         배꼽의 주사 자리는 여기서만 뺐다 — 하트와 같은 자리라 둘 다 넣으면 지저분하다.
+         "주사"라는 정보는 바로 아래 말풍선과 1초 뒤 홈 화면이 충분히 전달한다.
+
+         gradient id에 sp 접두사를 붙인 이유: 같은 문서 안의 #arm-target(char*)과
+         온보딩(obchar*)이 같은 그림을 쓰므로, id가 겹치면 한쪽이 상대 그라디언트를 가져다 쓴다. -->
+    <svg viewBox="0 0 150 162" width="262" height="283" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="spSkin" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#fff1da" /><stop offset="100%" stop-color="#ffd9ab" />
+        </linearGradient>
+        <linearGradient id="spHood" x1="0.2" y1="0" x2="0.6" y2="1">
+          <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#4fa392" />
+        </linearGradient>
+        <radialGradient id="spGround" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0%" stop-color="rgba(90,60,40,0.30)" />
+          <stop offset="60%" stop-color="rgba(90,60,40,0.12)" />
+          <stop offset="100%" stop-color="rgba(90,60,40,0)" />
+        </radialGradient>
+      </defs>
+      <ellipse class="sp-shadow" cx="75" cy="154" rx="44" ry="7" fill="url(#spGround)" />
+      <g class="sp-body">
+        <!-- 몸통: 앉은 자세. 아래가 넓은 종 모양이라 서 있는 것보다 안정돼 보이고,
+             안정된 실루엣이 곧 "순하다"로 읽힌다. -->
+        <path d="M75 78 c27 0 41 19 41 40 c0 17 -9 28 -41 28 s-41 -11 -41 -28 c0 -21 14 -40 41 -40 z"
+              fill="url(#spHood)" stroke="#1f5c50" stroke-width="4" stroke-linejoin="round" />
+        <!-- 배: 후드 밖으로 나온 맨살. 옷과 살의 대비가 있어야 옷을 입은 걸로 보인다. -->
+        <ellipse cx="75" cy="124" rx="31" ry="22" fill="url(#spSkin)" />
+        <ellipse cx="75" cy="130" rx="27" ry="16" fill="rgba(214,150,96,0.16)" />
+        <ellipse cx="64" cy="116" rx="10" ry="6" fill="rgba(255,255,255,0.45)" />
+        <!-- 발 -->
+        <ellipse cx="57" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4" />
+        <ellipse cx="93" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4" />
+        <!-- 후드: 머리를 통째로 감싼다. 이 앱 캐릭터가 귀여워 보이는 건 여기서 온다 —
+             머리가 몸보다 크고, 그 큰 머리가 둥글게 감싸여 있으면 아기 비율이 된다. -->
+        <circle cx="75" cy="52" r="43" fill="url(#spHood)" stroke="#1f5c50" stroke-width="4" />
+        <!-- 후드 안쪽 그늘: 얼굴이 후드 안에 "들어가 있게" 만든다. 없으면 초록 원 위에
+             얼굴을 얹어놓은 것처럼 납작해 보인다. -->
+        <ellipse cx="75" cy="58" rx="33.5" ry="31.5" fill="rgba(20,70,60,0.28)" />
+        <!-- 얼굴 -->
+        <ellipse cx="75" cy="57" rx="31" ry="29" fill="url(#spSkin)" stroke="#1f5c50" stroke-width="3.6" />
+        <ellipse cx="63" cy="44" rx="12" ry="7.5" fill="rgba(255,255,255,0.5)" />
+        <!-- 눈을 감은 웃음. 위로 휜 선이라야 웃는 눈이 된다 — 아래로 휘면 우는 눈이다. -->
+        <path d="M58 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M78 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round" />
+        <!-- 볼: 크고 진할수록 어려 보인다. -->
+        <ellipse cx="52" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85" />
+        <ellipse cx="98" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85" />
+        <path d="M67 69 q8 8 16 0" fill="none" stroke="#1f5c50" stroke-width="3.2" stroke-linecap="round" />
+        <!-- 팔이 앞으로 모인다. 바깥으로 늘어진 팔은 "서 있다", 모은 팔은 "건네준다"가 된다. -->
+        <path d="M39 106 q3 14 17 16" fill="none" stroke="#1f5c50" stroke-width="4" stroke-linecap="round" />
+        <path d="M111 106 q-3 14 -17 16" fill="none" stroke="#1f5c50" stroke-width="4" stroke-linecap="round" />
+      </g>
+      <!-- 품에 안긴 하트 -->
+      <path class="sp-hold" d="M75 131 c-10.5 -7.5 -14 -12 -14 -16.5 a7 7 0 0 1 14 -3.4 a7 7 0 0 1 14 3.4 c0 4.5 -3.5 9 -14 16.5 z"
+            fill="#ff8fb3" stroke="#1f5c50" stroke-width="3" stroke-linejoin="round" />
+      <!-- 손은 하트 위에 그린다 — 그래야 "들고 있다"가 된다. -->
+      <g class="sp-hands">
+        <circle cx="58" cy="122" r="8" fill="url(#spSkin)" stroke="#1f5c50" stroke-width="3.4" />
+        <circle cx="92" cy="122" r="8" fill="url(#spSkin)" stroke="#1f5c50" stroke-width="3.4" />
+      </g>
+      <!-- 떠오르는 하트 둘. 처음부터 있으면 배경 장식이지만, 나중에 뜨면 캐릭터의 반응이 된다. -->
+      <path class="sp-heart a" d="M18 62 a5.6 5.6 0 0 1 9.4 -3.8 a5.6 5.6 0 0 1 9.4 3.8 c0 6 -9.4 11.4 -9.4 11.4 s-9.4 -5.4 -9.4 -11.4 z" fill="#ff8fb3" />
+      <path class="sp-heart b" d="M120 40 a4.2 4.2 0 0 1 7 -2.8 a4.2 4.2 0 0 1 7 2.8 c0 4.5 -7 8.5 -7 8.5 s-7 -4 -7 -8.5 z" fill="#ffb3c9" />
+    </svg>
+  </div>
+  <div class="mj-splash-word">맘운자로</div>
+  <!-- 말풍선. 같은 문장이라도 네모난 회색 글줄이면 안내문이고, 말풍선이면 건네는 말이다.
+       꼬리가 캐릭터 쪽을 향해야 "이 캐릭터가 하는 말"로 읽힌다. -->
+  <div class="mj-splash-tag">오늘도 마음에<br>한 대 놓고 갑니다 💉</div>
+  <!-- 뭐 하는 앱인지. 처음 온 사람은 이름과 캐릭터만 보고는 알 수가 없다.
+       왜 문장이 아니라 세 줄인가: "기분을 고르면 처방을 주고 주사를 놓는 앱입니다"라고
+       쓰면 한 덩어리라 읽는 데 시간이 걸린다. 세 줄로 끊으면 순서가 눈에 보여서
+       읽지 않고 알아본다 — 스플래시에 있는 글은 읽히는 게 아니라 스쳐 지나간다.
+       가로로 늘어놓았다가 320px 화면에서 줄바꿈되며 화살표가 혼자 떨어졌다.
+       세로로 쌓으면 화면 너비와 무관하게 항상 같은 모양이다.
+       운(운세)은 일부러 뺐다. 이 앱의 중심은 마음-처방-주사이고, 켜는 첫 화면에
+       운세를 앞세우면 운세 앱으로 보인다(CLAUDE.md 최상위 원칙 1).
+       셋째 줄은 말풍선("한 대 놓고 갑니다")과 겹치지 않게 결과가 아니라 동작을 쓴다.
+       이 앱에서 주사를 놓는 방법이 실제로 폰을 찌르는 것인데, 그게 제일 특이한
+       부분인데도 켜는 화면에서 한 번도 안 알려주고 있었다. -->
+  <div class="mj-splash-steps">
+    <span class="mj-splash-step s1"><i>😊</i>오늘 기분 고르기</span>
+    <span class="mj-splash-step s2"><i>💊</i>나에게 맞는 처방</span>
+    <span class="mj-splash-step s3"><i>💉</i>폰을 콕! 찔러 주사</span>
+  </div>
+  <!-- 처음 온 사람이 제일 먼저 재는 것. 가입하라고 할까? 돈 내라고 할까? 오래 걸릴까?
+       셋 다 아니라는 걸 먼저 말해두면 그다음 화면을 경계하지 않고 본다. -->
+  <div class="mj-splash-note">설치도 가입도 없이 30초 · 무료</div>
+</div>
+</div>
+
+<!-- JS를 켜지 않은 방문자에게 보여줄 설명. 실제로 이걸 받아 가는 쪽은 사람이 아니라
+     AI 크롤러다(GPTBot·ClaudeBot·PerplexityBot 등은 대부분 JS를 실행하지 않는다).
+     이 앱은 화면을 전부 JS로 그리기 때문에, 그쪽이 받는 홈 HTML에는 버튼 라벨 말고
+     "이게 무슨 앱인지" 말해 주는 문장이 한 줄도 없었다. 그래서 검색해서 인용할 때
+     이름만 비슷한 당뇨 치료제 '마운자로'와 섞이거나, 아예 인용되지 않았다.
+
+     숨긴 텍스트가 아니라는 점이 중요하다. noscript는 JS가 꺼진 사람에게 실제로 보이고,
+     내용도 앱이 하는 일 그대로다(다르게 쓰면 클로킹이 된다 — 절대 그렇게 쓰지 말 것).
+     앱 화면과 겹치지 않으므로 레이아웃에는 영향이 없다. -->
+<noscript>
+  <div style="max-width:640px;margin:0 auto;padding:28px 20px;line-height:1.8;
+              font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+              color:#3d3324">
+    <h2 style="margin:0 0 10px">맘운자로 — 마음에 놓는 오늘의 처방</h2>
+    <p><strong>맘운자로</strong>는 오늘의 감정을 고르면 그 마음에 맞는 <strong>마음 처방</strong>을 주고,
+      휴대폰을 살짝 찌르는 동작으로 마음에 주사를 놓는 무료 한국어 웹앱입니다.
+      설치도 가입도 없이 브라우저에서 30초면 됩니다.</p>
+    <p>이름은 다이어트 주사 <em>마운자로(Mounjaro)</em>에서 따온 말장난입니다.
+      몸이 아니라 <strong>마음에 놓는 주사</strong>라는 뜻이고, 의약품·제약회사와는 아무 관계가 없습니다.
+      앱이 주는 처방은 재미로 보는 콘텐츠이지 의학적·심리학적 진단이 아닙니다.</p>
+    <p>핵심 흐름은 <strong>운 → 마음 → 처방 → 주사</strong> 네 단계입니다.
+      타로·사주·MBTI·별자리·띠는 따로 떨어진 운세가 아니라 그날의 <strong>오늘의 맘운</strong>을
+      만드는 재료로 들어가 있고, 모든 콘텐츠는 마지막에 “오늘 실제로 해볼 수 있는 한 가지”로 끝납니다.</p>
+    <p>이 페이지는 JavaScript로 그려집니다. 내용만 먼저 읽으시려면 아래로 가세요.</p>
+    <ul>
+      <li><a href="/guide/">전체 목록 — MBTI 16유형 · 타로 22장 · 별자리 12 · 띠 12</a></li>
+      <li><a href="/llms.txt">llms.txt — 사이트 전체 요약</a></li>
+    </ul>
+  </div>
+</noscript>
+
 <div id="app">
 
   <header class="app-header">
@@ -223,14 +476,20 @@
 
       <button class="arm-target" id="arm-target" type="button" hidden aria-label="팔에 콕 찔러서 주사 놓기">
         <!-- 팔만 덩그러니 있으면 "여기를 찌르라"는 게 안 읽힌다.
-             배를 내밀고 기다리는 캐릭터로 바꿔서 어디를 겨냥할지 한눈에 보이게 한다. -->
-        <svg viewBox="0 0 140 118" class="arm-svg" xmlns="http://www.w3.org/2000/svg">
+             배를 내밀고 기다리는 캐릭터로 바꿔서 어디를 겨냥할지 한눈에 보이게 한다.
+             스플래시·온보딩과 같은 후드 캐릭터다. 표정만 다르다 —
+             여기서는 눈을 뜨고 있다. 기다리는 자리에서 눈을 감고 있으면 자는 것처럼 보이고,
+             "지금 너를 보고 있다"가 있어야 찌르라는 말이 읽힌다.
+             ⚠️ 이 버튼은 요소 전체가 클릭 영역이라(app.js:838, prescriptions.js:986)
+             그림은 자유롭게 바꿔도 되지만, 배꼽의 .arm-site-ring은 CSS가 r을 9→15로
+             애니메이션하므로 r="9"인 <circle>로 남겨야 한다. -->
+        <svg viewBox="0 0 140 130" class="arm-svg" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="charBody" x1="0" y1="0" x2="0.3" y2="1">
-              <stop offset="0%" stop-color="#ffe9c9" /><stop offset="100%" stop-color="#ffd2a3" />
+              <stop offset="0%" stop-color="#fff1da" /><stop offset="100%" stop-color="#ffd9ab" />
             </linearGradient>
-            <linearGradient id="charShirt" x1="0" y1="0" x2="0.4" y2="1">
-              <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#5fb3a3" />
+            <linearGradient id="charShirt" x1="0.2" y1="0" x2="0.6" y2="1">
+              <stop offset="0%" stop-color="#8fd6c6" /><stop offset="100%" stop-color="#4fa392" />
             </linearGradient>
             <!-- 바닥 그림자: 가운데가 진하고 가장자리로 흩어져야 "떠 있지 않고 서 있다"가 된다 -->
             <radialGradient id="charGround" cx="0.5" cy="0.5" r="0.5">
@@ -240,38 +499,39 @@
             </radialGradient>
           </defs>
           <!-- 바닥 그림자 -->
-          <ellipse cx="70" cy="114" rx="36" ry="6" fill="url(#charGround)" />
+          <ellipse cx="70" cy="124" rx="36" ry="6" fill="url(#charGround)" />
           <!-- 다리 -->
-          <rect x="52" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
-          <rect x="75" y="96" width="13" height="18" rx="6.5" fill="#3d8a7c" />
-          <!-- 몸통(배) -->
-          <ellipse cx="70" cy="72" rx="34" ry="29" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
+          <rect x="53" y="104" width="14" height="18" rx="7" fill="#3d8a7c" stroke="#1f5c50" stroke-width="3" />
+          <rect x="73" y="104" width="14" height="18" rx="7" fill="#3d8a7c" stroke="#1f5c50" stroke-width="3" />
+          <!-- 몸통(맨배) -->
+          <ellipse cx="70" cy="82" rx="32" ry="28" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
           <!-- 배 아래쪽에 그늘을 넣어 평평한 타원이 아니라 둥근 배로 보이게 한다 -->
-          <ellipse cx="70" cy="80" rx="30" ry="21" fill="rgba(214,150,96,0.22)" />
-          <ellipse cx="59" cy="66" rx="12" ry="8" fill="rgba(255,255,255,0.42)" />
-          <!-- 옷: 배꼽 위쪽만 덮어 배를 내놓은 모습 -->
-          <path d="M38 62 a34 29 0 0 1 64 0 z" fill="url(#charShirt)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
-          <!-- 옷 주름 한 줄 -->
-          <path d="M50 52 q20 8 40 0" fill="none" stroke="rgba(31,92,80,0.28)" stroke-width="2.2" stroke-linecap="round" />
+          <ellipse cx="70" cy="90" rx="28" ry="20" fill="rgba(214,150,96,0.22)" />
+          <ellipse cx="59" cy="76" rx="11" ry="7" fill="rgba(255,255,255,0.42)" />
+          <!-- 옷: 배꼽 위쪽만 덮어 배를 내놓은 모습. 주사 놓을 자리를 비워두는 게 목적이다. -->
+          <path d="M38 72 a32 28 0 0 1 64 0 z" fill="url(#charShirt)" stroke="#1f5c50" stroke-width="3.5" stroke-linejoin="round" />
           <!-- 팔 -->
-          <path d="M38 60 q-14 10 -10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <path d="M102 60 q14 10 10 24" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <!-- 머리 -->
-          <circle cx="70" cy="28" r="23" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.5" />
-          <!-- 볼록해 보이도록 왼쪽 위 하이라이트 + 턱 밑 그늘 -->
-          <ellipse cx="60" cy="19" rx="9" ry="6" fill="rgba(255,255,255,0.45)" />
-          <path d="M50 33 a23 23 0 0 0 40 0 a23 23 0 0 1 -40 0z" fill="rgba(214,150,96,0.18)" />
-          <path d="M52 14 q18 -10 36 0" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
-          <circle cx="61" cy="28" r="2.8" fill="#1f5c50" />
-          <circle cx="79" cy="28" r="2.8" fill="#1f5c50" />
-          <circle cx="62" cy="27" r="0.9" fill="#fff" />
-          <circle cx="80" cy="27" r="0.9" fill="#fff" />
-          <path d="M64 36 q6 5 12 0" fill="none" stroke="#1f5c50" stroke-width="2.6" stroke-linecap="round" />
-          <ellipse cx="53" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
-          <ellipse cx="87" cy="34" rx="5" ry="3.2" fill="#ffb3b3" opacity=".75" />
-          <!-- 주사 놓을 자리 (배꼽) -->
-          <circle cx="70" cy="78" r="9" class="arm-site-ring" />
-          <circle cx="70" cy="78" r="3.5" fill="#ef6a54" />
+          <path d="M39 70 q-13 10 -9 22" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <path d="M101 70 q13 10 9 22" fill="none" stroke="#1f5c50" stroke-width="3.5" stroke-linecap="round" />
+          <!-- 후드: 머리를 통째로 감싼다. 스플래시·온보딩과 같은 형태다. -->
+          <circle cx="70" cy="36" r="32" fill="url(#charShirt)" stroke="#1f5c50" stroke-width="3.5" />
+          <!-- 후드 안쪽 그늘: 얼굴이 후드 안에 "들어가 있게" 만든다.
+               없으면 초록 원 위에 얼굴을 얹어놓은 것처럼 납작해 보인다. -->
+          <ellipse cx="70" cy="41" rx="25" ry="23.5" fill="rgba(20,70,60,0.28)" />
+          <!-- 얼굴 -->
+          <ellipse cx="70" cy="40" rx="23" ry="21.5" fill="url(#charBody)" stroke="#1f5c50" stroke-width="3.2" />
+          <ellipse cx="61" cy="30" rx="9" ry="5.5" fill="rgba(255,255,255,0.5)" />
+          <!-- 눈은 뜬 채로. 기다리는 자리에서 눈을 감으면 자는 것처럼 보인다. -->
+          <circle cx="62" cy="42" r="3" fill="#1f5c50" />
+          <circle cx="78" cy="42" r="3" fill="#1f5c50" />
+          <circle cx="63" cy="41" r="1" fill="#fff" />
+          <circle cx="79" cy="41" r="1" fill="#fff" />
+          <ellipse cx="53" cy="49" rx="5.6" ry="3.6" fill="#ffa8ae" opacity=".85" />
+          <ellipse cx="87" cy="49" rx="5.6" ry="3.6" fill="#ffa8ae" opacity=".85" />
+          <path d="M64 50 q6 6 12 0" fill="none" stroke="#1f5c50" stroke-width="2.8" stroke-linecap="round" />
+          <!-- 주사 놓을 자리 (배꼽). r="9"는 CSS 애니메이션(arm-pulse)이 기준으로 쓴다. -->
+          <circle cx="70" cy="92" r="9" class="arm-site-ring" />
+          <circle cx="70" cy="92" r="3.5" fill="#ef6a54" />
         </svg>
         <!-- 글자만으로는 "어느 방향으로 얼마나 세게"를 알 수 없다.
              폰이 콕 찌르는 동작을 문구 바로 옆에서 반복해 보여준다.
@@ -350,6 +610,16 @@
     <div id="history-game-panel" class="history-game-panel" hidden></div>
     <div id="history-content"></div>
     <div id="history-unified-feed"></div>
+    <!-- 한마디 입구를 설정 안에만 두면 아무도 못 찾는다(설정을 여는 사람이 거의 없다).
+         홈에 두지 않는 이유는 위 .home-links 주석과 같다 — 홈은 남는 높이를 전부
+         주사기에 주는 구조라, 여기에 한 줄을 더하면 앱의 얼굴이 그만큼 작아진다.
+         기록 탭은 그 제약이 없고, 무엇보다 여기까지 온 사람은 이미 이 앱을 쓰는
+         사람이다. 의견을 들을 값어치가 가장 큰 사람이 보는 자리다.
+         보낼 서버가 없으면 feedback.js가 이 블록을 숨긴다. -->
+    <div class="history-feedback" id="history-feedback" hidden>
+      <p class="history-feedback-text" id="history-feedback-text">쓰면서 불편한 곳, 있었으면 하는 기능 있으셨나요?</p>
+      <button class="history-feedback-btn" id="history-feedback-btn" type="button">💬 개발자에게 한마디<i class="fb-badge" hidden></i></button>
+    </div>
   </main>
 
   <main id="view-rx" class="view" hidden>
@@ -489,6 +759,15 @@
       <span>완료 이미지 효과</span>
       <button id="fade-toggle" class="toggle-btn" aria-pressed="true">✨ 켜짐</button>
     </div>
+    <!-- 방문 집계 제외 스위치.
+         ?noga=1 주소로도 되지만 홈 화면에 추가한 앱에는 주소창이 없어서 그 방법을 쓸 수 없다.
+         운영자가 주로 그 아이콘으로 들어오므로, 자기 방문이 계속 지표에 섞이는 걸 막으려면
+         앱 안에 스위치가 있어야 한다. 1/0을 헷갈릴 일도 없고 지금 상태가 눈에 보인다.
+         일반 사용자에게도 해가 없다 — 자기 방문을 빼는 것뿐이다. -->
+    <div class="sound-row">
+      <span>내 방문 집계 제외</span>
+      <button id="noga-toggle" class="toggle-btn" aria-pressed="false">📊 집계함</button>
+    </div>
     <!-- 설치 안내는 언제든 다시 볼 수 있어야 한다(첫 완주 때 한 번 뜨는 시트를 놓칠 수 있다).
          install-prompt.js가 이 버튼을 찾아 배선하고, 이미 설치했으면 행 자체를 숨긴다. -->
     <div class="sound-row" id="settings-install-row" hidden>
@@ -500,10 +779,55 @@
       <span>📖 사용법 다시 보기</span>
       <button id="settings-onboarding-btn" class="toggle-btn" type="button">보기</button>
     </div>
+    <!-- 지표로는 "몇 명이 몇 초 있다 갔다"까지만 보인다. 무엇을 고쳐야 하는지는
+         사람이 쓴 문장에만 들어 있다. 보낼 서버(Worker)가 없으면 feedback.js가
+         이 행을 숨기므로 기본값은 hidden이다. -->
+    <div class="sound-row" id="settings-feedback-row" hidden>
+      <span>💬 개발자에게 한마디<i class="fb-badge" hidden></i></span>
+      <button id="settings-feedback-btn" class="toggle-btn" type="button">대화하기</button>
+    </div>
     <div class="settings-divider"></div>
     <button id="settings-reset-btn" class="settings-reset-btn" type="button">🗑️ 모든 기록 초기화</button>
     <p class="settings-reset-hint">이름/사운드/센서 등 설정은 유지되고, 감정·처방·보낸 기록만 지워져요</p>
     <button id="settings-close-btn" class="settings-close">닫기</button>
+  </div>
+</div>
+
+<div id="feedback-overlay" class="settings-overlay">
+  <div class="settings-card feedback-card" role="dialog" aria-label="개발자에게 한마디">
+    <div class="feedback-head">
+      <h2>💬 개발자에게 한마디</h2>
+      <button id="feedback-close-btn" class="feedback-x" type="button" aria-label="닫기">✕</button>
+    </div>
+    <p class="feedback-sub" id="feedback-empty">불편한 곳, 있었으면 하는 기능, 그냥 하고 싶은 말.<br>직접 읽고 <strong>여기로 답을 드려요.</strong></p>
+    <!-- 스레드처럼 피드로 보여준다. 말풍선(카톡)이 아니라 왼쪽 정렬 + 얇은 구분선.
+         feedback.js가 채운다. -->
+    <div class="feedback-thread" id="feedback-thread" aria-live="polite"></div>
+    <p class="feedback-status" id="feedback-status" hidden></p>
+    <!-- 고치는 중이라는 표시. 아래 입력칸이 그 글의 입력칸이 된다. -->
+    <div class="feedback-editing" id="feedback-editing" hidden>
+      <span>✏️ 고치는 중</span>
+      <button id="feedback-edit-cancel" type="button">취소</button>
+    </div>
+    <!-- 스레드의 답글 입력줄과 같은 모양: 동그란 프로필 + 한 줄 입력 + 보내기 -->
+    <div class="feedback-compose">
+      <span class="fb-ava me" aria-hidden="true">🙂</span>
+      <textarea id="feedback-text" class="feedback-text" rows="1" maxlength="500"
+        placeholder="한마디 남기기..."></textarea>
+      <button id="feedback-send-btn" class="feedback-send" type="button" disabled>보내기</button>
+    </div>
+    <div class="feedback-foot">
+      <span id="feedback-count">0/500</span>
+      <!-- 긴 안내문이 화면 아래를 덮고 있었다. 접어두고, 궁금한 사람만 펼쳐 보게 한다.
+           숨기는 게 아니라 자리를 옮기는 것이다 — 무엇이 전달되는지는 계속 밝힌다. -->
+      <details class="feedback-info">
+        <summary>무엇이 함께 전달되나요?</summary>
+        <p>연락처는 받지 않아요. 답장은 이 화면에 그대로 붙습니다.
+        보낼 때 기기 종류와 화면 크기, 지금까지 주사를 놓은 횟수가 함께 전달돼요.
+        내가 쓴 글은 아래 <strong>수정 · 삭제</strong>로 언제든 고치거나 지울 수 있어요(이미 읽었을 수는 있어요).</p>
+      </details>
+    </div>
+    <button id="feedback-back-btn" class="action-btn feedback-back" type="button">💉 오늘의 맘운 보러가기</button>
   </div>
 </div>
 
@@ -532,6 +856,9 @@
       <button class="symptom-chip" data-symptom="affection"><span class="symptom-emoji">🥰</span>사랑</button>
       <button class="symptom-chip" data-symptom="stuffy"><span class="symptom-emoji">😖</span>답답함</button>
       <button class="symptom-chip" data-symptom="relief"><span class="symptom-emoji">🎈</span>홀가분</button>
+      <button class="symptom-chip" data-symptom="deflated"><span class="symptom-emoji">😮‍💨</span>허탈함</button>
+      <button class="symptom-chip" data-symptom="craving"><span class="symptom-emoji">🍕</span>식욕 폭발</button>
+      <button class="symptom-chip" data-symptom="selfblame"><span class="symptom-emoji">🫠</span>자책</button>
     </div>
     <div class="dose-preview" id="dose-preview" hidden>
       <div class="dose-preview-badge" id="dose-preview-badge">3mg</div>
@@ -807,10 +1134,32 @@
   (function () {
     var id = window.MAUMJARO_GA4_ID;
     if (!id) return;
+
     // 개발용 로컬 서버에서 나오는 트래픽은 보내지 않는다.
     // 안 막으면 테스트 방문이 실제 지표에 섞여 초기 데이터가 지저분해진다.
     var h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
+
+    // 내 방문 빼기 스위치 (?noga=1 로 한 번 접속하면 이 기기에서 영구히 꺼진다)
+    //
+    // 왜 GA4의 내부 트래픽 필터로 안 되는가
+    //   그 필터는 IP 기준인데, 모바일 IP는 접속할 때마다 바뀐다. 운영자가 주로 폰으로
+    //   확인하는 이 앱에서는 IP를 등록해도 자기 방문이 계속 집계된다. 실제로 30일
+    //   사용자 131명에 운영자 접속이 얼마나 섞였는지 알 수 없는 상태였다.
+    //   기기에 표시를 남기면 IP가 바뀌어도 계속 제외된다.
+    //
+    // 해제는 ?noga=0. 표시가 남은 걸 잊으면 "내 앱이 집계가 안 된다"고 오해하게 되므로
+    //   켜고 끌 때 화면에 알려준다(폰에서는 콘솔을 볼 수 없다).
+    var KEY = 'maumjaro:noAnalytics';
+    var off = false;
+    try {
+      var q = new URLSearchParams(location.search).get('noga');
+      if (q === '1') { localStorage.setItem(KEY, '1'); notice('이 기기는 방문 집계에서 제외됩니다'); }
+      else if (q === '0') { localStorage.removeItem(KEY); notice('이 기기의 방문 집계를 다시 켰습니다'); }
+      off = localStorage.getItem(KEY) === '1';
+    } catch (e) { /* 저장소를 못 쓰는 브라우저면 그냥 평소대로 집계한다 */ }
+    if (off) return;
+
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
@@ -819,54 +1168,82 @@
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
+
+    // 앱 스타일(style.css)이 아직 안 붙었을 수도 있어 이 배너는 스스로 그린다.
+    function notice(msg) {
+      function show() {
+        var el = document.createElement('div');
+        el.textContent = msg;
+        el.setAttribute('role', 'status');
+        el.style.cssText = 'position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:99999;'
+          + 'max-width:90vw;padding:10px 16px;border-radius:999px;font-size:13px;line-height:1.4;'
+          + 'background:#1f5c50;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);'
+          + 'font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;';
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 4000);
+      }
+      if (document.body) show();
+      else document.addEventListener('DOMContentLoaded', show);
+    }
   })();
 </script>
 
-<script src="prescriptions-data.js"></script>
-<script src="fortune-data.js"></script>
-<script src="tarot-data.js"></script>
-<script src="zodiac-data.js"></script>
-<script src="mbti-data.js"></script>
-<script src="game-data.js"></script>
+<script src="prescriptions-data.js?v=25"></script>
+<script src="fortune-data.js?v=25"></script>
+<script src="tarot-data.js?v=25"></script>
+<script src="zodiac-data.js?v=25"></script>
+<script src="mbti-data.js?v=25"></script>
+<script src="game-data.js?v=25"></script>
 <!-- 카드·갓차·캡슐 효과음. app.js보다 먼저 둬서 다른 파일들이 바로 쓸 수 있게 한다. -->
-<script src="sfx.js"></script>
-<script src="app.js"></script>
+<script src="sfx.js?v=25"></script>
+<script src="app.js?v=25"></script>
 <!-- 공유 링크에 유입 표(utm)를 붙인다. prescriptions.js의 shareOrCopy와
      share-card.js가 부르므로 둘보다 먼저 와야 한다. 없어도 공유는 그대로
      동작하고 표만 안 붙는다(전부 존재 여부를 확인한 뒤 쓴다). -->
-<script src="share-utm.js"></script>
-<script src="prescriptions.js"></script>
+<script src="share-utm.js?v=25"></script>
+<script src="prescriptions.js?v=25"></script>
 <!-- 9:16 공유 카드 생성기. mbti.js·lucky.js가 window.MaumjaroShare로 쓴다.
      Rx.shareOrCopy를 폴백으로 쓰므로 prescriptions.js 뒤에 온다. -->
-<script src="share-card.js"></script>
+<script src="share-card.js?v=25"></script>
 <!-- AI 프롬프트에 붙일 "요즘 상태" 요약. prescriptions.js가 쌓는 maumjaro:rxRecords를
      읽기만 하므로 그 뒤에 오고, fortune.js·heal-ai.js·rx-ai.js가 쓰므로 그 앞에 온다.
      이 파일이 없어도 세 곳 모두 맥락 없이 예전처럼 동작한다(전부 존재 여부를 확인한다). -->
-<script src="ai-context.js"></script>
+<script src="ai-context.js?v=25"></script>
 <!-- 마음유형(간이 MBTI) 시험지·결과. fortune.js가 window.MaumjaroMbti를 찾아 쓰므로
      fortune.js보다 먼저 와야 한다(fortune.js는 클릭 시점에 참조하므로 순서가 바뀌어도
      동작하지만, 먼저 두는 편이 의존 방향이 명확하다). -->
-<script src="mbti.js"></script>
+<script src="mbti.js?v=25"></script>
 <!-- 주간 행운번호. fortune.js의 기록 탭 타일에서 window.MaumjaroLucky로 불린다. -->
-<script src="lucky.js"></script>
-<script src="fortune.js"></script>
+<script src="lucky.js?v=25"></script>
+<script src="fortune.js?v=25"></script>
 <!-- 스레드용 "글로 공유"(이미지 없이 텍스트+링크). 문구를 만들 때 fortune.js가 가진
      AI 프록시 주소를 빌려 쓰므로 그 뒤에 온다. 버튼은 화면을 그릴 때 붙으므로
      prescriptions.js·game.js보다 뒤에 있어도 되고, 이 파일이 없으면 버튼만 안 생긴다. -->
-<script src="threads-share.js"></script>
-<script src="game.js"></script>
+<!-- ?v= 는 캐시 무효화다. 2026-09-12, 링크를 본문에서 빼는 수정을 배포했는데
+     이미 이 파일을 받아둔 폰은 예전 코드를 그대로 실행한다. 그러면 배포를 해도
+     그 기기에서는 계속 링크가 붙은 글이 나가고, 스레드에서 또 스팸으로 잡힌다.
+     이 파일을 고칠 때마다 숫자를 올려야 한다(style.css?v=3과 같은 이유). -->
+<script src="threads-share.js?v=25"></script>
+<script src="game.js?v=25"></script>
 <!-- 주사 직후 문구를 AI로 바꿔치기한다. app.js가 쏘는 이벤트만 듣기 때문에
      맨 뒤에 와야 하고, 이 파일이 없거나 실패해도 기본 문구가 그대로 뜬다. -->
-<script src="heal-ai.js"></script>
+<script src="heal-ai.js?v=25"></script>
 <!-- 오늘의 처방이 "왜 오늘 나한테 왔는지"를 별자리·띠·사주로 한 줄 풀어준다.
      fortune.js의 프록시 주소와 zodiac-data.js를 쓰므로 그 뒤에 와야 하고,
      실패하면 아무것도 안 붙이고 조용히 끝난다. -->
-<script src="rx-ai.js"></script>
+<script src="rx-ai.js?v=25"></script>
+<script src="fortune-ai.js?v=25"></script>
 <!-- 첫 주사를 완주한 뒤 "홈 화면에 추가"를 한 번만 권한다.
      보상 오버레이가 닫히는 것만 지켜보므로 다른 파일에 의존하지 않는다. -->
-<script src="install-prompt.js"></script>
-<!-- 첫 방문 3장 안내. 설정에서 다시 볼 수 있다. -->
-<script src="onboarding.js"></script>
+<script src="install-prompt.js?v=25"></script>
+<!-- 실행 스플래시를 치우는 쪽. 그리는 쪽은 <body> 맨 위에 박혀 있다.
+     onboarding.js보다 먼저 와야 한다 — 온보딩이 window.MaumjaroSplash.whenDone()으로
+     스플래시가 끝날 때까지 기다리기 때문이다(두 화면이 겹쳐 뜨면 로고를 못 본다).
+     track()을 쓰므로 game.js 뒤에 온다. -->
+<script src="splash.js?v=25"></script>
+<!-- 첫 방문 1장 안내. 설정에서 다시 볼 수 있다. -->
+<script src="onboarding.js?v=25"></script>
+<script src="feedback.js?v=25"></script>
 
 <!-- Cloudflare Web Analytics — 방문/유입 경로만 집계한다.
      쿠키를 쓰지 않으므로 동의 배너가 필요 없고, 감정 기록·사주 정보는 전송되지 않는다

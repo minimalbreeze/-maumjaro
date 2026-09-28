@@ -17,10 +17,18 @@
 //   - 생성물은 리포에 커밋되어 GitHub Pages가 그대로 서빙한다. 빌드 도구 없음.
 //
 // 실행: node scripts/build-pages.mjs
+//
+// 예외 하나: scripts/data/emotion-copy.mjs
+//   "내용을 여기에 베껴 쓰지 않는다"는 위 원칙의 유일한 예외다. 감정 페이지 23장이
+//   서로 85% 똑같아서 구글이 "크롤링됨 – 색인 생성 안 됨"으로 묶어버렸고, 앱 데이터만으로는
+//   그 이상 달라질 수가 없었다. 앱에 없는 내용이므로 앱과 어긋날 일도 없다.
+//   자세한 사정은 그 파일 머리말에 적어뒀다.
 
 import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { loadSymptoms } from './lib/symptoms.mjs';
+import { EMOTION_COPY } from './data/emotion-copy.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -67,10 +75,32 @@ function josa(word, withBatchim, withoutBatchim) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// 문장 끝 마침표를 떼어낸다. 데이터 값을 문장 가운데에 끼워 넣을 때 쓴다
+// (trait은 "…가 먼저다."처럼 마침표까지 들고 있어서 그대로 넣으면 문장이 두 번 끝난다).
+const noDot = (v) => String(v == null ? '' : v).trim().replace(/[.。]$/, '');
+
+// ---------- AI 답변엔진(GEO) ----------
+// ChatGPT·Perplexity·구글 AI 개요는 페이지를 처음부터 끝까지 읽고 요약해 주지 않는다.
+// 질문에 그대로 갖다 붙일 수 있는 "떼어내도 말이 되는 한 덩어리"를 찾아 인용한다.
+// 그래서 페이지마다 두 가지를 더 준다.
+//
+//   answer — 제목 바로 아래 2~3문장. 주어를 대명사로 쓰지 않는다.
+//            "이 유형은"이 아니라 "INFP는"으로 시작해야 떼어내도 뜻이 산다.
+//   faq    — 실제 검색 질문 모양의 Q&A. 눈에 보이는 본문과 FAQPage 구조화 데이터로
+//            같은 내용을 두 번 내려준다. 둘이 어긋나면 구글이 통째로 무시한다.
+//
+// 내용은 여기서 지어내지 않는다. 본문과 똑같이 *-data.js 값으로만 조립한다.
+function faqLd(faq) {
+  return `,\n{"@type":"FAQPage","mainEntity":[${faq.map((f) => `{"@type":"Question","name":${JSON.stringify(f.q)},"acceptedAnswer":{"@type":"Answer","text":${JSON.stringify(f.a)}}}`).join(',')}]}`;
+}
+function faqHtml(faq) {
+  return `\n<h2>자주 묻는 질문</h2>\n${faq.map((f) => `<div class="faq"><h3>${esc(f.q)}</h3><p>${esc(f.a)}</p></div>`).join('\n')}`;
+}
+
 // ---------- 페이지 껍데기 ----------
 // 앱과 같은 팔레트를 쓰되 CSS는 이 파일 안에 인라인으로 둔다.
 // style.css(80KB)를 불러오면 내용 없는 페이지에 앱 전체 스타일이 딸려와 느려진다.
-function shell({ url, title, desc, h1, sub, body, breadcrumb, keywords }) {
+function shell({ url, title, desc, h1, sub, body, breadcrumb, keywords, answer, faq }) {
   return `<!doctype html>
 <html lang="ko">
 <head>
@@ -87,6 +117,48 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}" />` : ''}
 <meta property="og:image" content="${SITE}/og-image-v2.jpg" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<!-- 구조화 데이터. 이 페이지들은 "크롤링은 됐는데 색인이 안 되는" 상태에 있다.
+     본문이 짧고 서로 비슷한 생성 페이지라, 검색엔진이 각 페이지의 정체와 위치를
+     스스로 알아내기 어렵다. 어떤 글이고 사이트 어디에 속하는지를 명시해 준다. -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"Article","headline":${JSON.stringify(title)},"description":${JSON.stringify(desc)},
+ "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"${SITE}${url}"},
+ "image":"${SITE}/og-image-v2.jpg",
+ "dateModified":"${today()}",
+ ${keywords ? `"keywords":${JSON.stringify(keywords)},` : ''}
+ ${answer ? `"abstract":${JSON.stringify(answer)},` : ''}
+ "author":{"@type":"Organization","name":"맘운자로","url":"${SITE}/"},
+ "publisher":{"@type":"Organization","name":"minimalbreeze","url":"https://minimalbreeze.com/"},
+ "isPartOf":{"@type":"WebSite","name":"맘운자로","url":"${SITE}/"}},
+{"@type":"BreadcrumbList","itemListElement":[
+ {"@type":"ListItem","position":1,"name":"맘운자로","item":"${SITE}/"},
+ {"@type":"ListItem","position":2,"name":"전체 목록","item":"${SITE}/guide/"},
+ {"@type":"ListItem","position":3,"name":${JSON.stringify(h1)},"item":"${SITE}${url}"}]}${faq && faq.length ? faqLd(faq) : ''}
+]}
+</script>
+<!-- GA4. 이게 없어서 63개 페이지의 방문이 통째로 집계에서 빠져 있었다(2026-09).
+     "페이지 조회수"에 홈 하나만 잡히던 이유다 — 검색으로 사람이 들어와도 보이지 않으니
+     SEO를 해놓고 성과를 확인할 수단이 없었다. index.html의 스니펫과 같은 동작을 하되,
+     이 페이지들은 정적이라 로컬 서버 예외 처리만 남기고 최소한으로 넣는다. -->
+<script>
+  (function () {
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local')) return;
+    // 내 방문 빼기(?noga=1). 홈에서 한 번 켜두면 localStorage가 같은 origin이라
+    // 이 페이지들에도 그대로 적용된다. 여기서는 표시만 읽고, 켜고 끄는 건 홈이 한다.
+    try { if (localStorage.getItem('maumjaro:noAnalytics') === '1') return; } catch (e) {}
+    var id = 'G-TPJ8FPW0W0';
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', id, { anonymize_ip: true });
+  })();
+</script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
 *{box-sizing:border-box}
@@ -105,6 +177,12 @@ ul{margin:0 0 16px;padding-left:20px}
 li{margin-bottom:6px;word-break:keep-all}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:18px 0}
 .card .k{font-size:12.5px;font-weight:800;color:var(--a);margin:0 0 4px}
+.answer{background:var(--card);border-left:4px solid var(--a);border-radius:0 14px 14px 0;
+ padding:15px 18px;margin:0 0 26px;font-size:16.5px}
+.answer p{margin:0}
+.faq{border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:4px}
+.faq h3{margin:16px 0 6px;font-size:15.5px}
+.faq p{margin:0 0 12px}
 .tells{background:rgba(183,121,239,.07);border-radius:12px;padding:12px 16px 12px 30px;margin:0 0 14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:14px 0}
 .grid a{display:block;padding:11px 12px;border-radius:12px;background:var(--card);
@@ -128,7 +206,9 @@ footer a{color:var(--dim)}
 <nav class="bc">${breadcrumb}</nav>
 <h1>${esc(h1)}</h1>
 <p class="sub">${esc(sub)}</p>
+${answer ? `<div class="answer"><p>${esc(answer)}</p></div>` : ''}
 ${body}
+${faq && faq.length ? faqHtml(faq) : ''}
 <a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 <footer>
@@ -163,6 +243,9 @@ function mbtiPages(D) {
   const groupOf = {};
   TYPE_GROUPS.forEach((g) => g.types.forEach((t) => { groupOf[t] = g; }));
   const AXIS_KEY = ['EI', 'SN', 'TF', 'JP'];
+  // 문항 풀은 축별로 나뉘어 있다({EI:[8개], SN:[8개]…}). 총합과 한 번에 푸는 수를 데이터에서 센다.
+  const poolSize = AXIS_KEY.reduce((n, a) => n + (MBTI_QUESTION_POOL[a] || []).length, 0);
+  const perTest = D.QUESTIONS_PER_AXIS * D.AXIS_ORDER.length;
 
   Object.keys(MBTI_TYPES).forEach((k) => {
     const t = MBTI_TYPES[k];
@@ -253,10 +336,38 @@ ${TYPE_GROUPS.map((gr) => `
 
 <p class="note">재미로 보는 간이 유형 설명입니다. 공식 MBTI® 검사와는 무관합니다.</p>`;
 
+    // 답변엔진이 통째로 인용해 갈 수 있는 한 덩어리. 본문과 같은 값만 쓴다.
+    const answer = `${k}는 맘운자로가 '${t.name}'${josa(t.name, '이라고', '라고')} 부르는 MBTI 유형입니다. `
+      + `'${noDot(t.trait)}'라는 말이 어울리고, ${noDot(t.strong)}는 점이 강점, ${noDot(t.weak)}는 점이 약한 지점입니다.`
+      + (m.best.length ? ` 가장 잘 맞는 유형은 ${m.best.map((x) => `${x}(${MBTI_TYPES[x].name})`).join(', ')}입니다.` : '');
+
+    const faq = [
+      { q: `${k}와 가장 잘 맞는 MBTI 유형은 무엇인가요?`,
+        a: `${m.best.map((x) => `${x}(${MBTI_TYPES[x].name})`).join(', ')}입니다.`
+           + (m.grow.length ? ` 부딪히지만 서로에게 배우는 유형은 ${m.grow.join(', ')}입니다.` : '')
+           + ` 맘운자로는 두 유형의 네 글자를 축별로 비교해 별 1~5개와 조심할 점까지 같이 보여줍니다.` },
+      { q: `${k}의 강점과 약점은 무엇인가요?`,
+        a: `강점은 ${noDot(t.strong)}는 것이고, 약한 지점은 ${noDot(t.weak)}는 것입니다. `
+           + `둘은 서로 다른 성질이 아니라 같은 성격이 잘 돌 때와 과하게 돌 때의 모습이라, 한쪽만 떼어낼 수는 없습니다.` },
+      { q: `주변 사람이 ${k}인지 어떻게 알아보나요?`,
+        a: tells.length
+           ? `${tells.map((x) => `'${noDot(x)}'`).join(', ')} — 이런 모습이 같이 보이면 ${k}일 가능성이 높습니다. `
+             + `다만 사람을 네 글자로 다 알 수는 없으니 대화의 실마리 정도로 쓰세요.`
+           : `말보다 행동을 보세요. 사람을 네 글자로 다 알 수는 없습니다.` },
+      { q: `${k}가 자주 힘들어하는 건 무엇인가요?`,
+        a: `맘운자로는 이걸 '${noDot(t.ache)}'이라고 부릅니다. 병이라기보다 성격의 부작용에 가까워서, `
+           + `${noDot(t.strong)}는 힘이 세게 작동하는 날일수록 같이 따라옵니다. 앱에서는 이럴 때 맞는 마음 처방까지 이어서 알려줍니다.` },
+      { q: `맘운자로 MBTI 테스트는 무료인가요?`,
+        a: `무료이고 가입도 설치도 필요 없습니다. ${poolSize}문항 풀에서 매번 ${perTest}개를 새로 뽑기 때문에 `
+           + `다시 해볼 때마다 다른 문제가 나옵니다. 공식 MBTI® 검사가 아닌 재미로 보는 간이 유형 검사입니다.` },
+    ];
+
     pages.push({
       url,
       html: shell({
         url,
+        answer,
+        faq,
         title: `${k} 특징과 궁합 — ${t.name} | 맘운자로`,
         desc: `${k}(${t.name})의 성격 특징, 강점과 약점, 주변에서 알아보는 단서, 잘 맞는 유형까지. 무료 간이 유형 테스트도 함께.`,
         keywords: `${k}, ${k} 특징, ${k} 성격, ${k} 궁합, MBTI, MBTI 테스트, 무료 MBTI`,
@@ -332,13 +443,37 @@ function tarotPages(D) {
 
 <p class="note">카드 그림은 1909년 라이더-웨이트 판(퍼블릭 도메인)을 사용합니다.</p>`;
 
+    const answer = `타로 ${c.name} 카드는 메이저 아르카나 ${c.id}번으로, 정방향은 '${up.keyword}', 역방향은 '${rev.keyword}'${josa(rev.keyword, '을', '를')} 뜻합니다. `
+      + `${noDot(up.line)}. 역방향은 나쁜 카드라는 뜻이 아니라, 같은 힘이 안쪽으로 향하거나 아직 덜 익었다는 표시로 읽습니다.`;
+
+    const faq = [
+      { q: `타로 ${c.name} 카드는 무슨 뜻인가요?`,
+        a: `정방향은 '${up.keyword}'입니다. ${noDot(up.line)}. 역방향은 '${rev.keyword}'${josa(rev.keyword, '으로', '로')}, ${noDot(rev.line)}.` },
+      { q: `${c.name} 역방향이 나오면 나쁜 건가요?`,
+        a: `아닙니다. 역방향은 정방향의 반대가 아니라 같은 힘이 안쪽으로 향하거나 아직 덜 익었다는 표시입니다. `
+           + `${c.name}의 역방향 키워드는 '${rev.keyword}'이고, ${noDot(rev.line)}.` },
+      { q: `${c.name}${josa(c.name, '은', '는')} 몇 번 카드인가요?`,
+        a: `메이저 아르카나 22장 중 ${c.id}번입니다. 메이저 아르카나는 0번 바보에서 시작해 21번 세계로 끝나는 `
+           + `하나의 이야기로 읽기도 하며, 인생의 큰 흐름을 다루는 카드들입니다.` },
+      { q: `${c.name}${josa(c.name, '이', '가')} 나왔을 때 무엇을 하면 되나요?`,
+        a: `맘운자로는 카드를 보고 끝내지 않습니다. ${c.name}${josa(c.name, '이', '가')} 세 번째 자리에 오면 `
+           + `'${RX_LABEL[c.rxCategory] || '오늘'}' 쓰는 마음 처방으로 이어집니다. 카드가 말한 것을 오늘 실제로 해볼 수 있는 한 가지로 바꿔주는 단계입니다.` },
+      { q: `맘운자로 타로는 어떻게 보나요? 무료인가요?`,
+        a: `무료이고 가입도 설치도 필요 없습니다. 카드를 3번 섞고 부채꼴로 펼쳐진 9장 중에서 직접 3장을 고르면, `
+           + `고른 카드가 봉인돼 있다가 주사를 놓는 순간 열립니다. 세 장은 각각 지금 내 마음, 우리 사이의 흐름, 내가 할 수 있는 것을 뜻합니다.` },
+    ];
+
     pages.push({
       url,
       html: shell({
         url,
+        answer,
+        faq,
         title: `타로 ${c.name} 카드 의미 (정방향·역방향) | 맘운자로`,
-        desc: `${c.name}(${c.en}) 카드의 정방향과 역방향 의미. 무료 타로 3장 뽑기도 함께.`,
-        keywords: `${c.name}, ${c.name} 타로, ${c.name} 의미, 타로카드, 무료 타로, 타로점`,
+        // 서치어드바이저에서 실제로 노출되는 검색어가 "오늘의 마음 타로" 계열이었다.
+        // 카드 이름만으로는 그 검색어에 걸리지 않으므로 설명·키워드에 같이 넣는다.
+        desc: `${c.name}(${c.en}) 카드의 정방향과 역방향 의미. 오늘의 마음을 타로 3장으로 무료로 읽어보세요.`,
+        keywords: `${c.name}, ${c.name} 타로, ${c.name} 의미, 오늘의 마음 타로, 오늘의마음타로, 타로카드, 무료 타로, 타로점`,
         h1: `${c.name} · ${c.en}`,
         sub: `타로 메이저 아르카나 ${c.id}번 카드`,
         breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 타로 › ${esc(c.name)}`,
@@ -402,10 +537,36 @@ ${best.length ? `<p>${esc(best[0].l.line)}</p>
 <h2>12별자리 전체</h2>
 <div class="grid">${ZODIAC_SIGNS.map((x) => `<a href="/zodiac/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>`;
 
+    const bestNames = best.map((p) => p.o.name);
+    const answer = `${s.name}${josa(s.name, '은', '는')} ${s.range} 사이에 태어난 별자리입니다. `
+      + `원소는 ${s.element}, 핵심 키워드는 ${s.keyword}${josa(s.keyword, '이고', '고')}, ${noDot(s.trait)}입니다.`
+      + (bestNames.length ? ` 원소 관계로 보면 ${bestNames.join(', ')}${josa(bestNames[bestNames.length - 1], '과', '와')} 잘 맞습니다.` : '');
+
+    const faq = [
+      { q: `${s.name}${josa(s.name, '은', '는')} 몇 월 며칠생인가요?`,
+        a: `${s.range} 사이에 태어나면 ${s.name}입니다. 별자리 경계는 해마다 하루 정도 움직이기 때문에, `
+           + `시작일이나 마지막 날에 태어났다면 앞뒤 별자리도 같이 읽어보는 편이 낫습니다.` },
+      { q: `${s.name}의 성격은 어떤가요?`,
+        a: (() => {
+          const kin = ZODIAC_SIGNS.filter((x) => x.element === s.element && x.key !== s.key).map((x) => x.name);
+          return `${noDot(s.trait)}입니다. 원소가 ${s.element}이라 세상을 대하는 기본 태도가 ${s.keyword} 쪽으로 기웁니다. `
+            + (kin.length ? `같은 ${s.element} 무리에는 ${kin.join(', ')}${josa(kin[kin.length - 1], '이', '가')} 함께 있습니다.` : '');
+        })() },
+      { q: `${s.name}${josa(s.name, '과', '와')} 잘 맞는 별자리는?`,
+        a: (bestNames.length ? `${bestNames.join(', ')}입니다. ` : '')
+           + `서양 점성술은 불과 바람, 흙과 물을 서로를 살리는 조합으로 보고, 불과 물, 흙과 바람은 부딪히는 조합으로 봅니다. `
+           + `같은 원소끼리는 편하지만 정체될 수 있고, 정반대 자리(6칸 차이)는 끌림과 긴장이 함께 옵니다.` },
+      { q: `${s.name} 오늘의 운세는 어디서 무료로 보나요?`,
+        a: `맘운자로에서 무료로 볼 수 있습니다. 생년월일만 한 번 넣으면 되고 태어난 시간은 몰라도 됩니다. `
+           + `같은 별자리인 사람은 같은 날 같은 결과를 보고, 운세로 끝나지 않고 오늘 해볼 수 있는 마음 처방까지 이어집니다.` },
+    ];
+
     pages.push({
       url,
       html: shell({
         url,
+        answer,
+        faq,
         title: `${s.name} 성격과 궁합 (${s.range}) | 맘운자로`,
         desc: `${s.name}(${s.range})의 성격 특징과 잘 맞는 별자리. 무료 오늘의 운세도 함께.`,
         keywords: `${s.name}, ${s.name} 성격, ${s.name} 궁합, ${s.name} 운세, 별자리 운세, 무료 운세`,
@@ -489,10 +650,36 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 <h2>12띠 전체</h2>
 <div class="grid">${CHINESE_ZODIAC.map((x) => `<a href="/animal/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>`;
 
+    const goodNames = good.map((r) => r.o.name);
+    const badNames = bad.map((r) => r.o.name);
+    const answer = `${z.name}${josa(z.name, '은', '는')} 십이지의 ${z.zhi}에 해당하는 띠로, 핵심 키워드는 ${z.keyword}입니다. ${noDot(z.trait)}입니다.`
+      + (goodNames.length ? ` 삼합·육합으로 잘 맞는 띠는 ${goodNames.join(', ')}이고,` : '')
+      + (badNames.length ? ` 충·원진에 해당해 부딪히기 쉬운 띠는 ${badNames.join(', ')}입니다.` : '');
+
+    const faq = [
+      { q: `${z.name}${josa(z.name, '과', '와')} 잘 맞는 띠는?`,
+        a: (goodNames.length ? `${goodNames.join(', ')}입니다. ` : '')
+           + `삼합은 열두 지지를 넷씩 묶은 세 무리로 예로부터 최고 궁합으로 보고, 육합은 둘씩 짝지어 서로 부족한 자리를 채우는 여섯 쌍입니다. `
+           + `맘운자로는 이 전통 규칙을 그대로 써서 별 1~5개로 보여줍니다.` },
+      { q: `${z.name}${josa(z.name, '과', '와')} 상극인 띠는?`,
+        a: (badNames.length ? `${badNames.join(', ')}입니다. ` : '')
+           + `여섯 칸 차이로 정면 충돌하는 충(沖), 큰 이유 없이 껄끄럽다고 보는 원진(怨嗔)에 해당합니다. `
+           + `다만 만나면 안 되는 사이라는 뜻은 아닙니다. 부딪히는 지점을 미리 알고 있으면 대부분 넘어갑니다.` },
+      { q: `띠 궁합과 사주 궁합은 뭐가 다른가요?`,
+        a: `띠 궁합은 태어난 해만 봅니다. 사주 궁합은 태어난 날까지 봅니다. `
+           + `맘운자로의 생년월일 궁합은 두 사람의 일간(태어난 날의 천간) 오행 관계를 보고 띠 관계는 보조 점수로만 쓰기 때문에, `
+           + `서로를 살리는 사이인지 한쪽이 끌고 가는 사이인지까지 방향을 구분해 알려줍니다.` },
+      { q: `내 띠는 어떻게 계산하나요?`,
+        a: `태어난 해의 지지로 정합니다. 맘운자로는 생년월일을 넣으면 자동으로 계산해 주므로 직접 따질 필요가 없습니다. `
+           + `양력 1~2월에 태어났다면 해가 바뀌는 기준 때문에 앞 해의 띠가 되는 경우가 있는데, 이것도 앱이 알아서 맞춰 줍니다.` },
+    ];
+
     pages.push({
       url,
       html: shell({
         url,
+        answer,
+        faq,
         title: `${z.name} 성격과 띠 궁합 (삼합·육합·충) | 맘운자로`,
         desc: `${z.name}의 성격과 잘 맞는 띠, 조심할 띠. 삼합·육합·충·원진 전통 규칙 기준. 무료 띠별 운세도 함께.`,
         keywords: `${z.name}, ${z.name} 성격, ${z.name} 궁합, 띠 궁합, 띠별 운세, 삼합, 육합, 무료 운세`,
@@ -505,12 +692,128 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
   });
 }
 
+// 감정 페이지.
+//
+// 왜 필요한가: 생성 페이지 63장이 전부 MBTI·타로·별자리·띠였다. 즉 검색엔진과
+// AI가 보는 맘운자로는 통째로 "운세 사이트"였다. 정작 이 앱의 핵심 경험인
+// 감정 → 처방 → 주사는 크롤러에게 한 글자도 보이지 않았다(홈이 전부 JS라서).
+// 브랜드 원칙 1("운세 앱으로 보이지 않기")이 바깥에서는 지켜지지 않고 있었던 셈이다.
+//
+// 그리고 사람들이 AI에게 실제로 던지는 질문은 "INFP 특징"보다
+// "기분 안 좋을 때 뭐 하면 좋아?" 쪽이다. 이 페이지들이 그 질문을 받는다.
+//
+// 긍정 감정에는 "힘들 때" 같은 말을 쓰면 안 되므로 결만 나눠 둔다(내용이 아니라 어조용).
+const POSITIVE_EMOTIONS = ['joy', 'ordinary', 'excitement', 'gratitude', 'proud', 'comfort', 'affection', 'relief'];
+
+function emotionPages(S) {
+  const keys = Object.keys(S);
+  const tile = (k) => `<a href="/emotion/${k}/">${esc(S[k].emoji)} ${esc(S[k].label)}</a>`;
+
+  keys.forEach((k) => {
+    const e = S[k];
+    const url = `/emotion/${k}/`;
+    const warm = POSITIVE_EMOTIONS.indexOf(k) >= 0;
+    const others = keys.filter((x) => x !== k);
+    // "비슷한 결"은 같은 편(긍정/그 외)에서 앞뒤로 몇 개만 고른다. 임의 분류를 새로 만들지 않는다.
+    const kin = others.filter((x) => (POSITIVE_EMOTIONS.indexOf(x) >= 0) === warm).slice(0, 6);
+    // 감정마다 손으로 쓴 고유 내용. 빠진 감정이 있으면 생성을 멈춘다 —
+    // 조용히 건너뛰면 그 페이지만 옛날처럼 얇아져서 또 색인이 안 된다.
+    const c = EMOTION_COPY[k];
+    if (!c) throw new Error(`emotion-copy.mjs에 '${k}'가 없습니다. 감정을 추가했다면 그 파일에도 추가하세요.`);
+
+    const answer = `${e.label}${josa(e.label, '은', '는')} 맘운자로에서 ${e.mg}짜리 '마음 주사'로 다루는 감정입니다. `
+      + `앱에서 ${e.label}${josa(e.label, '을', '를')} 고르면 그 마음에 맞는 한 줄이 나오고, 휴대폰을 살짝 찌르면 주사가 놓입니다. `
+      + `아래 10가지가 ${e.label}${josa(e.label, '을', '를')} 골랐을 때 실제로 나오는 말입니다.`;
+
+    const faq = [
+      { q: `${e.label}일 때 뭘 하면 좋을까요?`,
+        a: `맘운자로는 이럴 때 "${noDot(e.messages[0])}", "${noDot(e.messages[3] || e.messages[1])}" 같은 말을 건넵니다. `
+           + `그다음 오늘 실제로 해볼 수 있는 한 가지를 '마음 처방'으로 이어줍니다. 보고 끝나지 않는다는 게 이 앱의 방식입니다.` },
+      { q: `${e.mg}은 무슨 뜻인가요?`,
+        a: `감정의 무게를 주사 용량에 빗댄 표시입니다. 맘운자로는 ${keys.length}가지 감정에 각각 다른 용량을 매겨두었고, `
+           + `${e.label}${josa(e.label, '은', '는')} ${e.mg}입니다. 실제 의약품이 아니고 의학적 의미도 없습니다.` },
+      // 이 질문만 감정마다 다르다. 검색해서 들어오는 사람이 실제로 많이 묻는 형태이고,
+      // 23장이 서로 다른 페이지가 되게 하는 데도 이게 제일 크게 기여한다.
+      { q: `${e.label}${josa(e.label, '과', '와')} ${c.vs.other}${josa(c.vs.other, '은', '는')} 어떻게 다른가요?`,
+        a: `${noDot(c.vs.text)}.` },
+      { q: `${e.label}일 때 오늘 뭘 해보면 될까요?`,
+        a: `${c.try.map(noDot).join(', ')} — 맘운자로는 이 중 하나를 '오늘의 처방'으로 건네고, 휴대폰을 찌르면 그 처방이 놓입니다.` },
+      { q: `맘운자로는 무료인가요? 설치가 필요한가요?`,
+        a: `전부 무료이고 설치도 회원가입도 없습니다. 브라우저에서 주소를 열면 바로 쓸 수 있고, 30초면 됩니다. `
+           + `재미로 보는 콘텐츠이며 의학적·심리학적 진단이 아닙니다.` },
+    ];
+
+    const body = `
+<div class="card">
+  <p class="k">${esc(e.emoji)} ${esc(e.label)} · ${esc(e.mg)}</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">${esc(e.caption)}</p>
+</div>
+
+<h2>${esc(e.label)}${josa(e.label, '은', '는')} 언제 오나요</h2>
+<p>${esc(c.when)}</p>
+<p>맘운자로는 감정을 고쳐야 할 것으로 보지 않습니다. ${warm
+    ? `${esc(e.label)}${josa(e.label, '은', '는')} 오래 붙잡아둘 만한 마음이고, 이 앱은 그 순간을 기록해 두었다가 나중에 다시 꺼내 볼 수 있게 합니다.`
+    : `${esc(e.label)}${josa(e.label, '도', '도')} 그냥 오늘 여기 있는 마음입니다. 없애는 게 아니라 이름을 붙이고 잠시 내려놓는 쪽으로 다룹니다.`} 앱에서는 <strong>${esc(e.mg)}</strong>이 매겨져 있는데, 감정의 무게를 주사 용량에 빗댄 표시일 뿐이고 의학적 의미는 없습니다.</p>
+
+<h2>${esc(e.label)}${josa(e.label, '과', '와')} ${esc(c.vs.other)}, 어떻게 다른가요</h2>
+<p>${esc(c.vs.text)}</p>
+
+<h2>${esc(e.label)}일 때 오늘 해볼 수 있는 것</h2>
+<ul>${c.try.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+${c.note ? `<p class="note">${esc(c.note)}</p>` : ''}
+
+<h2>${esc(e.label)}일 때 맘운자로가 건네는 10가지</h2>
+<p>감정을 고르면 아래 중 하나가 나옵니다. 매번 같은 문장이 나오지 않도록 열흘에 걸쳐 열 개가 한 번씩 돌아갑니다.</p>
+<div class="tells"><ul style="margin:0">${e.messages.map((m) => `<li>${esc(m)}</li>`).join('')}</ul></div>
+
+<h2>그다음에 무엇을 하나요</h2>
+<p>맘운자로의 흐름은 <strong>운 → 마음 → 처방 → 주사</strong> 네 단계입니다.
+오늘의 기운과 지금 고른 마음(여기서는 ${esc(e.label)})을 합쳐 <strong>오늘 실제로 해볼 수 있는 한 가지</strong>를 주고,
+휴대폰을 살짝 찌르면 그 처방이 놓입니다. 친구에게 보낼 수도 있습니다.
+보고 끝나는 화면을 만들지 않는다는 게 이 앱의 원칙입니다.</p>
+
+<h2>비슷한 결의 감정</h2>
+<div class="grid">${kin.map(tile).join('')}</div>
+<p class="sub">감정 ${keys.length}가지를 한 번에 보려면 <a href="/guide/">전체 목록</a>으로.</p>
+
+<p class="note">재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다. 마음이 오래 힘드시면 전문가의 도움을 받으시길 권합니다.</p>`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer,
+        faq,
+        // 제목·설명은 검색하는 말투(c.q)로 시작한다.
+        //   전: "불안 — 이럴 때 듣고 싶은 말 10가지"
+        //   후: "불안할 때 듣고 싶은 말 10가지"
+        // "불안" 같은 짧은 말은 병원·상담·기사에 밀려 신규 사이트가 못 뚫는다.
+        // 설명도 제품 설명("고르면 맘운자로가 건네는")이 아니라 받는 것부터 말한다 —
+        // 검색한 사람은 무엇을 고르는지에 관심이 없다.
+        title: `${c.q} 듣고 싶은 말 10가지 | 맘운자로`,
+        desc: `${c.q} 듣고 싶은 말 10가지. ${e.label}${josa(e.label, '과', '와')} ${c.vs.other}${josa(c.vs.other, '이', '가')} 어떻게 다른지, 오늘 해볼 수 있는 세 가지까지. 설치도 가입도 없이 30초, 무료입니다.`,
+        keywords: `${c.q}, ${e.label}, ${e.label} ${c.vs.other} 차이, 기분 안 좋을 때, 감정 기록, 마음 처방, 위로되는 말, 맘운자로`,
+        h1: `${e.emoji} ${e.label}`,
+        sub: e.caption,
+        breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 감정 › ${esc(e.label)}`,
+        body,
+      }),
+    });
+  });
+}
+
 // 전체 목록 페이지 — 크롤러가 66장을 한 번에 발견하는 입구
-function indexPage(M, T, Z) {
+function indexPage(M, T, Z, S) {
   const url = '/guide/';
   const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const body = `
 <p>맘운자로가 다루는 내용을 한곳에 모았습니다. 전부 앱에서 무료로 직접 볼 수 있습니다.</p>
+<p class="sub">이름이 낯설다면 — <strong>맘운자로</strong>는 <strong>마운자로</strong>에서 따온 말장난입니다.
+몸에 놓는 주사가 아니라 <strong>마음에 놓는 주사</strong>라는 뜻이에요. 의약품과는 아무 관계가 없습니다.</p>
+
+<h2>감정 ${Object.keys(S).length}가지</h2>
+<p>맘운자로의 출발점입니다. 오늘 기분을 하나 고르면 그 마음에 맞는 처방이 나옵니다.</p>
+<div class="grid">${Object.keys(S).map((k) => `<a href="/emotion/${k}/">${esc(S[k].emoji)} ${esc(S[k].label)}</a>`).join('')}</div>
 
 <h2>MBTI 16유형</h2>
 <div class="grid">${Object.keys(M.MBTI_TYPES).map((k) => `<a href="/mbti/${k.toLowerCase()}/">${esc(k)} ${esc(M.MBTI_TYPES[k].name)}</a>`).join('')}</div>
@@ -524,13 +827,38 @@ function indexPage(M, T, Z) {
 <h2>띠 12</h2>
 <div class="grid">${Z.CHINESE_ZODIAC.map((z) => `<a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a>`).join('')}</div>`;
 
+  const answer = '맘운자로는 오늘의 감정을 고르면 그에 맞는 마음 처방을 주는 무료 한국어 웹앱입니다. '
+    + '이름은 다이어트 주사 마운자로에서 따온 말장난으로, 몸이 아니라 마음에 놓는 주사라는 뜻이며 의약품과는 아무 관계가 없습니다. '
+    + `타로 메이저 아르카나 ${T.TAROT_MAJOR.length}장, 사주 기반 오늘의 맘운, MBTI ${Object.keys(M.MBTI_TYPES).length}유형과 궁합, `
+    + `별자리 ${Z.ZODIAC_SIGNS.length}개와 띠 ${Z.CHINESE_ZODIAC.length}개의 운세·궁합을 설치나 가입 없이 브라우저에서 바로 볼 수 있습니다.`;
+
+  const faq = [
+    { q: '맘운자로는 어떤 앱인가요?',
+      a: '오늘의 감정을 고르면 그 마음에 맞는 처방을 주고, 휴대폰을 살짝 찌르는 동작으로 마음에 주사를 놓는 무료 웹앱입니다. '
+         + '운 → 마음 → 처방 → 주사 네 단계로 이어지고, 타로·사주·MBTI·별자리·띠는 그 오늘의 맘운을 풍부하게 만드는 재료로 들어가 있습니다.' },
+    { q: '맘운자로와 마운자로(Mounjaro)는 관계가 있나요?',
+      a: '없습니다. 이름만 빌려온 말장난입니다. 마운자로는 몸에 놓는 주사지만 맘운자로는 마음에 놓는 주사라는 뜻이고, '
+         + '의약품·제약회사와는 아무 관련이 없습니다. 앱 안의 처방도 의학적·심리학적 진단이 아니라 재미로 보는 콘텐츠입니다.' },
+    { q: '맘운자로는 무료인가요? 가입이 필요한가요?',
+      a: '전부 무료이고 회원가입도 로그인도 없습니다. 앱 스토어에서 받을 필요 없이 브라우저에서 바로 열리고, '
+         + '기록은 서버가 아니라 내 휴대폰 안에만 저장됩니다. 홈 화면에 추가하면 앱처럼 쓸 수 있습니다.' },
+    { q: '사주나 운세를 보려면 태어난 시간을 알아야 하나요?',
+      a: '몰라도 됩니다. 생년월일만 한 번 넣으면 사주 네 기둥 중 시주를 뺀 나머지로 오늘의 맘운, 별자리, 띠가 모두 계산됩니다. '
+         + '태어난 시간을 알면 더 정확해지지만 필수는 아닙니다.' },
+    { q: '다른 운세 앱과 뭐가 다른가요?',
+      a: '운세를 보여주고 끝내지 않는다는 점이 다릅니다. 맘운자로의 모든 콘텐츠는 마지막에 오늘 실제로 해볼 수 있는 한 가지, '
+         + '즉 마음 처방으로 이어지고, 그 처방을 친구에게 주사로 보낼 수도 있습니다.' },
+  ];
+
   pages.push({
     url,
     html: shell({
       url,
-      title: '무료 타로·MBTI·별자리·띠 전체 목록 | 맘운자로',
-      desc: 'MBTI 16유형, 타로 메이저 아르카나, 별자리 12, 띠 12 전체 목록. 전부 무료로 볼 수 있습니다.',
-      keywords: '무료 타로, MBTI 테스트, 별자리 운세, 띠별 운세, 무료 운세, 타로카드 의미',
+      answer,
+      faq,
+      title: '오늘의 마음 타로 · MBTI · 별자리 · 띠 전체 목록 | 맘운자로',
+      desc: '오늘의 마음을 타로로 읽어보세요. MBTI 16유형, 타로 메이저 아르카나, 별자리 12, 띠 12 전체 목록. 전부 무료입니다. 맘운자로는 마운자로에서 따온 말장난이에요.',
+      keywords: '오늘의 마음 타로, 오늘의마음타로, 맘운자로, 마운자로 패러디, 무료 타로, MBTI 테스트, 별자리 운세, 띠별 운세, 무료 운세, 타로카드 의미',
       h1: '전체 목록',
       sub: 'MBTI · 타로 · 별자리 · 띠',
       breadcrumb: '<a href="/">맘운자로</a> › 전체 목록',
@@ -539,16 +867,97 @@ function indexPage(M, T, Z) {
   });
 }
 
+// ---------- llms.txt ----------
+// LLM에게 "이 사이트가 무엇이고 어디에 무엇이 있는지"를 한 파일로 알려주는 관례
+// (https://llmstxt.org). 사이트맵은 주소만 나열하지만 이건 사람이 읽는 말로 설명한다.
+//
+// 왜 필요한가: 맘운자로는 SPA라서 홈의 정적 텍스트가 버튼 라벨뿐이다. AI 크롤러는
+// 대부분 JS를 실행하지 않으므로, 홈만 보고 가면 "이 앱이 뭐 하는 건지" 알 수 없다.
+// 생성 페이지 63장이 그 내용을 들고 있지만 거기까지 가 주리란 보장이 없다.
+// llms.txt는 첫 1KB 안에 정체를 밝혀 그 간극을 메운다.
+//
+// 사이트맵과 마찬가지로 페이지 목록에서 자동 생성한다. 손으로 관리하면 반드시 어긋난다.
+function buildLlmsTxt(M, T, Z, S) {
+  const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const line = (u, name, note) => `- [${name}](${SITE}${u})${note ? `: ${note}` : ''}`;
+
+  return `# 맘운자로 (Maumjaro)
+
+> 오늘의 감정을 고르면 그 마음에 맞는 '마음 처방'을 주고, 휴대폰을 살짝 찌르는 동작으로
+> 마음에 주사를 놓는 무료 한국어 웹앱. 이름은 다이어트 주사 '마운자로(Mounjaro)'에서 따온
+> 말장난으로, 몸이 아니라 마음에 놓는 주사라는 뜻이며 의약품·제약회사와는 아무 관계가 없다.
+
+핵심 흐름은 **운 → 마음 → 처방 → 주사** 네 단계다. 타로·사주·MBTI·별자리·띠는 독립된
+운세 서비스가 아니라 이 '오늘의 맘운'을 풍부하게 만드는 재료로 들어가 있고, 모든 콘텐츠는
+마지막에 "오늘 실제로 해볼 수 있는 한 가지"로 끝난다.
+
+## 사실 관계 (인용할 때 확인할 것)
+
+- 이름: 맘운자로 / Maumjaro. 운영: minimalbreeze.
+- 주소: ${SITE}/ (설치·가입·로그인 없음, 전부 무료)
+- 언어: 한국어. 기록은 서버가 아니라 사용자 기기(localStorage)에만 저장된다.
+- 제공 기능: 감정 기록과 마음 처방, 오늘의 맘운(사주 기반 운세), 타로 ${T.TAROT_MAJOR.length}장 뽑기,
+  간이 MBTI ${Object.keys(M.MBTI_TYPES).length}유형 검사와 궁합, 별자리 ${Z.ZODIAC_SIGNS.length}개·띠 ${Z.CHINESE_ZODIAC.length}개 운세와 궁합, 마음약 수집.
+- 사주·운세는 생년월일만 있으면 되고 태어난 시간은 선택이다.
+- 재미로 보는 콘텐츠이며 의학적·심리학적 진단이 아니다. 공식 MBTI® 검사가 아니다.
+- 타로 그림은 1909년 라이더-웨이트 판(퍼블릭 도메인)을 쓴다.
+
+## 시작점
+
+${line('/', '맘운자로 홈', '감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)')}
+${line('/guide/', '전체 목록', '감정·MBTI·타로·별자리·띠 콘텐츠 ' + pages.length + '장의 입구. 앱 소개와 FAQ도 여기 있다')}
+
+## 감정 ${Object.keys(S).length}가지 (앱의 출발점)
+
+오늘 기분을 하나 고르면 그 마음에 맞는 '마음 처방'이 나온다. 각 페이지에 그 감정일 때
+앱이 건네는 문장 10개와 네 단계 흐름 설명, FAQ가 있다. 괄호 안은 감정의 무게를 주사
+용량에 빗댄 표시로, 실제 의약품이 아니다.
+
+${Object.keys(S).map((k) => line(`/emotion/${k}/`, `${S[k].label} (${S[k].mg})`, noDot(S[k].caption))).join('\n')}
+
+## MBTI ${Object.keys(M.MBTI_TYPES).length}유형
+
+각 페이지에 성격 특징, 네 글자 뜻, 주변에서 알아보는 단서, 자주 앓는 것, 16유형 전체 궁합표, FAQ가 있다.
+
+${Object.keys(M.MBTI_TYPES).map((k) => line(`/mbti/${k.toLowerCase()}/`, `${k} — ${M.MBTI_TYPES[k].name}`, noDot(M.MBTI_TYPES[k].trait))).join('\n')}
+
+## 타로 메이저 아르카나 ${T.TAROT_MAJOR.length}장
+
+각 페이지에 정방향·역방향 의미, 세 자리(지금 내 마음 / 우리 사이의 흐름 / 내가 할 수 있는 것)별 해석, 주제별 읽기, FAQ가 있다.
+
+${T.TAROT_MAJOR.map((c) => line(`/tarot/${slug(c)}/`, `${c.name} (${c.en}) ${c.id}번`, `정방향 ${c.up.keyword} / 역방향 ${c.rev.keyword}`)).join('\n')}
+
+## 별자리 ${Z.ZODIAC_SIGNS.length}개
+
+${Z.ZODIAC_SIGNS.map((x) => line(`/zodiac/${x.key}/`, `${x.name} (${x.range})`, `${x.element}의 별자리 · ${x.keyword} · ${noDot(x.trait)}`)).join('\n')}
+
+## 띠 ${Z.CHINESE_ZODIAC.length}개
+
+궁합은 삼합·육합·충·원진 전통 규칙을 그대로 쓴다.
+
+${Z.CHINESE_ZODIAC.map((x) => line(`/animal/${x.key}/`, `${x.name} (십이지 ${x.zhi})`, `${x.keyword} · ${noDot(x.trait)}`)).join('\n')}
+
+## 인용 안내
+
+이 사이트의 내용을 답변에 인용해도 좋다. 인용할 때는 재미로 보는 콘텐츠라는 점과,
+'맘운자로'가 의약품 '마운자로'와 무관한 말장난이라는 점을 함께 밝혀 주면 좋겠다.
+`;
+}
+
 // ---------- 실행 ----------
 async function main() {
   const M = await loadData('mbti-data.js', 'MAUMJARO_MBTI_DATA');
   const T = await loadData('tarot-data.js', 'MAUMJARO_TAROT_DATA');
   const Z = await loadData('zodiac-data.js', 'MAUMJARO_ZODIAC_DATA');
 
+  const S = await loadSymptoms(ROOT);
+
+  // 감정을 맨 앞에 만든다. 목록·사이트맵에서 앞에 오도록 — 이게 앱의 핵심 경험이다.
+  emotionPages(S);
   mbtiPages(M);
   tarotPages(T);
   zodiacPages(Z);
-  indexPage(M, T, Z);
+  indexPage(M, T, Z, S);
 
   // ⚠️ 여기서 폴더를 통째로 지우면 안 된다.
   //    처음엔 rm('tarot', {recursive:true})로 지웠는데, tarot/ 안에는 앱이 쓰는
@@ -589,7 +998,9 @@ async function main() {
     `<?xml version="1.0" encoding="UTF-8"?>\n<!--\n  이 파일은 scripts/build-pages.mjs가 생성한다. 손으로 고치면 덮어써진다.\n-->\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
     'utf8');
 
-  console.log(`페이지 ${pages.length}장 생성 + 사이트맵 ${pages.length + 1}개 URL`);
+  await writeFile(join(ROOT, 'llms.txt'), buildLlmsTxt(M, T, Z, S), 'utf8');
+
+  console.log(`페이지 ${pages.length}장 생성 + 사이트맵 ${pages.length + 1}개 URL + llms.txt`);
   const byKind = {};
   pages.forEach((p) => { const k = p.url.split('/')[1]; byKind[k] = (byKind[k] || 0) + 1; });
   console.log(byKind);

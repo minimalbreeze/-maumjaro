@@ -83,8 +83,25 @@
         ${rows || balls ? `<div class="mj-share-panel">${balls}${rows}</div>` : ''}
       </div>
       <div class="mj-share-foot">
-        <div class="mj-share-url">maumjaro.minimalbreeze.com</div>
-        ${spec.note ? `<div class="mj-share-note">${esc(spec.note)}</div>` : ''}
+        <!-- 마스코트 얼굴. 이 카드는 앱 밖으로 나가는 유일한 화면인데 지금까지
+             브랜드 표시가 주소 한 줄뿐이었다.
+             SVG가 아니라 div + border-radius로 그리는 이유: 이 카드는 html2canvas로
+             래스터화되는데, inline SVG의 url(#gradient) 참조는 직렬화 과정에서
+             깨지는 것으로 알려져 있다. 공유 카드가 깨지면 캐릭터가 없는 것보다 나쁘다.
+             div·원·배경색은 html2canvas가 가장 안정적으로 처리하는 것들이다. -->
+        <div class="mj-share-sign">
+          <div class="mj-face">
+            <div class="mj-eye l"></div>
+            <div class="mj-eye r"></div>
+            <div class="mj-blush l"></div>
+            <div class="mj-blush r"></div>
+            <div class="mj-smile"></div>
+          </div>
+          <div class="mj-share-signtext">
+            <div class="mj-share-url">maumjaro.minimalbreeze.com</div>
+            ${spec.note ? `<div class="mj-share-note">${esc(spec.note)}</div>` : ''}
+          </div>
+        </div>
       </div>
     `;
   }

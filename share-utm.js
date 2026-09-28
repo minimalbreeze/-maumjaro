@@ -9,8 +9,16 @@
 //   여기는 "사람이 공유 시트로 보낸 링크"만 담당한다.
 //
 // 무엇을 알 수 있게 되는가
-//   utm_source=share  → 사용자 공유로 들어온 사람 (검색·직접 방문과 구분된다)
-//   utm_medium=<기능> → 어느 화면의 공유가 데려왔는지 (rx / fortune / tarot ...)
+//   utm_source=share   → 사용자 공유로 들어온 사람 (검색·직접 방문과 구분된다)
+//   utm_medium=social  → GA4가 "Organic Social"로 분류하게 하는 고정값
+//   utm_content=<기능> → 어느 화면의 공유가 데려왔는지 (rx / fortune / tarot ...)
+//
+// ⚠️ utm_medium에 기능 이름을 넣으면 안 된다 (2026-09 수정)
+//   예전에는 utm_medium=rx / tarot / slip / sns 를 넣었다. 그런데 GA4가 기본 채널로
+//   인정하는 medium은 organic·cpc·email·social·paid-social·referral·affiliate·display
+//   여덟 개뿐이고, 그 밖의 값은 전부 "Unassigned"로 떨어진다.
+//   실제로 한 달치(8/25~9/23) 세션 361개 중 102개(28%)가 Unassigned였다.
+//   기능 이름은 utm_content로 옮기고 medium은 social로 고정한다.
 //
 //   어느 SNS인지까지는 알 수 없다. navigator.share()는 사용자가 공유 시트에서
 //   무엇을 골랐는지 알려주지 않기 때문이다. 다만 GA4의 참조 도메인(t.co,
@@ -20,7 +28,8 @@
 
   const HOST = 'maumjaro.minimalbreeze.com';
 
-  function tag(url, medium) {
+  // 두 번째 인자는 "어느 화면에서 공유했는가"다. utm_medium이 아니라 utm_content로 간다.
+  function tag(url, feature) {
     if (typeof url !== 'string' || !url) return url;
     try {
       const u = new URL(url, location.href);
@@ -30,7 +39,8 @@
       // 최초 유입 경로를 지워버리면 안 된다.
       if (u.searchParams.has('utm_source')) return url;
       u.searchParams.set('utm_source', 'share');
-      u.searchParams.set('utm_medium', medium || 'sns');
+      u.searchParams.set('utm_medium', 'social');
+      if (feature) u.searchParams.set('utm_content', feature);
       return u.toString();
     } catch (e) {
       // URL 파싱이 실패하면 원본을 그대로 쓴다. 공유가 깨지는 것보다 표가 없는 편이 낫다.

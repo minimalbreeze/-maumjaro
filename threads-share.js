@@ -62,8 +62,11 @@
   // 링크는 한 줄로 깔끔하게 끝나야 한다. 파라미터를 여러 개 달면 글 끝이 지저분해지고
   // 스레드에서 링크 미리보기도 어수선해진다. 이 버튼은 대상이 스레드로 정해져 있으므로
   // utm_source 하나로 충분하다(GA4가 이것만으로 유입원을 분류한다).
-  function threadsUrl() {
-    return 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+  function threadsUrl(kind) {
+    const base = 'https://maumjaro.minimalbreeze.com/?utm_source=threads';
+    // 종류를 붙이면 (1) 어떤 공유가 유입을 만드는지 GA4에서 갈라 보이고,
+    // (2) 매번 글자 하나까지 같은 주소가 반복되지는 않는다.
+    return kind ? `${base}&utm_content=${encodeURIComponent(kind)}` : base;
   }
 
   // 소재 풀 — 콘텐츠 종류마다 따로 둔다.
@@ -203,22 +206,50 @@
     return pool[seedFor(kind) % pool.length];
   }
 
-  function buildPrompts(kind, fact) {
+  // 글의 "모양"을 매번 다르게 고른다.
+  //
+  // 왜 필요한가 (2026-09-11)
+  //   예전에는 어떤 글이든 "2~3줄 + 반드시 물음표로 끝" 한 가지 모양이었다. 문구는
+  //   달라도 뼈대가 같으면 기계가 보기엔 같은 틀에서 찍어낸 글이다. 링크 반복과 함께
+  //   이것이 계정을 봇으로 보이게 만든 신호였다.
+  //   줄 수·길이·마무리 방식을 섞어서, 사람이 그때그때 쓴 글처럼 흩어지게 한다.
+  const SHAPES = [
+    { lines: '1~2줄', chars: 70, emoji: '이모지는 쓰지 않는다.',
+      ending: '질문으로 한다. 물음표로 끝낸다.' },
+    { lines: '2~3줄', chars: 90, emoji: '이모지는 최대 1개.',
+      ending: '질문으로 한다. 물음표로 끝낸다.' },
+    { lines: '2줄', chars: 80, emoji: '이모지는 쓰지 않는다.',
+      ending: '혼잣말로 흐리게 끝낸다. 질문하지 않는다. 읽는 사람이 자기 얘기를 하고 싶어지게만 만든다.' },
+    { lines: '1~3줄', chars: 85, emoji: '이모지는 최대 1개.',
+      ending: '"나만 이런가" 같은 반문으로 한다. 물음표를 써도 되고 안 써도 된다.' },
+    { lines: '3줄', chars: 90, emoji: '이모지는 쓰지 않는다.',
+      ending: '둘 중 뭐가 맞냐고 고르게 하는 질문으로 한다.' },
+  ];
+
+  // 날짜·종류에 더해 오늘 몇 번째로 만드는 문구인지까지 섞는다.
+  // 그래야 같은 날 같은 화면에서도 모양이 갈린다.
+  function pickShape(kind, variant) {
+    return SHAPES[(seedFor(kind) + (Number(variant) || 0) * 7) % SHAPES.length];
+  }
+
+  function buildPrompts(kind, fact, variant) {
+    const shape = pickShape(kind, variant);
     const systemPrompt = [
       '너는 한국 스레드(Threads)에서 댓글이 많이 달리는 글을 쓰는 사람이다.',
       '목표는 단 하나다: 읽은 사람이 "나는 이런데" 하고 댓글을 달고 싶어지게 만드는 것.',
       '',
       '글의 구조:',
-      '- 첫 줄: 방금 겪은 일을 혼잣말처럼 툭 던진다. 주어진 "방금 본 결과"를 여기서 쓴다.',
-      '- 마지막 줄: 주어진 소재에 대한 질문. 반드시 물음표로 끝난다.',
+      '- 방금 겪은 일을 혼잣말처럼 툭 던진다. 주어진 "방금 본 결과"를 여기서 쓴다.',
+      '- 주어진 소재로 자연스럽게 넘어간다.',
+      `- 마무리는 ${shape.ending}`,
       '',
       '댓글이 붙는 조건:',
-      '- 질문은 답하기 쉬워야 한다. 둘 중 고르기, 한 단어로 답하기, 자기 경험 한 줄 꺼내기.',
       '- 의견이 갈리거나 다들 할 말이 있는 지점을 건드린다. 모두가 동의할 이야기는 댓글이 안 달린다.',
       '- 본인 입장을 슬쩍 하나 정해서 말한다. 중립적으로 쓰면 반박할 거리가 없다.',
+      '- 답하기 쉬워야 한다. 둘 중 고르기, 한 단어로 답하기, 자기 경험 한 줄 꺼내기.',
       '',
       '문체: 혼잣말하듯 편한 반말이나 가벼운 존댓말. 광고 문구나 카피라이터 말투는 절대 금지.',
-      '형식: 전체 3줄 이내, 90자 이내. 해시태그 금지. 링크 금지(링크는 앱이 따로 붙인다). 이모지는 최대 1개.',
+      `형식: 전체 ${shape.lines}, ${shape.chars}자 이내. 해시태그 금지. 링크 절대 금지. ${shape.emoji}`,
       '',
       // 결과 이야기는 도입부일 뿐이다. 여기가 길어지면 앱 자랑 글이 되고 댓글이 끊긴다.
       '중요: 특정 앱이나 서비스를 홍보하지 않는다. 앱 이름, "다운로드", "설치", "해보세요", "추천" 같은 말을 쓰지 않는다.',
@@ -254,10 +285,10 @@
     return s;
   }
 
-  function fetchCopy(kind, fact) {
+  function fetchCopy(kind, fact, variant) {
     const url = proxyUrl();
     if (!url) return Promise.reject(new Error('no proxy'));
-    const { systemPrompt, userPrompt } = buildPrompts(kind, fact);
+    const { systemPrompt, userPrompt } = buildPrompts(kind, fact, variant);
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), REQUEST_TIMEOUT_MS);
     return fetch(url, {
@@ -345,19 +376,24 @@
     '요즘 왜 이렇게 지치지\n여러분은 스트레스 어떻게 푸세요?',
   ];
 
-  function pickFallback(fallbacks, kind) {
+  function pickFallback(fallbacks, kind, used) {
     const list = (fallbacks && fallbacks.length) ? fallbacks.filter(Boolean)
       : (FALLBACKS_BY_KIND[kind] || FALLBACKS_COMMON);
     if (!list.length) return '';
-    // 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 고른다. 그래야 AI가 죽은 날에도
-    // 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
-    return list[seedFor(kind) % list.length];
+    // 시작점은 소재를 고르는 방식과 똑같이 (날짜 + 종류)로 잡는다. 그래야 AI가 죽은
+    // 날에도 콘텐츠마다 다른 글이 나가고, 다음 날엔 바뀐다.
+    //
+    // 거기에 "오늘 이 종류로 몇 번 올렸는지"를 더해 한 칸씩 옮긴다. 하루 1회 제한을
+    // 떼면서 필요해진 부분이다 — 고정된 자리만 쓰면 연달아 눌렀을 때 글자 하나까지
+    // 같은 글이 반복해서 나가고, 그게 계정이 막혔던 바로 그 신호다.
+    return list[(seedFor(kind) + (Number(used) || 0)) % list.length];
   }
 
-  // 하루에 종류당 몇 개까지 새로 만들지. 한 번 누르고 마는 사람이 대부분이라 1개면
-  // 충분하지만, 같은 날 두 번 공유하는 사람에게 같은 글이 또 나가면 티가 난다.
-  // 3개까지만 만들고 그 뒤로는 만들어 둔 것을 돌려쓴다.
-  const VARIANTS_PER_DAY = 3;
+  // 하루에 종류당 몇 개까지 새로 만들지. 그 뒤로는 만들어 둔 것을 순서대로 돌려쓴다.
+  // 올리는 횟수 자체에는 제한이 없다 — 이건 "같은 글이 다시 돌아오기까지의 거리"이고,
+  // 동시에 AI 호출 상한이다(종류당 하루 최대 10번). 한 화면에서 열 번을 눌러도
+  // 열 번 다 다른 글이 나간다.
+  const VARIANTS_PER_DAY = 10;
 
   function bumpUsed(kind) {
     const c = loadCache();
@@ -383,7 +419,7 @@
       return made[used % made.length];
     }
     try {
-      const line = await fetchCopy(kind, fact);
+      const line = await fetchCopy(kind, fact, made.length);
       const c = loadCache();
       c.byKey[`${kind}#${made.length}`] = line;
       saveCache(c);
@@ -392,13 +428,27 @@
     } catch (e) {
       // 오늘 만들어 둔 게 있으면 미리 써둔 문구보다 그게 낫다(오늘 소재에 맞는 글이므로).
       if (made.length) { bumpUsed(kind); return made[used % made.length]; }
-      return pickFallback(fallbacks, kind);
+      bumpUsed(kind);
+      return pickFallback(fallbacks, kind, used);
     }
   }
 
-  function shareText(text) {
-    const url = threadsUrl();
-    const full = `${text}\n\n${url}`;
+  // 본문에 링크를 붙인다.
+  //
+  // 경과
+  //   2026-09-11에 링크를 뺐었다. 매 글 끝에 똑같은 주소를 붙여 보냈더니 스레드가
+  //   계정을 자동화된 것으로 보고 막았기 때문이다("로봇이 아님을 증명하라" →
+  //   계정 비활성화). 글자 하나까지 같은 URL이 반복되는 건 스팸 분류의 강한 신호다.
+  //
+  //   그 뒤 링크를 프로필(bio)에만 두었더니 글은 올라가도 유입이 만들어지지 않아,
+  //   운영자 판단으로 본문에 다시 넣는다. 대신 그때와 똑같이 되돌리지는 않는다 —
+  //   주소에 종류(utm_content)를 붙여 공유마다 갈리게 하고, 글 자체도 종류당
+  //   하루 10개까지 서로 다른 문구가 나가도록 이미 바꿔두었다.
+  //
+  //   남는 위험: 같은 종류를 하루에 여러 번 올리면 그 주소는 같다. 짧은 시간에
+  //   몰아서 올리지 않는 것이 여전히 안전하다.
+  function shareText(text, url) {
+    const full = url ? `${text}\n\n${url}` : text;
     if (navigator.share) {
       // files를 주지 않는 것이 이 버튼의 핵심이다. 이미지가 붙으면 사진 게시물이 된다.
       return navigator.share({ text: full }).catch((e) => {
@@ -424,6 +474,28 @@
    *   fact      오늘 나온 결과 한 줄 — 이걸 재료로 문구를 만든다
    *   fallbacks AI가 실패했을 때 쓸 미리 써둔 문구들
    */
+  // 오늘 몇 번 올렸는지 세기만 한다. 막지는 않는다.
+  //
+  // 계정이 막혔던 실제 원인은 "같은 URL이 본문에 반복해서 나가는 것"이었고, 그건
+  // 링크를 본문에서 빼면서 이미 없앴다. 횟수 자체를 막던 난간은 그때 같이 걸어둔
+  // 것이라 이제 떼어낸다. 글 내용은 (날짜 + 종류)로 매번 달라지므로, 여러 번
+  // 올려도 똑같은 문장이 연달아 나가지는 않는다(VARIANTS_PER_DAY).
+  const POST_LOG_KEY = 'maumjaro:threadsPostLog';
+
+  function postsToday() {
+    try {
+      const log = JSON.parse(localStorage.getItem(POST_LOG_KEY) || '{}');
+      return log.date === todayKey() ? (Number(log.count) || 0) : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  function notePost() {
+    try {
+      localStorage.setItem(POST_LOG_KEY, JSON.stringify({ date: todayKey(), count: postsToday() + 1 }));
+    } catch (e) { /* 저장 실패는 무시 */ }
+  }
+
   function mountButton(opts) {
     if (!opts) return null;
     const after = opts.after;
@@ -432,23 +504,36 @@
     btn.className = 'rx-friend-quick-btn';
     btn.type = 'button';
     btn.style.cssText = 'width:100%;margin-top:8px;';
-    btn.textContent = '💬 글로 공유 (스레드)';
+    // 라벨은 호출부가 정할 수 있다. 한 탭 안에 스레드 버튼이 둘 이상 있는 화면(MBTI의
+    // 내 유형 / 궁합)에서 라벨이 같으면 어느 쪽을 누른 건지 구분이 안 된다 — 실제로
+    // 궁합 화면에서 눌렀다고 생각했는데 내 유형 글이 나간 일이 있었다.
+    const label = opts.label ? `💬 ${opts.label} (스레드)` : '💬 글로 공유 (스레드)';
+    btn.textContent = label;
     if (after && after.parentNode) after.parentNode.insertBefore(btn, after.nextSibling);
     else opts.anchor.appendChild(btn);
 
+    // 링크를 본문에서 뺐으므로, 어디에 걸어야 하는지 한 번은 알려줘야 한다.
+    // 모르면 링크 없는 글만 올라가고 유입은 0이 된다.
+    const hint = document.createElement('p');
+    hint.className = 'rx-custom-hint';
+    hint.style.cssText = 'text-align:center;margin-top:6px;font-size:12px;';
+    hint.textContent = '글 끝에 맘운자로 주소가 함께 붙어요';
+    btn.parentNode.insertBefore(hint, btn.nextSibling);
+
     btn.addEventListener('click', async () => {
-      const label = btn.textContent;
+      const restore = btn.textContent;
       btn.disabled = true;
       btn.textContent = '문구 만드는 중...';
       try {
         const text = await copyFor(opts.kind, opts.fact, opts.fallbacks);
         if (!text) return;
-        await shareText(text);
+        await shareText(text, threadsUrl(opts.kind));
+        notePost();
         const G = window.MaumjaroGame;
         if (G && typeof G.track === 'function') G.track('threads_text_shared', { kind: opts.kind });
       } finally {
         btn.disabled = false;
-        btn.textContent = label;
+        btn.textContent = restore;
       }
     });
     // 약국처럼 버튼을 한 번만 붙이고 내용은 열 때마다 바뀌는 화면을 위해,
@@ -457,5 +542,7 @@
     return btn;
   }
 
-  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl };
+    // threadsUrl은 이제 "글에 붙이는 링크"가 아니라 "프로필에 걸어둘 주소"다.
+  // 설정 화면 등에서 복사해 쓸 수 있게 그대로 내보낸다.
+  window.MaumjaroThreads = { mountButton, copyFor, threadsUrl, postsToday };
 })();
