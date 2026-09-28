@@ -206,6 +206,28 @@ check('옵션을 제대로 읽는다', () => {
   assert.equal(a.fixture, 'x.json');
 });
 
+
+console.log('\n[8] 설정 — 종목과 카테고리가 맞물리는지');
+const topicsCfg = JSON.parse(fs.readFileSync(path.join(HERE, '../config/topics.json'), 'utf8'));
+const knownNames = new Set((topicsCfg.knownCategories?.list || []).map((c) => c.name));
+
+check('알고 있는 카테고리 목록이 비어 있지 않다', () => assert.ok(knownNames.size > 0));
+check('모든 종목의 카테고리가 사이트에 실제로 있다', () => {
+  const bad = topicsCfg.topics.filter((t) => !knownNames.has(t.category));
+  assert.equal(bad.length, 0, `사이트에 없는 카테고리: ${bad.map((t) => `${t.name}→${t.category}`).join(', ')}`);
+});
+check('켜져 있는 종목에는 검색어가 있다', () => {
+  const bad = topicsCfg.topics.filter((t) => t.enabled !== false && !(t.queries || []).length);
+  assert.equal(bad.length, 0, `검색어 없는 종목: ${bad.map((t) => t.name).join(', ')}`);
+});
+check('종목 이름이 중복되지 않는다', () => {
+  const names = topicsCfg.topics.map((t) => t.name);
+  assert.equal(new Set(names).size, names.length);
+});
+check('뉴스 소스가 둘 이상이다', () => {
+  assert.ok((topicsCfg.feeds?.searchFeeds || []).length >= 2, '소스가 하나뿐이면 그 한 곳이 막힐 때 전체가 멈춥니다');
+});
+
 Date.now = realNow;
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ 전체 ${passed}개 항목 통과`}\n`);
 

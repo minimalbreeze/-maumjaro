@@ -55,7 +55,7 @@ const probe = await new Promise((resolve) => {
 
 check('wp:check가 사이트를 조사한다', () => assert.equal(probe.code, 0, probe.out.slice(-400)));
 check('wp:check는 글을 만들지 않는다', () => assert.equal(wp.state.created.length, 0));
-check('카테고리 6개를 읽어온다', () => assert.ok(/카테고리 6개/.test(probe.out), probe.out.slice(-300)));
+check('카테고리 14개를 읽어온다', () => assert.ok(/카테고리 14개/.test(probe.out), probe.out.slice(-300)));
 check('Rank Math 쓰기 가능 필드를 찾아낸다', () => {
   assert.ok(wp.state.optionsCalls > 0, 'OPTIONS 스키마 조회를 하지 않았습니다');
   assert.ok(/rank_math_title/.test(probe.out), probe.out.slice(-300));
@@ -85,7 +85,8 @@ check('본문이 워드프레스 블록으로 변환된다', () => {
 });
 check('카테고리가 하나만 지정된다', () => {
   assert.equal(post.categories?.length, 1, JSON.stringify(post.categories));
-  assert.equal(post.categories[0], 5, '바둑은 스포츠(id=5)로 들어가야 합니다');
+  // 사이트에 "바둑" 카테고리가 실제로 있으므로 상위인 "스포츠"가 아니라 "바둑"으로 가야 한다
+  assert.equal(post.categories[0], 8, `바둑 카테고리(id=8)여야 하는데 ${post.categories[0]}로 갔습니다`);
 });
 check('태그가 5~10개 범위다', () => {
   assert.ok(post.tags?.length >= 5 && post.tags.length <= 10, `태그 ${post.tags?.length}개`);

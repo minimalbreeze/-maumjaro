@@ -123,7 +123,7 @@
     {
       "name": "배드민턴",
       "enabled": true,
-      "category": "스포츠",
+      "category": "배드민턴",
       "queries": [
         "배드민턴 안세영",
         "BWF 배드민턴",
@@ -139,7 +139,7 @@
     {
       "name": "당구",
       "enabled": true,
-      "category": "스포츠",
+      "category": "당구",
       "queries": [
         "PBA 당구",
         "3쿠션 월드컵",
@@ -155,7 +155,7 @@
     {
       "name": "바둑",
       "enabled": true,
-      "category": "스포츠",
+      "category": "바둑",
       "queries": [
         "바둑 신진서",
         "바둑 국가대표",
@@ -182,6 +182,127 @@
         "코스 공략"
       ],
       "staticFeeds": []
+    },
+    {
+      "name": "축구",
+      "enabled": false,
+      "category": "축구",
+      "queries": [
+        "K리그",
+        "축구 국가대표",
+        "손흥민"
+      ],
+      "longTermHints": [
+        "리그 일정",
+        "대표팀 명단",
+        "순위",
+        "중계"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "농구",
+      "enabled": false,
+      "category": "농구",
+      "queries": [
+        "KBL 농구",
+        "프로농구 순위",
+        "NBA 한국"
+      ],
+      "longTermHints": [
+        "시즌 일정",
+        "플레이오프",
+        "순위"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "배구",
+      "enabled": false,
+      "category": "배구",
+      "queries": [
+        "V리그 배구",
+        "프로배구 순위",
+        "배구 국가대표"
+      ],
+      "longTermHints": [
+        "시즌 일정",
+        "순위",
+        "대표팀"
+      ],
+      "staticFeeds": []
+    },
+    {
+      "name": "볼링",
+      "enabled": false,
+      "category": "볼링",
+      "queries": [
+        "볼링 대회",
+        "프로볼링"
+      ],
+      "longTermHints": [
+        "대회 일정",
+        "규칙",
+        "기록"
+      ],
+      "staticFeeds": []
     }
-  ]
+  ],
+  "knownCategories": {
+    "_설명": "2026-09-28 기준 실제 워드프레스 카테고리. npm run wp:check를 돌리면 실제 ID까지 조회한다. 카테고리를 사이트에서 바꾸면 여기도 고쳐두면 좋다(안 고쳐도 동작은 한다).",
+    "list": [
+      {
+        "name": "골프",
+        "parent": null
+      },
+      {
+        "name": "골프 스윙",
+        "parent": "골프"
+      },
+      {
+        "name": "생활정보",
+        "parent": null
+      },
+      {
+        "name": "스포츠",
+        "parent": null
+      },
+      {
+        "name": "농구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "당구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "바둑",
+        "parent": "스포츠"
+      },
+      {
+        "name": "배구",
+        "parent": "스포츠"
+      },
+      {
+        "name": "배드민턴",
+        "parent": "스포츠"
+      },
+      {
+        "name": "볼링",
+        "parent": "스포츠"
+      },
+      {
+        "name": "야구",
+        "parent": null
+      },
+      {
+        "name": "축구",
+        "parent": null
+      },
+      {
+        "name": "파크골프",
+        "parent": null
+      }
+    ]
+  }
 }

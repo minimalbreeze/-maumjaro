@@ -12,13 +12,23 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
   const state = { created: [], tagsCreated: [], authHeaders: [], optionsCalls: 0 };
   let nextId = 100;
 
+  // 실제 사이트 구조 그대로 (2026-09-28 확인).
+  // 모의 서버가 실제와 다르면 테스트는 통과하는데 운영에서 깨진다.
   const CATEGORIES = [
-    { id: 2, name: '골프', slug: 'golf', parent: 0, count: 300 },
-    { id: 7, name: '골프 스윙', slug: 'swing', parent: 2, count: 40 },
-    { id: 3, name: '파크골프', slug: 'parkgolf', parent: 0, count: 80 },
-    { id: 4, name: '야구', slug: 'baseball', parent: 0, count: 90 },
-    { id: 5, name: '스포츠', slug: 'sports', parent: 0, count: 70 },
-    { id: 6, name: '생활정보', slug: 'life', parent: 0, count: 20 },
+    { id: 1, name: 'Uncategorized', slug: 'uncategorized', parent: 0, count: 0 },
+    { id: 2, name: '골프', slug: '골프', parent: 0, count: 300 },
+    { id: 3, name: '골프 스윙', slug: '골프-스윙', parent: 2, count: 40 },
+    { id: 4, name: '생활정보', slug: '생활정보', parent: 0, count: 20 },
+    { id: 5, name: '스포츠', slug: '스포츠', parent: 0, count: 70 },
+    { id: 6, name: '농구', slug: '농구', parent: 5, count: 5 },
+    { id: 7, name: '당구', slug: '당구', parent: 5, count: 12 },
+    { id: 8, name: '바둑', slug: '바둑', parent: 5, count: 9 },
+    { id: 9, name: '배구', slug: '배구', parent: 5, count: 4 },
+    { id: 10, name: '배드민턴', slug: '배드민턴', parent: 5, count: 15 },
+    { id: 11, name: '볼링', slug: '볼링', parent: 5, count: 3 },
+    { id: 12, name: '야구', slug: '야구', parent: 0, count: 90 },
+    { id: 13, name: '축구', slug: '축구', parent: 0, count: 6 },
+    { id: 14, name: '파크골프', slug: '파크골프', parent: 0, count: 80 },
   ];
 
   const META_SCHEMA = rankMathWritable
