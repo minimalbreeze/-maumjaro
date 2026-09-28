@@ -35,10 +35,18 @@ export const MODEL = MODELS.write;
  *  - Opus 5 / Sonnet 5 등 최신 계열: thinking {type:'adaptive'}, output_config.effort
  *  - Haiku 4.5: adaptive를 모른다. thinking은 budget_tokens 형태이고 effort는 오류가 난다.
  *
- * 그래서 모델 이름을 보고 맞는 형태를 만들어 붙인다.
+ * 그리고 도구 사용을 강제할 때(tool_choice로 특정 도구를 지목할 때)는 생각을
+ * 켤 수 없다. 켜면 400이 난다:
+ *   Thinking may not be enabled when tool_choice forces tool use.
+ * 실제로 이 조합 때문에 다 써 놓은 글이 SEO 단계에서 통째로 날아간 적이 있다.
+ *
+ * 그래서 모델 이름과 도구 강제 여부를 보고 맞는 형태를 만들어 붙인다.
  */
-export function tuningFor(model, { effort = 'high', maxTokens = 16000 } = {}) {
+export function tuningFor(model, { effort = 'high', maxTokens = 16000, forcedTool = false } = {}) {
   const isHaiku = /haiku/.test(model);
+  // 도구를 지목해 부르는 자리는 스키마에 맞는 JSON만 받으면 되는 단순한 일이다.
+  // 생각이 필요하지도 않고, 켜면 API가 거부한다.
+  if (forcedTool) return isHaiku ? {} : { output_config: { effort } };
   if (isHaiku) {
     // Haiku는 effort를 받지 않는다. 생각을 조금만 시킨다.
     return { thinking: { type: 'enabled', budget_tokens: Math.min(4000, Math.floor(maxTokens / 2)) } };
@@ -139,7 +147,7 @@ export async function callForJson({ system, prompt, toolName, description, schem
       messages: [{ role: 'user', content: prompt }],
       tools: [tool],
       tool_choice: { type: 'tool', name: toolName },
-      ...tuningFor(model, { effort, maxTokens }),
+      ...tuningFor(model, { effort, maxTokens, forcedTool: true }),
     }),
     { tries: 3, base: 2000, label: `Claude ${toolName}` }
   );

@@ -6,6 +6,7 @@
 import { callForJson } from './client.mjs';
 import { normalizeTags } from '../wordpress/taxonomy.mjs';
 import { buildSlug } from '../seo/rankmath.mjs';
+import { mainTokens } from '../news/normalize.mjs';
 
 const SYSTEM = `당신은 한국어 블로그 SEO 담당자입니다.
 
@@ -51,7 +52,28 @@ const SEO_SCHEMA = {
 };
 
 export async function generateSeo({ title, body, topic, category }) {
-  const result = await callForJson({
+  let result;
+  try {
+    result = await callSeoModel({ title, body, topic, category });
+  } catch (err) {
+    // 여기서 던지면 다 써 놓은 본문이 통째로 사라진다. 실제로 한 번 그랬다.
+    // SEO는 나중에 손으로 고칠 수 있지만 본문은 다시 만들려면 돈이 또 든다.
+    // 그래서 SEO만큼은 실패해도 글을 살린다.
+    console.warn(`    ⚠️  SEO 생성 실패 — 제목에서 뽑아 채웁니다: ${err.message}`);
+    result = localSeo({ title, body, topic });
+  }
+
+  return {
+    ...result,
+    tags: normalizeTags(result.tags),
+    metaDescription: clamp(result.metaDescription, 160),
+    seoTitle: clamp(result.seoTitle, 70),
+    slug: buildSlug({ focusKeyword: result.focusKeyword, title: result.slug, fallback: topic }),
+  };
+}
+
+async function callSeoModel({ title, body, topic, category }) {
+  return callForJson({
     system: SYSTEM,
     prompt: `다음은 방금 작성한 블로그 글입니다.
 
@@ -69,13 +91,37 @@ ${body.slice(0, 12000)}
     maxTokens: 8000,
     effort: 'medium',
   });
+}
+
+/**
+ * AI 없이 만드는 SEO 값.
+ *
+ * 좋은 값은 아니다. 임시글을 열어 Rank Math 칸에서 고치면 된다.
+ * 목적은 딱 하나 — 다 쓴 글을 SEO 단계 하나 때문에 잃지 않는 것.
+ */
+export function localSeo({ title, body, topic }) {
+  // 워프양식 제목은 "대회명/이슈 (클릭 유도형 부제목!)" 꼴이다. 괄호 앞이 핵심이다.
+  const head = String(title).split('(')[0].trim().replace(/[\/·]/g, ' ').replace(/\s+/g, ' ');
+  const focusKeyword = head.length >= 2 ? head.slice(0, 30) : topic;
+
+  const firstLines = String(body)
+    .split('\n')
+    .filter((l) => l.trim() && !l.trim().startsWith('#') && !l.trim().startsWith('<'))
+    .join(' ')
+    .replace(/[*_`>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // 태그는 5~10개가 원칙이다(지시서 [12]). 제목에서 뽑은 말로 채운다.
+  const tags = [...new Set([focusKeyword, topic, ...mainTokens(title)].filter((t) => t && t.length >= 2))].slice(0, 8);
 
   return {
-    ...result,
-    tags: normalizeTags(result.tags),
-    metaDescription: clamp(result.metaDescription, 160),
-    seoTitle: clamp(result.seoTitle, 70),
-    slug: buildSlug({ focusKeyword: result.focusKeyword, title: result.slug, fallback: topic }),
+    seoTitle: head || String(title),
+    metaDescription: firstLines.slice(0, 155) || `${focusKeyword} 소식을 정리했습니다.`,
+    focusKeyword,
+    keywords: [focusKeyword, topic].filter(Boolean),
+    tags,
+    slug: focusKeyword,
   };
 }
 

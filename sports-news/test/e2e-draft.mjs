@@ -72,6 +72,10 @@ check('pause_turn이 와도 이어받아 끝낸다', () => {
   assert.ok(/확인된 사실 5건/.test(result.out), result.out.slice(-400));
 });
 check('웹검색 도구를 붙여서 사실확인을 한다', () => assert.ok(ai.seen.hadWebSearch));
+// 폴백이 있으면 잘못 부른 호출도 겉으로는 성공해 보인다. 거부당한 호출이
+// 하나라도 있으면 실패로 본다.
+check('Claude API를 거부당하지 않는 형태로 부른다', () =>
+  assert.deepEqual(ai.seen.rejected, [], `거부당한 호출: ${ai.seen.rejected.join(', ')}`));
 check('글이 워드프레스에 저장된다', () => assert.equal(wp.state.created.length, 1, result.out.slice(-600)));
 
 const post = wp.state.created[0] || {};

@@ -98,7 +98,9 @@ function msg(content, stopReason = 'end_turn') {
 
 export function startMockServer({ simulatePauseTurn = false } = {}) {
   let verifyCalls = 0;
-  const seen = { tools: [], hadWebSearch: false, systemPrompts: [] };
+  // 모의가 거부한 요청을 남긴다. 거부가 한 번이라도 있으면 우리가 API를
+  // 잘못 부르고 있다는 뜻이다 — 폴백이 삼켜서 겉으로는 성공해 보여도.
+  const seen = { tools: [], hadWebSearch: false, systemPrompts: [], rejected: [] };
 
   const server = http.createServer((req, res) => {
     let body = '';
@@ -109,6 +111,21 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
       seen.tools.push(toolNames);
       if (toolNames.includes('web_search')) seen.hadWebSearch = true;
       if (payload.system) seen.systemPrompts.push(String(payload.system).slice(0, 60));
+
+      // 실제 API가 거부하는 조합은 모의도 거부해야 한다.
+      // 도구를 지목해 부르면서 thinking을 켜면 400이 난다. 모의가 이걸 받아주는
+      // 바람에, 테스트는 전부 통과하는데 운영에서 다 써 놓은 글이 SEO 단계에서
+      // 통째로 날아갔다.
+      const forcesTool = payload.tool_choice && payload.tool_choice.type === 'tool';
+      if (forcesTool && payload.thinking) {
+        seen.rejected.push('thinking + tool_choice 강제');
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({
+          type: 'error',
+          error: { type: 'invalid_request_error', message: 'Thinking may not be enabled when tool_choice forces tool use.' },
+        }));
+        return;
+      }
 
       let out;
       if (toolNames.includes('report_verification')) {
