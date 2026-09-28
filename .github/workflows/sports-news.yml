@@ -99,7 +99,8 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
         run: |
           # 입력값을 명령줄에 직접 끼워 넣지 않는다.
-          # ${{ }} 를 run 블록에 바로 쓰면 입력에 들어간 셸 문자가 그대로 실행된다.
+          # GitHub 표현식을 run 블록에 바로 쓰면 입력에 들어간 셸 문자가
+          # 그대로 실행되므로, 위 env로 넘겨받아 배열로 조립한다.
           args=()
           [ -n "$IN_TOPIC" ] && args+=("--topic=$IN_TOPIC")
           case "$IN_COUNT" in
@@ -119,7 +120,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: 생성된-글-${{ github.run_number }}
+          name: sports-news-drafts-${{ github.run_number }}
           path: |
             sports-news/out/
             logs/
