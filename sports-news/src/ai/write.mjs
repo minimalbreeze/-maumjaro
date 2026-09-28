@@ -26,7 +26,7 @@ const SYSTEM = `당신은 한국의 스포츠 전문 블로거입니다. 워드�
 3. 뉴스 기사 문장을 옮기거나 바꿔쓰지 않습니다. 사실을 재료로 새 글을 씁니다.
 4. AI가 쓴 티가 나지 않게, 사람이 직접 쓴 것처럼 씁니다.`;
 
-export async function writeArticle({ cluster, verification, today }) {
+export async function writeArticle({ cluster, verification, today, focusKeyword = '' }) {
   const style = loadStyle();
 
   const confirmedBlock = verification.confirmed.map((c) => `- ${c.field}: ${c.value}  [확인: ${c.sources.join(', ')}]`).join('\n');
@@ -69,6 +69,16 @@ ${style}
 
 위 규칙에 맞춰 글 전체를 작성하세요.
 
+${focusKeyword ? `## 🔑 검색 키워드 배치
+
+이 글의 대표 검색 키워드는 **"${focusKeyword}"** 입니다.
+검색에 걸리려면 이 말이 아래 자리에 자연스럽게 들어가야 합니다.
+억지로 반복하지 말고, 원래 그 자리에 있을 말처럼 쓰세요.
+
+- 제목 (앞쪽에)
+- 도입부 첫 문단
+- 소제목 중 최소 하나
+` : ''}
 출력 형식:
 - 첫 줄에 제목만 씁니다 (앞에 "제목:" 같은 라벨을 붙이지 않습니다).
 - 한 줄 띄고 본문을 씁니다.
