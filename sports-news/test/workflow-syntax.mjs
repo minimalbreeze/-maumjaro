@@ -38,7 +38,8 @@ for (const file of files) {
 
   check(`${file}: 표현식이 알려진 컨텍스트만 쓴다`, () => {
     const known = /^(secrets|inputs|github|env|vars|matrix|needs|steps|job|runner|strategy|always|success|failure|cancelled|hashFiles|format|toJSON|fromJSON|contains|startsWith|endsWith|join)\b/;
-    const bad = exprs.map((m) => m[1].trim()).filter((e) => !known.test(e));
+    // 부정(!)으로 시작하는 조건도 정상이다: if: ${{ !contains(inputs.mode, '...') }}
+    const bad = exprs.map((m) => m[1].trim().replace(/^!+\s*/, '')).filter((e) => !known.test(e));
     assert.equal(bad.length, 0, `알 수 없는 표현식: ${bad.join(' / ')}`);
   });
 }
