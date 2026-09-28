@@ -16,6 +16,19 @@ export class WordPressError extends Error {
   }
 }
 
+// 워드프레스에 보낼 때 쓰는 User-Agent.
+//
+// 왜 필요한가: 예전에는 헤더를 아예 안 보냈다. 그러면 많은 봇 차단 장치
+// (Imunify360, Wordfence, Cloudflare)가 "User-Agent 없음 = 봇"으로 보고 막는다.
+// 우리 정체를 숨기지 않으면서(이름과 주소를 그대로 적는다) 일반적인 형식을 지킨다.
+// 그래도 막히면 WORDPRESS_USER_AGENT로 바꿔 끼울 수 있게 열어 둔다.
+export const DEFAULT_USER_AGENT =
+  'Mozilla/5.0 (compatible; MaumjaroSportsDraft/1.0; +https://maumjaro.minimalbreeze.com/)';
+
+export function wpUserAgent() {
+  return env('WORDPRESS_USER_AGENT', DEFAULT_USER_AGENT);
+}
+
 export function wpConfig() {
   requireEnv(['WORDPRESS_URL', 'WORDPRESS_USERNAME', 'WORDPRESS_APP_PASSWORD']);
   const base = env('WORDPRESS_URL').replace(/\/+$/, '');
@@ -46,6 +59,7 @@ export async function wpFetch(pathOrUrl, { method = 'GET', body, query, timeoutM
         headers: {
           authorization: cfg.auth,
           accept: 'application/json',
+          'user-agent': wpUserAgent(),
           ...(body ? { 'content-type': 'application/json' } : {}),
         },
         body: body ? JSON.stringify(body) : undefined,
@@ -89,11 +103,37 @@ function wpErrorMessage(status, json, rawText = '') {
    확인 순서: ① WORDPRESS_URL이 맞는지 ② 보안 플러그인(Wordfence 등)이 REST API를 막고 있는지 ③ 호스팅 방화벽 ④ 회사·공용 네트워크 차단`;
   }
 
+  // 봇 차단은 401/403/406 어디로든 온다. 상태 코드보다 문구가 정확하다.
+  const bot = describeBotProtection(json?.message || rawText);
+  if (bot) return `호스팅 봇 차단에 걸렸습니다(${status}).${detail}\n${bot}`;
+
   if (status === 401) return `인증 실패(401). 사용자명 또는 애플리케이션 비밀번호를 확인하세요${detail}
    아이디에 이메일을 넣으셨다면 로그인 아이디(사용자명)로 바꿔보세요.`;
   if (status === 403) return `권한 없음(403). 이 계정에 글 작성 권한이 있는지 확인하세요${detail}`;
   if (status === 404) return `경로를 찾을 수 없음(404). WORDPRESS_URL이 맞는지, REST API가 켜져 있는지 확인하세요${detail}`;
   return `워드프레스 오류(${status})${detail}`;
+}
+
+/**
+ * 봇 차단 장치가 막은 것인지 가려낸다.
+ *
+ * Imunify360은 워드프레스처럼 {message: ...} JSON을 돌려주기 때문에, 본문이
+ * JSON인지만 보면 "워드프레스가 낸 권한 오류"로 오해하게 된다. 그러면 사용자는
+ * 멀쩡한 계정 권한을 몇 시간씩 들여다보게 된다. 문구로 한 번 더 가른다.
+ */
+export function describeBotProtection(text) {
+  const t = String(text || '');
+  if (/imunify/i.test(t)) {
+    return `   Imunify360(호스팅 보안)이 이 IP를 막았습니다. 계정 권한 문제가 아닙니다.
+   푸는 방법: ① cPanel > Imunify360 > Blocked IPs 에서 해당 IP 해제
+   ② 호스팅 고객센터에 "GitHub Actions IP를 화이트리스트에 넣어 달라"고 요청
+   ③ 또는 차단되지 않는 곳(내 PC)에서 실행`;
+  }
+  if (/bot[- ]?protection|access denied by/i.test(t)) {
+    return `   호스팅 보안 장치가 자동 접속을 막았습니다. 계정 권한 문제가 아닙니다.
+   호스팅 고객센터에 실행 IP 화이트리스트를 요청하거나, 내 PC에서 실행하세요.`;
+  }
+  return '';
 }
 
 /** 응답 본문이 무엇인지 한 줄로 알려준다 — 어디서 막혔는지 짐작하는 단서가 된다. */
@@ -102,6 +142,7 @@ function describeNonWordPressBody(rawText) {
   if (!t) return ' (응답 본문 없음)';
   if (/allowlist|egress|not in allow/i.test(t)) return ' (네트워크 정책이 이 주소를 막았습니다)';
   if (/cloudflare|attention required/i.test(t)) return ' (Cloudflare가 차단했습니다)';
+  if (/imunify/i.test(t)) return ' (호스팅 보안 Imunify360이 차단했습니다)';
   if (/wordfence|blocked by/i.test(t)) return ' (보안 플러그인이 차단했습니다)';
   if (/^</.test(t)) return ' (HTML 페이지가 왔습니다 — 보통 차단 안내 화면입니다)';
   return ` (응답: ${t.slice(0, 80)})`;

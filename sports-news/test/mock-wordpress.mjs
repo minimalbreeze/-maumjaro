@@ -9,8 +9,9 @@
 import http from 'node:http';
 
 export function startMockWordPress({ rankMathWritable = true, existingPosts = [] } = {}) {
-  const state = { created: [], tagsCreated: [], authHeaders: [], optionsCalls: 0 };
+  const state = { created: [], tagsCreated: [], authHeaders: [], optionsCalls: 0, media: [], mediaMeta: [] };
   let nextId = 100;
+  let nextMediaId = 500;
 
   // 실제 사이트 구조 그대로 (2026-09-28 확인).
   // 모의 서버가 실제와 다르면 테스트는 통과하는데 운영에서 깨진다.
@@ -36,9 +37,11 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
     : { _some_other_meta: { type: 'string', readonly: true } };
 
   const server = http.createServer((req, res) => {
-    let body = '';
-    req.on('data', (c) => { body += c; });
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
     req.on('end', () => {
+      const raw = Buffer.concat(chunks);
+      const body = raw.toString('utf8');
       const url = new URL(req.url, 'http://x');
       const p = url.pathname;
       state.authHeaders.push(req.headers.authorization || '');
@@ -56,6 +59,26 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
       }
       if (p === '/wp-json/wp/v2/users/me') return json({ name: '관리자', roles: ['administrator'] });
       if (p === '/wp-json/wp/v2/categories') return json(CATEGORIES, { 'x-wp-totalpages': '1' });
+      // 미디어 업로드. 실제 워드프레스처럼 파일 본문을 그대로 받고,
+      // 파일 이름은 Content-Disposition 헤더에서 읽는다.
+      if (p === '/wp-json/wp/v2/media' && req.method === 'POST') {
+        const cd = req.headers['content-disposition'] || '';
+        const name = /filename="([^"]+)"/.exec(cd)?.[1] || '';
+        const id = nextMediaId++;
+        state.media.push({ id, fileName: name, bytes: raw.length, contentType: req.headers['content-type'] });
+        return json({
+          id,
+          source_url: `http://127.0.0.1:${server.address().port}/wp-content/uploads/${name}`,
+          media_type: 'image',
+        });
+      }
+      // alt 텍스트를 나중에 넣는 요청
+      if (/^\/wp-json\/wp\/v2\/media\/\d+$/.test(p) && req.method === 'POST') {
+        const id = Number(p.split('/').pop());
+        state.mediaMeta.push({ id, ...JSON.parse(body || '{}') });
+        return json({ id });
+      }
+
       if (p === '/wp-json/wp/v2/tags') {
         if (req.method === 'POST') {
           const { name } = JSON.parse(body);

@@ -15,6 +15,8 @@ import { rankClusters } from '../src/news/rank.mjs';
 import { judgeDuplication } from '../src/duplicate/check.mjs';
 import { resolveCategory, normalizeTags } from '../src/wordpress/taxonomy.mjs';
 import { lintArticle, splitTitleAndBody } from '../src/ai/write.mjs';
+import { extractFaq, faqSchemaBlock } from '../src/seo/faq-schema.mjs';
+import { keywordDensity, targetKeywordCount } from '../src/seo/rankmath.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -109,11 +111,11 @@ check('태그에서 #을 떼고 중복을 합치며 10개로 제한한다', () =
 console.log('\n[5] 양식 검사');
 const good = splitTitleAndBody(`2026 KLPGA 챔피언십 (우승 경쟁 본격화!)
 
-안녕하세요, 스포츠 팬 여러분! 😊
+2026 KLPGA 챔피언십이 9월 10일부터 13일까지 서울CC에서 열립니다. 상금랭킹 1위와 2위의 격차가 크지 않아 순위가 뒤집힐 수 있는 대회입니다.
 
-이번 주 열리는 대회는 시즌 판도를 가를 한 판입니다.
+2026 KLPGA 챔피언십은 시즌 판도를 가를 한 판으로 꼽힙니다. 디펜딩 챔피언의 2연패 도전도 함께 걸려 있습니다.
 
-## ✨ 대회 개요
+## ✨ 2026 KLPGA 챔피언십 대회 개요
 
 **일정**: 9월 10~13일
 **장소**: 서울CC
@@ -121,6 +123,12 @@ const good = splitTitleAndBody(`2026 KLPGA 챔피언십 (우승 경쟁 본격화
 ## 🌟 주목할 선수
 
 올 시즌 두 번의 우승을 거둔 선수가 출전합니다. 최근 흐름이 좋습니다.
+
+## 📌 배경과 맥락
+
+2026 KLPGA 챔피언십은 시즌 후반 상금 경쟁의 분수령으로 여겨져 왔습니다. 지난 시즌에도 이 대회 결과가 상금왕 향방을 갈랐습니다.
+
+서울CC는 그린이 빠르기로 알려진 코스입니다. 퍼팅 감각이 좋은 선수에게 유리하다는 평가가 많습니다.
 
 ## 🎯 핵심 분석
 
@@ -133,13 +141,28 @@ const good = splitTitleAndBody(`2026 KLPGA 챔피언십 (우승 경쟁 본격화
 ✅ 신인왕 구도
 ✅ 코스 난이도
 
+## ❓ 자주 묻는 질문
+
+**Q. 2026 KLPGA 챔피언십은 언제 열리나요?**
+9월 10일부터 13일까지 나흘간 열립니다. 장소는 서울CC입니다.
+
+**Q. 2026 KLPGA 챔피언십 우승 상금은 얼마인가요?**
+공식 발표된 금액은 확인되지 않았습니다. 확정되면 다시 정리하겠습니다.
+
+**Q. 어떤 선수를 눈여겨봐야 하나요?**
+올 시즌 2승을 거둔 선수의 흐름이 가장 좋습니다. 디펜딩 챔피언도 2연패에 도전합니다.
+
+**Q. 코스 난이도는 어떤가요?**
+서울CC는 그린이 빠른 코스로 알려져 있습니다. 퍼팅에서 승부가 갈릴 가능성이 큽니다.
+
 ## 🔥 누가 웃게 될까?
 
 주말 내내 눈을 뗄 수 없는 승부가 될 것 같습니다. 함께 지켜봐 주시기 바랍니다.
-${'라운드마다 흐름이 바뀌는 코스라 마지막 홀까지 순위를 알 수 없습니다. '.repeat(8)}`);
+
+${'라운드마다 흐름이 바뀌는 코스라 마지막 홀까지 순위를 알 수 없습니다. 그린이 빠른 편이라 퍼팅 감각이 승부를 가릅니다.\n\n'.repeat(28)}`);
 const lintGood = lintArticle(good);
 check('올바른 글은 양식 검사를 통과한다', () => assert.ok(lintGood.ok, lintGood.issues.join(' / ')));
-check('소제목을 모두 인식한다', () => assert.equal(lintGood.headings.length, 5));
+check('소제목을 모두 인식한다', () => assert.equal(lintGood.headings.length, 7));
 
 const bad = splitTitleAndBody(`제목: 나쁜 예
 
@@ -163,7 +186,7 @@ check('금지 항목 5가지를 모두 잡아낸다', () => {
 
 console.log('\n[6] 워드프레스 HTML 변환');
 const html = markdownToBlocks(good.body);
-check('소제목이 H2 블록이 된다', () => assert.ok(html.includes('<!-- wp:heading -->\n<h2>✨ 대회 개요</h2>')));
+check('소제목이 H2 블록이 된다', () => assert.ok(html.includes('<!-- wp:heading -->\n<h2>✨ 2026 KLPGA 챔피언십 대회 개요</h2>')));
 check('**굵게**가 목록으로 오인되지 않는다', () => {
   assert.ok(html.includes('<strong>일정</strong>'), '굵은 라벨이 깨졌습니다');
   assert.ok(!html.includes('<li>*일정'), '굵은 라벨이 목록으로 잘못 들어갔습니다');
@@ -226,6 +249,68 @@ check('종목 이름이 중복되지 않는다', () => {
 });
 check('뉴스 소스가 둘 이상이다', () => {
   assert.ok((topicsCfg.feeds?.searchFeeds || []).length >= 2, '소스가 하나뿐이면 그 한 곳이 막힐 때 전체가 멈춥니다');
+});
+
+// ── 자주 묻는 질문 구조화 데이터 ──────────────────────────
+console.log('\n[자주 묻는 질문 구조화 데이터]');
+
+const faqBody = [
+  '## ❓ 자주 묻는 질문',
+  '**Q. 대회는 언제 열리나요?**',
+  '2026년 10월 3일부터 5일까지 열립니다. 장소는 남원입니다.',
+  '**Q. 참가비가 있나요?**',
+  '공식 발표된 금액은 확인되지 않았습니다.',
+  '## 🔥 누가 웃을까',
+  '끝까지 지켜봐 주시기 바랍니다.',
+].join('\n\n');
+
+check('질문과 답을 읽어낸다', () => {
+  const faqs = extractFaq(faqBody);
+  assert.equal(faqs.length, 2, JSON.stringify(faqs));
+  assert.equal(faqs[0].question, '대회는 언제 열리나요?');
+  assert.ok(faqs[0].answer.startsWith('2026년 10월 3일'), faqs[0].answer);
+});
+check('소제목이 답에 섞여 들어가지 않는다', () => {
+  const faqs = extractFaq(faqBody);
+  assert.ok(!faqs[1].answer.includes('누가 웃을까'), faqs[1].answer);
+  assert.ok(!faqs[1].answer.includes('지켜봐'), faqs[1].answer);
+});
+check('JSON-LD가 올바른 형태로 만들어진다', () => {
+  const block = faqSchemaBlock(faqBody);
+  const json = JSON.parse(block.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1]);
+  assert.equal(json['@type'], 'FAQPage');
+  assert.equal(json.mainEntity.length, 2);
+  assert.equal(json.mainEntity[0]['@type'], 'Question');
+  assert.equal(json.mainEntity[0].acceptedAnswer['@type'], 'Answer');
+});
+check('질문이 하나뿐이면 구조화 데이터를 만들지 않는다', () => {
+  assert.equal(faqSchemaBlock('**Q. 하나뿐?**\n\n네.'), '');
+});
+check('본문에 질문이 없으면 아무것도 붙이지 않는다', () => {
+  assert.equal(faqSchemaBlock('## ✨ 개요\n\n내용입니다.'), '');
+});
+check('</script>가 값에 섞여도 스크립트가 끊기지 않는다', () => {
+  const block = faqSchemaBlock('**Q. 왜?**\n\n</script> 때문입니다.\n\n**Q. 또?**\n\n그렇습니다.');
+  assert.ok(!/<\/script>[\s\S]*<\/script>[\s\S]*<\/script>/.test(block), '스크립트가 중간에 끊깁니다');
+  assert.ok(block.includes('<\\/script'), '이스케이프되지 않았습니다');
+});
+
+// ── 키워드 밀도 ───────────────────────────────────────────
+console.log('\n[키워드 밀도]');
+
+check('밀도를 Rank Math 방식으로 센다', () => {
+  const body = `${'가나다 '.repeat(96)}바둑춘향 선발대회`;
+  const d = keywordDensity(body, '바둑춘향 선발대회');
+  assert.equal(d.count, 1);
+  assert.equal(d.words, 98);
+  assert.ok(d.density > 1 && d.density < 1.1, `${d.density}%`);
+});
+check('키워드 사이 공백이 달라도 센다', () => {
+  assert.equal(keywordDensity('바둑춘향   선발대회 소식', '바둑춘향 선발대회').count, 1);
+});
+check('목표 횟수는 분량에 비례한다', () => {
+  assert.ok(targetKeywordCount(3500) >= 12, targetKeywordCount(3500));
+  assert.ok(targetKeywordCount(3500) <= 20);
 });
 
 Date.now = realNow;

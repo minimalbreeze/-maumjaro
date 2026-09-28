@@ -3,22 +3,50 @@
 // REST /wp/v2/media는 JSON이 아니라 파일 본문을 그대로 받는다.
 // 파일 이름은 Content-Disposition 헤더로 넘긴다.
 
-import { wpConfig, WordPressError } from '../wordpress/client.mjs';
+import { wpConfig, wpUserAgent, WordPressError } from '../wordpress/client.mjs';
 import { withRetry } from '../utils/retry.mjs';
 
-/** 한글 제목을 파일 이름으로 쓸 수 있게 바꾼다. 워드프레스가 한글 파일명을 싫어하는 경우가 있다. */
+/**
+ * 업로드할 파일 이름을 만든다. 반드시 ASCII만 남긴다.
+ *
+ * 파일 이름은 Content-Disposition 헤더로 넘어가는데, HTTP 헤더는 ASCII만
+ * 담을 수 있다. 한글이 한 글자라도 섞이면 요청을 만드는 단계에서 터진다.
+ *   Cannot convert argument to a ByteString ... value of 50556
+ *
+ * 그래서 한글은 버리고, 대신 원본에서 뽑은 짧은 해시를 붙여 이름이 겹치지
+ * 않게 한다. 사람이 읽을 이름은 alt 텍스트와 캡션이 담당하므로 파일 이름이
+ * 한글일 필요는 없다.
+ */
 export function safeFileName(seed, ext = 'png') {
-  const base = String(seed)
+  const src = String(seed);
+  const ascii = src
     .toLowerCase()
-    .replace(/[^a-z0-9가-힣]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 40);
+    .slice(0, 32)
+    .replace(/-$/, '');
+
+  // 한글만 있는 제목이면 ascii가 비거나 너무 짧아진다. 해시로 구분한다.
+  let h = 0;
+  for (const ch of src) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const tag = h.toString(36).slice(0, 6);
   const stamp = Date.now().toString(36);
-  return `${base || 'image'}-${stamp}.${ext}`;
+
+  const base = ascii.length >= 3 ? `${ascii}-${tag}` : `sports-${tag}`;
+  return `${base}-${stamp}.${ext}`;
+}
+
+/** 파일 이름이 헤더에 담길 수 있는지 확인한다. */
+export function isHeaderSafe(name) {
+  return /^[\x20-\x7E]*$/.test(name) && !/["\\]/.test(name);
 }
 
 export async function uploadMedia({ buffer, fileName, alt, caption = '', timeoutMs = 60000 }) {
   const cfg = wpConfig();
+
+  // 헤더에 못 담는 이름이 흘러들어오면 여기서 안전한 이름으로 바꾼다.
+  // 이름 때문에 이미지를 통째로 잃는 것보다 낫다.
+  if (!isHeaderSafe(fileName)) fileName = safeFileName(fileName);
 
   const { data } = await withRetry(async () => {
     const ctrl = new AbortController();
@@ -31,6 +59,7 @@ export async function uploadMedia({ buffer, fileName, alt, caption = '', timeout
           'content-type': 'image/png',
           'content-disposition': `attachment; filename="${fileName}"`,
           accept: 'application/json',
+          'user-agent': wpUserAgent(),
         },
         body: buffer,
         signal: ctrl.signal,

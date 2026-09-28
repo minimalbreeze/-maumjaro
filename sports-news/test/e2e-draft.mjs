@@ -72,6 +72,10 @@ check('pause_turn이 와도 이어받아 끝낸다', () => {
   assert.ok(/확인된 사실 5건/.test(result.out), result.out.slice(-400));
 });
 check('웹검색 도구를 붙여서 사실확인을 한다', () => assert.ok(ai.seen.hadWebSearch));
+// 폴백이 있으면 잘못 부른 호출도 겉으로는 성공해 보인다. 거부당한 호출이
+// 하나라도 있으면 실패로 본다.
+check('Claude API를 거부당하지 않는 형태로 부른다', () =>
+  assert.deepEqual(ai.seen.rejected, [], `거부당한 호출: ${ai.seen.rejected.join(', ')}`));
 check('글이 워드프레스에 저장된다', () => assert.equal(wp.state.created.length, 1, result.out.slice(-600)));
 
 const post = wp.state.created[0] || {};
@@ -165,6 +169,66 @@ check('최근 같은 글이 있으면 B로 판정하고 건너뛴다', () => {
 check('B 판정이면 AI 작성 단계로 넘어가지 않는다', () => {
   assert.ok(!/워프양식으로 작성 중/.test(r4.out), '중복인데 글을 썼습니다');
 });
+
+// ── 1순위가 막히면 다음 후보로 ──────────────────────────────────
+// 예전에는 1순위 글감이 중복이면 그 종목은 그대로 빈손이었다.
+// 후보가 더 있는데도 아무것도 안 만드는 건 아깝다.
+console.log('\n[1순위가 막히면 다음 후보로]');
+const wp5 = await startMockWordPress({
+  existingPosts: [{
+    id: 77, title: { rendered: '2026 삼성화재배 8강 대진 확정, 신진서 vs 커제 성사' },
+    link: 'http://example.test/?p=77', date: new Date().toISOString(),
+    modified: new Date().toISOString(), status: 'publish',
+  }],
+});
+const r5 = await run(['--topic=바둑', '--draft', '--fixture=test/fixtures/two-clusters.json'], {
+  ...probeEnv, WORDPRESS_URL: `http://127.0.0.1:${wp5.port}`,
+});
+check('1순위가 중복이면 다음 후보를 처리한다', () => {
+  assert.ok(/다음 후보로 넘어갑니다/.test(r5.out), r5.out.slice(-800));
+});
+check('다음 후보로 임시글 1건을 만든다', () => {
+  assert.equal(r5.code, 0, r5.out.slice(-600));
+  assert.equal(wp5.state.created.length, 1, `${wp5.state.created.length}건 저장됨`);
+  assert.equal(wp5.state.created[0].status, 'draft');
+});
+// 모의 AI는 어떤 글감을 줘도 같은 원고를 돌려주므로 저장된 제목으로는
+// 어느 글감이었는지 가릴 수 없다. 로그에 찍힌 처리 순서로 확인한다.
+check('중복 글감이 아니라 2순위 글감을 처리한다', () => {
+  const order = [...r5.out.matchAll(/처리: (.+)/g)].map((m) => m[1]);
+  assert.equal(order.length, 2, `처리한 글감 ${order.length}개: ${order.join(' / ')}`);
+  assert.ok(/삼성화재배/.test(order[0]), order[0]);
+  assert.ok(/LG배/.test(order[1]), order[1]);
+});
+wp5.server.close();
+
+// ── 주제를 직접 지정해 한 편만 쓰기 ─────────────────────────
+// 매일 전 종목을 훑는 것보다 훨씬 싸다. 요청한 주제를 카테고리로 분류하고
+// 그 한 편만 만든다.
+console.log('\n[주제 지정 — 1편만]');
+const wp6 = await startMockWordPress();
+const r6 = await run(
+  ['--subject=삼성화재배 8강 신진서 커제', '--draft', '--fixture=test/fixtures/sample-news.json'],
+  { ...probeEnv, WORDPRESS_URL: `http://127.0.0.1:${wp6.port}` },
+);
+check('주제를 카테고리로 분류한다', () => {
+  assert.equal(r6.code, 0, r6.out.slice(-800));
+  assert.ok(/주제 분류 중/.test(r6.out), r6.out.slice(-600));
+  assert.ok(/카테고리: 바둑/.test(r6.out), r6.out.slice(-600));
+});
+check('주제 모드에서도 임시글로 저장한다', () => {
+  assert.equal(wp6.state.created.length, 1, `${wp6.state.created.length}건`);
+  assert.equal(wp6.state.created[0].status, 'draft');
+});
+check('주제 모드는 1편만 만든다', () => {
+  assert.ok(/생성 1건/.test(r6.out), r6.out.slice(-400));
+});
+check('자주 묻는 질문 구조화 데이터가 본문에 붙는다', () => {
+  const content = wp6.state.created[0].content || '';
+  assert.ok(/application\/ld\+json/.test(content), '구조화 데이터가 없습니다');
+  assert.ok(/"@type":\s*"FAQPage"/.test(content), content.slice(-300));
+});
+wp6.server.close();
 
 if (siteBackup !== null) fs.writeFileSync(sitePath, siteBackup); else fs.rmSync(sitePath, { force: true });
 ai.server.close(); wp.server.close(); wp2.server.close(); wp3.server.close(); wp4.server.close();

@@ -1,0 +1,10 @@
+{
+  "_설명": "토큰 100만개당 요금(미국 달러). 실행이 끝나면 이 표로 대략의 비용을 계산해 보여준다. 요금은 바뀔 수 있으니 https://claude.com/pricing 에서 확인하고 여기를 고치면 된다. 웹검색은 별도 과금이라 횟수만 표시한다.",
+  "_확인일": "2026-09-28",
+  "models": {
+    "claude-opus-5":   { "input": 5.0, "output": 25.0 },
+    "claude-sonnet-5": { "input": 2.0, "output": 10.0 },
+    "claude-haiku-4-5":{ "input": 1.0, "output": 5.0 }
+  },
+  "usdToKrw": 1400
+}

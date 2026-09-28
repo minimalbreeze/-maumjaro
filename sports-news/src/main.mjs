@@ -28,7 +28,9 @@ import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.m
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
+import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { checkRankMath } from './seo/rankmath.mjs';
+import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
 
@@ -39,6 +41,9 @@ export function parseArgs(argv) {
     if ((m = /^--topic=(.+)$/.exec(a))) args.topics.push(m[1].replace(/^["']|["']$/g, ''));
     else if ((m = /^--limit=(\d+)$/.exec(a))) args.limit = Number(m[1]);
     else if ((m = /^--fixture=(.+)$/.exec(a))) args.fixture = m[1].replace(/^["']|["']$/g, '');
+    // --subject: 종목 목록을 훑지 않고, 적어 준 주제 하나만 쓴다.
+    // 매일 전 종목을 도는 것보다 훨씬 싸다.
+    else if ((m = /^--subject=([\s\S]+)$/.exec(a))) args.subject = m[1].replace(/^["']|["']$/g, '').trim();
     else if (a === '--draft') args.draft = true;
     else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
   }
@@ -91,9 +96,11 @@ async function collectTopic(topic, cfg, { fixture } = {}) {
   // 뉴스 수집이 막혀 있을 때 이후 단계(사실확인·작성·저장)를 점검하는 용도다.
   if (fixture) {
     const items = JSON.parse(fs.readFileSync(fixture, 'utf8'));
+    // 주제를 직접 지정한 경우(adHoc)에는 종목 이름으로 거르지 않는다.
+    // 그 이름은 사용자가 적어 준 문장이지 샘플 파일의 종목 이름이 아니다.
     const forTopic = Array.isArray(items)
-      ? items.filter((it) => !it.topic || it.topic === topic.name)
-      : (items[topic.name] || []);
+      ? items.filter((it) => topic.adHoc || !it.topic || it.topic === topic.name)
+      : (items[topic.name] || Object.values(items).flat());
     raw.push(...forTopic);
     log.info(`  샘플 파일에서 ${forTopic.length}건 (네트워크를 쓰지 않습니다)`);
   }
@@ -494,14 +501,16 @@ const slugish = (s) => String(s).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const { cfg, topics } = loadTopics(args.topics);
+  // --subject를 쓰면 종목 목록은 읽기만 하고 실제로 돌지는 않는다.
+  const { cfg, topics: configuredTopics } = loadTopics(args.subject ? [] : args.topics);
+  let topics = configuredTopics;
   const today = todayKST();
 
   logHeader(
     args.dryRun
       ? `🧪 DRY RUN — 워드프레스에 저장하지 않습니다 (${args.dryRunReason})`
       : '💾 임시글 저장 모드 (status=draft)',
-    topics.map((t) => t.name)
+    args.subject ? [args.subject] : topics.map((t) => t.name)
   );
 
   // 워드프레스 연결은 선택이다. 없으면 중복 검사와 카테고리 매칭만 건너뛴다.
@@ -524,6 +533,19 @@ async function main() {
     }
   }
 
+  // 주제를 직접 지정했으면 여기서 카테고리를 정하고 임시 종목을 만든다.
+  // 카테고리 목록을 먼저 읽어야 하므로 워드프레스 연결 뒤에 한다.
+  if (args.subject) {
+    const names = (siteCategories.length ? siteCategories : (cfg.knownCategories?.list || []))
+      .map((c) => c.name).filter(Boolean);
+    log.step(`주제 분류 중: "${args.subject}"`);
+    const classified = await classifySubject(args.subject, names);
+    log.info(`  카테고리: ${classified.category} — ${classified.reason}`);
+    log.info(`  검색어: ${classified.queries.join(', ')}`);
+    topics = [subjectAsTopic(args.subject, classified)];
+    args.limit ??= 1;
+  }
+
   const perTopic = [];
   for (const topic of topics) {
     log.section(`📰 ${topic.name}`);
@@ -541,20 +563,42 @@ async function main() {
       }
 
       const take = args.limit ?? Number(env('CANDIDATES_PER_TOPIC', '1'));
-      const picked = clusters.slice(0, take);
-      log.info(`후보 ${clusters.length}개 중 상위 ${picked.length}개 처리`);
+      log.info(`후보 ${clusters.length}개 중 ${take}개 목표`);
       clusters.slice(0, 5).forEach((c, i) => log.info(`  ${i + 1}. [${c.score}점] ${c.label.slice(0, 46)}`));
 
+      // 1순위 글감이 중복이거나 사실 근거가 부족하면 그대로 끝내지 않고
+      // 다음 후보로 내려간다. 예전에는 1순위가 걸리면 그 종목은 빈손이었다.
+      // 다만 후보를 무한정 훑으면 사실확인 비용이 계속 붙으므로, 건너뛴 만큼만
+      // 몇 번 더 시도한다.
+      const maxExtra = Number(env('MAX_EXTRA_CANDIDATES', '2'));
       const results = [];
-      for (const cluster of picked) {
+      let produced = 0;
+      let extra = 0;
+
+      for (const cluster of clusters) {
+        if (produced >= take) break;
+        if (extra > maxExtra) {
+          log.warn(`  다음 후보 시도를 ${maxExtra}번까지만 합니다. 여기서 멈춥니다.`);
+          break;
+        }
+
         log.raw('');
         log.step(`처리: ${cluster.label.slice(0, 50)}`);
+        let r;
         try {
-          results.push(await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable }));
+          r = await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable });
         } catch (err) {
           // 한 건이 실패해도 다음 건으로 계속한다.
           log.fail('  이 글감 처리 실패', err);
-          results.push({ topic: topic.name, label: cluster.label, error: err.message });
+          r = { topic: topic.name, label: cluster.label, error: err.message };
+        }
+        results.push(r);
+
+        if (r.skipped || r.error) {
+          extra++;
+          if (extra <= maxExtra && produced < take) log.info('  다음 후보로 넘어갑니다.');
+        } else {
+          produced++;
         }
       }
       perTopic.push({ topic: topic.name, candidates: clusters.length, results });
@@ -566,6 +610,47 @@ async function main() {
 
   printSummary(perTopic, args);
 }
+
+/**
+ * 이번 실행에 얼마나 썼는지 보여준다.
+ *
+ * 비용이 보이지 않으면 어디를 줄여야 할지 알 수 없다. 단계마다 모델이 다르므로
+ * 모델별로 나눠 보여준다. 요금표는 config/pricing.json에 있고 바뀌면 거기를 고친다.
+ */
+function printUsage() {
+  const rows = usageSummary();
+  if (!rows.length) return;
+
+  let pricing = null;
+  try {
+    pricing = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'pricing.json'), 'utf8'));
+  } catch { /* 요금표가 없으면 토큰만 보여준다 */ }
+
+  log.raw('');
+  log.raw('💰 이번 실행에 쓴 양');
+  let usd = 0;
+  let searches = 0;
+  for (const r of rows) {
+    const rate = pricing?.models?.[r.model];
+    let line = `   ${r.model}: 호출 ${r.calls}회 · 입력 ${fmt(r.input)} · 출력 ${fmt(r.output)}`;
+    if (r.cacheRead) line += ` · 캐시재사용 ${fmt(r.cacheRead)}`;
+    if (r.searches) line += ` · 웹검색 ${r.searches}회`;
+    searches += r.searches;
+    if (rate) {
+      const cost = (r.input / 1e6) * rate.input + (r.output / 1e6) * rate.output;
+      usd += cost;
+      line += `  ≈ $${cost.toFixed(3)}`;
+    }
+    log.raw(line);
+  }
+  if (usd > 0) {
+    const krw = Math.round(usd * (pricing?.usdToKrw || 1400));
+    log.raw(`   합계 ≈ $${usd.toFixed(3)} (약 ${krw.toLocaleString('ko-KR')}원)${searches ? ` + 웹검색 ${searches}회 별도` : ''}`);
+    log.raw('   * 토큰 요금만 계산한 값입니다. 웹검색은 별도 과금이라 횟수만 표시합니다.');
+  }
+}
+
+const fmt = (n) => n.toLocaleString('ko-KR');
 
 function printSummary(perTopic, args) {
   log.section('📋 실행 요약');
@@ -590,6 +675,7 @@ function printSummary(perTopic, args) {
 
   log.raw('');
   log.info(`생성 ${saved}건 · 업데이트 후보 ${updateCandidates}건 · 건너뜀 ${skipped}건 · 실패 ${failed}건`);
+  printUsage();
   if (args.dryRun) {
     log.raw('');
     log.info('🧪 DRY RUN이었습니다. 워드프레스에는 아무것도 저장되지 않았습니다.');

@@ -4,6 +4,7 @@
 // 저장 직후 워드프레스가 돌려준 status가 draft가 아니면 즉시 오류를 낸다.
 
 import { wpFetch } from './client.mjs';
+import { faqSchemaBlock } from '../seo/faq-schema.mjs';
 
 const DRAFT_STATUS = 'draft';
 
@@ -78,9 +79,13 @@ function escapeHtml(s) {
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
  */
 export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', featuredMediaId = null }) {
+  // 본문에 자주 묻는 질문이 있으면 구조화 데이터를 끝에 붙인다.
+  // 본문에 실제로 적힌 질문과 답만 들어간다 — 없는 내용을 만들어 붙이지 않는다.
+  const schema = faqSchemaBlock(body);
+
   const payload = {
     title,
-    content: markdownToBlocks(body, { images, adHtml }),
+    content: markdownToBlocks(body, { images, adHtml }) + (schema ? `\n\n${schema}` : ''),
     status: DRAFT_STATUS,
     categories: categoryId ? [categoryId] : [],
     tags: tagIds || [],
@@ -105,6 +110,7 @@ export async function saveDraft({ title, body, categoryId, tagIds, seo, seoField
     editUrl: data.link ? data.link.replace(/\/$/, '') : '',
     adminUrl: adminEditUrl(data),
     savedMeta: Object.keys(meta),
+    faqSchema: Boolean(schema),
   };
 }
 

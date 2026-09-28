@@ -29,3 +29,6 @@ sports-news/.env
 sports-news/out/
 sports-news/node_modules/
 logs/
+
+# 워드프레스 플러그인 zip은 필요할 때 만든다 (원본 .php는 sports-news/wordpress-plugin/에 있다)
+maumjaro-seo-rest.zip

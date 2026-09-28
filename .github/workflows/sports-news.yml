@@ -13,8 +13,12 @@ name: 스포츠 뉴스 임시글 만들기
 on:
   workflow_dispatch:
     inputs:
+      subject:
+        description: '주제를 직접 적기 (여기에 쓰면 이것만 1편 씁니다). 예: KBO 플레이오프 1차전'
+        required: false
+        default: ''
       topic:
-        description: '종목 (비우면 켜져 있는 종목 전부). 예: JLPGA, KBO, 바둑'
+        description: '종목 (주제를 비웠을 때만 씁니다. 비우면 켜져 있는 종목 전부). 예: JLPGA, KBO, 바둑'
         required: false
         default: ''
       mode:
@@ -71,6 +75,7 @@ jobs:
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
           missing=""
           [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
@@ -90,11 +95,13 @@ jobs:
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: npm run wp:check
 
       - name: 실행
         working-directory: sports-news
         env:
+          IN_SUBJECT: ${{ inputs.subject }}
           IN_TOPIC: ${{ inputs.topic }}
           IN_MODE: ${{ inputs.mode }}
           IN_COUNT: ${{ inputs.count }}
@@ -102,12 +109,19 @@ jobs:
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
           # 입력값을 명령줄에 직접 끼워 넣지 않는다.
           # GitHub 표현식을 run 블록에 바로 쓰면 입력에 들어간 셸 문자가
           # 그대로 실행되므로, 위 env로 넘겨받아 배열로 조립한다.
           args=()
-          [ -n "$IN_TOPIC" ] && args+=("--topic=$IN_TOPIC")
+          if [ -n "$IN_SUBJECT" ]; then
+            # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
+            args+=("--subject=$IN_SUBJECT")
+            echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
+          elif [ -n "$IN_TOPIC" ]; then
+            args+=("--topic=$IN_TOPIC")
+          fi
           case "$IN_COUNT" in
             ''|*[!0-9]*) echo "::error::글 개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
             *) args+=("--limit=$IN_COUNT") ;;
