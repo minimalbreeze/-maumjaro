@@ -6,6 +6,9 @@
 export const IMAGE_MARK = (i) => `<!--IMG:${i}-->`;
 export const AD_MARK = '<!--AD-->';
 
+import { WATCH_MARK } from '../seo/watch-banner.mjs';
+export { WATCH_MARK };
+
 /** 맘운자로로 링크를 건 이미지 HTML. 사용자 요청. */
 export function imageHtml({ url, alt, link = 'https://maumjaro.minimalbreeze.com/' }) {
   const a = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -29,15 +32,17 @@ ${snippet.trim()}
  * 소제목(## ...) 위치를 찾아 이미지·광고 자리를 잡는다.
  *
  * - 대표 이미지는 글 맨 위 (첫 문단 뒤)
+ * - 중계 배너는 두 번째 소제목 앞 — 개요를 읽고 "그래서 어디서 보지?"가
+ *   떠오르는 자리다. 글 끝에 두면 거기까지 안 내려간 사람이 못 본다.
  * - 본문 카드는 중간 소제목 앞
  * - 광고는 글 한가운데 소제목 앞 — "자연스럽게 보이도록"
  */
-export function planPlacements(body, { sectionImages = 1, withAd = true } = {}) {
+export function planPlacements(body, { sectionImages = 1, withAd = true, withWatch = false } = {}) {
   const lines = body.split('\n');
   const headings = [];
   lines.forEach((l, i) => { if (/^##\s+/.test(l)) headings.push({ index: i, text: l }); });
 
-  const plan = { heroAfterLine: null, sections: [], adBeforeLine: null, headings };
+  const plan = { heroAfterLine: null, sections: [], adBeforeLine: null, watchBeforeLine: null, headings };
 
   // 대표 이미지: 첫 소제목 바로 앞(= 도입부 뒤)
   plan.heroAfterLine = headings.length ? headings[0].index : 0;
@@ -47,8 +52,14 @@ export function planPlacements(body, { sectionImages = 1, withAd = true } = {}) 
     plan.adBeforeLine = headings[Math.floor(headings.length / 2)].index;
   }
 
-  // 본문 카드: 광고와 겹치지 않는 소제목 앞
-  const used = new Set([plan.heroAfterLine, plan.adBeforeLine]);
+  // 중계 배너: 두 번째 소제목 앞. 광고와 같은 자리에 겹치지 않게 한다.
+  if (withWatch && headings.length >= 2) {
+    const candidate = headings[1].index;
+    plan.watchBeforeLine = candidate === plan.adBeforeLine ? (headings[2]?.index ?? null) : candidate;
+  }
+
+  // 본문 카드: 광고·배너와 겹치지 않는 소제목 앞
+  const used = new Set([plan.heroAfterLine, plan.adBeforeLine, plan.watchBeforeLine]);
   for (const h of headings.slice(1)) {
     if (plan.sections.length >= sectionImages) break;
     if (used.has(h.index)) continue;
@@ -69,6 +80,7 @@ export function insertMarks(body, plan) {
 
   if (plan.heroAfterLine !== null) add(plan.heroAfterLine, IMAGE_MARK(0));
   if (plan.adBeforeLine !== null) add(plan.adBeforeLine, AD_MARK);
+  if (plan.watchBeforeLine !== null) add(plan.watchBeforeLine, WATCH_MARK);
   plan.sections.forEach((h, i) => add(h.index, IMAGE_MARK(i + 1)));
 
   const out = [];

@@ -17,6 +17,7 @@ import { saveDraft } from './draft.mjs';
 import { createHeroImage, createSectionImage } from '../images/provider.mjs';
 import { uploadMedia, safeFileName } from '../images/upload.mjs';
 import { planPlacements, insertMarks, imageHtml, adHtml } from '../images/embed.mjs';
+import { pickWatchLinks, watchBannerHtml } from '../seo/watch-banner.mjs';
 
 /**
  * writeDryRunFile이 만든 .md를 거꾸로 읽는다.
@@ -85,8 +86,14 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
   const cat = resolveCategory(parsed.category, siteCategories);
   log.info(`카테고리: ${cat.name} (id=${cat.id}, ${cat.matched})`);
 
-  // 이미지·광고 자리를 잡는다
-  const plan = planPlacements(parsed.body, { sectionImages: withImages ? 1 : 0, withAd: Boolean(AD_SNIPPET) });
+  // 이미지·광고·중계 배너 자리를 잡는다
+  const watch = pickWatchLinks(cat.name || parsed.category);
+  if (watch) log.info(`중계 배너: ${watch.primary.url}`);
+  const plan = planPlacements(parsed.body, {
+    sectionImages: withImages ? 1 : 0,
+    withAd: Boolean(AD_SNIPPET),
+    withWatch: Boolean(watch),
+  });
   const body = insertMarks(parsed.body, plan);
   const blocks = [];
   let featuredId = null;
@@ -131,6 +138,7 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
     seoFields,
     images: blocks,
     adHtml: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
+    watchHtml: watch ? watchBannerHtml(watch, { title: parsed.title.split('(')[0].trim() }) : '',
     featuredMediaId: featuredId,
   });
 

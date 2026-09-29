@@ -30,6 +30,7 @@ import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
+import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
 import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
@@ -310,6 +311,7 @@ async function processCluster(cluster, ctx) {
     seoFields,
     images: media.blocks,
     adHtml: media.ad,
+    watchHtml: media.watch,
     featuredMediaId: media.featuredId,
   });
   result.wordpress = saved;
@@ -376,9 +378,20 @@ function printArticle(result) {
  * 무엇이 안 됐는지만 로그에 남긴다.
  */
 async function attachImages({ article, seo, cluster, dryRun }) {
-  const plan = planPlacements(article.body, { sectionImages: 1, withAd: Boolean(AD_SNIPPET) });
+  // 중계 링크가 설정에 있는 종목만 배너를 넣는다. 없으면 자리도 잡지 않는다.
+  const watch = pickWatchLinks(cluster.category);
+  const plan = planPlacements(article.body, {
+    sectionImages: 1,
+    withAd: Boolean(AD_SNIPPET),
+    withWatch: Boolean(watch),
+  });
   const body = insertMarks(article.body, plan);
-  const out = { body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '', featuredId: null, summary: [] };
+  const out = {
+    body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
+    watch: watch ? watchBannerHtml(watch, { title: article.title.split('(')[0].trim() }) : '',
+    featuredId: null, summary: [],
+  };
+  if (watch) log.info(`    중계 배너: ${watch.primary.url}`);
 
   // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
   // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")
