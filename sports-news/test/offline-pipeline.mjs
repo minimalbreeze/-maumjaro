@@ -16,6 +16,7 @@ import { judgeDuplication } from '../src/duplicate/check.mjs';
 import { resolveCategory, normalizeTags } from '../src/wordpress/taxonomy.mjs';
 import { lintArticle, splitTitleAndBody, AI_TELLS } from '../src/ai/write.mjs';
 import { extractFaq, faqSchemaBlock } from '../src/seo/faq-schema.mjs';
+import { imageHtml } from '../src/images/embed.mjs';
 import { keywordDensity, targetKeywordCount } from '../src/seo/rankmath.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -411,8 +412,42 @@ check('네 가지 원칙이 프로젝트 규칙 파일에도 박혀 있다', () 
   }
 });
 
+check('링크를 현재 창에서 연다는 규칙이 문서에 남아 있다', () => {
+  assert.ok(/현재 창에서 연다/.test(프로젝트규칙), '링크 규칙이 빠졌습니다');
+});
+
 check('임시글로만 저장한다는 안전선이 문서에 남아 있다', () => {
   assert.ok(/임시글\(draft\)로만/.test(프로젝트규칙), '자동 발행 금지 원칙이 빠졌습니다');
+});
+
+// ── 링크는 현재 창에서 연다 ────────────────────────────────
+// 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을 잃고, 모바일에서는 탭이 쌓인다.
+// 우리가 만드는 링크(이미지·중계 배너)에 target이 붙지 않는지 확인한다.
+// 쿠팡 광고는 제휴사가 준 코드 그대로라 여기서 제외한다.
+console.log('\n[링크는 현재 창에서]');
+
+check('이미지 링크에 새 창이 붙지 않는다', () => {
+  const html = imageHtml({ url: 'https://x.test/a.png', alt: '대체텍스트' });
+  assert.ok(!/target=/.test(html), html);
+  assert.ok(!/noopener/.test(html), html);
+});
+
+check('우리가 만드는 링크 어디에도 target이 없다', () => {
+  const srcDir = path.join(HERE, '..', 'src');
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (fs.statSync(full).isDirectory()) { walk(full); continue; }
+      if (!name.endsWith('.mjs')) continue;
+      const text = fs.readFileSync(full, 'utf8');
+      // 주석에 설명으로 적은 것은 세지 않는다. 실제 출력에 들어가는 것만 본다.
+      const code = text.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
+      if (/target=["']_blank/.test(code)) offenders.push(path.relative(path.join(HERE, '..'), full));
+    }
+  };
+  walk(srcDir);
+  assert.deepEqual(offenders, [], `현재 창에서 열어야 합니다: ${offenders.join(', ')}`);
 });
 
 Date.now = realNow;

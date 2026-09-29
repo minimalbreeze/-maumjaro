@@ -37,8 +37,12 @@ const esc = (s) => String(s)
 
 /**
  * 배너 HTML을 만든다.
+ *
  * 워드프레스 블록 에디터에서도 그대로 보이도록 인라인 스타일만 쓴다
  * (테마 CSS에 기대면 테마를 바꿀 때 깨진다).
+ *
+ * 링크는 현재 창에서 연다. 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을
+ * 잃는다. target이 없으니 noopener도 필요 없다. 바깥 링크이므로 nofollow는 남긴다.
  */
 export function watchBannerHtml(entry, { title = '' } = {}) {
   if (!entry?.primary?.url) return '';
@@ -46,7 +50,7 @@ export function watchBannerHtml(entry, { title = '' } = {}) {
   const p = entry.primary;
   const extras = (entry.secondary || [])
     .filter((s) => s?.url && s?.text)
-    .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener nofollow"
+    .map((s) => `<a href="${esc(s.url)}" rel="nofollow"
         style="color:#6b2d8f;font-weight:600;text-decoration:underline;">${esc(s.text)}</a>`)
     .join(' · ');
 
@@ -54,7 +58,7 @@ export function watchBannerHtml(entry, { title = '' } = {}) {
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
   <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">📺 경기 보러가기</div>
   ${title ? `<div style="color:#ffffff;font-size:17px;font-weight:700;margin-bottom:14px;">${esc(title)}</div>` : ''}
-  <a href="${esc(p.url)}" target="_blank" rel="noopener nofollow"
+  <a href="${esc(p.url)}" rel="nofollow"
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →
   </a>
