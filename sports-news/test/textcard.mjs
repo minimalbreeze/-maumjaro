@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { wrapTitle, paletteFor, cardSvg, renderCard, PALETTES } from '../src/images/textcard.mjs';
+import { wrapTitle, paletteFor, cardSvg, renderCard, PALETTES, mixHex, inkFor, contrastRatio, shortLabel, estimateTextWidth } from '../src/images/textcard.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -72,6 +72,54 @@ await checkAsync('한글이 네모로 깨지지 않는다', async () => {
   for (let i = 0; i < data.length; i += info.channels) hist.set(data[i], (hist.get(data[i]) || 0) + 1);
   // 명도 종류가 몇 가지 안 되면 글자가 아예 안 그려진 것이다.
   assert.ok(hist.size > 20, `명도 종류 ${hist.size}가지 — 글자가 그려지지 않았습니다`);
+});
+
+// ── 글씨가 보이는가 ────────────────────────────────────────
+// 실제로 당한 일: 라벨 알약이 280px 고정이라 긴 라벨이 밖으로 삐져나갔고,
+// 삐져나간 글자는 배경과 같은 계열 색이어서 거의 보이지 않았다.
+console.log('\n[글씨가 보이는가]');
+
+check('모든 팔레트에서 본문 글자가 배경과 충분히 대비된다', () => {
+  for (const p of PALETTES) {
+    const bg = mixHex(p.from, p.to);
+    const ratio = contrastRatio(inkFor(bg), bg);
+    // WCAG AA 기준은 4.5:1. 큰 글씨라 3:1이면 되지만 넉넉히 잡는다.
+    assert.ok(ratio >= 4.5, `${p.name}: ${ratio.toFixed(2)}:1`);
+  }
+});
+
+check('모든 팔레트에서 라벨 글자가 알약과 충분히 대비된다', () => {
+  for (const p of PALETTES) {
+    const ratio = contrastRatio(inkFor(p.accent), p.accent);
+    assert.ok(ratio >= 4.5, `${p.name}: ${ratio.toFixed(2)}:1`);
+  }
+});
+
+check('긴 라벨을 알약 안에 들어갈 길이로 줄인다', () => {
+  const short = shortLabel('피트 알론소 볼티모어 오리올스 아메리칸리그 타점왕 홈런왕');
+  assert.ok(short.length <= 17, `${short.length}자: ${short}`);
+  assert.ok(short.endsWith('…'), short);
+});
+
+check('짧은 라벨은 그대로 둔다', () => {
+  assert.equal(shortLabel('야구'), '야구');
+  assert.equal(shortLabel('배드민턴'), '배드민턴');
+});
+
+check('알약이 글자보다 넓다', () => {
+  for (const label of ['야구', '파크골프', '골프 스윙', '피트 알론소 볼티모어 오리올스 아메리칸리그']) {
+    const svg = cardSvg({ title: '제목입니다', label, kind: 'hero', seed: label });
+    const pillW = Number(/<rect [^>]*rx="28"[^>]*width="(\d+)"/.exec(svg)?.[1]
+      ?? /<rect [^>]*width="(\d+)" height="56"/.exec(svg)?.[1]);
+    const textW = estimateTextWidth(shortLabel(label), 30);
+    assert.ok(pillW >= textW, `"${label}": 알약 ${pillW}px < 글자 ${textW}px`);
+    assert.ok(pillW <= 1200 - 100, `"${label}": 알약이 카드를 넘습니다 (${pillW}px)`);
+  }
+});
+
+check('라벨이 없으면 알약을 그리지 않는다', () => {
+  const svg = cardSvg({ title: '제목', label: '', kind: 'hero' });
+  assert.ok(!/height="56"/.test(svg), '빈 알약이 그려졌습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

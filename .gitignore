@@ -32,3 +32,7 @@ logs/
 
 # 워드프레스 플러그인 zip은 필요할 때 만든다 (원본 .php는 sports-news/wordpress-plugin/에 있다)
 maumjaro-seo-rest.zip
+
+# 카드 미리보기 PNG는 결과를 눈으로 확인하려고 그때그때 굽는 파일이다.
+# 배포물이 아니므로 리포에 넣지 않는다 (이 리포는 그대로 GitHub Pages로 나간다).
+/*-미리보기*.png

@@ -29,7 +29,8 @@ import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
-import { checkRankMath } from './seo/rankmath.mjs';
+import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
+import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
 import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
@@ -239,10 +240,28 @@ async function processCluster(cluster, ctx) {
 
   // 2-5. SEO
   log.step('  SEO 생성 중');
-  const seo = await generateSeo({ title: article.title, body: article.body, topic: cluster.topic, category: cluster.category });
+  const seo = await generateSeo({
+    title: article.title, body: article.body,
+    topic: cluster.topic, category: cluster.category,
+    provisionalKeyword,
+  });
+
+  // 대표 키워드가 본문에 실제로 들어 있는지 확인한다.
+  //
+  // SEO 단계가 본문을 읽고 제 나름의 긴 구절을 고르면, 그 말이 본문에 그대로는
+  // 한 번도 나오지 않아 키워드 밀도가 0%가 된다. Rank Math는 대표 키워드를
+  // 있는 그대로 찾으므로 그러면 점수가 0이다. 실제로 그렇게 나온 적이 있다.
+  const picked = chooseFocusKeyword(article.body, [seo.focusKeyword, provisionalKeyword, cluster.topic]);
+  if (picked.keyword && picked.keyword !== seo.focusKeyword) {
+    log.warn(`    대표 키워드를 "${seo.focusKeyword}" → "${picked.keyword}"로 바꿉니다`);
+    log.info(`      원래 키워드는 본문에 ${keywordCountOf(picked, seo.focusKeyword)}회 나옵니다 (밀도 0에 가까우면 점수가 0이 됩니다)`);
+    seo.focusKeyword = picked.keyword;
+    seo.slug = buildSlug({ focusKeyword: picked.keyword, title: article.title, fallback: cluster.topic });
+  }
+
   result.seo = seo;
   log.info(`    SEO 제목: ${seo.seoTitle}`);
-  log.info(`    대표 키워드: ${seo.focusKeyword} · 슬러그: ${seo.slug}`);
+  log.info(`    대표 키워드: ${seo.focusKeyword} (본문 ${picked.density.toFixed(2)}%) · 슬러그: ${seo.slug}`);
   log.info(`    태그(${seo.tags.length}): ${seo.tags.join(', ')}`);
 
   // 2-6. 이미지 — 대표 이미지 1장 + 본문 카드 1장
@@ -292,6 +311,7 @@ async function processCluster(cluster, ctx) {
     seoFields,
     images: media.blocks,
     adHtml: media.ad,
+    watchHtml: media.watch,
     featuredMediaId: media.featuredId,
   });
   result.wordpress = saved;
@@ -317,6 +337,11 @@ async function processCluster(cluster, ctx) {
  * 순서가 중요하다. 글을 먼저 쓰고 키워드를 나중에 정하면, 정작 본문에 그 말이
  * 없어서 검색에 안 걸린다. 확인된 사실 중 대회명을 우선으로 잡는다.
  */
+/** 바뀌기 전 키워드가 본문에 몇 번 나왔는지 — 왜 바꿨는지 보여주려고 쓴다. */
+function keywordCountOf(picked, keyword) {
+  return picked.candidates?.find((c) => c.keyword === keyword)?.count ?? 0;
+}
+
 function guessKeyword(cluster, verification) {
   const byField = (name) => verification.confirmed?.find((c) => c.field.includes(name))?.value;
   const raw = byField('대회명') || byField('대회') || cluster.label;
@@ -353,17 +378,34 @@ function printArticle(result) {
  * 무엇이 안 됐는지만 로그에 남긴다.
  */
 async function attachImages({ article, seo, cluster, dryRun }) {
-  const plan = planPlacements(article.body, { sectionImages: 1, withAd: Boolean(AD_SNIPPET) });
+  // 중계 링크가 설정에 있는 종목만 배너를 넣는다. 없으면 자리도 잡지 않는다.
+  const watch = pickWatchLinks(cluster.category);
+  const plan = planPlacements(article.body, {
+    sectionImages: 1,
+    withAd: Boolean(AD_SNIPPET),
+    withWatch: Boolean(watch),
+  });
   const body = insertMarks(article.body, plan);
-  const out = { body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '', featuredId: null, summary: [] };
+  const out = {
+    body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
+    watch: watch ? watchBannerHtml(watch, { title: article.title.split('(')[0].trim() }) : '',
+    featuredId: null, summary: [],
+  };
+  if (watch) log.info(`    중계 배너: ${watch.primary.url}`);
+
+  // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
+  // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")
+  // 카드 라벨로는 못 쓴다. 카테고리("야구")를 쓴다 — 짧고, 같은 카테고리끼리
+  // 색이 같아져서 시리즈처럼 보인다.
+  const cardLabel = cluster.category || cluster.topic;
 
   const wanted = [
     { role: 'hero', make: () => createHeroImage({
-        title: article.title, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+        title: article.title, topic: cluster.topic, label: cardLabel, focusKeyword: seo.focusKeyword,
         onFallback: (why) => log.warn(`    AI 이미지 생성 실패 — 텍스트 카드로 대체합니다: ${why}`),
       }) },
     ...plan.sections.map((h) => ({ role: 'section', make: () => createSectionImage({
-        heading: h.text, topic: cluster.topic, focusKeyword: seo.focusKeyword,
+        heading: h.text, topic: cluster.topic, label: cardLabel, focusKeyword: seo.focusKeyword,
       }) })),
   ];
 

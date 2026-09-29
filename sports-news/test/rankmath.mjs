@@ -5,7 +5,7 @@
 // 제대로 짚어내는지 확인한다.
 
 import assert from 'node:assert/strict';
-import { checkRankMath, buildSlug } from '../src/seo/rankmath.mjs';
+import { checkRankMath, buildSlug, chooseFocusKeyword } from '../src/seo/rankmath.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -108,6 +108,46 @@ check('둘 다 없어도 빈 슬러그를 내지 않는다', () => {
 
 check('너무 길면 자른다', () => {
   assert.ok(buildSlug({ focusKeyword: '가'.repeat(100) }).length <= 60);
+});
+
+// ── 본문에 실제로 있는 키워드 고르기 ────────────────────────
+// 실제로 당한 일: SEO 단계가 본문에 한 번도 나오지 않는 긴 구절
+// "피트 알론소 양대 리그 타점왕"을 대표 키워드로 골라 밀도가 0.00%가 됐다.
+console.log('\n[대표 키워드 고르기]');
+
+const 야구본문 = `${'피트 알론소가 또 하나의 기록을 세웠습니다. '.repeat(13)}${'메이저리그 정규시즌이 끝났습니다. '.repeat(90)}`;
+
+check('본문에 없는 긴 키워드 대신 본문에 있는 말을 고른다', () => {
+  const r = chooseFocusKeyword(야구본문, ['피트 알론소 양대 리그 타점왕', '피트 알론소']);
+  assert.equal(r.keyword, '피트 알론소', JSON.stringify(r.candidates.slice(0, 3)));
+  assert.ok(r.density > 0, `${r.density}%`);
+});
+
+check('원래 키워드가 본문에 없었다는 것을 보여준다', () => {
+  const r = chooseFocusKeyword(야구본문, ['피트 알론소 양대 리그 타점왕']);
+  const 원래 = r.candidates.find((c) => c.keyword === '피트 알론소 양대 리그 타점왕');
+  assert.equal(원래.count, 0, '본문에 없어야 합니다');
+});
+
+check('범위에 드는 것이 있으면 그중 더 구체적인 쪽을 고른다', () => {
+  // "삼성화재배 8강"이 1.25~2.5%에 들고, "삼성화재배"도 같이 든다면 긴 쪽.
+  const body = `${'삼성화재배 8강 대진이 나왔습니다. '.repeat(8)}${'바둑 소식입니다. '.repeat(120)}`;
+  const r = chooseFocusKeyword(body, ['삼성화재배 8강']);
+  assert.equal(r.keyword, '삼성화재배 8강', JSON.stringify(r.candidates));
+});
+
+check('후보가 없으면 빈 값을 돌려준다', () => {
+  assert.equal(chooseFocusKeyword('내용', []).keyword, '');
+});
+
+check('제목에 쉼표가 끼어도 키워드가 들어 있다고 본다', () => {
+  // "피트 알론소, 양대 리그 타점왕 최초" 는 사람 눈에는 키워드가 들어 있다.
+  const r = checkRankMath({
+    ...good,
+    title: '메츠 왜 버렸을까 (피트 알론소, 양대 리그 타점왕 최초!)',
+    focusKeyword: '피트 알론소 양대 리그 타점왕',
+  });
+  assert.ok(r.items.find((i) => i.id === 'kw-title').ok, '쉼표 때문에 놓쳤습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

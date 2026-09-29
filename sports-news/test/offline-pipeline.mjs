@@ -14,7 +14,7 @@ import { clusterArticles, splitBySourceCount } from '../src/news/normalize.mjs';
 import { rankClusters } from '../src/news/rank.mjs';
 import { judgeDuplication } from '../src/duplicate/check.mjs';
 import { resolveCategory, normalizeTags } from '../src/wordpress/taxonomy.mjs';
-import { lintArticle, splitTitleAndBody } from '../src/ai/write.mjs';
+import { lintArticle, splitTitleAndBody, AI_TELLS } from '../src/ai/write.mjs';
 import { extractFaq, faqSchemaBlock } from '../src/seo/faq-schema.mjs';
 import { keywordDensity, targetKeywordCount } from '../src/seo/rankmath.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
@@ -309,8 +309,110 @@ check('키워드 사이 공백이 달라도 센다', () => {
   assert.equal(keywordDensity('바둑춘향   선발대회 소식', '바둑춘향 선발대회').count, 1);
 });
 check('목표 횟수는 분량에 비례한다', () => {
-  assert.ok(targetKeywordCount(3500) >= 12, targetKeywordCount(3500));
-  assert.ok(targetKeywordCount(3500) <= 20);
+  assert.ok(targetKeywordCount(3000) < targetKeywordCount(4500));
+  assert.ok(targetKeywordCount(4200) <= 20);
+});
+
+// 실제로 당한 일: 3,500자를 기준으로 목표를 잡았는데 글이 4,159자로 나와
+// 밀도가 1.07%에 그쳤다. 분량이 규격(3,000~4,500자) 어디에 떨어지든
+// 1.25~2.5% 안에 들어야 한다.
+check('규격 분량 어디에 떨어져도 권장 구간 안에 든다', () => {
+  const n = targetKeywordCount();
+  for (const chars of [3000, 3500, 4000, 4500]) {
+    const words = Math.round(chars / 3.5);
+    const density = (n / words) * 100;
+    assert.ok(density >= 1.25, `${chars}자에서 ${density.toFixed(2)}% — 너무 낮습니다`);
+    assert.ok(density <= 2.5, `${chars}자에서 ${density.toFixed(2)}% — 남용입니다`);
+  }
+});
+
+// ── 실행 진입점이 .env 없이도 도는가 ───────────────────────
+// 실제로 당한 일: 새로 만든 명령이 process.loadEnvFile('.env')를 직접 불러
+// GitHub Actions에서 ENOENT로 0초 만에 죽었다. 거기엔 .env가 없고 비밀값이
+// 환경변수로 들어온다. .env 로딩은 utils/env.mjs의 loadEnv() 한 곳만 한다.
+console.log('\n[.env 없이도 도는가]');
+
+check('utils/env.mjs 말고는 .env를 직접 읽지 않는다', () => {
+  const srcDir = path.join(HERE, "..", "src");
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (fs.statSync(full).isDirectory()) { walk(full); continue; }
+      if (!name.endsWith('.mjs')) continue;
+      if (full.endsWith(path.join('utils', 'env.mjs'))) continue;
+      if (/process\.loadEnvFile/.test(fs.readFileSync(full, 'utf8'))) {
+        offenders.push(path.relative(path.join(HERE, ".."), full));
+      }
+    }
+  };
+  walk(srcDir);
+  assert.deepEqual(offenders, [], `loadEnv()를 쓰세요: ${offenders.join(', ')}`);
+});
+
+// ── 네 가지 원칙이 코드로 지켜지는가 ────────────────────────
+// 운영자가 정한 네 가지(① AI 티 안 나게 ② 구글 색인 ③ AI 인용 ④ 검색되는 제목).
+// 문서로만 적어두면 지켜지지 않으므로, 셀 수 있는 것은 검사로 묶어둔다.
+console.log('\n[네 가지 원칙]');
+
+check('① AI 상투어를 잡아낸다', () => {
+  const body = '## ✨ 개요\n\n결론적으로 좋은 대회입니다. 귀추가 주목됩니다.';
+  const issues = lintArticle({ title: '제목', body }).issues.join(' ');
+  assert.ok(issues.includes('결론적으로'), issues);
+  assert.ok(issues.includes('귀추가 주목됩니다'), issues);
+});
+
+check('① 접속어 남용을 잡아낸다', () => {
+  const body = `개요입니다. ${'또한 좋습니다. '.repeat(5)}`;
+  const issues = lintArticle({ title: '제목', body }).issues.join(' ');
+  assert.ok(/"또한"가 \d회 나옵니다/.test(issues), issues);
+});
+
+check('① 한 번 쓰는 것까지 막지는 않는다', () => {
+  // 한국어에서 자연스러운 말까지 전부 막으면 글이 어색해진다.
+  const body = '개요입니다. 또한 상금도 올랐습니다. 다양한 선수가 나옵니다.';
+  const issues = lintArticle({ title: '제목', body }).issues.join(' ');
+  assert.ok(!issues.includes('또한'), issues);
+  assert.ok(!issues.includes('다양한'), issues);
+});
+
+check('① 금지어 표에 허용 횟수가 모두 적혀 있다', () => {
+  for (const [phrase, limit] of Object.entries(AI_TELLS)) {
+    assert.ok(Number.isInteger(limit) && limit >= 0, `${phrase}: ${limit}`);
+  }
+  assert.ok(Object.keys(AI_TELLS).length >= 10, '표가 너무 비었습니다');
+});
+
+const 지시서 = fs.readFileSync(path.join(HERE, '..', 'config', 'style-warp.md'), 'utf8');
+
+check('②③④ 지시서가 네 가지 원칙을 맨 위에 싣고 있다', () => {
+  const head = 지시서.slice(0, 1400);
+  assert.ok(head.includes('AI가 쓴 글처럼 보이지 않는다'), '① 원칙이 없습니다');
+  assert.ok(head.includes('색인'), '② 원칙이 없습니다');
+  assert.ok(head.includes('AI가 인용'), '③ 원칙이 없습니다');
+  assert.ok(head.includes('검색에 걸리는 제목'), '④ 원칙이 없습니다');
+});
+
+check('③ 지시서가 대명사 대신 이름을 쓰라고 지시한다', () => {
+  assert.ok(/대명사/.test(지시서), '대명사 규칙이 빠졌습니다');
+  assert.ok(/떼어 읽어도/.test(지시서), '문장 독립성 규칙이 빠졌습니다');
+});
+
+check('④ 지시서가 키워드를 제목 맨 앞에 두라고 지시한다', () => {
+  assert.ok(/제목 맨 앞/.test(지시서), '제목 규칙이 빠졌습니다');
+});
+
+const 프로젝트규칙 = fs.readFileSync(path.join(HERE, '..', 'CLAUDE.md'), 'utf8');
+
+check('네 가지 원칙이 프로젝트 규칙 파일에도 박혀 있다', () => {
+  // 대화가 길어지면 맥락이 흐려진다. 다음 세션이 읽을 파일에도 남겨둔다.
+  for (const kw of ['AI가 쓴 글처럼 보이지 않는다', '서치콘솔', '인용', '검색에 걸리는 제목']) {
+    assert.ok(프로젝트규칙.includes(kw), `"${kw}"가 빠졌습니다`);
+  }
+});
+
+check('임시글로만 저장한다는 안전선이 문서에 남아 있다', () => {
+  assert.ok(/임시글\(draft\)로만/.test(프로젝트규칙), '자동 발행 금지 원칙이 빠졌습니다');
 });
 
 Date.now = realNow;

@@ -8,8 +8,10 @@
 
 import http from 'node:http';
 
-export function startMockWordPress({ rankMathWritable = true, existingPosts = [] } = {}) {
-  const state = { created: [], tagsCreated: [], authHeaders: [], optionsCalls: 0, media: [], mediaMeta: [] };
+export function startMockWordPress({ rankMathWritable = true, existingPosts = [], posts = {} } = {}) {
+  const state = {
+    posts: { ...posts },
+    updated: [], created: [], tagsCreated: [], authHeaders: [], optionsCalls: 0, media: [], mediaMeta: [] };
   let nextId = 100;
   let nextMediaId = 500;
 
@@ -87,6 +89,25 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
         }
         return json([]); // 기존 태그 없음 → 전부 새로 만든다
       }
+      // 글 하나 읽기/고치기 — 이미 만든 글의 SEO를 손보는 경로에서 쓴다.
+      const one = /^\/wp-json\/wp\/v2\/posts\/(\d+)$/.exec(p);
+      if (one) {
+        const id = Number(one[1]);
+        const stored = state.posts[id];
+        if (!stored) {
+          res.writeHead(404, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ code: 'rest_post_invalid_id', message: '글이 없습니다' }));
+        }
+        if (req.method === 'POST') {
+          const patch = JSON.parse(body || '{}');
+          stored.meta = { ...stored.meta, ...(patch.meta || {}) };
+          if (patch.slug) stored.slug = patch.slug;
+          state.updated.push({ id, ...patch });
+          return json({ id, ...stored });
+        }
+        return json({ id, ...stored });
+      }
+
       if (p === '/wp-json/wp/v2/posts' && req.method === 'POST') {
         const payload = JSON.parse(body);
         const post = { ...payload, id: nextId++, link: `http://127.0.0.1:${server.address().port}/?p=${nextId}` };
