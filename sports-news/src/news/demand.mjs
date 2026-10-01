@@ -1,8 +1,13 @@
 // 검색 수요 신호 — "관심은 올라오는데 아직 경쟁은 덜한" 글감을 가려낸다.
 //
-// 솔직히 밝혀둘 것: 우리는 구글 트렌드나 네이버 데이터랩에 접근하지 못한다.
-// 그래서 "검색량"을 직접 알 수는 없다. 대신 이미 긁어온 기사 목록만으로
-// 계산할 수 있는 대리 신호 두 가지를 쓴다. 지어낸 숫자보다 낫다.
+// 신호는 두 층이다.
+//
+// (A) 진짜 검색수 — 네이버 검색광고 키워드도구가 주는 월간 검색수와 경쟁 정도.
+//     키가 설정돼 있을 때만 쓴다. 추정이 아니라 네이버가 집계한 숫자다.
+//
+// (B) 대리 신호 — 키가 없을 때 쓴다. 이미 긁어온 기사 목록만으로 계산한다.
+//     구글 트렌드에는 접근하지 못하므로 "검색량"을 직접 알 수는 없지만,
+//     지어낸 숫자보다는 낫다.
 //
 //  1) 상승(burst): 최근 24시간 기사 수가 그 앞 기간의 하루 평균보다 많은가.
 //     언론이 갑자기 몰려 쓰기 시작했다면 사람들도 그때 찾기 시작한다.
@@ -11,6 +16,8 @@
 //     20개 매체가 쓴 사건은 검색결과를 언론사가 다 가져간다. 개인 블로그가
 //     비집고 들어갈 자리가 없다. 반대로 1곳만 쓴 건 교차 확인이 안 된다.
 //     2~4곳이 우리가 노릴 구간이다.
+
+import { competitionWeight } from './naver-keywords.mjs';
 
 /** 기사들의 발행 시각 분포에서 상승 신호를 뽑는다. */
 export function burstSignal(articles, { now = Date.now(), windowHours = 168 } = {}) {
@@ -45,14 +52,38 @@ export function crowding(sourceCount) {
   return { level: 'thin', weight: -6, label: '매체 1곳 — 교차 확인 불가' };
 }
 
+/**
+ * 월간 검색수를 점수로 바꾼다.
+ *
+ * 많을수록 좋지만 한없이 좋지는 않다. 10만 회짜리 키워드는 개인 블로그가
+ * 1페이지에 가기 어렵다. 1,000~30,000 구간이 노릴 자리다.
+ */
+export function volumeWeight(total) {
+  if (!total) return 0;
+  if (total < 100) return -6;        // 아무도 안 찾는다
+  if (total < 1000) return 4;
+  if (total <= 30000) return 14;     // 노릴 구간
+  if (total <= 100000) return 6;
+  return -2;                          // 너무 커서 상위 노출이 어렵다
+}
+
 /** 한 글감의 수요 신호를 한 번에 계산한다. */
 export function demandSignals(cluster, { now = Date.now(), windowHours = 168 } = {}) {
   const burst = burstSignal(cluster.articles || [], { now, windowHours });
   const crowd = crowding(cluster.sourceCount || 0);
+  const search = cluster.searchVolume || null;
 
-  const weight = crowd.weight + (burst.rising ? 10 : 0);
+  let weight = crowd.weight + (burst.rising ? 10 : 0);
   const reasons = [crowd.label];
   if (burst.rising) reasons.push(`최근 24시간 ${burst.recent}건 — 관심 상승(평소의 ${burst.ratio}배)`);
 
-  return { burst, crowd, weight, reasons };
+  // 진짜 검색수가 있으면 더한다. 추정보다 이쪽이 정확하다.
+  if (search?.total) {
+    const vw = volumeWeight(search.total);
+    const cw = competitionWeight(search.competition);
+    weight += vw + cw;
+    reasons.push(`"${search.keyword}" 월 ${search.total.toLocaleString('ko-KR')}회 · 경쟁 ${search.competition || '미상'}`);
+  }
+
+  return { burst, crowd, search, weight, reasons };
 }

@@ -29,6 +29,7 @@ import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
+import { attachSearchVolume, hasNaverKeywords } from './news/naver-keywords.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
 import { checkFlow } from './seo/flow.mjs';
@@ -616,8 +617,24 @@ async function main() {
       }
 
       const take = args.limit ?? Number(env('CANDIDATES_PER_TOPIC', '1'));
-      log.info(`후보 ${clusters.length}개 중 ${take}개 목표`);
-      clusters.slice(0, 5).forEach((c, i) => log.info(`  ${i + 1}. [${c.score}점] ${c.label.slice(0, 46)}`));
+
+      // 상위 후보에 실제 월간 검색수를 붙이고 다시 줄 세운다.
+      // 키가 없으면 그냥 지나간다 — 기사 쏠림 대리 신호로 간다.
+      if (hasNaverKeywords()) {
+        await attachSearchVolume(clusters, {
+          limit: 5,
+          onError: (why) => log.warn(`  검색수 조회 실패 — 대리 신호로 진행합니다: ${why}`),
+        });
+        const 재채점 = rankClusters(clusters, topic);
+        clusters.splice(0, clusters.length, ...재채점);
+      }
+
+      log.info(`후보 ${clusters.length}개 중 ${take}개 목표${hasNaverKeywords() ? ' (네이버 검색수 반영)' : ''}`);
+      clusters.slice(0, 5).forEach((c, i) => {
+        const v = c.searchVolume;
+        const 검색 = v ? ` · "${v.keyword}" 월 ${v.total.toLocaleString('ko-KR')}회/경쟁 ${v.competition || '미상'}` : '';
+        log.info(`  ${i + 1}. [${c.score}점] ${c.label.slice(0, 40)}${검색}`);
+      });
 
       // 1순위 글감이 중복이거나 사실 근거가 부족하면 그대로 끝내지 않고
       // 다음 후보로 내려간다. 예전에는 1순위가 걸리면 그 종목은 빈손이었다.
