@@ -122,8 +122,29 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
       if (p === '/wp-json/wp/v2/posts') {
         // 검색 요청이면 미리 넣어둔 기존 글을 돌려준다(중복 검사 경로 검증용)
         const search = url.searchParams.get('search');
-        const hits = search ? existingPosts : [];
-        return json(hits, { 'x-wp-total': String(existingPosts.length || 600), 'x-wp-totalpages': '1' });
+        if (search) {
+          return json(existingPosts, { 'x-wp-total': String(existingPosts.length || 600), 'x-wp-totalpages': '1' });
+        }
+
+        // 검색이 아니면 저장된 글 목록을 돌려준다.
+        //
+        // 왜 필요한가: 전에는 여기서 무조건 빈 배열을 돌려줬다. 그래서 글 목록을
+        // 훑는 코드를 검사해도 항상 빈 목록을 보고 통과했다 — "이미 설명이 있는
+        // 글은 건드리지 않는다"는 검사가 아무것도 확인하지 못한 채 초록불이었다.
+        const ids = Object.keys(state.posts).map(Number).sort((a, b) => b - a);
+        const wantStatus = url.searchParams.get('status');
+        const rows = ids
+          .map((id) => ({ id, ...state.posts[id] }))
+          .filter((row) => !wantStatus || row.status === wantStatus);
+
+        const perPage = Number(url.searchParams.get('per_page') || 10);
+        const page = Number(url.searchParams.get('page') || 1);
+        const totalPages = Math.max(1, Math.ceil(rows.length / perPage));
+        const slice = rows.slice((page - 1) * perPage, page * perPage);
+        return json(slice, {
+          'x-wp-total': String(rows.length),
+          'x-wp-totalpages': String(totalPages),
+        });
       }
 
       res.writeHead(404, { 'content-type': 'application/json' });

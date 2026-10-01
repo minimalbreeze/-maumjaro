@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { startMockWordPress } from './mock-wordpress.mjs';
-import { describeFrom, findEmptyDescriptions, fillOne, 인사말빼기 } from '../src/wordpress/fill-meta.mjs';
+import { describeFrom, findEmptyDescriptions, fillOne, 인사말빼기,
+         앞머리정리, 제목중복빼기, 망친설명인가, 표본고르기 } from '../src/wordpress/fill-meta.mjs';
 import { ROOT } from '../src/utils/env.mjs';
 
 let passed = 0;
@@ -83,6 +84,80 @@ check('인사말로 시작하는 글도 설명이 정보로 시작한다', () =>
   assert.ok(d.startsWith('잠실유수지'), d);
 });
 
+// ── 실제로 47개 글을 망친 앞머리들 ────────────────────────────
+// 미리보기에서 앞의 5개만 봤다. 그 5개가 모두 최근에 이 도구로 쓴 깨끗한 글이라
+// 문제가 안 보였다. 뒤쪽 600개는 손으로 쓴 글이고 앞머리가 전혀 달랐다.
+
+check('쿠팡 파트너스 고지문을 걷어낸다', () => {
+  const d = describeFrom('<p>"이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다" 안녕하세요, 골프 팬 여러분! 😊 미국 그린즈버러에서 윈덤 챔피언십이 개막합니다. 페덱스컵 70위 안에 들어야 합니다.</p>',
+    { title: '2026 PGA 윈덤 챔피언십 (정규시즌 최종전)' });
+  assert.ok(d.startsWith('미국 그린즈버러에서'), d);
+  assert.ok(!망친설명인가(d), d);
+});
+
+check('앞머리 이모지를 걷어낸다', () => {
+  const d = describeFrom('<p>안녕하세요, 당구 팬 여러분! 😊 프로당구 PBA 팀리그 화성특례시 투어가 2라운드에 접어들었습니다. 우리금융캐피탈이 1라운드 우승을 했습니다.</p>',
+    { title: '2026-27 PBA 팀리그 화성특례시 투어' });
+  assert.ok(d.startsWith('프로당구 PBA'), d);
+  assert.ok(!망친설명인가(d), d);
+});
+
+check('본문 앞에 제목이 또 적혀 있으면 지운다', () => {
+  const d = describeFrom('<p>몽백합배 세계바둑오픈 (신진서 홀로 남았다, 한국 유일 16강 생존!) ♟️ 안녕하세요, 바둑 팬 여러분! 😊 중국 베이징에서 제6회 몽백합배 세계바둑오픈전이 16강에 접어들었습니다.</p>',
+    { title: '2026 몽백합배 세계바둑오픈 (신진서 홀로 남았다, 한국 유일 16강 생존!)' });
+  assert.ok(d.startsWith('중국 베이징에서'), d);
+});
+
+check('"(대회명)" 앞머리를 지운다', () => {
+  const d = describeFrom('<p>(동아회원권그룹 오픈)안녕하세요, 골프 팬 여러분! 😊 KPGA 투어가 충남 태안에서 하반기 첫 무대를 엽니다. 상금은 10억원입니다.</p>',
+    { title: '2026 KPGA 동아회원권그룹 오픈 (하반기 개막전)' });
+  assert.ok(d.startsWith('KPGA 투어가'), d);
+});
+
+check('여러 겹으로 쌓여 있어도 전부 걷어낸다', () => {
+  // 실측: 제목 중복 → 이모지 → 인사말 → 쿠팡 고지문 → 다시 인사말
+  const d = 앞머리정리(
+    '대통령배 전국고교야구대회 🏆 안녕하세요, 고교야구 팬 여러분! 😊 "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다" 안녕하세요! 포항에서 열립니다. 세광고가 2관왕에 도전합니다.',
+    '2026 대통령배 전국고교야구대회(세광고 2관왕 도전)');
+  assert.ok(d.startsWith('포항에서 열립니다'), d);
+});
+
+check('제목과 안 맞는 앞머리는 지우지 않는다', () => {
+  // 추측으로 자르면 멀쩡한 첫 문장을 잃는다.
+  const t = '(단독) 김주형이 코치를 교체했다. 상금은 2억원이다.';
+  assert.equal(제목중복빼기(t, '전혀 다른 제목입니다'), t);
+});
+
+check('지울 게 글의 전부면 그대로 둔다', () => {
+  // 빈 설명보다는 허술한 설명이 낫다.
+  assert.equal(앞머리정리('안녕하세요!', '제목'), '안녕하세요!');
+  assert.equal(앞머리정리('😊', '제목'), '😊');
+});
+
+check('망친 설명을 알아낸다', () => {
+  assert.ok(망친설명인가('"이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다" 안녕하세요'));
+  assert.ok(망친설명인가('😊 프로당구 PBA 팀리그가 열립니다'));
+  assert.ok(망친설명인가('안녕하세요, 골프 팬 여러분! 대회가 열립니다'));
+  // 사람이 쓴 멀쩡한 설명은 망친 것이 아니다 — 덮어쓰면 안 된다.
+  assert.ok(!망친설명인가('잠실유수지 파크골프장은 9홀이고 이용료는 무료입니다.'));
+  assert.ok(!망친설명인가('어스몬다민컵 우승상금은 2억원입니다.'));
+  assert.ok(!망친설명인가(''));
+});
+
+check('미리보기 표본을 목록 전체에서 고른다', () => {
+  // 앞의 5개만 보고 "깨끗하다"고 판단해서 47개를 망쳤다. 끝도 반드시 본다.
+  const list = Array.from({ length: 612 }, (_, i) => i);
+  const 표본 = 표본고르기(list, 12);
+  assert.equal(표본[0], 0, '처음이 빠졌습니다');
+  assert.equal(표본.at(-1), 611, '마지막이 빠졌습니다');
+  assert.ok(표본.some((v) => v > 250 && v < 400), `중간이 빠졌습니다: ${표본.join(',')}`);
+  assert.ok(표본.length >= 10, 표본.length);
+});
+
+check('표본이 목록보다 많으면 전부 돌려준다', () => {
+  assert.deepEqual(표본고르기([1, 2, 3], 12), [1, 2, 3]);
+});
+
 check('본문이 비면 빈 값을 돌려준다', () => {
   assert.equal(describeFrom(''), '');
   assert.equal(describeFrom('<p></p>'), '');
@@ -102,6 +177,16 @@ const wp = await startMockWordPress({
       title: { raw: '서울 파크골프장' },
       content: { raw: 본문 },
       meta: { rank_math_description: '이미 설명이 있습니다', rank_math_focus_keyword: '서울 파크골프장' },
+    },
+    1510: {
+      // 우리가 잘못 채운 글. 덮어써서 고쳐야 한다.
+      status: 'publish', slug: '윈덤-챔피언십',
+      title: { raw: '2026 PGA 윈덤 챔피언십' },
+      content: { raw: 본문 },
+      meta: {
+        rank_math_description: '"이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다" 안녕하세요, 골프 팬 여러분!',
+        rank_math_focus_keyword: '윈덤 챔피언십',
+      },
     },
   },
 });
@@ -143,11 +228,23 @@ check('고치기 전에 원본을 남긴다', () => {
   assert.equal(saved.description, '', '원본은 비어 있었어야 합니다');
 });
 
-const { empty } = await findEmptyDescriptions();
+const { empty, broken } = await findEmptyDescriptions();
 check('이미 설명이 있는 글은 대상에서 뺀다', () => {
   // 사람이 공들여 쓴 설명을 덮어쓰면 안 된다.
-  const ids = empty.map((e) => e.id);
+  const ids = [...empty, ...broken].map((e) => e.id);
   assert.ok(!ids.includes(1500), `1500번을 건드리려 합니다: ${ids.join(',')}`);
+});
+
+check('잘못 채운 글은 고칠 대상으로 따로 모은다', () => {
+  assert.deepEqual(broken.map((b) => b.id), [1510], JSON.stringify(broken.map((b) => b.id)));
+  // 빈 글과 섞이면 안 된다 — 채우기와 고치기는 다른 일이다.
+  assert.ok(!empty.some((e) => e.id === 1510));
+});
+
+check('고칠 때 원본 설명을 백업에 남긴다', () => {
+  // 덮어쓰기 전 값이 남아야 되돌릴 수 있다.
+  const 나쁜글 = broken.find((b) => b.id === 1510);
+  assert.ok(나쁜글.description.includes('쿠팡 파트너스'), 나쁜글.description);
 });
 
 fs.rmSync(path.join(ROOT, 'out', 'backup'), { recursive: true, force: true });
