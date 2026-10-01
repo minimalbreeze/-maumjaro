@@ -78,9 +78,22 @@ jobs:
       # 메타 설명 채우기는 여러 번 나눠 돌리는 일이라 차이가 크다.
       # 조건은 아래 '실행' 단계와 똑같이 둔다 — 모르는 방식이 들어오면 설치하는
       # 쪽으로 기운다(안 깔려서 글씨가 깨지는 것보다 2분 버리는 게 낫다).
+      #
+      # 5분을 넘기면 포기한다. apt가 응답 없이 매달리는 일이 실제로 있었다
+      # (취소 요청에도 안 죽고 8분 넘게 버텼다). 단계에 제한이 없으면 job의
+      # 30분을 그대로 먹는다. 폰트는 AI를 부르기 전에 깔리므로 돈은 안 들지만
+      # 30분을 버리고 글도 못 쓴다.
+      #
+      # 실패해도 계속 간다. 폰트가 없으면 카드 글씨 모양이 나빠질 뿐이고,
+      # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
+      # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
         if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+        timeout-minutes: 5
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk \
+            || echo "::warning::한글 폰트를 못 깔았습니다. 글은 그대로 나가지만 카드 이미지 글씨 모양이 나쁠 수 있습니다."
 
       - name: 설치
         working-directory: sports-news
