@@ -112,18 +112,31 @@ async function main() {
   const mode = process.argv[2];
 
   if (mode === 'find') {
-    const q = process.argv.slice(3).filter((a) => !a.startsWith('--')).join(' ');
-    if (!q) { log.fail('찾을 말을 적어주세요', new Error('예: npm run posts:find -- 파3 예약')); process.exitCode = 1; return; }
-    log.section(`🔎 "${q}" 로 글 찾기`);
-    const rows = await findPosts(q);
-    if (!rows.length) { log.warn('찾지 못했습니다.'); return; }
-    for (const r of rows) {
-      log.raw('');
-      log.info(`[${r.id}] ${r.status} · ${r.title}`);
-      log.info(`      주소: ${r.slug}`);
-      log.info(`      SEO 제목: ${r.seoTitle || '(비어 있음)'}`);
-      log.info(`      메타 설명: ${r.description || '(비어 있음)'}`);
-      log.info(`      대표 키워드: ${r.focusKeyword || '(비어 있음)'}`);
+    const raw = process.argv.slice(3).filter((a) => !a.startsWith('--')).join(' ');
+    if (!raw) { log.fail('찾을 말을 적어주세요', new Error('예: npm run posts:find -- 남서울 | 파인빌')); process.exitCode = 1; return; }
+
+    // "가|나|다" 로 여러 개를 한 번에 찾는다. 한 번 돌릴 때마다 1분씩
+    // 기다리지 않아도 된다.
+    const queries = raw.split('|').map((q) => q.trim()).filter(Boolean);
+
+    for (const q of queries) {
+      log.section(`🔎 "${q}"`);
+      let rows = [];
+      try {
+        rows = await findPosts(q, { perPage: 5 });
+      } catch (err) {
+        log.fail(`  "${q}" 조회 실패`, err);
+        continue;
+      }
+      if (!rows.length) { log.warn('  찾지 못했습니다.'); continue; }
+      for (const r of rows) {
+        log.raw('');
+        log.info(`[${r.id}] ${r.status} · ${r.title}`);
+        log.info(`      주소: ${r.slug}`);
+        log.info(`      SEO 제목: ${r.seoTitle || '(비어 있음)'}`);
+        log.info(`      메타 설명: ${r.description || '(비어 있음)'}`);
+        log.info(`      대표 키워드: ${r.focusKeyword || '(비어 있음)'}`);
+      }
     }
     return;
   }
