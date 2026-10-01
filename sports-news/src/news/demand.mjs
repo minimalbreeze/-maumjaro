@@ -2,8 +2,10 @@
 //
 // 신호는 두 층이다.
 //
-// (A) 진짜 검색수 — 네이버 검색광고 키워드도구가 주는 월간 검색수와 경쟁 정도.
-//     키가 설정돼 있을 때만 쓴다. 추정이 아니라 네이버가 집계한 숫자다.
+// (A) 네이버가 집계한 숫자. 둘 중 있는 것을 쓴다.
+//     - 데이터랩 검색어트렌드: 0~100 상대지수와 추이. 광고 계정이 필요 없다.
+//     - 검색광고 키워드도구: 월간 검색수(절대값). 광고 계정이 있어야 한다.
+//     상대지수를 검색수인 척 쓰지 않는다 — 섞으면 판단이 틀어진다.
 //
 // (B) 대리 신호 — 키가 없을 때 쓴다. 이미 긁어온 기사 목록만으로 계산한다.
 //     구글 트렌드에는 접근하지 못하므로 "검색량"을 직접 알 수는 없지만,
@@ -18,6 +20,7 @@
 //     2~4곳이 우리가 노릴 구간이다.
 
 import { competitionWeight } from './naver-keywords.mjs';
+import { trendWeight } from './naver-trend.mjs';
 
 /** 기사들의 발행 시각 분포에서 상승 신호를 뽑는다. */
 export function burstSignal(articles, { now = Date.now(), windowHours = 168 } = {}) {
@@ -72,12 +75,22 @@ export function demandSignals(cluster, { now = Date.now(), windowHours = 168 } =
   const burst = burstSignal(cluster.articles || [], { now, windowHours });
   const crowd = crowding(cluster.sourceCount || 0);
   const search = cluster.searchVolume || null;
+  const trend = cluster.trend || null;
 
   let weight = crowd.weight + (burst.rising ? 10 : 0);
   const reasons = [crowd.label];
   if (burst.rising) reasons.push(`최근 24시간 ${burst.recent}건 — 관심 상승(평소의 ${burst.ratio}배)`);
 
-  // 진짜 검색수가 있으면 더한다. 추정보다 이쪽이 정확하다.
+  // 데이터랩 추이가 있으면 기사 쏠림 추정보다 이쪽을 믿는다.
+  if (trend) {
+    weight += trendWeight(trend);
+    reasons.push(
+      `"${trend.keyword}" 검색 ${trend.rising ? `상승 중(최근 ${trend.ratio}배)` : '평탄'}`
+      + ` · 상대지수 ${trend.peak}`,
+    );
+  }
+
+  // 절대 검색수가 있으면 더한다. 가장 정확한 신호다.
   if (search?.total) {
     const vw = volumeWeight(search.total);
     const cw = competitionWeight(search.competition);
@@ -85,5 +98,5 @@ export function demandSignals(cluster, { now = Date.now(), windowHours = 168 } =
     reasons.push(`"${search.keyword}" 월 ${search.total.toLocaleString('ko-KR')}회 · 경쟁 ${search.competition || '미상'}`);
   }
 
-  return { burst, crowd, search, weight, reasons };
+  return { burst, crowd, search, trend, weight, reasons };
 }
