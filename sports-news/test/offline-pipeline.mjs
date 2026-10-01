@@ -359,6 +359,40 @@ check('utils/env.mjs 말고는 .env를 직접 읽지 않는다', () => {
   assert.deepEqual(offenders, [], `loadEnv()를 쓰세요: ${offenders.join(', ')}`);
 });
 
+// ── 실측 데이터가 점수표에 반영됐는가 ───────────────────────
+// 네이버 서치어드바이저 실측치(config/search-demand.md)를 근거로 점수를 준다.
+// 문서와 코드가 따로 놀면 "데이터 기반"이 말뿐이 된다.
+console.log('\n[실측 유입 데이터 반영]');
+
+const 점수 = (label) => rankClusters(
+  [{ label, articles: [{ summary: '' }], sourceCount: 3, latestAt: new Date(NOW).toISOString() }],
+  { name: '골프', category: '골프', longTermHints: [] },
+)[0].score;
+
+check('상금 글감이 대회 결과보다 높다', () => {
+  // 실측 1위가 "어스몬다민컵우승상금" 134클릭이다.
+  assert.ok(점수('어스몬다민컵 우승 상금은 얼마') > 점수('어스몬다민컵 1라운드 결과'),
+    `${점수('어스몬다민컵 우승 상금은 얼마')} vs ${점수('어스몬다민컵 1라운드 결과')}`);
+});
+
+check('시설 이용 안내가 개장 소식보다 높다', () => {
+  assert.ok(점수('남서울 파3 이용방법과 예약 안내') > 점수('남서울 파3 야간개장 시작'));
+});
+
+check('복장·가는 길 같은 검색어에도 가점이 있다', () => {
+  for (const kw of ['복장 규정', '가는 길과 주차', '중계 보는법', '이용료 안내']) {
+    assert.ok(점수(`대회 ${kw}`) > 점수('대회 소식'), kw);
+  }
+});
+
+check('실측 데이터 원본이 문서로 남아 있다', () => {
+  const file = path.join(HERE, '..', 'config', 'search-demand.md');
+  assert.ok(fs.existsSync(file), 'config/search-demand.md가 없습니다');
+  const doc = fs.readFileSync(file, 'utf8');
+  assert.ok(/확인일/.test(doc), '언제 받은 데이터인지 적혀 있어야 합니다');
+  assert.ok(/어스몬다민컵|남서울/.test(doc), '실제 검색어가 빠졌습니다');
+});
+
 // ── 글의 수명을 정하는 섹션 ────────────────────────────────
 // 두 편 연속으로 ⑤번(오래 가는 내용)이 빠졌다. 지시서에 적어두기만 해서는
 // 안 지켜진다는 뜻이라 검사로 올렸다.
