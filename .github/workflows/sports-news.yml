@@ -32,6 +32,11 @@ on:
           - '사이트 조사만 (글 안 씀 · 비용 0원)'
           - '이미 만든 글 SEO 손보기 (비용 0원)'
           - '이미 올린 글 링크 현재창으로 (비용 0원)'
+          - '글 찾기 (제목·SEO 값 보기 · 비용 0원)'
+      find_query:
+        description: "글 찾기용 검색어. 예: 파3 예약"
+        required: false
+        default: ''
       post_ids:
         description: "손볼 글 번호 (SEO·링크 고치기에 씁니다. 띄어쓰기로 여러 개). 예: 7253 7246"
         required: false
@@ -175,10 +180,27 @@ jobs:
           done
           node src/wordpress/fix-links.mjs "${ids[@]}"
 
+      - name: 글 찾기
+        # 검색어로 글을 찾아 제목·슬러그·현재 SEO 값을 보여준다. 아무것도 바꾸지 않는다.
+        if: ${{ contains(inputs.mode, '글 찾기') }}
+        working-directory: sports-news
+        env:
+          IN_FIND_QUERY: ${{ inputs.find_query }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_FIND_QUERY" ]; then
+            echo "::error::찾을 말을 적어주세요 (예: 파3 예약)"
+            exit 1
+          fi
+          node src/wordpress/retitle.mjs find "$IN_FIND_QUERY"
+
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
