@@ -18,7 +18,21 @@ console.log('\n[임시글 SEO 손보기]');
 
 check('블록 HTML에서 사람이 읽는 글만 남긴다', () => {
   const t = htmlToText('<!-- wp:paragraph --><p>피트 <strong>알론소</strong>가 기록을&nbsp;세웠다</p><!-- /wp:paragraph -->');
-  assert.equal(t, '피트 알론소 가 기록을 세웠다');
+  assert.equal(t, '피트 알론소가 기록을 세웠다');
+});
+
+check('낱말 안에 끼인 태그가 낱말을 쪼개지 않는다', () => {
+  // 실측 사고: 메타 설명이 "3할 타자 를 바라보는" 으로 나왔다. 글이 허술해 보인다.
+  assert.equal(htmlToText('<p>요즘 <strong>3할 타자</strong>를 보는 눈</p>'), '요즘 3할 타자를 보는 눈');
+  assert.equal(htmlToText('<p><a href="#">잠실 파크골프장</a>은 무료다</p>'), '잠실 파크골프장은 무료다');
+  assert.equal(htmlToText('<p>기록<sup>1</sup>을 세웠다</p>'), '기록1을 세웠다');
+});
+
+check('문단·목록 사이는 공백으로 띄운다', () => {
+  // 인라인이 아닌 태그는 여전히 띄워야 한다. 안 띄우면 문장이 붙어버린다.
+  assert.equal(htmlToText('<p>첫 문단이다.</p><p>둘째 문단이다.</p>'), '첫 문단이다. 둘째 문단이다.');
+  assert.equal(htmlToText('<ul><li>상금</li><li>일정</li></ul>'), '상금 일정');
+  assert.equal(htmlToText('<h2>관전 포인트</h2><p>본문이다.</p>'), '관전 포인트 본문이다.');
 });
 
 check('구조화 데이터 스크립트를 본문으로 세지 않는다', () => {

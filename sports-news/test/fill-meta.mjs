@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { startMockWordPress } from './mock-wordpress.mjs';
-import { describeFrom, findEmptyDescriptions, fillOne } from '../src/wordpress/fill-meta.mjs';
+import { describeFrom, findEmptyDescriptions, fillOne, 인사말빼기 } from '../src/wordpress/fill-meta.mjs';
 import { ROOT } from '../src/utils/env.mjs';
 
 let passed = 0;
@@ -52,6 +52,35 @@ check('HTML 태그와 구조화 데이터를 걷어낸다', () => {
   const d = describeFrom('<p>본문입니다. 두 번째 문장입니다.</p><script type="application/ld+json">{"@type":"FAQPage"}</script>');
   assert.ok(!d.includes('FAQPage'), d);
   assert.ok(!d.includes('<'), d);
+});
+
+check('인사말을 걷어낸다', () => {
+  // 155자는 짧다. "안녕하세요, 스포츠 팬 여러분!"이 앞을 잡아먹으면
+  // 검색결과에 정작 필요한 정보가 안 보인다.
+  assert.equal(
+    인사말빼기('안녕하세요, 스포츠 팬 여러분! 제9회 바둑춘향 선발대회가 10월 3일 남원에서 열립니다.'),
+    '제9회 바둑춘향 선발대회가 10월 3일 남원에서 열립니다.');
+  assert.equal(
+    인사말빼기('파크골프 팬 여러분 반갑습니다! 충주 단월파크골프장이 10월 1일 재개장했습니다.'),
+    '충주 단월파크골프장이 10월 1일 재개장했습니다.');
+});
+
+check('인사말만 있는 글은 지우지 않는다', () => {
+  // 다 지워버리면 설명이 비어버린다. 없는 것보다는 인사말이라도 있는 게 낫다.
+  assert.equal(인사말빼기('안녕하세요!'), '안녕하세요!');
+  assert.equal(인사말빼기('스포츠 팬 여러분!'), '스포츠 팬 여러분!');
+});
+
+check('본문 중간의 인사말은 건드리지 않는다', () => {
+  // 앞에서 한 번만 지운다. 문장 안의 말까지 지우면 뜻이 망가진다.
+  const t = '김주형은 우승 후 "안녕하세요, 팬 여러분!" 이라고 인사했다. 상금은 2억원이다.';
+  assert.equal(인사말빼기(t), t);
+});
+
+check('인사말로 시작하는 글도 설명이 정보로 시작한다', () => {
+  const d = describeFrom('<p>안녕하세요, 스포츠 팬 여러분! 잠실유수지 파크골프장은 9홀이고 이용료는 무료입니다. 예약은 서울시 공공서비스예약에서 합니다.</p>');
+  assert.ok(!d.startsWith('안녕하세요'), d);
+  assert.ok(d.startsWith('잠실유수지'), d);
 });
 
 check('본문이 비면 빈 값을 돌려준다', () => {
