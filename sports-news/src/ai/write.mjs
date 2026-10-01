@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { callForText } from './client.mjs';
-import { ROOT } from '../utils/env.mjs';
+import { ROOT, env } from '../utils/env.mjs';
 import { targetKeywordCount } from '../seo/rankmath.mjs';
 
 let styleCache = null;
@@ -88,6 +88,27 @@ ${focusKeyword ? `## 🔑 검색 키워드 배치
 떼어 인용할 때도 대명사보다 이름이 들어 있는 문장이 인용됩니다.
 다만 한 문단에 세 번 넣는 식으로 몰아 쓰지는 마세요.
 ` : ''}
+## ⚠️ 반드시 들어가야 할 두 섹션
+
+지시서를 다 읽었더라도 이 둘은 특히 빠지기 쉽습니다. 없으면 글을 다시 써야
+합니다. 오늘 소식만 적힌 글은 한 주 뒤에 아무도 찾지 않습니다.
+
+**1) \`## 📊\` 기록과 데이터**
+확인된 숫자를 비교 대상과 함께 씁니다.
+"좋은 성적" (X) → "43홈런 113타점, 2위는 106타점" (O)
+
+**2) \`## 📌\` 배경·원리·비교 — 이 섹션이 글의 수명을 정합니다**
+아래 중 **둘 이상**을 실제로 담습니다. 한 문장씩 흘리지 말고 각각 2~3문단으로.
+
+- **규칙·제도**: 이 종목/대회가 어떻게 굴러가는지. 처음 보는 사람 기준으로.
+- **원리**: 왜 그런 결과가 나오는지. 경기 구조·전략·조건.
+- **역사·계보**: 언제 시작됐고 누가 있었는지. 이 기록이 왜 드문지.
+- **비교**: 다른 대회·리그·선수·시설과 무엇이 어떻게 다른지.
+
+예를 들어 지역 체육시설 재개장이라면, 재개장 날짜만 쓰고 끝내지 말고
+그 종목의 코스가 어떻게 구성되는지, 이용 방법과 비용은 어떤지, 근처 다른
+시설과 무엇이 다른지를 씁니다. **그게 1년 뒤에도 검색되는 부분입니다.**
+
 출력 형식:
 - 첫 줄에 제목만 씁니다 (앞에 "제목:" 같은 라벨을 붙이지 않습니다).
 - 한 줄 띄고 본문을 씁니다.
@@ -95,7 +116,13 @@ ${focusKeyword ? `## 🔑 검색 키워드 배치
 - 해시태그 목록은 쓰지 않습니다 (태그는 별도로 처리합니다).
 - 설명이나 사족 없이 글 본문만 출력합니다.`;
 
-  const raw = await callForText({ system: SYSTEM, prompt, maxTokens: 32000 });
+  // effort를 낮추면 생각 토큰이 줄어 출력 요금이 내려간다. 양식이 이미
+  // 지시서로 촘촘히 잡혀 있어 여기서 길게 고민할 일이 많지 않다.
+  const raw = await callForText({
+    system: SYSTEM, prompt,
+    maxTokens: 24000,
+    effort: env('WRITE_EFFORT', 'medium'),
+  });
   return splitTitleAndBody(raw);
 }
 
@@ -158,6 +185,19 @@ export function lintArticle({ title, body }) {
   if (headings.length < 6) issues.push(`소제목이 ${headings.length}개뿐입니다 (7~9개 권장)`);
   if (!/^##\s*[^\n]*(자주 묻는|Q&A|궁금)/m.test(body) && !/\*\*Q\./.test(body)) {
     issues.push('자주 묻는 질문 섹션이 없습니다');
+  }
+
+  // 글의 수명을 정하는 섹션. 두 편 연속 빠져서 검사로 올렸다.
+  // 소제목만 있고 내용이 없는 경우도 잡으려고 분량까지 본다.
+  const 오래가는 = headings.find((h) => /배경|원리|비교|역사|규칙|계보/.test(h));
+  if (!오래가는) {
+    issues.push('배경·원리·비교 섹션이 없습니다 (뉴스만 있으면 한 주 뒤에 죽습니다)');
+  } else {
+    const 조각 = body.split(new RegExp(`^##\\s*${오래가는.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'm'))[1] || '';
+    const 본문 = 조각.split(/^##\s+/m)[0] || '';
+    if (본문.replace(/\s/g, '').length < 300) {
+      issues.push(`"${오래가는}" 섹션이 너무 짧습니다 (${본문.replace(/\s/g, '').length}자)`);
+    }
   }
 
   // 문단이 길면 모바일에서 글이 벽처럼 보인다. 문장 수로 센다.

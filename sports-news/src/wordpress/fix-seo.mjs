@@ -14,12 +14,17 @@ import { chooseFocusKeyword, keywordDensity, buildSlug } from '../seo/rankmath.m
 import { log } from '../utils/logger.mjs';
 import { loadEnv } from '../utils/env.mjs';
 
+// 글자 사이에 끼어 있는 태그들. 이걸 공백으로 바꾸면 낱말이 쪼개진다.
+// 실제로 "<strong>3할 타자</strong>를" 이 "3할 타자 를" 로 나왔다.
+const 인라인태그 = /<\/?(?:a|b|strong|i|em|span|u|s|mark|code|sub|sup|small|abbr|cite|q|time)\b[^>]*>/gi;
+
 /** 워드프레스 블록 HTML에서 사람이 읽는 글만 남긴다. */
 export function htmlToText(html) {
   return String(html || '')
     .replace(/<!--[\s\S]*?-->/g, ' ')
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(인라인태그, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')

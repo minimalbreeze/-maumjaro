@@ -9,11 +9,17 @@ export const AD_MARK = '<!--AD-->';
 import { WATCH_MARK } from '../seo/watch-banner.mjs';
 export { WATCH_MARK };
 
-/** 맘운자로로 링크를 건 이미지 HTML. 사용자 요청. */
+/**
+ * 맘운자로로 링크를 건 이미지 HTML. 사용자 요청.
+ *
+ * 링크는 현재 창에서 연다(target="_blank"를 쓰지 않는다). 새 창으로 띄우면
+ * 독자가 원래 글로 돌아오는 길을 잃고, 모바일에서는 탭이 쌓여 성가시다.
+ * target이 없으니 noopener도 필요 없다 — 그건 새 창을 띄울 때만 쓰는 것이다.
+ */
 export function imageHtml({ url, alt, link = 'https://maumjaro.minimalbreeze.com/' }) {
   const a = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return `<!-- wp:image {"linkDestination":"custom"} -->
-<figure class="wp-block-image size-large"><a href="${a(link)}" target="_blank" rel="noopener"><img src="${a(url)}" alt="${a(alt)}"/></a></figure>
+<figure class="wp-block-image size-large"><a href="${a(link)}"><img src="${a(url)}" alt="${a(alt)}"/></a></figure>
 <!-- /wp:image -->`;
 }
 

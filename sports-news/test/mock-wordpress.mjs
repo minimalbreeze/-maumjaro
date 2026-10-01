@@ -102,6 +102,11 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
           const patch = JSON.parse(body || '{}');
           stored.meta = { ...stored.meta, ...(patch.meta || {}) };
           if (patch.slug) stored.slug = patch.slug;
+          // 실제 워드프레스는 보낸 본문을 저장한다. 모의가 이걸 빠뜨리면
+          // "고쳤는데 다시 읽으면 예전 내용"이라 테스트가 현실과 어긋난다.
+          if (patch.content !== undefined) stored.content = { raw: patch.content };
+          if (patch.title !== undefined) stored.title = { raw: patch.title };
+          if (patch.status !== undefined) stored.status = patch.status;
           state.updated.push({ id, ...patch });
           return json({ id, ...stored });
         }

@@ -31,12 +31,20 @@ on:
           - '임시글로 저장 (draft)'
           - '사이트 조사만 (글 안 씀 · 비용 0원)'
           - '이미 만든 글 SEO 손보기 (비용 0원)'
+          - '이미 올린 글 링크 현재창으로 (비용 0원)'
+          - '글 찾기 (제목·SEO 값 보기 · 비용 0원)'
+          - '메타 설명 비어 있는 글 채우기 (미리보기 · 비용 0원)'
+          - '메타 설명 비어 있는 글 채우기 (실제 적용 · 비용 0원)'
+      find_query:
+        description: "글 찾기용 검색어. 예: 파3 예약"
+        required: false
+        default: ''
       post_ids:
-        description: "SEO 손보기용 글 번호 (띄어쓰기로 여러 개). 예: 7246 7241"
+        description: "손볼 글 번호 (SEO·링크 고치기에 씁니다. 띄어쓰기로 여러 개). 예: 7253 7246"
         required: false
         default: ''
       count:
-        description: '한 종목당 만들 글 수'
+        description: '만들 글 수 (메타 설명 채우기에서는 한 번에 채울 글 수)'
         required: false
         default: '1'
 
@@ -64,8 +72,28 @@ jobs:
 
       # 텍스트 카드 이미지에 한글을 그리려면 한글 폰트가 있어야 한다.
       # 러너 기본 폰트로는 중국어체나 비트맵으로 그려져 썸네일 모양이 나쁘다.
+      #
+      # 글을 쓰는 방식일 때만 설치한다. apt로 2분쯤 걸리는데, 0원 방식(손보기·
+      # 메타 설명 채우기 등)은 이미지를 만들지 않으므로 그 2분이 그냥 버려진다.
+      # 메타 설명 채우기는 여러 번 나눠 돌리는 일이라 차이가 크다.
+      # 조건은 아래 '실행' 단계와 똑같이 둔다 — 모르는 방식이 들어오면 설치하는
+      # 쪽으로 기운다(안 깔려서 글씨가 깨지는 것보다 2분 버리는 게 낫다).
+      #
+      # 5분을 넘기면 포기한다. apt가 응답 없이 매달리는 일이 실제로 있었다
+      # (취소 요청에도 안 죽고 8분 넘게 버텼다). 단계에 제한이 없으면 job의
+      # 30분을 그대로 먹는다. 폰트는 AI를 부르기 전에 깔리므로 돈은 안 들지만
+      # 30분을 버리고 글도 못 쓴다.
+      #
+      # 실패해도 계속 간다. 폰트가 없으면 카드 글씨 모양이 나빠질 뿐이고,
+      # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
+      # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
+        timeout-minutes: 5
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk \
+            || echo "::warning::한글 폰트를 못 깔았습니다. 글은 그대로 나가지만 카드 이미지 글씨 모양이 나쁠 수 있습니다."
 
       - name: 설치
         working-directory: sports-news
@@ -82,6 +110,11 @@ jobs:
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_AD_API_KEY: ${{ secrets.NAVER_AD_API_KEY }}
+          NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
         run: |
           missing=""
           [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
@@ -102,6 +135,11 @@ jobs:
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_AD_API_KEY: ${{ secrets.NAVER_AD_API_KEY }}
+          NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
         run: npm run wp:check
 
       - name: 이미 만든 글 SEO 손보기
@@ -115,6 +153,11 @@ jobs:
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_AD_API_KEY: ${{ secrets.NAVER_AD_API_KEY }}
+          NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
         run: |
           if [ -z "$IN_POST_IDS" ]; then
             echo "::error::글 번호를 적어주세요 (예: 7246 7241)"
@@ -129,10 +172,79 @@ jobs:
           done
           node src/wordpress/fix-seo.mjs "${ids[@]}"
 
+      - name: 이미 올린 글 링크 현재창으로
+        # 본문의 target="_blank"만 걷어낸다. 글의 상태(발행/임시글)는 건드리지 않는다.
+        # AI를 부르지 않으므로 비용이 0원이다.
+        if: ${{ contains(inputs.mode, '링크 현재창으로') }}
+        working-directory: sports-news
+        env:
+          IN_POST_IDS: ${{ inputs.post_ids }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_AD_API_KEY: ${{ secrets.NAVER_AD_API_KEY }}
+          NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
+        run: |
+          if [ -z "$IN_POST_IDS" ]; then
+            echo "::error::글 번호를 적어주세요 (예: 7253)"
+            exit 1
+          fi
+          ids=()
+          for id in $IN_POST_IDS; do
+            case "$id" in
+              ''|*[!0-9]*) echo "::error::글 번호는 숫자여야 합니다: $id"; exit 1 ;;
+              *) ids+=("$id") ;;
+            esac
+          done
+          node src/wordpress/fix-links.mjs "${ids[@]}"
+
+      - name: 글 찾기
+        # 검색어로 글을 찾아 제목·슬러그·현재 SEO 값을 보여준다. 아무것도 바꾸지 않는다.
+        if: ${{ contains(inputs.mode, '글 찾기') }}
+        working-directory: sports-news
+        env:
+          IN_FIND_QUERY: ${{ inputs.find_query }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_FIND_QUERY" ]; then
+            echo "::error::찾을 말을 적어주세요 (예: 파3 예약)"
+            exit 1
+          fi
+          node src/wordpress/retitle.mjs find "$IN_FIND_QUERY"
+
+      - name: 메타 설명 채우기
+        # 메타 설명이 비어 있는 글만 본문에서 뽑아 채운다.
+        # 이미 설명이 있는 글은 건드리지 않고, meta 하나만 보낸다.
+        if: ${{ contains(inputs.mode, '메타 설명') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_COUNT: ${{ inputs.count }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          case "$IN_MODE" in
+            *미리보기*) node src/wordpress/fill-meta.mjs --dry-run ;;
+            *)
+              case "$IN_COUNT" in
+                ''|*[!0-9]*) echo "::error::개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
+              esac
+              node src/wordpress/fill-meta.mjs "--limit=$IN_COUNT" ;;
+          esac
+
       - name: 실행
-        # 사이트 조사만 고르거나 SEO만 손볼 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
+        # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
@@ -144,22 +256,31 @@ jobs:
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          NAVER_AD_API_KEY: ${{ secrets.NAVER_AD_API_KEY }}
+          NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
+          NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
         run: |
           # 입력값을 명령줄에 직접 끼워 넣지 않는다.
           # GitHub 표현식을 run 블록에 바로 쓰면 입력에 들어간 셸 문자가
           # 그대로 실행되므로, 위 env로 넘겨받아 배열로 조립한다.
           args=()
-          if [ -n "$IN_SUBJECT" ]; then
-            # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
-            args+=("--subject=$IN_SUBJECT")
-            echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
-          elif [ -n "$IN_TOPIC" ]; then
-            args+=("--topic=$IN_TOPIC")
-          fi
           case "$IN_COUNT" in
             ''|*[!0-9]*) echo "::error::글 개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
-            *) args+=("--limit=$IN_COUNT") ;;
           esac
+          if [ -n "$IN_SUBJECT" ]; then
+            # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
+            args+=("--subject=$IN_SUBJECT" "--limit=$IN_COUNT")
+            echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
+          elif [ -n "$IN_TOPIC" ]; then
+            args+=("--topic=$IN_TOPIC" "--limit=$IN_COUNT")
+          else
+            # 종목을 안 고르면 전 종목을 훑어 가장 좋은 글감만 쓴다.
+            # 수집은 공짜라 넓게 보고, 돈이 드는 작성은 좁게 한다.
+            args+=("--best=$IN_COUNT")
+            echo "전 종목에서 가장 좋은 글감 $IN_COUNT편을 고릅니다"
+          fi
           case "$IN_MODE" in
             *draft*)
               args+=("--draft")

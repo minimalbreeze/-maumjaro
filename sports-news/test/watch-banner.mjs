@@ -58,14 +58,32 @@ check('배너가 워드프레스 html 블록으로 나온다', () => {
   assert.ok(배너.trimEnd().endsWith('<!-- /wp:html -->'));
 });
 
-check('바깥 링크에 nofollow와 새 창을 붙인다', () => {
+check('바깥 링크에 nofollow를 붙인다', () => {
   const links = 배너.match(/<a [^>]*>/g) || [];
   assert.ok(links.length >= 1, '링크가 없습니다');
-  for (const a of links) {
-    assert.ok(/rel="[^"]*noopener/.test(a), a);
-    assert.ok(/rel="[^"]*nofollow/.test(a), a);
-    assert.ok(/target="_blank"/.test(a), a);
+  for (const a of links) assert.ok(/rel="[^"]*nofollow/.test(a), a);
+});
+
+check('링크를 현재 창에서 연다', () => {
+  // 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을 잃는다.
+  assert.ok(!/target=/.test(배너), 배너.match(/<a [^>]*>/g)?.join('\n'));
+  // target이 없으면 noopener도 필요 없다 — 그건 새 창을 띄울 때만 쓰는 것이다.
+  assert.ok(!/noopener/.test(배너), '쓸모없는 noopener가 남아 있습니다');
+});
+
+check('태그 속성이 깨지지 않았다', () => {
+  // 실제로 당한 일: 수정하다가 style=""display:... 로 따옴표가 겹쳐
+  // 버튼 스타일이 통째로 날아갔다. 눈으로 보기 전에는 몰랐다.
+  assert.ok(!/=""[^>]/.test(배너), '빈 따옴표 뒤에 값이 붙어 있습니다');
+  for (const tag of 배너.match(/<(a|div|p)\s[^>]*>/g) || []) {
+    const quotes = (tag.match(/"/g) || []).length;
+    assert.equal(quotes % 2, 0, `따옴표 짝이 안 맞습니다: ${tag.slice(0, 120)}`);
   }
+});
+
+check('버튼에 스타일이 살아 있다', () => {
+  const 버튼 = /<a [^>]*display:inline-block[^>]*>/.test(배너);
+  assert.ok(버튼, '버튼 스타일이 사라졌습니다');
 });
 
 check('제목이 배너에 실린다', () => {

@@ -155,7 +155,18 @@ export function buildSlug({ focusKeyword, title, fallback = '' }) {
  * 그래서 후보들을 실제 본문에 대고 세어 보고 가장 나은 것을 고른다.
  * 긴 후보는 앞에서부터 잘라 짧은 형태도 후보에 넣는다 — 긴 구절은 통째로
  * 반복되지 않지만 그 앞머리(사람 이름, 대회명)는 반복되기 때문이다.
+ *
+ * 다만 너무 짧게 잘라내면 안 된다. 실제로 "경주 알천파크골프장 야간개장"이
+ * 일반명사 "파크골프"로 떨어진 적이 있다. 밀도는 올라가지만 전국 수백 개
+ * 블로그와 싸우는 말이라 1페이지에 갈 수 없다.
+ *
+ * 실측 데이터(config/search-demand.md)가 이걸 뒷받침한다. 클릭이 나는 건
+ * "남서울 파3 이용방법", "어스몬다민컵우승상금" 같은 구체적인 말이다.
+ * 그래서 일반명사 한 낱말짜리에는 감점을 준다.
  */
+/** 너무 흔해서 단독으로는 상위 노출이 어려운 말. 감점 대상이다. */
+const 일반명사 = /^(파크골프|골프|야구|축구|농구|배구|바둑|당구|볼링|배드민턴|테니스|스포츠|경기|대회|선수|리그|시즌|우승|기록)$/;
+
 export function chooseFocusKeyword(body, candidates = []) {
   const seen = new Set();
   const pool = [];
@@ -175,8 +186,10 @@ export function chooseFocusKeyword(body, candidates = []) {
   if (!pool.length) return { keyword: '', density: 0, candidates: [] };
 
   const scored = pool
-    .map((kw) => ({ keyword: kw, ...keywordDensity(body, kw) }))
+    .map((kw) => ({ keyword: kw, 일반: 일반명사.test(kw), ...keywordDensity(body, kw) }))
     .sort((a, b) => {
+      // 일반명사는 밀도가 아무리 높아도 뒤로 민다. 1페이지에 갈 수 없는 말이다.
+      if (a.일반 !== b.일반) return a.일반 ? 1 : -1;
       // 1.25~2.5% 안에 드는 것이 최우선. 그중에서는 긴 쪽(더 구체적인 쪽)을 쓴다.
       const inRange = (x) => x.density >= 1.25 && x.density <= 2.5;
       if (inRange(a) !== inRange(b)) return inRange(a) ? -1 : 1;

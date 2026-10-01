@@ -16,6 +16,7 @@ import { judgeDuplication } from '../src/duplicate/check.mjs';
 import { resolveCategory, normalizeTags } from '../src/wordpress/taxonomy.mjs';
 import { lintArticle, splitTitleAndBody, AI_TELLS } from '../src/ai/write.mjs';
 import { extractFaq, faqSchemaBlock } from '../src/seo/faq-schema.mjs';
+import { imageHtml } from '../src/images/embed.mjs';
 import { keywordDensity, targetKeywordCount } from '../src/seo/rankmath.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -128,7 +129,15 @@ const good = splitTitleAndBody(`2026 KLPGA 챔피언십 (우승 경쟁 본격화
 
 2026 KLPGA 챔피언십은 시즌 후반 상금 경쟁의 분수령으로 여겨져 왔습니다. 지난 시즌에도 이 대회 결과가 상금왕 향방을 갈랐습니다.
 
+KLPGA 투어는 한 시즌에 30개 안팎의 대회를 치릅니다. 그중 메이저로 분류되는 대회는 상금과 랭킹 포인트가 따로 매겨집니다.
+
 서울CC는 그린이 빠르기로 알려진 코스입니다. 퍼팅 감각이 좋은 선수에게 유리하다는 평가가 많습니다.
+
+코스 길이는 전장 6,400야드 안팎입니다. 비슷한 전장의 다른 대회와 비교하면 페어웨이가 좁은 편이어서 드라이버 정확도가 중요합니다.
+
+상금왕은 한 시즌 누적 상금으로 정해집니다. 대상은 포인트제라 꾸준함이 더 중요하고, 둘을 동시에 가져가는 선수는 많지 않습니다.
+
+신인왕은 데뷔 시즌에만 노릴 수 있습니다. 한 번 놓치면 다시는 기회가 없다는 점에서 다른 타이틀과 성격이 다릅니다.
 
 ## 🎯 핵심 분석
 
@@ -350,6 +359,78 @@ check('utils/env.mjs 말고는 .env를 직접 읽지 않는다', () => {
   assert.deepEqual(offenders, [], `loadEnv()를 쓰세요: ${offenders.join(', ')}`);
 });
 
+// ── 실측 데이터가 점수표에 반영됐는가 ───────────────────────
+// 네이버 서치어드바이저 실측치(config/search-demand.md)를 근거로 점수를 준다.
+// 문서와 코드가 따로 놀면 "데이터 기반"이 말뿐이 된다.
+console.log('\n[실측 유입 데이터 반영]');
+
+const 점수 = (label) => rankClusters(
+  [{ label, articles: [{ summary: '' }], sourceCount: 3, latestAt: new Date(NOW).toISOString() }],
+  { name: '골프', category: '골프', longTermHints: [] },
+)[0].score;
+
+check('상금 글감이 대회 결과보다 높다', () => {
+  // 실측 1위가 "어스몬다민컵우승상금" 134클릭이다.
+  assert.ok(점수('어스몬다민컵 우승 상금은 얼마') > 점수('어스몬다민컵 1라운드 결과'),
+    `${점수('어스몬다민컵 우승 상금은 얼마')} vs ${점수('어스몬다민컵 1라운드 결과')}`);
+});
+
+check('시설 이용 안내가 개장 소식보다 높다', () => {
+  assert.ok(점수('남서울 파3 이용방법과 예약 안내') > 점수('남서울 파3 야간개장 시작'));
+});
+
+check('복장·가는 길 같은 검색어에도 가점이 있다', () => {
+  for (const kw of ['복장 규정', '가는 길과 주차', '중계 보는법', '이용료 안내']) {
+    assert.ok(점수(`대회 ${kw}`) > 점수('대회 소식'), kw);
+  }
+});
+
+check('실측 데이터 원본이 문서로 남아 있다', () => {
+  const file = path.join(HERE, '..', 'config', 'search-demand.md');
+  assert.ok(fs.existsSync(file), 'config/search-demand.md가 없습니다');
+  const doc = fs.readFileSync(file, 'utf8');
+  assert.ok(/확인일/.test(doc), '언제 받은 데이터인지 적혀 있어야 합니다');
+  assert.ok(/어스몬다민컵|남서울/.test(doc), '실제 검색어가 빠졌습니다');
+});
+
+// ── 글의 수명을 정하는 섹션 ────────────────────────────────
+// 두 편 연속으로 ⑤번(오래 가는 내용)이 빠졌다. 지시서에 적어두기만 해서는
+// 안 지켜진다는 뜻이라 검사로 올렸다.
+console.log('\n[배경·원리·비교 섹션]');
+
+const 섹션있는글 = (본문) => [
+  '핵심 요약입니다. 2026년 10월 6일에 다시 엽니다.',
+  '## ✨ 개요', '**일정**: 10월 6일',
+  '## 📌 배경과 원리', 본문,
+  '## ❓ 자주 묻는 질문', '**Q. 언제 여나요?**', '10월 6일입니다.',
+  '## 🔥 누가 웃을까', '다음은 10월 10일입니다. 또 정리하겠습니다. 지켜봐 주세요.',
+].join('\n\n');
+
+check('섹션이 아예 없으면 짚어낸다', () => {
+  const body = 섹션있는글('내용').replace('## 📌 배경과 원리', '## 🎯 분석');
+  const issues = lintArticle({ title: '제목', body }).issues.join(' ');
+  assert.ok(issues.includes('배경·원리·비교 섹션이 없습니다'), issues);
+});
+
+check('소제목만 있고 내용이 비면 짚어낸다', () => {
+  // 소제목 하나 넣고 한 문장만 쓰는 것으로 넘어가지 못하게 한다.
+  const issues = lintArticle({ title: '제목', body: 섹션있는글('짧습니다.') }).issues.join(' ');
+  assert.ok(/섹션이 너무 짧습니다/.test(issues), issues);
+});
+
+check('내용이 충분하면 통과한다', () => {
+  const 긴본문 = '파크골프는 9홀 또는 18홀로 구성됩니다. 홀마다 파가 정해져 있습니다. '.repeat(12);
+  const issues = lintArticle({ title: '제목', body: 섹션있는글(긴본문) }).issues.join(' ');
+  assert.ok(!/배경|섹션이 너무 짧/.test(issues), issues);
+});
+
+check('작성 지시에도 그 섹션이 박혀 있다', () => {
+  // 지시서 파일에만 있으면 모델이 흘려보낸다. 프롬프트 끝에 다시 넣었다.
+  const src = fs.readFileSync(path.join(HERE, '..', 'src', 'ai', 'write.mjs'), 'utf8');
+  assert.ok(/반드시 들어가야 할 두 섹션/.test(src), '작성 지시에서 빠졌습니다');
+  assert.ok(/글의 수명을 정합니다/.test(src), '왜 중요한지 설명이 빠졌습니다');
+});
+
 // ── 네 가지 원칙이 코드로 지켜지는가 ────────────────────────
 // 운영자가 정한 네 가지(① AI 티 안 나게 ② 구글 색인 ③ AI 인용 ④ 검색되는 제목).
 // 문서로만 적어두면 지켜지지 않으므로, 셀 수 있는 것은 검사로 묶어둔다.
@@ -411,8 +492,53 @@ check('네 가지 원칙이 프로젝트 규칙 파일에도 박혀 있다', () 
   }
 });
 
+check('여섯 단계 흐름이 문서에 남아 있다', () => {
+  for (const kw of ['경쟁은 덜한 글감', '첫 문장에서 답변', '오래 검색될 개념', '다음 검색을 유도']) {
+    assert.ok(프로젝트규칙.includes(kw), `"${kw}"가 빠졌습니다`);
+  }
+});
+
+check('트렌드 데이터가 없다는 한계를 숨기지 않는다', () => {
+  // 대리 신호를 "검색량"인 척하면 나중에 판단이 틀어진다.
+  assert.ok(/대리 신호|접근하지\s*\n?못한다/.test(프로젝트규칙), '한계 설명이 빠졌습니다');
+});
+
+check('링크를 현재 창에서 연다는 규칙이 문서에 남아 있다', () => {
+  assert.ok(/현재 창에서 연다/.test(프로젝트규칙), '링크 규칙이 빠졌습니다');
+});
+
 check('임시글로만 저장한다는 안전선이 문서에 남아 있다', () => {
   assert.ok(/임시글\(draft\)로만/.test(프로젝트규칙), '자동 발행 금지 원칙이 빠졌습니다');
+});
+
+// ── 링크는 현재 창에서 연다 ────────────────────────────────
+// 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을 잃고, 모바일에서는 탭이 쌓인다.
+// 우리가 만드는 링크(이미지·중계 배너)에 target이 붙지 않는지 확인한다.
+// 쿠팡 광고는 제휴사가 준 코드 그대로라 여기서 제외한다.
+console.log('\n[링크는 현재 창에서]');
+
+check('이미지 링크에 새 창이 붙지 않는다', () => {
+  const html = imageHtml({ url: 'https://x.test/a.png', alt: '대체텍스트' });
+  assert.ok(!/target=/.test(html), html);
+  assert.ok(!/noopener/.test(html), html);
+});
+
+check('우리가 만드는 링크 어디에도 target이 없다', () => {
+  const srcDir = path.join(HERE, '..', 'src');
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir)) {
+      const full = path.join(dir, name);
+      if (fs.statSync(full).isDirectory()) { walk(full); continue; }
+      if (!name.endsWith('.mjs')) continue;
+      const text = fs.readFileSync(full, 'utf8');
+      // 주석에 설명으로 적은 것은 세지 않는다. 실제 출력에 들어가는 것만 본다.
+      const code = text.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
+      if (/target=["']_blank/.test(code)) offenders.push(path.relative(path.join(HERE, '..'), full));
+    }
+  };
+  walk(srcDir);
+  assert.deepEqual(offenders, [], `현재 창에서 열어야 합니다: ${offenders.join(', ')}`);
 });
 
 Date.now = realNow;

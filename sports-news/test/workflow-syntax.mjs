@@ -61,6 +61,19 @@ if (fs.existsSync(sports)) {
   check('sports-news: 리포에 쓰기 권한을 요구하지 않는다', () => {
     assert.ok(/contents: read/.test(text));
   });
+  check('sports-news: 한글 폰트 설치 조건이 실행 단계와 같다', () => {
+    // 폰트는 텍스트 카드에만 쓴다. 조건이 어긋나면 둘 중 하나가 난다.
+    //   더 좁으면 → 글은 쓰는데 폰트가 없어 카드 글씨가 깨진다
+    //   더 넓으면 → 0원 방식에서 apt로 2분을 그냥 버린다
+    const 조건 = (이름) => {
+      const m = new RegExp(`- name: ${이름}\\n([\\s\\S]*?)(?=\\n {6}- |$)`).exec(text);
+      assert.ok(m, `${이름} 단계를 못 찾았습니다`);
+      const i = /^\s*if: \$\{\{([\s\S]*?)\}\}/m.exec(m[1]);
+      assert.ok(i, `${이름} 단계에 if 조건이 없습니다`);
+      return i[1].trim();
+    };
+    assert.equal(조건('한글 폰트 설치'), 조건('실행'));
+  });
 }
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

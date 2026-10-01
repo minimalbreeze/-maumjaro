@@ -136,6 +136,21 @@ check('범위에 드는 것이 있으면 그중 더 구체적인 쪽을 고른�
   assert.equal(r.keyword, '삼성화재배 8강', JSON.stringify(r.candidates));
 });
 
+check('일반명사로 떨어지지 않는다', () => {
+  // 실제로 당한 일: "경주 알천파크골프장 야간개장"이 밀도가 높다는 이유로
+  // "파크골프"로 떨어졌다. 전국 수백 개 블로그와 싸우는 말이라 1페이지에 못 간다.
+  // 실측 데이터도 구체적인 이름이 클릭을 만든다고 말한다.
+  const body = `${'경주 알천파크골프장이 야간개장합니다. '.repeat(6)}${'파크골프 이야기입니다. '.repeat(30)}`;
+  const r = chooseFocusKeyword(body, ['경주 알천파크골프장 야간개장', '파크골프']);
+  assert.equal(r.keyword, '경주 알천파크골프장', JSON.stringify(r.candidates.slice(0, 3)));
+});
+
+check('일반명사밖에 없으면 그것이라도 쓴다', () => {
+  // 감점이지 금지가 아니다. 대안이 없으면 비워두는 것보다 낫다.
+  const body = '골프 이야기입니다. '.repeat(40);
+  assert.equal(chooseFocusKeyword(body, ['골프']).keyword, '골프');
+});
+
 check('후보가 없으면 빈 값을 돌려준다', () => {
   assert.equal(chooseFocusKeyword('내용', []).keyword, '');
 });

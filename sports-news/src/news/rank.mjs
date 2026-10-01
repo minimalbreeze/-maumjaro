@@ -4,8 +4,50 @@
 // 그래서 '앞으로 벌어질 일'(대회 프리뷰·일정·출전명단)에 가점을 주고,
 // '이미 끝나고 소비된 일'(단일 경기 결과·이적설·잡담)에 감점을 준다.
 //
+// 여기에 검색 수요 신호를 더한다(demand.mjs): "관심은 올라오는데 아직 경쟁은
+// 덜한" 글감을 위로 올린다. 예전에는 매체가 많이 다룰수록 가점을 줬는데, 그건
+// 경쟁이 가장 센 글감을 1순위로 고르는 셈이었다. 20개 매체가 쓴 사건은 검색결과를
+// 언론사가 다 가져간다. 개인 블로그가 비집고 들어갈 자리는 그 반대편에 있다.
+//
 // 여기서 최종 결정을 하지는 않는다. 점수는 Claude에게 넘길 후보의 순서를 정할 뿐이고,
 // 실제 채택 여부는 중복 검사와 사실 확인 단계를 거쳐 결정된다.
+
+import { demandSignals } from './demand.mjs';
+
+/**
+ * 실제로 클릭을 만드는 검색어 꼴.
+ *
+ * 추측이 아니라 네이버 서치어드바이저 실측치다(2026-10-01, 최근 90일).
+ * config/search-demand.md에 원본을 적어뒀다. 두 덩어리로 갈린다.
+ *
+ * ① 대회명 + 상금 — 압도적 1위
+ *      어스몬다민컵우승상금   134클릭 / 715노출 / CTR 18.7%
+ *      변형 10개를 합치면 약 181클릭. 전체 유입의 가장 큰 몫이다.
+ *      사람들은 "누가 이겼나"보다 "얼마 받았나"를 훨씬 많이 찾는다.
+ *
+ * ② 시설명 + 행동 — 꾸준한 2위
+ *      남서울 파3 이용방법     38클릭 / 277노출 / CTR 13.7%
+ *      서평택 파3 예약방법      6클릭 /  33노출 / CTR 18.2%
+ *      안산 제일cc 파3 복장     3클릭 /  13노출 / CTR 23.1%
+ *
+ * CTR이 10~65%다. 뉴스성 검색어와 비교가 안 된다. 경쟁이 거의 없다는 뜻이고,
+ * 한 번 올라가면 계속 들어온다. 그래서 이런 글감에 가장 큰 가점을 준다.
+ */
+const 실전_유입 = [
+  // ① 돈 이야기 — 실측 1위
+  { re: /(상금|우승\s?상금|총상금|부상|시상금)/, w: 22, why: '상금 — 실측 유입 1위' },
+  { re: /(가격|요금|이용료|참가비|회비|할인)/, w: 16, why: '가격·요금' },
+
+  // ② 시설 이용 안내
+  { re: /(이용\s?방법|이용안내|이용 시간|운영\s?시간)/, w: 18, why: '이용방법' },
+  { re: /(예약\s?방법|예약제|사전예약|예약 안내)/, w: 18, why: '예약방법' },
+  { re: /(복장|드레스\s?코드|복장규정)/, w: 16, why: '복장 — CTR 20% 넘는 꼴' },
+  { re: /(가는\s?길|가는법|주차|오시는\s?길|네비|위치)/, w: 14, why: '찾아가는 길' },
+
+  // ③ 보는 방법·입문
+  { re: /(중계|보는\s?법|시청\s?방법|생중계|어디서 보)/, w: 14, why: '중계·시청 방법' },
+  { re: /(초보|입문|처음|준비물|클럽\s?조합|고르는|규정)/, w: 12, why: '입문자 질문' },
+];
 
 const LONG_TERM = [
   { re: /(개막|D-\d|프리뷰|미리보기|앞두고|출사표)/, w: 12, why: '대회 프리뷰' },
@@ -31,6 +73,7 @@ export function scoreCluster(cluster, topic) {
   let score = 0;
   const reasons = [];
 
+  for (const { re, w, why } of 실전_유입) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of LONG_TERM) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of SHORT_LIVED) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
 
@@ -39,10 +82,10 @@ export function scoreCluster(cluster, topic) {
     if (text.includes(hint)) { score += 5; reasons.push(`+5 ${hint}`); }
   }
 
-  // 여러 매체가 함께 다룬 사건일수록 확인 가능한 사실이 많다.
-  const srcBonus = Math.min(cluster.sourceCount, 5) * 4;
-  score += srcBonus;
-  reasons.push(`+${srcBonus} 출처 ${cluster.sourceCount}곳`);
+  // 검색 수요 신호: 관심은 올라오는데 경쟁은 덜한 쪽에 가점.
+  const demand = demandSignals(cluster);
+  score += demand.weight;
+  for (const r of demand.reasons) reasons.push(`${demand.weight >= 0 ? '+' : ''}${demand.weight} ${r}`);
 
   // 최신일수록 가점. 날짜를 모르는 건은 최신성을 주장할 수 없으므로 감점.
   if (cluster.latestAt) {
@@ -54,8 +97,10 @@ export function scoreCluster(cluster, topic) {
     reasons.push('-5 발행일 미상');
   }
 
-  return { ...cluster, topic: topic.name, category: topic.category, score, reasons };
+  return { ...cluster, topic: topic.name, category: topic.category, score, reasons, demand };
 }
+
+export { 실전_유입 };
 
 export function rankClusters(clusters, topic) {
   return clusters.map((c) => scoreCluster(c, topic)).sort((a, b) => b.score - a.score);
