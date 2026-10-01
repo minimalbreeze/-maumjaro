@@ -33,6 +33,8 @@ on:
           - '이미 만든 글 SEO 손보기 (비용 0원)'
           - '이미 올린 글 링크 현재창으로 (비용 0원)'
           - '글 찾기 (제목·SEO 값 보기 · 비용 0원)'
+          - '메타 설명 비어 있는 글 채우기 (미리보기 · 비용 0원)'
+          - '메타 설명 비어 있는 글 채우기 (실제 적용 · 비용 0원)'
       find_query:
         description: "글 찾기용 검색어. 예: 파3 예약"
         required: false
@@ -42,7 +44,7 @@ on:
         required: false
         default: ''
       count:
-        description: '만들 글 수 (종목·주제를 비우면 전 종목 중 가장 좋은 것으로)'
+        description: '만들 글 수 (메타 설명 채우기에서는 한 번에 채울 글 수)'
         required: false
         default: '1'
 
@@ -197,10 +199,32 @@ jobs:
           fi
           node src/wordpress/retitle.mjs find "$IN_FIND_QUERY"
 
+      - name: 메타 설명 채우기
+        # 메타 설명이 비어 있는 글만 본문에서 뽑아 채운다.
+        # 이미 설명이 있는 글은 건드리지 않고, meta 하나만 보낸다.
+        if: ${{ contains(inputs.mode, '메타 설명') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_COUNT: ${{ inputs.count }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          case "$IN_MODE" in
+            *미리보기*) node src/wordpress/fill-meta.mjs --dry-run ;;
+            *)
+              case "$IN_COUNT" in
+                ''|*[!0-9]*) echo "::error::개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
+              esac
+              node src/wordpress/fill-meta.mjs "--limit=$IN_COUNT" ;;
+          esac
+
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
