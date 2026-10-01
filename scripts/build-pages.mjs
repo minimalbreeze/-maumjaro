@@ -29,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { loadSymptoms } from './lib/symptoms.mjs';
 import { EMOTION_COPY } from './data/emotion-copy.mjs';
+import { ATHLETE_MBTI } from './data/athletes.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -237,6 +238,12 @@ const AXIS_DEF = {
 };
 const AXIS_PAIR = [['E', 'I'], ['S', 'N'], ['T', 'F'], ['J', 'P']];
 
+// 유형별 선수 목록. scripts/data/athletes.mjs에 출처가 달린 것만 들어 있으므로
+// 여기서 거르지 않고 그대로 쓴다. 없으면 빈 배열이라 그 줄은 아예 안 그려진다.
+function athletesOf(type) {
+  return ATHLETE_MBTI.filter((a) => a.type === type);
+}
+
 function mbtiPages(D) {
   const { MBTI_TYPES, MBTI_MATCH, TYPE_TELLS, TYPE_GROUPS, BLOOD_TYPES, BLOOD_MBTI_MIX,
     MBTI_QUESTION_POOL, MATCH_AXIS_LINES, MATCH_CAUTION } = D;
@@ -276,6 +283,7 @@ function mbtiPages(D) {
 
 <h2>${esc(k)} 성격 특징</h2>
 <p><strong>${esc(k)}</strong>는 맘운자로에서 <strong>${esc(t.name)}</strong>이라고 부릅니다. ${esc(t.trait)}</p>
+${athletesOf(k).length ? `<p>같은 유형으로 알려진 선수 — ${athletesOf(k).map((a) => `<strong>${esc(a.name)}</strong>(${esc(a.sport)}, <a href="${esc(a.url)}" rel="nofollow noopener" target="_blank">${esc(a.source)}</a>)`).join(' · ')}. <a href="/mbti/athletes/">선수 MBTI 전체 보기 ›</a></p>` : ''}
 ${g ? `<p>${esc(k)}는 <strong>${esc(g.emoji)} ${esc(g.label)}</strong> 기질군에 속합니다. 이 무리는 ${esc(g.desc)}이고, ${esc(g.types.filter((x) => x !== k).map((x) => `${x}(${MBTI_TYPES[x].name})`).join(', '))}가 같은 결을 공유합니다.</p>` : ''}
 <ul>
   <li><strong>강점</strong> — ${esc(t.strong)}</li>
@@ -909,6 +917,77 @@ function hubPages(M, T) {
   }
 }
 
+// ---------- 스포츠 선수 MBTI (/mbti/athletes/) ----------
+// 서치어드바이저에 선수 이름 + mbti 검색이 꾸준히 들어온다(30일 17회:
+// 신진서 6 · 서승재 4 · 강소휘 4 · 사쿠마 아카리 3). 그 검색을 받아줄 페이지가 없었다.
+//
+// 다만 실존 인물의 성격 유형이라 목록을 베껴 오면 안 된다. scripts/data/athletes.mjs에
+// "본인이 밝혔고 매체·날짜·링크가 특정되는 것"만 모아 두고, 이 페이지는 그걸 그대로 쓴다.
+// 선수마다 어디서 나온 말인지를 표에 붙이는 것이 이 페이지의 핵심이다.
+//
+// 브랜드 원칙 3(모든 주요 콘텐츠는 주사 경험으로 연결)에 따라 끝은 오늘의 맘운으로 보낸다.
+function athletePages(M) {
+  const url = '/mbti/athletes/';
+  const byType = {};
+  ATHLETE_MBTI.forEach((a) => { (byType[a.type] = byType[a.type] || []).push(a); });
+  const types = Object.keys(byType).sort();
+
+  const rows = ATHLETE_MBTI.map((a) => `<tr>
+  <td><strong>${esc(a.name)}</strong></td>
+  <td>${esc(a.sport)}</td>
+  <td><a href="/mbti/${a.type.toLowerCase()}/">${esc(a.type)}</a></td>
+  <td>${esc(a.how)}<br><a href="${esc(a.url)}" rel="nofollow noopener" target="_blank">${esc(a.source)}</a>${a.note ? `<br><span class="sub">${esc(a.note)}</span>` : ''}</td>
+</tr>`).join('');
+
+  const body = `
+<p>선수 본인이 밝힌 MBTI만 모았습니다. <strong>어디서 나온 말인지</strong>를 선수마다 적어 뒀습니다.</p>
+<p class="sub">인터넷에 도는 "국가대표 MBTI 모음" 같은 목록은 출처가 없어서 넣지 않았습니다.
+기사에서 "이 유형의 예"로 이름만 언급된 경우도 본인이 밝힌 것이 아니라 뺐습니다.</p>
+
+<h2>선수 ${ATHLETE_MBTI.length}명</h2>
+<div style="overflow-x:auto;">
+<table>
+<thead><tr><th>선수</th><th>종목</th><th>MBTI</th><th>어디서 나온 말인가</th></tr></thead>
+<tbody>${rows}</tbody>
+</table>
+</div>
+
+<h2>유형별로 묶어보면</h2>
+${types.map((t) => `<p><a href="/mbti/${t.toLowerCase()}/"><strong>${esc(t)}</strong></a> — ${byType[t].map((a) => esc(a.name)).join(' · ')}${M.MBTI_TYPES[t] ? ` <span class="sub">(${esc(M.MBTI_TYPES[t].name)})</span>` : ''}</p>`).join('')}
+
+<h2>MBTI가 같으면 경기 스타일도 같을까</h2>
+<p>아닙니다. MBTI는 <strong>성격 유형 검사이지 실력이나 경기력을 재는 도구가 아닙니다.</strong>
+같은 ISFP인 김도영과 김택연도 포지션부터 다릅니다. 재미로 보는 선에서 봐주세요.</p>
+<p>그리고 유형은 <strong>검사 시점의 결과</strong>입니다. 몇 년 뒤 다시 하면 달라지기도 합니다.</p>
+
+<h2>그래서 오늘 내 마음은? 💞</h2>
+<p>좋아하는 선수와 유형이 같았다면, 같은 유형의 사람이 오늘 어떤 마음일지도 궁금하지 않으세요.
+맘운자로는 유형을 알려주고 끝나지 않습니다. 지금 기분을 하나 고르면 <strong>그 마음에 맞는 처방</strong>이
+나오고, 그 처방을 친구에게 주사로 보낼 수도 있습니다.</p>
+<p><a href="/">오늘의 맘운 보러가기 ›</a> · <a href="/mbti/">MBTI 16유형 전체 보기 ›</a></p>`;
+
+  pages.push({
+    url,
+    html: shell({
+      url,
+      answer: `선수 본인이 밝힌 MBTI만 모았습니다. 손흥민은 ESFJ(2021년 라디오에서 본인 공개), 김도영과 김택연은 ISFP(2024년 스포츠경향 인터뷰)입니다. 선수마다 어느 매체에서 언제 나온 말인지를 함께 적어 뒀습니다. 출처가 없는 온라인 목록은 넣지 않았습니다. MBTI는 성격 유형 검사이지 경기력을 재는 도구가 아닙니다.`,
+      faq: [
+        { q: '손흥민 MBTI는 무엇인가요?', a: 'ESFJ입니다. 2021년 11월 라디오 방송에서 본인이 직접 밝혔고, 문화일보가 2022년 6월 보도했습니다.' },
+        { q: '김도영 MBTI는 무엇인가요?', a: 'ISFP입니다. 2024년 9월 스포츠경향 인터뷰에서 본인이 ISFP라고 소개했습니다. 같은 ISFP인 김택연도 함께 소개됐습니다.' },
+        { q: 'MBTI가 같으면 경기 스타일도 비슷한가요?', a: '아닙니다. MBTI는 성격 유형 검사이지 실력이나 경기력을 재는 도구가 아닙니다. 또한 검사 시점의 결과라 나중에 달라지기도 합니다.' },
+        { q: '다른 선수들 MBTI는 왜 없나요?', a: '본인이 밝혔고 매체와 날짜가 특정되는 것만 싣기 때문입니다. 출처 없이 도는 목록은 넣지 않았습니다.' },
+      ],
+      title: '스포츠 선수 MBTI — 본인이 밝힌 것만 (출처 표기) | 맘운자로',
+      desc: '손흥민 ESFJ, 김도영·김택연 ISFP 등 선수 본인이 밝힌 MBTI만 모았습니다. 선수마다 어느 매체에서 언제 나온 말인지 함께 적었습니다. 출처 없는 목록은 싣지 않았습니다.',
+      keywords: `스포츠 선수 MBTI, 운동선수 MBTI, 축구선수 MBTI, 야구선수 MBTI, ${ATHLETE_MBTI.map((a) => `${a.name} MBTI`).join(', ')}, MBTI, 맘운자로`,
+      h1: '스포츠 선수 MBTI',
+      sub: '본인이 밝힌 것만 · 출처 표기',
+      breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/mbti/">MBTI</a> › 스포츠 선수',
+      body,
+    }),
+  });
+}
+
 function indexPage(M, T, Z, S) {
   const url = '/guide/';
   const slug = (c) => c.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -1064,6 +1143,7 @@ async function main() {
   tarotPages(T);
   zodiacPages(Z);
   hubPages(M, T);
+  athletePages(M);
   indexPage(M, T, Z, S);
 
   // ⚠️ 여기서 폴더를 통째로 지우면 안 된다.
