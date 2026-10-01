@@ -31,6 +31,7 @@ import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
+import { checkFlow } from './seo/flow.mjs';
 import { usageSummary } from './ai/client.mjs';
 
 /* ── CLI ────────────────────────────────────────────────── */
@@ -279,6 +280,16 @@ async function processCluster(cluster, ctx) {
   result.seoCheck = seoCheck;
   log.info(`    SEO 항목 ${seoCheck.score}점 (${seoCheck.items.length - seoCheck.missing.length}/${seoCheck.items.length})`);
   for (const m of seoCheck.missing) log.warn(`      빠짐: ${m.label} — ${m.fix}`);
+
+  // 흐름 점검: 몇 달 뒤에도 검색되는 글의 구조를 갖췄는가.
+  const flow = checkFlow({ title: article.title, body: article.body, demand: cluster.demand });
+  result.flow = flow;
+  log.info(`    흐름 ${flow.score}점`);
+  for (const i of flow.items) {
+    const mark = i.ok === null ? '—' : i.ok ? '✅' : '❌';
+    log.info(`      ${mark} ${i.step} ${i.label}`);
+  }
+  for (const m of flow.missing) log.warn(`      ${m.step} 보완: ${m.fix}`);
 
   // 2-7. 카테고리
   const cat = siteCategories.length

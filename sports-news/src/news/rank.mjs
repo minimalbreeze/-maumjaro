@@ -4,8 +4,15 @@
 // 그래서 '앞으로 벌어질 일'(대회 프리뷰·일정·출전명단)에 가점을 주고,
 // '이미 끝나고 소비된 일'(단일 경기 결과·이적설·잡담)에 감점을 준다.
 //
+// 여기에 검색 수요 신호를 더한다(demand.mjs): "관심은 올라오는데 아직 경쟁은
+// 덜한" 글감을 위로 올린다. 예전에는 매체가 많이 다룰수록 가점을 줬는데, 그건
+// 경쟁이 가장 센 글감을 1순위로 고르는 셈이었다. 20개 매체가 쓴 사건은 검색결과를
+// 언론사가 다 가져간다. 개인 블로그가 비집고 들어갈 자리는 그 반대편에 있다.
+//
 // 여기서 최종 결정을 하지는 않는다. 점수는 Claude에게 넘길 후보의 순서를 정할 뿐이고,
 // 실제 채택 여부는 중복 검사와 사실 확인 단계를 거쳐 결정된다.
+
+import { demandSignals } from './demand.mjs';
 
 const LONG_TERM = [
   { re: /(개막|D-\d|프리뷰|미리보기|앞두고|출사표)/, w: 12, why: '대회 프리뷰' },
@@ -39,10 +46,10 @@ export function scoreCluster(cluster, topic) {
     if (text.includes(hint)) { score += 5; reasons.push(`+5 ${hint}`); }
   }
 
-  // 여러 매체가 함께 다룬 사건일수록 확인 가능한 사실이 많다.
-  const srcBonus = Math.min(cluster.sourceCount, 5) * 4;
-  score += srcBonus;
-  reasons.push(`+${srcBonus} 출처 ${cluster.sourceCount}곳`);
+  // 검색 수요 신호: 관심은 올라오는데 경쟁은 덜한 쪽에 가점.
+  const demand = demandSignals(cluster);
+  score += demand.weight;
+  for (const r of demand.reasons) reasons.push(`${demand.weight >= 0 ? '+' : ''}${demand.weight} ${r}`);
 
   // 최신일수록 가점. 날짜를 모르는 건은 최신성을 주장할 수 없으므로 감점.
   if (cluster.latestAt) {
@@ -54,7 +61,7 @@ export function scoreCluster(cluster, topic) {
     reasons.push('-5 발행일 미상');
   }
 
-  return { ...cluster, topic: topic.name, category: topic.category, score, reasons };
+  return { ...cluster, topic: topic.name, category: topic.category, score, reasons, demand };
 }
 
 export function rankClusters(clusters, topic) {
