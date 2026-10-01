@@ -72,7 +72,14 @@ jobs:
 
       # 텍스트 카드 이미지에 한글을 그리려면 한글 폰트가 있어야 한다.
       # 러너 기본 폰트로는 중국어체나 비트맵으로 그려져 썸네일 모양이 나쁘다.
+      #
+      # 글을 쓰는 방식일 때만 설치한다. apt로 2분쯤 걸리는데, 0원 방식(손보기·
+      # 메타 설명 채우기 등)은 이미지를 만들지 않으므로 그 2분이 그냥 버려진다.
+      # 메타 설명 채우기는 여러 번 나눠 돌리는 일이라 차이가 크다.
+      # 조건은 아래 '실행' 단계와 똑같이 둔다 — 모르는 방식이 들어오면 설치하는
+      # 쪽으로 기운다(안 깔려서 글씨가 깨지는 것보다 2분 버리는 게 낫다).
       - name: 한글 폰트 설치
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
         run: sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk
 
       - name: 설치
