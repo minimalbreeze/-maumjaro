@@ -163,7 +163,11 @@ export function describeFrom(content, { title = '', focusKeyword = '', max = 155
   if (!out) out = text.slice(0, max);
 
   // 키워드가 설명 안에 없으면 앞에 붙인다. 검색결과에서 굵게 표시되는 부분이다.
-  const kw = String(focusKeyword || '').trim();
+  //
+  // Rank Math는 키워드를 쉼표로 여러 개 넣을 수 있다. 전부 붙이면 이렇게 된다.
+  //   "금석배 전국 고등학생 축구대회,금석배,고등학생 축구대회 정보입니다."
+  // 첫 번째 것만 쓴다 — 그게 대표 키워드다.
+  const kw = String(focusKeyword || '').split(',')[0].trim();
   if (kw && !out.includes(kw)) {
     const 붙임 = `${kw} 정보입니다. ${out}`;
     out = 붙임.length <= max + 20 ? 붙임 : out;

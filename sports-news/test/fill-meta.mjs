@@ -44,6 +44,14 @@ check('키워드가 없으면 앞에 붙인다', () => {
   assert.ok(d.includes('송도 파3'), d);
 });
 
+check('키워드가 쉼표로 여러 개면 첫 번째만 쓴다', () => {
+  // Rank Math는 키워드를 여러 개 넣을 수 있다. 전부 붙이면 설명이 이렇게 된다.
+  //   "금석배 전국 고등학생 축구대회,금석배,고등학생 축구대회 정보입니다."
+  const d = describeFrom(본문, { focusKeyword: '금석배 전국 고등학생 축구대회,금석배,고등학생 축구대회' });
+  assert.ok(!d.includes(',금석배'), d);
+  assert.ok(d.startsWith('금석배 전국 고등학생 축구대회 정보입니다.'), d);
+});
+
 check('키워드가 이미 있으면 덧붙이지 않는다', () => {
   const d = describeFrom(본문, { focusKeyword: '잠실유수지 파크골프장' });
   assert.ok(!d.includes('정보입니다. 잠실유수지'), d);
