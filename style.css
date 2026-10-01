@@ -38,7 +38,14 @@
   --accent-a: #ff9166;
   --accent-b: #ffc66b;
   --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* 화면 아래쪽에서 비워둬야 할 높이.
+     ⚠️ env()를 그대로 쓰지 않고 상한을 둔다. 실제 아이폰(390x844) 스크린샷에서
+     역산해 보니 이 값이 83px까지 올라와 있었다 — 탭바 글자 아래로 93px이 빈 채였다.
+     (iOS 사파리는 하단 툴바가 접힌 뒤에도 펼쳐졌을 때 기준 값을 계속 돌려줄 때가 있다.)
+     홈 인디케이터를 피하는 데 필요한 건 34px이고, 그건 애플 자신의 탭바 기준이다.
+     그보다 큰 값은 안전영역이 아니라 그냥 빈 공간이라 상한에서 자른다.
+     env()가 34px 이하인 기기에서는 min()이 원래 값을 그대로 쓰므로 영향이 없다. */
+  --safe-bottom: min(env(safe-area-inset-bottom, 0px), 34px);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
