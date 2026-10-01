@@ -19,6 +19,13 @@
   /* 카드는 반투명이 아니라 흰색이다. 배경 위에 떠 있어야 목록으로 읽힌다. */
   --card: #ffffff;
   --card-border: rgba(214,170,185,0.18);
+  /* 카드가 "떠 있다"는 느낌을 만드는 그림자. 한 군데에서만 정의하고 전부 이걸 쓴다 —
+     카드마다 그림자를 따로 적으면 화면마다 높이가 달라 보여 톤이 흩어진다.
+     회색이 아니라 분홍기가 도는 그림자다. 파스텔 배경 위에서 회색 그림자는 때처럼 보인다. */
+  --card-shadow: 0 6px 18px rgba(190,140,160,0.10);
+  --card-shadow-sm: 0 3px 10px rgba(190,140,160,0.09);
+  /* 카드 모서리도 토큰으로. 16과 22가 섞여 있으면 같은 화면에서 서로 다른 앱처럼 보인다. */
+  --card-radius: 22px;
   --text: #6b4657;
   /* 배경 아래쪽이 라벤더로 어두워진 만큼 보조 텍스트도 한 단계 진하게 —
      기존 #b98a9a는 라벤더 위에서 명암비 2.08까지 떨어졌다(3.1로 회복). */
@@ -118,7 +125,9 @@ body::before {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-dim);
-  background: rgba(128,128,128,0.12);
+  /* 회색(rgba(186,146,162,...))은 파스텔 배경 위에서 때가 탄 것처럼 보인다.
+     배경과 같은 계열의 따뜻한 분홍 톤으로 바꾼다. 밝기는 비슷해서 명암비는 그대로다. */
+  background: rgba(255,145,102,0.11);
   border-radius: 999px;
   padding: 3px 10px;
   white-space: nowrap;
@@ -166,10 +175,10 @@ body::before {
   padding: 14px 16px;
   /* 라운드를 키우고 그림자를 깔아 카드가 배경 위에 떠 보이게 한다.
      테두리만으로는 밝은 배경 위에서 경계가 안 읽힌다. */
-  border-radius: 22px;
+  border-radius: var(--card-radius);
   background: var(--card);
   border: 1px solid var(--card-border);
-  box-shadow: 0 6px 18px rgba(190,140,160,0.10);
+  box-shadow: var(--card-shadow);
   margin-bottom: 9px;
 }
 .today-rx-card[hidden] { display: none; }
@@ -189,7 +198,7 @@ body::before {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   background: linear-gradient(135deg, #b779ef, #ff8fb3);
   margin-bottom: 4px;
   box-shadow: 0 10px 26px rgba(183,121,239,0.35);
@@ -557,8 +566,10 @@ body::before {
 .tab-btn.active {
   color: var(--text);
   font-weight: 800;
-  background: linear-gradient(180deg, rgba(255,145,102,0.17), rgba(255,198,107,0.09));
-  box-shadow: 0 0 0 1px rgba(255,145,102,0.26), 0 2px 10px rgba(255,145,102,0.16);
+  background: linear-gradient(180deg, rgba(255,145,102,0.15), rgba(255,198,107,0.08));
+  /* 선을 한 겹 벗기고 번짐으로 표현한다. 흰 탭바 위에서 1px 링은 너무 또렷하다.
+     구분 수단 네 가지(배경·인디케이터·굵기·아이콘)는 그대로라 접근성은 안 깎인다. */
+  box-shadow: 0 0 0 1px rgba(255,145,102,0.14), 0 3px 12px rgba(255,145,102,0.18);
 }
 .tab-btn.active .tab-icon {
   filter: none;
@@ -1250,7 +1261,7 @@ body::before {
   margin: 14px 0 14px;
 }
 .rx-slip-banner {
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   padding: 22px 16px;
   margin-bottom: 14px;
   text-align: center;
@@ -1432,7 +1443,7 @@ body::before {
 .rx-custom-preview {
   margin: 16px 0;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   background: #fffdf9;
   border: 1.5px dashed var(--card-border);
 }
@@ -1507,9 +1518,10 @@ body::before {
   align-items: center;
   gap: 5px;
   padding: 14px 4px 12px;
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   background: var(--card);
   border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   cursor: pointer;
 }
 .rx-category-tile:active {
@@ -2233,7 +2245,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   gap: 8px;
   padding: 24px 16px;
   margin-bottom: 20px;
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   background: linear-gradient(135deg, #b779ef, #ff8fb3);
   color: #fff;
 }
@@ -3229,21 +3241,23 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .home-collection[hidden] { display: none; }
 .hc-top { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--text); }
 .hc-pct { margin-left: auto; color: var(--text-dim); }
-.hc-bar { display: block; width: 100%; height: 6px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
+.hc-bar { display: block; width: 100%; height: 6px; border-radius: 999px; background: rgba(186,146,162,0.16); overflow: hidden; }
 .hc-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
 
 .home-teaser {
   width: 100%; flex-shrink: 0; margin-bottom: 8px;
   padding: 9px 13px; border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255,145,102,0.15), rgba(255,198,107,0.12));
-  border: 1px solid rgba(255,145,102,0.24);
+  /* 테두리를 한 단계 연하게 하고 그림자로 띄운다. 선이 굵으면 알림이 경고처럼 보인다. */
+  background: linear-gradient(135deg, rgba(255,145,102,0.13), rgba(255,198,107,0.10));
+  border: 1px solid rgba(255,145,102,0.16);
+  box-shadow: var(--card-shadow-sm);
   font-size: 13.5px; font-weight: 700; color: var(--text);
   display: flex; align-items: center; gap: 7px; justify-content: center;
   text-align: center; line-height: 1.35;
 }
 .home-teaser[hidden] { display: none; }
 .home-teaser .t-sep { color: var(--text-dim); font-weight: 400; }
-.home-teaser.done { background: rgba(128,128,128,0.10); border-color: var(--card-border); }
+.home-teaser.done { background: rgba(186,146,162,0.10); border-color: var(--card-border); }
 
 /* ---------- 도착한 처방 접이식 줄 ----------
    친구가 보낸 처방/운세/타로 카드가 2개 이상이면 홈 최상단을 다 먹는다.
@@ -3289,14 +3303,30 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .home-emo-grid {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
 }
+/* 첫 화면의 주인공. 아래 카드들과 같은 언어(흰 바탕·둥근 모서리·뜬 그림자)를 쓴다.
+   모서리만 13이고 그림자가 없으면 바로 아래 처방 카드와 다른 앱처럼 따로 논다.
+   ⚠️ 높이는 절대 건드리지 않는다 — min-height 58은 그대로 두고 안쪽만 바꾼다.
+   이 칩이 1px이라도 커지면 360×780 폰에서 CTA가 탭바 밑으로 밀린다(여유가 53px뿐). */
 .home-emo {
-  border: 1px solid var(--card-border); border-radius: 13px;
+  border: 1px solid var(--card-border); border-radius: 18px;
   background: var(--card); cursor: pointer;
+  box-shadow: var(--card-shadow-sm);
   padding: 8px 2px 6px; display: flex; flex-direction: column;
   align-items: center; gap: 3px; min-height: 58px; /* 손가락으로 누르기 충분한 크기 */
+  transition: box-shadow .15s ease, transform .12s ease;
 }
-.home-emo:active { transform: scale(0.95); }
-.home-emo-icon { font-size: 20px; line-height: 1; }
+.home-emo:active { transform: scale(0.95); box-shadow: var(--card-shadow); }
+/* 이모지를 파스텔 원 안에 넣는다(처방 카드의 .today-rx-emoji와 같은 처리).
+   원 크기는 실측으로 맞췄다. 라벨 실제 높이가 13.8px(11.5px × 1.2)라서
+   패딩8 + 원 + 간격3 + 13.8 + 패딩6 + 테두리2 ≤ min-height 58 을 만족해야 한다.
+   원이 26이면 58.8로 0.8px 넘쳐서 칩이 커진다 — 25가 상한이다. */
+.home-emo-icon {
+  font-size: 15px; line-height: 1;
+  width: 25px; height: 25px; border-radius: 50%;
+  background: rgba(255,145,102,0.13);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
 /* 5열이라 칸이 좁다. nowrap을 두면 "스트레스"가 칸 밖으로 넘친다. */
 .home-emo-label {
   font-size: 11.5px; font-weight: 700; color: var(--text);
@@ -3317,8 +3347,9 @@ body:has(#healing-overlay.show) #app #syringe-svg {
      한 줄이 늘어난 만큼 타일 높이와 주사기 최소 높이를 함께 줄여 되돌린다. */
   /* 이 값들은 반드시 위 기본값보다 작아야 한다 — 크게 적으면 좁은 화면에서
      오히려 타일을 키워 CTA를 탭바 밑으로 밀어낸다(실제로 한 번 그렇게 깨졌다). */
-  .home-emo { min-height: 50px; padding: 6px 2px 5px; gap: 2px; }
-  .home-emo-icon { font-size: 19px; }
+  .home-emo { min-height: 50px; padding: 6px 2px 5px; gap: 2px; border-radius: 15px; }
+  /* 좁은 화면도 같은 계산: 패딩6 + 20 + 간격2 + 라벨14.4 + 패딩5 + 테두리2 = 49.4 ≤ 50 */
+  .home-emo-icon { font-size: 13px; width: 20px; height: 20px; }
   .home-emo-label { font-size: 12px; }
   .home-emo-grid { gap: 6px; }
   .home-emo-more { margin-top: 3px; padding: 3px; font-size: 13px; }
@@ -3375,7 +3406,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .ob-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
 .ob-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: rgba(128,128,128,0.28); transition: background .2s ease, width .2s ease;
+  background: rgba(186,146,162,0.28); transition: background .2s ease, width .2s ease;
 }
 .ob-dot.on { width: 18px; border-radius: 4px; background: var(--brand-coral, #ff9166); }
 .ob-next { width: 100%; }
@@ -3425,7 +3456,8 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   width: 100%;
   background: var(--card);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  border-radius: var(--card-radius);
   padding: 12px 14px;
   margin-bottom: 10px;
   flex-shrink: 0;
@@ -3441,7 +3473,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .game-lv { font-size: 10.5px; color: var(--text-dim); margin-top: 3px; }
 .game-bar {
   height: 5px; border-radius: 999px; margin-top: 4px;
-  background: rgba(128,128,128,0.18); overflow: hidden;
+  background: rgba(186,146,162,0.18); overflow: hidden;
 }
 .game-bar > span {
   display: block; height: 100%; border-radius: 999px;
@@ -3458,7 +3490,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .game-pharmacy-pct { margin-left: auto; color: var(--text-dim); font-weight: 700; }
 .gp-bar {
   display: block; width: 100%; height: 6px; border-radius: 999px;
-  background: rgba(128,128,128,0.16); overflow: hidden;
+  background: rgba(186,146,162,0.16); overflow: hidden;
 }
 .gp-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #b779ef, #ff8fb3); }
 .gp-locked {
@@ -3740,7 +3772,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 }
 .reward-close {
   width: 100%; margin-top: 10px; padding: 11px; border: none; border-radius: 999px;
-  background: rgba(128,128,128,0.12); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
+  background: rgba(186,146,162,0.12); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
 }
 
 /* ---------- 운세 여는 연출 (캡슐) ----------
@@ -4048,7 +4080,8 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .history-game-panel {
   width: 100%; flex-shrink: 0; margin-bottom: 12px;
   background: var(--card); border: 1px solid var(--card-border);
-  border-radius: 16px; padding: 13px 14px;
+  box-shadow: var(--card-shadow);
+  border-radius: var(--card-radius); padding: 13px 14px;
 }
 .history-game-panel[hidden] { display: none; }
 .hg-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
@@ -4061,7 +4094,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   aspect-ratio: 1; border-radius: 5px; display: flex;
   align-items: center; justify-content: center;
   font-size: 8px; font-weight: 700;
-  background: rgba(128,128,128,0.12); color: var(--text-dim);
+  background: rgba(186,146,162,0.12); color: var(--text-dim);
 }
 .hg-cell.on {
   background: linear-gradient(180deg, #ff9166, #ffc66b); color: #fff;
@@ -4073,9 +4106,9 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   width: 100%; padding: 5px 6px; margin: -5px -6px 4px; cursor: pointer;
   border: none; background: none; border-radius: 9px; text-align: left;
 }
-.hg-tap:active { background: rgba(128,128,128,0.10); }
+.hg-tap:active { background: rgba(186,146,162,0.10); }
 .hg-label { flex: 0 0 92px; font-size: 11px; font-weight: 700; color: var(--text); }
-.hg-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
+.hg-bar { flex: 1; height: 6px; border-radius: 999px; background: rgba(186,146,162,0.16); overflow: hidden; }
 .hg-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff9166, #ffc66b); }
 .hg-bar > i.col { background: linear-gradient(90deg, #b779ef, #ff8fb3); }
 .hg-val { flex: 0 0 auto; font-size: 10px; font-weight: 700; color: var(--text-dim); }
@@ -4130,7 +4163,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 .report-sec { font-size: 11.5px; font-weight: 700; color: var(--text-dim); margin-bottom: 8px; }
 .report-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); margin-bottom: 7px; }
 .report-row > span:first-child { flex: 0 0 74px; }
-.report-bar { flex: 1; height: 7px; border-radius: 999px; background: rgba(128,128,128,0.16); overflow: hidden; }
+.report-bar { flex: 1; height: 7px; border-radius: 999px; background: rgba(186,146,162,0.16); overflow: hidden; }
 .report-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff9166, #ffc66b); }
 .report-stats { display: flex; gap: 8px; margin: 16px 0 12px; }
 .report-stats > div {
