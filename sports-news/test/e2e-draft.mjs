@@ -230,6 +230,29 @@ check('자주 묻는 질문 구조화 데이터가 본문에 붙는다', () => {
 });
 wp6.server.close();
 
+// ── 전 종목에서 가장 좋은 글감 하나 ─────────────────────────
+// 종목마다 1편씩 쓰면 "야구에 좋은 글감이 없는 날에도 야구 글을 쓰는" 일이
+// 생긴다. --best는 그날 가장 좋은 것만 고른다. 수집은 공짜고 돈은 작성에 든다.
+console.log('\n[전 종목에서 가장 좋은 글감]');
+const wp7 = await startMockWordPress();
+const r7 = await run(
+  ['--best=1', '--draft', '--fixture=test/fixtures/two-clusters.json'],
+  { ...probeEnv, WORDPRESS_URL: `http://127.0.0.1:${wp7.port}` },
+);
+check('전 종목을 훑어 후보를 모은다', () => {
+  assert.equal(r7.code, 0, r7.out.slice(-800));
+  assert.ok(/전 종목에서 글감 찾기/.test(r7.out), r7.out.slice(-600));
+});
+check('모은 후보 중 1편만 만든다', () => {
+  assert.equal(wp7.state.created.length, 1, `${wp7.state.created.length}건 저장됨`);
+  assert.equal(wp7.state.created[0].status, 'draft');
+});
+check('종목이 여러 개여도 글은 1편이다', () => {
+  // 종목별 1편 경로였다면 종목 수만큼 나왔을 것이다.
+  assert.ok(/생성 1건/.test(r7.out), r7.out.slice(-400));
+});
+wp7.server.close();
+
 if (siteBackup !== null) fs.writeFileSync(sitePath, siteBackup); else fs.rmSync(sitePath, { force: true });
 ai.server.close(); wp.server.close(); wp2.server.close(); wp3.server.close(); wp4.server.close();
 

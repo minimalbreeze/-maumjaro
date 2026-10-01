@@ -37,7 +37,7 @@ on:
         required: false
         default: ''
       count:
-        description: '한 종목당 만들 글 수'
+        description: '만들 글 수 (종목·주제를 비우면 전 종목 중 가장 좋은 것으로)'
         required: false
         default: '1'
 
@@ -200,17 +200,21 @@ jobs:
           # GitHub 표현식을 run 블록에 바로 쓰면 입력에 들어간 셸 문자가
           # 그대로 실행되므로, 위 env로 넘겨받아 배열로 조립한다.
           args=()
-          if [ -n "$IN_SUBJECT" ]; then
-            # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
-            args+=("--subject=$IN_SUBJECT")
-            echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
-          elif [ -n "$IN_TOPIC" ]; then
-            args+=("--topic=$IN_TOPIC")
-          fi
           case "$IN_COUNT" in
             ''|*[!0-9]*) echo "::error::글 개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
-            *) args+=("--limit=$IN_COUNT") ;;
           esac
+          if [ -n "$IN_SUBJECT" ]; then
+            # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
+            args+=("--subject=$IN_SUBJECT" "--limit=$IN_COUNT")
+            echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
+          elif [ -n "$IN_TOPIC" ]; then
+            args+=("--topic=$IN_TOPIC" "--limit=$IN_COUNT")
+          else
+            # 종목을 안 고르면 전 종목을 훑어 가장 좋은 글감만 쓴다.
+            # 수집은 공짜라 넓게 보고, 돈이 드는 작성은 좁게 한다.
+            args+=("--best=$IN_COUNT")
+            echo "전 종목에서 가장 좋은 글감 $IN_COUNT편을 고릅니다"
+          fi
           case "$IN_MODE" in
             *draft*)
               args+=("--draft")

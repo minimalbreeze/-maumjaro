@@ -48,6 +48,9 @@ export function parseArgs(argv) {
     // --subject: 종목 목록을 훑지 않고, 적어 준 주제 하나만 쓴다.
     // 매일 전 종목을 도는 것보다 훨씬 싸다.
     else if ((m = /^--subject=([\s\S]+)$/.exec(a))) args.subject = m[1].replace(/^["']|["']$/g, '').trim();
+    // --best=N: 전 종목의 글감을 한 자리에 모아 점수로 줄 세운 뒤 상위 N개만 쓴다.
+    // 뉴스 수집은 공짜고 돈이 드는 건 사실확인·작성이라, 넓게 보고 좁게 쓰는 게 이득이다.
+    else if ((m = /^--best=(\d+)$/.exec(a))) args.best = Number(m[1]);
     else if (a === '--draft') args.draft = true;
     else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
   }
@@ -601,6 +604,15 @@ async function main() {
     args.limit ??= 1;
   }
 
+  // --best: 종목을 가로질러 가장 좋은 글감만 고른다.
+  if (args.best) {
+    const perTopic = await writeBestAcrossTopics({
+      topics, cfg, args, siteCategories, seoFields, today, wpAvailable,
+    });
+    printSummary(perTopic, args);
+    return;
+  }
+
   const perTopic = [];
   for (const topic of topics) {
     log.section(`📰 ${topic.name}`);
@@ -692,6 +704,106 @@ async function main() {
   }
 
   printSummary(perTopic, args);
+}
+
+/**
+ * 종목을 가로질러 가장 좋은 글감만 쓴다.
+ *
+ * 왜 이렇게 하나
+ *   뉴스 수집은 RSS라 공짜다. 돈이 드는 건 사실확인과 작성이다. 그래서 전
+ *   종목을 넓게 훑어 후보를 한 자리에 모아 놓고, 그중 점수가 가장 높은 것
+ *   몇 개만 쓴다. 비용은 그 몇 개 값 그대로인데 고르는 눈은 훨씬 넓어진다.
+ *
+ *   종목별로 1편씩 쓰면 "야구에 좋은 글감이 없는 날에도 야구 글을 쓰는" 일이
+ *   생긴다. 이쪽은 그날 가장 좋은 것만 고른다.
+ */
+async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFields, today, wpAvailable }) {
+  log.section('🔎 전 종목에서 글감 찾기');
+
+  const pool = [];
+  for (const topic of topics) {
+    try {
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture });
+      log.info(`${topic.name}: 수집 ${stats.raw}건 → 후보 ${clusters.length}개`);
+      pool.push(...clusters);
+    } catch (err) {
+      log.warn(`${topic.name}: 수집 실패 — 건너뜁니다 (${err.message})`);
+    }
+  }
+
+  if (!pool.length) {
+    log.warn('모든 종목에서 글감을 찾지 못했습니다.');
+    return [];
+  }
+
+  // 네이버 신호는 상위 후보에만 붙인다. 한 번에 5개까지만 물어볼 수 있다.
+  pool.sort((a, b) => b.score - a.score);
+  const 붙임 = [];
+  if (hasNaverTrend()) {
+    await attachTrend(pool, {
+      limit: 5, keywordOf: searchKeywordFor,
+      onError: (why) => log.warn(`  검색 추이 조회 실패 — 대리 신호로 진행합니다: ${why}`),
+    });
+    붙임.push('데이터랩 추이');
+  }
+  if (hasNaverKeywords()) {
+    await attachSearchVolume(pool, {
+      limit: 5,
+      onError: (why) => log.warn(`  검색수 조회 실패 — 대리 신호로 진행합니다: ${why}`),
+    });
+    붙임.push('검색수');
+  }
+  // 신호를 붙였으면 다시 채점한다. 글감마다 종목이 다르므로 제 종목으로 채점한다.
+  const byName = new Map(topics.map((t) => [t.name, t]));
+  if (붙임.length) {
+    for (const c of pool) {
+      const t = byName.get(c.topic);
+      if (t) Object.assign(c, rankClusters([c], t)[0]);
+    }
+    pool.sort((a, b) => b.score - a.score);
+  }
+
+  log.raw('');
+  log.info(`후보 ${pool.length}개 중 ${args.best}개 선정${붙임.length ? ` (${붙임.join(' + ')} 반영)` : ''}`);
+  pool.slice(0, 8).forEach((c, i) => {
+    const 조각 = [];
+    if (c.trend) 조각.push(`${c.trend.rising ? `상승 ${c.trend.ratio}배` : '평탄'}/지수 ${c.trend.peak}`);
+    if (c.searchVolume) 조각.push(`월 ${c.searchVolume.total.toLocaleString('ko-KR')}회`);
+    log.info(`  ${i + 1}. [${c.score}점] ${c.topic} — ${c.label.slice(0, 36)}${조각.length ? ` · ${조각.join(' · ')}` : ''}`);
+  });
+
+  const maxExtra = Number(env('MAX_EXTRA_CANDIDATES', '2'));
+  const results = [];
+  let produced = 0;
+  let extra = 0;
+
+  for (const cluster of pool) {
+    if (produced >= args.best) break;
+    if (extra > maxExtra) {
+      log.warn(`  다음 후보 시도를 ${maxExtra}번까지만 합니다. 여기서 멈춥니다.`);
+      break;
+    }
+
+    log.raw('');
+    log.step(`처리: [${cluster.topic}] ${cluster.label.slice(0, 44)}`);
+    let r;
+    try {
+      r = await processCluster(cluster, { ...args, siteCategories, seoFields, today, wpAvailable });
+    } catch (err) {
+      log.fail('  이 글감 처리 실패', err);
+      r = { topic: cluster.topic, label: cluster.label, error: err.message };
+    }
+    results.push(r);
+
+    if (r.skipped || r.error) {
+      extra++;
+      if (extra <= maxExtra && produced < args.best) log.info('  다음 후보로 넘어갑니다.');
+    } else {
+      produced++;
+    }
+  }
+
+  return [{ topic: '전 종목', candidates: pool.length, results }];
 }
 
 /**
