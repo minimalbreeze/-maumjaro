@@ -537,7 +537,7 @@
     // 처음 온 사람에게만 흐름을 한 줄로 알려준다(팝업 튜토리얼은 만들지 않는다)
     if (firstGuide) {
       if (p.totalCheckIns === 0) {
-        firstGuide.innerHTML = '<b>①</b> 기분 고르기 → <b>②</b> 마음처방 → <b>③</b> 상자 열고 마음약 받기';
+        firstGuide.innerHTML = '<b>①</b> 기분 고르기 → <b>②</b> 마음처방 → <b>③</b> 마음약 받기';
         firstGuide.hidden = false;
       } else {
         firstGuide.hidden = true;
