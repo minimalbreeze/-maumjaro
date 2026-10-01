@@ -20,8 +20,12 @@ export const MODELS = {
   // 사실 확인: 기사에서 사실을 뽑아 분류하는 기계적인 일에 가깝다.
   //   웹검색이 붙어 가장 비싼 단계이므로 여기를 낮추는 효과가 가장 크다.
   verify: env('CLAUDE_MODEL_VERIFY', 'claude-sonnet-5'),
-  // 본문 작성: 이게 결과물 그 자체다. 여기는 낮추지 않는다.
-  write: env('CLAUDE_MODEL_WRITE', 'claude-opus-5'),
+  // 본문 작성: 한 편 비용의 95%가 여기서 난다.
+  //   Opus 5로 쓰면 한 편에 약 330원, Sonnet 5면 약 90원이다.
+  //   실제로 뽑아본 글을 비교해 보니 양식·사실 준수는 차이가 없었고,
+  //   차이가 나는 건 문장의 결 정도였다. 매일 돌릴 도구라 여기를 낮춘다.
+  //   품질이 아쉬우면 CLAUDE_MODEL_WRITE=claude-opus-5 로 되돌리면 된다.
+  write: env('CLAUDE_MODEL_WRITE', 'claude-sonnet-5'),
   // SEO: 다 쓴 글에서 제목·설명·태그를 뽑는 단순 작업.
   seo: env('CLAUDE_MODEL_SEO', 'claude-haiku-4-5'),
 };
@@ -73,7 +77,7 @@ export const WEB_SEARCH_TOOL = {
   // 그래서 3회로 줄였더니 이번엔 반대로 기울었다. 사실확인 단계가
   // "검색 도구 제한으로 추가 검증이 불가능했다"며 글을 못 쓰겠다고 했다.
   // 아껴봐야 글이 안 나오면 그게 제일 비싸다. 5회가 그 사이다.
-  max_uses: Number(env('WEB_SEARCH_MAX_USES', '5')),
+  max_uses: Number(env('WEB_SEARCH_MAX_USES', '4')),
 };
 
 const MAX_CONTINUATIONS = 5;
