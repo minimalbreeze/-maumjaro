@@ -58,7 +58,16 @@
   el.addEventListener('pointerdown', skip, { passive: true });
   // 애니메이션은 안에 있는 로고·글자에도 걸려 있어서 animationend가 여러 번 올라온다.
   // 화면 전체(el)에서 난 것만 "끝"으로 본다.
-  el.addEventListener('animationend', (e) => { if (e.target === el) finish(); });
+  //
+  // ⚠️ e.target === el 만으로는 부족하다. ::before/::after에 걸린 애니메이션은
+  // 가상요소가 따로 이벤트 대상이 될 수 없어서 el에서 그대로 올라온다 —
+  // 배경이 피어오르는 애니메이션(1.1초)을 추가했더니 그게 끝나는 순간 스플래시가
+  // 통째로 걷혀서 3.5초짜리 화면이 1.1초로 잘렸다.
+  // 그래서 "사라지는 그 애니메이션"인지를 이름으로 확인한다. 앞으로 이 화면에
+  // 애니메이션을 몇 개를 더 붙이든 끝을 판단하는 건 mj-splash-out 하나뿐이다.
+  el.addEventListener('animationend', (e) => {
+    if (e.target === el && e.animationName === 'mj-splash-out') finish();
+  });
   // 안전망. 백그라운드 탭처럼 애니메이션 이벤트가 오지 않는 상황에서도 반드시 치운다.
   // 길이를 여기에 따로 적어두지 않는다 — 2600으로 박아뒀다가 CSS를 2.4초에서 3.5초로
   // 늘렸을 때 이 타이머가 먼저 터져서 마지막 0.9초가 잘렸다. 화면은 다 그려졌는데
