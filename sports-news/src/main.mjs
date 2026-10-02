@@ -27,7 +27,7 @@ import { createHeroImage, createSectionImage, hasAiImage } from './images/provid
 import { uploadMedia, safeFileName } from './images/upload.mjs';
 import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.mjs';
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
-import { writeArticle, lintArticle } from './ai/write.mjs';
+import { writeArticle, lintArticle, writeLongevitySection, spliceSection } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/naver-keywords.mjs';
@@ -238,12 +238,43 @@ async function processCluster(cluster, ctx) {
   // 2-4. 본문 작성
   log.step('  워프양식으로 작성 중');
   const article = await writeArticle({ cluster, verification, today, focusKeyword: provisionalKeyword });
-  const lint = lintArticle(article);
-  result.article = article;
-  result.lint = lint;
+  let lint = lintArticle(article);
   log.info(`    제목: ${article.title}`);
   log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
   if (!lint.ok) for (const i of lint.issues) log.warn(`    양식 확인 필요: ${i}`);
+
+  // ⑤ 배경·원리·비교가 빠졌으면 그 섹션만 받아서 끼운다.
+  //
+  // 왜 — 지시로는 안 됐다. 작성 지시에 박고 검사까지 붙였는데도 7260·7264·
+  // 7268·7272 네 편 연속 빠졌다. 경고만 찍고 글은 그대로 저장됐기 때문이다.
+  // 이 섹션이 글의 수명을 정하는 부분이라 한 번은 다시 물어볼 값이 있다.
+  // 전체 재작성이 아니라 섹션 하나만 받으므로 한 편 값의 1/5쯤 든다.
+  const 수명문제 = lint.issues.filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+  if (수명문제.length && env('REPAIR_SECTION', 'on') !== 'off') {
+    log.step('  오래 검색되는 섹션 보완 중 (빠진 섹션만 다시 받습니다)');
+    try {
+      const section = await writeLongevitySection({
+        title: article.title, body: article.body,
+        cluster, verification, focusKeyword: provisionalKeyword,
+      });
+      const 보완 = spliceSection(article.body, section);
+      const 다시 = lintArticle({ title: article.title, body: 보완 });
+      // 보완한 쪽이 실제로 나아졌을 때만 받아들인다. 나빠지면 원본을 지킨다.
+      const 남은문제 = 다시.issues.filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+      if (남은문제.length < 수명문제.length) {
+        article.body = 보완;
+        lint = 다시;
+        log.ok(`    보완 완료 — 본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
+      } else {
+        log.warn('    보완해도 기준에 못 미쳐 원본을 그대로 씁니다');
+      }
+    } catch (err) {
+      log.warn(`    섹션 보완 실패 — 원본으로 진행합니다 (${err.message})`);
+    }
+  }
+
+  result.article = article;
+  result.lint = lint;
 
   // 2-5. SEO
   log.step('  SEO 생성 중');

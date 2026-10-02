@@ -140,3 +140,66 @@ check('경쟁이 심한 글감은 ①에서 걸린다', () => {
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
+
+// ── ⑤ 섹션 보완 ───────────────────────────────────────────
+// 7260·7264·7268·7272 네 편 연속 빠졌다. 지시로는 안 돼서 보완 호출을 붙였다.
+{
+  const { spliceSection } = await import('../src/ai/write.mjs');
+  const { lintArticle } = await import('../src/ai/write.mjs');
+
+  const 섹션 = `## 📌 파크골프 코스 구성과 이용 규칙\n\n${'파크골프 코스 구성과 규칙을 설명하는 문장입니다. '.repeat(14)}`;
+
+  check('자주 묻는 질문 앞에 끼운다', () => {
+    const body = ['## 📊 기록과 데이터', '숫자.', '', '## ❓ 자주 묻는 질문', '**Q. 뭐?**', 'A. 저거.'].join('\n');
+    const out = spliceSection(body, 섹션);
+    assert.ok(out.indexOf('📌') < out.indexOf('❓'), out);
+    assert.ok(out.includes('## 📊'), '기존 섹션이 사라졌습니다');
+  });
+
+  check('맺음 섹션 앞에도 끼운다', () => {
+    const body = ['## 📊 기록', '숫자.', '', '## 다음에 더 찾아볼 것', '끝.'].join('\n');
+    const out = spliceSection(body, 섹션);
+    assert.ok(out.indexOf('📌') < out.indexOf('다음에 더 찾아볼 것'), out);
+  });
+
+  check('끼울 자리가 없으면 맨 뒤에 붙인다', () => {
+    const out = spliceSection('## 📊 기록\n숫자.', 섹션);
+    assert.ok(out.includes('📌'), out);
+    assert.ok(out.includes('## 📊'), out);
+  });
+
+  check('보완하면 수명 문제가 사라진다', () => {
+    const 없는글 = ['## 📊 기록과 데이터', '43홈런 113타점. 2위는 106타점.', '',
+                    '## ❓ 자주 묻는 질문', '**Q. 언제?**', 'A. 10월 3일.'].join('\n');
+    const 전 = lintArticle({ title: '제목', body: 없는글 }).issues
+      .filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+    const 후 = lintArticle({ title: '제목', body: spliceSection(없는글, 섹션) }).issues
+      .filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+    assert.ok(전.length > 0, '원래 글에서 문제가 안 잡혔습니다');
+    assert.equal(후.length, 0, `보완 뒤에도 남았습니다: ${후.join(' / ')}`);
+  });
+
+  check('짧은 섹션은 보완으로 인정하지 않는다', () => {
+    // 소제목만 있고 내용이 없으면 끼워도 의미가 없다. 300자 기준에 걸려야 한다.
+    const 짧음 = '## 📌 배경\n\n한 줄.';
+    const out = spliceSection('## 📊 기록\n숫자.\n\n## ❓ 자주 묻는 질문\nA.', 짧음);
+    const 남음 = lintArticle({ title: '제목', body: out }).issues
+      .filter((i) => /섹션이 너무 짧습니다/.test(i));
+    assert.equal(남음.length, 1, JSON.stringify(lintArticle({ title: '제목', body: out }).issues));
+  });
+}
+
+// 보완 섹션의 소제목이 검사에 인정되는 말인지.
+//
+// 처음에 기본 소제목을 "## 📌 알고 보면 더 보이는 것들"로 뒀다. 그 말에는
+// 배경·원리·비교·역사·규칙·계보가 없어서, 섹션을 끼워도 검사가 계속 "섹션이
+// 없다"고 했다. 보완이 영원히 실패하는 길이었다.
+{
+  const { LONGEVITY_WORDS } = await import('../src/ai/write.mjs');
+
+  check('검사가 요구하는 낱말이 기본 소제목에 들어 있다', () => {
+    assert.ok(LONGEVITY_WORDS.test('## 📌 배경과 원리, 비슷한 사례 비교'));
+    // 예전 기본값은 통과하지 못한다 — 그게 버그였다.
+    assert.ok(!LONGEVITY_WORDS.test('## 📌 알고 보면 더 보이는 것들'));
+  });
+}

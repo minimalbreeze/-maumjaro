@@ -126,6 +126,94 @@ ${focusKeyword ? `## 🔑 검색 키워드 배치
   return splitTitleAndBody(raw);
 }
 
+/**
+ * ⑤ 배경·원리·비교 섹션만 따로 받아 온다.
+ *
+ * 왜 이게 필요한가 — 지시로는 안 됐다. 작성 지시에 "반드시 들어가야 할 두
+ * 섹션"으로 박아두고 lint 검사까지 붙였는데도 7260·7264·7268·7272 네 편
+ * 연속으로 빠졌다. 경고만 찍고 글은 그대로 저장됐기 때문이다.
+ *
+ * 전체를 다시 쓰지 않는다. 빠진 섹션 하나만 받아서 끼운다 — 한 편 다시 쓰는
+ * 값의 1/5쯤이면 된다. 이 섹션이 글의 수명을 정하는 부분이라 비용을 쓸 값이 있다.
+ */
+export async function writeLongevitySection({ title, body, cluster, verification, focusKeyword = '' }) {
+  const confirmed = (verification?.confirmed || [])
+    .map((c) => `- ${c.field}: ${c.value}`).join('\n') || '(없음)';
+
+  const prompt = `아래 블로그 글에 **"오래 검색되는 섹션"이 빠져 있습니다.** 그 섹션만 써 주세요.
+
+## 글 제목
+${title}
+
+## 이미 쓴 본문
+${body}
+
+## 확인된 사실
+${confirmed}
+
+## 써야 할 것
+
+\`## 📌\` 로 시작하는 소제목 하나와 그 내용만 씁니다.
+소제목에는 **배경·원리·비교·역사·규칙·계보 중 한 낱말이 들어가야 합니다**
+(예: \`## 📌 파크골프 코스 구성과 이용 규칙\`, \`## 📌 다른 구장과 비교하면\`).
+아래 중 **둘 이상**을 실제로 담습니다. 각각 2~3문단으로 씁니다.
+
+- **규칙·제도**: 이 종목/대회가 어떻게 굴러가는지. 처음 보는 사람 기준으로.
+- **원리**: 왜 그런 결과가 나오는지. 경기 구조·전략·조건.
+- **역사·계보**: 언제 시작됐고 누가 있었는지. 이 기록이 왜 드문지.
+- **비교**: 다른 대회·리그·선수·시설과 무엇이 어떻게 다른지.
+
+${focusKeyword ? `"${focusKeyword}"를 이 섹션에서 두 번 이상 자연스럽게 씁니다.\n` : ''}
+## 규칙
+
+- **공백 제외 400자 이상** 씁니다. 한 문장씩 흘리지 않습니다.
+- 위 본문에 이미 적힌 내용을 되풀이하지 않습니다. 새로 알려주는 내용만 씁니다.
+- 확인된 사실에 없는 숫자·날짜·이름을 만들지 않습니다. 모르면 일반적인 설명으로
+  씁니다. **이 원칙이 분량보다 위에 있습니다.**
+- "또한", "결론적으로", "귀추가 주목됩니다" 같은 말은 쓰지 않습니다.
+
+소제목 한 줄과 본문만 출력합니다. 다른 설명은 붙이지 않습니다.`;
+
+  const raw = await callForText({
+    system: SYSTEM, prompt,
+    maxTokens: 4000,
+    effort: env('REPAIR_EFFORT', 'low'),
+  });
+
+  const t = String(raw || '').trim();
+
+  // 소제목이 없거나, lintArticle이 "오래 가는 섹션"으로 인정하지 않는 말이면
+  // 보정한다. 검사는 소제목에 배경·원리·비교·역사·규칙·계보 중 하나를 요구한다.
+  // 이걸 안 맞추면 보완을 해도 검사가 계속 "섹션이 없다"고 한다 — 실제로 당했다.
+  const 첫줄 = t.split('\n')[0] || '';
+  if (!/^##\s/.test(첫줄)) return `${OLDEVITY_HEADING}\n\n${t}`;
+  if (!LONGEVITY_WORDS.test(첫줄)) {
+    return [OLDEVITY_HEADING, ...t.split('\n').slice(1)].join('\n');
+  }
+  return t;
+}
+
+/** lintArticle이 "오래 가는 섹션"으로 인정하는 낱말. */
+export const LONGEVITY_WORDS = /배경|원리|비교|역사|규칙|계보/;
+const OLDEVITY_HEADING = '## 📌 배경과 원리, 비슷한 사례 비교';
+
+/**
+ * 본문에 섹션을 끼운다.
+ *
+ * 자주 묻는 질문과 마지막 맺음 섹션 앞에 둔다. 글의 흐름이 ④ 데이터 → ⑤ 확장
+ * → ⑥ 다음 검색이라, 질문·맺음 뒤로 가면 순서가 어그러진다.
+ */
+export function spliceSection(body, section) {
+  const lines = String(body || '').split('\n');
+  // 뒤에서부터 찾아 '자주 묻는 질문'이나 맺음 소제목의 첫 줄 위치를 잡는다.
+  let at = -1;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^##\s/.test(lines[i]) && /자주 묻는|질문|마지막|정리하면|다음에|더 찾아/.test(lines[i])) at = i;
+  }
+  if (at < 0) return `${body.trimEnd()}\n\n${section}`;
+  return [...lines.slice(0, at), section, '', ...lines.slice(at)].join('\n').trim();
+}
+
 function statusLabel(s) {
   return { upcoming: '아직 열리지 않음 (예정)', ongoing: '진행 중', finished: '이미 종료됨', unclear: '불명확' }[s] || s;
 }
