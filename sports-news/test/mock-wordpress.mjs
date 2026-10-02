@@ -132,10 +132,13 @@ export function startMockWordPress({ rankMathWritable = true, existingPosts = []
         // 훑는 코드를 검사해도 항상 빈 목록을 보고 통과했다 — "이미 설명이 있는
         // 글은 건드리지 않는다"는 검사가 아무것도 확인하지 못한 채 초록불이었다.
         const ids = Object.keys(state.posts).map(Number).sort((a, b) => b - a);
-        const wantStatus = url.searchParams.get('status');
+        // status 는 'publish' 처럼 하나일 수도, 'publish,draft' 처럼 쉼표 목록일
+        // 수도 있다. 실제 워드프레스가 둘 다 받는다.
+        const wantStatus = (url.searchParams.get('status') || '')
+          .split(',').map((v) => v.trim()).filter(Boolean);
         const rows = ids
           .map((id) => ({ id, ...state.posts[id] }))
-          .filter((row) => !wantStatus || row.status === wantStatus);
+          .filter((row) => !wantStatus.length || wantStatus.includes(row.status));
 
         const perPage = Number(url.searchParams.get('per_page') || 10);
         const page = Number(url.searchParams.get('page') || 1);

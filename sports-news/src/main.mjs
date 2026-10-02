@@ -17,6 +17,7 @@ import { settleAll } from './utils/retry.mjs';
 import { fetchFeed, parseFeed, buildQueryUrl, filterRecent, dedupeItems, applyQuerySuffix } from './news/fetch-rss.mjs';
 import { clusterArticles, splitBySourceCount } from './news/normalize.mjs';
 import { rankClusters } from './news/rank.mjs';
+import { recentCategories, categoryIndex } from './news/variety.mjs';
 
 import { findRelatedPosts, judgeDuplication, VERDICT_LABEL } from './duplicate/check.mjs';
 import { loadSiteCategories, resolveCategory, resolveTagIds } from './wordpress/taxonomy.mjs';
@@ -95,7 +96,7 @@ const todayKST = () => new Date(Date.now() + 9 * 3600 * 1000).toISOString().slic
 
 /* ── 1단계: 수집 ─────────────────────────────────────────── */
 
-async function collectTopic(topic, cfg, { fixture } = {}) {
+async function collectTopic(topic, cfg, { fixture, recentCats = null } = {}) {
   const { hoursWindow, maxItemsPerQuery, minSources, maxCandidatesPerTopic } = cfg.defaults;
   const raw = [];
 
@@ -162,7 +163,7 @@ async function collectTopic(topic, cfg, { fixture } = {}) {
   const { fresh, undated, stale } = filterRecent(deduped, hoursWindow);
   const clusters = clusterArticles(fresh);
   const { enough, thin } = splitBySourceCount(clusters, minSources);
-  const ranked = rankClusters(enough, topic).slice(0, maxCandidatesPerTopic);
+  const ranked = rankClusters(enough, topic, { recentCategories: recentCats }).slice(0, maxCandidatesPerTopic);
 
   return {
     clusters: ranked,
@@ -604,10 +605,24 @@ async function main() {
     args.limit ??= 1;
   }
 
+  // 최근에 쓴 종목은 점수를 깎는다. 같은 종목만 연달아 나오는 걸 막는다.
+  // 조회가 실패해도 그냥 간다 — 다양성 때문에 글을 못 쓰게 되면 안 된다.
+  let recentCats = null;
+  if (wpAvailable) {
+    try {
+      recentCats = await recentCategories({ categoryNameById: categoryIndex(siteCategories) });
+      if (recentCats?.length) {
+        log.info(`최근 글 종목: ${recentCats.join(' → ')} (같은 종목은 점수를 깎습니다)`);
+      }
+    } catch (err) {
+      log.warn(`최근 글 조회 실패 — 종목 다양성 감점 없이 진행합니다 (${err.message})`);
+    }
+  }
+
   // --best: 종목을 가로질러 가장 좋은 글감만 고른다.
   if (args.best) {
     const perTopic = await writeBestAcrossTopics({
-      topics, cfg, args, siteCategories, seoFields, today, wpAvailable,
+      topics, cfg, args, siteCategories, seoFields, today, wpAvailable, recentCats,
     });
     printSummary(perTopic, args);
     return;
@@ -617,7 +632,7 @@ async function main() {
   for (const topic of topics) {
     log.section(`📰 ${topic.name}`);
     try {
-      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture });
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture, recentCats });
       log.info(`수집 ${stats.raw}건 → 중복 제거 후 ${stats.deduped ?? 0}건`);
       log.info(`  최근 ${stats.hoursWindow}시간 이내 ${stats.fresh ?? 0}건 · 그보다 오래됨 ${stats.stale ?? 0}건 · 날짜미상 ${stats.undated ?? 0}건`);
       log.info(`  묶음 ${stats.clusters}개 (출처 ${cfg.defaults.minSources}곳 미만이라 제외된 묶음 ${stats.thin}개)`);
@@ -649,7 +664,7 @@ async function main() {
         붙임.push('검색수');
       }
       if (붙임.length) {
-        const 재채점 = rankClusters(clusters, topic);
+        const 재채점 = rankClusters(clusters, topic, { recentCategories: recentCats });
         clusters.splice(0, clusters.length, ...재채점);
       }
 
@@ -717,13 +732,13 @@ async function main() {
  *   종목별로 1편씩 쓰면 "야구에 좋은 글감이 없는 날에도 야구 글을 쓰는" 일이
  *   생긴다. 이쪽은 그날 가장 좋은 것만 고른다.
  */
-async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFields, today, wpAvailable }) {
+async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFields, today, wpAvailable, recentCats = null }) {
   log.section('🔎 전 종목에서 글감 찾기');
 
   const pool = [];
   for (const topic of topics) {
     try {
-      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture });
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture, recentCats });
       log.info(`${topic.name}: 수집 ${stats.raw}건 → 후보 ${clusters.length}개`);
       pool.push(...clusters);
     } catch (err) {
@@ -758,7 +773,7 @@ async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFie
   if (붙임.length) {
     for (const c of pool) {
       const t = byName.get(c.topic);
-      if (t) Object.assign(c, rankClusters([c], t)[0]);
+      if (t) Object.assign(c, rankClusters([c], t, { recentCategories: recentCats })[0]);
     }
     pool.sort((a, b) => b.score - a.score);
   }
