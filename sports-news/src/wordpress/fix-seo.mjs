@@ -10,7 +10,7 @@
 //   본문은 그대로 두고 대표 키워드만 본문에 실제로 있는 말로 바꾼다.
 
 import { wpFetch } from './client.mjs';
-import { chooseFocusKeyword, keywordDensity, buildSlug } from '../seo/rankmath.mjs';
+import { chooseFocusKeyword, keywordDensity, buildSlug, 키워드정리 } from '../seo/rankmath.mjs';
 import { log } from '../utils/logger.mjs';
 import { loadEnv } from '../utils/env.mjs';
 
@@ -68,9 +68,21 @@ export async function fixPostSeo(postId, { apply = true } = {}) {
   };
 
   if (!picked.keyword || picked.keyword === current) return result;
-  // 지금 것이 이미 권장 구간 안이면 건드리지 않는다.
-  if (before.density >= 1.25 && before.density <= 2.5) return result;
-  if (picked.density <= before.density) return result;
+
+  // 지금 키워드에 따옴표·괄호가 붙어 있으면 밀도와 무관하게 고친다.
+  //
+  // 왜 — 글 7276의 키워드가 "'2026 우리할매떡볶이 어린이" 였는데 밀도가 1.26%로
+  // 권장 구간 안이라 아래 조건에 걸려 그대로 통과했다. 밀도를 셀 때는 구두점을
+  // 무시하고 세기 때문에, 껍데기가 붙은 키워드는 영원히 "이미 괜찮은" 상태로
+  // 보인다. 검색창에 따옴표를 치는 사람은 없으니 밀도보다 이게 먼저다.
+  const 껍데기 = current && 키워드정리(current) !== current;
+  if (껍데기) {
+    result.reason = '키워드에 따옴표·괄호가 붙어 있습니다';
+  } else {
+    // 지금 것이 이미 권장 구간 안이면 건드리지 않는다.
+    if (before.density >= 1.25 && before.density <= 2.5) return result;
+    if (picked.density <= before.density) return result;
+  }
 
   if (apply) {
     await wpFetch(`/wp/v2/posts/${postId}`, {
