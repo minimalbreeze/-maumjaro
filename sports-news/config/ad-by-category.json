@@ -1,0 +1,45 @@
+{
+  "_설명": "카테고리별 쿠팡 파트너스 링크. 글 카테고리에 맞는 상품을 보여주면 클릭이 는다 — 파크골프 글에 주방용품이 뜨면 아무도 안 누른다. 여기 없는 카테고리는 config/ad-coupang.html의 일반 캐러셀을 그대로 쓴다.",
+  "_확인일": "2026-10-03",
+  "_링크_바꾸는_법": "쿠팡 파트너스에서 카테고리에 맞는 상품·검색 링크를 만들어 url 을 바꾸면 된다. 코드는 안 고쳐도 된다. 링크가 죽었는지는 '광고 링크 점검' 방식으로 확인한다.",
+  "_label_설명": "광고 앞에 놓는 한 줄. 광고가 뜬금없이 나오면 그냥 넘긴다. 바로 앞에 '그래서 뭘 사야 하나'가 적혀 있으면 광고가 답처럼 보인다.",
+
+  "categories": {
+    "파크골프": {
+      "url": "https://link.coupang.com/a/hygjf8K51g",
+      "label": "파크골프 입문이라면 채부터 고민될 텐데, 요즘 많이 쓰는 것들입니다"
+    },
+    "야구": {
+      "url": "https://link.coupang.com/a/hyhj5IFI4G",
+      "label": "글러브랑 배트, 시즌 앞두고 바꾸신다면"
+    },
+    "골프": {
+      "url": "https://link.coupang.com/a/hygBwJCftc",
+      "label": "라운딩 준비물 챙기실 때 참고하세요"
+    },
+    "농구": {
+      "url": "https://link.coupang.com/a/hygKaWVuvs",
+      "label": "직관 가실 때, 농구 용품도 같이 보세요"
+    },
+    "배드민턴": {
+      "url": "https://link.coupang.com/a/hygMHgL1xc",
+      "label": "라켓이랑 셔틀콕, 쓰던 게 오래됐다면"
+    },
+    "볼링": {
+      "url": "https://link.coupang.com/a/hygQQMK0g8",
+      "label": "내 공, 내 신발로 치면 점수가 달라집니다"
+    },
+    "당구": {
+      "url": "https://link.coupang.com/a/hygR65uvUy",
+      "label": "개인 큐 쓰시는 분들이 보는 것들"
+    },
+    "바둑": {
+      "url": "",
+      "label": "바둑 용품 둘러보기"
+    },
+    "축구": {
+      "url": "https://link.coupang.com/a/hyg2jPPYw8",
+      "label": "축구화랑 용품 보러 가기"
+    }
+  }
+}

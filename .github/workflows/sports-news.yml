@@ -42,6 +42,7 @@ on:
           - '이미지 설명(alt) 채우기 (실제 적용 · 비용 0원)'
           - '글 제목·설명 고치기 (미리보기 · 비용 0원)'
           - '글 제목·설명 고치기 (실제 적용 · 비용 0원)'
+          - '광고 링크 점검 (죽은 링크 찾기 · 비용 0원)'
       find_query:
         description: "글 찾기용 검색어. 예: 파3 예약"
         required: false
@@ -103,7 +104,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '광고 링크 점검') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -320,10 +321,18 @@ jobs:
               ${IN_DESC:+--desc="$IN_DESC"}
           done
 
+      - name: 광고 링크 점검
+        # 쿠팡 파트너스 링크는 상품이 품절되면 죽는다. 죽은 링크는 눌러도
+        # 아무것도 안 나오니 그 종목 글 전체의 광고 자리가 버려진다.
+        # 죽은 링크를 찾으면 실행이 빨간색으로 끝나 알아채기 쉽다.
+        if: ${{ contains(inputs.mode, '광고 링크 점검') }}
+        working-directory: sports-news
+        run: node src/images/check-ads.mjs
+
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '광고 링크 점검') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
