@@ -203,3 +203,40 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     assert.ok(!LONGEVITY_WORDS.test('## 📌 알고 보면 더 보이는 것들'));
   });
 }
+
+// ── 색인되기 전에 끝나는 글감 ──────────────────────────────
+// 구글 색인은 3~14일 걸린다. "3R 단독 선두"는 색인될 쯤엔 대회가 끝나 있어서
+// 방문자가 생기기 시작할 시점에 글이 이미 죽어 있다. 실제로 글 7685가 그랬다.
+{
+  const { scoreCluster } = await import('../src/news/rank.mjs');
+  const 묶음 = (label) => ({ label, articles: [{ summary: '' }], latestAt: new Date().toISOString() });
+  const 골프 = { name: 'KLPGA', category: '골프' };
+
+  check('대회 중간 순위 글감은 크게 깎인다', () => {
+    const r = scoreCluster(묶음('KLPGA 하이트진로 챔피언십 3R 유해란 단독 선두, 김민솔과 우승 경쟁'), 골프);
+    assert.ok(r.score < 0, `${r.score}점 — 아직 높습니다`);
+    assert.ok(r.reasons.some((x) => /색인/.test(x)), r.reasons.join(' / '));
+  });
+
+  check('같은 대회라도 일정·중계 각도는 살린다', () => {
+    // 대회 자체를 막으면 안 된다. 막는 것은 "지금 이 순간의 중간 상황"뿐이다.
+    const r = scoreCluster(묶음('KLPGA 하이트진로 챔피언십 대회 일정 중계 출전 명단 상금'), 골프);
+    assert.ok(r.score > 30, `${r.score}점 — 멀쩡한 글감이 깎였습니다`);
+  });
+
+  check('중간 상황 쪽이 반드시 뒤로 밀린다', () => {
+    const 중간 = scoreCluster(묶음('하이트진로 챔피언십 3R 중간 순위 단독 선두'), 골프).score;
+    const 안내 = scoreCluster(묶음('하이트진로 챔피언십 대회 일정과 중계 보는 법'), 골프).score;
+    assert.ok(안내 > 중간, `중간 ${중간} vs 안내 ${안내}`);
+  });
+
+  check('경기 진행 중 상황도 깎는다', () => {
+    const r = scoreCluster(묶음('KBO 플레이오프 9회말 역전 승부치기 접전'), { name: 'KBO', category: '야구' });
+    assert.ok(r.reasons.some((x) => /경기 진행 중/.test(x)), r.reasons.join(' / '));
+  });
+
+  check('읽는 날에 따라 뜻이 바뀌는 말도 깎는다', () => {
+    const r = scoreCluster(묶음('오늘 경기 KBL 개막전'), { name: 'KBL', category: '농구' });
+    assert.ok(r.reasons.some((x) => /읽는 날/.test(x)), r.reasons.join(' / '));
+  });
+}
