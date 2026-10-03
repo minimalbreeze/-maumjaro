@@ -37,6 +37,8 @@ on:
           - '메타 설명 비어 있는 글 채우기 (실제 적용 · 비용 0원)'
           - '잘못 채운 메타 설명 고치기 (미리보기 · 비용 0원)'
           - '잘못 채운 메타 설명 고치기 (실제 적용 · 비용 0원)'
+          - '이미지 설명(alt) 채우기 (미리보기 · 비용 0원)'
+          - '이미지 설명(alt) 채우기 (실제 적용 · 비용 0원)'
       find_query:
         description: "글 찾기용 검색어. 예: 파3 예약"
         required: false
@@ -90,7 +92,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -251,10 +253,33 @@ jobs:
               node src/wordpress/fill-meta.mjs "--limit=$IN_COUNT" $repair ;;
           esac
 
+      - name: 이미지 설명(alt) 채우기
+        # 본문을 고치는 유일한 단계다. alt가 없거나 빈 <img>에만 설명을 넣고,
+        # 저장 전에 "alt 말고 다른 게 바뀌지 않았는지"를 코드로 확인한다.
+        # 고치기 전 원본 본문을 파일로 남긴다.
+        if: ${{ contains(inputs.mode, '이미지 설명') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_COUNT: ${{ inputs.count }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          case "$IN_MODE" in
+            *미리보기*) node src/wordpress/fix-alt.mjs --dry-run ;;
+            *)
+              case "$IN_COUNT" in
+                ''|*[!0-9]*) echo "::error::개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
+              esac
+              node src/wordpress/fix-alt.mjs "--limit=$IN_COUNT" ;;
+          esac
+
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
