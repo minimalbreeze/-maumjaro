@@ -77,3 +77,30 @@ if (fs.existsSync(sports)) {
 }
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
+
+// 워크플로가 부르는 CLI 형태가 실제 스크립트와 맞는지.
+//
+// 실측 사고: retitle.mjs 는 `set <글번호>` 를 받는데(argv[2]=set, argv[3]=id)
+// 워크플로가 `retitle.mjs <글번호>` 로 불러서 "글 번호를 적어주세요"로 죽었다.
+if (fs.existsSync(sports)) {
+  const text = fs.readFileSync(sports, 'utf8');
+  const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/wordpress/retitle.mjs');
+
+  check('retitle 을 부를 때 서브커맨드를 빠뜨리지 않는다', () => {
+    // 워크플로는 retitle 을 두 군데서 부른다 — 글 찾기(find)와 제목 고치기(set).
+    // 둘 다 서브커맨드가 첫 인자여야 한다.
+    const 부름들 = [...text.matchAll(/node src\/wordpress\/retitle\.mjs\s+(\S+)/g)].map((m) => m[1]);
+    assert.ok(부름들.length > 0, '워크플로가 retitle 을 부르지 않습니다');
+    for (const 첫인자 of 부름들) {
+      assert.ok(['find', 'set'].includes(첫인자),
+        `retitle.mjs 를 "${첫인자}" 로 부르고 있습니다 — find 나 set 이어야 합니다`);
+    }
+    assert.ok(부름들.includes('set'), '제목 고치기(set) 호출이 없습니다');
+  });
+
+  check('retitle 이 실제로 argv[3]에서 글 번호를 읽는다', () => {
+    // 위 검사가 의미를 가지려면 스크립트 쪽 약속도 같이 확인해야 한다.
+    const code = fs.readFileSync(src, 'utf8');
+    assert.ok(/process\.argv\[3\]/.test(code), 'retitle.mjs 의 인자 위치가 바뀌었습니다');
+  });
+}

@@ -313,7 +313,8 @@ jobs:
             esac
             # 값에 공백이 들어가므로 셸이 쪼개지 않게 큰따옴표로 넘긴다.
             # 비어 있는 입력은 ${VAR:+...} 로 아예 빼서, 빈 값으로 덮어쓰지 않는다.
-            node src/wordpress/retitle.mjs "$id" $dry \
+            # retitle.mjs 는 set 서브커맨드를 먼저 받는다 (argv[2]=set, argv[3]=글번호).
+            node src/wordpress/retitle.mjs set "$id" $dry \
               ${IN_TITLE:+--title="$IN_TITLE"} \
               ${IN_DESC:+--desc="$IN_DESC"}
           done
