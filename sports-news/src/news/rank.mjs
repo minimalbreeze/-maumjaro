@@ -69,6 +69,34 @@ const SHORT_LIVED = [
   { re: /(루머|설|~할 듯|가능성 제기|관측)/, w: -6, why: '확인 안 된 추측' },
 ];
 
+/**
+ * 색인되기 전에 끝나 버리는 글감.
+ *
+ * 구글 색인은 보통 3~14일 걸린다. 그런데 "3R 유해란 단독 선두"는 하루 뒤면
+ * 끝난 이야기다. 색인이 되어 검색결과에 뜨기 시작할 무렵에는 이미 대회가
+ * 끝나 있어서 그 말을 찾는 사람이 없다. **방문자가 생기기 시작할 시점에 글이
+ * 이미 죽어 있다.**
+ *
+ * 실제로 글 7685가 그렇게 나왔다. 운영자가 바로 짚었다.
+ *
+ * 위에 있는 SHORT_LIVED와는 다른 축이다. 저쪽은 "가볍고 자극적인 글감"을 막고,
+ * 이쪽은 "유통기한이 색인 기간보다 짧은 글감"을 막는다. '메이저'·'우승 경쟁'
+ * 같은 말로 가점을 두둑이 받는 글감도 여기 걸릴 수 있다.
+ *
+ * 대회 자체(일정·중계·출전명단)는 막지 않는다. 그건 대회 내내 검색된다.
+ * 막는 것은 "지금 이 순간의 중간 상황"뿐이다.
+ */
+const 색인전_소멸 = [
+  { re: /(\d\s?R\b|\d\s?라운드\s*(?:째|만에)?\s*(?:순위|선두|경쟁|진행)|중간\s?순위|리더보드)/,
+    w: -20, why: '대회 중간 순위 — 색인될 쯤엔 끝나 있다' },
+  { re: /(단독\s?선두|공동\s?선두|선두\s?경쟁|추격전|역전\s?우승\s?경쟁)/,
+    w: -18, why: '지금 이 순간의 순위 — 하루면 바뀐다' },
+  { re: /(\d회\s?말|\d회\s?초|\d이닝|전반전|후반전|\d세트째|연장\s?승부|승부치기)/,
+    w: -18, why: '경기 진행 중 상황' },
+  { re: /(오늘\s?경기|금일\s?경기|이번\s?주\s?경기|내일\s?경기)/,
+    w: -12, why: '읽는 날이 지나면 뜻이 달라진다' },
+];
+
 export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   const text = `${cluster.label} ${cluster.articles.map((a) => a.summary || '').join(' ')}`;
   let score = 0;
@@ -77,6 +105,7 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   for (const { re, w, why } of 실전_유입) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of LONG_TERM) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of SHORT_LIVED) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
+  for (const { re, w, why } of 색인전_소멸) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
 
   // topics.json의 longTermHints — 종목별로 사장님이 직접 지정한 가점 키워드
   for (const hint of topic.longTermHints || []) {
@@ -108,7 +137,7 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   return { ...cluster, topic: topic.name, category: topic.category, score, reasons, demand };
 }
 
-export { 실전_유입 };
+export { 실전_유입, 색인전_소멸 };
 
 export function rankClusters(clusters, topic, opts = {}) {
   return clusters.map((c) => scoreCluster(c, topic, opts)).sort((a, b) => b.score - a.score);
