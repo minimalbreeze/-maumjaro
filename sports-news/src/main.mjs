@@ -30,6 +30,7 @@ import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle, writeLongevitySection, spliceSection } from './ai/write.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
+import { researchSubject, subjectAsCluster } from './ai/research.mjs';
 import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/naver-keywords.mjs';
 import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
@@ -49,6 +50,7 @@ export function parseArgs(argv) {
     // --subject: 종목 목록을 훑지 않고, 적어 준 주제 하나만 쓴다.
     // 매일 전 종목을 도는 것보다 훨씬 싸다.
     else if ((m = /^--subject=([\s\S]+)$/.exec(a))) args.subject = m[1].replace(/^["']|["']$/g, '').trim();
+    else if (a === '--research') args.research = true;   // 뉴스를 안 거치고 공식 자료만으로 쓴다
     // --best=N: 전 종목의 글감을 한 자리에 모아 점수로 줄 세운 뒤 상위 N개만 쓴다.
     // 뉴스 수집은 공짜고 돈이 드는 건 사실확인·작성이라, 넓게 보고 좁게 쓰는 게 이득이다.
     else if ((m = /^--best=(\d+)$/.exec(a))) args.best = Number(m[1]);
@@ -213,8 +215,16 @@ async function processCluster(cluster, ctx) {
   }
 
   // 2-2. 사실 확인 (웹검색)
-  log.step('  사실 확인 중 (웹검색)');
-  const verification = await verifyCluster(cluster, { relatedPosts: dup.related, today });
+  //
+  // 뉴스가 없는 글감(시설 이용안내·예매 방법 등)은 기사 대신 공식 자료를 직접
+  // 찾는다. 운영자 실측에서 CTR이 가장 높은 글감이 뉴스에 없는 정보였다.
+  const 조사모드 = ctx.research && !cluster.articles.length;
+  log.step(조사모드 ? '  공식 자료 조사 중 (웹검색 — 뉴스 없이)' : '  사실 확인 중 (웹검색)');
+  const verification = 조사모드
+    ? await researchSubject(cluster.label, {
+        relatedPosts: dup.related, today, category: cluster.category,
+      })
+    : await verifyCluster(cluster, { relatedPosts: dup.related, today });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
   log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
@@ -634,6 +644,20 @@ async function main() {
     log.info(`  검색어: ${classified.queries.join(', ')}`);
     topics = [subjectAsTopic(args.subject, classified)];
     args.limit ??= 1;
+
+    // --research: 뉴스를 아예 거치지 않는다. 주제 하나를 바로 처리한다.
+    if (args.research) {
+      log.section(`🔍 ${args.subject}`);
+      log.info('뉴스 없이 공식 자료(관공서·협회·공식 홈페이지)를 직접 찾습니다.');
+      const cluster = subjectAsCluster(args.subject, {
+        topic: classified.category || '주제', category: classified.category,
+      });
+      const r = await processCluster(cluster, {
+        ...args, siteCategories, seoFields, today, wpAvailable, research: true,
+      });
+      printSummary([{ topic: args.subject, results: [r] }], args);
+      return;
+    }
   }
 
   // 최근에 쓴 종목은 점수를 깎는다. 같은 종목만 연달아 나오는 걸 막는다.

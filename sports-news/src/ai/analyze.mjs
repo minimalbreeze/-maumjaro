@@ -9,7 +9,7 @@
 
 import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
 
-const SYSTEM = `당신은 한국 스포츠 블로그의 팩트체커입니다.
+export const SYSTEM = `당신은 한국 스포츠 블로그의 팩트체커입니다.
 
 역할은 글을 쓰는 것이 아니라, 어떤 정보가 확실하고 어떤 정보가 확실하지 않은지 가려내는 것입니다.
 
@@ -20,7 +20,7 @@ const SYSTEM = `당신은 한국 스포츠 블로그의 팩트체커입니다.
 - 날짜가 중요합니다. 이미 지난 대회를 예정된 대회로 착각하지 않습니다.
 - 오늘 날짜를 기준으로 "다가오는 일정"과 "이미 끝난 일"을 구분합니다.`;
 
-const REPORT_TOOL = {
+export const REPORT_TOOL = {
   name: 'report_verification',
   description: '수집한 뉴스와 웹검색 결과를 종합해 사실 확인 결과를 보고합니다.',
   strict: true,

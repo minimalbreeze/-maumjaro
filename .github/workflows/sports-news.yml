@@ -29,6 +29,7 @@ on:
         options:
           - '미리보기 (워드프레스에 저장 안 함)'
           - '임시글로 저장 (draft)'
+          - '주제로 직접 쓰기 (뉴스 말고 공식 자료 조사 · draft)'
           - '사이트 조사만 (글 안 씀 · 비용 0원)'
           - '이미 만든 글 SEO 손보기 (비용 0원)'
           - '이미 올린 글 링크 현재창으로 (비용 0원)'
@@ -329,6 +330,7 @@ jobs:
           IN_TOPIC: ${{ inputs.topic }}
           IN_MODE: ${{ inputs.mode }}
           IN_COUNT: ${{ inputs.count }}
+          IN_RESEARCH: ${{ contains(inputs.mode, '공식 자료 조사') }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
@@ -351,6 +353,12 @@ jobs:
             # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
             args+=("--subject=$IN_SUBJECT" "--limit=$IN_COUNT")
             echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
+            # 공식 자료 조사 방식이면 뉴스를 아예 안 거친다.
+            # 요금·예약·주차처럼 뉴스에 없는 정보를 쓸 때 쓴다.
+            if [ "$IN_RESEARCH" = "true" ]; then
+              args+=("--research")
+              echo "  뉴스 없이 공식 자료(관공서·협회·공식 홈페이지)로 조사합니다"
+            fi
           elif [ -n "$IN_TOPIC" ]; then
             args+=("--topic=$IN_TOPIC" "--limit=$IN_COUNT")
           else
