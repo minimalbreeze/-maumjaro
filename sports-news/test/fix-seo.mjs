@@ -131,3 +131,40 @@ check('미리보기는 고칠 내용을 알려주되 저장하지 않는다', ()
 
 wp.server.close();
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
+
+// ── 껍데기 붙은 키워드는 밀도와 무관하게 고친다 ─────────────
+// 글 7276: 키워드가 "'2026 우리할매떡볶이 어린이" 인데 밀도 1.26%로 권장 구간
+// 안이라 "이미 괜찮다"고 판단해 그대로 통과했다. 밀도를 셀 때는 구두점을
+// 무시하고 세니 껍데기가 붙은 키워드는 영원히 멀쩡해 보인다.
+{
+  const 본문2 = '<p>' + '2026 우리할매떡볶이 어린이 바둑왕 결승. 김노율이 박준우를 꺾었다. '.repeat(3)
+    + '바둑 이야기입니다. '.repeat(70) + '</p>';
+
+  const wp2 = await startMockWordPress({
+    posts: {
+      7276: {
+        status: 'draft', slug: '2026-우리할매떡볶이-어린이',
+        title: { raw: "2026 우리할매떡볶이 어린이 바둑왕 우승 김노율, 박준우 꺾고 정상에" },
+        content: { raw: 본문2 },
+        meta: { rank_math_focus_keyword: "'2026 우리할매떡볶이 어린이" },
+      },
+    },
+  });
+  process.env.WORDPRESS_URL = `http://127.0.0.1:${wp2.port}`;
+
+  const r2 = await fixPostSeo(7276, { apply: true });
+  const patch2 = () => wp2.state.updated.find((u) => u.id === 7276);
+
+  check('밀도가 권장 구간이어도 껍데기는 고친다', () => {
+    assert.ok(r2.changed, `안 고쳤습니다: ${r2.reason || ''}`);
+    assert.ok(!/^['"‘’“”]/.test(patch2().meta.rank_math_focus_keyword),
+      JSON.stringify(patch2().meta.rank_math_focus_keyword));
+  });
+
+  check('고친 뒤에도 본문과 상태는 그대로다', () => {
+    assert.ok(!('content' in patch2()), '본문을 보냈습니다');
+    assert.ok(!('status' in patch2()), '상태를 보냈습니다');
+  });
+
+  wp2.server.close();
+}

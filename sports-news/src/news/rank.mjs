@@ -13,6 +13,7 @@
 // 실제 채택 여부는 중복 검사와 사실 확인 단계를 거쳐 결정된다.
 
 import { demandSignals } from './demand.mjs';
+import { varietyPenalty } from './variety.mjs';
 
 /**
  * 실제로 클릭을 만드는 검색어 꼴.
@@ -68,7 +69,7 @@ const SHORT_LIVED = [
   { re: /(루머|설|~할 듯|가능성 제기|관측)/, w: -6, why: '확인 안 된 추측' },
 ];
 
-export function scoreCluster(cluster, topic) {
+export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   const text = `${cluster.label} ${cluster.articles.map((a) => a.summary || '').join(' ')}`;
   let score = 0;
   const reasons = [];
@@ -87,6 +88,13 @@ export function scoreCluster(cluster, topic) {
   score += demand.weight;
   for (const r of demand.reasons) reasons.push(`${demand.weight >= 0 ? '+' : ''}${demand.weight} ${r}`);
 
+  // 같은 종목만 연달아 쓰지 않게 감점. 점수표는 그대로 두고 여기서만 조절한다.
+  const variety = varietyPenalty(topic.category, recentCategories);
+  if (variety.weight) {
+    score += variety.weight;
+    for (const r of variety.reasons) reasons.push(`${variety.weight} ${r}`);
+  }
+
   // 최신일수록 가점. 날짜를 모르는 건은 최신성을 주장할 수 없으므로 감점.
   if (cluster.latestAt) {
     const hours = (Date.now() - new Date(cluster.latestAt).getTime()) / 3600000;
@@ -102,6 +110,6 @@ export function scoreCluster(cluster, topic) {
 
 export { 실전_유입 };
 
-export function rankClusters(clusters, topic) {
-  return clusters.map((c) => scoreCluster(c, topic)).sort((a, b) => b.score - a.score);
+export function rankClusters(clusters, topic, opts = {}) {
+  return clusters.map((c) => scoreCluster(c, topic, opts)).sort((a, b) => b.score - a.score);
 }

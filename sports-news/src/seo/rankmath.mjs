@@ -167,17 +167,41 @@ export function buildSlug({ focusKeyword, title, fallback = '' }) {
 /** 너무 흔해서 단독으로는 상위 노출이 어려운 말. 감점 대상이다. */
 const 일반명사 = /^(파크골프|골프|야구|축구|농구|배구|바둑|당구|볼링|배드민턴|테니스|스포츠|경기|대회|선수|리그|시즌|우승|기록)$/;
 
+/**
+ * 키워드 후보에서 검색어가 될 수 없는 껍데기를 벗긴다.
+ *
+ * 실측 사고: 제목에 작은따옴표가 있는 기사에서 대표 키워드가
+ * \`'2026 우리할매떡볶이 어린이\` 로 저장됐다. 따옴표로 시작하는 말을 검색창에
+ * 치는 사람은 없다.
+ *
+ * 왜 걸러지지 않았나 — 밀도를 셀 때(KEY_IN)는 구두점을 무시하고 센다. 그래서
+ * 따옴표가 붙은 후보도 밀도 1.26%로 멀쩡해 보였고, 권장 구간(1.25~2.5%)에
+ * 들어 1순위가 됐다. 세는 쪽은 따옴표를 무시하는데 저장하는 쪽은 붙여서 저장한
+ * 것이다. 세는 기준과 저장하는 값을 같게 만든다.
+ */
+export function 키워드정리(v) {
+  return String(v || '')
+    .replace(/\s+/g, ' ')
+    // 앞뒤의 따옴표·괄호·가운뎃점 따위를 벗긴다. 낱말 사이의 것은 건드리지 않는다.
+    .replace(/^[\s'"‘’“”(){}\[\]<>·,.!?:;~\-—–]+/, '')
+    .replace(/[\s'"‘’“”(){}\[\]<>·,.!?:;~\-—–]+$/, '')
+    // 안쪽에 따옴표나 괄호가 남았으면 거기서 끊는다. 검색어에 들어갈 기호가 아니다.
+    // (하이픈·점은 "3-1", "No.1" 처럼 낱말에 쓰이므로 건드리지 않는다.)
+    .replace(/['"‘’“”(){}\[\]<>].*$/, '')
+    .trim();
+}
+
 export function chooseFocusKeyword(body, candidates = []) {
   const seen = new Set();
   const pool = [];
 
   for (const c of candidates) {
-    const kw = String(c || '').replace(/\s+/g, ' ').trim();
+    const kw = 키워드정리(c);
     if (!kw) continue;
     const words = kw.split(' ');
     // 원래 형태부터 두 낱말까지 앞에서부터 줄여가며 후보로 넣는다.
     for (let n = words.length; n >= Math.min(2, words.length); n--) {
-      const form = words.slice(0, n).join(' ');
+      const form = 키워드정리(words.slice(0, n).join(' '));
       if (form.length < 2 || seen.has(form)) continue;
       seen.add(form);
       pool.push(form);
