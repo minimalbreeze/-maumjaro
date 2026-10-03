@@ -22,7 +22,7 @@
 ## 시작점
 
 - [맘운자로 홈](https://maumjaro.minimalbreeze.com/): 감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)
-- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): 감정·MBTI·타로·별자리·띠 콘텐츠 89장의 입구. 앱 소개와 FAQ도 여기 있다
+- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): 감정·MBTI·타로·별자리·띠 콘텐츠 90장의 입구. 앱 소개와 FAQ도 여기 있다
 
 ## 감정 23가지 (앱의 출발점)
 
