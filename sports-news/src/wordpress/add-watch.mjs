@@ -19,7 +19,7 @@
 //   - 넣기만 한다. 원래 있던 글자는 하나도 지우거나 바꾸지 않는다.
 //     저장 전에 bannerOnlyChange() 로 확인하고, 아니면 보내지 않는다.
 //   - 중계처가 바뀐 글은 이미 있는 배너 블록만 새 것으로 바꾼다.
-//   - 같은 주소를 가리키는 배너가 이미 있으면 아무것도 안 한다(두 번 돌려도 안전하다).
+//   - 본문이 글자 하나까지 같아지면 보내지 않는다(두 번 돌려도 안전하다).
 //   - 고치기 전 원본 본문을 파일로 남긴다.
 //   - content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
 
@@ -147,14 +147,18 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
   }
   const url = entry.primary.url;
-  if (alreadyHasBanner(content, url)) {
-    return { ...base, url, skip: '이미 같은 중계 주소가 본문에 있습니다' };
-  }
 
-  // 제목의 괄호 앞까지만 배너에 쓴다 — 글 만들 때와 같은 규칙이다.
-  const banner = watchBannerHtml(entry, { title: title.split('(')[0].trim() });
+  const banner = watchBannerHtml(entry);
   const { html, 한일 } = applyBanner(content, banner);
   if (!한일) return { ...base, url, skip: '배너 HTML이 비었습니다' };
+
+  // 글자 하나까지 같으면 보내지 않는다. 이게 멱등성을 지킨다 — 두 번 돌려도
+  // 배너가 둘이 되지 않고, 쓸데없는 저장도 일어나지 않는다.
+  // 주소만 보고 건너뛰지 않는 이유: 배너 모양을 손봤을 때(글 제목 반복을
+  // 걷어낸 것처럼) 주소는 그대로여도 이미 올린 글을 새 모양으로 바꿔야 한다.
+  if (html === content) {
+    return { ...base, url, skip: '배너가 이미 지금 모양으로 들어 있습니다' };
+  }
 
   if (!bannerOnlyChange(content, html)) {
     throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');

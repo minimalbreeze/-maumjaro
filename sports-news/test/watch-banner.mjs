@@ -51,7 +51,7 @@ check('설정의 모든 항목에 확인일이 적혀 있다', () => {
   }
 });
 
-const 배너 = watchBannerHtml(pickWatchLinks('농구'), { title: '2026 KB국민은행 박신자컵' });
+const 배너 = watchBannerHtml(pickWatchLinks('농구'));
 
 check('배너가 워드프레스 html 블록으로 나온다', () => {
   assert.ok(배너.startsWith('<!-- wp:html -->'), 배너.slice(0, 40));
@@ -86,14 +86,25 @@ check('버튼에 스타일이 살아 있다', () => {
   assert.ok(버튼, '버튼 스타일이 사라졌습니다');
 });
 
-check('제목이 배너에 실린다', () => {
-  assert.ok(배너.includes('2026 KB국민은행 박신자컵'), '제목이 없습니다');
+check('글 제목을 배너 안에 다시 쓰지 않는다', () => {
+  // 글 제목이 길면 카드 안에서 두세 줄로 접혀 어색하고, 바로 그 글을 읽는
+  // 중이라 같은 말이 두 번 나오는 셈이었다. 운영자가 "이상해"라고 짚었다.
+  // 무엇의 중계인지는 CTA 글귀와 hint 가 말해 준다.
+  const e = pickWatchLinks('농구');
+  assert.ok(배너.includes(e.primary.text), 'CTA 글귀가 없습니다');
+  assert.ok(배너.includes(e.primary.hint), 'hint 가 없습니다');
+  assert.equal(watchBannerHtml(e, { title: '2026 KB국민은행 박신자컵' }).includes('박신자컵'), false,
+    '제목을 넘기면 아직 실립니다');
 });
 
-check('제목에 든 따옴표가 HTML을 깨지 않는다', () => {
-  const b = watchBannerHtml(pickWatchLinks('농구'), { title: '"따옴표" & <태그>' });
-  assert.ok(!/<태그>/.test(b), '태그가 그대로 들어갔습니다');
+check('설정에 든 따옴표·태그가 HTML을 깨지 않는다', () => {
+  const b = watchBannerHtml({
+    primary: { text: '"따옴표" & <태그> 보기', url: 'https://example.com/?a=1&b=2', hint: '<b>굵게</b>' },
+    secondary: [{ text: '<i>기울임</i>', url: 'https://example.com/x?y=1&z=2' }],
+  });
+  assert.ok(!/<태그>|<b>굵게|<i>기울임/.test(b), '태그가 그대로 들어갔습니다');
   assert.ok(b.includes('&quot;따옴표&quot;'), b.slice(0, 400));
+  assert.ok(b.includes('a=1&amp;b=2'), '주소의 &가 안 바뀌었습니다');
 });
 
 // ── 본문 어디에 들어가는가 ─────────────────────────────────
