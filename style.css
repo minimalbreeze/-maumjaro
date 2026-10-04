@@ -5250,3 +5250,62 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   .cb-card, .cb-inner { transition: none; }
   .cb-inner { transform: none; }
 }
+
+/* ---------- 설치 유도 잠금 (gate.js) ----------
+   ⚠️ 실험 기능이다. index.html의 window.MAUMJARO_GATE 에서 on:false 로 끄면
+   이 스타일은 쓰이지 않는다(요소 자체가 안 만들어진다). 지울 필요 없다. */
+.gate-badge { position: absolute; top: 2px; right: 10px; font-size: 9px; line-height: 1; }
+.gate-lock {
+  position: fixed; inset: 0; z-index: 1600;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(60, 40, 55, 0.34);
+  opacity: 0; transition: opacity .2s ease;
+  padding: 0 10px calc(10px + var(--safe-bottom));
+}
+.gate-lock.show { opacity: 1; }
+.gate-inner {
+  width: 100%; max-width: 460px; text-align: center;
+  background: var(--card); border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: 0 -10px 34px rgba(150, 100, 125, 0.24);
+  padding: 22px 18px calc(16px + var(--safe-bottom));
+  transform: translateY(14px); transition: transform .22s cubic-bezier(0.2, 1, 0.4, 1);
+}
+.gate-lock.show .gate-inner { transform: none; }
+.gate-ico { font-size: 30px; line-height: 1; margin-bottom: 8px; }
+.gate-title { font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.4; }
+.gate-body { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; margin: 8px 0 14px; }
+.gate-steps { text-align: left; margin-bottom: 14px; }
+.gate-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 13px; margin-bottom: 6px; border-radius: 14px;
+  font-size: 13.5px; color: var(--text-dim);
+  background: rgba(186, 146, 162, 0.09);
+}
+.gate-step span { font-weight: 800; flex: none; }
+/* 지금 해야 할 단계만 눈에 띄게 한다 — 셋 다 강조하면 어디부터인지 모른다 */
+.gate-step.now { background: rgba(255, 145, 102, 0.14); color: var(--text); font-weight: 700; }
+.gate-step.ok { opacity: .55; }
+.gate-step-done { background: rgba(47, 111, 94, 0.10); color: #2f6f5e; font-weight: 700; }
+.gate-go {
+  width: 100%; padding: 13px; border: none; border-radius: 999px; cursor: pointer;
+  font-size: 15px; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  box-shadow: 0 6px 18px rgba(183, 121, 239, 0.3);
+}
+.gate-go:active { transform: scale(0.97); }
+.gate-later {
+  width: 100%; margin-top: 8px; padding: 10px;
+  border: none; background: none; cursor: pointer;
+  font-size: 13.5px; font-weight: 700; color: var(--text-dim);
+}
+/* 온보딩 카드에 덧붙는 설명 줄 */
+.gate-note {
+  margin: 12px 0 0; padding: 11px 13px; border-radius: 14px;
+  background: rgba(255, 145, 102, 0.10);
+  font-size: 12.5px; line-height: 1.55; color: var(--text); text-align: left;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate-lock, .gate-inner { transition: none; }
+  .gate-inner { transform: none; }
+}
