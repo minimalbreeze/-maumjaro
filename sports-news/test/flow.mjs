@@ -245,6 +245,15 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     assert.ok(용품 > 신상 + 40, `용품 ${용품}점 vs 신상 ${신상}점`);
   });
 
+  check('틈새 가설 검증은 같은 소재로 하지 않는다', () => {
+    // 같은 소재 두 글은 같은 검색어로 경쟁한다. 비교 결과가 "어느 각도가 맞나"가
+    // 아니라 "누가 상대를 밀어냈나"가 된다. 중복 검사가 실제로 이걸 막았다(4원).
+    const doc = fs.readFileSync(path.join(HERE, '..', 'config', '검증-틈새가설.md'), 'utf8');
+    assert.match(doc, /카니발라이제이션|서로 잡아먹/, '같은 소재 비교의 함정이 적혀 있어야 합니다');
+    assert.match(doc, /다른 소재/, '비교축이 다른 소재여야 한다는 점이 적혀 있어야 합니다');
+    assert.match(doc, /네이버/, '유입이 네이버라는 사실이 적혀 있어야 합니다');
+  });
+
   check('수익 실측 자리가 비어 있다는 것을 숨기지 않는다', () => {
     // 지어낸 숫자를 적으면 점수표가 그걸 따라 움직인다.
     const rev = fs.readFileSync(path.join(HERE, '..', 'config', 'revenue.md'), 'utf8');
