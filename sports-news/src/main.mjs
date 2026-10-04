@@ -642,6 +642,16 @@ const slugish = (s) => String(s).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  // --official 은 여기서 끝낸다. AI도 워드프레스도 건드리지 않는다(0원).
+  //
+  // 왜 맨 앞인가: 처음에는 이 검사를 아래쪽에 뒀더니 그 앞의 주제 분류가 AI를
+  // 불러서 ANTHROPIC_API_KEY 가 없다고 죽었다. "0원"이라고 적어 놓고 돈을 쓸
+  // 뻔했다. 0원 모드는 아무것도 준비하기 전에 갈라져야 한다.
+  if (args.official) {
+    await 공식페이지확인(args.subject || args.topics.join(' '));
+    return;
+  }
   // --subject를 쓰면 종목 목록은 읽기만 하고 실제로 돌지는 않는다.
   const { cfg, topics: configuredTopics } = loadTopics(args.subject ? [] : args.topics);
   let topics = configuredTopics;
@@ -713,12 +723,6 @@ async function main() {
     } catch (err) {
       log.warn(`최근 글 조회 실패 — 종목 다양성 감점 없이 진행합니다 (${err.message})`);
     }
-  }
-
-  // --official: 공식 페이지를 받아보기만 한다. 0원이다.
-  if (args.official) {
-    await 공식페이지확인(args.subject || args.topics.join(' '));
-    return;
   }
 
   // --candidates: 후보만 보여주고 멈춘다. 글을 쓰지 않으므로 0원이다.

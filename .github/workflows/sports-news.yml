@@ -161,6 +161,8 @@ jobs:
         if: ${{ contains(inputs.mode, '공식 페이지') }}
         working-directory: sports-news
         env:
+          # 비밀값을 넘기지 않는다. 이 모드는 AI도 워드프레스도 쓰지 않는다 —
+          # 넘길 필요가 없는 것을 넘기지 않는 게 안전하다.
           IN_SUBJECT: ${{ inputs.subject }}
           IN_TOPIC: ${{ inputs.topic }}
         run: |

@@ -276,6 +276,30 @@ check('지시서 분량과 채점 기준이 같은 것을 가리킨다', () => {
   assert.ok(하한 >= 3750, `지시서 하한 ${하한}자 — 공백 제외 3,000자를 채울 수 없습니다`);
 });
 
+check('--official 은 AI를 한 번도 부르지 않는다', () => {
+  // "비용 0원"이라고 적어 놓고 돈을 쓰면 안 된다. 처음에 이 검사를 main() 아래쪽에
+  // 뒀더니 그 앞의 주제 분류가 AI를 불러서 죽었다(ANTHROPIC_API_KEY 없음).
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 시작 = src.indexOf('async function 공식페이지확인');
+  const 끝 = src.indexOf('\nasync function 후보만보기');
+  assert.ok(시작 > 0 && 끝 > 시작, '공식페이지확인 함수를 못 찾았습니다');
+  const 본문 = src.slice(시작, 끝);
+  for (const 금지 of ['classifySubject', 'verifyCluster', 'researchSubject', 'writeArticle', 'generateSeo', 'saveDraft', 'callWithSearch']) {
+    assert.ok(!본문.includes(금지), `0원 모드가 ${금지} 를 부릅니다`);
+  }
+});
+
+check('--official 갈림길이 AI 호출보다 앞에 있다', () => {
+  // 갈림길이 뒤에 있으면 그 앞 단계가 먼저 돈다. 자리가 곧 비용이다.
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 갈림 = src.indexOf('if (args.official)');
+  const 분류 = src.indexOf('classifySubject(');
+  const 연결 = src.indexOf('loadSiteCategories()');
+  assert.ok(갈림 > 0, '--official 갈림길이 없습니다');
+  assert.ok(갈림 < 분류, '--official 이 주제 분류(AI) 뒤에 있습니다');
+  assert.ok(갈림 < 연결, '--official 이 워드프레스 연결 뒤에 있습니다');
+});
+
 check('--candidates 는 후보만 보는 모드다', () => {
   // 글을 쓰지 않으므로 0원이다. 글을 쓰게 되면 비용이 생긴다.
   assert.equal(parseArgs(['--candidates']).candidates, true);
