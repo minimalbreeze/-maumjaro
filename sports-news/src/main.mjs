@@ -438,7 +438,11 @@ function printArticle(result) {
  */
 async function attachImages({ article, seo, cluster, dryRun }) {
   // 중계 링크가 설정에 있는 종목만 배너를 넣는다. 없으면 자리도 잡지 않는다.
-  const watch = pickWatchLinks(cluster.category);
+  // 제목·본문을 함께 넘긴다. '농구'처럼 한 카테고리에 리그가 둘인 경우
+  // (KBL / WKBL) 글 내용을 봐야 맞는 중계처를 고를 수 있다.
+  const watch = pickWatchLinks(cluster.category, {
+    text: `${article.title}\n${article.body}`,
+  });
   const plan = planPlacements(article.body, {
     sectionImages: 1,
     withAd: Boolean(AD_SNIPPET),

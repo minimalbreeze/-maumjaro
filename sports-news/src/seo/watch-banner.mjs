@@ -25,10 +25,27 @@ export function loadWatchLinks() {
   return cache;
 }
 
-/** 이 글에 붙일 중계 링크를 고른다. 없으면 null — 배너를 넣지 않는다. */
-export function pickWatchLinks(category, { config = loadWatchLinks() } = {}) {
+/**
+ * 이 글에 붙일 중계 링크를 고른다. 없으면 null — 배너를 넣지 않는다.
+ *
+ * 카테고리만 보면 안 된다. '농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어 있고
+ * 중계처가 서로 다르다. 카테고리만 보고 고르면 KBL 글에 여자농구 중계 배너가
+ * 붙는다 — 독자가 눌러도 그 경기가 없다.
+ *
+ * 그래서 match 를 먼저 본다. 글 제목·본문에 그 말이 있으면 그 항목을 쓰고,
+ * 없으면 카테고리 기본값으로 돌아간다.
+ */
+export function pickWatchLinks(category, { config = loadWatchLinks(), text = '' } = {}) {
   const entry = config.byCategory?.[category];
-  if (!entry?.primary?.url) return null;
+  if (!entry) return null;
+
+  const 글 = String(text || '');
+  for (const m of entry.match || []) {
+    if (!m?.primary?.url) continue;
+    if ((m.keywords || []).some((w) => w && 글.includes(w))) return m;
+  }
+
+  if (!entry.primary?.url) return null;
   return entry;
 }
 

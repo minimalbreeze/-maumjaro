@@ -153,3 +153,47 @@ check('설정 파일이 주석으로 원칙을 남겨둔다', () => {
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
+
+// ── 한 카테고리에 리그가 둘일 때 ────────────────────────────
+// '농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어가고 중계처가 다르다.
+// 카테고리만 보고 고르면 KBL 글에 여자농구 배너가 붙는다 — 눌러도 그 경기가 없다.
+{
+  const 설정 = {
+    byCategory: {
+      농구: {
+        match: [{
+          keywords: ['KBL', '부산 KCC', '창원 LG'],
+          primary: { text: 'tvN SPORTS', url: 'https://tvnsports.cjenm.com/ko/' },
+        }],
+        primary: { text: '여농티비', url: 'https://www.youtube.com/@WKBL_official/streams' },
+      },
+      바둑: { note: '중계 링크 없음' },
+    },
+  };
+
+  check('KBL 글에는 KBL 중계처가 붙는다', () => {
+    const r = pickWatchLinks('농구', { config: 설정, text: '2026-27 KBL 부산 KCC 경기일정' });
+    assert.ok(r.primary.url.includes('tvnsports'), r.primary.url);
+  });
+
+  check('여자농구 글에는 기본값이 붙는다', () => {
+    const r = pickWatchLinks('농구', { config: 설정, text: '박신자컵 여자농구 결승' });
+    assert.ok(r.primary.url.includes('WKBL'), r.primary.url);
+  });
+
+  check('글 내용을 안 주면 기본값으로 간다', () => {
+    const r = pickWatchLinks('농구', { config: 설정 });
+    assert.ok(r.primary.url.includes('WKBL'), r.primary.url);
+  });
+
+  check('primary 가 없는 카테고리는 배너를 안 넣는다', () => {
+    assert.equal(pickWatchLinks('바둑', { config: 설정, text: '바둑 대회' }), null);
+    assert.equal(pickWatchLinks('없는종목', { config: 설정, text: 'x' }), null);
+  });
+
+  check('실제 설정에서 KBL과 WKBL이 갈린다', () => {
+    const kbl = pickWatchLinks('농구', { text: '2026-27 KBL 창원 LG 중계' });
+    const wkbl = pickWatchLinks('농구', { text: '박신자컵 여자농구' });
+    assert.notEqual(kbl.primary.url, wkbl.primary.url, '둘이 같은 곳을 가리킵니다');
+  });
+}
