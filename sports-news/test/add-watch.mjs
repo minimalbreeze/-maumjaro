@@ -187,7 +187,7 @@ await checkAsync('고치기 전에 원본 본문을 남긴다', async () => {
 await checkAsync('두 번 돌려도 배너가 둘이 되지 않는다', async () => {
   const r = await addWatchBanner(7690, { apply: true, siteCategories });
   assert.ok(!r.changed);
-  assert.match(r.skip, /이미/);
+  assert.match(r.skip, /이미 지금 모양/);
   const 글 = wp.state.posts[7690].content.raw;
   assert.equal((글.match(/tvnsports\.cjenm\.com/g) || []).length, 1, 글);
 });
@@ -206,6 +206,22 @@ await checkAsync('설정에 링크가 없는 종목은 건너뛴다', async () =
   assert.ok(!r.changed);
   assert.match(r.skip, /중계 링크가 없습니다/);
   assert.equal(wp.state.updated.length, before);
+});
+
+await checkAsync('배너 모양이 바뀌면 이미 올린 글도 새 모양으로 바꾼다', async () => {
+  // 주소만 보고 건너뛰면 모양을 손본 뒤 기존 글이 옛 모양으로 남는다.
+  // 실제로 글 제목 반복을 걷어낼 때 이 문제가 났다.
+  const 옛모양 = wp.state.posts[7690].content.raw.replace(
+    '📺 경기 보러가기',
+    '📺 경기 보러가기</div><div>2026-27 KBL 경기일정과 중계 어디서 보나',
+  );
+  wp.state.posts[7690].content = { raw: 옛모양 };
+  const r = await addWatchBanner(7690, { apply: true, siteCategories });
+  assert.ok(r.changed, r.skip);
+  assert.equal(r.한일, '교체');
+  const 글 = wp.state.posts[7690].content.raw;
+  assert.ok(!글.includes('2026-27 KBL 경기일정과 중계 어디서 보나'), '옛 모양이 남았습니다');
+  assert.equal(findBanners(글).length, 1, '배너가 둘이 됐습니다');
 });
 
 await checkAsync('상태 보기는 저장된 본문과 화면 본문을 함께 센다', async () => {

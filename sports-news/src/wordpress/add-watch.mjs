@@ -1,6 +1,7 @@
 // 이미 올린 글에 중계 배너를 넣는다. AI를 부르지 않는다(0원).
 //
 //   npm run watch:add -- 7690 --show       지금 상태만 본다 (고치지 않는다)
+//   npm run watch:add -- 7690 --show --html  배너 HTML을 그대로 찍는다
 //   npm run watch:add -- 7690 --dry-run    무엇이 들어가는지 먼저 본다
 //   npm run watch:add -- 7690              실제로 넣는다
 //
@@ -18,7 +19,7 @@
 //   - 넣기만 한다. 원래 있던 글자는 하나도 지우거나 바꾸지 않는다.
 //     저장 전에 bannerOnlyChange() 로 확인하고, 아니면 보내지 않는다.
 //   - 중계처가 바뀐 글은 이미 있는 배너 블록만 새 것으로 바꾼다.
-//   - 같은 주소를 가리키는 배너가 이미 있으면 아무것도 안 한다(두 번 돌려도 안전하다).
+//   - 본문이 글자 하나까지 같아지면 보내지 않는다(두 번 돌려도 안전하다).
 //   - 고치기 전 원본 본문을 파일로 남긴다.
 //   - content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
 
@@ -146,14 +147,18 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
   }
   const url = entry.primary.url;
-  if (alreadyHasBanner(content, url)) {
-    return { ...base, url, skip: '이미 같은 중계 주소가 본문에 있습니다' };
-  }
 
-  // 제목의 괄호 앞까지만 배너에 쓴다 — 글 만들 때와 같은 규칙이다.
-  const banner = watchBannerHtml(entry, { title: title.split('(')[0].trim() });
+  const banner = watchBannerHtml(entry);
   const { html, 한일 } = applyBanner(content, banner);
   if (!한일) return { ...base, url, skip: '배너 HTML이 비었습니다' };
+
+  // 글자 하나까지 같으면 보내지 않는다. 이게 멱등성을 지킨다 — 두 번 돌려도
+  // 배너가 둘이 되지 않고, 쓸데없는 저장도 일어나지 않는다.
+  // 주소만 보고 건너뛰지 않는 이유: 배너 모양을 손봤을 때(글 제목 반복을
+  // 걷어낸 것처럼) 주소는 그대로여도 이미 올린 글을 새 모양으로 바꿔야 한다.
+  if (html === content) {
+    return { ...base, url, skip: '배너가 이미 지금 모양으로 들어 있습니다' };
+  }
 
   if (!bannerOnlyChange(content, html)) {
     throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
@@ -202,6 +207,14 @@ export async function showBanner(postId, { siteCategories = [] } = {}) {
     raw: { 글자수: raw.length, 배너블록: banners.length, 표시: 센다(raw, BANNER_SIGN), 주소: url ? 센다(raw, url) : 0 },
     rendered: { 글자수: rendered.length, 표시: 센다(rendered, BANNER_SIGN), 주소: url ? 센다(rendered, url) : 0 },
     url,
+    // 숫자만 세면 "들어는 있는데 모양이 이상하다"를 못 본다. 실제 덩어리를 그대로 돌려준다.
+    블록: banners[0]?.block || '',
+    // 화면에 그려진 쪽에서 배너 자리만 떼어 본다.
+    화면조각: (() => {
+      const at = rendered.indexOf(BANNER_SIGN);
+      if (at < 0) return '';
+      return rendered.slice(Math.max(0, at - 300), at + 900);
+    })(),
     앞뒤: banners.length ? raw.slice(Math.max(0, banners[0].start - 160), banners[0].start) : '',
   };
 }
@@ -209,6 +222,7 @@ export async function showBanner(postId, { siteCategories = [] } = {}) {
 async function main() {
   const ids = process.argv.slice(2).filter((a) => /^\d+$/.test(a)).map(Number);
   const show = process.argv.includes('--show');
+  const html = process.argv.includes('--html');
   const apply = !process.argv.includes('--dry-run') && !show;
   if (!ids.length) {
     log.fail('글 번호를 적어주세요', new Error('예: npm run watch:add -- 7690 --dry-run'));
@@ -232,6 +246,13 @@ async function main() {
         log.warn('      본문에는 배너가 있는데 화면 본문에는 없습니다 — 워드프레스가 그리면서 지웁니다');
       }
       if (r.앞뒤) log.raw(`      배너 앞: …${r.앞뒤.replace(/\s+/g, ' ').slice(-120)}`);
+      if (r.블록) {
+        // 글자만 떼어 보면 같은 말이 두 번 나오는 것 같은 어색함이 바로 보인다.
+        const 글자 = r.블록.replace(/<[^>]*>/g, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/\s+/g, ' ').trim();
+        log.raw(`      배너에 적힌 말: ${글자}`);
+      }
+      if (html && r.블록) { log.raw('      ── 저장된 배너 HTML ──'); log.raw(r.블록); }
+      if (html && r.화면조각) { log.raw('      ── 화면에 그려진 배너 자리 ──'); log.raw(r.화면조각); }
       if (r.link) log.raw(`      ${r.link}`);
     }
     return;

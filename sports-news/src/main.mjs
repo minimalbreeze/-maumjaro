@@ -456,7 +456,7 @@ async function attachImages({ article, seo, cluster, dryRun }) {
   const body = insertMarks(article.body, plan);
   const out = {
     body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
-    watch: watch ? watchBannerHtml(watch, { title: article.title.split('(')[0].trim() }) : '',
+    watch: watch ? watchBannerHtml(watch) : '',
     featuredId: null, summary: [],
   };
   if (watch) log.info(`    중계 배너: ${watch.primary.url}`);

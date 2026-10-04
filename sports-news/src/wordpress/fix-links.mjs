@@ -45,6 +45,24 @@ export function countNewWindowLinks(html) {
   return (String(html || '').match(/<a\s[^>]*target\s*=\s*["']\s*_blank/gi) || []).length;
 }
 
+/**
+ * 본문에는 없는데 화면에 그려진 쪽에는 새 창 링크가 있는지.
+ *
+ * 왜 보나: 사이트 쪽에서 출력할 때 외부 링크마다 target="_blank" 를 끼워 넣는
+ * 설정이 있다(Rank Math 의 '외부 링크를 새 창에서 열기' 같은 것). 그러면 이
+ * 도구가 본문을 깨끗이 고쳐도 화면에서는 여전히 새 창으로 열린다 — 독자가
+ * 글로 돌아올 길을 잃고 전면 광고도 뜨지 않는다. 실제로 글 7690 이 그랬다.
+ *
+ * 본문을 고쳐서 될 일이 아니므로 고치지 않고 알린다. 워드프레스 설정에서
+ * 꺼야 한다.
+ */
+export function 사이트가새창을붙이나(post) {
+  const raw = post?.content?.raw ?? '';
+  const rendered = post?.content?.rendered ?? '';
+  if (!rendered) return false;
+  return countNewWindowLinks(rendered) > 0 && countNewWindowLinks(openInSameWindow(raw)) === 0;
+}
+
 export async function fixPostLinks(postId, { apply = true } = {}) {
   const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
 
@@ -58,6 +76,8 @@ export async function fixPostLinks(postId, { apply = true } = {}) {
     before: countNewWindowLinks(before),
     after: countNewWindowLinks(after),
     changed: false,
+    // 본문을 고쳐도 화면에서는 새 창으로 열리는 경우. 사이트 설정 문제다.
+    사이트가붙임: 사이트가새창을붙이나(post),
   };
 
   if (before === after) return result;
@@ -86,6 +106,11 @@ async function main() {
     try {
       const r = await fixPostLinks(id, { apply });
       log.step(`${id}: ${String(r.title).slice(0, 50)} [${r.status}]`);
+      if (r.사이트가붙임) {
+        log.warn('  본문은 깨끗한데 화면에서는 새 창으로 열립니다 — 사이트가 출력할 때 붙입니다.');
+        log.raw('     Rank Math → 일반 설정 → 링크 → "외부 링크를 새 창에서 열기"를 끄세요.');
+        log.raw('     본문을 고쳐서 될 일이 아닙니다.');
+      }
       if (r.changed) {
         log.ok(`  새 창 링크 ${r.before}개 → ${r.after}개`);
         log.info('  글의 상태는 건드리지 않았습니다.');

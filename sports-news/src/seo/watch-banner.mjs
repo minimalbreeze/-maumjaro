@@ -75,10 +75,15 @@ const esc = (s) => String(s)
  * 워드프레스 블록 에디터에서도 그대로 보이도록 인라인 스타일만 쓴다
  * (테마 CSS에 기대면 테마를 바꿀 때 깨진다).
  *
+ * 글 제목을 배너 안에 다시 쓰지 않는다. 예전에는 썼는데, 글 제목이 길면
+ * ('2026-27 KBL 경기일정과 중계 어디서 보나') 카드 안에서 두세 줄로 접혀
+ * 어색했고, 바로 그 글을 읽는 중이라 같은 말이 두 번 나오는 셈이었다.
+ * 무엇의 중계인지는 CTA 글귀와 hint 가 이미 말해 준다.
+ *
  * 링크는 현재 창에서 연다. 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을
  * 잃는다. target이 없으니 noopener도 필요 없다. 바깥 링크이므로 nofollow는 남긴다.
  */
-export function watchBannerHtml(entry, { title = '' } = {}) {
+export function watchBannerHtml(entry) {
   if (!entry?.primary?.url) return '';
 
   const p = entry.primary;
@@ -91,7 +96,6 @@ export function watchBannerHtml(entry, { title = '' } = {}) {
   return `<!-- wp:html -->
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
   <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">📺 경기 보러가기</div>
-  ${title ? `<div style="color:#ffffff;font-size:17px;font-weight:700;margin-bottom:14px;">${esc(title)}</div>` : ''}
   <a href="${esc(p.url)}" rel="nofollow"
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →

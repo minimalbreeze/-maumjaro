@@ -138,7 +138,7 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
     seoFields,
     images: blocks,
     adHtml: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
-    watchHtml: watch ? watchBannerHtml(watch, { title: parsed.title.split('(')[0].trim() }) : '',
+    watchHtml: watch ? watchBannerHtml(watch) : '',
     featuredMediaId: featuredId,
   });
 
