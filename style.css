@@ -5191,3 +5191,62 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   .mj-splash-step i { width: 18px; font-size: 16px; }
   .mj-splash-note { margin-top: 11px; font-size: 12.5px; }
 }
+
+/* ---------- 주사 직후 마무리 카드 (comeback.js) ----------
+   앱에서 가장 귀한 1초다. 주사를 끝까지 놓은 사람만 보고, 그 사람은 100% 본다.
+   여기에 "내일 올 이유"와 "친구에게 보낼 입구"를 같이 둔다.
+   아래에서 올라오는 시트 형태인 이유: 화면을 덮어 가두지 않고, 바깥을 누르면 닫힌다.
+   가두면 다음에 주사를 안 놓는다. */
+.cb-card {
+  position: fixed; inset: 0; z-index: 1500;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(60, 40, 55, 0.28);
+  opacity: 0; transition: opacity .22s ease;
+  padding: 0 10px calc(10px + var(--safe-bottom));
+}
+.cb-card.show { opacity: 1; }
+.cb-inner {
+  width: 100%; max-width: 460px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: 0 -10px 34px rgba(150, 100, 125, 0.22);
+  padding: 18px 18px calc(16px + var(--safe-bottom));
+  transform: translateY(14px); transition: transform .24s cubic-bezier(0.2, 1, 0.4, 1);
+}
+.cb-card.show .cb-inner { transform: none; }
+.cb-head {
+  font-size: 13px; font-weight: 800; color: var(--text-dim);
+  letter-spacing: .3px; margin-bottom: 12px; text-align: center;
+}
+.cb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px; margin-bottom: 8px;
+  border-radius: 16px;
+  background: rgba(255, 145, 102, 0.07);
+  font-size: 14.5px; color: var(--text); line-height: 1.45;
+}
+.cb-ico {
+  width: 36px; height: 36px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-size: 18px;
+  background: rgba(255, 145, 102, 0.15);
+}
+.cb-sub { font-size: 12.5px; color: var(--text-dim); }
+.cb-share {
+  width: 100%; margin-top: 10px; padding: 13px;
+  border: none; border-radius: 999px; cursor: pointer;
+  font-size: 15px; font-weight: 800; color: #fff;
+  /* 보라~핑크 CTA 그라디언트 — 친구에게 보내는 동작은 앱 전체에서 이 색을 쓴다 */
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  box-shadow: 0 6px 18px rgba(183, 121, 239, 0.3);
+}
+.cb-share:active { transform: scale(0.97); }
+.cb-close {
+  width: 100%; margin-top: 8px; padding: 10px;
+  border: none; background: none; cursor: pointer;
+  font-size: 13.5px; font-weight: 700; color: var(--text-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-card, .cb-inner { transition: none; }
+  .cb-inner { transform: none; }
+}

@@ -2149,6 +2149,10 @@
     wireExternalTrigger,
     showRxImageFade,
     shareOrCopy,
+    // 주사 직후 공유(comeback.js)가 같은 링크 구조를 쓰도록 내보낸다.
+    // 링크 규격을 두 군데서 만들면 한쪽만 고쳤을 때 조용히 깨진다 —
+    // 받는 쪽(decodeCustomPayload)이 한 곳이므로 만드는 곳도 한 곳이어야 한다.
+    buildCustomShareUrl,
     // wireExternalTrigger에 직접 onComplete를 넘긴 흐름(맘운·타로 등)은 기본 완료 처리를
     // 타지 않으므로, 자기 후처리를 끝낸 뒤 이걸 호출해 주사 상태를 idle로 되돌려야 한다.
     // 호출하지 않으면 genericState가 'injecting'에 머물러 이후 모든 주사가 막힌다.
