@@ -152,10 +152,8 @@ export const VISUALS_SCHEMA = {
           },
           motion_need: {
             type: 'integer',
-            minimum: 0,
-            maximum: 10,
             description:
-              '이 샷에 실제 움직임이 얼마나 필요한가. 걷는 사람·열리는 문·지나가는 차=높음. 오래된 사진·서류·빈 방=낮음. 예산 안에서 높은 것부터 AI 영상으로 만든다.',
+              '이 샷에 실제 움직임이 얼마나 필요한가 0~10. 걷는 사람·열리는 문·지나가는 차=높음. 오래된 사진·서류·빈 방=낮음. 예산 안에서 높은 것부터 AI 영상으로 만든다.',
           },
           depicts_real_person: {
             type: 'boolean',

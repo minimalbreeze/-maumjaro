@@ -98,14 +98,28 @@ export function __setClientForTest(fake) {
   client = fake;
 }
 
+/**
+ * 웹검색 횟수 한도.
+ *
+ * 처음에 sports-news를 따라 6으로 뒀더니 실제 실행에서 모자랐다. 소재를
+ * 5건 요청했는데 검색 6번을 쓰고 'Server tool use limit exceeded'가 떠서
+ * 1건만 제출됐다. 1차 기록을 확인하려면 소재 하나에 4~6번은 든다 —
+ * 후보를 찾는 검색, 원전을 찾는 검색, 다른 출처를 찾는 검색이 각각 필요하다.
+ *
+ * sports-news는 이미 있는 뉴스 기사를 확인하는 일이라 4번으로 충분했다.
+ * 여기는 1855년 신문을 찾아 들어가는 일이라 성격이 다르다.
+ *
+ * 올리면 비용이 는다. 검색 결과가 전부 입력 토큰으로 쌓이기 때문이다.
+ * 실측: 검색 6회에 입력 91,150 토큰이었다. 20회면 입력이 3배 가까이 될 수 있다.
+ * 그래서 소재 개수를 줄이는 쪽이 검색을 늘리는 쪽보다 싸다.
+ */
+export const WEB_SEARCH_MAX_USES = Number(env('WEB_SEARCH_MAX_USES', '20'));
+
 /** 최신 정보를 확인해야 하는 단계에서만 붙인다. */
 export const WEB_SEARCH_TOOL = {
   type: 'web_search_20260209',
   name: 'web_search',
-  // 소재 하나를 검증하는 데 출처 2개 이상을 확인해야 한다(기획서 3번의 위험 판정).
-  // 너무 적게 주면 "검증이 불가능했다"며 결과를 못 내놓고, 너무 많이 주면
-  // 비용과 시간이 커진다. sports-news에서 4회로 자리를 잡았으므로 같은 값에서 시작한다.
-  max_uses: Number(env('WEB_SEARCH_MAX_USES', '6')),
+  max_uses: WEB_SEARCH_MAX_USES,
 };
 
 const MAX_CONTINUATIONS = 5;
