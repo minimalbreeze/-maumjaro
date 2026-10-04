@@ -26,9 +26,9 @@ import { saveDraft } from './wordpress/draft.mjs';
 import { createHeroImage, createSectionImage, hasAiImage } from './images/provider.mjs';
 import { uploadMedia, safeFileName } from './images/upload.mjs';
 import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.mjs';
-import { adSnippetFor } from './images/ad-category.mjs';
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle, writeLongevitySection, spliceSection } from './ai/write.mjs';
+import { searchBlocked } from './ai/client.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { researchSubject, subjectAsCluster } from './ai/research.mjs';
@@ -228,7 +228,12 @@ async function processCluster(cluster, ctx) {
     : await verifyCluster(cluster, { relatedPosts: dup.related, today });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
-  log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
+  const 검색막힘 = searchBlocked(verification.searched);
+  if (검색막힘) {
+    log.warn(`    웹검색이 막혔습니다 (${검색막힘}) — 수집한 기사에 적힌 사실로만 씁니다`);
+  } else {
+    log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
+  }
 
   if (verification.isDuplicateOfExisting) {
     result.skipped = `AI 중복 판정: ${verification.duplicateReason}`;
@@ -438,25 +443,19 @@ function printArticle(result) {
  */
 async function attachImages({ article, seo, cluster, dryRun }) {
   // 중계 링크가 설정에 있는 종목만 배너를 넣는다. 없으면 자리도 잡지 않는다.
-  const watch = pickWatchLinks(cluster.category);
+  // 제목·본문을 함께 넘긴다. '농구'처럼 한 카테고리에 리그가 둘인 경우
+  // (KBL / WKBL) 글 내용을 봐야 맞는 중계처를 고를 수 있다.
+  const watch = pickWatchLinks(cluster.category, {
+    text: `${article.title}\n${article.body}`,
+  });
   const plan = planPlacements(article.body, {
     sectionImages: 1,
     withAd: Boolean(AD_SNIPPET),
     withWatch: Boolean(watch),
   });
   const body = insertMarks(article.body, plan);
-
-  // 광고는 글 카테고리에 맞춘다. 파크골프 글에 주방용품이 뜨면 아무도 안 누른다.
-  // 링크를 아직 안 만든 종목은 기존 캐러셀(config/ad-coupang.html)로 넘어간다.
-  const 광고 = adSnippetFor(cluster.category, { fallback: AD_SNIPPET });
-  if (광고.snippet) {
-    log.info(광고.matched
-      ? `    광고: ${광고.category} 맞춤 링크`
-      : '    광고: 일반 캐러셀 (이 카테고리는 맞춤 링크가 없습니다)');
-  }
-
   const out = {
-    body, blocks: [], ad: 광고.snippet ? adHtml(광고.snippet) : '',
+    body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
     watch: watch ? watchBannerHtml(watch, { title: article.title.split('(')[0].trim() }) : '',
     featuredId: null, summary: [],
   };

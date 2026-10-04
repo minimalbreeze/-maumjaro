@@ -25,10 +25,44 @@ export function loadWatchLinks() {
   return cache;
 }
 
-/** 이 글에 붙일 중계 링크를 고른다. 없으면 null — 배너를 넣지 않는다. */
-export function pickWatchLinks(category, { config = loadWatchLinks() } = {}) {
+/**
+ * 그 말이 낱말로 들어 있는지. 글자 포함(includes)으로는 안 된다.
+ *
+ * 'KBL'이 'WKBL' 안에 들어 있다. 포함으로 보면 여자농구(WKBL) 글이 남자농구
+ * 항목에 걸려서 tvN SPORTS 배너가 붙는다 — 독자가 눌러도 그 경기가 없다.
+ * 검사가 실제로 이걸 잡았다.
+ *
+ * 앞뒤가 영문·숫자면 낱말이 아닌 것으로 본다. 한글은 조사가 붙으므로
+ * ('KBL이', '창원 LG가') 막지 않는다.
+ */
+export function 낱말로있나(text, word) {
+  const w = String(word || '').trim();
+  if (!w) return false;
+  const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, 'i').test(String(text || ''));
+}
+
+/**
+ * 이 글에 붙일 중계 링크를 고른다. 없으면 null — 배너를 넣지 않는다.
+ *
+ * 카테고리만 보면 안 된다. '농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어 있고
+ * 중계처가 서로 다르다. 카테고리만 보고 고르면 KBL 글에 여자농구 중계 배너가
+ * 붙는다 — 독자가 눌러도 그 경기가 없다.
+ *
+ * 그래서 match 를 먼저 본다. 글 제목·본문에 그 말이 있으면 그 항목을 쓰고,
+ * 없으면 카테고리 기본값으로 돌아간다.
+ */
+export function pickWatchLinks(category, { config = loadWatchLinks(), text = '' } = {}) {
   const entry = config.byCategory?.[category];
-  if (!entry?.primary?.url) return null;
+  if (!entry) return null;
+
+  const 글 = String(text || '');
+  for (const m of entry.match || []) {
+    if (!m?.primary?.url) continue;
+    if ((m.keywords || []).some((w) => 낱말로있나(글, w))) return m;
+  }
+
+  if (!entry.primary?.url) return null;
   return entry;
 }
 

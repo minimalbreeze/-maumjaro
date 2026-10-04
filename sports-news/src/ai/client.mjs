@@ -218,6 +218,24 @@ export function toolInputOf(response, toolName) {
 }
 
 /** 웹검색이 실제로 몇 번 돌았고 어떤 출처를 봤는지 — 로그용. */
+/**
+ * 웹검색이 막혔는지 본다.
+ *
+ * 한도가 소진되면 검색 호출이 전부 오류로 돌아온다. 그걸 조용히 넘기면
+ * "확인된 사실 0건 → 글 못 씀"으로 끝나는데, 정작 왜 그런지가 로그에
+ * 안 보인다. 실제로 이 일로 글 다섯 편이 연달아 나오지 않았다.
+ */
+export function searchBlocked(searched) {
+  const rows = Array.isArray(searched) ? searched : [];
+  if (!rows.length) return null;
+  const 오류 = rows.filter((r) => r?.error);
+  const 성공 = rows.filter((r) => r?.url);
+  if (오류.length && !성공.length) {
+    return 오류[0].error || 'unknown';
+  }
+  return null;
+}
+
 export function searchSummary(response) {
   const results = [];
   for (const block of response.content) {
