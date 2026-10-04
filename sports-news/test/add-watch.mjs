@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { startMockWordPress } from './mock-wordpress.mjs';
 import {
-  bannerSlot, applyBanner, bannerOnlyChange, alreadyHasBanner, findBanners, addWatchBanner,
+  bannerSlot, applyBanner, bannerOnlyChange, alreadyHasBanner, findBanners, addWatchBanner, showBanner,
 } from '../src/wordpress/add-watch.mjs';
 import { pickWatchLinks, watchBannerHtml } from '../src/seo/watch-banner.mjs';
 import { ROOT } from '../src/utils/env.mjs';
@@ -205,6 +205,20 @@ await checkAsync('설정에 링크가 없는 종목은 건너뛴다', async () =
   const r = await addWatchBanner(7692, { apply: true, siteCategories });
   assert.ok(!r.changed);
   assert.match(r.skip, /중계 링크가 없습니다/);
+  assert.equal(wp.state.updated.length, before);
+});
+
+await checkAsync('상태 보기는 저장된 본문과 화면 본문을 함께 센다', async () => {
+  // "본문에는 배너가 있는데 화면에는 안 보인다"를 가리려면 둘을 나란히 봐야 한다.
+  const r = await showBanner(7690, { siteCategories });
+  assert.equal(r.raw.배너블록, 1, JSON.stringify(r.raw));
+  assert.equal(r.url, 'https://tvnsports.cjenm.com/ko/');
+  assert.ok(r.raw.표시 >= 1);
+});
+
+await checkAsync('상태 보기는 아무것도 저장하지 않는다', async () => {
+  const before = wp.state.updated.length;
+  await showBanner(7690, { siteCategories });
   assert.equal(wp.state.updated.length, before);
 });
 

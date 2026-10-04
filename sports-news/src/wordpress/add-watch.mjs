@@ -1,5 +1,6 @@
 // 이미 올린 글에 중계 배너를 넣는다. AI를 부르지 않는다(0원).
 //
+//   npm run watch:add -- 7690 --show       지금 상태만 본다 (고치지 않는다)
 //   npm run watch:add -- 7690 --dry-run    무엇이 들어가는지 먼저 본다
 //   npm run watch:add -- 7690              실제로 넣는다
 //
@@ -175,19 +176,66 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
   };
 }
 
+/**
+ * 글 하나의 배너 상태를 그대로 찍는다. 아무것도 고치지 않는다.
+ *
+ * 왜 따로 있나: "본문에는 배너가 있는데 화면에는 안 보인다"가 실제로 있었다.
+ * 저장된 본문(raw)과 워드프레스가 그려 주는 본문(rendered)을 나란히 봐야
+ * 어느 쪽에서 사라지는지 알 수 있다. 추측으로 고치면 안 된다.
+ */
+export async function showBanner(postId, { siteCategories = [] } = {}) {
+  const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
+  const raw = post?.content?.raw ?? '';
+  const rendered = post?.content?.rendered ?? '';
+  const catId = Array.isArray(post?.categories) ? post.categories[0] : null;
+
+  const 센다 = (s, w) => (w ? s.split(w).length - 1 : 0);
+  const banners = findBanners(raw);
+  const url = banners[0]?.url || '';
+
+  return {
+    id: postId,
+    title: post?.title?.raw || '',
+    status: post?.status,
+    link: post?.link || '',
+    category: categoryIndex(siteCategories).get(catId) || '',
+    raw: { 글자수: raw.length, 배너블록: banners.length, 표시: 센다(raw, BANNER_SIGN), 주소: url ? 센다(raw, url) : 0 },
+    rendered: { 글자수: rendered.length, 표시: 센다(rendered, BANNER_SIGN), 주소: url ? 센다(rendered, url) : 0 },
+    url,
+    앞뒤: banners.length ? raw.slice(Math.max(0, banners[0].start - 160), banners[0].start) : '',
+  };
+}
+
 async function main() {
   const ids = process.argv.slice(2).filter((a) => /^\d+$/.test(a)).map(Number);
-  const apply = !process.argv.includes('--dry-run');
+  const show = process.argv.includes('--show');
+  const apply = !process.argv.includes('--dry-run') && !show;
   if (!ids.length) {
     log.fail('글 번호를 적어주세요', new Error('예: npm run watch:add -- 7690 --dry-run'));
     process.exitCode = 1;
     return;
   }
 
-  log.section(`📺 중계 배너 넣기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
+  log.section(show ? '📺 중계 배너 상태 보기 (고치지 않습니다)' : `📺 중계 배너 넣기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
 
   const { data: cats } = await wpFetch('/wp/v2/categories', { query: { per_page: 100 } });
   const siteCategories = Array.isArray(cats) ? cats : [];
+
+  if (show) {
+    for (const id of ids) {
+      const r = await showBanner(id, { siteCategories });
+      log.info(`[${r.id}] ${r.title.slice(0, 45)} — ${r.category || '분류 없음'} (${r.status})`);
+      log.raw(`      저장된 본문: ${r.raw.글자수}자 · 배너 블록 ${r.raw.배너블록}개 · '경기 보러가기' ${r.raw.표시}번 · 주소 ${r.raw.주소}번`);
+      log.raw(`      화면 본문:   ${r.rendered.글자수}자 · '경기 보러가기' ${r.rendered.표시}번 · 주소 ${r.rendered.주소}번`);
+      if (r.url) log.raw(`      배너 주소: ${r.url}`);
+      if (r.raw.배너블록 && !r.rendered.표시) {
+        log.warn('      본문에는 배너가 있는데 화면 본문에는 없습니다 — 워드프레스가 그리면서 지웁니다');
+      }
+      if (r.앞뒤) log.raw(`      배너 앞: …${r.앞뒤.replace(/\s+/g, ' ').slice(-120)}`);
+      if (r.link) log.raw(`      ${r.link}`);
+    }
+    return;
+  }
 
   for (const id of ids) {
     try {
