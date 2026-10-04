@@ -12,7 +12,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const WORKFLOWS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.github/workflows');
+// 워크플로는 리포 구조에 따라 두 자리 중 하나에 있다.
+//   맘운자로 안에 있을 때: ../../.github/workflows  (sports-news/ 가 하위 폴더)
+//   비공개 리포로 떼어낸 뒤: ../.github/workflows   (sports-news 가 루트)
+// 전략 자료를 공개 저장소에 두지 않으려고 떼어내는 중이라, 양쪽에서 다 돌아야 한다.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const WORKFLOWS = [
+  path.resolve(HERE, '../../.github/workflows'),
+  path.resolve(HERE, '../.github/workflows'),
+].find((d) => fs.existsSync(d)) || path.resolve(HERE, '../.github/workflows');
 let passed = 0;
 const check = (name, fn) => {
   try { fn(); console.log(`  ✅ ${name}`); passed++; }
