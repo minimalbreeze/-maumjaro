@@ -55,6 +55,10 @@ export function parseArgs(argv) {
     // --best=N: 전 종목의 글감을 한 자리에 모아 점수로 줄 세운 뒤 상위 N개만 쓴다.
     // 뉴스 수집은 공짜고 돈이 드는 건 사실확인·작성이라, 넓게 보고 좁게 쓰는 게 이득이다.
     else if ((m = /^--best=(\d+)$/.exec(a))) args.best = Number(m[1]);
+    // --candidates: 글감 후보만 점수 순으로 보여주고 멈춘다. AI를 한 번도 부르지
+    // 않으므로 0원이다. 뉴스 수집과 점수 매기기는 전부 코드가 한다.
+    else if (a === '--candidates') args.candidates = true;
+    else if ((m = /^--candidates=(\d+)$/.exec(a))) { args.candidates = true; args.candidatesTop = Number(m[1]); }
     else if (a === '--draft') args.draft = true;
     else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
   }
@@ -684,6 +688,12 @@ async function main() {
     }
   }
 
+  // --candidates: 후보만 보여주고 멈춘다. 글을 쓰지 않으므로 0원이다.
+  if (args.candidates) {
+    await 후보만보기({ topics, cfg, args, recentCats });
+    return;
+  }
+
   // --best: 종목을 가로질러 가장 좋은 글감만 고른다.
   if (args.best) {
     const perTopic = await writeBestAcrossTopics({
@@ -892,6 +902,53 @@ async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFie
  * 비용이 보이지 않으면 어디를 줄여야 할지 알 수 없다. 단계마다 모델이 다르므로
  * 모델별로 나눠 보여준다. 요금표는 config/pricing.json에 있고 바뀌면 거기를 고친다.
  */
+/**
+ * 오늘 쓸 만한 글감 후보를 점수 순으로 보여주고 멈춘다.
+ *
+ * AI를 한 번도 부르지 않는다(0원). 뉴스 수집은 RSS, 점수는 news/rank.mjs 가
+ * 전부 코드로 한다. 돈이 드는 건 사실확인과 작성인데 거기까지 가지 않는다.
+ *
+ * 점수 근거를 함께 찍는다. 운영자가 "왜 이게 1등인가"를 보고 직접 고를 수
+ * 있어야 한다 — 점수만 보여주면 그냥 1등을 쓰게 되고, 그러면 사람이 고르는
+ * 의미가 없다.
+ */
+async function 후보만보기({ topics, cfg, args, recentCats }) {
+  const 전체 = [];
+  for (const topic of topics) {
+    log.section(`📰 ${topic.name}`);
+    try {
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture, recentCats });
+      const 시간 = stats.hoursWindow ?? cfg.defaults.hoursWindow;
+      log.info(`  기사 ${stats.raw}건 → 최근 ${시간}시간 ${stats.fresh}건 → 묶음 ${stats.clusters}개 → 후보 ${clusters.length}개`);
+      if (!clusters.length) explainNoCandidates(stats, cfg);
+      전체.push(...clusters);
+    } catch (err) {
+      log.fail(`  ${topic.name} 수집 실패`, err);
+    }
+  }
+
+  전체.sort((a, b) => b.score - a.score);
+  const top = 전체.slice(0, args.candidatesTop || 10);
+
+  log.section(`🗂️  오늘의 글감 후보 ${top.length}개 (전체 ${전체.length}개 · 비용 0원)`);
+  if (!top.length) {
+    log.warn('후보가 없습니다. 뉴스 수집이 막혔거나 최근 기사가 없습니다.');
+    return;
+  }
+
+  top.forEach((c, i) => {
+    log.raw('');
+    log.raw(`${String(i + 1).padStart(2)}. [${c.score}점] ${c.label}`);
+    log.raw(`     ${c.category || c.topic} · 매체 ${c.sourceCount}곳 (${(c.sources || []).slice(0, 3).join(', ')})`);
+    const 근거 = (c.reasons || []).join(' / ');
+    if (근거) log.raw(`     근거: ${근거}`);
+  });
+
+  log.raw('');
+  log.info('쓰고 싶은 것을 고르면 그 주제로 1편 씁니다 (주제를 직접 적어 쓰는 방식).');
+}
+
+
 function printUsage() {
   const rows = usageSummary();
   if (!rows.length) return;

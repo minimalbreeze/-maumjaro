@@ -237,6 +237,28 @@ check('옵션을 제대로 읽는다', () => {
   assert.equal(a.limit, 3);
   assert.equal(a.fixture, 'x.json');
 });
+check('--candidates 는 후보만 보는 모드다', () => {
+  // 글을 쓰지 않으므로 0원이다. 글을 쓰게 되면 비용이 생긴다.
+  assert.equal(parseArgs(['--candidates']).candidates, true);
+  const a = parseArgs(['--candidates=5']);
+  assert.equal(a.candidates, true);
+  assert.equal(a.candidatesTop, 5);
+  assert.equal(parseArgs([]).candidates, undefined);
+});
+check('--candidates 는 AI를 부르는 단계로 넘어가지 않는다', () => {
+  // 후보만 보려고 돌렸는데 사실확인·작성까지 가면 돈이 나간다.
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 시작 = src.indexOf('async function 후보만보기');
+  const 끝 = src.indexOf('\nfunction printUsage');
+  assert.ok(시작 > 0 && 끝 > 시작, '후보만보기 함수를 못 찾았습니다');
+  const 본문 = src.slice(시작, 끝);
+  for (const 금지 of ['processCluster', 'verifyCluster', 'writeArticle', 'generateSeo', 'saveDraft']) {
+    assert.ok(!본문.includes(금지), `후보만 보는 경로가 ${금지} 를 부릅니다 — 돈이 나갑니다`);
+  }
+  // 그리고 후보 경로는 --best 보다 먼저 멈춰야 한다.
+  assert.ok(src.indexOf('if (args.candidates)') < src.indexOf('if (args.best)'),
+    '--candidates 가 --best 뒤에 있으면 글을 써버립니다');
+});
 
 
 console.log('\n[8] 설정 — 종목과 카테고리가 맞물리는지');
