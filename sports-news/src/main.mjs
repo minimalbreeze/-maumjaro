@@ -29,6 +29,7 @@ import { planPlacements, insertMarks, imageHtml, adHtml } from './images/embed.m
 import { adSnippetFor } from './images/ad-category.mjs';
 import { verifyCluster, hasEnoughFacts } from './ai/analyze.mjs';
 import { writeArticle, lintArticle, writeLongevitySection, spliceSection } from './ai/write.mjs';
+import { searchBlocked } from './ai/client.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { researchSubject, subjectAsCluster } from './ai/research.mjs';
@@ -228,7 +229,12 @@ async function processCluster(cluster, ctx) {
     : await verifyCluster(cluster, { relatedPosts: dup.related, today });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
-  log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
+  const 검색막힘 = searchBlocked(verification.searched);
+  if (검색막힘) {
+    log.warn(`    웹검색이 막혔습니다 (${검색막힘}) — 수집한 기사에 적힌 사실로만 씁니다`);
+  } else {
+    log.info(`    사건 상태: ${verification.eventStatus} · 웹검색 ${verification.searched.length}건 참조`);
+  }
 
   if (verification.isDuplicateOfExisting) {
     result.skipped = `AI 중복 판정: ${verification.duplicateReason}`;
