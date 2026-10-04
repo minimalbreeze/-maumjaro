@@ -12,6 +12,7 @@
 // 추가하면 앞의 100편이 전부 템플릿 양산물로 남는다.
 
 import { callForText, MODELS } from '../ai/client.mjs';
+import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 
 /** 사실 구분 태그 (기획서 6번). 대본 모든 문단에 하나씩 붙는다. */
 export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
@@ -73,10 +74,8 @@ export const SCRIPT_SYSTEM = `당신은 "AI 서프라이즈" 채널의 작가다
 
 /** 대본 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다. */
 export function buildScriptPrompt(item, { targetMinutes = 4 } = {}) {
-  // 한국어 다큐멘터리 나레이션 속도를 분당 약 330자로 본다.
-  // 이 값은 추정치다. Phase 4에서 실제 TTS로 읽혀보고 보정해야 한다.
-  const charsPerMinute = 330;
-  const target = Math.round(targetMinutes * charsPerMinute);
+  // 나레이션 속도는 narration.mjs 한 곳에만 둔다. 장면 분할도 같은 값을 쓴다.
+  const target = charsForMinutes(targetMinutes);
 
   const lines = [];
 
@@ -227,9 +226,8 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
   const narration = bodyLines
     .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
     .join(' ');
-  const chars = narration.replace(/\s/g, '').length;
-  const charsPerMinute = 330;
-  const estMinutes = chars / charsPerMinute;
+  const chars = countNarrationChars(narration);
+  const estMinutes = minutesForChars(chars);
   if (estMinutes < 2.5) {
     warnings.push(`나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 짧습니다.`);
   }
@@ -240,11 +238,12 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
   // 6) HOOK 첫 문장 길이 — 첫 10초가 핵심이므로 따로 본다
   const hookMatch = text.match(/^##\s*\[HOOK\][^\n]*\n([\s\S]*?)(?=\n##\s*\[|$)/m);
   const hookChars = hookMatch
-    ? hookMatch[1]
-        .split('\n')
-        .map((l) => l.trim().replace(/^\[\w+\]\s*/, ''))
-        .join(' ')
-        .replace(/\s/g, '').length
+    ? countNarrationChars(
+        hookMatch[1]
+          .split('\n')
+          .map((l) => l.trim().replace(/^\[\w+\]\s*/, ''))
+          .join(' ')
+      )
     : 0;
   if (hookMatch && hookChars > 120) {
     warnings.push(`HOOK이 ${hookChars}자입니다. 첫 10초면 약 55자가 적당합니다.`);

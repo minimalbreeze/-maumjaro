@@ -541,6 +541,505 @@ test('최신 모델에는 adaptive와 effort를 준다', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+section('7. 대본 파서 — 글자를 하나도 잃지 않는가');
+
+const { parseScript, narrationFingerprint } = await import('../src/scenes/parse.mjs');
+const { splitIntoScenes, groupIntoScenes, planShots, TARGET_SCENES_MIN, TARGET_SCENES_MAX, SHOT_SECONDS_MAX } =
+  await import('../src/scenes/split.mjs');
+const { countNarrationChars, charsForMinutes, NARRATION_CHARS_PER_MINUTE } = await import(
+  '../src/narration.mjs'
+);
+
+/** 섹션마다 문단 n개를 넣은 대본. 길이를 조절해 여러 경우를 본다. */
+function fakeScript(paragraphsPerSection = 3) {
+  const filler = '당시 기록에 남은 내용은 여기까지였고 그 뒤의 일은 어떤 문서로도 확인되지 않았다';
+  const lines = [];
+  for (const s of SECTIONS) {
+    lines.push(`## [${s.key}] ${s.label}`);
+    for (let i = 0; i < paragraphsPerSection; i++) {
+      lines.push(`[${TAGS[i % TAGS.length]}] ${s.key} 문단 ${i + 1}입니다. ${filler}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+test('대본을 섹션과 태그 문단으로 읽는다', () => {
+  const p = parseScript(fakeScript(2));
+  assert.equal(p.problems.length, 0, p.problems.join(' | '));
+  assert.equal(p.sections.length, SECTIONS.length);
+  assert.equal(p.paragraphs.length, SECTIONS.length * 2);
+  assert.equal(p.sections[0].key, 'HOOK');
+  assert.ok(p.totalChars > 0);
+  assert.ok(p.totalSeconds > 0);
+});
+
+test('태그 없는 문단을 문제로 잡는다', () => {
+  const p = parseScript(fakeScript(1) + '\n태그 없는 문단입니다.\n');
+  assert.ok(p.problems.some((x) => x.includes('태그가 없는')));
+});
+
+test('섹션 제목보다 먼저 나온 문단을 잡는다', () => {
+  const p = parseScript('[FACT] 섹션보다 먼저 나왔습니다.\n' + fakeScript(1));
+  assert.ok(p.problems.some((x) => x.includes('먼저 나온')));
+});
+
+test('태그만 있고 내용이 없는 줄을 잡는다', () => {
+  const p = parseScript('## [HOOK] 훅\n[FACT]\n');
+  assert.ok(p.problems.some((x) => x.includes('내용이 없는')));
+});
+
+test('빈 대본에도 죽지 않는다', () => {
+  for (const input of ['', null, undefined]) {
+    const p = parseScript(input);
+    assert.ok(p.problems.length > 0);
+    assert.equal(p.paragraphs.length, 0);
+  }
+});
+
+test('나레이션 속도가 대본 작성과 장면 분할에서 같은 값이다', () => {
+  // 이게 어긋나면 "4분으로 쓴 대본이 장면 합계 5분"이 되는 버그가 생긴다.
+  assert.equal(charsForMinutes(4), NARRATION_CHARS_PER_MINUTE * 4);
+  const p = parseScript(fakeScript(3));
+  const expected = (p.totalChars * 60) / NARRATION_CHARS_PER_MINUTE;
+  assert.ok(Math.abs(p.totalSeconds - expected) < 1, `${p.totalSeconds} vs ${expected}`);
+});
+
+test('공백은 글자 수에서 빼고 센다', () => {
+  assert.equal(countNarrationChars('가 나 다'), 3);
+  assert.equal(countNarrationChars('가나다'), 3);
+  assert.equal(countNarrationChars('  '), 0);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('8. 장면 분할 — 코드가 하고, 나레이션을 바꾸지 않는가');
+
+test('장면으로 쪼개도 나레이션이 원문과 똑같다', () => {
+  // 이게 Phase 2에서 가장 중요한 규칙이다.
+  // 사람이 승인한 대본과 영상에서 읽히는 말이 달라지면 승인이 무의미해진다.
+  for (const n of [1, 2, 3, 5, 8]) {
+    const md = fakeScript(n);
+    const parsed = parseScript(md);
+    const r = splitIntoScenes(md);
+    assert.equal(r.problems.length, 0, `문단 ${n}개: ${r.problems.join(' | ')}`);
+    assert.equal(
+      narrationFingerprint(r.scenes.flatMap((s) => s.paragraphs)),
+      narrationFingerprint(parsed),
+      `문단 ${n}개에서 나레이션이 바뀌었다`
+    );
+  }
+});
+
+test('문단을 하나도 잃지 않는다', () => {
+  const md = fakeScript(4);
+  const parsed = parseScript(md);
+  const r = splitIntoScenes(md);
+  const inScenes = r.scenes.reduce((sum, s) => sum + s.paragraphs.length, 0);
+  assert.equal(inScenes, parsed.paragraphs.length);
+});
+
+test('문단 순서가 유지된다', () => {
+  const md = fakeScript(3);
+  const parsed = parseScript(md);
+  const r = splitIntoScenes(md);
+  const flat = r.scenes.flatMap((s) => s.paragraphs.map((p) => p.text));
+  assert.deepEqual(flat, parsed.paragraphs.map((p) => p.text));
+});
+
+test('보통 길이 대본은 장면이 12~15개가 된다', () => {
+  for (const n of [2, 3, 4, 5]) {
+    const r = splitIntoScenes(fakeScript(n));
+    assert.ok(
+      r.stats.sceneCount >= TARGET_SCENES_MIN && r.stats.sceneCount <= TARGET_SCENES_MAX,
+      `문단 ${n}개 → 장면 ${r.stats.sceneCount}개 (12~15를 벗어남)`
+    );
+    assert.equal(r.stats.outsideTargetRange, false);
+  }
+});
+
+test('섹션 수보다 적은 장면은 만들 수 없다고 표시한다', () => {
+  // 섹션 9개 × 문단 1개면 장면이 9개가 물리적 최소치다. 오류가 아니라 알림이다.
+  const r = splitIntoScenes(fakeScript(1));
+  assert.equal(r.stats.sceneCount, SECTIONS.length);
+  assert.equal(r.stats.outsideTargetRange, true);
+  assert.equal(r.problems.length, 0, '범위를 벗어난 건 오류가 아니어야 한다');
+});
+
+test('장면이 섹션 경계를 넘지 않는다', () => {
+  const r = splitIntoScenes(fakeScript(4));
+  for (const scene of r.scenes) {
+    const sections = new Set(scene.paragraphs.map((p) => p.text.split(' ')[0]));
+    assert.equal(sections.size, 1, `장면 ${scene.scene_number}에 여러 섹션이 섞였다`);
+  }
+});
+
+test('샷은 8초를 넘지 않는다', () => {
+  const r = splitIntoScenes(fakeScript(5));
+  for (const scene of r.scenes) {
+    for (const shot of scene.shots) {
+      assert.ok(shot.duration <= SHOT_SECONDS_MAX + 0.01, `${shot.shot_id} = ${shot.duration}초`);
+    }
+  }
+});
+
+test('샷 길이 합계가 장면 길이와 같다', () => {
+  const r = splitIntoScenes(fakeScript(4));
+  for (const scene of r.scenes) {
+    const sum = scene.shots.reduce((s, x) => s + x.duration, 0);
+    assert.ok(Math.abs(sum - scene.duration) < 0.1, `장면 ${scene.scene_number}: ${sum} vs ${scene.duration}`);
+  }
+});
+
+test('샷 번호가 겹치지 않는다', () => {
+  const r = splitIntoScenes(fakeScript(4));
+  const ids = r.scenes.flatMap((s) => s.shots.map((x) => x.shot_id));
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test('깨진 대본으로는 장면을 만들지 않는다', () => {
+  const r = splitIntoScenes('## [HOOK] 훅\n태그 없는 문단');
+  assert.ok(r.problems.length > 0);
+  assert.equal(r.scenes.length, 0);
+});
+
+test('planShots는 길이를 고르게 나눈다', () => {
+  const shots = planShots(20, 3);
+  assert.equal(shots.length, 3);
+  assert.ok(shots.every((s) => Math.abs(s.duration - 20 / 3) < 0.02));
+  assert.equal(shots[0].shot_id, 'S03-1');
+  assert.deepEqual(planShots(0), []);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('9. 이미지/영상 배분 — 코드가 예산을 지키는가');
+
+const {
+  assignAssetTypes,
+  assignSound,
+  estimateCost,
+  ASSET_TYPE,
+  MAX_VIDEO_SHOTS,
+  MAX_SFX_SCENE_RATIO,
+  MOOD_SOUND,
+} = await import('../src/scenes/assets.mjs');
+
+/** 화면 설계가 끝난 상태의 가짜 장면들. */
+function designedScenes({ realPersonShots = 0, noVideoPrompt = 0 } = {}) {
+  const r = splitIntoScenes(fakeScript(4));
+  let realLeft = realPersonShots;
+  let noVidLeft = noVideoPrompt;
+  const moods = ['mystery', 'tension', 'twist', 'record', 'calm', 'somber'];
+  return r.scenes.map((scene, si) => ({
+    ...scene,
+    mood: moods[si % moods.length],
+    visual_description: '설명',
+    shots: scene.shots.map((shot, i) => {
+      const real = realLeft-- > 0;
+      const noVid = noVidLeft-- > 0;
+      return {
+        ...shot,
+        image_prompt: 'an empty hotel lobby at night',
+        video_prompt: noVid ? '' : 'a door slowly opens',
+        camera: 'zoom in',
+        // 뒤쪽 샷에 높은 점수를 준다 — 점수순으로 뽑히는지 보려고.
+        motion_need: (si * 3 + i) % 11,
+        depicts_real_person: real,
+      };
+    }),
+  }));
+}
+
+test('영상 비중을 지킨다', () => {
+  const scenes = designedScenes();
+  const total = scenes.flatMap((s) => s.shots).length;
+  for (const ratio of [0, 0.15, 0.3, 0.5]) {
+    const out = assignAssetTypes(scenes, { videoRatio: ratio });
+    const videos = out.flatMap((s) => s.shots).filter((x) => x.asset_type === ASSET_TYPE.VIDEO);
+    assert.ok(videos.length <= Math.floor(total * ratio), `비중 ${ratio}: ${videos.length}개`);
+  }
+});
+
+test('영상 비중 0이면 전부 이미지다', () => {
+  const out = assignAssetTypes(designedScenes(), { videoRatio: 0 });
+  assert.ok(out.flatMap((s) => s.shots).every((x) => x.asset_type === ASSET_TYPE.IMAGE));
+});
+
+test('비중을 1로 줘도 절대 상한을 넘지 않는다', () => {
+  // AI가 뭘 하든 편당 영상 비용의 상한이 보장되어야 한다.
+  const out = assignAssetTypes(designedScenes(), { videoRatio: 1 });
+  const videos = out.flatMap((s) => s.shots).filter((x) => x.asset_type === ASSET_TYPE.VIDEO);
+  assert.ok(videos.length <= MAX_VIDEO_SHOTS, `${videos.length} > ${MAX_VIDEO_SHOTS}`);
+});
+
+test('이상한 비중 값에도 죽지 않는다', () => {
+  for (const bad of [NaN, -1, 'abc', undefined, null]) {
+    const out = assignAssetTypes(designedScenes(), { videoRatio: bad });
+    assert.ok(out.flatMap((s) => s.shots).every((x) => x.asset_type));
+  }
+});
+
+test('실존 인물이 보이는 샷은 무조건 이미지다', () => {
+  // 비용 문제가 아니라 안전 문제라 예산보다 먼저 적용되어야 한다.
+  const scenes = designedScenes({ realPersonShots: 5 });
+  const out = assignAssetTypes(scenes, { videoRatio: 1 });
+  for (const shot of out.flatMap((s) => s.shots)) {
+    if (shot.depicts_real_person) {
+      assert.equal(shot.asset_type, ASSET_TYPE.IMAGE, `${shot.shot_id}이 영상으로 배정됐다`);
+    }
+  }
+});
+
+test('영상 프롬프트가 없는 샷은 영상으로 뽑지 않는다', () => {
+  const out = assignAssetTypes(designedScenes({ noVideoPrompt: 6 }), { videoRatio: 1 });
+  for (const shot of out.flatMap((s) => s.shots)) {
+    if (!shot.video_prompt) assert.equal(shot.asset_type, ASSET_TYPE.IMAGE);
+  }
+});
+
+test('움직임이 더 필요한 샷부터 영상으로 뽑는다', () => {
+  const scenes = designedScenes();
+  const out = assignAssetTypes(scenes, { videoRatio: 0.15 });
+  const shots = out.flatMap((s) => s.shots);
+  const videos = shots.filter((x) => x.asset_type === ASSET_TYPE.VIDEO);
+  const images = shots.filter((x) => x.asset_type === ASSET_TYPE.IMAGE && x.video_prompt);
+  const minVideo = Math.min(...videos.map((x) => x.motion_need));
+  const maxImage = Math.max(...images.map((x) => x.motion_need));
+  assert.ok(minVideo >= maxImage, `영상 최저 ${minVideo} < 이미지 최고 ${maxImage}`);
+});
+
+test('영상 샷에도 대체용 이미지 프롬프트가 남아 있다', () => {
+  // 기획서 9번: AI 영상 생성 실패 시 이미지 + 카메라 움직임으로 대체한다.
+  const out = assignAssetTypes(designedScenes(), { videoRatio: 0.3 });
+  for (const shot of out.flatMap((s) => s.shots)) {
+    if (shot.asset_type === ASSET_TYPE.VIDEO) {
+      assert.equal(shot.fallback, ASSET_TYPE.IMAGE);
+      assert.ok(shot.image_prompt, `${shot.shot_id}에 대체 이미지 프롬프트가 없다`);
+      assert.ok(shot.camera, `${shot.shot_id}에 카메라 움직임이 없다`);
+    }
+  }
+});
+
+test('효과음을 과도하게 쓰지 않는다', () => {
+  // 기획서 13번: "단, 과도하게 사용하지 않는다"
+  const out = assignSound(designedScenes());
+  const withSfx = out.filter((s) => s.sound_effect).length;
+  assert.ok(
+    withSfx <= Math.max(1, Math.floor(out.length * MAX_SFX_SCENE_RATIO)),
+    `${withSfx}/${out.length} 장면에 효과음이 들어갔다`
+  );
+});
+
+test('모든 장면에 BGM이 배정된다', () => {
+  const out = assignSound(designedScenes());
+  assert.ok(out.every((s) => s.bgm), 'BGM 없는 장면이 있다');
+});
+
+test('모르는 분위기에도 죽지 않는다', () => {
+  const scenes = designedScenes().map((s) => ({ ...s, mood: '아무말' }));
+  const out = assignSound(scenes);
+  assert.ok(out.every((s) => s.bgm));
+});
+
+test('반전 장면이 효과음 우선순위를 갖는다', () => {
+  const scenes = designedScenes();
+  const twistIdx = scenes.findIndex((s) => s.mood === 'twist');
+  assert.ok(twistIdx > -1, '테스트 데이터에 twist 장면이 있어야 한다');
+  const out = assignSound(scenes);
+  assert.equal(out[twistIdx].sound_effect, MOOD_SOUND.twist.sfx);
+});
+
+test('비용 계산에 영상 샷의 대체 이미지도 들어간다', () => {
+  const out = assignAssetTypes(designedScenes(), { videoRatio: 0.15 });
+  const shots = out.flatMap((s) => s.shots);
+  const cost = estimateCost(out);
+  // 영상 샷도 대체용 이미지를 뽑으므로 이미지 수 = 전체 샷 수
+  assert.equal(cost.imageCount, shots.length);
+  assert.ok(cost.totalUsd > 0);
+  assert.ok(cost.videoSeconds > 0);
+});
+
+test('전부 이미지면 영상 비용이 0이다', () => {
+  const cost = estimateCost(assignAssetTypes(designedScenes(), { videoRatio: 0 }));
+  assert.equal(cost.videoUsd, 0);
+  assert.equal(cost.videoCount, 0);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('10. 불편한 화면 차단 — 보는 사람을 지키는가');
+
+const {
+  checkPrompts,
+  composeImagePrompt,
+  buildVisualsPrompt,
+  mergeVisuals,
+  STYLE_SUFFIX,
+  NEGATIVE_SUFFIX,
+  VISUALS_SCHEMA,
+} = await import('../src/scenes/visuals.mjs');
+
+test('시체·피·상처가 들어간 프롬프트를 잡아낸다', () => {
+  const bad = [
+    'a bloodstained hotel carpet',
+    'a corpse lying on the floor',
+    'a wounded man in the hallway',
+    'a terrified face in the dark',
+    'a dead body covered with a sheet',
+    'a zombie walking down the corridor',
+  ];
+  for (const prompt of bad) {
+    const r = checkPrompts([{ shot_id: 'S01-1', image_prompt: prompt, video_prompt: '' }]);
+    assert.equal(r.ok, false, `잡아내지 못함: ${prompt}`);
+    assert.ok(r.violations[0].word);
+  }
+});
+
+test('영상 프롬프트도 함께 검사한다', () => {
+  const r = checkPrompts([
+    { shot_id: 'S01-1', image_prompt: 'an empty room', video_prompt: 'blood dripping slowly' },
+  ]);
+  assert.equal(r.ok, false);
+  assert.equal(r.violations[0].field, 'video_prompt');
+});
+
+test('괜찮은 프롬프트는 통과시킨다', () => {
+  const good = [
+    'an empty hotel corridor at night, a single lamp still on',
+    'a half-open door with keys left on the floor',
+    'a stopped clock on a bare wall',
+    'an untouched dinner table, chairs pushed back',
+    'yellowed newspaper clippings spread on a desk',
+  ];
+  const r = checkPrompts(good.map((p, i) => ({ shot_id: `S01-${i}`, image_prompt: p, video_prompt: '' })));
+  assert.equal(r.ok, true, JSON.stringify(r.violations));
+});
+
+test('빈 입력에도 죽지 않는다', () => {
+  for (const input of [[], null, undefined, [{}]]) {
+    assert.equal(checkPrompts(input).ok, true);
+  }
+});
+
+test('완성된 프롬프트에 고정 스타일과 금지 목록이 붙는다', () => {
+  const p = composeImagePrompt('an empty hotel lobby');
+  assert.ok(p.includes('an empty hotel lobby'));
+  assert.ok(p.includes(STYLE_SUFFIX));
+  assert.ok(p.includes(NEGATIVE_SUFFIX));
+  // 기획서 10번: 1990년대 TV 재연 느낌
+  assert.ok(STYLE_SUFFIX.includes('reenactment') || STYLE_SUFFIX.includes('reconstruction'));
+  // 실존 인물 금지가 들어 있어야 한다
+  assert.ok(NEGATIVE_SUFFIX.includes('identifiable'));
+});
+
+test('화면 설계 프롬프트에 태그별 지시가 들어간다', () => {
+  const r = splitIntoScenes(fakeScript(4));
+  const scene = r.scenes.find((s) => s.tags.includes('UNKNOWN')) || r.scenes[0];
+  const p = buildVisualsPrompt(scene, { item: { title: '테스트 사건' }, totalScenes: r.scenes.length });
+  assert.ok(p.includes('테스트 사건'));
+  assert.ok(p.includes(scene.shots[0].shot_id));
+  assert.ok(p.includes('시체'), '금지 지시가 프롬프트에 있어야 한다');
+  for (const s of scene.shots) assert.ok(p.includes(s.shot_id));
+});
+
+test('화면 설계를 샷에 합친다', () => {
+  const r = splitIntoScenes(fakeScript(3));
+  const scene = r.scenes[0];
+  const design = {
+    mood: 'tension',
+    visual_description: '빈 복도',
+    shots: scene.shots.map((s) => ({
+      shot_id: s.shot_id,
+      image_prompt: 'an empty corridor',
+      video_prompt: 'a door opens',
+      camera: 'pan left',
+      motion_need: 7,
+      depicts_real_person: false,
+    })),
+  };
+  const m = mergeVisuals(scene, design);
+  assert.equal(m.problems.length, 0);
+  assert.equal(m.scene.mood, 'tension');
+  assert.ok(m.scene.shots[0].image_prompt.includes('an empty corridor'));
+  assert.ok(m.scene.shots[0].image_prompt.includes(STYLE_SUFFIX));
+  assert.equal(m.scene.shots[0].camera, 'pan left');
+  assert.equal(m.scene.shots[0].motion_need, 7);
+});
+
+test('설계가 빠진 샷을 문제로 알린다', () => {
+  const r = splitIntoScenes(fakeScript(3));
+  const scene = r.scenes.find((s) => s.shots.length > 1) || r.scenes[0];
+  const m = mergeVisuals(scene, { mood: 'mystery', visual_description: '', shots: [] });
+  assert.ok(m.problems.length >= scene.shots.length);
+});
+
+test('없는 샷 번호가 돌아오면 알린다', () => {
+  const r = splitIntoScenes(fakeScript(3));
+  const scene = r.scenes[0];
+  const m = mergeVisuals(scene, {
+    mood: 'mystery',
+    visual_description: '',
+    shots: [
+      ...scene.shots.map((s) => ({
+        shot_id: s.shot_id, image_prompt: 'x', video_prompt: '', camera: 'zoom in',
+        motion_need: 1, depicts_real_person: false,
+      })),
+      { shot_id: 'S99-9', image_prompt: 'y', video_prompt: '', camera: 'zoom in', motion_need: 1, depicts_real_person: false },
+    ],
+  });
+  assert.ok(m.problems.some((p) => p.includes('S99-9')));
+});
+
+test('모르는 카메라 움직임은 기본값으로 바꾼다', () => {
+  const r = splitIntoScenes(fakeScript(3));
+  const scene = r.scenes[0];
+  const m = mergeVisuals(scene, {
+    mood: 'mystery',
+    visual_description: '',
+    shots: scene.shots.map((s) => ({
+      shot_id: s.shot_id, image_prompt: 'x', video_prompt: '', camera: '빙글빙글',
+      motion_need: 99, depicts_real_person: false,
+    })),
+  });
+  assert.equal(m.scene.shots[0].camera, 'zoom in');
+  assert.equal(m.scene.shots[0].motion_need, 10, '범위를 넘는 점수는 깎아야 한다');
+});
+
+test('화면 설계 스키마가 strict 요건을 지킨다', () => {
+  assert.equal(VISUALS_SCHEMA.additionalProperties, false);
+  assert.ok(VISUALS_SCHEMA.required.length);
+  assert.equal(VISUALS_SCHEMA.properties.shots.items.additionalProperties, false);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('11. 장면 저장');
+
+test('장면과 프롬프트를 두 파일로 저장한다', () => {
+  const id = store.listContent()[0].id;
+  const scenes = assignSound(assignAssetTypes(designedScenes(), { videoRatio: 0.15 }));
+  const split = splitIntoScenes(fakeScript(4));
+  store.saveScenes(id, { scenes, stats: split.stats, problems: [], cost: estimateCost(scenes) });
+
+  assert.ok(fs.existsSync(store.contentPath(id, 'scenes.json')));
+  assert.ok(fs.existsSync(store.contentPath(id, 'prompts.json')));
+  assert.equal(store.loadContent(id).research.status, 'SCENES_READY');
+
+  const prompts = JSON.parse(fs.readFileSync(store.contentPath(id, 'prompts.json'), 'utf8'));
+  const shotCount = scenes.flatMap((s) => s.shots).length;
+  assert.equal(prompts.count, shotCount);
+  assert.ok(prompts.prompts.every((p) => p.shot_id && p.asset_type && p.image_prompt));
+});
+
+test('문제가 남아 있으면 SCENES_READY로 올리지 않는다', () => {
+  const id = store.listContent()[1].id;
+  const scenes = assignSound(assignAssetTypes(designedScenes(), { videoRatio: 0.15 }));
+  store.saveScenes(id, {
+    scenes,
+    stats: splitIntoScenes(fakeScript(4)).stats,
+    problems: ['화면 설계가 없는 샷이 있습니다'],
+  });
+  assert.notEqual(store.loadContent(id).research.status, 'SCENES_READY');
+});
+
+// ─────────────────────────────────────────────────────────────
 
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
