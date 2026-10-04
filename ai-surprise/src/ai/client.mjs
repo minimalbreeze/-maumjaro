@@ -127,17 +127,24 @@ export async function callWithSearch({
   let continuations = 0;
 
   for (;;) {
-    const c = await ai();
     response = await withRetry(
-      () =>
-        c.messages.create({
+      async () => {
+        const c = await ai();
+        // 반드시 스트리밍으로 받는다. max_tokens가 크면 SDK가 논스트리밍 요청을
+        // 아예 거부한다:
+        //   "Streaming is required for operations that may take longer than 10 minutes"
+        // 실제로 이것 때문에 첫 실행이 6초 만에 죽었다. 검색이 여러 번 돌면
+        // 한 번 호출이 몇 분씩 걸리므로 여기가 가장 긴 호출이다.
+        const stream = c.messages.stream({
           model,
           max_tokens: maxTokens,
           system,
           messages,
           tools: [WEB_SEARCH_TOOL, ...tools],
           ...tuningFor(model, { effort, maxTokens }),
-        }),
+        });
+        return await stream.finalMessage();
+      },
       { tries: 3, base: 2000, label: 'Claude 검색 호출' }
     );
 
@@ -206,10 +213,13 @@ export async function callForJson({
     ? prompt
     : `${prompt}\n\n반드시 ${toolName} 도구를 호출해서 결과를 제출하세요. 도구 호출 외의 설명 문장은 쓰지 마세요.`;
 
-  const c = await ai();
   const response = await withRetry(
-    () =>
-      c.messages.create({
+    async () => {
+      const c = await ai();
+      // 여기도 스트리밍으로 받는다. 지금 maxTokens(6000~8000)는 논스트리밍으로도
+      // 통과할 값이지만, 나중에 누가 이 값을 올리는 순간 위 검색 호출과 똑같이
+      // 죽는다. 그 사고를 한 번 겪었으므로 호출 경로를 전부 스트리밍으로 맞춘다.
+      const stream = c.messages.stream({
         model,
         max_tokens: maxTokens,
         system,
@@ -217,7 +227,9 @@ export async function callForJson({
         tools: [tool],
         tool_choice: forced ? { type: 'tool', name: toolName } : { type: 'auto' },
         ...tuningFor(model, { effort, maxTokens }),
-      }),
+      });
+      return await stream.finalMessage();
+    },
     { tries: 3, base: 2000, label: `Claude ${toolName}` }
   );
 

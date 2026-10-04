@@ -41,6 +41,25 @@ function test(name, fn) {
   }
 }
 
+/**
+ * 비동기 테스트.
+ *
+ * 위의 test()는 동기라서 async 함수를 넘기면 예외를 못 잡고 조용히 통과한다.
+ * 조용히 통과하는 테스트는 테스트가 없는 것보다 나쁘므로 따로 둔다.
+ * 호출할 때 반드시 await 해야 한다.
+ */
+async function asyncTest(name, fn) {
+  try {
+    await fn();
+    passed++;
+    console.log(`  ✅ ${name}`);
+  } catch (err) {
+    failed++;
+    console.log(`  ❌ ${name}`);
+    console.log(`     ${err.message.split('\n').slice(0, 6).join('\n     ')}`);
+  }
+}
+
 function section(title) {
   console.log(`\n${'─'.repeat(60)}\n${title}\n${'─'.repeat(60)}`);
 }
@@ -529,6 +548,57 @@ test('Haiku에는 budget_tokens를 주고 effort를 주지 않는다', () => {
   const t = tuningFor('claude-haiku-4-5', { effort: 'high', maxTokens: 8000 });
   assert.ok(t.thinking?.budget_tokens > 0);
   assert.equal(t.output_config, undefined, 'Haiku에 effort를 주면 오류가 난다');
+});
+
+await asyncTest('모든 AI 호출이 스트리밍을 쓴다', async () => {
+  // 실제로 돈을 쓴 실패를 막는 테스트다.
+  //
+  // max_tokens가 크면 SDK가 논스트리밍 요청을 아예 거부한다:
+  //   "Streaming is required for operations that may take longer than 10 minutes"
+  // 첫 실행이 이것 때문에 6초 만에 죽었다. 호출 경로가 하나라도 create()를
+  // 쓰고 있으면 여기서 걸리게 한다.
+  const client = await import('../src/ai/client.mjs');
+
+  const calls = { stream: 0, create: 0 };
+  const fakeResponse = {
+    stop_reason: 'end_turn',
+    content: [
+      { type: 'text', text: '안녕' },
+      { type: 'tool_use', name: 'probe', input: { ok: true } },
+    ],
+    usage: { input_tokens: 1, output_tokens: 1 },
+  };
+
+  client.__setClientForTest({
+    messages: {
+      stream: () => {
+        calls.stream++;
+        return { finalMessage: async () => fakeResponse };
+      },
+      create: async () => {
+        calls.create++;
+        return fakeResponse;
+      },
+    },
+  });
+
+  try {
+    await client.callWithSearch({ system: 's', prompt: 'p', maxTokens: 24000 });
+    await client.callForText({ system: 's', prompt: 'p' });
+    await client.callForJson({
+      system: 's',
+      prompt: 'p',
+      toolName: 'probe',
+      description: 'd',
+      schema: { type: 'object', additionalProperties: false, required: [], properties: {} },
+    });
+  } finally {
+    client.__setClientForTest(null);
+    client.resetUsage();
+  }
+
+  assert.equal(calls.create, 0, `논스트리밍 create()를 ${calls.create}번 썼다 — 긴 호출에서 400이 난다`);
+  assert.equal(calls.stream, 3, `스트리밍 호출이 3번이어야 한다 (실제 ${calls.stream}번)`);
 });
 
 test('최신 모델에는 adaptive와 effort를 준다', () => {
