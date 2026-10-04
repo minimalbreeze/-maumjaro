@@ -23,6 +23,11 @@ on:
           - '테스트만 (비용 0원 · 처음엔 이걸로)'
           - '소재만 찾기 (대본 안 씀)'
           - '소재 찾고 대본까지 쓰기'
+          - '소재 → 대본 → 장면까지 쓰기'
+      video_ratio:
+        description: 'AI 영상 비중 (0.15 = 샷의 15%만 영상. 올리면 비싸집니다)'
+        required: false
+        default: '0.15'
       count:
         description: '찾을 소재 수'
         required: false
@@ -96,7 +101,10 @@ jobs:
           IN_SCRIPTS: ${{ inputs.scripts }}
           IN_MINUTES: ${{ inputs.minutes }}
           IN_CATEGORY: ${{ inputs.category }}
+          IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 장면 단계가 읽는다. 샷 중 몇 %를 AI 영상으로 만들지 정한다.
+          VIDEO_SHOT_RATIO: ${{ inputs.video_ratio }}
         run: |
           for pair in "소재 수:$IN_COUNT" "대본 수:$IN_SCRIPTS" "영상 길이:$IN_MINUTES"; do
             label="${pair%%:*}"; value="${pair#*:}"
@@ -104,11 +112,19 @@ jobs:
               ''|*[!0-9]*) echo "::error::${label}는 숫자여야 합니다: $value"; exit 1 ;;
             esac
           done
+          case "$IN_VIDEO_RATIO" in
+            ''|*[!0-9.]*|*.*.*) echo "::error::영상 비중은 0~1 사이 숫자여야 합니다: $IN_VIDEO_RATIO"; exit 1 ;;
+          esac
 
           args=("--count=$IN_COUNT")
           [ -n "$IN_CATEGORY" ] && args+=("--category=$IN_CATEGORY")
 
           case "$IN_MODE" in
+            *'장면까지'*)
+              args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes")
+              echo "소재 → 대본 → 장면·프롬프트까지 만듭니다. AI 영상 비중 $IN_VIDEO_RATIO"
+              node src/main.mjs auto "${args[@]}"
+              ;;
             *'대본까지'*)
               args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES")
               echo "소재를 찾고, 관문을 통과한 것 중 $IN_SCRIPTS편의 대본을 씁니다."

@@ -15,12 +15,15 @@ import process from 'node:process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { log } from './utils/logger.mjs';
-import { missingKeys } from './utils/env.mjs';
+import { missingKeys, env } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
 import { writeScript } from './script/write.mjs';
 import { GATE, MIN_SOURCE_COUNT } from './model.mjs';
+import { splitIntoScenes } from './scenes/split.mjs';
+import { designAllScenes } from './scenes/visuals.mjs';
+import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
 import {
   saveToInbox,
   listInbox,
@@ -28,6 +31,7 @@ import {
   knownTitles,
   promoteToContent,
   saveScript,
+  saveScenes,
   loadContent,
   INBOX_DIR,
   contentPath,
@@ -243,6 +247,130 @@ async function cmdScript(positional, flags) {
 }
 
 /**
+ * 대본 → 장면·샷·프롬프트 (Phase 2).
+ *
+ * 쪼개는 건 코드가, 화면 설계는 AI가 한다.
+ */
+async function cmdScenes(flags) {
+  const id = String(flags.id || '').padStart(3, '0');
+  if (!flags.id) {
+    log.error('어떤 편의 장면을 만들지 알려주세요.');
+    log.info('  node src/main.mjs list              제작 중인 편 보기');
+    log.info('  node src/main.mjs scenes --id=001   그 편의 장면 만들기');
+    process.exit(1);
+  }
+
+  const loaded = loadContent(id);
+  if (!loaded) {
+    log.error(`content/${id} 을 찾을 수 없습니다. node src/main.mjs list 로 확인해 주세요.`);
+    process.exit(1);
+  }
+  if (!loaded.script) {
+    log.error(`content/${id} 에 대본이 없습니다. 먼저 대본을 써야 합니다:`);
+    log.info(`  node src/main.mjs script --id=${id}`);
+    process.exit(1);
+  }
+
+  // 기획서 18번의 2단계. 양식을 통과하지 못한 대본으로 장면을 만들지 않는다.
+  if (loaded.research.status === 'SCRIPTING' && !flags.force) {
+    log.error('이 편의 대본은 양식 검사를 통과하지 못했습니다.');
+    log.info(`content/${id}/script-check.json 을 확인하고 대본을 고쳐주세요.`);
+    log.info('그래도 진행하려면 --force 를 붙이세요.');
+    process.exit(2);
+  }
+
+  const videoRatio = flags['video-ratio'] !== undefined
+    ? Number(flags['video-ratio'])
+    : Number(env('VIDEO_SHOT_RATIO', String(DEFAULT_VIDEO_RATIO)));
+
+  // ── 1단계: 코드가 쪼갠다 (AI 안 씀, 비용 0원)
+  log.section(`✂️  장면 분할  |  content/${id}  |  코드가 처리 (비용 0원)`);
+  const split = splitIntoScenes(loaded.script, {
+    targetScenes: flags.scenes ? Number(flags.scenes) : null,
+  });
+
+  if (split.problems.length) {
+    log.error('대본에 문제가 있어 장면을 만들 수 없습니다:');
+    for (const p of split.problems) log.info(`· ${p}`);
+    process.exit(2);
+  }
+
+  log.ok(`장면 ${split.stats.sceneCount}개, 샷 ${split.stats.shotCount}개`);
+  log.info(`전체 ${split.stats.totalSeconds}초 (약 ${(split.stats.totalSeconds / 60).toFixed(1)}분), 나레이션 ${split.stats.totalChars}자`);
+  log.info(`장면 길이 ${split.stats.shortestScene}~${split.stats.longestScene}초`);
+  if (split.stats.outsideTargetRange) {
+    log.warn(`장면이 ${split.stats.sceneCount}개입니다. 기획서 목표는 12~15개입니다 — 대본 길이 때문일 수 있습니다.`);
+  }
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 화면 설계(AI)를 하지 않고 여기서 멈춥니다.');
+    for (const s of split.scenes) {
+      log.raw(`  장면 ${s.scene_number} [${s.section}] ${s.duration}초 · 샷 ${s.shots.length}개 · ${s.tags.join('+')}`);
+      log.raw(`     ${s.narration.slice(0, 60)}${s.narration.length > 60 ? '…' : ''}`);
+    }
+    return;
+  }
+
+  // ── 2단계: AI가 화면을 설계한다
+  requireApiKey();
+  log.section(`🎨 화면 설계  |  장면 ${split.scenes.length}개  |  모델 ${MODELS.script}`);
+  const designed = await designAllScenes(split.scenes, {
+    item: loaded.research,
+    onProgress: (m) => log.step(m),
+  });
+
+  // ── 3단계: 코드가 이미지/영상을 배분하고 소리를 배정한다
+  log.section('💡 이미지·영상 배분과 소리');
+  let scenes = assignAssetTypes(designed.scenes, { videoRatio });
+  scenes = assignSound(scenes);
+
+  const cost = estimateCost(scenes);
+  const problems = [...designed.problems];
+
+  const shots = scenes.flatMap((s) => s.shots);
+  const videoShots = shots.filter((s) => s.asset_type === ASSET_TYPE.VIDEO);
+  log.info(`AI 영상 ${videoShots.length}개 / 이미지 ${shots.length - videoShots.length}개 (영상 비중 ${Math.round(videoRatio * 100)}%)`);
+  log.info(`AI 영상 길이 합계 ${cost.videoSeconds}초`);
+  const realPersonShots = shots.filter((s) => s.depicts_real_person).length;
+  if (realPersonShots) {
+    log.info(`실존 인물이 보이는 샷 ${realPersonShots}개 — 전부 이미지로 고정했습니다.`);
+  }
+  const sfxScenes = scenes.filter((s) => s.sound_effect).length;
+  log.info(`효과음 ${sfxScenes}/${scenes.length} 장면 (과도하게 쓰지 않도록 상한을 둡니다)`);
+
+  log.raw('');
+  log.raw('  장면별:');
+  for (const s of scenes) {
+    const v = s.shots.filter((x) => x.asset_type === ASSET_TYPE.VIDEO).length;
+    log.raw(
+      `  ${String(s.scene_number).padStart(2)} [${s.section}] ${String(s.duration).padStart(6)}초 · ` +
+        `샷 ${s.shots.length}(영상 ${v}) · ${s.mood}${s.sound_effect ? ' · ' + s.sound_effect : ''}`
+    );
+    if (s.visual_description) log.raw(`     ${s.visual_description}`);
+  }
+
+  saveScenes(id, { scenes, stats: split.stats, problems, cost });
+
+  log.section('💰 Phase 3 예상 에셋 비용');
+  log.info(`이미지 ${cost.imageCount}장 → $${cost.imageUsd}`);
+  log.info(`AI 영상 ${cost.videoCount}클립 ${cost.videoSeconds}초 → $${cost.videoUsd}`);
+  log.info(`합계 약 $${cost.totalUsd}`);
+  log.info(cost.note);
+
+  log.raw('');
+  if (problems.length) {
+    log.error(`확인이 필요한 문제 ${problems.length}건 — 상태를 SCENES_READY로 올리지 않았습니다:`);
+    for (const p of problems) log.info(`· ${p}`);
+    log.info(`파일은 저장했습니다: ${contentPath(id, 'scenes.json')}`);
+  } else {
+    log.ok(`장면 완성: ${contentPath(id, 'scenes.json')}`);
+    log.info(`Phase 3 입력: ${contentPath(id, 'prompts.json')}`);
+  }
+  printUsage();
+}
+
+/**
  * 버튼 한 번으로 소재 찾기부터 대본까지 (GitHub Actions용).
  *
  * GitHub에서 돌릴 때는 실행이 끝나면 컴퓨터가 사라진다. 그래서 "소재 찾고
@@ -316,6 +444,7 @@ async function cmdAuto(flags) {
   const targets = ready.slice(0, Math.max(1, scripts));
   log.section(`✍️  대본 작성  |  ${targets.length}편  |  모델 ${MODELS.script}`);
 
+  const scripted = [];
   for (const item of targets) {
     const { id } = promoteToContent(item);
     log.step(`content/${id} — ${item.title}`);
@@ -331,6 +460,7 @@ async function cmdAuto(flags) {
       for (const w of check.warnings) log.warn(w);
       if (check.ok) {
         log.ok(`완성: content/${id}/script.md`);
+        scripted.push(id);
       } else {
         log.error(`양식 미달 — content/${id}/script.md 에 저장했지만 확인이 필요합니다:`);
         for (const e of check.errors) log.info(`· ${e}`);
@@ -338,6 +468,20 @@ async function cmdAuto(flags) {
     } catch (err) {
       log.fail(`content/${id} 대본 실패`, err);
     }
+  }
+
+  // 장면까지 이어서 만든다 (Phase 2).
+  // 양식을 통과한 대본만 넘긴다 — 깨진 대본으로 장면을 만들면 돈만 쓴다.
+  if (flags.scenes && scripted.length) {
+    for (const id of scripted) {
+      try {
+        await cmdScenes({ id });
+      } catch (err) {
+        log.fail(`content/${id} 장면 만들기 실패`, err);
+      }
+    }
+  } else if (flags.scenes) {
+    log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
   }
 
   log.raw('');
@@ -378,12 +522,15 @@ async function main() {
       return;
     case 'script':
       return cmdScript(positional, flags);
+    case 'scenes':
+      return cmdScenes(flags);
     default:
-      log.raw('AI 서프라이즈 — Phase 1 (소재 수집 · 심사 · 대본)');
+      log.raw('AI 서프라이즈 — 소재 수집 · 심사 · 대본 · 장면');
       log.raw('');
-      log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=4]');
-      log.raw('      소재 찾기부터 대본까지 한 번에. GitHub Actions가 이걸 씁니다.');
+      log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=4] [--scenes]');
+      log.raw('      소재 찾기부터 한 번에. GitHub Actions가 이걸 씁니다.');
       log.raw('      관문을 통과한 소재만 대본을 씁니다.');
+      log.raw('      --scenes 를 붙이면 장면·프롬프트까지 이어서 만듭니다.');
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
@@ -396,6 +543,10 @@ async function main() {
       log.raw('');
       log.raw('  node src/main.mjs script --id=001');
       log.raw('      이미 제작에 들어간 편의 대본을 다시 씁니다.');
+      log.raw('');
+      log.raw('  node src/main.mjs scenes --id=001 [--dry-run] [--video-ratio=0.15]');
+      log.raw('      대본을 장면·샷으로 쪼개고 화면 프롬프트를 만듭니다.');
+      log.raw('      --dry-run 은 쪼개기만 하고 멈춥니다 (비용 0원).');
       log.raw('');
       log.raw('  npm test');
       log.raw('      API 키 없이 돌아가는 테스트입니다.');

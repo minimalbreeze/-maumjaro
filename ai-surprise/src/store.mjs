@@ -123,6 +123,7 @@ export function loadContent(id) {
     id,
     research,
     script: fs.existsSync(scriptFile) ? fs.readFileSync(scriptFile, 'utf8') : null,
+    scenes: readJsonSafe(contentPath(id, 'scenes.json')),
   };
 }
 
@@ -148,6 +149,53 @@ export function setStatus(id, status) {
   research.status_updated_at = new Date().toISOString();
   fs.writeFileSync(file, JSON.stringify(research, null, 2) + '\n', 'utf8');
   return research;
+}
+
+/**
+ * 장면과 프롬프트를 저장한다 (기획서 21번의 scenes.json / prompts.json).
+ *
+ * 두 파일로 나누는 이유: scenes.json은 사람이 읽고 판단하는 것이고,
+ * prompts.json은 Phase 3이 기계로 돌리는 입력이다. 성격이 달라서
+ * 한 파일에 섞으면 둘 다 읽기 나빠진다.
+ *
+ * 문제가 남아 있으면 SCENES_READY로 올리지 않는다 — 깨진 장면으로
+ * Phase 3을 돌리면 돈을 쓴 뒤에야 알게 된다.
+ */
+export function saveScenes(id, { scenes, stats, problems = [], cost = null }) {
+  ensureDir(contentPath(id));
+
+  fs.writeFileSync(
+    contentPath(id, 'scenes.json'),
+    JSON.stringify({ stats, problems, cost, scenes }, null, 2) + '\n',
+    'utf8'
+  );
+
+  // Phase 3이 바로 집어 쓸 수 있는 평평한 목록.
+  const prompts = [];
+  for (const scene of scenes || []) {
+    for (const shot of scene.shots || []) {
+      prompts.push({
+        shot_id: shot.shot_id,
+        scene_number: scene.scene_number,
+        asset_type: shot.asset_type,
+        fallback: shot.fallback,
+        duration: shot.duration,
+        camera: shot.camera,
+        image_prompt: shot.image_prompt,
+        video_prompt: shot.video_prompt,
+        depicts_real_person: shot.depicts_real_person,
+        mood: scene.mood,
+      });
+    }
+  }
+  fs.writeFileSync(
+    contentPath(id, 'prompts.json'),
+    JSON.stringify({ count: prompts.length, prompts }, null, 2) + '\n',
+    'utf8'
+  );
+
+  setStatus(id, problems.length ? 'SCRIPT_READY' : 'SCENES_READY');
+  return contentPath(id, 'scenes.json');
 }
 
 /** 대본을 저장하고 검증 결과를 함께 남긴다. */
