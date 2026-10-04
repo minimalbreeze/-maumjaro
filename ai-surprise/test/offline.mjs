@@ -1,0 +1,553 @@
+// 오프라인 테스트.
+//
+// API 키 없이, npm install 없이 돌아간다. 돈이 들지 않고 몇 초면 끝난다.
+// 그래서 코드를 고칠 때마다 부담 없이 돌려볼 수 있다.
+//
+//   node test/offline.mjs
+//
+// 여기서 검증하는 것은 "AI가 좋은 대본을 쓰는가"가 아니다. 그건 실제로
+// 돌려봐야 안다. 여기서 보는 것은 "AI가 엉뚱한 걸 내놨을 때 우리 코드가
+// 그걸 잡아내는가"다. 그게 이 프로젝트의 안전장치 전부다.
+
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+// store.mjs 를 불러오기 전에 저장 위치를 임시 폴더로 바꾼다.
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-surprise-test-'));
+process.env.AI_SURPRISE_DATA_DIR = TMP;
+
+const { makeItem, finalScore, evaluateGate, GATE, FACT_STATUS, MAX_SCORE, STATUS } = await import(
+  '../src/model.mjs'
+);
+const { buildCollectPrompt, COLLECT_SCHEMA } = await import('../src/research/collect.mjs');
+const { buildScorePrompt, SCORE_SCHEMA } = await import('../src/research/score.mjs');
+const { buildScriptPrompt, validateScript, SECTIONS, TAGS } = await import('../src/script/write.mjs');
+const store = await import('../src/store.mjs');
+
+let passed = 0;
+let failed = 0;
+
+function test(name, fn) {
+  try {
+    fn();
+    passed++;
+    console.log(`  ✅ ${name}`);
+  } catch (err) {
+    failed++;
+    console.log(`  ❌ ${name}`);
+    console.log(`     ${err.message.split('\n').slice(0, 6).join('\n     ')}`);
+  }
+}
+
+function section(title) {
+  console.log(`\n${'─'.repeat(60)}\n${title}\n${'─'.repeat(60)}`);
+}
+
+// ─────────────────────────────────────────────────────────────
+section('1. 점수 계산');
+
+test('배점 합계가 100점이다', () => {
+  assert.equal(MAX_SCORE, 100);
+});
+
+test('항목 점수를 더해 최종 점수를 낸다', () => {
+  const score = finalScore({
+    interesting_score: 20,
+    twist_score: 20,
+    fact_score: 15,
+    visual_score: 10,
+    title_score: 10,
+  });
+  assert.equal(score, 75);
+});
+
+test('배점 상한을 넘겨 주면 깎는다', () => {
+  // AI가 25점 항목에 999점을 줘도 100점 만점이 무너지지 않아야 한다.
+  const score = finalScore({
+    interesting_score: 999,
+    twist_score: 999,
+    fact_score: 999,
+    visual_score: 999,
+    title_score: 999,
+  });
+  assert.equal(score, 100);
+});
+
+test('점수가 빠져 있으면 0으로 센다', () => {
+  assert.equal(finalScore({}), 0);
+  assert.equal(finalScore(null), 0);
+  assert.equal(finalScore({ interesting_score: 'abc' }), 0);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('2. 자동 제작 관문 — 가짜 소재를 막는 방어선');
+
+const fullScores = {
+  interesting_score: 25,
+  twist_score: 25,
+  fact_score: 20,
+  visual_score: 15,
+  title_score: 15,
+};
+
+test('출처 2개 + 확인된 사실이면 통과한다', () => {
+  const item = makeItem({
+    title: '통과해야 하는 소재',
+    fact_status: 'CONFIRMED',
+    sources: [
+      { url: 'https://a.example', name: 'A신문', kind: 'PRIMARY' },
+      { url: 'https://b.example', name: 'B기록원', kind: 'PRIMARY' },
+    ],
+    ...fullScores,
+    risk_flags: [],
+    risk_score: 5,
+  });
+  assert.equal(item.gate, GATE.AUTO_OK);
+  assert.equal(item.recommended, true);
+});
+
+test('출처가 1개면 점수가 만점이라도 검토 필요로 간다', () => {
+  // 이게 이 프로젝트에서 가장 중요한 규칙이다.
+  // 재미있는 소재가 점수로 관문을 뚫는 일이 없어야 한다.
+  const item = makeItem({
+    title: '출처 하나뿐',
+    fact_status: 'PARTIAL',
+    sources: [{ url: 'https://a.example', name: 'A블로그', kind: 'SECONDARY' }],
+    ...fullScores,
+    risk_flags: [],
+    risk_score: 0,
+  });
+  assert.equal(item.final_score, 100);
+  assert.equal(item.gate, GATE.REVIEW_NEEDED);
+  assert.equal(item.recommended, false);
+  assert.ok(item.gate_reasons.some((r) => r.includes('출처')));
+});
+
+test('1차 기록이 없는 이야기(UNVERIFIED)는 아예 막는다', () => {
+  const item = makeItem({
+    title: '인터넷 괴담',
+    fact_status: 'UNVERIFIED',
+    sources: [
+      { url: 'https://a.example', name: '커뮤니티', kind: 'SECONDARY' },
+      { url: 'https://b.example', name: '요약블로그', kind: 'SECONDARY' },
+    ],
+    ...fullScores,
+    risk_flags: [],
+    risk_score: 10,
+  });
+  assert.equal(item.gate, GATE.BLOCKED);
+});
+
+test('위험 유형 4가지는 즉시 차단된다', () => {
+  for (const flag of [
+    'FABRICATED',
+    'DEFAMATION',
+    'LIVING_PERSON_CLAIM',
+    'CRIMINAL_GLORIFICATION',
+  ]) {
+    const item = makeItem({
+      title: `위험: ${flag}`,
+      fact_status: 'CONFIRMED',
+      sources: [
+        { url: 'https://a.example', name: 'A', kind: 'PRIMARY' },
+        { url: 'https://b.example', name: 'B', kind: 'PRIMARY' },
+      ],
+      ...fullScores,
+      risk_flags: [flag],
+      risk_score: 90,
+    });
+    assert.equal(item.gate, GATE.BLOCKED, `${flag} 이 차단되지 않았다`);
+  }
+});
+
+test('음모론 플래그는 차단이 아니라 검토 필요다', () => {
+  // 음모론 자체를 다루는 건 가능하다. THEORY로 구분하면 된다.
+  const item = makeItem({
+    title: '음모론이 얽힌 사건',
+    fact_status: 'CONFIRMED',
+    sources: [
+      { url: 'https://a.example', name: 'A', kind: 'PRIMARY' },
+      { url: 'https://b.example', name: 'B', kind: 'PRIMARY' },
+    ],
+    ...fullScores,
+    risk_flags: ['CONSPIRACY_AS_FACT'],
+    risk_score: 40,
+  });
+  assert.equal(item.gate, GATE.REVIEW_NEEDED);
+  assert.ok(item.gate_reasons.some((r) => r.includes('THEORY')));
+});
+
+test('위험도 50점 이상이면 검토 필요다', () => {
+  const item = makeItem({
+    title: '위험도 높음',
+    fact_status: 'CONFIRMED',
+    sources: [
+      { url: 'https://a.example', name: 'A', kind: 'PRIMARY' },
+      { url: 'https://b.example', name: 'B', kind: 'PRIMARY' },
+    ],
+    ...fullScores,
+    risk_flags: [],
+    risk_score: 60,
+  });
+  assert.equal(item.gate, GATE.REVIEW_NEEDED);
+});
+
+test('모르는 위험 플래그는 조용히 버린다', () => {
+  // AI가 스키마에 없는 값을 보내도 코드가 죽지 않아야 한다.
+  const item = makeItem({
+    title: '이상한 플래그',
+    fact_status: 'CONFIRMED',
+    sources: [
+      { url: 'https://a.example', name: 'A', kind: 'PRIMARY' },
+      { url: 'https://b.example', name: 'B', kind: 'PRIMARY' },
+    ],
+    ...fullScores,
+    risk_flags: ['NOT_A_REAL_FLAG'],
+    risk_score: 0,
+  });
+  assert.deepEqual(item.risk_flags, []);
+  assert.equal(item.gate, GATE.AUTO_OK);
+});
+
+test('사실성 등급이 이상하면 UNVERIFIED로 떨어뜨린다', () => {
+  // 모르는 값을 "확인됨"으로 봐주면 안 된다. 안전한 쪽으로 기울인다.
+  const item = makeItem({ title: 'x', fact_status: '아무말', sources: [] });
+  assert.equal(item.fact_status, FACT_STATUS.UNVERIFIED);
+  assert.equal(item.gate, GATE.BLOCKED);
+});
+
+test('출처 배열에서 source_count 를 직접 센다', () => {
+  // AI가 source_count 를 틀리게 보고해도 실제 배열 길이를 쓴다.
+  const item = makeItem({
+    title: 'x',
+    fact_status: 'CONFIRMED',
+    source_count: 99,
+    sources: [{ url: 'https://a.example', name: 'A', kind: 'PRIMARY' }],
+  });
+  assert.equal(item.source_count, 1);
+});
+
+test('url 없는 출처는 세지 않는다', () => {
+  const item = makeItem({
+    title: 'x',
+    fact_status: 'CONFIRMED',
+    sources: [{ name: '어디선가 들음' }, { url: 'https://a.example', name: 'A' }],
+  });
+  assert.equal(item.source_count, 1);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('3. 프롬프트 조립');
+
+test('수집 프롬프트에 분야 목록이 들어간다', () => {
+  const p = buildCollectPrompt({ count: 3 });
+  assert.ok(p.includes('3건'));
+  assert.ok(p.includes('실제 미스터리'));
+  assert.ok(p.includes('submit_materials'));
+});
+
+test('수집 프롬프트에 제외 목록이 들어간다', () => {
+  const p = buildCollectPrompt({ count: 2, avoidTitles: ['이미 한 소재'] });
+  assert.ok(p.includes('이미 한 소재'));
+  assert.ok(p.includes('제외'));
+});
+
+test('분야를 지정하면 그 분야만 넣는다', () => {
+  const p = buildCollectPrompt({ category: '과학적 미스터리' });
+  assert.ok(p.includes('분야: 과학적 미스터리'));
+});
+
+test('심사 프롬프트에 출처와 1차 기록 여부가 들어간다', () => {
+  const p = buildScorePrompt({
+    title: '테스트 사건',
+    sources: [{ url: 'https://a.example', name: 'A신문', kind: 'PRIMARY' }],
+    primary_record_found: true,
+  });
+  assert.ok(p.includes('테스트 사건'));
+  assert.ok(p.includes('https://a.example'));
+  assert.ok(p.includes('[PRIMARY]'));
+  assert.ok(p.includes('1차 기록 있음: 예'));
+});
+
+test('심사 프롬프트에 배점이 숫자로 들어간다', () => {
+  const p = buildScorePrompt({ title: 'x' });
+  assert.ok(p.includes('0~25'));
+  assert.ok(p.includes('0~20'));
+  assert.ok(p.includes('0~15'));
+});
+
+test('대본 프롬프트에 모든 섹션이 순서대로 들어간다', () => {
+  const p = buildScriptPrompt({ title: 'x', summary: 'y' });
+  let last = -1;
+  for (const s of SECTIONS) {
+    const idx = p.indexOf(`[${s.key}]`);
+    assert.ok(idx > -1, `${s.key} 가 프롬프트에 없다`);
+    assert.ok(idx > last, `${s.key} 순서가 어긋났다`);
+    last = idx;
+  }
+});
+
+test('대본 프롬프트에 분량이 글자 수로 들어간다', () => {
+  const p = buildScriptPrompt({ title: 'x' }, { targetMinutes: 4 });
+  assert.ok(p.includes('1320자'), '4분 × 330자 = 1320자가 들어가야 한다');
+});
+
+test('확인되지 않은 항목이 UNKNOWN 지시와 함께 들어간다', () => {
+  const p = buildScriptPrompt({ title: 'x', unknowns: ['그가 왜 왔는지'] });
+  assert.ok(p.includes('그가 왜 왔는지'));
+  assert.ok(p.includes('[UNKNOWN]'));
+});
+
+test('스키마가 strict 요건을 지킨다', () => {
+  // strict: true 를 쓰려면 additionalProperties: false 와 required 가 있어야 한다.
+  for (const [name, schema] of [
+    ['COLLECT_SCHEMA', COLLECT_SCHEMA],
+    ['SCORE_SCHEMA', SCORE_SCHEMA],
+  ]) {
+    assert.equal(schema.additionalProperties, false, `${name} 에 additionalProperties:false 가 없다`);
+    assert.ok(Array.isArray(schema.required) && schema.required.length, `${name} 에 required 가 없다`);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+section('4. 대본 검증 — AI가 양식을 어겼을 때 잡아내는가');
+
+/** 양식을 지킨 대본을 만든다. 글자 수를 채워 분량 경고를 피한다. */
+function goodScript() {
+  const filler = '기록에 남은 내용은 여기까지였다. 그 뒤의 일은 문서로 확인되지 않는다. ';
+  const lines = [];
+  for (const s of SECTIONS) {
+    lines.push(`## [${s.key}] ${s.label}`);
+    lines.push(`[FACT] 1987년 11월 그 호텔에서 일어난 일이다. ${filler.repeat(2)}`);
+    lines.push(`[UNKNOWN] 확인되지 않은 부분이 남아 있다. ${filler}`);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+test('양식을 지킨 대본은 통과한다', () => {
+  const r = validateScript(goodScript());
+  assert.equal(r.ok, true, `오류: ${r.errors.join(' | ')}`);
+  assert.equal(r.stats.sectionsFound, SECTIONS.length);
+  assert.ok(r.stats.tagCounts.FACT > 0);
+});
+
+test('섹션이 빠지면 잡아낸다', () => {
+  const broken = goodScript().replace(/## \[TWIST\][\s\S]*?(?=## \[OUR_READING\])/, '');
+  const r = validateScript(broken);
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('TWIST')));
+});
+
+test('우리 해석 섹션이 빠지면 잡아낸다', () => {
+  // 유튜브 비정품 콘텐츠 정책 대응 섹션이다. 빠지면 반드시 걸려야 한다.
+  const broken = goodScript().replace(/## \[OUR_READING\][\s\S]*?(?=## \[EXPLAIN\])/, '');
+  const r = validateScript(broken);
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('OUR_READING')));
+});
+
+test('태그 없는 문단을 잡아낸다', () => {
+  // 가장 위험한 실패다. 태그가 없으면 추측이 사실로 섞인다.
+  const broken = goodScript() + '\n이 문단에는 태그가 없습니다. 그래서 걸려야 합니다.\n';
+  const r = validateScript(broken);
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('태그가 없는 문단')));
+});
+
+test('FACT 문단이 하나도 없으면 잡아낸다', () => {
+  const noFact = goodScript().replace(/\[FACT\]/g, '[THEORY]');
+  const r = validateScript(noFact);
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('[FACT]')));
+});
+
+test('인사말을 잡아낸다', () => {
+  for (const greeting of [
+    '[FACT] 안녕하세요 오늘의 사건입니다.',
+    '[FACT] 여러분이 아는 그 사건입니다.',
+    '[FACT] 구독과 좋아요 부탁드립니다.',
+  ]) {
+    const r = validateScript(goodScript() + '\n' + greeting + '\n');
+    assert.equal(r.ok, false, `잡아내지 못함: ${greeting}`);
+    assert.ok(r.errors.some((e) => e.includes('쓰지 않기로 한 표현')));
+  }
+});
+
+test('섹션 순서가 바뀌면 잡아낸다', () => {
+  const lines = goodScript().split('\n');
+  // HOOK 블록과 CASE 블록의 제목을 서로 바꾼다.
+  const out = lines.map((l) =>
+    l.startsWith('## [HOOK]') ? '## [CASE] 사건 소개' : l.startsWith('## [CASE]') ? '## [HOOK] 훅' : l
+  );
+  const r = validateScript(out.join('\n'));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('순서')));
+});
+
+test('나레이션이 짧으면 경고한다 (오류는 아니다)', () => {
+  const short = SECTIONS.map((s) => `## [${s.key}] ${s.label}\n[FACT] 짧다.`).join('\n');
+  const r = validateScript(short);
+  assert.equal(r.ok, true, '분량은 오류가 아니라 경고여야 한다');
+  assert.ok(r.warnings.some((w) => w.includes('짧습니다')));
+});
+
+test('태그와 제목을 뺀 글자 수만 센다', () => {
+  const one = '## [HOOK] 훅\n[FACT] 가나다라마바사\n';
+  const r = validateScript(one);
+  // "가나다라마바사" 7자만 세야 한다. [FACT] 나 ## [HOOK] 훅 은 빼고.
+  assert.equal(r.stats.narrationChars, 7);
+});
+
+test('빈 대본에도 죽지 않는다', () => {
+  for (const input of ['', null, undefined]) {
+    const r = validateScript(input);
+    assert.equal(r.ok, false);
+  }
+});
+
+test('모든 태그 이름이 검증기와 프롬프트에서 같다', () => {
+  const p = buildScriptPrompt({ title: 'x' });
+  for (const t of TAGS) {
+    assert.ok(p.includes(`[${t}]`), `프롬프트에 [${t}] 설명이 없다`);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+section('5. 저장소');
+
+test('소재를 보관함에 넣고 다시 읽는다', () => {
+  const item = makeItem({
+    title: '보관함 테스트 소재',
+    summary: '요약',
+    fact_status: 'CONFIRMED',
+    sources: [
+      { url: 'https://a.example', name: 'A', kind: 'PRIMARY' },
+      { url: 'https://b.example', name: 'B', kind: 'PRIMARY' },
+    ],
+    ...fullScores,
+  });
+  store.saveToInbox(item);
+  const list = store.listInbox();
+  assert.equal(list.length, 1);
+  assert.equal(list[0].title, '보관함 테스트 소재');
+  assert.ok(list[0]._file.endsWith('.json'));
+});
+
+test('보관함은 점수 높은 순으로 정렬된다', () => {
+  const low = makeItem({
+    title: '낮은 점수 소재',
+    fact_status: 'CONFIRMED',
+    sources: [{ url: 'https://c.example', name: 'C' }, { url: 'https://d.example', name: 'D' }],
+    interesting_score: 5,
+  });
+  store.saveToInbox(low);
+  const list = store.listInbox();
+  assert.ok(list[0].final_score >= list[list.length - 1].final_score);
+});
+
+test('파일명에 쓸 수 없는 문자가 있어도 저장된다', () => {
+  const nasty = makeItem({
+    title: 'a/b\\c:d*e?f"g<h>i|j',
+    fact_status: 'CONFIRMED',
+    sources: [{ url: 'https://e.example', name: 'E' }, { url: 'https://f.example', name: 'F' }],
+  });
+  const file = store.saveToInbox(nasty);
+  assert.ok(fs.existsSync(file));
+});
+
+test('콘텐츠로 올리면 번호가 붙고 상태가 SELECTED가 된다', () => {
+  const item = store.listInbox()[0];
+  const { id, research } = store.promoteToContent(item);
+  assert.match(id, /^\d{3}$/);
+  assert.equal(research.status, 'SELECTED');
+  assert.equal(research.content_id, id);
+  assert.ok(fs.existsSync(store.contentPath(id, 'research.json')));
+});
+
+test('콘텐츠 번호는 001부터 하나씩 늘어난다', () => {
+  const before = store.listContent().length;
+  const item = store.listInbox()[1];
+  const { id } = store.promoteToContent(item);
+  assert.equal(Number(id), before + 1);
+});
+
+test('모르는 상태값은 거부한다', () => {
+  const id = store.listContent()[0].id;
+  assert.throws(() => store.setStatus(id, 'TOTALLY_MADE_UP'), /모르는 상태/);
+  // 기획서 17번의 값은 모두 받아야 한다.
+  for (const s of STATUS) store.setStatus(id, s);
+});
+
+test('양식을 통과한 대본은 SCRIPT_READY가 된다', () => {
+  const id = store.listContent()[0].id;
+  const check = validateScript(goodScript());
+  store.saveScript(id, goodScript(), check);
+  assert.equal(store.loadContent(id).research.status, 'SCRIPT_READY');
+  assert.ok(store.loadContent(id).script.includes('[OUR_READING]'));
+});
+
+test('양식을 통과하지 못한 대본은 SCRIPT_READY로 올리지 않는다', () => {
+  // 이게 중요하다. 깨진 대본이 다음 Phase로 조용히 넘어가면 안 된다.
+  const id = store.listContent()[1].id;
+  const broken = '## [HOOK] 훅\n태그 없는 문단';
+  const check = validateScript(broken);
+  assert.equal(check.ok, false);
+  store.saveScript(id, broken, check);
+  assert.equal(store.loadContent(id).research.status, 'SCRIPTING');
+});
+
+test('이미 다룬 제목 목록에 보관함과 콘텐츠가 모두 들어간다', () => {
+  const titles = store.knownTitles();
+  assert.ok(titles.includes('보관함 테스트 소재'));
+  assert.ok(titles.length >= 2);
+});
+
+test('없는 콘텐츠를 읽으면 null을 돌려준다', () => {
+  assert.equal(store.loadContent('999'), null);
+});
+
+// ─────────────────────────────────────────────────────────────
+section('6. 모델별 파라미터 분기 — 400 오류를 막는 부분');
+
+const { tuningFor, canForceTool } = await import('../src/ai/client.mjs');
+
+test('Opus 5.5는 도구를 강제할 수 없다', () => {
+  // 강제하면 400이 난다. 이걸 틀리면 심사 단계가 통째로 깨진다.
+  assert.equal(canForceTool('claude-opus-5-5'), false);
+  assert.equal(canForceTool('claude-sonnet-5-5'), false);
+});
+
+test('Sonnet 5와 Haiku 4.5는 도구를 강제할 수 있다', () => {
+  assert.equal(canForceTool('claude-sonnet-5'), true);
+  assert.equal(canForceTool('claude-haiku-4-5'), true);
+});
+
+test('Haiku에는 budget_tokens를 주고 effort를 주지 않는다', () => {
+  const t = tuningFor('claude-haiku-4-5', { effort: 'high', maxTokens: 8000 });
+  assert.ok(t.thinking?.budget_tokens > 0);
+  assert.equal(t.output_config, undefined, 'Haiku에 effort를 주면 오류가 난다');
+});
+
+test('최신 모델에는 adaptive와 effort를 준다', () => {
+  for (const model of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-sonnet-5']) {
+    const t = tuningFor(model, { effort: 'high' });
+    assert.equal(t.thinking.type, 'adaptive', `${model}`);
+    assert.equal(t.output_config.effort, 'high', `${model}`);
+    assert.equal(t.thinking.budget_tokens, undefined, `${model} 에 budget_tokens를 주면 400이 난다`);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+
+console.log(`\n${'═'.repeat(60)}`);
+console.log(`통과 ${passed}건  실패 ${failed}건`);
+console.log(`임시 폴더: ${TMP}`);
+console.log('═'.repeat(60));
+
+// 테스트가 만든 임시 폴더를 지운다.
+fs.rmSync(TMP, { recursive: true, force: true });
+
+if (failed) process.exit(1);

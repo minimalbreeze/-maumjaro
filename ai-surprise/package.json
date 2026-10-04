@@ -1,0 +1,20 @@
+{
+  "name": "ai-surprise",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "실제로 있었던 이상한 이야기를 AI로 재구성하는 유튜브 콘텐츠 제작 시스템. Phase 1: 소재 수집·평가·대본 생성.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "collect": "node src/main.mjs collect",
+    "score": "node src/main.mjs score",
+    "script": "node src/main.mjs script",
+    "list": "node src/main.mjs list",
+    "test": "node test/offline.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.0"
+  }
+}
