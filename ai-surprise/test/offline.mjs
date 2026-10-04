@@ -23,7 +23,9 @@ const { makeItem, finalScore, evaluateGate, GATE, FACT_STATUS, MAX_SCORE, STATUS
 );
 const { buildCollectPrompt, COLLECT_SCHEMA } = await import('../src/research/collect.mjs');
 const { buildScorePrompt, SCORE_SCHEMA } = await import('../src/research/score.mjs');
-const { buildScriptPrompt, validateScript, SECTIONS, TAGS } = await import('../src/script/write.mjs');
+const { buildScriptPrompt, validateScript, sectionBody, SECTIONS, TAGS } = await import(
+  '../src/script/write.mjs'
+);
 const store = await import('../src/store.mjs');
 
 let passed = 0;
@@ -489,6 +491,65 @@ test('빈 대본에도 죽지 않는다', () => {
   for (const input of ['', null, undefined]) {
     const r = validateScript(input);
     assert.equal(r.ok, false);
+  }
+});
+
+await asyncTest('제목 다음에 빈 줄이 있어도 HOOK 길이를 센다', async () => {
+  // 실제로 돈을 쓴 실패를 막는 테스트다.
+  //
+  // 실행 #3에서 "HOOK 0자"로 찍혔다. 정규식에 m 플래그가 붙어 $ 가 "줄 끝"을
+  // 뜻했고, 마크다운이 제목 다음에 빈 줄을 두므로 거의 항상 0자로 측정됐다.
+  // 대본은 멀쩡했는데 측정이 틀렸고, 더 나쁘게는 HOOK이 진짜 비어 있어도
+  // 못 잡아냈다.
+  const withBlank = ['## [HOOK] 훅', '', '[FACT] 1987년 그 호텔에 남자가 들어왔다.', '', '## [CASE] 사건', '[FACT] 다음.'].join('\n');
+  const withoutBlank = ['## [HOOK] 훅', '[FACT] 1987년 그 호텔에 남자가 들어왔다.', '## [CASE] 사건', '[FACT] 다음.'].join('\n');
+
+  for (const [name, md] of [['빈 줄 있음', withBlank], ['빈 줄 없음', withoutBlank]]) {
+    const body = sectionBody(md, 'HOOK');
+    assert.equal(body.length, 1, `${name}: 문단 1개여야 한다`);
+    assert.ok(body[0].includes('1987년'), `${name}: 내용이 다르다`);
+    const r = validateScript(md);
+    assert.ok(r.stats.hookChars > 0, `${name}: HOOK 글자 수가 0으로 나왔다`);
+  }
+
+  // 두 형태의 측정값이 같아야 한다 — 빈 줄은 읽히는 말에 영향을 주지 않는다.
+  assert.equal(
+    validateScript(withBlank).stats.hookChars,
+    validateScript(withoutBlank).stats.hookChars
+  );
+});
+
+test('HOOK이 비어 있으면 오류로 잡는다', () => {
+  // 경고가 아니라 오류여야 한다. 기획서 22번: 첫 10초가 가장 중요하다.
+  const emptyHook = SECTIONS.map((s) =>
+    s.key === 'HOOK'
+      ? `## [${s.key}] ${s.label}\n`
+      : `## [${s.key}] ${s.label}\n[FACT] 내용이 있습니다.`
+  ).join('\n');
+  const r = validateScript(emptyHook);
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.some((e) => e.includes('HOOK')), r.errors.join(' | '));
+  assert.equal(r.stats.hookChars, 0);
+});
+
+test('HOOK이 너무 길면 경고한다', () => {
+  const long = goodScript().replace(
+    '## [HOOK] 훅',
+    '## [HOOK] 훅\n[FACT] ' + '가'.repeat(200)
+  );
+  const r = validateScript(long);
+  assert.ok(r.warnings.some((w) => w.includes('HOOK')), r.warnings.join(' | '));
+});
+
+test('sectionBody는 다른 섹션 내용을 섞지 않는다', () => {
+  const md = goodScript();
+  for (const s of SECTIONS) {
+    const body = sectionBody(md, s.key);
+    assert.ok(body.length > 0, `${s.key} 본문이 비었다`);
+    assert.ok(
+      body.every((l) => /^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]/.test(l)),
+      `${s.key} 본문에 제목이나 빈 줄이 섞였다`
+    );
   }
 });
 

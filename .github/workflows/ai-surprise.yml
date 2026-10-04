@@ -136,6 +136,42 @@ jobs:
               ;;
           esac
 
+      # 대본을 실행 기록에 그대로 찍는다.
+      #
+      # Artifacts zip을 내려받아 압축을 풀어야 대본을 읽을 수 있었다. 대본을
+      # 읽는 게 이 단계의 유일한 목적인데 그 과정이 번거로웠다. 실행 화면을
+      # 펼치면 바로 보이게 한다.
+      #
+      # 실패해도 계속 간다. 파일은 Artifacts에 그대로 올라가므로 찍기에
+      # 실패한 것이 결과물을 잃는 것은 아니다.
+      - name: 만들어진 대본 보여주기
+        if: ${{ always() && !contains(inputs.mode, '테스트만') }}
+        continue-on-error: true
+        working-directory: ai-surprise
+        run: |
+          shopt -s nullglob
+          found=0
+          for f in content/*/script.md; do
+            found=1
+            id="${f%/script.md}"; id="${id#content/}"
+            echo "::group::📄 대본 content/$id/script.md"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          for f in content/*/script-check.json; do
+            id="${f%/script-check.json}"; id="${id#content/}"
+            echo "::group::🔎 대본 검사 결과 content/$id"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          for f in content/*/scenes.json; do
+            id="${f%/scenes.json}"; id="${id#content/}"
+            echo "::group::🎬 장면 content/$id/scenes.json"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          [ "$found" = "1" ] || echo "만들어진 대본이 없습니다."
+
       - name: 결과물 올리기 (소재 목록·대본)
         if: ${{ always() && !contains(inputs.mode, '테스트만') }}
         uses: actions/upload-artifact@v4
