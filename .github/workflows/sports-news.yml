@@ -31,6 +31,7 @@ on:
           - '임시글로 저장 (draft)'
           - '주제로 직접 쓰기 (뉴스 말고 공식 자료 조사 · draft)'
           - '오늘의 글감 후보 보기 (글 안 씀 · 비용 0원)'
+          - '공식 페이지 받아보기 (요금표 읽히는지 · 비용 0원)'
           - '사이트 조사만 (글 안 씀 · 비용 0원)'
           - '이미 만든 글 SEO 손보기 (비용 0원)'
           - '이미 올린 글 링크 현재창으로 (비용 0원)'
@@ -109,7 +110,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '글감 후보') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -148,6 +149,27 @@ jobs:
             exit 1
           fi
           echo "비밀값 4개 모두 등록되어 있습니다. (값은 출력하지 않습니다)"
+
+      - name: 공식 페이지 받아보기
+        # config/facilities.json 에 사람이 확인해 적어둔 공식 주소를 직접 받아온다.
+        # AI를 한 번도 부르지 않으므로 0원이다.
+        #
+        # 왜 필요한가: 돈이 되는 글(시설 요금·예약)은 뉴스에 안 나와서 웹검색이
+        # 유일한 출처였다. 그런데 웹검색은 계정 한도에 걸리면 한 건도 못 가져온다.
+        # 글을 쓰기 전에 이걸 돌려 요금표가 실제로 읽히는지 먼저 본다 — 안 읽히면
+        # 돈만 쓰고 글이 안 나온다.
+        if: ${{ contains(inputs.mode, '공식 페이지') }}
+        working-directory: sports-news
+        env:
+          IN_SUBJECT: ${{ inputs.subject }}
+          IN_TOPIC: ${{ inputs.topic }}
+        run: |
+          주제="${IN_SUBJECT:-$IN_TOPIC}"
+          if [ -z "$주제" ]; then
+            echo "::error::주제를 적어주세요 (subject). 예: 남서울CC 파3 이용료"
+            exit 1
+          fi
+          node src/main.mjs --official --subject="$주제"
 
       - name: 오늘의 글감 후보 보기
         # 뉴스를 모아 점수만 매겨 보여주고 멈춘다. AI를 한 번도 부르지 않으므로
@@ -393,7 +415,7 @@ jobs:
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '글감 후보') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}

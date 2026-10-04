@@ -32,6 +32,7 @@ import { searchBlocked } from './ai/client.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { researchSubject, subjectAsCluster } from './ai/research.mjs';
+import { pickFacilities, gatherOfficial } from './news/official.mjs';
 import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/naver-keywords.mjs';
 import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
@@ -57,6 +58,9 @@ export function parseArgs(argv) {
     else if ((m = /^--best=(\d+)$/.exec(a))) args.best = Number(m[1]);
     // --candidates: 글감 후보만 점수 순으로 보여주고 멈춘다. AI를 한 번도 부르지
     // 않으므로 0원이다. 뉴스 수집과 점수 매기기는 전부 코드가 한다.
+    // --official: 설정에 적힌 공식 페이지를 받아보기만 한다. AI를 부르지 않으므로
+    // 0원이다. 글을 쓰기 전에 요금표가 실제로 읽히는지 확인하는 용도다.
+    else if (a === '--official') args.official = true;
     else if (a === '--candidates') args.candidates = true;
     else if ((m = /^--candidates=(\d+)$/.exec(a))) { args.candidates = true; args.candidatesTop = Number(m[1]); }
     else if (a === '--draft') args.draft = true;
@@ -224,10 +228,33 @@ async function processCluster(cluster, ctx) {
   // 뉴스가 없는 글감(시설 이용안내·예매 방법 등)은 기사 대신 공식 자료를 직접
   // 찾는다. 운영자 실측에서 CTR이 가장 높은 글감이 뉴스에 없는 정보였다.
   const 조사모드 = ctx.research && !cluster.articles.length;
+
+  // 공식 페이지를 코드가 직접 받아온다. 웹검색 한도(Server tool use limit
+  // exceeded)에 걸려도 사실을 얻는 길이다. 돈이 되는 글(시설 요금·예약)이
+  // 정확히 그 한도에 묶여 있었다 — 2026-10-04 에 두 번 연속 실패했다.
+  // 설정(config/facilities.json)에 사람이 확인해 적어둔 주소만 받아온다.
+  let official = [];
+  if (조사모드) {
+    const 시설 = pickFacilities(cluster.label);
+    if (시설.length) {
+      log.step(`  공식 페이지 ${시설.length}곳 받아오는 중 (웹검색 안 씀 · 0원)`);
+      official = await gatherOfficial(시설);
+      for (const r of official) {
+        if (r.ok) log.ok(`    ${r.이름}: ${r.text.length}자 · 금액 줄 ${r.금액줄.length}개 — ${r.url}`);
+        else log.warn(`    ${r.이름}: 받지 못했습니다 (${r.why}) — ${r.url}`);
+      }
+      if (!official.some((r) => r.ok)) {
+        log.warn('    공식 페이지를 한 곳도 받지 못했습니다 — 웹검색에만 의존합니다');
+      }
+    } else {
+      log.info('  주제에 맞는 공식 페이지가 설정에 없습니다 (config/facilities.json)');
+    }
+  }
+
   log.step(조사모드 ? '  공식 자료 조사 중 (웹검색 — 뉴스 없이)' : '  사실 확인 중 (웹검색)');
   const verification = 조사모드
     ? await researchSubject(cluster.label, {
-        relatedPosts: dup.related, today, category: cluster.category,
+        relatedPosts: dup.related, today, category: cluster.category, official,
       })
     : await verifyCluster(cluster, { relatedPosts: dup.related, today });
   result.verification = verification;
@@ -688,6 +715,12 @@ async function main() {
     }
   }
 
+  // --official: 공식 페이지를 받아보기만 한다. 0원이다.
+  if (args.official) {
+    await 공식페이지확인(args.subject || args.topics.join(' '));
+    return;
+  }
+
   // --candidates: 후보만 보여주고 멈춘다. 글을 쓰지 않으므로 0원이다.
   if (args.candidates) {
     await 후보만보기({ topics, cfg, args, recentCats });
@@ -912,6 +945,55 @@ async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFie
  * 있어야 한다 — 점수만 보여주면 그냥 1등을 쓰게 되고, 그러면 사람이 고르는
  * 의미가 없다.
  */
+/**
+ * 공식 페이지가 실제로 읽히는지 확인만 한다. AI를 한 번도 부르지 않는다(0원).
+ *
+ * 글을 쓰기 전에 이걸 돌려야 한다. 받아오지 못하는 주소로 글을 쓰려 들면
+ * 웹검색에만 매달리게 되고, 그게 막히면 돈만 쓰고 글이 안 나온다.
+ */
+async function 공식페이지확인(주제) {
+  log.section(`🌐 공식 페이지 받아보기 (AI 안 부름 · 0원)`);
+  if (!주제) {
+    log.fail('주제를 적어주세요', new Error('예: npm run official -- --subject="남서울CC 파3 이용료"'));
+    process.exitCode = 1;
+    return;
+  }
+
+  const 시설 = pickFacilities(주제);
+  log.info(`주제: ${주제}`);
+  if (!시설.length) {
+    log.warn('설정(config/facilities.json)에 이 주제와 맞는 시설이 없습니다.');
+    log.raw('   공식 주소를 눈으로 확인한 뒤 facilities.json 에 이름·별칭·공식·확인일을 적으세요.');
+    log.raw('   주소를 코드가 만들어내지 않습니다 — 없는 주소를 긁어 "공식 확인"이라 쓰면 독자를 속입니다.');
+    return;
+  }
+
+  log.info(`맞는 시설 ${시설.length}곳: ${시설.map((f) => f.이름).join(', ')}`);
+  const 받음 = await gatherOfficial(시설);
+  for (const r of 받음) {
+    log.raw('');
+    if (!r.ok) {
+      log.fail(`${r.이름} — 받지 못했습니다`, new Error(`${r.why} (${r.url})`));
+      continue;
+    }
+    log.ok(`${r.이름} — ${r.text.length}자 받음 (${r.url})`);
+    log.raw(`   확인일(설정): ${r.확인일 || '없음'} · 받은 시각: ${r.받은시각}`);
+    if (r.금액줄.length) {
+      log.raw('   금액이 적힌 줄:');
+      for (const l of r.금액줄.slice(0, 12)) log.raw(`     ${l}`);
+    } else {
+      log.warn('   금액처럼 보이는 줄이 없습니다 — 스크립트로 그리는 표일 수 있습니다.');
+      log.raw('   그러면 이 주소로는 요금을 못 읽습니다. 요금표가 글자로 있는 페이지를 찾아 바꾸세요.');
+    }
+  }
+
+  const 성공 = 받음.filter((r) => r.ok && r.금액줄.length).length;
+  log.raw('');
+  if (성공) log.ok(`${성공}곳에서 금액을 읽었습니다. 이 주제는 웹검색 없이도 글을 쓸 수 있습니다.`);
+  else log.warn('금액을 읽은 곳이 없습니다. 지금 글을 쓰면 웹검색에만 의존합니다.');
+}
+
+
 async function 후보만보기({ topics, cfg, args, recentCats }) {
   const 전체 = [];
   for (const topic of topics) {
