@@ -4,6 +4,10 @@
 // 지켜지지 않는다 — 이 파일이 그 약속을 코드로 붙잡아 둔다.
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 import { checkFlow } from '../src/seo/flow.mjs';
 import { burstSignal, crowding, demandSignals } from '../src/news/demand.mjs';
 
@@ -222,6 +226,30 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     // 대회 자체를 막으면 안 된다. 막는 것은 "지금 이 순간의 중간 상황"뿐이다.
     const r = scoreCluster(묶음('KLPGA 하이트진로 챔피언십 대회 일정 중계 출전 명단 상금'), 골프);
     assert.ok(r.score > 30, `${r.score}점 — 멀쩡한 글감이 깎였습니다`);
+  });
+
+  // ── 돈이 되는 글감 ─────────────────────────────────────────
+  // 우리 목적은 유입이 아니라 수익이다. 읽고 나가는 글과 사러 가는 글을 같은
+  // 점수로 매기면 안 된다. 실측 의도: "파3 골프장" transactional ·
+  // "파3 골프장 추천" commercial · "신지애 나이" informational.
+  check('돈을 쓸 사람이 오는 글감에 가점한다', () => {
+    const r = scoreCluster(묶음('서울 근교 파3 골프장 추천, 이용료와 예약방법 (초보 입문 용품)'), 골프);
+    assert.ok(r.reasons.some((x) => /광고가 답이 되는|비교하고 산다|돈을 쓰려고/.test(x)), r.reasons.join(' / '));
+    assert.ok(r.score > 100, `${r.score}점 — 돈 되는 글감이 묻혔습니다`);
+  });
+
+  check('읽고 나가는 인물 신상은 뒤로 민다', () => {
+    // 검색량은 크지만("신지애 남편" 월 210) 살 게 없다.
+    const 신상 = scoreCluster(묶음('신지애 나이와 남편, 재산은 얼마'), 골프).score;
+    const 용품 = scoreCluster(묶음('골프 입문 클럽 추천과 가격 비교'), 골프).score;
+    assert.ok(용품 > 신상 + 40, `용품 ${용품}점 vs 신상 ${신상}점`);
+  });
+
+  check('수익 실측 자리가 비어 있다는 것을 숨기지 않는다', () => {
+    // 지어낸 숫자를 적으면 점수표가 그걸 따라 움직인다.
+    const rev = fs.readFileSync(path.join(HERE, '..', 'config', 'revenue.md'), 'utf8');
+    assert.match(rev, /추측|추정/, '구매의도 가점이 추정이라는 사실이 적혀 있어야 합니다');
+    assert.match(rev, /지어낸 숫자를 적지 않는다/);
   });
 
   // ── 영구히 남는 기록 ───────────────────────────────────────
