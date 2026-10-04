@@ -5,7 +5,7 @@
 // 제대로 짚어내는지 확인한다.
 
 import assert from 'node:assert/strict';
-import { checkRankMath, buildSlug, chooseFocusKeyword } from '../src/seo/rankmath.mjs';
+import { checkRankMath, buildSlug, chooseFocusKeyword, 조사붙은낱말인가, 조사앞까지 } from '../src/seo/rankmath.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -165,7 +165,41 @@ check('제목에 쉼표가 끼어도 키워드가 들어 있다고 본다', () =
   assert.ok(r.items.find((i) => i.id === 'kw-title').ok, '쉼표 때문에 놓쳤습니다');
 });
 
-console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
+
+// ── 조사가 붙은 키워드 ─────────────────────────────────────
+check('조사가 붙은 낱말을 알아본다', () => {
+  // 글 7769 에서 대표 키워드가 "신지애가 일본여자오픈 골프선수권대회"로 잡혔다.
+  // 사람은 "신지애가"로 검색하지 않는다.
+  assert.ok(조사붙은낱말인가('신지애가'));
+  assert.ok(조사붙은낱말인가('경기를'));
+  assert.ok(조사붙은낱말인가('대회에서'));
+  assert.ok(조사붙은낱말인가('우승했다'));
+});
+
+check('조사가 아닌 것을 조사로 오인하지 않는다', () => {
+  // 떼고 나서 한 글자만 남으면 조사가 아니다. 멀쩡한 말을 버리면 안 된다.
+  assert.ok(!조사붙은낱말인가('국가'));
+  assert.ok(!조사붙은낱말인가('신지애'));
+  assert.ok(!조사붙은낱말인가('경기'));
+  assert.ok(!조사붙은낱말인가('KBO'));     // 영문에는 조사가 붙지 않는다
+  assert.ok(!조사붙은낱말인가('3R'));
+  assert.ok(!조사붙은낱말인가(''));
+});
+
+check('조사가 나오는 자리에서 후보를 자른다', () => {
+  assert.equal(조사앞까지('신지애 일본여자오픈 골프선수권대회를 우승'), '신지애 일본여자오픈');
+  assert.equal(조사앞까지('신지애가 일본여자오픈 골프선수권대회'), '');
+  assert.equal(조사앞까지('남서울cc 파3 골프장'), '남서울cc 파3 골프장');
+});
+
+check('조사가 붙은 구절을 대표 키워드로 고르지 않는다', () => {
+  // 이 검사가 마지막 방어선이다. 못 잡으면 슬러그까지 "신지애가-..."로 들어간다.
+  const body = '신지애 우승 상금은 3천만엔이다. 신지애 우승 상금 규모를 보면 '
+    + '신지애 우승 상금이 그중 크다. 신지애 우승 상금 기록.';
+  const r = chooseFocusKeyword(body, ['신지애가 일본여자오픈 골프선수권대회', '신지애 우승 상금']);
+  assert.equal(r.keyword, '신지애 우승 상금', r.keyword);
+  assert.ok(!r.candidates.some((c) => c.keyword.includes('신지애가')), '조사 후보가 남았습니다');
+});
 
 // ── 키워드 껍데기 벗기기 ───────────────────────────────────
 // 실측 사고(글 7276): 대표 키워드가 "'2026 우리할매떡볶이 어린이" 로 저장됐다.
@@ -207,3 +241,5 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     assert.ok(!/['"‘’“”()]/.test(r.keyword), `기호가 남았습니다: ${JSON.stringify(r.keyword)}`);
   });
 }
+
+console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

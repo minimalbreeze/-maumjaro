@@ -224,6 +224,30 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     assert.ok(r.score > 30, `${r.score}점 — 멀쩡한 글감이 깎였습니다`);
   });
 
+  // ── 영구히 남는 기록 ───────────────────────────────────────
+  // 신지애의 통산 30승·사상 첫 커리어 그랜드슬램·영구시드가 후보 48개 중 상위
+  // 12개에 들지 못했다. 점수표가 "끝난 경기 결과"와 "영구 기록"을 구분하지
+  // 못했기 때문이다. 실측: "신지애 우승 횟수" 월 40 · "신지애 누적상금" 월 80 —
+  // 상시 검색된다. 반면 "신지애 일본여자오픈"은 검색량이 잡히지 않는다.
+  check('영구히 남는 기록은 크게 가점한다', () => {
+    const r = scoreCluster(묶음('신지애 JLPGA 통산 30승, 사상 첫 커리어 그랜드슬램·영구시드 획득'), 골프);
+    assert.ok(r.score > 70, `${r.score}점 — 기록 글감이 묻혔습니다: ${r.reasons.join(' / ')}`);
+    assert.ok(r.reasons.some((x) => /통산 기록/.test(x)), r.reasons.join(' / '));
+    assert.ok(r.reasons.some((x) => /그랜드슬램/.test(x)), r.reasons.join(' / '));
+  });
+
+  check('기록 글감이 하루짜리 경기 결과를 앞선다', () => {
+    const 기록 = scoreCluster(묶음('신지애 통산 30승, 사상 첫 커리어 그랜드슬램 영구시드'), 골프).score;
+    const 결과 = scoreCluster(묶음('신지애 일본여자오픈 최종 라운드 역전 우승'), 골프).score;
+    assert.ok(기록 > 결과 + 30, `기록 ${기록}점 vs 결과 ${결과}점 — 차이가 작습니다`);
+  });
+
+  check('우승 자체에는 가점하지 않는다', () => {
+    // 우승은 매주 나온다. 다시 바뀌지 않는 수치만 가점한다.
+    const r = scoreCluster(묶음('박현경 KLPGA 대회 우승'), 골프);
+    assert.ok(!r.reasons.some((x) => /영구히 남는|그랜드슬램|영구시드/.test(x)), r.reasons.join(' / '));
+  });
+
   check('중간 상황 쪽이 반드시 뒤로 밀린다', () => {
     const 중간 = scoreCluster(묶음('하이트진로 챔피언십 3R 중간 순위 단독 선두'), 골프).score;
     const 안내 = scoreCluster(묶음('하이트진로 챔피언십 대회 일정과 중계 보는 법'), 골프).score;

@@ -265,7 +265,12 @@ export function lintArticle({ title, body }) {
   const issues = [];
 
   if (!title) issues.push('제목이 비어 있습니다');
-  if (body.length < 2400) issues.push(`본문이 너무 짧습니다 (${body.length}자, 3,000자 이상 권장)`);
+  // 채점표(checkRankMath)와 같은 기준으로 센다 — 공백을 지운 글자 수.
+  // 기준이 다르면 lint 는 통과하는데 SEO 점수에서 떨어진다(실제로 글 7769 가 그랬다).
+  const 공백뺀길이 = body.replace(/^#+\s+/gm, '').replace(/\s+/g, '').length;
+  if (공백뺀길이 < 3000) {
+    issues.push(`본문이 짧습니다 (공백 제외 ${공백뺀길이}자 — 채점 기준 3,000자)`);
+  }
 
   // [8]-⑧ 마지막 소제목에 "마무리" 금지
   const headings = [...body.matchAll(/^##\s*(.+)$/gm)].map((m) => m[1].trim());
