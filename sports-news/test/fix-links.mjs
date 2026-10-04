@@ -8,7 +8,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startMockWordPress } from './mock-wordpress.mjs';
-import { openInSameWindow, countNewWindowLinks, fixPostLinks } from '../src/wordpress/fix-links.mjs';
+import {
+  openInSameWindow, countNewWindowLinks, countFixable, linkOnlyChange,
+  fixPostLinks, findNewWindowPosts,
+} from '../src/wordpress/fix-links.mjs';
+import { ROOT } from '../src/utils/env.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 let passed = 0;
@@ -137,4 +141,95 @@ check('.env 없이도 도는 진입점이다', () => {
 });
 
 wp.server.close();
+
+// ── 쿠팡 광고 보호 ─────────────────────────────────────────
+const 쿠팡블록 = [
+  '<!-- wp:html -->',
+  '<script src="https://ads-partners.coupang.com/g.js"></script>',
+  '<a href="https://link.coupang.com/a/xyz" target="_blank" rel="nofollow sponsored">용품 보러가기</a>',
+  '<!-- /wp:html -->',
+].join('\n');
+
+check('쿠팡 광고 블록 안의 링크는 건드리지 않는다', () => {
+  // 제휴사가 준 코드다. 우리가 손대면 광고가 동작하지 않을 수 있다.
+  // 전수로 돌리는 도구라 이 보호가 없으면 수백 편의 광고를 한 번에 망친다.
+  const out = openInSameWindow(쿠팡블록);
+  assert.equal(out, 쿠팡블록, out);
+});
+
+check('쿠팡이 아닌 wp:html 블록은 고친다', () => {
+  const 내블록 = '<!-- wp:html -->\n<a href="https://x.test" target="_blank">내 링크</a>\n<!-- /wp:html -->';
+  assert.ok(!/target/.test(openInSameWindow(내블록)), openInSameWindow(내블록));
+});
+
+check('광고 안의 링크는 고칠 개수로 세지 않는다', () => {
+  // 세는 기준과 고치는 기준이 다르면 "고쳤는데 아직 남아 있다"로 보인다.
+  assert.equal(countNewWindowLinks(쿠팡블록), 1);
+  assert.equal(countFixable(쿠팡블록), 0);
+  assert.equal(countFixable(쿠팡블록 + '\n<a href="/a" target="_blank">내 링크</a>'), 1);
+});
+
+check('광고와 내 링크가 섞여 있어도 광고만 남는다', () => {
+  const 섞임 = 쿠팡블록 + '\n<p><a href="https://y.test" target="_blank" rel="noopener">내 링크</a></p>';
+  const out = openInSameWindow(섞임);
+  assert.ok(out.includes('link.coupang.com/a/xyz" target="_blank"'), '광고가 바뀌었습니다');
+  assert.ok(/<a href="https:\/\/y\.test">/.test(out), out);
+});
+
+check('링크 속성 말고 다른 게 바뀌면 알아챈다', () => {
+  // 저장 전 마지막 방어선이다. 못 잡으면 발행된 글이 망가진다.
+  const before = '<p>첫 문단</p><a href="/a" target="_blank" rel="noopener nofollow">x</a><p>끝 문단</p>';
+  assert.ok(linkOnlyChange(before, openInSameWindow(before)));
+  assert.ok(!linkOnlyChange(before, openInSameWindow(before).replace('첫 문단', '다른 문단')));
+  assert.ok(!linkOnlyChange(before, openInSameWindow(before).replace('<p>끝 문단</p>', '')));
+  assert.ok(!linkOnlyChange(before, openInSameWindow(before).replace('href="/a"', 'href="/b"')));
+});
+
+// ── 전수 훑기 ──────────────────────────────────────────────
+const wp2 = await startMockWordPress({
+  posts: {
+    1: { status: 'publish', slug: 'a', title: { raw: '새 창 링크가 있는 글' }, categories: [3],
+         content: { raw: '<p><a href="https://x.test" target="_blank" rel="noopener">가기</a></p>' } },
+    2: { status: 'draft', slug: 'b', title: { raw: '임시글도 센다' }, categories: [3],
+         content: { raw: '<p><a href="/b" target="_blank">가기</a></p>' } },
+    3: { status: 'publish', slug: 'c', title: { raw: '깨끗한 글' }, categories: [3],
+         content: { raw: '<p><a href="/c">가기</a></p>' } },
+    4: { status: 'publish', slug: 'd', title: { raw: '광고 안에만 있는 글' }, categories: [3],
+         content: { raw: 쿠팡블록 } },
+  },
+});
+process.env.WORDPRESS_URL = `http://127.0.0.1:${wp2.port}`;
+const 훑음 = await findNewWindowPosts();
+
+check('본문에 새 창 링크가 박힌 글만 고른다', () => {
+  assert.deepEqual(훑음.대상.map((p) => p.id).sort(), [1, 2], JSON.stringify(훑음.대상.map((p) => p.id)));
+});
+
+check('임시글도 훑는다', () => {
+  // 임시글로 쌓아두고 나중에 발행하는 흐름이라 발행된 것만 보면 놓친다.
+  assert.ok(훑음.대상.some((p) => p.status === 'draft'));
+});
+
+check('광고 안에만 있는 글은 대상이 아니고, 따로 센다', () => {
+  assert.ok(!훑음.대상.some((p) => p.id === 4));
+  assert.equal(훑음.광고만, 1);
+});
+
+await (async () => {
+  const r = await fixPostLinks(1);
+  check('전수로 고친 글은 원본 본문을 남긴다', () => {
+    assert.ok(r.changed);
+    assert.ok(r.backup && fs.existsSync(r.backup), String(r.backup));
+    const saved = JSON.parse(fs.readFileSync(r.backup, 'utf8'));
+    assert.ok(saved.content.raw.includes('target="_blank"'), '원본이 아니라 고친 뒤를 남겼습니다');
+  });
+  check('전수로 고칠 때도 content만 보낸다', () => {
+    const patch = wp2.state.updated.find((u) => u.id === 1);
+    assert.deepEqual(Object.keys(patch).sort(), ['content', 'id']);
+  });
+})();
+
+fs.rmSync(path.join(ROOT, 'out', 'backup-content'), { recursive: true, force: true });
+wp2.server.close();
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
