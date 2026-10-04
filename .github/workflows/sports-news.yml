@@ -344,7 +344,7 @@ jobs:
           fi
           how=''
           case "$IN_MODE" in
-            *상태\ 보기*) how='--show' ;;
+            *상태\ 보기*) how='--show --html' ;;
             *미리보기*) how='--dry-run' ;;
           esac
           node src/wordpress/add-watch.mjs $IN_IDS $how
