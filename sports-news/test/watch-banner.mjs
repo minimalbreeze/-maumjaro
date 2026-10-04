@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pickWatchLinks, watchBannerHtml, loadWatchLinks, WATCH_MARK } from '../src/seo/watch-banner.mjs';
+import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, WATCH_MARK } from '../src/seo/watch-banner.mjs';
 import { planPlacements, insertMarks } from '../src/images/embed.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -152,8 +152,6 @@ check('설정 파일이 주석으로 원칙을 남겨둔다', () => {
   assert.ok(/만들어내지 않는다|확인한/.test(raw), '원칙 설명이 빠졌습니다');
 });
 
-console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
-
 // ── 한 카테고리에 리그가 둘일 때 ────────────────────────────
 // '농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어가고 중계처가 다르다.
 // 카테고리만 보고 고르면 KBL 글에 여자농구 배너가 붙는다 — 눌러도 그 경기가 없다.
@@ -197,3 +195,24 @@ console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `�
     assert.notEqual(kbl.primary.url, wkbl.primary.url, '둘이 같은 곳을 가리킵니다');
   });
 }
+
+check('KBL은 WKBL 안에 들어 있다 — 낱말로만 본다', () => {
+  // 글자 포함으로 보면 여자농구(WKBL) 글이 남자농구 항목에 걸려 tvN SPORTS
+  // 배너가 붙는다. 독자가 눌러도 그 경기가 없다.
+  assert.ok(!낱말로있나('WKBL 개막 일정', 'KBL'));
+  assert.ok(낱말로있나('2026-27 KBL이 개막했다', 'KBL'));
+  assert.ok(낱말로있나('창원 LG가 이겼다', '창원 LG'));
+  assert.ok(!낱말로있나('', 'KBL'));
+});
+
+check('WKBL 글에는 여농티비가 붙는다', () => {
+  const r = pickWatchLinks('농구', { text: 'WKBL 청주 KB 개막 일정·중계' });
+  assert.match(r.primary.url, /WKBL_official/, r.primary.url);
+});
+
+check('KBL 글에는 tvN SPORTS가 붙는다', () => {
+  const r = pickWatchLinks('농구', { text: '2026-27 KBL 부산 KCC 경기일정·중계' });
+  assert.equal(r.primary.url, 'https://tvnsports.cjenm.com/ko/');
+});
+
+console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
