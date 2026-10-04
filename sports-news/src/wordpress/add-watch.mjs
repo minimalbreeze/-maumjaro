@@ -15,8 +15,9 @@
 //
 // 안전장치 (발행된 글의 본문을 고치기 때문에)
 //   - 넣기만 한다. 원래 있던 글자는 하나도 지우거나 바꾸지 않는다.
-//     저장 전에 insertOnlyChange() 로 확인하고, 아니면 보내지 않는다.
-//   - 같은 중계 주소가 이미 본문에 있으면 넣지 않는다(두 번 돌려도 안전하다).
+//     저장 전에 bannerOnlyChange() 로 확인하고, 아니면 보내지 않는다.
+//   - 중계처가 바뀐 글은 이미 있는 배너 블록만 새 것으로 바꾼다.
+//   - 같은 주소를 가리키는 배너가 이미 있으면 아무것도 안 한다(두 번 돌려도 안전하다).
 //   - 고치기 전 원본 본문을 파일로 남긴다.
 //   - content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
 
@@ -62,33 +63,69 @@ export function bannerSlot(html) {
   return heads[1];
 }
 
-/** 이 글에 이 배너가 이미 있는지. 같은 주소가 보이면 있는 것으로 본다. */
-export function alreadyHasBanner(html, url) {
-  if (!url) return false;
-  return String(html || '').includes(url);
+/**
+ * 배너임을 알아보는 표시. watchBannerHtml() 이 항상 넣는 글귀다.
+ *
+ * 주소로 알아보면 안 된다. 글 7690 이 그 경우였다 — 본문 글자 안에 중계
+ * 주소가 링크로 적혀 있는데 배너 블록은 없었다. 주소만 보고 "이미 있다"고
+ * 건너뛰어서 배너가 영영 안 들어갔다.
+ */
+const BANNER_SIGN = '📺 경기 보러가기';
+
+/** 본문에 든 배너 블록들. wp:html 블록 중 위 표시가 든 것만. */
+export function findBanners(html) {
+  const out = [];
+  for (const m of String(html || '').matchAll(/<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi)) {
+    if (!m[1].includes(BANNER_SIGN)) continue;
+    const url = /href="([^"]+)"/.exec(m[1])?.[1] || '';
+    out.push({ start: m.index, end: m.index + m[0].length, url, block: m[0] });
+  }
+  return out;
 }
 
-/** 배너 한 블록을 끼운 본문을 돌려준다. */
-export function insertBanner(html, banner) {
-  const body = String(html || '');
-  const block = String(banner || '').trim();
-  if (!block) return { html: body, 넣음: 0 };
-
-  const at = bannerSlot(body);
-  if (at === null) return { html: `${body.trimEnd()}\n\n${block}`, 넣음: 1 };
-  return { html: `${body.slice(0, at)}${block}\n\n${body.slice(at)}`, 넣음: 1 };
+/** 이 글에 이 배너가 이미 있는지. 배너 블록이 같은 주소를 가리킬 때만 '있다'. */
+export function alreadyHasBanner(html, url) {
+  if (!url) return false;
+  return findBanners(html).some((b) => b.url === url);
 }
 
 /**
- * 넣은 것 말고는 바뀐 게 없는지 확인한다.
+ * 배너를 넣거나, 이미 있는 배너를 새 것으로 바꾼다.
  *
- * 저장 전 마지막 방어선이다. 끼운 블록을 after 에서 한 번 빼고 공백을 고른 뒤
- * before 와 글자 하나까지 같아야 한다.
+ * - 배너가 없으면 bannerSlot() 자리에 한 블록 넣는다.
+ * - 배너가 있는데 주소가 다르면(중계처가 바뀐 경우) 그 블록만 바꾼다.
+ *   자리는 그대로 둔다 — 원래 자리가 글 흐름에 맞게 잡혀 있다.
  */
-export function insertOnlyChange(before, after, banner) {
-  const 평평하게 = (s) => String(s).replace(/\s+/g, ' ').trim();
-  const 뺀것 = 평평하게(after).replace(평평하게(banner), '');
-  return 평평하게(뺀것) === 평평하게(before);
+export function applyBanner(html, banner) {
+  const body = String(html || '');
+  const block = String(banner || '').trim();
+  if (!block) return { html: body, 한일: null };
+
+  const 있는것 = findBanners(body);
+  if (있는것.length) {
+    let out = body;
+    for (const b of [...있는것].reverse()) out = out.slice(0, b.start) + block + out.slice(b.end);
+    return { html: out, 한일: '교체' };
+  }
+
+  const at = bannerSlot(body);
+  if (at === null) return { html: `${body.trimEnd()}\n\n${block}`, 한일: '추가' };
+  return { html: `${body.slice(0, at)}${block}\n\n${body.slice(at)}`, 한일: '추가' };
+}
+
+/**
+ * 배너 말고는 바뀐 게 없는지 확인한다.
+ *
+ * 저장 전 마지막 방어선이다. 양쪽에서 배너 블록을 통째로 빼고 공백을 고른 뒤
+ * 글자 하나까지 같아야 한다. 넣은 경우에도 바꾼 경우에도 같은 방법으로 본다.
+ */
+export function bannerOnlyChange(before, after) {
+  const 벗기기 = (s) => {
+    let out = String(s);
+    for (const b of [...findBanners(out)].reverse()) out = out.slice(0, b.start) + out.slice(b.end);
+    return out.replace(/\s+/g, ' ').trim();
+  };
+  return 벗기기(before) === 벗기기(after);
 }
 
 /** 글 하나를 본다. 넣을 수 있으면 넣는다. content 하나만 보낸다. */
@@ -114,10 +151,10 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
 
   // 제목의 괄호 앞까지만 배너에 쓴다 — 글 만들 때와 같은 규칙이다.
   const banner = watchBannerHtml(entry, { title: title.split('(')[0].trim() });
-  const { html, 넣음 } = insertBanner(content, banner);
-  if (!넣음) return { ...base, url, skip: '배너 HTML이 비었습니다' };
+  const { html, 한일 } = applyBanner(content, banner);
+  if (!한일) return { ...base, url, skip: '배너 HTML이 비었습니다' };
 
-  if (!insertOnlyChange(content, html, banner)) {
+  if (!bannerOnlyChange(content, html)) {
     throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
   }
 
@@ -130,7 +167,12 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
       timeoutMs: 45000,
     });
   }
-  return { ...base, url, text: entry.primary.text, changed: true, backup, banner };
+  return {
+    ...base, url, text: entry.primary.text, 한일, changed: true, backup, banner,
+    // 미리보기에서 본문 상태를 그대로 보여준다. "주소는 본문에 있는데 배너는
+    // 없다"를 눈으로 가릴 수 있어야 한다.
+    진단: `배너 블록 ${findBanners(content).length}개 · 본문에 ${url} ${(content.split(url).length - 1)}번`,
+  };
 }
 
 async function main() {
@@ -152,7 +194,8 @@ async function main() {
       const r = await addWatchBanner(id, { apply, siteCategories });
       log.info(`[${r.id}] ${r.title.slice(0, 45)} — ${r.category || '분류 없음'} (${r.status})`);
       if (r.skip) { log.warn(`      건너뜀: ${r.skip}`); continue; }
-      log.ok(`      ${r.text} → ${r.url}`);
+      log.raw(`      ${r.진단}`);
+      log.ok(`      ${r.한일}: ${r.text} → ${r.url}`);
       if (apply) log.ok(`      넣었습니다. 원본 본문: ${r.backup}`);
       else log.info('      미리보기입니다. --dry-run 을 빼면 실제로 넣습니다.');
     } catch (err) {

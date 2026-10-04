@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { startMockWordPress } from './mock-wordpress.mjs';
 import {
-  bannerSlot, insertBanner, insertOnlyChange, alreadyHasBanner, addWatchBanner,
+  bannerSlot, applyBanner, bannerOnlyChange, alreadyHasBanner, findBanners, addWatchBanner,
 } from '../src/wordpress/add-watch.mjs';
 import { pickWatchLinks, watchBannerHtml } from '../src/seo/watch-banner.mjs';
 import { ROOT } from '../src/utils/env.mjs';
@@ -58,8 +58,8 @@ check('h3는 자리 후보가 아니다', () => {
 
 check('소제목이 둘도 없으면 맨 끝에 붙인다', () => {
   const 짧은글 = [P('도입'), H2('하나')].join('\n\n');
-  const r = insertBanner(짧은글, '<!-- wp:html -->\n배너\n<!-- /wp:html -->');
-  assert.equal(r.넣음, 1);
+  const r = applyBanner(짧은글, '<!-- wp:html -->\n📺 경기 보러가기\n<!-- /wp:html -->');
+  assert.equal(r.한일, '추가');
   assert.ok(r.html.trimEnd().endsWith('<!-- /wp:html -->'), r.html.slice(-80));
   assert.ok(r.html.includes('<h2>하나</h2>'), '원래 내용이 사라졌습니다');
 });
@@ -67,7 +67,7 @@ check('소제목이 둘도 없으면 맨 끝에 붙인다', () => {
 // ── 넣은 것 말고는 안 바뀌는가 ──────────────────────────────
 const entry = pickWatchLinks('농구', { text: '2026-27 KBL 부산 KCC' });
 const 배너 = watchBannerHtml(entry, { title: '2026-27 KBL 경기일정' });
-const { html: 넣은본문, 넣음 } = insertBanner(본문, 배너);
+const { html: 넣은본문, 한일 } = applyBanner(본문, 배너);
 
 check('설정에서 KBL 중계처를 고른다', () => {
   assert.equal(entry.primary.url, 'https://tvnsports.cjenm.com/ko/');
@@ -75,7 +75,7 @@ check('설정에서 KBL 중계처를 고른다', () => {
 });
 
 check('배너가 들어간다', () => {
-  assert.equal(넣음, 1);
+  assert.equal(한일, '추가');
   assert.ok(넣은본문.includes('tvnsports.cjenm.com'));
   assert.ok(넣은본문.includes('📺 경기 보러가기'));
 });
@@ -87,7 +87,7 @@ check('배너는 현재 창에서 열린다', () => {
 });
 
 check('넣은 것 말고는 글자 하나 안 바뀐다', () => {
-  assert.ok(insertOnlyChange(본문, 넣은본문, 배너), '본문이 바뀌었습니다');
+  assert.ok(bannerOnlyChange(본문, 넣은본문), '본문이 바뀌었습니다');
   for (const 조각 of ['2026-27 KBL 정규리그가 10월 4일 개막했다', '부산 KCC와 창원 LG', '📌 배경과 원리', '중계권은 3년 단위로']) {
     assert.ok(넣은본문.includes(조각), `사라졌습니다: ${조각}`);
   }
@@ -95,14 +95,38 @@ check('넣은 것 말고는 글자 하나 안 바뀐다', () => {
 
 check('본문이 바뀌면 알아챈다', () => {
   // 이 검사가 마지막 방어선이다. 못 잡으면 발행된 글이 망가진다.
-  assert.ok(!insertOnlyChange(본문, 넣은본문.replace('부산 KCC와 창원 LG', '다른 팀'), 배너));
-  assert.ok(!insertOnlyChange(본문, 넣은본문.replace(H2('📌 배경과 원리, 비슷한 사례 비교'), ''), 배너));
-  assert.ok(!insertOnlyChange(본문, 넣은본문.replace(P('tvN SPORTS가 중계한다.'), ''), 배너));
+  assert.ok(!bannerOnlyChange(본문, 넣은본문.replace('부산 KCC와 창원 LG', '다른 팀')));
+  assert.ok(!bannerOnlyChange(본문, 넣은본문.replace(H2('📌 배경과 원리, 비슷한 사례 비교'), '')));
+  assert.ok(!bannerOnlyChange(본문, 넣은본문.replace(P('tvN SPORTS가 중계한다.'), '')));
 });
 
-check('같은 주소가 이미 있으면 알아챈다', () => {
+check('배너가 있는지는 배너 블록으로 본다 — 주소로 보면 안 된다', () => {
+  // 글 7690 이 실제로 이랬다. 본문 글자 안에 중계 주소가 링크로 적혀 있는데
+  // 배너 블록은 없었다. 주소만 보고 '이미 있다'며 건너뛰어서 배너가 영영
+  // 안 들어갔다. 운영자가 "베너가 빠졌어"라고 짚은 게 이것이다.
+  const 주소만있는본문 = 본문.replace(
+    P('tvN SPORTS가 중계한다.'),
+    P('tvN SPORTS(<a href="https://tvnsports.cjenm.com/ko/" rel="nofollow">공식 사이트</a>)가 중계한다.'),
+  );
+  assert.ok(주소만있는본문.includes('https://tvnsports.cjenm.com/ko/'), '준비가 잘못됐습니다');
+  assert.ok(!alreadyHasBanner(주소만있는본문, 'https://tvnsports.cjenm.com/ko/'), '주소만 보고 있습니다');
+  assert.equal(findBanners(주소만있는본문).length, 0);
+
   assert.ok(alreadyHasBanner(넣은본문, 'https://tvnsports.cjenm.com/ko/'));
+  assert.equal(findBanners(넣은본문).length, 1);
   assert.ok(!alreadyHasBanner(본문, 'https://tvnsports.cjenm.com/ko/'));
+});
+
+check('중계처가 바뀌면 있는 배너를 바꾼다', () => {
+  // 중계권이 옮겨가는 일이 실제로 있다(2026-27 KBL → tvN SPORTS).
+  // 그때 배너를 하나 더 넣으면 둘이 되어 어느 쪽이 맞는지 알 수 없다.
+  const 옛배너본문 = 넣은본문.replace('https://tvnsports.cjenm.com/ko/', 'https://old.example.com/');
+  const r = applyBanner(옛배너본문, 배너);
+  assert.equal(r.한일, '교체');
+  assert.equal(findBanners(r.html).length, 1, '배너가 둘이 됐습니다');
+  assert.ok(r.html.includes('tvnsports.cjenm.com'));
+  assert.ok(!r.html.includes('old.example.com'), '옛 배너가 남았습니다');
+  assert.ok(bannerOnlyChange(옛배너본문, r.html), '배너 말고 다른 게 바뀌었습니다');
 });
 
 // ── 실제 경로 ──────────────────────────────────────────────
