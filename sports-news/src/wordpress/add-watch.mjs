@@ -1,6 +1,7 @@
 // 이미 올린 글에 중계 배너를 넣는다. AI를 부르지 않는다(0원).
 //
 //   npm run watch:add -- 7690 --show       지금 상태만 본다 (고치지 않는다)
+//   npm run watch:add -- 7690 --show --html  배너 HTML을 그대로 찍는다
 //   npm run watch:add -- 7690 --dry-run    무엇이 들어가는지 먼저 본다
 //   npm run watch:add -- 7690              실제로 넣는다
 //
@@ -202,6 +203,14 @@ export async function showBanner(postId, { siteCategories = [] } = {}) {
     raw: { 글자수: raw.length, 배너블록: banners.length, 표시: 센다(raw, BANNER_SIGN), 주소: url ? 센다(raw, url) : 0 },
     rendered: { 글자수: rendered.length, 표시: 센다(rendered, BANNER_SIGN), 주소: url ? 센다(rendered, url) : 0 },
     url,
+    // 숫자만 세면 "들어는 있는데 모양이 이상하다"를 못 본다. 실제 덩어리를 그대로 돌려준다.
+    블록: banners[0]?.block || '',
+    // 화면에 그려진 쪽에서 배너 자리만 떼어 본다.
+    화면조각: (() => {
+      const at = rendered.indexOf(BANNER_SIGN);
+      if (at < 0) return '';
+      return rendered.slice(Math.max(0, at - 300), at + 900);
+    })(),
     앞뒤: banners.length ? raw.slice(Math.max(0, banners[0].start - 160), banners[0].start) : '',
   };
 }
@@ -209,6 +218,7 @@ export async function showBanner(postId, { siteCategories = [] } = {}) {
 async function main() {
   const ids = process.argv.slice(2).filter((a) => /^\d+$/.test(a)).map(Number);
   const show = process.argv.includes('--show');
+  const html = process.argv.includes('--html');
   const apply = !process.argv.includes('--dry-run') && !show;
   if (!ids.length) {
     log.fail('글 번호를 적어주세요', new Error('예: npm run watch:add -- 7690 --dry-run'));
@@ -232,6 +242,13 @@ async function main() {
         log.warn('      본문에는 배너가 있는데 화면 본문에는 없습니다 — 워드프레스가 그리면서 지웁니다');
       }
       if (r.앞뒤) log.raw(`      배너 앞: …${r.앞뒤.replace(/\s+/g, ' ').slice(-120)}`);
+      if (r.블록) {
+        // 글자만 떼어 보면 같은 말이 두 번 나오는 것 같은 어색함이 바로 보인다.
+        const 글자 = r.블록.replace(/<[^>]*>/g, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/\s+/g, ' ').trim();
+        log.raw(`      배너에 적힌 말: ${글자}`);
+      }
+      if (html && r.블록) { log.raw('      ── 저장된 배너 HTML ──'); log.raw(r.블록); }
+      if (html && r.화면조각) { log.raw('      ── 화면에 그려진 배너 자리 ──'); log.raw(r.화면조각); }
       if (r.link) log.raw(`      ${r.link}`);
     }
     return;
