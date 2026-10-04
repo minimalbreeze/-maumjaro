@@ -164,12 +164,14 @@ jobs:
           IN_SUBJECT: ${{ inputs.subject }}
           IN_TOPIC: ${{ inputs.topic }}
         run: |
-          주제="${IN_SUBJECT:-$IN_TOPIC}"
-          if [ -z "$주제" ]; then
+          # 변수명은 영문으로 둔다. bash 변수명에 한글을 쓰면 할당이 아니라
+          # 명령으로 해석되어 'command not found' 로 죽는다(실제로 당했다).
+          SUBJ="${IN_SUBJECT:-$IN_TOPIC}"
+          if [ -z "$SUBJ" ]; then
             echo "::error::주제를 적어주세요 (subject). 예: 남서울CC 파3 이용료"
             exit 1
           fi
-          node src/main.mjs --official --subject="$주제"
+          node src/main.mjs --official --subject="$SUBJ"
 
       - name: 오늘의 글감 후보 보기
         # 뉴스를 모아 점수만 매겨 보여주고 멈춘다. AI를 한 번도 부르지 않으므로

@@ -84,6 +84,26 @@ if (fs.existsSync(sports)) {
   });
 }
 
+
+check('셸 변수명에 한글을 쓰지 않는다', () => {
+  // bash 변수명은 영문·숫자·밑줄만 된다. 주제="..." 는 할당이 아니라 명령으로
+  // 해석되어 'command not found' 로 죽는다. 실제로 '공식 페이지 받아보기'
+  // 스텝이 그래서 죽었다. YAML 문법 검사로는 안 잡히므로 따로 본다.
+  const 나쁜것 = [];
+  for (const file of files) {
+    const text = fs.readFileSync(path.join(WORKFLOWS, file), 'utf8');
+    text.split('\n').forEach((line, i) => {
+      // run 블록 안쪽은 깊게 들여쓰여 있다. 줄 맨 앞 토큰이 곧바로 = 를 만나면 할당이다.
+      // args+=("x") 같은 배열 추가도 정상 할당이므로 += 를 허용한다.
+      const m = /^\s{6,}([^\s=#|>&$'"]+?)\+?=(?!=)/.exec(line);
+      if (!m) return;
+      if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(m[1])) return;
+      나쁜것.push(`${file}:${i + 1} "${m[1]}"`);
+    });
+  }
+  assert.equal(나쁜것.length, 0, `셸 변수명에 영문 아닌 글자: ${나쁜것.join(' / ')}`);
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
 
 // 워크플로가 부르는 CLI 형태가 실제 스크립트와 맞는지.
