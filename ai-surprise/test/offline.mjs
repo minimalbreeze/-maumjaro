@@ -273,6 +273,26 @@ test('수집 프롬프트에 제외 목록이 들어간다', () => {
   assert.ok(p.includes('제외'));
 });
 
+test('수집 프롬프트가 검색 예산을 알려준다', () => {
+  // 첫 실제 실행에서 모델이 자기 검색 한도(6회)를 모른 채 후보를 넓게 벌려놓고
+  // 검증에 들어갔다가 한도에 걸려 1건만 제출했다. 예산을 알려줘야 집중한다.
+  const p = buildCollectPrompt({ count: 5, maxSearches: 20 });
+  assert.ok(p.includes('검색 예산: 20회'), '검색 횟수가 프롬프트에 없다');
+  assert.ok(p.includes('4~6회'), '소재당 드는 검색 횟수 안내가 없다');
+  assert.ok(p.includes('바닥'), '예산이 바닥나는 상황에 대한 경고가 없다');
+});
+
+test('검색 예산이 적으면 집중할 소재 수도 줄어든다', () => {
+  // 예산 6회면 (6-2)/5 = 0 → 최소 1건. 예산 20회면 (20-2)/5 = 3건.
+  const tight = buildCollectPrompt({ count: 5, maxSearches: 6 });
+  const roomy = buildCollectPrompt({ count: 5, maxSearches: 20 });
+  assert.ok(tight.includes('1건 정도에 집중'), tight.split('\n').find((l) => l.includes('집중')));
+  assert.ok(roomy.includes('3건 정도에 집중'), roomy.split('\n').find((l) => l.includes('집중')));
+  // 요청 개수보다 많이 집중하라고 시키지 않는다
+  const few = buildCollectPrompt({ count: 2, maxSearches: 40 });
+  assert.ok(few.includes('2건 정도에 집중'));
+});
+
 test('분야를 지정하면 그 분야만 넣는다', () => {
   const p = buildCollectPrompt({ category: '과학적 미스터리' });
   assert.ok(p.includes('분야: 과학적 미스터리'));
@@ -328,6 +348,51 @@ test('스키마가 strict 요건을 지킨다', () => {
     assert.equal(schema.additionalProperties, false, `${name} 에 additionalProperties:false 가 없다`);
     assert.ok(Array.isArray(schema.required) && schema.required.length, `${name} 에 required 가 없다`);
   }
+});
+
+await asyncTest('스키마에 API가 거부하는 옵션이 없다', async () => {
+  // 실제로 돈을 쓴 실패를 막는 테스트다.
+  //
+  // 점수 항목에 minimum/maximum을 넣었더니 심사 단계가 400으로 통째로 죽었다:
+  //   tools.0.custom: For 'integer' type, properties maximum, minimum are not supported
+  //
+  // 소재를 찾는 데 1분 40초와 토큰 9만 개를 쓴 뒤에 이걸로 실패했다.
+  // 범위 제한은 코드(makeItem의 clamp, mergeVisuals의 clampInt)가 이미 하므로
+  // 스키마에서는 설명으로만 적는다.
+  //
+  // 스키마 전체를 재귀로 훑어서 거부되는 조합이 하나라도 있으면 걸리게 한다.
+  const { VISUALS_SCHEMA: VS } = await import('../src/scenes/visuals.mjs');
+
+  // 타입별로 strict 도구가 받지 않는 키워드.
+  const BANNED_BY_TYPE = {
+    integer: ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf'],
+    number: ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf'],
+  };
+
+  const problems = [];
+  const walk = (node, path) => {
+    if (!node || typeof node !== 'object') return;
+    const banned = BANNED_BY_TYPE[node.type];
+    if (banned) {
+      for (const key of banned) {
+        if (key in node) problems.push(`${path}: '${node.type}' 타입에 ${key} 를 쓸 수 없다`);
+      }
+    }
+    for (const [key, child] of Object.entries(node.properties || {})) {
+      walk(child, `${path}.${key}`);
+    }
+    if (node.items) walk(node.items, `${path}[]`);
+  };
+
+  for (const [name, schema] of [
+    ['COLLECT_SCHEMA', COLLECT_SCHEMA],
+    ['SCORE_SCHEMA', SCORE_SCHEMA],
+    ['VISUALS_SCHEMA', VS],
+  ]) {
+    walk(schema, name);
+  }
+
+  assert.deepEqual(problems, [], `\n     ${problems.join('\n     ')}`);
 });
 
 // ─────────────────────────────────────────────────────────────

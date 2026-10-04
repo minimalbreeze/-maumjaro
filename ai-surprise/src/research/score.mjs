@@ -46,11 +46,11 @@ export const SCORE_SCHEMA = {
     'risk_notes',
   ],
   properties: {
-    interesting_score: { type: 'integer', minimum: 0, maximum: SCORE_WEIGHTS.interesting_score },
-    twist_score: { type: 'integer', minimum: 0, maximum: SCORE_WEIGHTS.twist_score },
-    fact_score: { type: 'integer', minimum: 0, maximum: SCORE_WEIGHTS.fact_score },
-    visual_score: { type: 'integer', minimum: 0, maximum: SCORE_WEIGHTS.visual_score },
-    title_score: { type: 'integer', minimum: 0, maximum: SCORE_WEIGHTS.title_score },
+    interesting_score: { type: 'integer', description: `0~${SCORE_WEIGHTS.interesting_score}` },
+    twist_score: { type: 'integer', description: `0~${SCORE_WEIGHTS.twist_score}` },
+    fact_score: { type: 'integer', description: `0~${SCORE_WEIGHTS.fact_score}` },
+    visual_score: { type: 'integer', description: `0~${SCORE_WEIGHTS.visual_score}` },
+    title_score: { type: 'integer', description: `0~${SCORE_WEIGHTS.title_score}` },
     fact_status: {
       type: 'string',
       enum: Object.keys(FACT_STATUS),
@@ -68,9 +68,7 @@ export const SCORE_SCHEMA = {
     },
     risk_score: {
       type: 'integer',
-      minimum: 0,
-      maximum: 100,
-      description: '종합 위험도. 0=안전, 100=절대 다루면 안 됨',
+      description: '종합 위험도 0~100. 0=안전, 100=절대 다루면 안 됨',
     },
     risk_notes: {
       type: 'string',

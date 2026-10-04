@@ -7,7 +7,7 @@
 // 이 파일에서 가장 중요한 요구는 "출처를 실제 URL로 받는 것"이다.
 // 출처 없이 요약만 돌려주면 다음 단계에서 검증할 방법이 없다.
 
-import { callWithSearch, searchSummary, textOf, MODELS } from '../ai/client.mjs';
+import { callWithSearch, searchSummary, textOf, MODELS, WEB_SEARCH_MAX_USES } from '../ai/client.mjs';
 import { CATEGORIES } from '../model.mjs';
 
 export const COLLECT_SYSTEM = `당신은 다큐멘터리 제작팀의 자료 조사원이다.
@@ -112,8 +112,19 @@ export const COLLECT_SCHEMA = {
   },
 };
 
-/** 수집 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다. */
-export function buildCollectPrompt({ count = 5, category = null, avoidTitles = [] } = {}) {
+/**
+ * 수집 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다.
+ *
+ * maxSearches를 프롬프트에 적는 이유: 첫 실제 실행에서 모델이 자기 검색 한도를
+ * 모른 채 후보를 넓게 벌려놓고 검증에 들어갔다가 한도에 걸렸다. 그래서
+ * 6건 중 1건만 제출됐다. 예산을 알려주면 몇 건에 집중할지 스스로 정한다.
+ */
+export function buildCollectPrompt({
+  count = 5,
+  category = null,
+  avoidTitles = [],
+  maxSearches = WEB_SEARCH_MAX_USES,
+} = {}) {
   const lines = [];
 
   lines.push(`"실제로 있었던 이상한 이야기" 소재를 ${count}건 찾아 주세요.`);
@@ -145,8 +156,19 @@ export function buildCollectPrompt({ count = 5, category = null, avoidTitles = [
   lines.push('3. 1차 기록을 못 찾은 후보는 버립니다. 버린 이유는 search_notes에 적습니다.');
   lines.push(`4. 남은 것을 submit_materials 도구로 제출합니다.`);
   lines.push('');
+
+  lines.push(`━━━ 검색 예산: ${maxSearches}회 ━━━`);
+  lines.push(`웹검색은 이번 작업에서 총 ${maxSearches}회만 쓸 수 있습니다. 넘기면 더 못 씁니다.`);
+  lines.push('소재 하나를 1차 기록까지 확인하는 데 보통 4~6회가 듭니다.');
+  lines.push('');
+  lines.push('그래서 이렇게 쓰세요:');
+  lines.push('- 후보를 넓게 벌려놓고 전부 검증하려 하지 마세요. 예산이 중간에 바닥납니다.');
+  lines.push(`- 처음 1~2회로 후보를 모으고, 그중 ${Math.max(1, Math.min(count, Math.floor((maxSearches - 2) / 5)))}건 정도에 집중해 끝까지 확인하세요.`);
+  lines.push('- 확인을 끝낸 소재가 생기면 바로 제출할 수 있게 준비해 두세요.');
+  lines.push('');
   lines.push(
-    `${count}건을 억지로 채우지 마세요. 기준을 통과한 것이 2건이면 2건만 제출하는 게 맞습니다.`
+    `${count}건을 억지로 채우지 마세요. 기준을 통과한 것이 2건이면 2건만 제출하는 게 맞습니다. ` +
+      `제대로 확인한 1건이 확인 안 된 5건보다 낫습니다.`
   );
 
   return lines.join('\n');
