@@ -242,6 +242,110 @@ async function cmdScript(positional, flags) {
   printUsage();
 }
 
+/**
+ * 버튼 한 번으로 소재 찾기부터 대본까지 (GitHub Actions용).
+ *
+ * GitHub에서 돌릴 때는 실행이 끝나면 컴퓨터가 사라진다. 그래서 "소재 찾고
+ * 멈춘 다음 사람이 골라서 다시 누르기"를 할 수 없다. 한 번에 끝내야 한다.
+ *
+ * 기획서 18번의 소재 승인을 건너뛰는 게 아니다. 승인의 내용을 바꾼 것이다.
+ *   - 관문을 통과한(AUTO_OK) 소재만 대본을 쓴다. 즉 1차 기록이 확인되고
+ *     출처가 2개 이상인 소재만이다.
+ *   - 검토 필요 소재는 대본을 쓰지 않고 목록으로만 남긴다. 사람이 보고
+ *     따로 돌려야 한다.
+ *   - 어차피 결과는 파일로만 나온다. 유튜브에 아무것도 올라가지 않는다.
+ *     사람은 대본을 읽고 승인한 뒤에 다음 Phase를 시작한다.
+ */
+async function cmdAuto(flags) {
+  requireApiKey();
+  const count = Number(flags.count || 5);
+  const scripts = Number(flags.scripts || 1);
+  const targetMinutes = Number(flags.minutes || 4);
+  const category = typeof flags.category === 'string' ? flags.category : null;
+
+  log.section(`🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`);
+  const found = await collect({
+    count,
+    category,
+    avoidTitles: knownTitles(),
+    onProgress: (m) => log.step(m),
+  });
+
+  if (!found.items.length) {
+    log.warn('기준을 통과한 소재가 없습니다. 다시 돌려보시거나 분야를 바꿔보세요.');
+    if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
+    return;
+  }
+  log.ok(`${found.items.length}건을 찾았습니다.`);
+  if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
+
+  log.section(`⚖️  소재 심사  |  모델 ${MODELS.score}`);
+  const { items, failures } = await scoreAll(found.items, { onProgress: (m) => log.step(m) });
+  for (const f of failures) log.warn(`심사 실패: ${f.title} — ${f.error}`);
+
+  const kept = [];
+  for (const item of items) {
+    if (item.gate === GATE.BLOCKED) {
+      log.warn(`버림: ${item.title} — ${(item.gate_reasons || []).join(', ')}`);
+      continue;
+    }
+    saveToInbox(item);
+    kept.push(item);
+  }
+
+  log.section(`📋 보관함에 들어간 소재 ${kept.length}건`);
+  kept.sort((a, b) => b.final_score - a.final_score).forEach((item, i) => printCard(item, i + 1));
+
+  // 관문을 통과한 소재만 대본을 쓴다.
+  const ready = kept.filter((i) => i.gate === GATE.AUTO_OK);
+  const held = kept.filter((i) => i.gate === GATE.REVIEW_NEEDED);
+
+  log.raw('');
+  if (held.length) {
+    log.warn(`${held.length}건은 검토가 필요해 대본을 쓰지 않습니다:`);
+    for (const h of held) log.info(`· ${h.title} — ${(h.gate_reasons || []).join(', ')}`);
+  }
+
+  if (!ready.length) {
+    log.warn('관문을 통과한 소재가 없어 대본을 쓰지 않았습니다.');
+    log.info('소재 목록은 결과물에 들어 있습니다. 출처를 보고 판단해 주세요.');
+    printUsage();
+    return;
+  }
+
+  const targets = ready.slice(0, Math.max(1, scripts));
+  log.section(`✍️  대본 작성  |  ${targets.length}편  |  모델 ${MODELS.script}`);
+
+  for (const item of targets) {
+    const { id } = promoteToContent(item);
+    log.step(`content/${id} — ${item.title}`);
+    try {
+      const { markdown, check } = await writeScript(item, {
+        targetMinutes,
+        onProgress: (m) => log.info(m),
+      });
+      saveScript(id, markdown, check);
+      log.info(
+        `나레이션 ${check.stats.narrationChars}자 (약 ${check.stats.estimatedMinutes}분), HOOK ${check.stats.hookChars}자`
+      );
+      for (const w of check.warnings) log.warn(w);
+      if (check.ok) {
+        log.ok(`완성: content/${id}/script.md`);
+      } else {
+        log.error(`양식 미달 — content/${id}/script.md 에 저장했지만 확인이 필요합니다:`);
+        for (const e of check.errors) log.info(`· ${e}`);
+      }
+    } catch (err) {
+      log.fail(`content/${id} 대본 실패`, err);
+    }
+  }
+
+  log.raw('');
+  log.ok('끝났습니다. 아래 Artifacts 에서 소재 목록과 대본을 내려받으세요.');
+  log.info('대본을 읽고 괜찮으면 다음 Phase로 넘어갑니다. 아직 유튜브에 아무것도 올라가지 않았습니다.');
+  printUsage();
+}
+
 function printUsage() {
   const rows = usageSummary();
   if (!rows.length) return;
@@ -264,6 +368,8 @@ async function main() {
   switch (cmd) {
     case 'collect':
       return cmdCollect(flags);
+    case 'auto':
+      return cmdAuto(flags);
     case 'list':
       return cmdList();
     case 'score':
@@ -274,6 +380,10 @@ async function main() {
       return cmdScript(positional, flags);
     default:
       log.raw('AI 서프라이즈 — Phase 1 (소재 수집 · 심사 · 대본)');
+      log.raw('');
+      log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=4]');
+      log.raw('      소재 찾기부터 대본까지 한 번에. GitHub Actions가 이걸 씁니다.');
+      log.raw('      관문을 통과한 소재만 대본을 씁니다.');
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
