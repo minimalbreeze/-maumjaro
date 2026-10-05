@@ -9,6 +9,7 @@
 
 import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
 import { givenArticleNote } from '../news/given-article.mjs';
+import { 기존글목록 } from '../duplicate/check.mjs';
 
 export const SYSTEM = `당신은 한국 스포츠 블로그의 팩트체커입니다.
 
@@ -96,14 +97,20 @@ export const REPORT_TOOL = {
   },
 };
 
-export async function verifyCluster(cluster, { relatedPosts = [], today }) {
+export async function verifyCluster(cluster, { relatedPosts = [], today, subject = '' }) {
   const articleLines = cluster.articles
     .map((a, i) => `${i + 1}. [${a.source || '출처미상'}] ${a.title}${a.publishedAt ? ` (${a.publishedAt.slice(0, 16).replace('T', ' ')} UTC)` : ' (발행일 미상)'}${a.summary ? `\n   요약: ${a.summary}` : ''}`)
     .join('\n');
 
-  const existingLines = relatedPosts.length
-    ? relatedPosts.map((p) => `- "${p.title}" (${p.date?.slice(0, 10)}, 유사도 ${Math.round((p.similarity || 0) * 100)}%)`).join('\n')
-    : '(비슷한 기존 글 없음)';
+  const existingLines = 기존글목록(relatedPosts);
+
+  // 운영자가 각도를 지정했으면 그걸 프롬프트에 올린다.
+  // 2026-10-05: 운영자가 "통산 상금 순위"라는 각도를 지정하고 기사까지 줬는데,
+  // 이 줄이 없어서 사실확인 단계는 그 각도를 모른 채 기사 첫 줄(통산 30승)만
+  // 보고 어제 쓴 우승 글과 같다며 글을 막았다. 각도를 모르면 각도로 판단할 수 없다.
+  const 요청각도 = subject && subject !== cluster.articles[0]?.title
+    ? `\n\n## 운영자가 요청한 각도\n${subject}\n\n이 각도로 글을 쓴다. 기사 전체를 요약하는 것이 아니다.`
+    : '';
 
   // 운영자가 직접 준 기사면 그 사실을 알린다. 1차 출처로 다루고, 웹검색이
   // 막혀도 거기 적힌 숫자로 글을 쓰게 한다.
@@ -113,7 +120,7 @@ export async function verifyCluster(cluster, { relatedPosts = [], today }) {
 종목: ${cluster.topic}
 
 ## 수집된 기사 제목 (${cluster.articles.length}건 / 출처 ${cluster.sourceCount}곳)
-${articleLines}${제공안내}
+${articleLines}${요청각도}${제공안내}
 
 ## 내 블로그의 기존 글 중 비슷한 것
 ${existingLines}
@@ -140,8 +147,15 @@ ${existingLines}
    마세요. 그건 unverified 입니다.
 
 4. 이 사건이 앞으로 열리는 일인지, 이미 끝난 일인지 오늘 날짜 기준으로 판단하세요.
-5. 기존 블로그 글과 사실상 같은 내용인지 판단하세요. 같은 대회라도 새로운 진전이
-   있으면 중복이 아닙니다. 단순 반복이면 중복입니다.
+5. 기존 블로그 글과 사실상 같은 내용인지 판단하세요.
+   **판단 대상은 이 글이 다룰 각도입니다**(위에 '운영자가 요청한 각도'가 있으면
+   그것, 없으면 기사의 핵심 사건). 같은 선수·같은 날·같은 대회라도 각도가 다르면
+   중복이 아닙니다. 예를 들어 '우승'과 '통산 상금 순위'는 다른 각도입니다.
+
+   기존 글은 **제목과 발췌만** 주어집니다. 거기 적혀 있지 않은 내용까지 그 글이
+   이미 다룬다고 단정하지 마세요. 중복이라고 판단한다면 duplicateReason 에
+   **기존 글의 제목이나 발췌 중 어느 대목이 이 각도를 이미 담고 있는지** 그대로
+   인용하세요. 인용할 대목이 없으면 중복이 아닙니다.
 6. 확인이 끝나면 report_verification 도구를 호출해 결과를 보고하세요.
 
 report_verification 도구를 반드시 호출해야 합니다.`;

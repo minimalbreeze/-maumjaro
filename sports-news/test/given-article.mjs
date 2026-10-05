@@ -15,6 +15,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { givenArticleCluster, givenArticleNote, 첫줄제목 } from '../src/news/given-article.mjs';
+import { 기존글목록 } from '../src/duplicate/check.mjs';
 import { parseArgs } from '../src/main.mjs';
 import { startMockServer } from './mock-anthropic.mjs';
 
@@ -200,6 +201,53 @@ await checkAsync('빈 기사 파일은 이유를 말하고 멈춘다', async () 
   const e = await run(['--dry-run', '--subject=아무거나', `--article=${빈파일}`]);
   assert.notEqual(e.code, 0, '빈 파일인데 그냥 넘어갔습니다');
   assert.match(e.out, /비어 있습니다/, e.out.slice(-500));
+});
+
+// ── 각도를 지정했을 때의 중복 판정 ───────────────────────
+// 2026-10-05: 운영자가 "통산 상금 순위" 각도를 지정하고 기사까지 줬는데,
+// 사실확인 단계가 어제 쓴 '일본여자오픈 우승' 글과 같다며 글을 막았다.
+// 그 글 제목에는 통산 상금 순위가 없었다 — 제목만 보고 단정한 것이다.
+await checkAsync('운영자가 지정한 각도가 사실확인 프롬프트에 올라간다', async () => {
+  const 각도 = '신지애 통산 상금 1위 131억원 (누적상금 2~15위와 격차)';
+  const r2 = await run(['--dry-run', `--subject=${각도}`, `--article=${기사파일}`]);
+  assert.equal(r2.code, 0, r2.out.slice(-800));
+  const p = ai.seen.userPrompts.filter((x) => x.includes('## 할 일')).pop();
+  assert.ok(p, '사실확인 프롬프트를 못 찾았습니다');
+  assert.match(p, /운영자가 요청한 각도/, '각도 항목이 없습니다');
+  assert.ok(p.includes(각도), '지정한 각도가 프롬프트에 없습니다');
+});
+
+check('중복 판정을 각도 기준으로 하라고 지시한다', () => {
+  // 같은 선수·같은 날이어도 각도가 다르면 중복이 아니다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/ai/analyze.mjs'), 'utf8');
+  assert.ok(/각도가 다르면\s+중복이 아닙니다/.test(src), '각도 기준 지시가 없습니다');
+  assert.match(src, /'우승'과 '통산 상금 순위'는 다른 각도/, '구체적인 예가 없습니다');
+});
+
+check('제목만 보고 단정하지 말라고 못 박는다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/ai/analyze.mjs'), 'utf8');
+  assert.match(src, /제목과 발췌만/, '무엇이 주어지는지 밝히지 않습니다');
+  assert.match(src, /단정하지 마세요/, '단정 금지가 없습니다');
+  assert.match(src, /인용할 대목이 없으면 중복이 아닙니다/, '근거 인용 요구가 없습니다');
+});
+
+check('기존 글 목록이 발췌와 한계를 함께 적는다', () => {
+  const 목록 = 기존글목록([
+    { title: '신지애 일본여자오픈 우승', date: '2026-10-05T00:00:00', similarity: 0.4, excerpt: '통산 30승과 커리어 그랜드슬램을 달성했다.' },
+  ]);
+  assert.match(목록, /발췌: 통산 30승/, '발췌가 없습니다');
+  assert.match(목록, /제목과 발췌뿐/, '무엇만 주어지는지 밝히지 않습니다');
+  assert.match(목록, /가정하지 마라/, '가정 금지가 없습니다');
+  // 발췌가 없는 글도 "없음"이라고 분명히 적는다. 비워두면 있는 줄 안다.
+  assert.match(기존글목록([{ title: 'a', date: '2026-01-01', similarity: 0.4 }]), /발췌: \(없음\)/);
+  assert.equal(기존글목록([]), '(비슷한 기존 글 없음)');
+});
+
+check('기존 글을 받아올 때 발췌도 같이 받는다', () => {
+  // 발췌를 안 받으면 위 지시가 할 일이 없다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/duplicate/check.mjs'), 'utf8');
+  assert.match(src, /_fields:.*excerpt/, '_fields 에 excerpt 가 없습니다');
+  assert.match(src, /excerpt: stripHtml\(/, '발췌를 담지 않습니다');
 });
 
 ai.server.close();

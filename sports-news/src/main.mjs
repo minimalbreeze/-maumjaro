@@ -297,7 +297,9 @@ async function processCluster(cluster, ctx) {
     ? await researchSubject(cluster.label, {
         relatedPosts: dup.related, today, category: cluster.category, official,
       })
-    : await verifyCluster(cluster, { relatedPosts: dup.related, today });
+    : await verifyCluster(cluster, {
+        relatedPosts: dup.related, today, subject: ctx.subject || '',
+      });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
   const 검색막힘 = searchBlocked(verification.searched);

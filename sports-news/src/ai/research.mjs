@@ -21,6 +21,7 @@
 import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
 import { officialBlock } from '../news/official.mjs';
 import { SYSTEM, REPORT_TOOL } from './analyze.mjs';
+import { 기존글목록 } from '../duplicate/check.mjs';
 
 /**
  * 출처 등급.
@@ -64,9 +65,7 @@ export async function researchSubject(subject, {
   // main.mjs 가 gatherOfficial() 결과를 넣어 준다.
   official = [],
 } = {}) {
-  const existingLines = relatedPosts.length
-    ? relatedPosts.map((p) => `- "${p.title}" (${p.date?.slice(0, 10)}, 유사도 ${Math.round((p.similarity || 0) * 100)}%)`).join('\n')
-    : '(비슷한 기존 글 없음)';
+  const existingLines = 기존글목록(relatedPosts);
 
   // 공식 페이지에서 받아온 글을 프롬프트 앞쪽에 둔다. 웹검색보다 먼저 쓰게 한다.
   const officialText = official.length ? `${officialBlock(official)}\n\n` : '';
@@ -94,7 +93,9 @@ ${officialText}## 할 일
    - **준비물·복장 규정**
    - 대회라면: 정식 명칭, 일정, 장소, **상금**, 주관 단체, 출전 선수
 3. 숫자는 출처와 함께 확인하세요. confirmed의 sources에 어디서 봤는지 적으세요.
-4. 기존 블로그 글과 사실상 같은 내용인지 판단하세요.
+4. 기존 블로그 글과 사실상 같은 내용인지 판단하세요. 기존 글은 **제목과 발췌만**
+   주어집니다. 거기 없는 내용까지 그 글이 다룬다고 단정하지 마세요. 중복이라면
+   duplicateReason 에 어느 대목이 겹치는지 그대로 인용하세요.
 5. 확인이 끝나면 report_verification 도구를 호출해 결과를 보고하세요.
 
 ${출처등급}
