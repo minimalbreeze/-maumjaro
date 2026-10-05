@@ -323,11 +323,13 @@ async function processCluster(cluster, ctx) {
   // 2-3. SEO 키워드를 먼저 잡는다.
   // 글을 다 쓴 뒤에 키워드를 정하면 본문에 그 말이 없어 검색에 안 걸린다.
   // 사실 확인 결과만으로 키워드를 먼저 정하고, 그 말을 넣어 쓰게 한다.
-  const provisionalKeyword = guessKeyword(cluster, verification);
+  const provisionalKeyword = guessKeyword(cluster, verification, ctx.subject);
 
   // 2-4. 본문 작성
   log.step('  워프양식으로 작성 중');
-  const article = await writeArticle({ cluster, verification, today, focusKeyword: provisionalKeyword });
+  const article = await writeArticle({
+    cluster, verification, today, focusKeyword: provisionalKeyword, subject: ctx.subject || '',
+  });
   let lint = lintArticle(article);
   log.info(`    제목: ${article.title}`);
   log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
@@ -480,10 +482,30 @@ function keywordCountOf(picked, keyword) {
   return picked.candidates?.find((c) => c.keyword === keyword)?.count ?? 0;
 }
 
-function guessKeyword(cluster, verification) {
+function guessKeyword(cluster, verification, subject = '') {
+  // 운영자가 각도를 지정했으면 그 머리를 쓴다. 대회명이 아니다.
+  // 2026-10-05 글 7777: 대회명을 먼저 본 탓에 '신지애 일본여자오픈'이 잡혔다.
+  // 실측으로 검색량이 잡히지 않는 말이다(config/search-demand.md). 운영자가
+  // 요청한 '신지애 통산 상금'은 월 40~80이다.
+  if (subject) return 각도머리(subject);
   const byField = (name) => verification.confirmed?.find((c) => c.field.includes(name))?.value;
   const raw = byField('대회명') || byField('대회') || cluster.label;
   return String(raw).replace(/\s+/g, ' ').trim().split(/[(\[|—·]/)[0].trim().slice(0, 30);
+}
+
+/**
+ * 운영자가 준 주제에서 키워드로 쓸 머리를 뽑는다.
+ *
+ * 주제는 "키워드 (질문)" 모양으로 적는다. 괄호 앞이 검색되는 말이다.
+ * 끝에 붙은 금액은 떼어낸다 — 사람은 '131억원'을 타이핑하지 않고, 본문에서
+ * 여러 번 반복하기도 어색하다. 숫자 자체는 본문에 그대로 쓴다.
+ */
+export function 각도머리(subject) {
+  const 머리 = String(subject || '').replace(/\s+/g, ' ').trim().split(/[(\[|—·]/)[0].trim();
+  const 금액 = /^[\d,.]+(억원|만원|억|만|원|달러|엔|파운드|유로)$/;
+  const 낱말 = 머리.split(' ');
+  while (낱말.length > 2 && 금액.test(낱말[낱말.length - 1])) 낱말.pop();
+  return 낱말.join(' ').slice(0, 30);
 }
 
 /** 미리보기에서 글 전문을 로그에 찍는다. */

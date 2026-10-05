@@ -16,7 +16,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { givenArticleCluster, givenArticleNote, 첫줄제목 } from '../src/news/given-article.mjs';
 import { 기존글목록 } from '../src/duplicate/check.mjs';
-import { parseArgs } from '../src/main.mjs';
+import { parseArgs, 각도머리 } from '../src/main.mjs';
 import { startMockServer } from './mock-anthropic.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -248,6 +248,48 @@ check('기존 글을 받아올 때 발췌도 같이 받는다', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src/duplicate/check.mjs'), 'utf8');
   assert.match(src, /_fields:.*excerpt/, '_fields 에 excerpt 가 없습니다');
   assert.match(src, /excerpt: stripHtml\(/, '발췌를 담지 않습니다');
+});
+
+// ── 각도가 작성·키워드 단계까지 가는가 ────────────────────
+// 글 7777 이 이걸 안 해서 어제 글과 거의 같은 제목으로 나왔다.
+check('각도를 본문 작성 지시에 올린다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/ai/write.mjs'), 'utf8');
+  assert.match(src, /이 글의 각도 — 여기가 중심이다/, '각도 블록이 없습니다');
+  assert.match(src, /제목과 글 맨 앞 핵심 요약은 \*\*이 각도\*\*로 씁니다/, '제목 지시가 없습니다');
+  assert.match(src, /각도에서 벗어나면 중복 글이 됩니다/, '왜 각도를 지켜야 하는지 없습니다');
+  // 각도가 없으면 블록도 없어야 한다. 빈 제목을 "각도"라고 올리면 안 된다.
+  assert.match(src, /subject \? `/, '각도가 없을 때 조건이 없습니다');
+});
+
+check('각도머리가 검색되는 말을 뽑는다', () => {
+  // 운영자는 "키워드 (질문)" 모양으로 주제를 적는다. 괄호 앞이 검색어다.
+  assert.equal(각도머리('신지애 통산 상금 1위 131억원 (JLPGA 누적상금 2~15위와 격차)'), '신지애 통산 상금 1위');
+  assert.equal(각도머리('윤이나 LPGA 2026시즌 성적 (준우승 2회)'), '윤이나 LPGA 2026시즌 성적');
+  // 금액 꼬리만 뗀다. 사람은 '131억원'을 타이핑하지 않는다.
+  assert.equal(각도머리('남서울CC 파3 이용료 13,000원'), '남서울CC 파3 이용료');
+  // 두 낱말까지는 남긴다 — 다 떼어내 빈 키워드가 되면 안 된다.
+  assert.equal(각도머리('상금 3000만'), '상금 3000만');
+  assert.equal(각도머리(''), '');
+});
+
+check('각도가 있으면 대회명보다 각도를 키워드로 쓴다', () => {
+  // 글 7777: 대회명을 먼저 봐서 '신지애 일본여자오픈'이 잡혔다.
+  // 실측으로 검색량이 잡히지 않는 말이다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  const 시작 = src.indexOf('function guessKeyword');
+  const 본문 = src.slice(시작, src.indexOf('\n}', 시작));
+  const 각도줄 = 본문.indexOf('if (subject) return 각도머리');
+  const 대회줄 = 본문.indexOf("byField('대회명')");
+  assert.ok(각도줄 > 0, '각도를 쓰지 않습니다');
+  assert.ok(각도줄 < 대회줄, '대회명이 각도보다 먼저 쓰입니다');
+});
+
+check('각도가 작성·SEO 단계까지 넘어간다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  assert.match(src, /guessKeyword\(cluster, verification, ctx\.subject\)/, 'guessKeyword 에 안 넘깁니다');
+  assert.match(src, /subject: ctx\.subject \|\| ''/, 'writeArticle 에 안 넘깁니다');
+  // SEO 는 provisionalKeyword 로 각도를 받는다.
+  assert.match(src, /provisionalKeyword,/, 'generateSeo 에 키워드를 안 넘깁니다');
 });
 
 ai.server.close();

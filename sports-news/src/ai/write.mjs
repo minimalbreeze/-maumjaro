@@ -27,7 +27,7 @@ const SYSTEM = `당신은 한국의 스포츠 전문 블로거입니다. 워드�
 3. 뉴스 기사 문장을 옮기거나 바꿔쓰지 않습니다. 사실을 재료로 새 글을 씁니다.
 4. AI가 쓴 티가 나지 않게, 사람이 직접 쓴 것처럼 씁니다.`;
 
-export async function writeArticle({ cluster, verification, today, focusKeyword = '' }) {
+export async function writeArticle({ cluster, verification, today, focusKeyword = '', subject = '' }) {
   const style = loadStyle();
 
   const confirmedBlock = verification.confirmed.map((c) => `- ${c.field}: ${c.value}  [확인: ${c.sources.join(', ')}]`).join('\n');
@@ -44,10 +44,24 @@ export async function writeArticle({ cluster, verification, today, focusKeyword 
     ? verification.addedValue.map((v) => `- ${v}`).join('\n')
     : '(없음)';
 
+  // 운영자가 각도를 지정했으면 그게 글의 중심이다.
+  // 2026-10-05 글 7777: 각도가 '통산 상금 1위 131억원'이었는데 이 블록이 없어서
+  // 사건 요약(일본여자오픈 우승)만 보고 썼다. 제목이 어제 쓴 글과 거의 같아졌다.
+  const 각도 = subject ? `
+
+## 🎯 이 글의 각도 — 여기가 중심이다
+**${subject}**
+
+제목과 글 맨 앞 핵심 요약은 **이 각도**로 씁니다. 위 '사건 요약'은 이 각도를
+설명하는 데 필요한 배경일 뿐입니다. 사건을 요약하는 글이 아닙니다.
+
+같은 사건을 다른 각도로 쓴 글이 이미 블로그에 있을 수 있습니다. 그 글과 겹치지
+않게 하는 것이 이 각도의 목적입니다. 각도에서 벗어나면 중복 글이 됩니다.` : '';
+
   const prompt = `오늘 날짜: ${today} (한국시간)
 종목: ${cluster.topic}
 사건 요약: ${verification.topicSummary}
-진행 상태: ${statusLabel(verification.eventStatus)}
+진행 상태: ${statusLabel(verification.eventStatus)}${각도}
 
 ## ✅ 확인된 사실 — 본문에 쓸 수 있는 것은 이것뿐입니다
 ${confirmedBlock}
