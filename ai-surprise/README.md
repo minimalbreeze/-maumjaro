@@ -26,13 +26,13 @@ GitHub 리포 → **Settings** → 왼쪽 **Secrets and variables** → **Action
 ## 실행하기
 
 1. GitHub 리포 → 위쪽 **Actions** 탭
-2. 왼쪽 목록에서 **"AI 서프라이즈 소재·대본 만들기"** 클릭
+2. 왼쪽 목록에서 **"AI 서프라이즈 소재·대본·영상 만들기"** 클릭
 3. 오른쪽 **Run workflow** 버튼 클릭
 4. 항목을 고르고 초록 **Run workflow** 누르기
 
 | 항목 | 설명 |
 |---|---|
-| 무엇을 할까요 | **테스트만**(기본) = 돈 안 듦 / **소재만 찾기** / **대본까지** / **장면까지** |
+| 무엇을 할까요 | **테스트만**(기본) = 돈 안 듦 / **소재만 찾기** / **대본까지** / **장면까지** / **영상·쇼츠까지** |
 | AI 영상 비중 | 기본 0.15 (샷의 15%만 AI 영상). **올리면 비용이 많이 올라갑니다** |
 | 찾을 소재 수 | 기본 5건 |
 | 쓸 대본 수 | 점수 높은 순. 기본 1편 |
@@ -51,7 +51,20 @@ GitHub 리포 → **Settings** → 왼쪽 **Secrets and variables** → **Action
 - `content/001/script.md` — 대본
 - `content/001/scenes.json` — 장면 (사람이 읽고 판단하는 것)
 - `content/001/prompts.json` — 화면 프롬프트 (Phase 3이 기계로 읽는 것)
+- `content/001/video/final.mp4` — 본편 영상
+- `content/001/video/shorts/short-1.mp4` — 쇼츠 (3개)
+- `content/001/video/timeline.json` — 편집 계획 (어느 샷을 몇 초에 쓰는지)
+- `content/001/video/shorts.json` — 쇼츠 후보와 고른 이유
 - `logs/` — 실행 기록
+
+**"영상·쇼츠까지"로 돌리면 10~20분 걸립니다.** 샷을 하나씩 렌더하고 마지막에
+자막을 굽기 때문입니다. AI를 한 번도 안 부르므로 장면까지와 비교해 **추가 비용은
+0원**입니다.
+
+그리고 지금 나오는 영상의 그림은 **자리표시**입니다. 샷 번호와 장면 정보를 적은
+단색 화면입니다. 진짜 그림은 Phase 3이 만듭니다. 지금 이 영상으로 확인하는 것은
+"그림이 예쁜가"가 아니라 **샷이 순서대로 붙는가, 길이가 맞는가, 자막이 유튜브
+자막 자리를 비켜 앉는가**입니다.
 
 화면에는 소재가 카드로 나옵니다.
 
@@ -115,6 +128,19 @@ node src/main.mjs auto --scripts=1     소재 찾기부터 대본까지 한 번�
 node src/main.mjs auto --scripts=1 --scenes   장면·프롬프트까지 이어서
 node src/main.mjs scenes --id=001      그 편의 장면·프롬프트 만들기
 node src/main.mjs scenes --id=001 --dry-run   쪼개기만 (비용 0원)
+npm run video -- --id=001              그 편을 영상 파일로 만들기 (비용 0원)
+npm run video -- --id=001 --dry-run    편집 계획과 쇼츠 후보만 (렌더 안 함)
+npm run video -- --id=001 --no-shorts  본편만 (쇼츠 안 자름)
+node src/main.mjs auto --scripts=1 --scenes --video   소재부터 영상까지 한 번에
+```
+
+영상을 만들려면 ffmpeg와 한글 글꼴이 필요합니다. 글꼴이 없으면 자막의 한글이
+전부 네모로 나옵니다 — 그런데 ffmpeg는 오류를 내지 않으므로 영상을 눈으로 볼
+때까지 모릅니다.
+
+```
+sudo apt-get install -y ffmpeg fonts-noto-cjk     우분투/데비안
+brew install ffmpeg && brew install --cask font-noto-sans-cjk-kr    맥
 ```
 
 개수와 분야를 정할 수 있습니다.
@@ -146,6 +172,16 @@ ai-surprise/
       research.json             소재 정보 + 심사 결과 + 현재 상태
       script.md                 대본
       script-check.json         대본 검증 결과
+      scenes.json               장면·샷
+      prompts.json              화면 프롬프트 (Phase 3 입력)
+      video/
+        timeline.json           편집 계획
+        subtitle-wide.ass       구워 넣는 자막
+        subtitle-ko.srt         유튜브에 따로 올릴 자막 (Phase 7)
+        shorts.json             쇼츠 후보와 고른 이유
+        final.mp4               본편
+        shorts/short-1.mp4      쇼츠
+        clips/                  샷 조각 (중간 파일. 지워도 됩니다)
   logs/
     2026-10-04.log              실행 기록
 ```

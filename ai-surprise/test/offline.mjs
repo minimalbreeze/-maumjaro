@@ -742,7 +742,7 @@ section('7. 대본 파서 — 글자를 하나도 잃지 않는가');
 const { parseScript, narrationFingerprint } = await import('../src/scenes/parse.mjs');
 const { splitIntoScenes, groupIntoScenes, planShots, TARGET_SCENES_MIN, TARGET_SCENES_MAX, SHOT_SECONDS_MAX } =
   await import('../src/scenes/split.mjs');
-const { countNarrationChars, charsForMinutes, NARRATION_CHARS_PER_MINUTE } = await import(
+const { countNarrationChars, charsForMinutes, secondsForChars, NARRATION_CHARS_PER_MINUTE } = await import(
   '../src/narration.mjs'
 );
 
@@ -1236,6 +1236,491 @@ test('문제가 남아 있으면 SCENES_READY로 올리지 않는다', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────
+
+section('12. 자막 — 유튜브 자막 자리를 비켜주는가, 글자가 안 잘리는가');
+
+const {
+  FORMATS,
+  COLORS,
+  assColor,
+  emphasize,
+  splitForScreen,
+  splitWordsBalanced,
+  wrapLines,
+  assTime,
+  buildCues,
+  renderAss,
+  buildAss,
+  renderSrt,
+  totalSeconds,
+} = await import('../src/video/subtitle.mjs');
+
+test('ASS 색상은 &HAABBGGRR 순서다 (RGB가 뒤집힌다)', () => {
+  // 빨강(255,0,0) → BB=00 GG=00 RR=FF
+  assert.equal(assColor({ r: 255, g: 0, b: 0 }), '&H000000FF');
+  // 파랑(0,0,255) → BB=FF
+  assert.equal(assColor({ r: 0, g: 0, b: 255 }), '&H00FF0000');
+  assert.equal(COLORS.white, '&H00FFFFFF');
+});
+
+test('유튜브 자막 자리를 비운다 — 16:9는 240px, 쇼츠는 600px', () => {
+  for (const format of [FORMATS.wide, FORMATS.shorts]) {
+    const ass = renderAss([{ start: 0, end: 2, text: '시험' }], { format });
+    const style = ass.split('\n').find((l) => l.startsWith('Style: Main'));
+    const fields = style.split(',');
+    // Alignment, MarginL, MarginR, MarginV, Encoding 이 마지막 다섯 칸이다.
+    assert.equal(fields.at(-5), '2', `${format.name}: 하단 중앙 정렬이어야 한다`);
+    assert.equal(Number(fields.at(-2)), format.marginV, `${format.name}: MarginV`);
+    assert.ok(ass.includes(`PlayResY: ${format.height}`));
+  }
+  assert.equal(FORMATS.wide.marginV, 240);
+  assert.equal(FORMATS.shorts.marginV, 600);
+});
+
+test('자동 줄바꿈을 끈다 — 한 줄 글자 수 계산이 무의미해지지 않게', () => {
+  assert.ok(renderAss([], {}).includes('WrapStyle: 2'));
+});
+
+test('숫자를 노란 굵은 글씨로 강조하고 다음 글자에서 되돌린다', () => {
+  const out = emphasize('세 명이 사라졌는데 외투는 두 벌만 없었다');
+  assert.ok(out.includes(`{\\c${COLORS.yellow}\\b1}세 명`), out);
+  assert.ok(out.includes(`{\\c${COLORS.white}\\b0}`), out);
+  // 되돌림 태그 수가 강조 태그 수와 같아야 한다. 하나라도 빠지면
+  // 그 뒤의 자막 전체가 노란 굵은 글씨로 남는다.
+  const on = out.match(/\\b1}/g)?.length ?? 0;
+  const off = out.match(/\\b0}/g)?.length ?? 0;
+  assert.equal(on, off);
+});
+
+test('아라비아 숫자와 단위도 함께 강조한다', () => {
+  const out = emphasize('1900년 12월 26일에 등대지기 3명이 사라졌다');
+  for (const piece of ['1900년', '12월', '26일', '3명']) {
+    assert.ok(out.includes(`\\b1}${piece}`), `${piece}가 강조되지 않았다: ${out}`);
+  }
+});
+
+test('강조할 숫자가 없으면 글자를 건드리지 않는다', () => {
+  assert.equal(emphasize('아무도 남지 않았다'), '아무도 남지 않았다');
+});
+
+test('한 줄 글자 수 상한을 넘지 않는다', () => {
+  const long =
+    '등대지기 세 명이 사라진 뒤 섬에 도착한 보급선 선원들은 문이 안쪽에서 ' +
+    '잠겨 있지 않은 것을 발견했고 식탁 위에는 손대지 않은 식사가 그대로 놓여 있었다';
+  for (const format of [FORMATS.wide, FORMATS.shorts]) {
+    for (const chunk of splitForScreen(long, format)) {
+      for (const line of wrapLines(chunk, format).split('\\N')) {
+        assert.ok(
+          countNarrationChars(line) <= format.maxCharsPerLine,
+          `${format.name}: "${line}" (${countNarrationChars(line)}자 > ${format.maxCharsPerLine}자)`
+        );
+      }
+      assert.ok(wrapLines(chunk, format).split('\\N').length <= format.maxLines);
+    }
+  }
+});
+
+test('어절을 가운데서 자르지 않는다', () => {
+  const text = '보급선 선원들이 도착했을 때 등대는 비어 있었다';
+  const joined = splitForScreen(text, FORMATS.shorts)
+    .flatMap((c) => wrapLines(c, FORMATS.shorts).split('\\N'))
+    .join(' ')
+    .replace(/\s+/g, ' ');
+  // 조각을 다시 붙이면 원문의 어절이 전부 온전히 남아 있어야 한다.
+  for (const word of text.split(' ')) {
+    assert.ok(joined.includes(word), `어절 "${word}"가 잘렸다: ${joined}`);
+  }
+});
+
+test('어절 하나가 혼자 떨어지지 않는다 — 1초짜리 자막을 막는다', () => {
+  // 예전 구현은 한 줄을 끝까지 채우고 남은 어절을 다음 조각에 혼자 두었다.
+  const sentence =
+    '1900년 12월 26일 보급선이 플래넌 제도 등대에 도착했지만 등대지기 세 명은 아무도 없었고 식탁에는 식사가 그대로 있었다';
+  const chunks = splitWordsBalanced(sentence, FORMATS.shorts.maxCharsPerLine * FORMATS.shorts.maxLines);
+  assert.ok(chunks.length >= 2, '쪼개져야 한다');
+  const shortest = Math.min(...chunks.map((c) => countNarrationChars(c)));
+  const longest = Math.max(...chunks.map((c) => countNarrationChars(c)));
+  // 가장 짧은 조각이 가장 긴 조각의 1/4보다는 커야 한다.
+  assert.ok(shortest > longest / 4, `조각 길이가 너무 들쭉날쭉하다: ${JSON.stringify(chunks)}`);
+});
+
+test('짧은 글은 쪼개지 않는다', () => {
+  assert.deepEqual(splitForScreen('아무도 없었다', FORMATS.wide), ['아무도 없었다']);
+});
+
+test('빈 글에도 죽지 않는다', () => {
+  for (const input of ['', '   ', null, undefined]) {
+    assert.deepEqual(splitForScreen(input, FORMATS.wide), []);
+  }
+  assert.deepEqual(buildCues(null, {}), []);
+  assert.equal(totalSeconds(null), 0);
+});
+
+test('ASS 시간 표기는 h:mm:ss.cc 다', () => {
+  assert.equal(assTime(0), '0:00:00.00');
+  assert.equal(assTime(1.5), '0:00:01.50');
+  assert.equal(assTime(61.23), '0:01:01.23');
+  assert.equal(assTime(3725.5), '1:02:05.50');
+  // 음수가 들어와도 0으로 막는다. ASS는 음수 시간을 조용히 무시한다.
+  assert.equal(assTime(-3), '0:00:00.00');
+});
+
+test('자막 큐가 겹치지 않고 순서대로 간다', () => {
+  const cues = buildCues(videoScenes(), { format: FORMATS.wide });
+  assert.ok(cues.length > 0);
+  for (let i = 1; i < cues.length; i++) {
+    assert.ok(
+      cues[i].start >= cues[i - 1].start - 0.001,
+      `큐 ${i}가 앞으로 갔다: ${cues[i - 1].start} → ${cues[i].start}`
+    );
+    assert.ok(cues[i - 1].end <= cues[i].start + 0.001, `큐 ${i - 1}과 ${i}가 겹친다`);
+    assert.ok(cues[i].end > cues[i].start, `큐 ${i}의 길이가 0이다`);
+  }
+});
+
+test('자막 전체 길이가 나레이션 길이와 맞는다', () => {
+  const scenes = videoScenes();
+  const cues = buildCues(scenes, { format: FORMATS.wide });
+  assert.ok(Math.abs(cues.at(-1).end - totalSeconds(scenes)) < 0.5);
+});
+
+test('TTS 실제 타임스탬프를 주면 그걸 쓴다 (추정하지 않는다)', () => {
+  const scenes = videoScenes();
+  const count = scenes.flatMap((s) => s.paragraphs).length;
+  // 문단마다 정확히 10초로 못 박는다.
+  const timings = Array.from({ length: count }, (_, i) => ({ start: i * 10, end: i * 10 + 10 }));
+  const cues = buildCues(scenes, { format: FORMATS.wide, paragraphTimings: timings });
+  assert.equal(cues[0].start, 0);
+  assert.ok(Math.abs(cues.at(-1).end - count * 10) < 0.001);
+});
+
+test('쇼츠 구간을 자르면 시작이 0초로 옮겨진다', () => {
+  const scenes = videoScenes();
+  const all = buildCues(scenes, { format: FORMATS.shorts });
+  const range = { start: 30, end: 70 };
+  const cut = buildCues(scenes, { format: FORMATS.shorts, range });
+  assert.ok(cut.length > 0 && cut.length < all.length);
+  assert.ok(cut[0].start >= 0 && cut[0].start < 1, `첫 큐가 0초에서 시작해야 한다: ${cut[0].start}`);
+  assert.ok(cut.at(-1).end <= range.end - range.start + 0.001, '구간 밖으로 넘어갔다');
+});
+
+test('SRT에는 위치·색 태그가 들어가지 않는다', () => {
+  const srt = renderSrt(buildCues(videoScenes(), { format: FORMATS.wide }));
+  assert.ok(srt.includes('-->'));
+  assert.ok(!srt.includes('\\c&H'), 'SRT에 ASS 색상 태그가 섞였다');
+  assert.ok(!srt.includes('\\N'), 'SRT에 ASS 줄바꿈이 섞였다');
+  assert.ok(/^1\n00:00:00,000 --> /.test(srt), srt.slice(0, 60));
+});
+
+test('대본 한 편으로 ASS 한 파일이 끝까지 만들어진다', () => {
+  const ass = buildAss(videoScenes(), { format: FORMATS.wide });
+  assert.ok(ass.includes('[Events]'));
+  const dialogues = ass.split('\n').filter((l) => l.startsWith('Dialogue:'));
+  assert.ok(dialogues.length > 10, `자막 줄이 ${dialogues.length}개뿐이다`);
+  // 모든 Dialogue 줄의 칸 수가 같아야 한다. 하나라도 틀리면 ASS 전체가 깨진다.
+  for (const d of dialogues) {
+    assert.ok(d.split(',').length >= 10, `칸이 모자란 자막 줄: ${d}`);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('13. 편집 타임라인 — 영상과 소리가 어긋나지 않는가');
+
+const { buildTimeline, DEFAULT_FPS } = await import('../src/video/plan.mjs');
+
+test('샷마다 클립 하나를 만들고 시간을 이어 붙인다', () => {
+  const scenes = videoScenes();
+  const t = buildTimeline(scenes, { format: FORMATS.wide });
+  assert.equal(t.clips.length, scenes.flatMap((s) => s.shots).length);
+  assert.equal(t.width, 1920);
+  assert.equal(t.height, 1080);
+  assert.equal(t.fps, DEFAULT_FPS);
+  assert.equal(t.clips[0].start, 0);
+  for (let i = 1; i < t.clips.length; i++) {
+    const prev = t.clips[i - 1];
+    assert.ok(
+      Math.abs(t.clips[i].start - (prev.start + prev.duration)) < 0.02,
+      `클립 ${i}에 빈틈이나 겹침이 있다`
+    );
+  }
+});
+
+test('샷 길이 합계가 나레이션 길이와 맞는다 — 안 맞으면 문제로 잡는다', () => {
+  const t = buildTimeline(videoScenes(), { format: FORMATS.wide });
+  assert.equal(t.problems.length, 0, t.problems.join(' | '));
+  assert.ok(Math.abs(t.duration - t.narration_seconds) <= 1);
+});
+
+test('길이가 어긋나면 조용히 넘기지 않는다', () => {
+  const scenes = videoScenes().map((s, i) =>
+    i === 0 ? { ...s, shots: s.shots.map((sh) => ({ ...sh, duration: sh.duration + 5 })) } : s
+  );
+  const t = buildTimeline(scenes, { format: FORMATS.wide });
+  assert.ok(t.problems.some((p) => p.includes('어긋납니다')), t.problems.join(' | '));
+});
+
+test('길이가 0인 샷은 버리고 문제로 남긴다', () => {
+  const scenes = videoScenes();
+  scenes[0].shots[0] = { ...scenes[0].shots[0], duration: 0 };
+  const t = buildTimeline(scenes, { format: FORMATS.wide });
+  assert.ok(t.problems.some((p) => p.includes('길이가 0')));
+  assert.ok(!t.clips.some((c) => c.duration === 0));
+});
+
+test('영상 샷에는 이미지 대체 경로를 함께 적는다 (생성 실패 대비)', () => {
+  const t = buildTimeline(videoScenes(), { format: FORMATS.wide });
+  const videoClips = t.clips.filter((c) => c.source.type === 'video');
+  assert.ok(videoClips.length > 0, '영상 샷이 하나는 있어야 이 테스트가 뜻이 있다');
+  for (const c of videoClips) {
+    assert.ok(c.source.path.endsWith('.mp4'));
+    assert.ok(c.source.fallback?.endsWith('.png'), '이미지 대체 경로가 없다');
+  }
+  for (const c of t.clips.filter((c) => c.source.type === 'image')) {
+    assert.ok(c.source.path.endsWith('.png'));
+  }
+});
+
+test('첫 샷에는 전환을 걸지 않는다', () => {
+  const t = buildTimeline(videoScenes(), { format: FORMATS.wide });
+  assert.equal(t.clips[0].transition, 'cut');
+});
+
+test('쇼츠 규격으로도 같은 타임라인을 만든다', () => {
+  const t = buildTimeline(videoScenes(), { format: FORMATS.shorts });
+  assert.equal(t.width, 1080);
+  assert.equal(t.height, 1920);
+  assert.ok(t.subtitle.includes('shorts'));
+});
+
+test('빈 장면에도 죽지 않는다', () => {
+  const t = buildTimeline([], {});
+  assert.equal(t.clips.length, 0);
+  assert.equal(t.duration, 0);
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('14. 쇼츠 후보 — 말이 끊기지 않는 구간을 고르는가');
+
+const { pickShorts, SHORTS_MIN_SECONDS, SHORTS_MAX_SECONDS } = await import('../src/video/shorts.mjs');
+
+test('30~60초 구간 3개를 고른다', () => {
+  const picks = pickShorts(videoScenes(), { count: 3 });
+  assert.equal(picks.length, 3);
+  for (const p of picks) {
+    assert.ok(
+      p.duration >= SHORTS_MIN_SECONDS && p.duration <= SHORTS_MAX_SECONDS,
+      `${p.duration}초는 범위 밖이다`
+    );
+    assert.ok(p.end > p.start);
+    assert.ok(p.reason.length > 0);
+  }
+});
+
+test('문단 경계에서만 자른다 — 문장 중간에서 끊지 않는다', () => {
+  const scenes = videoScenes();
+  const picks = pickShorts(scenes, { count: 3 });
+  // 문단 경계 시각을 전부 모은다.
+  const bounds = [0];
+  let cursor = 0;
+  for (const s of scenes) {
+    for (const p of s.paragraphs) {
+      cursor += secondsForChars(countNarrationChars(p.text));
+      bounds.push(Math.round(cursor * 100) / 100);
+    }
+  }
+  const near = (t) => bounds.some((b) => Math.abs(b - t) < 0.05);
+  for (const p of picks) {
+    assert.ok(near(p.start), `시작 ${p.start}초가 문단 경계가 아니다`);
+    assert.ok(near(p.end), `끝 ${p.end}초가 문단 경계가 아니다`);
+  }
+});
+
+test('고른 구간들이 서로 절반 넘게 겹치지 않는다', () => {
+  const picks = pickShorts(videoScenes(), { count: 3 });
+  for (let i = 0; i < picks.length; i++) {
+    for (let j = i + 1; j < picks.length; j++) {
+      const overlap = Math.min(picks[i].end, picks[j].end) - Math.max(picks[i].start, picks[j].start);
+      const limit = Math.min(picks[i].duration, picks[j].duration) * 0.5;
+      assert.ok(overlap <= limit, `${i + 1}번과 ${j + 1}번이 ${overlap.toFixed(1)}초 겹친다`);
+    }
+  }
+});
+
+test('HOOK이나 TWIST가 들어간 구간을 1순위로 올린다', () => {
+  const picks = pickShorts(videoScenes(), { count: 3 });
+  assert.ok(
+    picks[0].sections.includes('HOOK') || picks[0].sections.includes('TWIST'),
+    `1순위 구간이 ${picks[0].sections.join('+')}이다`
+  );
+});
+
+test('대본이 짧아 30초가 안 나오면 전체를 돌려주고 이유를 적는다', () => {
+  const short = splitIntoScenes(fakeScript(1)).scenes.slice(0, 1);
+  const picks = pickShorts(short, { count: 3 });
+  assert.equal(picks.length, 1);
+  assert.ok(picks[0].reason.includes('만들 수 없었습니다'), picks[0].reason);
+});
+
+test('빈 장면에도 죽지 않는다', () => {
+  assert.deepEqual(pickShorts([], {}), []);
+  assert.deepEqual(pickShorts(null, {}), []);
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('15. ffmpeg 명령 조립 — 오타 하나로 다른 그림이 나오는 부분');
+
+const { cameraFilter, clipArgs, concatArgs, concatList, finishArgs, shortsArgs, escapeFilterPath } =
+  await import('../src/video/ffmpeg.mjs');
+
+test('카메라 움직임마다 프레임 수가 길이×fps와 맞는다', () => {
+  for (const camera of ['zoom in', 'zoom out', 'pan left', 'pan right', 'slow camera shake', 'parallax']) {
+    const f = cameraFilter(camera, { width: 1920, height: 1080, fps: 30, duration: 8 });
+    assert.ok(f.includes('d=240'), `${camera}: d= 가 240이 아니다 — ${f}`);
+    assert.ok(f.includes('s=1920x1080'), `${camera}: 출력 크기가 없다`);
+    assert.ok(f.includes('fps=30'), `${camera}: fps가 없다`);
+    // 계단을 막으려고 먼저 2배로 키운다.
+    assert.ok(f.startsWith('scale=3840:2160'), `${camera}: 미리 키우지 않았다`);
+    // 따옴표 짝이 맞아야 한다. 하나라도 어긋나면 필터 전체가 깨진다.
+    assert.equal((f.match(/'/g) || []).length % 2, 0, `${camera}: 따옴표가 안 맞는다`);
+  }
+});
+
+test('모르는 카메라 이름은 줌인으로 떨어진다 (렌더가 멈추지 않게)', () => {
+  const unknown = cameraFilter('헬리콥터 샷', { width: 1920, height: 1080, fps: 30, duration: 4 });
+  const zoomIn = cameraFilter('zoom in', { width: 1920, height: 1080, fps: 30, duration: 4 });
+  assert.equal(unknown, zoomIn);
+});
+
+test('길이가 0이어도 프레임을 최소 1장은 뽑는다', () => {
+  assert.ok(cameraFilter('zoom in', { width: 100, height: 100, fps: 30, duration: 0 }).includes('d=1'));
+});
+
+test('이미지 샷에는 카메라 움직임을 걸고, 영상 샷에는 걸지 않는다', () => {
+  const base = { width: 1920, height: 1080, fps: 30, inputPath: 'in', outputPath: 'out.mp4' };
+  const image = clipArgs({ duration: 5, camera: 'pan left', source: { type: 'image' } }, base);
+  assert.ok(image.includes('-loop'), '이미지는 -loop 1 로 늘려야 한다');
+  assert.ok(image.join(' ').includes('zoompan'));
+
+  const video = clipArgs({ duration: 5, camera: 'pan left', source: { type: 'video' } }, base);
+  assert.ok(!video.includes('-loop'));
+  assert.ok(!video.join(' ').includes('zoompan'));
+  // 비율이 다른 영상도 꽉 채우고 넘치는 부분을 자른다.
+  assert.ok(video.join(' ').includes('crop=1920:1080'));
+});
+
+test('샷 길이를 -t 로 못 박는다 — 소리와 어긋나지 않게', () => {
+  const args = clipArgs(
+    { duration: 7.456, camera: 'zoom in', source: { type: 'image' } },
+    { width: 1920, height: 1080, fps: 30, inputPath: 'in', outputPath: 'out.mp4' }
+  );
+  assert.equal(args[args.indexOf('-t') + 1], '7.456');
+  assert.ok(args.includes('-an'), '소리는 마지막에 한 번에 붙인다');
+});
+
+test('조각들은 다시 인코딩하지 않고 이어 붙인다', () => {
+  const args = concatArgs({ listPath: 'list.txt', outputPath: 'out.mp4' });
+  assert.ok(args.includes('-c') && args[args.indexOf('-c') + 1] === 'copy');
+  assert.ok(args.includes('concat'));
+});
+
+test('concat 목록의 작은따옴표를 이스케이프한다', () => {
+  const list = concatList(["/tmp/it's/a.mp4", '/tmp/b.mp4']);
+  assert.ok(list.includes("'\\''"), list);
+  assert.equal(list.trim().split('\n').length, 2);
+});
+
+test('자막을 마지막에 한 번만 굽는다 — 샷 경계에서 끊기지 않게', () => {
+  const args = finishArgs({ videoPath: 'silent.mp4', subtitlePath: 'sub.ass', outputPath: 'final.mp4', fps: 30 });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.equal(vf, 'ass=sub.ass');
+  assert.ok(args.includes('-an'), '소리가 없으면 무음으로 둔다');
+});
+
+test('나레이션을 붙이면 소리 크기를 방송 기준으로 맞춘다', () => {
+  const args = finishArgs({ videoPath: 'v.mp4', audioPath: 'voice.mp3', outputPath: 'final.mp4', fps: 30 });
+  assert.ok(args.join(' ').includes('loudnorm=I=-16'));
+  assert.ok(args.includes('-shortest'));
+  assert.ok(!args.includes('-an'));
+});
+
+test('쇼츠는 9:16으로 가운데를 잘라낸다', () => {
+  const args = shortsArgs({ videoPath: 'silent.mp4', start: 12.5, duration: 45, outputPath: 's.mp4' });
+  // -ss 가 -i 앞에 있어야 빨리 찾아간다.
+  assert.ok(args.indexOf('-ss') < args.indexOf('-i'));
+  assert.equal(args[args.indexOf('-ss') + 1], '12.500');
+  assert.equal(args[args.indexOf('-t') + 1], '45.000');
+  assert.ok(args.join(' ').includes('crop=1080:1920'));
+});
+
+test('쇼츠 자막을 한 번만 굽는다 — 두 겹으로 겹치지 않게', () => {
+  // 처음에 완성본(자막이 이미 구워진 영상)에서 잘랐더니 자막이 두 겹이 됐다.
+  // 가로 자막이 세로로 확대·크롭되어 깨진 채 깔리고 그 위에 쇼츠 자막이 얹혔다.
+  // 렌더는 성공했고 오류도 없었다. 영상을 눈으로 보기 전까지 몰랐다.
+  const args = shortsArgs({
+    videoPath: 'silent.mp4',
+    start: 0,
+    duration: 40,
+    subtitlePath: 'short-1.ass',
+    outputPath: 's.mp4',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.equal((vf.match(/ass=/g) || []).length, 1, `자막 필터가 ${vf}`);
+  // 원본은 자막 없는 중간 영상이어야 한다.
+  assert.equal(args[args.indexOf('-i') + 1], 'silent.mp4');
+});
+
+test('쇼츠 소리는 영상과 같은 시각에서 자른다 — 입이 안 맞으면 바로 넘긴다', () => {
+  const args = shortsArgs({
+    videoPath: 'silent.mp4',
+    audioPath: '../voice.mp3',
+    start: 147.82,
+    duration: 37.64,
+    outputPath: 's.mp4',
+  });
+  // -ss 가 두 번, 각 입력 앞에 하나씩.
+  const ssIndexes = args.reduce((acc, a, i) => (a === '-ss' ? [...acc, i] : acc), []);
+  assert.equal(ssIndexes.length, 2, '-ss 가 입력마다 하나씩 있어야 한다');
+  for (const i of ssIndexes) assert.equal(args[i + 1], '147.820');
+  assert.ok(ssIndexes[0] < args.indexOf('silent.mp4'));
+  assert.ok(ssIndexes[1] < args.lastIndexOf('../voice.mp3'));
+  assert.ok(args.includes('-shortest'));
+  assert.ok(args.join(' ').includes('loudnorm=I=-16'), '본편과 같은 소리 기준이어야 한다');
+  assert.ok(!args.includes('-an'));
+});
+
+test('나레이션이 없으면 쇼츠는 무음으로 만든다', () => {
+  const args = shortsArgs({ videoPath: 'silent.mp4', start: 0, duration: 40, outputPath: 's.mp4' });
+  assert.ok(args.includes('-an'));
+  assert.equal(args.filter((a) => a === '-ss').length, 1);
+});
+
+test('필터 경로의 콜론·따옴표·역슬래시를 이스케이프한다', () => {
+  assert.equal(escapeFilterPath('C:\\x\\sub.ass'), 'C\\:\\\\x\\\\sub.ass');
+  assert.equal(escapeFilterPath("it's.ass"), "it\\'s.ass");
+  // 이스케이프한 경로가 필터 문자열에 그대로 들어간다.
+  const args = finishArgs({ videoPath: 'v.mp4', subtitlePath: 'a:b.ass', outputPath: 'o.mp4' });
+  assert.equal(args[args.indexOf('-vf') + 1], 'ass=a\\:b.ass');
+});
+
+/**
+ * 영상 테스트가 쓰는 장면 묶음.
+ *
+ * designedScenes()와 달리 카메라 움직임을 종류별로 돌려가며 붙인다 —
+ * 어떤 카메라든 ffmpeg 필터가 깨지지 않는지 보려고.
+ */
+function videoScenes() {
+  const cameras = ['zoom in', 'zoom out', 'pan left', 'pan right', 'slow camera shake', 'parallax'];
+  const scenes = designedScenes().map((scene, si) => ({
+    ...scene,
+    shots: scene.shots.map((shot, i) => ({ ...shot, camera: cameras[(si + i) % cameras.length] })),
+  }));
+  return assignSound(assignAssetTypes(scenes, { videoRatio: 0.15 }));
+}
 
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);

@@ -211,3 +211,36 @@ export function saveScript(id, markdown, check) {
   setStatus(id, check?.ok ? 'SCRIPT_READY' : 'SCRIPTING');
   return contentPath(id, 'script.md');
 }
+
+/**
+ * Phase 5가 만든 편집 계획을 저장한다.
+ *
+ * 영상 파일 자체는 content/<id>/video/ 에 들어간다. 계획(timeline.json)과
+ * 자막은 따로 저장한다 — 렌더가 중간에 죽어도 같은 계획으로 이어서 할 수
+ * 있어야 하고, 사람이 "이 샷만 다시"라고 말할 수 있어야 한다.
+ */
+export function saveVideoPlan(id, { timeline, subtitleAss, subtitleSrt = null, shorts = [] }) {
+  const dir = contentPath(id, 'video');
+  ensureDir(dir);
+
+  fs.writeFileSync(path.join(dir, 'timeline.json'), JSON.stringify(timeline, null, 2) + '\n', 'utf8');
+  if (subtitleAss) fs.writeFileSync(path.join(dir, timeline.subtitle || 'subtitle.ass'), subtitleAss, 'utf8');
+  // 유튜브에 따로 올릴 자막 트랙 (Phase 7에서 쓴다).
+  if (subtitleSrt) fs.writeFileSync(path.join(dir, 'subtitle-ko.srt'), subtitleSrt, 'utf8');
+  fs.writeFileSync(
+    path.join(dir, 'shorts.json'),
+    JSON.stringify(
+      {
+        count: shorts.length,
+        // 문단 본문은 다시 빼낼 수 있으므로 저장하지 않는다. 파일이 커지면
+        // 사람이 열어볼 수 없게 된다.
+        shorts: shorts.map(({ paragraphs, ...rest }) => rest),
+      },
+      null,
+      2
+    ) + '\n',
+    'utf8'
+  );
+
+  return dir;
+}

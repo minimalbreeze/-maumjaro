@@ -1,4 +1,4 @@
-name: AI 서프라이즈 소재·대본 만들기
+name: AI 서프라이즈 소재·대본·영상 만들기
 
 # 왜 여기서 도는가
 #   PC에 Node를 깔거나 터미널을 열 필요 없이 GitHub 화면에서 버튼만 누르면
@@ -24,6 +24,7 @@ on:
           - '소재만 찾기 (대본 안 씀)'
           - '소재 찾고 대본까지 쓰기'
           - '소재 → 대본 → 장면까지 쓰기'
+          - '소재 → 대본 → 장면 → 영상·쇼츠까지 만들기'
       video_ratio:
         description: 'AI 영상 비중 (0.15 = 샷의 15%만 영상. 올리면 비싸집니다)'
         required: false
@@ -56,7 +57,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
@@ -89,6 +90,21 @@ jobs:
           fi
           echo "ANTHROPIC_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
+      # 영상을 만들 때만 깐다. 다른 방식에서는 1분 넘게 기다릴 이유가 없다.
+      # fonts-noto-cjk 가 없으면 자막의 한글이 전부 네모로 나온다 —
+      # 그런데 ffmpeg는 오류를 내지 않으므로, 영상을 눈으로 보기 전까지
+      # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
+      - name: ffmpeg와 한글 글꼴 설치
+        if: ${{ contains(inputs.mode, '영상') }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
+          ffmpeg -hide_banner -version | head -1
+          fc-list | grep -ci "noto sans cjk" || {
+            echo "::error::한글 글꼴이 설치되지 않았습니다. 자막이 네모로 나옵니다."
+            exit 1
+          }
+
       - name: 실행
         if: ${{ !contains(inputs.mode, '테스트만') }}
         working-directory: ai-surprise
@@ -120,6 +136,12 @@ jobs:
           [ -n "$IN_CATEGORY" ] && args+=("--category=$IN_CATEGORY")
 
           case "$IN_MODE" in
+            *'영상'*)
+              args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--video")
+              echo "소재 → 대본 → 장면 → 영상·쇼츠까지 만듭니다. AI 영상 비중 $IN_VIDEO_RATIO"
+              echo "렌더링은 AI를 안 쓰므로 추가 비용이 없습니다. 시간은 10~20분 걸립니다."
+              node src/main.mjs auto "${args[@]}"
+              ;;
             *'장면까지'*)
               args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes")
               echo "소재 → 대본 → 장면·프롬프트까지 만듭니다. AI 영상 비중 $IN_VIDEO_RATIO"
@@ -170,6 +192,14 @@ jobs:
             cat "$f"
             echo "::endgroup::"
           done
+          for f in content/*/video/shorts.json; do
+            id="${f%/video/shorts.json}"; id="${id#content/}"
+            echo "::group::📱 쇼츠 후보 content/$id"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          echo "만들어진 영상 파일:"
+          ls -lh content/*/video/final.mp4 content/*/video/shorts/*.mp4 2>/dev/null || echo "  (없음)"
           [ "$found" = "1" ] || echo "만들어진 대본이 없습니다."
 
       - name: 결과물 올리기 (소재 목록·대본)
@@ -181,5 +211,7 @@ jobs:
             ai-surprise/inbox/
             ai-surprise/content/
             ai-surprise/logs/
+            !ai-surprise/content/*/video/clips/
+            !ai-surprise/content/*/video/silent.mp4
           if-no-files-found: ignore
           retention-days: 30
