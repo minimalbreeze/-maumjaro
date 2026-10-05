@@ -24,6 +24,10 @@ import { GATE, MIN_SOURCE_COUNT } from './model.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
+import { FORMATS, buildAss, buildCues, renderSrt } from './video/subtitle.mjs';
+import { buildTimeline } from './video/plan.mjs';
+import { pickShorts } from './video/shorts.mjs';
+import { renderTimeline, renderShort, probe } from './video/render.mjs';
 import {
   saveToInbox,
   listInbox,
@@ -32,6 +36,7 @@ import {
   promoteToContent,
   saveScript,
   saveScenes,
+  saveVideoPlan,
   loadContent,
   INBOX_DIR,
   contentPath,
@@ -371,6 +376,165 @@ async function cmdScenes(flags) {
 }
 
 /**
+ * 장면 → 실제 영상 파일 (Phase 5).
+ *
+ * AI를 한 번도 부르지 않는다. 전부 계산과 ffmpeg다. 그래서 공짜다 —
+ * 몇 번이고 다시 돌려 눈으로 확인할 수 있다.
+ *
+ * Phase 3(그림)·Phase 4(목소리)가 아직 없으므로, 없는 에셋은 자리표시
+ * 이미지로 채운다. 그래야 "그림이 없어서" 못 고치는 것과 "편집이 틀려서"
+ * 못 고치는 것을 구분할 수 있다.
+ */
+async function cmdVideo(flags) {
+  const id = String(flags.id || '').padStart(3, '0');
+  if (!flags.id) {
+    log.error('어떤 편의 영상을 만들지 알려주세요.');
+    log.info('  node src/main.mjs list             제작 중인 편 보기');
+    log.info('  node src/main.mjs video --id=001   그 편의 영상 만들기');
+    process.exit(1);
+  }
+
+  const scenesPath = contentPath(id, 'scenes.json');
+  if (!fs.existsSync(scenesPath)) {
+    log.error(`${scenesPath} 이 없습니다. 먼저 장면을 만들어야 합니다:`);
+    log.info(`  node src/main.mjs scenes --id=${id}`);
+    process.exit(1);
+  }
+
+  const saved = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
+  const scenes = saved.scenes || [];
+  if (!scenes.length) {
+    log.error('장면이 비어 있습니다.');
+    process.exit(2);
+  }
+
+  // 기획서 18번의 2단계. 장면에 문제가 남아 있으면 영상을 만들지 않는다.
+  if (saved.problems?.length && !flags.force) {
+    log.error(`이 편의 장면에 확인되지 않은 문제가 ${saved.problems.length}건 있습니다:`);
+    for (const p of saved.problems) log.info(`· ${p}`);
+    log.info('그래도 진행하려면 --force 를 붙이세요.');
+    process.exit(2);
+  }
+
+  // ── 1단계: 편집 계획 (비용 0원)
+  log.section(`🎬 편집 계획  |  content/${id}  |  코드가 처리 (비용 0원)`);
+  const timeline = buildTimeline(scenes, { format: FORMATS.wide });
+  log.ok(`클립 ${timeline.clips.length}개, ${timeline.duration}초 (약 ${(timeline.duration / 60).toFixed(1)}분)`);
+  log.info(`나레이션 길이 ${timeline.narration_seconds}초 — 샷 길이 합계와 ${Math.abs(timeline.duration - timeline.narration_seconds).toFixed(2)}초 차이`);
+  if (timeline.problems.length) {
+    log.error('편집 계획에 문제가 있습니다:');
+    for (const p of timeline.problems) log.info(`· ${p}`);
+    if (!flags.force) {
+      log.info('그래도 진행하려면 --force 를 붙이세요.');
+      process.exit(2);
+    }
+  }
+
+  // ── 2단계: 자막
+  log.section('💬 자막');
+  const ass = buildAss(scenes, { format: FORMATS.wide });
+  const cues = buildCues(scenes, { format: FORMATS.wide });
+  log.ok(`자막 ${cues.length}줄`);
+  log.info(`유튜브 자막 자리로 화면 아래 ${FORMATS.wide.marginV}px를 비웠습니다 (가로), 쇼츠는 ${FORMATS.shorts.marginV}px.`);
+
+  // ── 3단계: 쇼츠 후보
+  log.section('📱 쇼츠 후보');
+  const shorts = pickShorts(scenes, { count: Number(flags.shorts ?? 3) });
+  for (const s of shorts) {
+    log.raw(`  ${s.rank}순위  ${fmtTime(s.start)}~${fmtTime(s.end)}  ${s.duration}초  ${s.reason}`);
+    log.raw(`      ${s.paragraphs[0].text.slice(0, 50)}…`);
+  }
+
+  const dir = saveVideoPlan(id, {
+    timeline,
+    subtitleAss: ass,
+    subtitleSrt: renderSrt(cues),
+    shorts,
+  });
+  log.ok(`편집 계획 저장: ${dir}`);
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 렌더링을 하지 않고 여기서 멈춥니다.');
+    return;
+  }
+
+  // ── 4단계: 실제 렌더링
+  const assetDir = flags.assets ? path.resolve(String(flags.assets)) : contentPath(id, 'assets');
+  const hasAssets = fs.existsSync(assetDir);
+  const audioPath = flags.audio ? path.resolve(String(flags.audio)) : contentPath(id, 'voice.mp3');
+  const hasAudio = fs.existsSync(audioPath);
+
+  log.section(`🖥  렌더링  |  ${timeline.width}x${timeline.height} @ ${timeline.fps}fps`);
+  if (!hasAssets) {
+    log.warn(`에셋 폴더가 없습니다 (${assetDir}). 모든 샷을 자리표시 이미지로 만듭니다.`);
+    log.info('진짜 그림은 Phase 3이 만듭니다. 지금은 편집이 맞는지만 봅니다.');
+  }
+  if (!hasAudio) {
+    log.warn(`나레이션 파일이 없습니다 (${audioPath}). 무음으로 만듭니다.`);
+    log.info('목소리는 Phase 4가 만듭니다.');
+  }
+  log.info(`샷 ${timeline.clips.length}개를 하나씩 렌더합니다. 몇 분 걸립니다.`);
+
+  const workDir = contentPath(id, 'video');
+  const started = Date.now();
+  const result = await renderTimeline(timeline, {
+    workDir,
+    assetDir: hasAssets ? assetDir : null,
+    subtitle: ass,
+    audioPath: hasAudio ? audioPath : null,
+    onProgress: (m) => log.step(m),
+  });
+
+  const info = await probe(result.path);
+  const minutes = ((Date.now() - started) / 60000).toFixed(1);
+  log.ok(`본편 완성: ${result.path}`);
+  log.info(`${info.width}x${info.height}, ${info.duration.toFixed(1)}초, ${minutes}분 걸림`);
+  if (result.placeholders.length) {
+    log.info(`자리표시로 만든 샷 ${result.placeholders.length}/${timeline.clips.length}개`);
+  }
+  // 계획한 길이와 실제 길이가 다르면 소리가 어긋난다. 조용히 넘기지 않는다.
+  const drift = info.duration - timeline.duration;
+  if (Math.abs(drift) > 1) {
+    log.error(`계획(${timeline.duration}초)과 실제 길이(${info.duration.toFixed(1)}초)가 ${drift.toFixed(1)}초 다릅니다.`);
+  }
+
+  // ── 5단계: 쇼츠 자르기
+  if (shorts.length && !flags['no-shorts']) {
+    log.section('📱 쇼츠 렌더링');
+    const shortsDir = path.join(workDir, 'shorts');
+    for (const s of shorts) {
+      const shortAss = buildAss(scenes, {
+        format: FORMATS.shorts,
+        range: { start: s.start, end: s.end },
+      });
+      const out = await renderShort(s, {
+        // 완성본이 아니라 자막 없는 중간 영상에서 자른다. 완성본에서 자르면
+        // 가로 자막이 깨진 채 깔리고 그 위에 쇼츠 자막이 또 얹힌다.
+        sourceVideo: result.silentPath,
+        audioPath: hasAudio ? audioPath : null,
+        workDir: shortsDir,
+        subtitle: shortAss,
+        index: s.rank,
+        fps: timeline.fps,
+      });
+      const si = await probe(out);
+      log.ok(`쇼츠 ${s.rank}: ${si.width}x${si.height}, ${si.duration.toFixed(1)}초 — ${out}`);
+    }
+  }
+
+  log.raw('');
+  log.info('기획서 18번: 여기서 멈춥니다. 영상은 파일로만 있고 유튜브에 올라가지 않았습니다.');
+  log.info('사람이 본편과 쇼츠를 직접 보고 승인한 뒤에 업로드합니다.');
+}
+
+/** 초 → m:ss. 쇼츠 구간을 사람이 읽기 쉽게. */
+function fmtTime(seconds) {
+  const s = Math.max(0, Math.round(Number(seconds) || 0));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
  * 버튼 한 번으로 소재 찾기부터 대본까지 (GitHub Actions용).
  *
  * GitHub에서 돌릴 때는 실행이 끝나면 컴퓨터가 사라진다. 그래서 "소재 찾고
@@ -484,6 +648,21 @@ async function cmdAuto(flags) {
     log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
   }
 
+  // 영상까지 이어서 만든다 (Phase 5).
+  // AI를 안 쓰므로 여기서 추가로 드는 돈은 없다. 시간만 든다.
+  // 장면 단계에서 문제가 남은 편은 cmdVideo가 스스로 거른다.
+  if (flags.video && flags.scenes && scripted.length) {
+    for (const id of scripted) {
+      try {
+        await cmdVideo({ id });
+      } catch (err) {
+        log.fail(`content/${id} 영상 만들기 실패`, err);
+      }
+    }
+  } else if (flags.video) {
+    log.warn('장면이 없어 영상을 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
+  }
+
   log.raw('');
   log.ok('끝났습니다. 아래 Artifacts 에서 소재 목록과 대본을 내려받으세요.');
   log.info('대본을 읽고 괜찮으면 다음 Phase로 넘어갑니다. 아직 유튜브에 아무것도 올라가지 않았습니다.');
@@ -524,6 +703,8 @@ async function main() {
       return cmdScript(positional, flags);
     case 'scenes':
       return cmdScenes(flags);
+    case 'video':
+      return cmdVideo(flags);
     default:
       log.raw('AI 서프라이즈 — 소재 수집 · 심사 · 대본 · 장면');
       log.raw('');
@@ -531,6 +712,7 @@ async function main() {
       log.raw('      소재 찾기부터 한 번에. GitHub Actions가 이걸 씁니다.');
       log.raw('      관문을 통과한 소재만 대본을 씁니다.');
       log.raw('      --scenes 를 붙이면 장면·프롬프트까지 이어서 만듭니다.');
+      log.raw('      --scenes --video 를 붙이면 영상 파일과 쇼츠까지 만듭니다.');
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
@@ -547,6 +729,10 @@ async function main() {
       log.raw('  node src/main.mjs scenes --id=001 [--dry-run] [--video-ratio=0.15]');
       log.raw('      대본을 장면·샷으로 쪼개고 화면 프롬프트를 만듭니다.');
       log.raw('      --dry-run 은 쪼개기만 하고 멈춥니다 (비용 0원).');
+      log.raw('');
+      log.raw('  node src/main.mjs video --id=001 [--dry-run] [--no-shorts]');
+      log.raw('      장면을 실제 영상 파일로 만듭니다. 쇼츠도 함께 자릅니다.');
+      log.raw('      AI를 안 쓰므로 비용 0원입니다. --dry-run 은 계획만 세웁니다.');
       log.raw('');
       log.raw('  npm test');
       log.raw('      API 키 없이 돌아가는 테스트입니다.');
