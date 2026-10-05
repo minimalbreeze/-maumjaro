@@ -38,6 +38,7 @@ import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/n
 import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
+import { pickApp, appBannerHtml } from './seo/app-banner.mjs';
 import { checkFlow } from './seo/flow.mjs';
 import { usageSummary } from './ai/client.mjs';
 
@@ -455,6 +456,7 @@ async function processCluster(cluster, ctx) {
     images: media.blocks,
     adHtml: media.ad,
     watchHtml: media.watch,
+    appHtml: media.app,
     featuredMediaId: media.featuredId,
   });
   result.wordpress = saved;
@@ -547,18 +549,27 @@ async function attachImages({ article, seo, cluster, dryRun }) {
   const watch = pickWatchLinks(cluster.category, {
     text: `${article.title}\n${article.body}`,
   });
+  // 운영자가 만든 앱 이름이 글에 나오면 다운로드 배너를 넣는다.
+  // config/app-links.json 에 주소가 적힌 앱만 — 주소를 만들어내지 않는다.
+  const app = pickApp(`${article.title}\n${article.body}`);
+  const appHtml = app ? appBannerHtml(app) : '';
+
   const plan = planPlacements(article.body, {
     sectionImages: 1,
     withAd: Boolean(AD_SNIPPET),
     withWatch: Boolean(watch),
+    withApp: Boolean(appHtml),
   });
   const body = insertMarks(article.body, plan);
   const out = {
     body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
     watch: watch ? watchBannerHtml(watch) : '',
+    app: appHtml,
     featuredId: null, summary: [],
   };
   if (watch) log.info(`    중계 배너: ${watch.primary.url}`);
+  if (appHtml) log.info(`    앱 배너: ${app.이름} → ${app.url}`);
+  else if (app) log.warn(`    앱 배너: ${app.이름} 은 설정에 주소가 없어 넣지 않습니다 (config/app-links.json)`);
 
   // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
   // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")

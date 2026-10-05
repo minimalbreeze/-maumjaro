@@ -9,9 +9,17 @@
 // 나쁘다. 그래서 주소가 없으면 배너가 아예 안 나가야 한다.
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
-  loadAppLinks, pickApp, appBannerHtml, appBannerFor, 앱스토어주소인가, 주소없는앱, APP_MARK,
+  loadAppLinks, pickApp, appBannerHtml, appBannerFor, 앱스토어주소인가, 주소없는앱,
+  APP_MARK, APP_PLACEHOLDER,
 } from '../src/seo/app-banner.mjs';
+import { planPlacements, insertMarks } from '../src/images/embed.mjs';
+import { markdownToBlocks } from '../src/wordpress/draft.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 let passed = 0;
 const check = (name, fn) => {
@@ -140,6 +148,71 @@ check('스포츠 글에는 앱 배너가 붙지 않는다', () => {
   // 앱 설정이 채워진 뒤에도 평소 글은 그대로여야 한다.
   assert.equal(appBannerFor('신지애 통산 상금 1위, 131억 원 격차는 왜 벌어졌나'), '');
   assert.equal(appBannerFor('윤이나 LPGA 2026시즌 성적'), '');
+});
+
+// ── 본문에 실제로 들어가는가 ───────────────────────────────
+// 배너를 만들어 놓고 본문에 꽂지 않으면 아무 일도 안 일어난다.
+const 본문 = `도입부 문장입니다.
+
+## 첫 소제목
+
+내용 한 줄.
+
+## 두 번째 소제목
+
+내용 두 줄.
+
+## 세 번째 소제목
+
+마무리.`;
+
+check('앱 배너 자리를 소제목 앞에 잡는다', () => {
+  const plan = planPlacements(본문, { withAd: false, withWatch: false, withApp: true });
+  assert.notEqual(plan.appBeforeLine, null, '자리를 안 잡았습니다');
+  const 끼운것 = insertMarks(본문, plan);
+  assert.ok(끼운것.includes(APP_PLACEHOLDER), '자리표시자가 본문에 없습니다');
+  // 받으러 가는 버튼이라 글 아래쪽보다 위쪽이 낫다.
+  const 줄 = 끼운것.split('\n');
+  assert.ok(줄.indexOf(APP_PLACEHOLDER) < 줄.length / 2, '배너가 글 아래쪽에 있습니다');
+});
+
+check('앱이 없으면 자리도 안 잡는다', () => {
+  const plan = planPlacements(본문, { withAd: false, withWatch: false, withApp: false });
+  assert.equal(plan.appBeforeLine, null);
+  assert.ok(!insertMarks(본문, plan).includes(APP_PLACEHOLDER));
+});
+
+check('중계 배너와 같은 자리에 겹치지 않는다', () => {
+  // 둘 다 들어가면 카드가 붙어 나온다.
+  const plan = planPlacements(본문, { withAd: true, withWatch: true, withApp: true });
+  for (const [a, b] of [['appBeforeLine', 'watchBeforeLine'], ['appBeforeLine', 'adBeforeLine']]) {
+    if (plan[a] !== null && plan[b] !== null) {
+      assert.notEqual(plan[a], plan[b], `${a} 와 ${b} 가 같은 줄입니다`);
+    }
+  }
+});
+
+check('자리표시자가 실제 배너로 바뀐다', () => {
+  const html = appBannerHtml(페이드캠);
+  const 블록 = markdownToBlocks(`본문.\n\n${APP_PLACEHOLDER}\n\n## 소제목`, { appHtml: html });
+  assert.ok(블록.includes(페이드캠.url), '배너가 들어가지 않았습니다');
+  assert.ok(!블록.includes(APP_PLACEHOLDER), '자리표시자가 그대로 남았습니다');
+});
+
+check('배너가 없으면 자리표시자가 조용히 사라진다', () => {
+  // 없는 주소를 '다운로드'라고 걸지 않는다. 대신 글은 그대로 나가야 한다.
+  const 블록 = markdownToBlocks(`본문.\n\n${APP_PLACEHOLDER}\n\n## 소제목`, { appHtml: '' });
+  assert.ok(!블록.includes(APP_PLACEHOLDER), '자리표시자가 독자에게 보입니다');
+  assert.ok(블록.includes('소제목'), '글이 사라졌습니다');
+});
+
+check('main 이 앱 배너를 저장까지 넘긴다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  assert.match(src, /pickApp\(/, '앱을 찾지 않습니다');
+  assert.match(src, /withApp: Boolean\(appHtml\)/, '자리 계획에 안 넘깁니다');
+  assert.match(src, /appHtml: media\.app/, 'saveDraft 에 안 넘깁니다');
+  // 주소가 없을 때 조용히 빠지지 않고 알려준다.
+  assert.match(src, /설정에 주소가 없어 넣지 않습니다/, '왜 안 나오는지 알려주지 않습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

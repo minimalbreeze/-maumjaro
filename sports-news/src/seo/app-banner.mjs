@@ -17,7 +17,13 @@ import path from 'node:path';
 import { ROOT } from '../utils/env.mjs';
 import { 낱말로있나 } from './watch-banner.mjs';
 
+// 카드 안에 늘 들어가는 글귀. 나중에 "이 글에 앱 배너가 있나"를 이걸로 찾는다
+// (watch-banner 가 '📺 경기 보러가기' 로 하는 것과 같다).
 export const APP_MARK = '📱 앱 받으러 가기';
+
+// 본문에 먼저 꽂아 두는 자리표시자. draft.mjs 가 실제 배너로 바꾼다.
+// 설정에 주소가 없으면 자리표시자만 조용히 사라진다.
+export const APP_PLACEHOLDER = '<!--APP-->';
 
 let cache = null;
 export function loadAppLinks() {
