@@ -8,6 +8,7 @@
 // 여기서 웹검색을 붙여 Claude가 직접 확인하게 한다.
 
 import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
+import { givenArticleNote } from '../news/given-article.mjs';
 
 export const SYSTEM = `당신은 한국 스포츠 블로그의 팩트체커입니다.
 
@@ -104,11 +105,15 @@ export async function verifyCluster(cluster, { relatedPosts = [], today }) {
     ? relatedPosts.map((p) => `- "${p.title}" (${p.date?.slice(0, 10)}, 유사도 ${Math.round((p.similarity || 0) * 100)}%)`).join('\n')
     : '(비슷한 기존 글 없음)';
 
+  // 운영자가 직접 준 기사면 그 사실을 알린다. 1차 출처로 다루고, 웹검색이
+  // 막혀도 거기 적힌 숫자로 글을 쓰게 한다.
+  const 제공안내 = cluster.운영자제공 ? `\n\n${givenArticleNote()}` : '';
+
   const prompt = `오늘 날짜: ${today} (한국시간)
 종목: ${cluster.topic}
 
 ## 수집된 기사 제목 (${cluster.articles.length}건 / 출처 ${cluster.sourceCount}곳)
-${articleLines}
+${articleLines}${제공안내}
 
 ## 내 블로그의 기존 글 중 비슷한 것
 ${existingLines}

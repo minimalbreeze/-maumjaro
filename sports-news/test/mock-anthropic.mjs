@@ -137,7 +137,7 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
   let verifyCalls = 0;
   // 모의가 거부한 요청을 남긴다. 거부가 한 번이라도 있으면 우리가 API를
   // 잘못 부르고 있다는 뜻이다 — 폴백이 삼켜서 겉으로는 성공해 보여도.
-  const seen = { tools: [], hadWebSearch: false, systemPrompts: [], rejected: [] };
+  const seen = { tools: [], hadWebSearch: false, systemPrompts: [], rejected: [], userPrompts: [] };
 
   const server = http.createServer((req, res) => {
     let body = '';
@@ -148,6 +148,15 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
       seen.tools.push(toolNames);
       if (toolNames.includes('web_search')) seen.hadWebSearch = true;
       if (payload.system) seen.systemPrompts.push(String(payload.system).slice(0, 60));
+      // 사용자 프롬프트 전문을 남긴다. 어떤 재료를 실제로 넘겼는지 검사하려면
+      // 이게 있어야 한다 — 운영자가 준 기사가 사실확인 단계에 닿았는지 같은 것.
+      for (const m of payload.messages || []) {
+        if (m.role !== 'user') continue;
+        const t = typeof m.content === 'string'
+          ? m.content
+          : (m.content || []).map((b) => b.text || '').join('\n');
+        if (t) seen.userPrompts.push(t);
+      }
 
       // 실제 API가 거부하는 조합은 모의도 거부해야 한다.
       // 도구를 지목해 부르면서 thinking을 켜면 400이 난다. 모의가 이걸 받아주는

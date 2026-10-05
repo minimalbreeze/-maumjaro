@@ -33,6 +33,7 @@ import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { researchSubject, subjectAsCluster } from './ai/research.mjs';
 import { pickFacilities, gatherOfficial } from './news/official.mjs';
+import { givenArticleCluster } from './news/given-article.mjs';
 import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/naver-keywords.mjs';
 import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
@@ -61,6 +62,10 @@ export function parseArgs(argv) {
     // --official: 설정에 적힌 공식 페이지를 받아보기만 한다. AI를 부르지 않으므로
     // 0원이다. 글을 쓰기 전에 요금표가 실제로 읽히는지 확인하는 용도다.
     else if (a === '--official') args.official = true;
+    // --article=파일: 운영자가 준 기사를 글감 재료로 쓴다. 뉴스 수집을 거치지
+    // 않는다. 주제 한 줄만 넘기면 기사에 있는 숫자가 전달되지 않아, 사실 확인
+    // 단계가 "확인할 수 없다"며 글을 못 쓴다(2026-10-05 에 실제로 그랬다).
+    else if ((m = /^--article=(.+)$/.exec(a))) args.articleFile = m[1].replace(/^["']|["']$/g, '');
     else if (a === '--candidates') args.candidates = true;
     else if ((m = /^--candidates=(\d+)$/.exec(a))) { args.candidates = true; args.candidatesTop = Number(m[1]); }
     else if (a === '--draft') args.draft = true;
@@ -731,6 +736,22 @@ async function main() {
     log.info(`  검색어: ${classified.queries.join(', ')}`);
     topics = [subjectAsTopic(args.subject, classified)];
     args.limit ??= 1;
+
+    // --article: 운영자가 준 기사를 재료로 1편 쓴다. 뉴스 수집을 거치지 않는다.
+    if (args.articleFile) {
+      const 본문 = fs.readFileSync(args.articleFile, 'utf8');
+      const cluster = givenArticleCluster(본문, {
+        subject: args.subject, topic: classified.category || '주제', category: classified.category,
+      });
+      if (!cluster) throw new Error(`기사 파일이 비어 있습니다: ${args.articleFile}`);
+      log.section(`📄 ${args.subject}`);
+      log.info(`운영자가 준 기사를 재료로 씁니다 (${본문.trim().length}자 · 뉴스 수집 안 함)`);
+      const r = await processCluster(cluster, {
+        ...args, siteCategories, seoFields, today, wpAvailable,
+      });
+      printSummary([{ topic: args.subject, results: [r] }], args);
+      return;
+    }
 
     // --research: 뉴스를 아예 거치지 않는다. 주제 하나를 바로 처리한다.
     if (args.research) {

@@ -49,6 +49,10 @@ on:
           - '중계 배너 상태 보기 (고치지 않음 · 비용 0원)'
           - '중계 배너 넣기 (미리보기 · 비용 0원)'
           - '중계 배너 넣기 (실제 적용 · 비용 0원)'
+      article_text:
+        description: '기사 본문을 붙여넣기 (이게 있으면 뉴스 수집을 건너뛰고 이 기사를 재료로 1편 씁니다. 주제도 함께 적으세요)'
+        required: false
+        default: ''
       find_query:
         description: "글 찾기용 검색어. 예: 파3 예약"
         required: false
@@ -426,6 +430,7 @@ jobs:
           IN_TOPIC: ${{ inputs.topic }}
           IN_MODE: ${{ inputs.mode }}
           IN_COUNT: ${{ inputs.count }}
+          IN_ARTICLE: ${{ inputs.article_text }}
           IN_RESEARCH: ${{ contains(inputs.mode, '공식 자료 조사') }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
@@ -449,9 +454,16 @@ jobs:
             # 주제를 적었으면 그것만 쓴다. 종목 목록은 돌지 않는다.
             args+=("--subject=$IN_SUBJECT" "--limit=$IN_COUNT")
             echo "주제 지정: $IN_SUBJECT (1편만 만듭니다)"
+            # 기사 본문을 붙여넣었으면 그걸 재료로 쓴다. 뉴스 수집을 안 거친다.
+            # 주제 한 줄만 넘기면 기사에 있는 숫자가 전달되지 않아, 사실 확인
+            # 단계가 "확인할 수 없다"며 글을 못 쓴다(2026-10-05 에 실제로 그랬다).
+            if [ -n "$IN_ARTICLE" ]; then
+              printf '%s' "$IN_ARTICLE" > "$RUNNER_TEMP/given-article.txt"
+              args+=("--article=$RUNNER_TEMP/given-article.txt")
+              echo "  붙여넣은 기사를 재료로 씁니다 ($(wc -c < "$RUNNER_TEMP/given-article.txt")바이트)"
             # 공식 자료 조사 방식이면 뉴스를 아예 안 거친다.
             # 요금·예약·주차처럼 뉴스에 없는 정보를 쓸 때 쓴다.
-            if [ "$IN_RESEARCH" = "true" ]; then
+            elif [ "$IN_RESEARCH" = "true" ]; then
               args+=("--research")
               echo "  뉴스 없이 공식 자료(관공서·협회·공식 홈페이지)로 조사합니다"
             fi
