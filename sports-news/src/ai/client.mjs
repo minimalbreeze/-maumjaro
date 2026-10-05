@@ -86,23 +86,42 @@ const MAX_CONTINUATIONS = 5;
  * 웹검색을 곁들인 호출. pause_turn이 오면 대화를 그대로 되돌려보내 이어받는다.
  * (문서상 "Continue" 같은 사용자 메시지를 덧붙이면 안 된다 — 서버가 스스로 이어간다.)
  */
-export async function callWithSearch({ system, prompt, tools = [], maxTokens = 16000, effort = env('VERIFY_EFFORT', 'medium') }) {
+export async function callWithSearch({
+  system, prompt, tools = [],
+  // 2026-10-05: 4,537바이트 기사로 돌렸을 때 도구 입력이 잘려서 confirmed 가
+  // 통째로 없는 결과가 왔다. 3분 걸린 호출값을 그대로 버렸다. 상한은 올려도
+  // 실제로 쓴 토큰만 과금되므로 올려 둔다.
+  maxTokens = Number(env('VERIFY_MAX_TOKENS', '24000')),
+  effort = env('VERIFY_EFFORT', 'medium'),
+}) {
   const messages = [{ role: 'user', content: prompt }];
   let response;
   let continuations = 0;
 
   for (;;) {
+    // 스트리밍으로 받는다. 두 가지 이유다.
+    //   ① max_tokens 를 16,000 위로 올리면 SDK 가 비스트리밍 요청을 거부한다
+    //      ("Streaming is required for operations that may take longer than
+    //      10 minutes"). 이 한도에 묶여 있던 탓에 긴 기사에서 도구 입력이 잘렸다.
+    //   ② thinking: adaptive 가 같은 예산을 쓴다. 생각이 길어지면 정작 결과가
+    //      잘린다 — 2026-10-05 윤이나 기사(4,537바이트)가 그렇게 죽었다.
+    // finalMessage() 는 create() 와 같은 모양의 응답을 준다. 이어받기 로직은 그대로다.
     response = await withRetry(
-      () => ai().messages.create({
+      () => ai().messages.stream({
         model: MODELS.verify,
         max_tokens: maxTokens,
         system,
         messages,
         tools: [WEB_SEARCH_TOOL, ...tools],
         ...tuningFor(MODELS.verify, { effort, maxTokens }),
-      }),
+      }).finalMessage(),
       { tries: 3, base: 2000, label: 'Claude 호출' }
     );
+
+    // 비용을 센다. 이어받기(pause_turn)는 호출마다 따로 과금되므로 매번 센다.
+    // 2026-10-05 까지 이 한 줄이 없어서 **사실 확인 단계가 비용 집계에 아예
+    // 안 들어갔다.** 한 편 127원이라고 찍힌 값이 실제보다 낮았다.
+    recordUsage(MODELS.verify, response);
 
     if (response.stop_reason !== 'pause_turn' || continuations >= MAX_CONTINUATIONS) break;
     continuations++;

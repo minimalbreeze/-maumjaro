@@ -302,6 +302,9 @@ async function processCluster(cluster, ctx) {
       });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
+  if (verification.잘린결과) {
+    log.warn('    사실 확인 응답이 길이 제한에 걸려 잘렸습니다 — 아래 판단의 근거가 불완전합니다 (VERIFY_MAX_TOKENS)');
+  }
   const 검색막힘 = searchBlocked(verification.searched);
   if (검색막힘) {
     log.warn(`    웹검색이 막혔습니다 (${검색막힘}) — 수집한 기사에 적힌 사실로만 씁니다`);

@@ -169,12 +169,63 @@ report_verification 도구를 반드시 호출해야 합니다.`;
 
   const result = toolInputOf(response, 'report_verification');
   if (!result) {
-    const err = new Error('사실 확인 결과를 받지 못했습니다');
+    const err = new Error(`사실 확인 결과를 받지 못했습니다 (stop_reason=${response.stop_reason})`);
     err.code = 'VERIFY_NO_RESULT';
     throw err;
   }
 
-  return { ...result, searched: searchSummary(response) };
+  return { ...정리한사실확인(result, response), searched: searchSummary(response) };
+}
+
+/**
+ * 사실 확인 결과의 빈 칸을 채운다.
+ *
+ * 왜 필요한가: 2026-10-05 윤이나 기사(4,537바이트)로 돌렸을 때 도구 입력이 잘려
+ * confirmed 가 통째로 없는 결과가 왔고, 코드가 `confirmed.length` 를 읽다가
+ * TypeError 로 죽었다.
+ *
+ *   ❌ 실행 실패: Cannot read properties of undefined (reading 'length')
+ *       at processCluster (src/main.mjs:304:49)
+ *
+ * 3분 걸린 유료 호출값이 읽기도 전에 버려졌고, 로그만 보면 왜 죽었는지 알 수
+ * 없었다. 배열은 배열로 채워 두고, **confirmed 자체가 없으면** 잘렸다고 분명히
+ * 말하고 멈춘다 — 사실 0건으로 넘기면 "사실 근거 부족"이라는 틀린 이유가 남는다.
+ */
+export function 정리한사실확인(result, response = {}) {
+  const 배열 = (v) => (Array.isArray(v) ? v : []);
+  const 잘림 = response.stop_reason === 'max_tokens';
+
+  if (!Array.isArray(result.confirmed)) {
+    const err = new Error(
+      `사실 확인 결과가 잘렸습니다 (stop_reason=${response.stop_reason}) — `
+      + '확인된 사실 목록이 아예 오지 않았습니다. VERIFY_MAX_TOKENS 를 올려 다시 돌리세요.'
+    );
+    err.code = 'VERIFY_TRUNCATED';
+    throw err;
+  }
+
+  return {
+    ...result,
+    topicSummary: String(result.topicSummary || ''),
+    eventStatus: result.eventStatus || 'unknown',
+    confirmed: result.confirmed,
+    conflicting: 배열(result.conflicting),
+    unverified: 배열(result.unverified),
+    outlook: 배열(result.outlook),
+    addedValue: 배열(result.addedValue),
+    isDuplicateOfExisting: result.isDuplicateOfExisting === true,
+    duplicateReason: String(result.duplicateReason || ''),
+    // 잘린 결과로는 "쓸 만하다"를 믿을 수 없다. 사실이 있으면 쓰게 두고,
+    // 잘렸다는 사실만 남겨 로그에 찍는다.
+    worthWriting: result.worthWriting !== false,
+    // 잘린 응답이면 모델이 적은 이유를 그대로 믿을 수 없다. 지우지는 않고,
+    // 잘렸다는 사실을 덧붙여 로그에 함께 남긴다.
+    worthWritingReason: [
+      String(result.worthWritingReason || ''),
+      잘림 ? '(응답이 길이 제한에 걸려 잘렸습니다 — 판단 근거가 불완전합니다)' : '',
+    ].filter(Boolean).join(' '),
+    잘린결과: 잘림,
+  };
 }
 
 /** 본문에 쓸 수 있는 재료가 최소한 있는지 코드 차원에서 한 번 더 막는다. */

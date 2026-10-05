@@ -22,6 +22,7 @@ import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
 import { officialBlock } from '../news/official.mjs';
 import { SYSTEM, REPORT_TOOL } from './analyze.mjs';
 import { 기존글목록 } from '../duplicate/check.mjs';
+import { 정리한사실확인 } from './analyze.mjs';
 
 /**
  * 출처 등급.
@@ -123,12 +124,13 @@ report_verification 도구를 반드시 호출해야 합니다.`;
 
   const result = toolInputOf(response, 'report_verification');
   if (!result) {
-    const err = new Error('자료 조사 결과를 받지 못했습니다');
+    const err = new Error(`자료 조사 결과를 받지 못했습니다 (stop_reason=${response.stop_reason})`);
     err.code = 'RESEARCH_NO_RESULT';
     throw err;
   }
 
-  return { ...result, searched: searchSummary(response) };
+  // 같은 결함이 있다 — 응답이 잘리면 confirmed 가 없는 채로 내려간다.
+  return { ...정리한사실확인(result, response), searched: searchSummary(response) };
 }
 
 /**
