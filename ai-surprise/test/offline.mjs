@@ -1722,6 +1722,268 @@ function videoScenes() {
   return assignSound(assignAssetTypes(scenes, { videoRatio: 0.15 }));
 }
 
+// ─────────────────────────────────────────────────────────────
+
+section('16. 이미지 생성 — 코드가 돈을 지키는가');
+
+const {
+  IMAGE_MODELS,
+  DEFAULT_IMAGE_MODEL,
+  modelFor,
+  isDone,
+  firstUrl,
+  createClient,
+} = await import('../src/assets/replicate.mjs');
+const {
+  generateImages,
+  shotsToGenerate,
+  estimateUsd,
+  looksLikeImage,
+  hasUsableFile,
+  DEFAULT_MAX_USD,
+  MAX_ATTEMPTS,
+} = await import('../src/assets/images.mjs');
+
+/** 가짜 PNG. 앞 8바이트만 진짜면 우리 검사를 통과한다. */
+const PNG_HEAD = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+function fakePng(size = 4096) {
+  return Buffer.concat([PNG_HEAD, Buffer.alloc(size - 8, 7)]);
+}
+
+/** 테스트용 가짜 Replicate. 몇 번 불렸는지, 무엇을 받았는지 기억한다. */
+function fakeApi({ failTimes = 0, failForever = new Set(), bad = new Set() } = {}) {
+  const calls = [];
+  let failsLeft = failTimes;
+  return {
+    calls,
+    async generate(prompt, opts) {
+      calls.push({ prompt, opts });
+      if (failsLeft > 0) {
+        failsLeft--;
+        const e = new Error('일시적 실패');
+        e.retryable = true;
+        throw e;
+      }
+      const shotHint = prompt.match(/SHOT:(\S+)/)?.[1];
+      if (shotHint && failForever.has(shotHint)) {
+        const e = new Error('모델이 거부했습니다');
+        e.retryable = true;
+        throw e;
+      }
+      return { url: `https://example.test/${calls.length}.png`, usdEstimate: 0.003, model: 'fake' };
+    },
+    async download(url) {
+      const n = Number(url.match(/\/(\d+)\.png$/)?.[1]);
+      return bad.has(n) ? Buffer.from('nope') : fakePng();
+    },
+  };
+}
+
+function fakePrompts(count, { prefix = 'S01' } = {}) {
+  return Array.from({ length: count }, (_, i) => ({
+    shot_id: `${prefix}-${i + 1}`,
+    scene_number: 1,
+    asset_type: 'IMAGE',
+    duration: 6,
+    camera: 'zoom in',
+    image_prompt: `SHOT:${prefix}-${i + 1} an empty lighthouse interior at night`,
+    video_prompt: '',
+    depicts_real_person: false,
+    mood: 'mystery',
+  }));
+}
+
+function imgDir(name) {
+  const dir = path.join(TMP, 'img', name);
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+test('모르는 모델 이름은 분명한 오류로 막는다', () => {
+  assert.throws(() => modelFor('없는모델'), /모르는 이미지 모델/);
+  assert.equal(modelFor(DEFAULT_IMAGE_MODEL).model, IMAGE_MODELS.schnell.model);
+  // 기본은 싼 쪽이어야 한다. 비싼 게 기본이면 실수 한 번이 비싸진다.
+  assert.ok(
+    IMAGE_MODELS[DEFAULT_IMAGE_MODEL].usdPerImage <=
+      Math.min(...Object.values(IMAGE_MODELS).map((m) => m.usdPerImage)),
+    '기본 모델이 가장 싼 모델이 아닙니다'
+  );
+});
+
+test('토큰이 없으면 호출 전에 막고, 어디서 받는지 알려준다', () => {
+  assert.throws(
+    () => createClient({ token: '' }),
+    (err) => err.code === 'REPLICATE_TOKEN_MISSING' && /REPLICATE_API_TOKEN/.test(err.message)
+  );
+});
+
+test('예측 상태를 끝난 것과 아닌 것으로 가른다', () => {
+  for (const s of ['succeeded', 'failed', 'canceled']) assert.equal(isDone(s), true, s);
+  for (const s of ['starting', 'processing']) assert.equal(isDone(s), false, s);
+});
+
+test('결과가 문자열이든 배열이든 주소를 꺼낸다', () => {
+  assert.equal(firstUrl('https://a/1.png'), 'https://a/1.png');
+  assert.equal(firstUrl(['https://a/1.png', 'https://a/2.png']), 'https://a/1.png');
+  assert.equal(firstUrl([]), null);
+  assert.equal(firstUrl(null), null);
+  assert.equal(firstUrl({ image: 'https://a/1.png' }), null);
+});
+
+test('내려받다 만 파일을 이미지로 인정하지 않는다', () => {
+  assert.equal(looksLikeImage(fakePng()), true);
+  assert.equal(looksLikeImage(Buffer.from('<html>오류 페이지</html>')), false);
+  assert.equal(looksLikeImage(Buffer.alloc(0)), false);
+  assert.equal(looksLikeImage(PNG_HEAD), false, '8바이트짜리는 이미지가 아니다');
+  assert.equal(looksLikeImage(null), false);
+});
+
+test('이미 있는 이미지는 다시 만들지 않는다 — 중간에 죽어도 돈을 다시 안 쓴다', () => {
+  const dir = imgDir('skip');
+  const prompts = fakePrompts(3);
+  fs.writeFileSync(path.join(dir, 'S01-2.png'), fakePng());
+
+  const { todo, skipped } = shotsToGenerate(prompts, { assetDir: dir });
+  assert.deepEqual(todo.map((t) => t.shot_id), ['S01-1', 'S01-3']);
+  assert.equal(skipped.length, 1);
+  assert.equal(skipped[0].reason, '이미 있습니다');
+
+  // --force 면 전부 다시 만든다.
+  assert.equal(shotsToGenerate(prompts, { assetDir: dir, force: true }).todo.length, 3);
+});
+
+test('반쪽짜리 파일은 "있다"고 보지 않는다', () => {
+  const dir = imgDir('partial');
+  fs.writeFileSync(path.join(dir, 'S01-1.png'), Buffer.alloc(50));
+  assert.equal(hasUsableFile(path.join(dir, 'S01-1.png')), false);
+  assert.equal(shotsToGenerate(fakePrompts(1), { assetDir: dir }).todo.length, 1);
+});
+
+test('프롬프트가 빈 샷은 만들지 않고 문제로 남긴다', () => {
+  const dir = imgDir('empty-prompt');
+  const prompts = fakePrompts(2);
+  prompts[0].image_prompt = '   ';
+  const { todo, skipped } = shotsToGenerate(prompts, { assetDir: dir });
+  assert.equal(todo.length, 1);
+  assert.ok(skipped.some((s) => s.reason.includes('비어 있습니다')));
+});
+
+await asyncTest('이미지를 만들고 파일로 저장한다', async () => {
+  const dir = imgDir('ok');
+  const api = fakeApi();
+  const r = await generateImages(fakePrompts(3), { assetDir: dir, client: api, sleepFn: async () => {} });
+
+  assert.equal(r.made.length, 3);
+  assert.equal(r.failed.length, 0);
+  assert.equal(api.calls.length, 3);
+  for (const m of r.made) assert.ok(fs.existsSync(m.file), `${m.file} 이 없다`);
+  // 반쪽짜리 임시 파일이 남으면 안 된다.
+  assert.equal(fs.readdirSync(dir).filter((f) => f.endsWith('.part')).length, 0);
+});
+
+await asyncTest('가로세로비를 16:9로 넘긴다 — 본편 규격과 맞아야 한다', async () => {
+  const dir = imgDir('ratio');
+  const api = fakeApi();
+  await generateImages(fakePrompts(1), { assetDir: dir, client: api, sleepFn: async () => {} });
+  assert.equal(api.calls[0].opts.aspectRatio, '16:9');
+});
+
+await asyncTest('비용 상한을 넘기 전에 멈춘다 — 넘은 뒤에 세면 이미 쓴 뒤다', async () => {
+  const dir = imgDir('budget');
+  const api = fakeApi();
+  // 장당 $0.003, 상한 $0.007 → 2장까지만.
+  const r = await generateImages(fakePrompts(10), {
+    assetDir: dir,
+    client: api,
+    maxUsd: 0.007,
+    sleepFn: async () => {},
+  });
+
+  assert.equal(r.stoppedBy, 'budget');
+  assert.equal(r.made.length, 2, `${r.made.length}장 만들었다`);
+  assert.ok(r.spentUsd <= 0.007, `상한을 넘겨 썼다: $${r.spentUsd}`);
+  assert.equal(api.calls.length, 2, 'API를 상한 너머로 불렀다');
+  assert.equal(r.failed.length, 8);
+  assert.ok(r.failed[0].reason.includes('비용 상한'));
+});
+
+await asyncTest('상한에 걸려 멈춘 뒤 다시 돌리면 남은 것부터 이어서 만든다', async () => {
+  const dir = imgDir('resume');
+  const prompts = fakePrompts(6);
+  const first = await generateImages(prompts, {
+    assetDir: dir, client: fakeApi(), maxUsd: 0.007, sleepFn: async () => {},
+  });
+  assert.equal(first.made.length, 2);
+
+  const api2 = fakeApi();
+  const second = await generateImages(prompts, {
+    assetDir: dir, client: api2, maxUsd: 1, sleepFn: async () => {},
+  });
+  // 이미 만든 2장은 건너뛰고 4장만 새로 만든다.
+  assert.equal(api2.calls.length, 4, `${api2.calls.length}번 불렀다 — 이미 있는 걸 다시 샀다`);
+  assert.equal(second.made.length, 4);
+  assert.equal(second.skipped.filter((s) => s.reason === '이미 있습니다').length, 2);
+});
+
+await asyncTest('일시적 실패는 다시 걸어본다', async () => {
+  const dir = imgDir('retry');
+  const api = fakeApi({ failTimes: 2 });
+  const r = await generateImages(fakePrompts(1), { assetDir: dir, client: api, sleepFn: async () => {} });
+  assert.equal(r.made.length, 1);
+  assert.equal(r.made[0].attempts, 3);
+  assert.equal(api.calls.length, 3);
+});
+
+await asyncTest('계속 실패하는 샷이 있어도 나머지는 끝까지 만든다', async () => {
+  const dir = imgDir('partial-fail');
+  const api = fakeApi({ failForever: new Set(['S01-2']) });
+  const r = await generateImages(fakePrompts(4), { assetDir: dir, client: api, sleepFn: async () => {} });
+
+  assert.equal(r.made.length, 3);
+  assert.equal(r.failed.length, 1);
+  assert.equal(r.failed[0].shot_id, 'S01-2');
+  // 실패한 샷만 MAX_ATTEMPTS 번 걸고 포기한다.
+  assert.equal(api.calls.length, 3 + MAX_ATTEMPTS);
+  assert.ok(!fs.existsSync(path.join(dir, 'S01-2.png')), '실패한 샷의 파일이 남았다');
+});
+
+await asyncTest('내려받은 게 이미지가 아니면 실패로 치고 파일을 남기지 않는다', async () => {
+  const dir = imgDir('bad-download');
+  // 모든 내려받기가 깨진 데이터를 준다.
+  const api = fakeApi({ bad: new Set([1, 2, 3]) });
+  const r = await generateImages(fakePrompts(1), { assetDir: dir, client: api, sleepFn: async () => {} });
+
+  assert.equal(r.made.length, 0);
+  assert.equal(r.failed.length, 1);
+  assert.ok(/이미지가 아닙니다/.test(r.failed[0].reason), r.failed[0].reason);
+  assert.equal(fs.readdirSync(dir).length, 0, '깨진 파일이 남았다');
+});
+
+await asyncTest('호출이 성공한 뒤 내려받기가 실패해도 쓴 돈으로 센다', async () => {
+  const dir = imgDir('spend-on-call');
+  const api = fakeApi({ bad: new Set([1, 2, 3]) });
+  const r = await generateImages(fakePrompts(1), { assetDir: dir, client: api, sleepFn: async () => {} });
+  // 세 번 걸었으니 세 번 돈이 나갔다. 파일은 0개다.
+  assert.ok(r.spentUsd > 0, '돈을 썼는데 0원으로 셌다');
+  assert.equal(r.made.length, 0);
+});
+
+test('비용 추정이 장수에 비례한다', () => {
+  assert.equal(estimateUsd(0), 0);
+  const one = estimateUsd(1);
+  assert.ok(Math.abs(estimateUsd(50) - one * 50) < 1e-6);
+  assert.ok(estimateUsd(50, 'dev') > estimateUsd(50, 'schnell'));
+  assert.ok(DEFAULT_MAX_USD > 0);
+});
+
+await asyncTest('빈 목록에도 죽지 않는다', async () => {
+  const dir = imgDir('empty');
+  const r = await generateImages([], { assetDir: dir, client: fakeApi(), sleepFn: async () => {} });
+  assert.equal(r.made.length, 0);
+  assert.equal(r.spentUsd, 0);
+  assert.equal(r.stoppedBy, null);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

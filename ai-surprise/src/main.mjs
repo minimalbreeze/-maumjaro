@@ -24,6 +24,8 @@ import { GATE, MIN_SOURCE_COUNT } from './model.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
+import { generateImages, shotsToGenerate, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
+import { modelFor, DEFAULT_IMAGE_MODEL } from './assets/replicate.mjs';
 import { FORMATS, buildAss, buildCues, renderSrt } from './video/subtitle.mjs';
 import { buildTimeline } from './video/plan.mjs';
 import { pickShorts } from './video/shorts.mjs';
@@ -376,6 +378,122 @@ async function cmdScenes(flags) {
 }
 
 /**
+ * 화면 프롬프트 → 실제 이미지 파일 (Phase 3).
+ *
+ * 여기가 처음으로 "장당 돈이 나가는" 단계다. 그래서 기본값이 보수적이다.
+ *  - 모델은 싼 쪽(schnell)이 기본
+ *  - 비용 상한이 걸려 있고, 넘으면 멈춘다
+ *  - --dry-run 으로 몇 장에 얼마인지 먼저 볼 수 있다 (비용 0원)
+ */
+async function cmdImages(flags) {
+  const id = String(flags.id || '').padStart(3, '0');
+  if (!flags.id) {
+    log.error('어떤 편의 이미지를 만들지 알려주세요.');
+    log.info('  node src/main.mjs list               제작 중인 편 보기');
+    log.info('  node src/main.mjs images --id=001    그 편의 이미지 만들기');
+    process.exit(1);
+  }
+
+  const promptsPath = contentPath(id, 'prompts.json');
+  if (!fs.existsSync(promptsPath)) {
+    log.error(`${promptsPath} 이 없습니다. 먼저 장면을 만들어야 합니다:`);
+    log.info(`  node src/main.mjs scenes --id=${id}`);
+    process.exit(1);
+  }
+
+  const saved = JSON.parse(fs.readFileSync(promptsPath, 'utf8'));
+  const prompts = saved.prompts || [];
+  if (!prompts.length) {
+    log.error('화면 프롬프트가 비어 있습니다.');
+    process.exit(2);
+  }
+
+  const modelKey = typeof flags.model === 'string' ? flags.model : env('IMAGE_MODEL', DEFAULT_IMAGE_MODEL);
+  const maxUsd = flags['max-usd'] !== undefined ? Number(flags['max-usd']) : DEFAULT_MAX_USD;
+  if (!Number.isFinite(maxUsd) || maxUsd <= 0) {
+    log.error(`비용 상한이 숫자가 아닙니다: ${flags['max-usd']}`);
+    process.exit(1);
+  }
+
+  const assetDir = contentPath(id, 'assets');
+  const model = modelFor(modelKey);
+  const { todo, skipped } = shotsToGenerate(prompts, { assetDir, force: Boolean(flags.force) });
+
+  log.section(`🖼  이미지 생성  |  content/${id}  |  ${model.model}`);
+  log.info(model.note);
+  log.info(`샷 ${prompts.length}개 중 ${todo.length}개를 만듭니다.`);
+  if (skipped.length) {
+    const already = skipped.filter((s) => s.reason === '이미 있습니다').length;
+    if (already) log.info(`${already}개는 이미 있어 건너뜁니다 (--force 로 다시 만듭니다).`);
+    for (const s of skipped.filter((x) => x.reason !== '이미 있습니다')) {
+      log.warn(`${s.shot_id}: ${s.reason}`);
+    }
+  }
+  log.info(`예상 비용 약 $${estimateUsd(todo.length, modelKey)} (추정치), 상한 $${maxUsd}`);
+
+  if (estimateUsd(todo.length, modelKey) > maxUsd) {
+    log.warn(`예상 비용이 상한을 넘습니다. 상한에 걸리면 멈추고, 남은 샷은 다음 실행에서 이어서 만듭니다.`);
+    log.info(`한 번에 끝내려면 --max-usd 를 올리세요.`);
+  }
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    for (const s of todo.slice(0, 5)) {
+      log.raw(`  ${s.shot_id}  ${String(s.image_prompt).slice(0, 90)}…`);
+    }
+    if (todo.length > 5) log.raw(`  … 그리고 ${todo.length - 5}개 더`);
+    return;
+  }
+
+  if (!todo.length) {
+    log.ok('만들 이미지가 없습니다. 전부 이미 있습니다.');
+    log.info(`다음: node src/main.mjs video --id=${id}`);
+    return;
+  }
+
+  const token = env('REPLICATE_API_TOKEN');
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    log.info('  1) https://replicate.com/account/api-tokens 에서 토큰을 만드세요 (r8_... 로 시작합니다)');
+    log.info('  2) GitHub 리포 → Settings → Secrets and variables → Actions → New repository secret');
+    log.info('  3) 이름을 REPLICATE_API_TOKEN 으로 넣으세요');
+    process.exit(1);
+  }
+
+  const started = Date.now();
+  const result = await generateImages(prompts, {
+    assetDir,
+    token,
+    modelKey,
+    maxUsd,
+    force: Boolean(flags.force),
+    onProgress: (m) => log.step(m),
+  });
+
+  log.raw('');
+  log.ok(`이미지 ${result.made.length}개 완성 — ${assetDir}`);
+  log.info(`${((Date.now() - started) / 60000).toFixed(1)}분 걸림, 쓴 돈 약 $${result.spentUsd} (추정치)`);
+  log.info('실제 청구액은 https://replicate.com/account/billing 에서 확인하세요.');
+
+  if (result.stoppedBy === 'budget') {
+    log.warn(`비용 상한 $${maxUsd}에 걸려 멈췄습니다.`);
+    log.info(`같은 명령을 다시 돌리면 이미 만든 것은 건너뛰고 남은 것부터 이어서 만듭니다.`);
+  }
+
+  if (result.failed.length) {
+    log.error(`만들지 못한 샷 ${result.failed.length}개:`);
+    for (const f of result.failed.slice(0, 10)) log.info(`· ${f.shot_id}: ${f.reason}`);
+    if (result.failed.length > 10) log.info(`· … 그리고 ${result.failed.length - 10}개 더`);
+    log.info('같은 명령을 다시 돌리면 실패한 것만 다시 만듭니다.');
+    log.info('그대로 영상을 만들면 실패한 샷만 자리표시 화면으로 나옵니다.');
+  }
+
+  log.raw('');
+  log.info(`다음: node src/main.mjs video --id=${id}`);
+}
+
+/**
  * 장면 → 실제 영상 파일 (Phase 5).
  *
  * AI를 한 번도 부르지 않는다. 전부 계산과 ffmpeg다. 그래서 공짜다 —
@@ -648,6 +766,25 @@ async function cmdAuto(flags) {
     log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
   }
 
+  // 진짜 그림까지 만든다 (Phase 3).
+  // 여기서 처음으로 장당 돈이 나간다. 상한은 cmdImages가 지킨다.
+  if (flags.images && flags.scenes && scripted.length) {
+    for (const id of scripted) {
+      try {
+        await cmdImages({
+          id,
+          model: flags['image-model'],
+          'max-usd': flags['max-usd'],
+        });
+      } catch (err) {
+        // 그림을 못 만들어도 영상은 만든다 — 실패한 샷만 자리표시로 나온다.
+        log.fail(`content/${id} 이미지 만들기 실패`, err);
+      }
+    }
+  } else if (flags.images) {
+    log.warn('장면이 없어 이미지를 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
+  }
+
   // 영상까지 이어서 만든다 (Phase 5).
   // AI를 안 쓰므로 여기서 추가로 드는 돈은 없다. 시간만 든다.
   // 장면 단계에서 문제가 남은 편은 cmdVideo가 스스로 거른다.
@@ -703,6 +840,8 @@ async function main() {
       return cmdScript(positional, flags);
     case 'scenes':
       return cmdScenes(flags);
+    case 'images':
+      return cmdImages(flags);
     case 'video':
       return cmdVideo(flags);
     default:
@@ -713,6 +852,7 @@ async function main() {
       log.raw('      관문을 통과한 소재만 대본을 씁니다.');
       log.raw('      --scenes 를 붙이면 장면·프롬프트까지 이어서 만듭니다.');
       log.raw('      --scenes --video 를 붙이면 영상 파일과 쇼츠까지 만듭니다.');
+      log.raw('      --scenes --images --video 를 붙이면 진짜 그림까지 만듭니다 (장당 돈이 나갑니다).');
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
@@ -729,6 +869,11 @@ async function main() {
       log.raw('  node src/main.mjs scenes --id=001 [--dry-run] [--video-ratio=0.15]');
       log.raw('      대본을 장면·샷으로 쪼개고 화면 프롬프트를 만듭니다.');
       log.raw('      --dry-run 은 쪼개기만 하고 멈춥니다 (비용 0원).');
+      log.raw('');
+      log.raw('  node src/main.mjs images --id=001 [--dry-run] [--model=dev] [--max-usd=3]');
+      log.raw('      화면 프롬프트로 실제 이미지를 만듭니다. 장당 돈이 나갑니다.');
+      log.raw('      --dry-run 은 몇 장에 얼마인지만 보여줍니다 (비용 0원).');
+      log.raw('      이미 만든 이미지는 건너뜁니다. 중간에 죽어도 돈을 다시 안 씁니다.');
       log.raw('');
       log.raw('  node src/main.mjs video --id=001 [--dry-run] [--no-shorts]');
       log.raw('      장면을 실제 영상 파일로 만듭니다. 쇼츠도 함께 자릅니다.');
