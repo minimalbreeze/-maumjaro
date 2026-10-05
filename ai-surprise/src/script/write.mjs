@@ -158,6 +158,28 @@ export function buildScriptPrompt(item, { targetMinutes = 4 } = {}) {
 // 그래서 받자마자 기계적으로 확인한다.
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * 섹션 하나의 본문 줄들을 돌려준다.
+ *
+ * `## [KEY] 라벨` 줄 다음부터 다음 `##` 줄 전까지. 빈 줄과 제목은 뺀다.
+ * 정규식 대신 줄 단위로 읽는 이유는 바로 위 주석에 적어뒀다.
+ */
+export function sectionBody(markdown, key) {
+  const lines = String(markdown || '').split('\n');
+  const out = [];
+  let inside = false;
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (/^##\s*\[/.test(line)) {
+      inside = new RegExp(`^##\\s*\\[${key}\\]`).test(line);
+      continue;
+    }
+    if (inside && line) out.push(line);
+  }
+  return out;
+}
+
 const GREETING_PATTERNS = [
   /안녕하세요/,
   /여러분/,
@@ -235,17 +257,24 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
     warnings.push(`나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 깁니다.`);
   }
 
-  // 6) HOOK 첫 문장 길이 — 첫 10초가 핵심이므로 따로 본다
-  const hookMatch = text.match(/^##\s*\[HOOK\][^\n]*\n([\s\S]*?)(?=\n##\s*\[|$)/m);
-  const hookChars = hookMatch
-    ? countNarrationChars(
-        hookMatch[1]
-          .split('\n')
-          .map((l) => l.trim().replace(/^\[\w+\]\s*/, ''))
-          .join(' ')
-      )
-    : 0;
-  if (hookMatch && hookChars > 120) {
+  // 6) HOOK 길이 — 첫 10초가 핵심이므로 따로 본다 (기획서 22번)
+  //
+  // 정규식으로 잘라내다가 실제 실행에서 틀렸다. 아래 형태였다:
+  //   /^##\s*\[HOOK\][^\n]*\n([\s\S]*?)(?=\n##\s*\[|$)/m
+  // m 플래그가 붙으면 $ 가 "줄 끝"을 뜻하므로, 제목 다음에 빈 줄이 있으면
+  // 게으른 그룹이 빈 문자열에서 바로 멈춘다. 마크다운은 보통 제목 다음에
+  // 빈 줄을 두므로 거의 항상 0자로 측정됐다. 실행 #3에서 "HOOK 0자"로 찍혔다.
+  //
+  // 더 나쁜 건 HOOK이 진짜로 비어 있어도 못 잡아낸다는 점이었다.
+  // 그래서 정규식을 버리고 줄 단위로 읽는다.
+  const hookLines = sectionBody(text, 'HOOK');
+  const hookChars = countNarrationChars(
+    hookLines.map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, '')).join(' ')
+  );
+  if (hookChars === 0) {
+    // 경고가 아니라 오류다. 훅 없는 영상은 아무도 안 본다.
+    errors.push('HOOK 섹션에 나레이션이 없습니다. 첫 10초가 이 채널에서 가장 중요합니다.');
+  } else if (hookChars > 120) {
     warnings.push(`HOOK이 ${hookChars}자입니다. 첫 10초면 약 55자가 적당합니다.`);
   }
 
