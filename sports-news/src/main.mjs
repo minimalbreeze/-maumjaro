@@ -80,6 +80,40 @@ export function parseArgs(argv) {
   return args;
 }
 
+/**
+ * 샘플 파일의 기사 날짜를 "지금" 기준으로 옮긴다.
+ *
+ * 왜 필요한가: 샘플 파일에는 날짜가 고정으로 박혀 있다(2026-09-27 …). 수집 창이
+ * 7일(hoursWindow 168)이라 날이 지나면 전부 "오래된 기사"로 걸러지고, 후보가
+ * 0개가 되어 점검이 깨진다. 실제로 2026-10-05 에 깨졌다 — 어제는 7일 안쪽이라
+ * 통과했고 코드는 그대로였다. 날짜에 매달린 점검은 매일 깨진다.
+ *
+ * 가장 최신 기사를 지금으로 맞추고 나머지를 같은 만큼 민다. 기사 사이의 시간차는
+ * 그대로 남는다 — 그 간격이 묶음 만들기와 급상승 계산에 쓰이기 때문이다.
+ *
+ * 샘플 파일에만 쓴다. 실제 수집에는 손대지 않는다.
+ */
+export function 샘플날짜당기기(items, { now = Date.now(), hoursWindow = 168 } = {}) {
+  const rows = Array.isArray(items) ? items : [];
+  const 시각들 = rows
+    .map((it) => Date.parse(it?.publishedAt || ''))
+    .filter((t) => Number.isFinite(t));
+  if (!시각들.length) return rows;
+
+  const 최신 = Math.max(...시각들);
+  // 이미 수집 창 안에 있으면 손대지 않는다. 쓸데없이 날짜를 바꾸면 샘플에 담긴
+  // 실제 시간 분포가 사라진다. 창을 벗어났을 때만 당긴다.
+  if (now - 최신 < hoursWindow * 3600 * 1000) return rows;
+
+  const 밀기 = now - 최신;
+
+  return rows.map((it) => {
+    const t = Date.parse(it?.publishedAt || '');
+    if (!Number.isFinite(t)) return it;
+    return { ...it, publishedAt: new Date(t + 밀기).toISOString() };
+  });
+}
+
 function loadTopics(filter) {
   const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'topics.json'), 'utf8'));
   let topics = cfg.topics.filter((t) => t.enabled !== false);
@@ -120,8 +154,10 @@ async function collectTopic(topic, cfg, { fixture, recentCats = null } = {}) {
     const forTopic = Array.isArray(items)
       ? items.filter((it) => topic.adHoc || !it.topic || it.topic === topic.name)
       : (items[topic.name] || Object.values(items).flat());
-    raw.push(...forTopic);
-    log.info(`  샘플 파일에서 ${forTopic.length}건 (네트워크를 쓰지 않습니다)`);
+    // 날짜를 지금 기준으로 옮긴다. 안 그러면 날이 지나면서 전부 걸러진다.
+    const 당긴것 = 샘플날짜당기기(forTopic, { hoursWindow });
+    raw.push(...당긴것);
+    log.info(`  샘플 파일에서 ${당긴것.length}건 (네트워크를 쓰지 않습니다 · 날짜는 지금 기준으로 옮김)`);
   }
 
   // 검색 피드를 위에서부터 시도한다. 한 곳이 막혀도(구글뉴스 403 등) 다음 곳으로 넘어간다.

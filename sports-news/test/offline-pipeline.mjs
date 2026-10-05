@@ -276,6 +276,48 @@ check('지시서 분량과 채점 기준이 같은 것을 가리킨다', () => {
   assert.ok(하한 >= 3750, `지시서 하한 ${하한}자 — 공백 제외 3,000자를 채울 수 없습니다`);
 });
 
+check('샘플 날짜를 지금 기준으로 옮긴다', async () => {
+  // 샘플 파일 날짜가 고정이라 수집 창(7일)을 벗어나면 후보가 0개가 된다.
+  // 2026-10-05 에 실제로 그래서 점검이 깨졌다 — 코드는 그대로였고 날짜만 지났다.
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const now = Date.parse('2026-10-05T12:00:00Z');
+  const 원본 = [
+    { title: 'a', publishedAt: '2026-09-27T23:00:00Z' },
+    { title: 'b', publishedAt: '2026-09-27T21:00:00Z' },
+    { title: 'c', publishedAt: '2026-09-28T01:00:00Z' },
+  ];
+  const 당김 = 샘플날짜당기기(원본, { now });
+
+  // 가장 최신 기사가 지금이 된다.
+  const 최신 = Math.max(...당김.map((x) => Date.parse(x.publishedAt)));
+  assert.equal(최신, now, new Date(최신).toISOString());
+
+  // 기사 사이 간격은 그대로 남는다 — 묶음 만들기와 급상승 계산이 그걸 쓴다.
+  const 간격원본 = Date.parse(원본[2].publishedAt) - Date.parse(원본[0].publishedAt);
+  const 간격당김 = Date.parse(당김[2].publishedAt) - Date.parse(당김[0].publishedAt);
+  assert.equal(간격당김, 간격원본);
+
+  // 전부 수집 창(7일) 안에 들어온다.
+  for (const x of 당김) {
+    assert.ok(now - Date.parse(x.publishedAt) < 168 * 3600 * 1000, x.publishedAt);
+  }
+});
+
+check('이미 최근인 샘플은 건드리지 않는다', async () => {
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const now = Date.parse('2026-10-05T12:00:00Z');
+  const 원본 = [{ title: 'a', publishedAt: '2026-10-05T11:00:00Z' }];
+  assert.equal(샘플날짜당기기(원본, { now })[0].publishedAt, 원본[0].publishedAt);
+});
+
+check('날짜가 없는 항목은 그대로 둔다', async () => {
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const r = 샘플날짜당기기([{ title: 'a' }, { title: 'b', publishedAt: '2026-09-01T00:00:00Z' }]);
+  assert.equal(r[0].publishedAt, undefined);
+  assert.ok(r.length === 2);
+  assert.deepEqual(샘플날짜당기기([]), []);
+});
+
 check('--official 은 AI를 한 번도 부르지 않는다', () => {
   // "비용 0원"이라고 적어 놓고 돈을 쓰면 안 된다. 처음에 이 검사를 main() 아래쪽에
   // 뒀더니 그 앞의 주제 분류가 AI를 불러서 죽었다(ANTHROPIC_API_KEY 없음).
