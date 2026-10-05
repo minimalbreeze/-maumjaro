@@ -50,61 +50,6 @@ const 실전_유입 = [
   { re: /(초보|입문|처음|준비물|클럽\s?조합|고르는|규정)/, w: 12, why: '입문자 질문' },
 ];
 
-/**
- * 돈을 쓸 준비가 된 사람이 오는 글감.
- *
- * 우리 목적은 유입이 아니라 수익이다. 사람이 들어오고 → 광고를 누르고 → 수익이
- * 쌓인다. 그런데 점수표는 유입까지만 보고 있었다. 읽고 나가는 글과 사러 가는
- * 글을 같은 점수로 매겼다.
- *
- * 실측 근거(2026-10-04, 검색 의도 조회):
- *
- *   파3 골프장          transactional   ← 살 준비가 된 사람
- *   파3 골프장 추천      commercial      ← 비교하고 살 사람
- *   파3 골프장 예약      transactional
- *   남서울cc 파3         navigational    ← 가려는 사람 (운영자가 클릭 많다고 짚은 글)
- *   신지애 나이·남편     informational   ← 읽고 나간다
- *
- * 운영자가 "노출 대비 광고 클릭이 적다"고 한 글들과, "클릭이 많다"고 한 글의
- * 차이가 여기 있다. 골프장에 가려는 사람은 골프화·장갑·공을 살 수 있다.
- * 선수 기록을 찾아온 사람은 살 게 없다.
- *
- * 그래서 이 가점은 오래사는_기록(최대 +20)보다 크게 둔다. 오래 검색되는 것과
- * 돈이 되는 것은 다르고, 우리가 원하는 건 뒤쪽이다.
- */
-const 구매의도 = [
-  // 장비·용품을 살 사람. 광고가 바로 답이 되는 자리다.
-  //
-  // ⚠️ 한 글자 패턴을 쓰지 않는다. 처음에 채·화·공·볼 을 넣었더니 사람 이름과
-  // 지명을 먹었다 — "김채영"의 채, "화성시"의 화. 그 탓에 관중 기록 글이 용품
-  // 가점 +24 를 받아 1등으로 올라갔다(2026-10-05 실측). 한국어에서 한 글자는
-  // 어디에나 들어 있다.
-  { re: /(스포츠\s?용품|운동\s?용품|장비|골프채|아이언|드라이버|퍼터|웨지|골프화|운동화|라켓|글러브|배트|야구공|골프공|볼링공|유니폼|골프웨어|장갑|캐디백|골프백)/,
-    w: 24, why: '용품·장비 — 광고가 답이 되는 글' },
-  { re: /(추천|고르는\s?법|고를\s?때|어떤\s?걸|비교해|가성비|입문\s?세트|구매\s?가이드)/,
-    w: 22, why: '고르려는 사람 — 비교하고 산다' },
-
-  // 시설에 가려는 사람. 가는 길에 사는 게 있다.
-  { re: /(예약|이용료|요금|가격|입장료|대여|렌탈|레슨|강습|회원권)/,
-    w: 22, why: '돈을 쓰려고 알아보는 중' },
-  { re: /(초보|입문|처음\s?(?:가|배우|시작)|시작하려|준비물|배우려|무엇부터)/,
-    w: 20, why: '입문자 — 장비를 새로 산다' },
-  // '동반'은 뺐다 — "동반 우승·동반 출전"처럼 경기 기사에 흔하다.
-  { re: /(혼자\s?(?:가|서|이용|라운드|플레이)|2인\s?(?:플레이|라운드|예약)|아이와|연습장)/,
-    w: 14, why: '가는 방법을 찾는 중' },
-];
-
-/**
- * 읽고 나가는 글감. 수명은 길어도 광고가 눌리지 않는다.
- *
- * 깎지는 않는다 — 유입 자체는 블로그를 키우고, 그게 전체 광고 노출을 올린다.
- * 다만 같은 점수면 돈이 되는 쪽을 먼저 쓰도록 구매의도 가점과 격차를 둔다.
- * 선수 신상(나이·남편·재산)은 검색량이 크지만 살 게 없다.
- */
-const 읽고나간다 = [
-  { re: /(나이|남편|아내|결혼|재산|연봉|사생활|가족사|근황|열애)/, w: -6, why: '인물 신상 — 읽고 나간다' },
-];
-
 const LONG_TERM = [
   { re: /(개막|D-\d|프리뷰|미리보기|앞두고|출사표)/, w: 12, why: '대회 프리뷰' },
   { re: /(일정|스케줄|중계|편성|생중계|시청)/, w: 10, why: '일정·중계 정보' },
@@ -185,8 +130,6 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   for (const { re, w, why } of 실전_유입) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of LONG_TERM) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of SHORT_LIVED) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
-  for (const { re, w, why } of 구매의도) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
-  for (const { re, w, why } of 읽고나간다) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
   for (const { re, w, why } of 오래사는_기록) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of 색인전_소멸) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
 
@@ -220,7 +163,7 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   return { ...cluster, topic: topic.name, category: topic.category, score, reasons, demand };
 }
 
-export { 실전_유입, 색인전_소멸, 오래사는_기록, 구매의도, 읽고나간다 };
+export { 실전_유입, 색인전_소멸, 오래사는_기록 };
 
 export function rankClusters(clusters, topic, opts = {}) {
   return clusters.map((c) => scoreCluster(c, topic, opts)).sort((a, b) => b.score - a.score);
