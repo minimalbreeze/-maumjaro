@@ -1115,6 +1115,19 @@ test('빈 입력에도 죽지 않는다', () => {
   }
 });
 
+test('문장 끝 마침표가 있든 없든 점이 두 개 찍히지 않는다', () => {
+  // 실행 #5에서 나온 것: "...a single empty bench.. documentary reenactment still"
+  // AI가 마침표로 끝낼 때와 아닐 때가 섞여서 절반만 이랬다.
+  for (const body of ['an empty bench', 'an empty bench.', 'an empty bench. ', 'an empty bench,']) {
+    const out = composeImagePrompt(body);
+    assert.ok(!out.includes('..'), `점이 두 개: ${out.slice(0, 60)}`);
+    assert.ok(out.startsWith('an empty bench. '), out.slice(0, 40));
+  }
+  // 내용이 비어도 고정 문구는 온전해야 한다.
+  assert.ok(!composeImagePrompt('').includes('..'));
+  assert.ok(!composeImagePrompt('   ').startsWith('.'));
+});
+
 test('완성된 프롬프트에 고정 스타일과 금지 목록이 붙는다', () => {
   const p = composeImagePrompt('an empty hotel lobby');
   assert.ok(p.includes('an empty hotel lobby'));
