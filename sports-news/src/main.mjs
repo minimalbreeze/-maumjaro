@@ -357,10 +357,19 @@ async function processCluster(cluster, ctx) {
       const 다시 = lintArticle({ title: article.title, body: 보완 });
       // 보완한 쪽이 실제로 나아졌을 때만 받아들인다. 나빠지면 원본을 지킨다.
       const 남은문제 = 다시.issues.filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+      // 최종 채점과 같은 기준으로도 확인한다. 예전에는 lintArticle 만 보고
+      // "보완 완료"라고 찍었는데, checkFlow ⑤ 는 다른 낱말 목록을 써서 그대로
+      // 실패였다(글 7793). 목록은 이제 한 군데지만, 둘이 또 갈라지면 여기서
+      // 바로 드러나도록 양쪽을 다 본다.
+      const 확장통과 = checkFlow({ title: article.title, body: 보완 })
+        .items.find((i) => i.id === 'evergreen')?.ok === true;
       if (남은문제.length < 수명문제.length) {
         article.body = 보완;
         lint = 다시;
         log.ok(`    보완 완료 — 본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
+        if (!확장통과) {
+          log.warn('    다만 ⑤(오래 가는 내용)는 여전히 통과하지 못했습니다 — 최종 채점에서 ❌ 로 남습니다');
+        }
       } else {
         log.warn('    보완해도 기준에 못 미쳐 원본을 그대로 씁니다');
       }

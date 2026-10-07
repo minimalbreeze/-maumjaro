@@ -9,6 +9,7 @@ import path from 'node:path';
 import { callForText } from './client.mjs';
 import { ROOT, env } from '../utils/env.mjs';
 import { targetKeywordCount } from '../seo/rankmath.mjs';
+import { LONGEVITY_WORDS, LONGEVITY_HEADING, 오래가는소제목찾기 } from '../seo/longevity.mjs';
 
 let styleCache = null;
 export function loadStyle() {
@@ -207,9 +208,11 @@ ${focusKeyword ? `"${focusKeyword}"를 이 섹션에서 두 번 이상 자연스
   return t;
 }
 
-/** lintArticle이 "오래 가는 섹션"으로 인정하는 낱말. */
-export const LONGEVITY_WORDS = /배경|원리|비교|역사|규칙|계보/;
-const OLDEVITY_HEADING = '## 📌 배경과 원리, 비슷한 사례 비교';
+// 낱말 목록은 seo/longevity.mjs 한 군데서만 정한다. 예전에는 여기와
+// flow.mjs 가 각자 목록을 들고 있어서, 보완이 "완료"라고 찍은 글이 최종
+// 채점에서는 ⑤ 실패로 저장됐다(글 7793).
+export { LONGEVITY_WORDS };
+const OLDEVITY_HEADING = LONGEVITY_HEADING;
 
 /**
  * 본문에 섹션을 끼운다.
@@ -296,7 +299,7 @@ export function lintArticle({ title, body }) {
 
   // 글의 수명을 정하는 섹션. 두 편 연속 빠져서 검사로 올렸다.
   // 소제목만 있고 내용이 없는 경우도 잡으려고 분량까지 본다.
-  const 오래가는 = headings.find((h) => /배경|원리|비교|역사|규칙|계보/.test(h));
+  const 오래가는 = 오래가는소제목찾기(headings);
   if (!오래가는) {
     issues.push('배경·원리·비교 섹션이 없습니다 (뉴스만 있으면 한 주 뒤에 죽습니다)');
   } else {
