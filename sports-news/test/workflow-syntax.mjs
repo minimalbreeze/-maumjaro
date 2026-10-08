@@ -12,7 +12,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const WORKFLOWS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.github/workflows');
+// 워크플로는 리포 구조에 따라 두 자리 중 하나에 있다.
+//   맘운자로 안에 있을 때: ../../.github/workflows  (sports-news/ 가 하위 폴더)
+//   비공개 리포로 떼어낸 뒤: ../.github/workflows   (sports-news 가 루트)
+// 전략 자료를 공개 저장소에 두지 않으려고 떼어내는 중이라, 양쪽에서 다 돌아야 한다.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const WORKFLOWS = [
+  path.resolve(HERE, '../../.github/workflows'),
+  path.resolve(HERE, '../.github/workflows'),
+].find((d) => fs.existsSync(d)) || path.resolve(HERE, '../.github/workflows');
 let passed = 0;
 const check = (name, fn) => {
   try { fn(); console.log(`  ✅ ${name}`); passed++; }
@@ -75,6 +83,26 @@ if (fs.existsSync(sports)) {
     assert.equal(조건('한글 폰트 설치'), 조건('실행'));
   });
 }
+
+
+check('셸 변수명에 한글을 쓰지 않는다', () => {
+  // bash 변수명은 영문·숫자·밑줄만 된다. 주제="..." 는 할당이 아니라 명령으로
+  // 해석되어 'command not found' 로 죽는다. 실제로 '공식 페이지 받아보기'
+  // 스텝이 그래서 죽었다. YAML 문법 검사로는 안 잡히므로 따로 본다.
+  const 나쁜것 = [];
+  for (const file of files) {
+    const text = fs.readFileSync(path.join(WORKFLOWS, file), 'utf8');
+    text.split('\n').forEach((line, i) => {
+      // run 블록 안쪽은 깊게 들여쓰여 있다. 줄 맨 앞 토큰이 곧바로 = 를 만나면 할당이다.
+      // args+=("x") 같은 배열 추가도 정상 할당이므로 += 를 허용한다.
+      const m = /^\s{6,}([^\s=#|>&$'"]+?)\+?=(?!=)/.exec(line);
+      if (!m) return;
+      if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(m[1])) return;
+      나쁜것.push(`${file}:${i + 1} "${m[1]}"`);
+    });
+  }
+  assert.equal(나쁜것.length, 0, `셸 변수명에 영문 아닌 글자: ${나쁜것.join(' / ')}`);
+});
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
 

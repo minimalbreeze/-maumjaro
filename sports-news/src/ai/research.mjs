@@ -19,7 +19,10 @@
 //   그게 기존 사실확인 단계가 하던 일이고, 여기서는 그 일을 입구로 옮긴 것뿐이다.
 
 import { callWithSearch, toolInputOf, searchSummary } from './client.mjs';
+import { officialBlock } from '../news/official.mjs';
 import { SYSTEM, REPORT_TOOL } from './analyze.mjs';
+import { 기존글목록 } from '../duplicate/check.mjs';
+import { 정리한사실확인 } from './analyze.mjs';
 
 /**
  * 출처 등급.
@@ -57,10 +60,16 @@ export const 출처등급 = `## 출처 등급 (중요)
  * 같은 모양을 기대하기 때문이다. 다른 점은 입력이 "뉴스 기사 목록"이 아니라
  * "주제 한 줄"이라는 것뿐이다.
  */
-export async function researchSubject(subject, { relatedPosts = [], today, category = '' } = {}) {
-  const existingLines = relatedPosts.length
-    ? relatedPosts.map((p) => `- "${p.title}" (${p.date?.slice(0, 10)}, 유사도 ${Math.round((p.similarity || 0) * 100)}%)`).join('\n')
-    : '(비슷한 기존 글 없음)';
+export async function researchSubject(subject, {
+  relatedPosts = [], today, category = '',
+  // 공식 페이지에서 직접 받아온 내용. 웹검색이 막혀도 사실을 얻는 길이다.
+  // main.mjs 가 gatherOfficial() 결과를 넣어 준다.
+  official = [],
+} = {}) {
+  const existingLines = 기존글목록(relatedPosts);
+
+  // 공식 페이지에서 받아온 글을 프롬프트 앞쪽에 둔다. 웹검색보다 먼저 쓰게 한다.
+  const officialText = official.length ? `${officialBlock(official)}\n\n` : '';
 
   const prompt = `오늘 날짜: ${today} (한국시간)
 ${category ? `분야: ${category}\n` : ''}
@@ -70,10 +79,11 @@ ${subject}
 ## 내 블로그의 기존 글 중 비슷한 것
 ${existingLines}
 
-## 할 일
+${officialText}## 할 일
 
-이 주제로 블로그 글을 쓰려고 합니다. **뉴스 기사는 없습니다.** 웹검색으로 직접
-자료를 찾아 사실을 모아 주세요.
+이 주제로 블로그 글을 쓰려고 합니다. **뉴스 기사는 없습니다.**${official.length
+  ? ' 위에 코드가 직접 받아온 공식 페이지 내용이 있습니다. **그것부터 confirmed 에 넣고**, 모자란 것을 웹검색으로 보강하세요.'
+  : ' 웹검색으로 직접 자료를 찾아 사실을 모아 주세요.'}
 
 1. 주제에 나온 고유명사(시설명·대회명·단체명)의 **공식 출처**를 먼저 찾으세요.
 2. 독자가 실제로 궁금해하는 것부터 확인하세요. 순서대로:
@@ -84,7 +94,9 @@ ${existingLines}
    - **준비물·복장 규정**
    - 대회라면: 정식 명칭, 일정, 장소, **상금**, 주관 단체, 출전 선수
 3. 숫자는 출처와 함께 확인하세요. confirmed의 sources에 어디서 봤는지 적으세요.
-4. 기존 블로그 글과 사실상 같은 내용인지 판단하세요.
+4. 기존 블로그 글과 사실상 같은 내용인지 판단하세요. 기존 글은 **제목과 발췌만**
+   주어집니다. 거기 없는 내용까지 그 글이 다룬다고 단정하지 마세요. 중복이라면
+   duplicateReason 에 어느 대목이 겹치는지 그대로 인용하세요.
 5. 확인이 끝나면 report_verification 도구를 호출해 결과를 보고하세요.
 
 ${출처등급}
@@ -94,6 +106,13 @@ ${출처등급}
 이 주제가 특정 시점의 사건이 아니라 "계속 유효한 안내"라면 \`unclear\` 대신
 상황에 맞게 고르되, 시설 안내처럼 늘 유효한 내용이면 \`ongoing\` 으로 두세요.
 
+${official.length ? `
+## 웹검색이 막히면
+
+웹검색이 한도 초과 등으로 작동하지 않으면 **거기서 멈추고, 위 공식 페이지에서
+얻은 것만으로 보고하세요.** 검색이 안 된다고 글을 포기하지 마세요 — 공식 페이지에
+요금과 운영 안내가 이미 적혀 있습니다. 모자란 항목은 unverified 로 남기면 됩니다.
+` : ''}
 report_verification 도구를 반드시 호출해야 합니다.`;
 
   const response = await callWithSearch({
@@ -105,12 +124,13 @@ report_verification 도구를 반드시 호출해야 합니다.`;
 
   const result = toolInputOf(response, 'report_verification');
   if (!result) {
-    const err = new Error('자료 조사 결과를 받지 못했습니다');
+    const err = new Error(`자료 조사 결과를 받지 못했습니다 (stop_reason=${response.stop_reason})`);
     err.code = 'RESEARCH_NO_RESULT';
     throw err;
   }
 
-  return { ...result, searched: searchSummary(response) };
+  // 같은 결함이 있다 — 응답이 잘리면 confirmed 가 없는 채로 내려간다.
+  return { ...정리한사실확인(result, response), searched: searchSummary(response) };
 }
 
 /**

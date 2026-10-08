@@ -45,7 +45,7 @@ export async function findRelatedPosts(cluster, { perTerm = 10 } = {}) {
           orderby: 'date',
           order: 'desc',
           status: 'publish,draft,future,pending',
-          _fields: 'id,title,link,date,modified,status,categories',
+          _fields: 'id,title,link,date,modified,status,categories,excerpt',
         },
       });
       for (const p of data || []) {
@@ -57,6 +57,11 @@ export async function findRelatedPosts(cluster, { perTerm = 10 } = {}) {
             date: p.date,
             modified: p.modified,
             status: p.status,
+            // 발췌를 같이 받는다. 제목만 보고 "그 글이 이미 다뤘다"고 판정하면
+            // 틀린다 — 2026-10-05 에 '신지애 일본여자오픈 우승' 글 제목만 본
+            // 사실확인 단계가, 제목에 없는 통산 상금 순위까지 그 글이 다룬다고
+            // 단정하고 새 글을 막았다.
+            excerpt: stripHtml(p.excerpt?.rendered || '').slice(0, 300),
           });
         }
       }
@@ -70,6 +75,24 @@ export async function findRelatedPosts(cluster, { perTerm = 10 } = {}) {
 
 function stripHtml(s) {
   return s.replace(/<[^>]*>/g, '').replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d)).replace(/&amp;/g, '&').trim();
+}
+
+/**
+ * 사실확인·조사 프롬프트에 넣을 기존 글 목록을 만든다.
+ *
+ * 제목과 발췌까지 적고, **발췌에 없는 내용을 그 글이 다룬다고 가정하지 말라**고
+ * 분명히 못 박는다. 이게 없으면 제목 하나로 중복을 단정한다(위 excerpt 주석 참고).
+ */
+export function 기존글목록(relatedPosts = []) {
+  if (!relatedPosts.length) return '(비슷한 기존 글 없음)';
+  const 줄 = relatedPosts.map((p) => {
+    const 머리 = `- "${p.title}" (${p.date?.slice(0, 10)}, 제목 유사도 ${Math.round((p.similarity || 0) * 100)}%)`;
+    return p.excerpt ? `${머리}\n  발췌: ${p.excerpt}` : `${머리}\n  발췌: (없음)`;
+  }).join('\n');
+  return `${줄}
+
+위 목록은 **제목과 발췌뿐**이다. 글 전문은 주어지지 않았다. 거기 적혀 있지 않은
+내용까지 그 글이 다룬다고 가정하지 마라.`;
 }
 
 /** 유사도를 계산해 A/B/C 판정과 근거를 만든다. */

@@ -7,6 +7,8 @@
 // ①은 글감을 고를 때 정해진다(news/demand.mjs). 여기서는 ②~⑥을 완성된 글에
 // 대고 본다. 지시서에 적어두기만 하면 지켜지지 않는다 — 셀 수 있는 것은 센다.
 
+import { 오래가는소제목인가 } from './longevity.mjs';
+
 const H2 = (body) => [...String(body).matchAll(/^##\s+(.+)$/gm)].map((m) => m[1].trim());
 
 /** 소제목 이전의 첫 덩어리 = 핵심 요약 */
@@ -62,8 +64,8 @@ export function checkFlow({ title = '', body = '', demand = null } = {}) {
     },
     {
       id: 'evergreen', step: '⑤', label: '오래 가는 내용으로 확장했다',
-      ok: 개념.test(body) && heads.some((h) => /배경|원리|비교|역사|규칙|기록|데이터/.test(h)),
-      detail: heads.filter((h) => /배경|원리|비교|역사|규칙|기록|데이터/.test(h)).join(' / ') || '해당 소제목 없음',
+      ok: 개념.test(body) && heads.some(오래가는소제목인가),
+      detail: heads.filter(오래가는소제목인가).join(' / ') || '해당 소제목 없음',
       fix: '규칙·원리·역사·비교 중 둘 이상을 담은 섹션을 두세요. 뉴스만 있으면 한 주 뒤에 죽습니다',
     },
     {

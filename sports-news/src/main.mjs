@@ -32,10 +32,14 @@ import { searchBlocked } from './ai/client.mjs';
 import { generateSeo } from './ai/seo.mjs';
 import { classifySubject, subjectAsTopic } from './ai/classify.mjs';
 import { researchSubject, subjectAsCluster } from './ai/research.mjs';
+import { pickFacilities, gatherOfficial } from './news/official.mjs';
+import { givenArticleCluster } from './news/given-article.mjs';
 import { attachSearchVolume, hasNaverKeywords, searchKeywordFor } from './news/naver-keywords.mjs';
 import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
+import { pickApp, appBannerHtml } from './seo/app-banner.mjs';
+import { pickOfficial, officialBannerHtml } from './seo/official-banner.mjs';
 import { checkFlow } from './seo/flow.mjs';
 import { usageSummary } from './ai/client.mjs';
 
@@ -55,6 +59,17 @@ export function parseArgs(argv) {
     // --best=N: 전 종목의 글감을 한 자리에 모아 점수로 줄 세운 뒤 상위 N개만 쓴다.
     // 뉴스 수집은 공짜고 돈이 드는 건 사실확인·작성이라, 넓게 보고 좁게 쓰는 게 이득이다.
     else if ((m = /^--best=(\d+)$/.exec(a))) args.best = Number(m[1]);
+    // --candidates: 글감 후보만 점수 순으로 보여주고 멈춘다. AI를 한 번도 부르지
+    // 않으므로 0원이다. 뉴스 수집과 점수 매기기는 전부 코드가 한다.
+    // --official: 설정에 적힌 공식 페이지를 받아보기만 한다. AI를 부르지 않으므로
+    // 0원이다. 글을 쓰기 전에 요금표가 실제로 읽히는지 확인하는 용도다.
+    else if (a === '--official') args.official = true;
+    // --article=파일: 운영자가 준 기사를 글감 재료로 쓴다. 뉴스 수집을 거치지
+    // 않는다. 주제 한 줄만 넘기면 기사에 있는 숫자가 전달되지 않아, 사실 확인
+    // 단계가 "확인할 수 없다"며 글을 못 쓴다(2026-10-05 에 실제로 그랬다).
+    else if ((m = /^--article=(.+)$/.exec(a))) args.articleFile = m[1].replace(/^["']|["']$/g, '');
+    else if (a === '--candidates') args.candidates = true;
+    else if ((m = /^--candidates=(\d+)$/.exec(a))) { args.candidates = true; args.candidatesTop = Number(m[1]); }
     else if (a === '--draft') args.draft = true;
     else if (a === '--dry-run' || a === '--dryrun') args.dryRun = true;
   }
@@ -70,6 +85,40 @@ export function parseArgs(argv) {
     args.dryRunReason ??= '--draft 플래그 없음';
   }
   return args;
+}
+
+/**
+ * 샘플 파일의 기사 날짜를 "지금" 기준으로 옮긴다.
+ *
+ * 왜 필요한가: 샘플 파일에는 날짜가 고정으로 박혀 있다(2026-09-27 …). 수집 창이
+ * 7일(hoursWindow 168)이라 날이 지나면 전부 "오래된 기사"로 걸러지고, 후보가
+ * 0개가 되어 점검이 깨진다. 실제로 2026-10-05 에 깨졌다 — 어제는 7일 안쪽이라
+ * 통과했고 코드는 그대로였다. 날짜에 매달린 점검은 매일 깨진다.
+ *
+ * 가장 최신 기사를 지금으로 맞추고 나머지를 같은 만큼 민다. 기사 사이의 시간차는
+ * 그대로 남는다 — 그 간격이 묶음 만들기와 급상승 계산에 쓰이기 때문이다.
+ *
+ * 샘플 파일에만 쓴다. 실제 수집에는 손대지 않는다.
+ */
+export function 샘플날짜당기기(items, { now = Date.now(), hoursWindow = 168 } = {}) {
+  const rows = Array.isArray(items) ? items : [];
+  const 시각들 = rows
+    .map((it) => Date.parse(it?.publishedAt || ''))
+    .filter((t) => Number.isFinite(t));
+  if (!시각들.length) return rows;
+
+  const 최신 = Math.max(...시각들);
+  // 이미 수집 창 안에 있으면 손대지 않는다. 쓸데없이 날짜를 바꾸면 샘플에 담긴
+  // 실제 시간 분포가 사라진다. 창을 벗어났을 때만 당긴다.
+  if (now - 최신 < hoursWindow * 3600 * 1000) return rows;
+
+  const 밀기 = now - 최신;
+
+  return rows.map((it) => {
+    const t = Date.parse(it?.publishedAt || '');
+    if (!Number.isFinite(t)) return it;
+    return { ...it, publishedAt: new Date(t + 밀기).toISOString() };
+  });
 }
 
 function loadTopics(filter) {
@@ -112,8 +161,10 @@ async function collectTopic(topic, cfg, { fixture, recentCats = null } = {}) {
     const forTopic = Array.isArray(items)
       ? items.filter((it) => topic.adHoc || !it.topic || it.topic === topic.name)
       : (items[topic.name] || Object.values(items).flat());
-    raw.push(...forTopic);
-    log.info(`  샘플 파일에서 ${forTopic.length}건 (네트워크를 쓰지 않습니다)`);
+    // 날짜를 지금 기준으로 옮긴다. 안 그러면 날이 지나면서 전부 걸러진다.
+    const 당긴것 = 샘플날짜당기기(forTopic, { hoursWindow });
+    raw.push(...당긴것);
+    log.info(`  샘플 파일에서 ${당긴것.length}건 (네트워크를 쓰지 않습니다 · 날짜는 지금 기준으로 옮김)`);
   }
 
   // 검색 피드를 위에서부터 시도한다. 한 곳이 막혀도(구글뉴스 403 등) 다음 곳으로 넘어간다.
@@ -220,14 +271,42 @@ async function processCluster(cluster, ctx) {
   // 뉴스가 없는 글감(시설 이용안내·예매 방법 등)은 기사 대신 공식 자료를 직접
   // 찾는다. 운영자 실측에서 CTR이 가장 높은 글감이 뉴스에 없는 정보였다.
   const 조사모드 = ctx.research && !cluster.articles.length;
+
+  // 공식 페이지를 코드가 직접 받아온다. 웹검색 한도(Server tool use limit
+  // exceeded)에 걸려도 사실을 얻는 길이다. 돈이 되는 글(시설 요금·예약)이
+  // 정확히 그 한도에 묶여 있었다 — 2026-10-04 에 두 번 연속 실패했다.
+  // 설정(config/facilities.json)에 사람이 확인해 적어둔 주소만 받아온다.
+  let official = [];
+  if (조사모드) {
+    const 시설 = pickFacilities(cluster.label);
+    if (시설.length) {
+      log.step(`  공식 페이지 ${시설.length}곳 받아오는 중 (웹검색 안 씀 · 0원)`);
+      official = await gatherOfficial(시설);
+      for (const r of official) {
+        if (r.ok) log.ok(`    ${r.이름}: ${r.text.length}자 · 금액 줄 ${r.금액줄.length}개 — ${r.url}`);
+        else log.warn(`    ${r.이름}: 받지 못했습니다 (${r.why}) — ${r.url}`);
+      }
+      if (!official.some((r) => r.ok)) {
+        log.warn('    공식 페이지를 한 곳도 받지 못했습니다 — 웹검색에만 의존합니다');
+      }
+    } else {
+      log.info('  주제에 맞는 공식 페이지가 설정에 없습니다 (config/facilities.json)');
+    }
+  }
+
   log.step(조사모드 ? '  공식 자료 조사 중 (웹검색 — 뉴스 없이)' : '  사실 확인 중 (웹검색)');
   const verification = 조사모드
     ? await researchSubject(cluster.label, {
-        relatedPosts: dup.related, today, category: cluster.category,
+        relatedPosts: dup.related, today, category: cluster.category, official,
       })
-    : await verifyCluster(cluster, { relatedPosts: dup.related, today });
+    : await verifyCluster(cluster, {
+        relatedPosts: dup.related, today, subject: ctx.subject || '',
+      });
   result.verification = verification;
   log.info(`    확인된 사실 ${verification.confirmed.length}건 / 미확인 ${verification.unverified.length}건 / 출처상이 ${verification.conflicting.length}건`);
+  if (verification.잘린결과) {
+    log.warn('    사실 확인 응답이 길이 제한에 걸려 잘렸습니다 — 아래 판단의 근거가 불완전합니다 (VERIFY_MAX_TOKENS)');
+  }
   const 검색막힘 = searchBlocked(verification.searched);
   if (검색막힘) {
     log.warn(`    웹검색이 막혔습니다 (${검색막힘}) — 수집한 기사에 적힌 사실로만 씁니다`);
@@ -249,11 +328,13 @@ async function processCluster(cluster, ctx) {
   // 2-3. SEO 키워드를 먼저 잡는다.
   // 글을 다 쓴 뒤에 키워드를 정하면 본문에 그 말이 없어 검색에 안 걸린다.
   // 사실 확인 결과만으로 키워드를 먼저 정하고, 그 말을 넣어 쓰게 한다.
-  const provisionalKeyword = guessKeyword(cluster, verification);
+  const provisionalKeyword = guessKeyword(cluster, verification, ctx.subject);
 
   // 2-4. 본문 작성
   log.step('  워프양식으로 작성 중');
-  const article = await writeArticle({ cluster, verification, today, focusKeyword: provisionalKeyword });
+  const article = await writeArticle({
+    cluster, verification, today, focusKeyword: provisionalKeyword, subject: ctx.subject || '',
+  });
   let lint = lintArticle(article);
   log.info(`    제목: ${article.title}`);
   log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
@@ -277,10 +358,19 @@ async function processCluster(cluster, ctx) {
       const 다시 = lintArticle({ title: article.title, body: 보완 });
       // 보완한 쪽이 실제로 나아졌을 때만 받아들인다. 나빠지면 원본을 지킨다.
       const 남은문제 = 다시.issues.filter((i) => /배경·원리·비교 섹션이 없습니다|섹션이 너무 짧습니다/.test(i));
+      // 최종 채점과 같은 기준으로도 확인한다. 예전에는 lintArticle 만 보고
+      // "보완 완료"라고 찍었는데, checkFlow ⑤ 는 다른 낱말 목록을 써서 그대로
+      // 실패였다(글 7793). 목록은 이제 한 군데지만, 둘이 또 갈라지면 여기서
+      // 바로 드러나도록 양쪽을 다 본다.
+      const 확장통과 = checkFlow({ title: article.title, body: 보완 })
+        .items.find((i) => i.id === 'evergreen')?.ok === true;
       if (남은문제.length < 수명문제.length) {
         article.body = 보완;
         lint = 다시;
         log.ok(`    보완 완료 — 본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
+        if (!확장통과) {
+          log.warn('    다만 ⑤(오래 가는 내용)는 여전히 통과하지 못했습니다 — 최종 채점에서 ❌ 로 남습니다');
+        }
       } else {
         log.warn('    보완해도 기준에 못 미쳐 원본을 그대로 씁니다');
       }
@@ -376,6 +466,7 @@ async function processCluster(cluster, ctx) {
     images: media.blocks,
     adHtml: media.ad,
     watchHtml: media.watch,
+    appHtml: media.app,
     featuredMediaId: media.featuredId,
   });
   result.wordpress = saved;
@@ -406,10 +497,30 @@ function keywordCountOf(picked, keyword) {
   return picked.candidates?.find((c) => c.keyword === keyword)?.count ?? 0;
 }
 
-function guessKeyword(cluster, verification) {
+function guessKeyword(cluster, verification, subject = '') {
+  // 운영자가 각도를 지정했으면 그 머리를 쓴다. 대회명이 아니다.
+  // 2026-10-05 글 7777: 대회명을 먼저 본 탓에 '신지애 일본여자오픈'이 잡혔다.
+  // 실측으로 검색량이 잡히지 않는 말이다(config/search-demand.md). 운영자가
+  // 요청한 '신지애 통산 상금'은 월 40~80이다.
+  if (subject) return 각도머리(subject);
   const byField = (name) => verification.confirmed?.find((c) => c.field.includes(name))?.value;
   const raw = byField('대회명') || byField('대회') || cluster.label;
   return String(raw).replace(/\s+/g, ' ').trim().split(/[(\[|—·]/)[0].trim().slice(0, 30);
+}
+
+/**
+ * 운영자가 준 주제에서 키워드로 쓸 머리를 뽑는다.
+ *
+ * 주제는 "키워드 (질문)" 모양으로 적는다. 괄호 앞이 검색되는 말이다.
+ * 끝에 붙은 금액은 떼어낸다 — 사람은 '131억원'을 타이핑하지 않고, 본문에서
+ * 여러 번 반복하기도 어색하다. 숫자 자체는 본문에 그대로 쓴다.
+ */
+export function 각도머리(subject) {
+  const 머리 = String(subject || '').replace(/\s+/g, ' ').trim().split(/[(\[|—·]/)[0].trim();
+  const 금액 = /^[\d,.]+(억원|만원|억|만|원|달러|엔|파운드|유로)$/;
+  const 낱말 = 머리.split(' ');
+  while (낱말.length > 2 && 금액.test(낱말[낱말.length - 1])) 낱말.pop();
+  return 낱말.join(' ').slice(0, 30);
 }
 
 /** 미리보기에서 글 전문을 로그에 찍는다. */
@@ -448,18 +559,40 @@ async function attachImages({ article, seo, cluster, dryRun }) {
   const watch = pickWatchLinks(cluster.category, {
     text: `${article.title}\n${article.body}`,
   });
+  // 배너 자리 하나에 앱 배너 또는 공식 홈페이지 배너가 들어간다.
+  // 한 글에 둘 다 해당될 일은 없다(앱 글 vs 구단 글). 자리를 둘로 늘리면
+  // 카드가 연달아 붙어 글이 광고판처럼 보인다.
+  //
+  // 어느 쪽이든 config 에 사람이 확인해 적어둔 주소만 쓴다 —
+  // 주소를 만들어내지 않는다(app-links.json / official-links.json).
+  //
+  // 밑의 변수 이름이 app 인 것은 앱 배너가 먼저 생겼기 때문이다.
+  // 지금은 "링크 배너 자리"를 뜻한다.
+  const 글전체 = `${article.title}\n${article.body}`;
+  const app = pickApp(글전체);
+  const official = app ? null : pickOfficial(글전체);
+  const appHtml = app ? appBannerHtml(app) : (official ? officialBannerHtml(official) : '');
+
   const plan = planPlacements(article.body, {
     sectionImages: 1,
     withAd: Boolean(AD_SNIPPET),
     withWatch: Boolean(watch),
+    withApp: Boolean(appHtml),
   });
   const body = insertMarks(article.body, plan);
   const out = {
     body, blocks: [], ad: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
     watch: watch ? watchBannerHtml(watch) : '',
+    app: appHtml,
     featuredId: null, summary: [],
   };
   if (watch) log.info(`    중계 배너: ${watch.primary.url}`);
+  const 배너대상 = app || official;
+  if (appHtml) log.info(`    ${app ? '앱' : '공식 홈페이지'} 배너: ${배너대상.이름} → ${배너대상.url}`);
+  else if (배너대상) {
+    const 설정 = app ? 'config/app-links.json' : 'config/official-links.json';
+    log.warn(`    배너: ${배너대상.이름} 은 설정에 쓸 수 있는 주소가 없어 넣지 않습니다 (${설정})`);
+  }
 
   // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
   // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")
@@ -611,6 +744,16 @@ const slugish = (s) => String(s).replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  // --official 은 여기서 끝낸다. AI도 워드프레스도 건드리지 않는다(0원).
+  //
+  // 왜 맨 앞인가: 처음에는 이 검사를 아래쪽에 뒀더니 그 앞의 주제 분류가 AI를
+  // 불러서 ANTHROPIC_API_KEY 가 없다고 죽었다. "0원"이라고 적어 놓고 돈을 쓸
+  // 뻔했다. 0원 모드는 아무것도 준비하기 전에 갈라져야 한다.
+  if (args.official) {
+    await 공식페이지확인(args.subject || args.topics.join(' '));
+    return;
+  }
   // --subject를 쓰면 종목 목록은 읽기만 하고 실제로 돌지는 않는다.
   const { cfg, topics: configuredTopics } = loadTopics(args.subject ? [] : args.topics);
   let topics = configuredTopics;
@@ -655,6 +798,22 @@ async function main() {
     topics = [subjectAsTopic(args.subject, classified)];
     args.limit ??= 1;
 
+    // --article: 운영자가 준 기사를 재료로 1편 쓴다. 뉴스 수집을 거치지 않는다.
+    if (args.articleFile) {
+      const 본문 = fs.readFileSync(args.articleFile, 'utf8');
+      const cluster = givenArticleCluster(본문, {
+        subject: args.subject, topic: classified.category || '주제', category: classified.category,
+      });
+      if (!cluster) throw new Error(`기사 파일이 비어 있습니다: ${args.articleFile}`);
+      log.section(`📄 ${args.subject}`);
+      log.info(`운영자가 준 기사를 재료로 씁니다 (${본문.trim().length}자 · 뉴스 수집 안 함)`);
+      const r = await processCluster(cluster, {
+        ...args, siteCategories, seoFields, today, wpAvailable,
+      });
+      printSummary([{ topic: args.subject, results: [r] }], args);
+      return;
+    }
+
     // --research: 뉴스를 아예 거치지 않는다. 주제 하나를 바로 처리한다.
     if (args.research) {
       log.section(`🔍 ${args.subject}`);
@@ -682,6 +841,12 @@ async function main() {
     } catch (err) {
       log.warn(`최근 글 조회 실패 — 종목 다양성 감점 없이 진행합니다 (${err.message})`);
     }
+  }
+
+  // --candidates: 후보만 보여주고 멈춘다. 글을 쓰지 않으므로 0원이다.
+  if (args.candidates) {
+    await 후보만보기({ topics, cfg, args, recentCats });
+    return;
   }
 
   // --best: 종목을 가로질러 가장 좋은 글감만 고른다.
@@ -892,6 +1057,102 @@ async function writeBestAcrossTopics({ topics, cfg, args, siteCategories, seoFie
  * 비용이 보이지 않으면 어디를 줄여야 할지 알 수 없다. 단계마다 모델이 다르므로
  * 모델별로 나눠 보여준다. 요금표는 config/pricing.json에 있고 바뀌면 거기를 고친다.
  */
+/**
+ * 오늘 쓸 만한 글감 후보를 점수 순으로 보여주고 멈춘다.
+ *
+ * AI를 한 번도 부르지 않는다(0원). 뉴스 수집은 RSS, 점수는 news/rank.mjs 가
+ * 전부 코드로 한다. 돈이 드는 건 사실확인과 작성인데 거기까지 가지 않는다.
+ *
+ * 점수 근거를 함께 찍는다. 운영자가 "왜 이게 1등인가"를 보고 직접 고를 수
+ * 있어야 한다 — 점수만 보여주면 그냥 1등을 쓰게 되고, 그러면 사람이 고르는
+ * 의미가 없다.
+ */
+/**
+ * 공식 페이지가 실제로 읽히는지 확인만 한다. AI를 한 번도 부르지 않는다(0원).
+ *
+ * 글을 쓰기 전에 이걸 돌려야 한다. 받아오지 못하는 주소로 글을 쓰려 들면
+ * 웹검색에만 매달리게 되고, 그게 막히면 돈만 쓰고 글이 안 나온다.
+ */
+async function 공식페이지확인(주제) {
+  log.section(`🌐 공식 페이지 받아보기 (AI 안 부름 · 0원)`);
+  if (!주제) {
+    log.fail('주제를 적어주세요', new Error('예: npm run official -- --subject="남서울CC 파3 이용료"'));
+    process.exitCode = 1;
+    return;
+  }
+
+  const 시설 = pickFacilities(주제);
+  log.info(`주제: ${주제}`);
+  if (!시설.length) {
+    log.warn('설정(config/facilities.json)에 이 주제와 맞는 시설이 없습니다.');
+    log.raw('   공식 주소를 눈으로 확인한 뒤 facilities.json 에 이름·별칭·공식·확인일을 적으세요.');
+    log.raw('   주소를 코드가 만들어내지 않습니다 — 없는 주소를 긁어 "공식 확인"이라 쓰면 독자를 속입니다.');
+    return;
+  }
+
+  log.info(`맞는 시설 ${시설.length}곳: ${시설.map((f) => f.이름).join(', ')}`);
+  const 받음 = await gatherOfficial(시설);
+  for (const r of 받음) {
+    log.raw('');
+    if (!r.ok) {
+      log.fail(`${r.이름} — 받지 못했습니다`, new Error(`${r.why} (${r.url})`));
+      continue;
+    }
+    log.ok(`${r.이름} — ${r.text.length}자 받음 (${r.url})`);
+    log.raw(`   확인일(설정): ${r.확인일 || '없음'} · 받은 시각: ${r.받은시각}`);
+    if (r.금액줄.length) {
+      log.raw('   금액이 적힌 줄:');
+      for (const l of r.금액줄.slice(0, 12)) log.raw(`     ${l}`);
+    } else {
+      log.warn('   금액처럼 보이는 줄이 없습니다 — 스크립트로 그리는 표일 수 있습니다.');
+      log.raw('   그러면 이 주소로는 요금을 못 읽습니다. 요금표가 글자로 있는 페이지를 찾아 바꾸세요.');
+    }
+  }
+
+  const 성공 = 받음.filter((r) => r.ok && r.금액줄.length).length;
+  log.raw('');
+  if (성공) log.ok(`${성공}곳에서 금액을 읽었습니다. 이 주제는 웹검색 없이도 글을 쓸 수 있습니다.`);
+  else log.warn('금액을 읽은 곳이 없습니다. 지금 글을 쓰면 웹검색에만 의존합니다.');
+}
+
+
+async function 후보만보기({ topics, cfg, args, recentCats }) {
+  const 전체 = [];
+  for (const topic of topics) {
+    log.section(`📰 ${topic.name}`);
+    try {
+      const { clusters, stats } = await collectTopic(topic, cfg, { fixture: args.fixture, recentCats });
+      const 시간 = stats.hoursWindow ?? cfg.defaults.hoursWindow;
+      log.info(`  기사 ${stats.raw}건 → 최근 ${시간}시간 ${stats.fresh}건 → 묶음 ${stats.clusters}개 → 후보 ${clusters.length}개`);
+      if (!clusters.length) explainNoCandidates(stats, cfg);
+      전체.push(...clusters);
+    } catch (err) {
+      log.fail(`  ${topic.name} 수집 실패`, err);
+    }
+  }
+
+  전체.sort((a, b) => b.score - a.score);
+  const top = 전체.slice(0, args.candidatesTop || 10);
+
+  log.section(`🗂️  오늘의 글감 후보 ${top.length}개 (전체 ${전체.length}개 · 비용 0원)`);
+  if (!top.length) {
+    log.warn('후보가 없습니다. 뉴스 수집이 막혔거나 최근 기사가 없습니다.');
+    return;
+  }
+
+  top.forEach((c, i) => {
+    log.raw('');
+    log.raw(`${String(i + 1).padStart(2)}. [${c.score}점] ${c.label}`);
+    log.raw(`     ${c.category || c.topic} · 매체 ${c.sourceCount}곳 (${(c.sources || []).slice(0, 3).join(', ')})`);
+    const 근거 = (c.reasons || []).join(' / ');
+    if (근거) log.raw(`     근거: ${근거}`);
+  });
+
+  log.raw('');
+  log.info('쓰고 싶은 것을 고르면 그 주제로 1편 씁니다 (주제를 직접 적어 쓰는 방식).');
+}
+
+
 function printUsage() {
   const rows = usageSummary();
   if (!rows.length) return;

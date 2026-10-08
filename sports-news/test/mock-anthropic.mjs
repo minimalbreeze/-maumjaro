@@ -137,7 +137,7 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
   let verifyCalls = 0;
   // 모의가 거부한 요청을 남긴다. 거부가 한 번이라도 있으면 우리가 API를
   // 잘못 부르고 있다는 뜻이다 — 폴백이 삼켜서 겉으로는 성공해 보여도.
-  const seen = { tools: [], hadWebSearch: false, systemPrompts: [], rejected: [] };
+  const seen = { tools: [], hadWebSearch: false, systemPrompts: [], rejected: [], userPrompts: [] };
 
   const server = http.createServer((req, res) => {
     let body = '';
@@ -148,6 +148,15 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
       seen.tools.push(toolNames);
       if (toolNames.includes('web_search')) seen.hadWebSearch = true;
       if (payload.system) seen.systemPrompts.push(String(payload.system).slice(0, 60));
+      // 사용자 프롬프트 전문을 남긴다. 어떤 재료를 실제로 넘겼는지 검사하려면
+      // 이게 있어야 한다 — 운영자가 준 기사가 사실확인 단계에 닿았는지 같은 것.
+      for (const m of payload.messages || []) {
+        if (m.role !== 'user') continue;
+        const t = typeof m.content === 'string'
+          ? m.content
+          : (m.content || []).map((b) => b.text || '').join('\n');
+        if (t) seen.userPrompts.push(t);
+      }
 
       // 실제 API가 거부하는 조합은 모의도 거부해야 한다.
       // 도구를 지목해 부르면서 thinking을 켜면 400이 난다. 모의가 이걸 받아주는
@@ -191,15 +200,36 @@ export function startMockServer({ simulatePauseTurn = false } = {}) {
         res.end(JSON.stringify(out));
         return;
       }
-      // 스트리밍(본문 작성 단계)
+      // 스트리밍. 본문 작성뿐 아니라 사실 확인(도구 호출)도 이 길로 온다 —
+      // max_tokens 를 올리려고 callWithSearch 를 스트리밍으로 바꿨기 때문이다.
+      // 텍스트만 흘려보내면 도구 호출 블록이 사라져서 "결과를 받지 못했습니다"가 된다.
       res.writeHead(200, { 'content-type': 'text/event-stream' });
-      const text = out.content.find((b) => b.type === 'text')?.text || '';
       const send = (ev, data) => res.write(`event: ${ev}\ndata: ${JSON.stringify(data)}\n\n`);
       send('message_start', { type: 'message_start', message: { ...out, content: [], usage: { input_tokens: 1200, output_tokens: 0 } } });
-      send('content_block_start', { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } });
-      send('content_block_delta', { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } });
-      send('content_block_stop', { type: 'content_block_stop', index: 0 });
-      send('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 800 } });
+
+      let idx = 0;
+      for (const block of out.content) {
+        if (block.type === 'text') {
+          send('content_block_start', { type: 'content_block_start', index: idx, content_block: { type: 'text', text: '' } });
+          send('content_block_delta', { type: 'content_block_delta', index: idx, delta: { type: 'text_delta', text: block.text } });
+        } else if (block.type === 'tool_use') {
+          send('content_block_start', {
+            type: 'content_block_start', index: idx,
+            content_block: { type: 'tool_use', id: block.id, name: block.name, input: {} },
+          });
+          send('content_block_delta', {
+            type: 'content_block_delta', index: idx,
+            delta: { type: 'input_json_delta', partial_json: JSON.stringify(block.input) },
+          });
+        } else {
+          // 서버 도구 결과(web_search_tool_result) 등은 통째로 한 번에 보낸다.
+          send('content_block_start', { type: 'content_block_start', index: idx, content_block: block });
+        }
+        send('content_block_stop', { type: 'content_block_stop', index: idx });
+        idx++;
+      }
+
+      send('message_delta', { type: 'message_delta', delta: { stop_reason: out.stop_reason || 'end_turn' }, usage: { output_tokens: 800 } });
       send('message_stop', { type: 'message_stop' });
       res.end();
     });

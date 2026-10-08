@@ -168,10 +168,36 @@ KLPGA 투어는 한 시즌에 30개 안팎의 대회를 치릅니다. 그중 메
 
 주말 내내 눈을 뗄 수 없는 승부가 될 것 같습니다. 함께 지켜봐 주시기 바랍니다.
 
-${'라운드마다 흐름이 바뀌는 코스라 마지막 홀까지 순위를 알 수 없습니다. 그린이 빠른 편이라 퍼팅 감각이 승부를 가릅니다.\n\n'.repeat(28)}`);
+${'라운드마다 흐름이 바뀌는 코스라 마지막 홀까지 순위를 알 수 없습니다. 그린이 빠른 편이라 퍼팅 감각이 승부를 가릅니다.\n\n'.repeat(64)}`);
+// 반복을 64회로 둔 이유: lint 가 채점표와 같은 기준(공백 제외 3,000자)으로
+// 분량을 재기 때문이다. 28회(공백 제외 1,428자)로는 실제 글 길이를 못 비춘다.
 const lintGood = lintArticle(good);
 check('올바른 글은 양식 검사를 통과한다', () => assert.ok(lintGood.ok, lintGood.issues.join(' / ')));
 check('소제목을 모두 인식한다', () => assert.equal(lintGood.headings.length, 7));
+check('짧은 글은 작성 직후에 걸린다', () => {
+  // 채점표와 같은 기준(공백 제외 3,000자)으로 센다. 기준이 다르면 lint 는
+  // 통과하는데 SEO 점수에서 떨어진다 — 글 7769 가 그랬다.
+  const 짧은글 = { title: '제목', body: '## 📌 배경과 원리, 비교\n\n' + '가나다라마바사아자차. '.repeat(100) };
+  const r = lintArticle(짧은글);
+  const 분량문제 = r.issues.filter((i) => /짧습니다/.test(i));
+  assert.equal(분량문제.length, 1, r.issues.join(' / '));
+  assert.match(분량문제[0], /공백 제외/, 분량문제[0]);
+});
+
+check('분량 미달이 비싼 보완을 부르지는 않는다', () => {
+  // 보완은 ⑤ 섹션이 빠졌을 때만 돈다(AI를 한 번 더 부른다). 분량이 조금 모자란
+  // 것만으로 매번 다시 부르면 한 편 값이 올라간다. main.mjs 의 실제 트리거
+  // 조건을 꺼내 분량 문구에 대 본다.
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const m = /const 수명문제 = lint\.issues\.filter\(\(i\) => (\/.+?\/)\.test\(i\)\);/.exec(src);
+  assert.ok(m, '보완 트리거 조건을 못 찾았습니다');
+  const 트리거 = new RegExp(m[1].slice(1, -1));
+  const 분량문구 = lintArticle({ title: '제목', body: '## 📌 배경과 원리, 비교\n\n짧다.' })
+    .issues.find((i) => /본문이 짧습니다/.test(i));
+  assert.ok(분량문구, '분량 문구가 안 나왔습니다');
+  assert.ok(!트리거.test(분량문구), `분량 미달이 보완을 부릅니다: ${m[1]}`);
+});
+
 
 const bad = splitTitleAndBody(`제목: 나쁜 예
 
@@ -236,6 +262,107 @@ check('옵션을 제대로 읽는다', () => {
   assert.deepEqual(a.topics, ['JLPGA']);
   assert.equal(a.limit, 3);
   assert.equal(a.fixture, 'x.json');
+});
+check('지시서 분량과 채점 기준이 같은 것을 가리킨다', () => {
+  // 지시서는 "공백 포함", 채점표는 "공백 제외"로 재던 탓에 지시를 지킨 글이
+  // 떨어졌다(글 7769: 공백 포함 3,651자 → 공백 제외 2,782자). 기준이 어긋나면
+  // 작성자가 아무리 지켜도 점수가 깎인다.
+  const warp = fs.readFileSync(path.join(HERE, '../config/style-warp.md'), 'utf8');
+  const m = /본문 \*\*([\d,]+)~([\d,]+)자\*\*\(공백 포함\)/.exec(warp);
+  assert.ok(m, '지시서에서 분량 규칙을 못 찾았습니다');
+  const 하한 = Number(m[1].replace(/,/g, ''));
+  // 한국어는 공백이 글자 수의 4분의 1쯤 된다. 공백 제외 3,000자를 채우려면
+  // 공백 포함 하한이 3,750자 이상이어야 한다.
+  assert.ok(하한 >= 3750, `지시서 하한 ${하한}자 — 공백 제외 3,000자를 채울 수 없습니다`);
+});
+
+check('샘플 날짜를 지금 기준으로 옮긴다', async () => {
+  // 샘플 파일 날짜가 고정이라 수집 창(7일)을 벗어나면 후보가 0개가 된다.
+  // 2026-10-05 에 실제로 그래서 점검이 깨졌다 — 코드는 그대로였고 날짜만 지났다.
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const now = Date.parse('2026-10-05T12:00:00Z');
+  const 원본 = [
+    { title: 'a', publishedAt: '2026-09-27T23:00:00Z' },
+    { title: 'b', publishedAt: '2026-09-27T21:00:00Z' },
+    { title: 'c', publishedAt: '2026-09-28T01:00:00Z' },
+  ];
+  const 당김 = 샘플날짜당기기(원본, { now });
+
+  // 가장 최신 기사가 지금이 된다.
+  const 최신 = Math.max(...당김.map((x) => Date.parse(x.publishedAt)));
+  assert.equal(최신, now, new Date(최신).toISOString());
+
+  // 기사 사이 간격은 그대로 남는다 — 묶음 만들기와 급상승 계산이 그걸 쓴다.
+  const 간격원본 = Date.parse(원본[2].publishedAt) - Date.parse(원본[0].publishedAt);
+  const 간격당김 = Date.parse(당김[2].publishedAt) - Date.parse(당김[0].publishedAt);
+  assert.equal(간격당김, 간격원본);
+
+  // 전부 수집 창(7일) 안에 들어온다.
+  for (const x of 당김) {
+    assert.ok(now - Date.parse(x.publishedAt) < 168 * 3600 * 1000, x.publishedAt);
+  }
+});
+
+check('이미 최근인 샘플은 건드리지 않는다', async () => {
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const now = Date.parse('2026-10-05T12:00:00Z');
+  const 원본 = [{ title: 'a', publishedAt: '2026-10-05T11:00:00Z' }];
+  assert.equal(샘플날짜당기기(원본, { now })[0].publishedAt, 원본[0].publishedAt);
+});
+
+check('날짜가 없는 항목은 그대로 둔다', async () => {
+  const { 샘플날짜당기기 } = await import('../src/main.mjs');
+  const r = 샘플날짜당기기([{ title: 'a' }, { title: 'b', publishedAt: '2026-09-01T00:00:00Z' }]);
+  assert.equal(r[0].publishedAt, undefined);
+  assert.ok(r.length === 2);
+  assert.deepEqual(샘플날짜당기기([]), []);
+});
+
+check('--official 은 AI를 한 번도 부르지 않는다', () => {
+  // "비용 0원"이라고 적어 놓고 돈을 쓰면 안 된다. 처음에 이 검사를 main() 아래쪽에
+  // 뒀더니 그 앞의 주제 분류가 AI를 불러서 죽었다(ANTHROPIC_API_KEY 없음).
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 시작 = src.indexOf('async function 공식페이지확인');
+  const 끝 = src.indexOf('\nasync function 후보만보기');
+  assert.ok(시작 > 0 && 끝 > 시작, '공식페이지확인 함수를 못 찾았습니다');
+  const 본문 = src.slice(시작, 끝);
+  for (const 금지 of ['classifySubject', 'verifyCluster', 'researchSubject', 'writeArticle', 'generateSeo', 'saveDraft', 'callWithSearch']) {
+    assert.ok(!본문.includes(금지), `0원 모드가 ${금지} 를 부릅니다`);
+  }
+});
+
+check('--official 갈림길이 AI 호출보다 앞에 있다', () => {
+  // 갈림길이 뒤에 있으면 그 앞 단계가 먼저 돈다. 자리가 곧 비용이다.
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 갈림 = src.indexOf('if (args.official)');
+  const 분류 = src.indexOf('classifySubject(');
+  const 연결 = src.indexOf('loadSiteCategories()');
+  assert.ok(갈림 > 0, '--official 갈림길이 없습니다');
+  assert.ok(갈림 < 분류, '--official 이 주제 분류(AI) 뒤에 있습니다');
+  assert.ok(갈림 < 연결, '--official 이 워드프레스 연결 뒤에 있습니다');
+});
+
+check('--candidates 는 후보만 보는 모드다', () => {
+  // 글을 쓰지 않으므로 0원이다. 글을 쓰게 되면 비용이 생긴다.
+  assert.equal(parseArgs(['--candidates']).candidates, true);
+  const a = parseArgs(['--candidates=5']);
+  assert.equal(a.candidates, true);
+  assert.equal(a.candidatesTop, 5);
+  assert.equal(parseArgs([]).candidates, undefined);
+});
+check('--candidates 는 AI를 부르는 단계로 넘어가지 않는다', () => {
+  // 후보만 보려고 돌렸는데 사실확인·작성까지 가면 돈이 나간다.
+  const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
+  const 시작 = src.indexOf('async function 후보만보기');
+  const 끝 = src.indexOf('\nfunction printUsage');
+  assert.ok(시작 > 0 && 끝 > 시작, '후보만보기 함수를 못 찾았습니다');
+  const 본문 = src.slice(시작, 끝);
+  for (const 금지 of ['processCluster', 'verifyCluster', 'writeArticle', 'generateSeo', 'saveDraft']) {
+    assert.ok(!본문.includes(금지), `후보만 보는 경로가 ${금지} 를 부릅니다 — 돈이 나갑니다`);
+  }
+  // 그리고 후보 경로는 --best 보다 먼저 멈춰야 한다.
+  assert.ok(src.indexOf('if (args.candidates)') < src.indexOf('if (args.best)'),
+    '--candidates 가 --best 뒤에 있으면 글을 써버립니다');
 });
 
 

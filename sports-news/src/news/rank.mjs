@@ -86,6 +86,31 @@ const SHORT_LIVED = [
  * 대회 자체(일정·중계·출전명단)는 막지 않는다. 그건 대회 내내 검색된다.
  * 막는 것은 "지금 이 순간의 중간 상황"뿐이다.
  */
+/**
+ * 영구히 남는 기록. 색인이 붙은 뒤에도, 내년에도 검색된다.
+ *
+ * 왜 넣었나: 신지애의 JLPGA 통산 30승·사상 첫 커리어 그랜드슬램·영구시드가
+ * 후보 48개 중 상위 12개에 들지 못했다. 점수표가 "끝난 경기 결과"와 "영구히
+ * 남는 기록"을 구분하지 못했기 때문이다. 색인전_소멸 이 중간 순위를 깎는
+ * 반대쪽, 즉 영구 기록에 가점하는 자리가 비어 있었다.
+ *
+ * 실측 근거(2026-10-04 조회): "신지애 우승 횟수" 월 40 · "신지애 누적상금" 월 80
+ * · "신지애 우승 상금" 월 40 — 모두 상시 검색된다. 반면 "신지애 일본여자오픈"은
+ * 검색량이 잡히지 않는다. 대회명+결과는 며칠이면 죽고, 기록은 계속 산다.
+ *
+ * 우승 자체에는 가점하지 않는다. 우승은 매주 나온다. 통산 N승·최초·영구시드처럼
+ * **다시 바뀌지 않는 수치**만 본다.
+ */
+const 오래사는_기록 = [
+  { re: /(통산\s?\d+승|\d+번째\s?우승|통산\s?\d+(?:번|회)\s?우승)/, w: 20, why: '통산 기록 — 영구히 남는 숫자' },
+  { re: /(그랜드\s?슬램|커리어\s?그랜드슬램|4대\s?메이저\s?(?:정복|제패|석권))/, w: 20, why: '그랜드슬램 — 바뀌지 않는 기록' },
+  { re: /(영구\s?시드|종신\s?시드)/, w: 18, why: '영구시드 — 제도와 명단이 함께 검색된다' },
+  { re: /(사상\s?첫|역대\s?첫|최초로|최연소|최고령|역대\s?\d+번째|사상\s?최)/, w: 16, why: '최초·최연소 — 기록으로 남는다' },
+  { re: /(명예의\s?전당|殿堂|홀\s?오브\s?페임)/, w: 16, why: '명예의 전당' },
+  { re: /(누적\s?상금|통산\s?상금|상금\s?랭킹\s?\d+위)/, w: 16, why: '누적 상금 — 상시 검색된다' },
+  { re: /(한\s?시즌\s?최다|대회\s?최다|역대\s?최다|타이\s?기록|신기록)/, w: 14, why: '최다·신기록' },
+];
+
 const 색인전_소멸 = [
   { re: /(\d\s?R\b|\d\s?라운드\s*(?:째|만에)?\s*(?:순위|선두|경쟁|진행)|중간\s?순위|리더보드)/,
     w: -20, why: '대회 중간 순위 — 색인될 쯤엔 끝나 있다' },
@@ -105,6 +130,7 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   for (const { re, w, why } of 실전_유입) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of LONG_TERM) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of SHORT_LIVED) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
+  for (const { re, w, why } of 오래사는_기록) if (re.test(text)) { score += w; reasons.push(`+${w} ${why}`); }
   for (const { re, w, why } of 색인전_소멸) if (re.test(text)) { score += w; reasons.push(`${w} ${why}`); }
 
   // topics.json의 longTermHints — 종목별로 사장님이 직접 지정한 가점 키워드
@@ -137,7 +163,7 @@ export function scoreCluster(cluster, topic, { recentCategories = null } = {}) {
   return { ...cluster, topic: topic.name, category: topic.category, score, reasons, demand };
 }
 
-export { 실전_유입, 색인전_소멸 };
+export { 실전_유입, 색인전_소멸, 오래사는_기록 };
 
 export function rankClusters(clusters, topic, opts = {}) {
   return clusters.map((c) => scoreCluster(c, topic, opts)).sort((a, b) => b.score - a.score);

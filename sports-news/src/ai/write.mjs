@@ -9,6 +9,7 @@ import path from 'node:path';
 import { callForText } from './client.mjs';
 import { ROOT, env } from '../utils/env.mjs';
 import { targetKeywordCount } from '../seo/rankmath.mjs';
+import { LONGEVITY_WORDS, LONGEVITY_HEADING, 오래가는소제목찾기 } from '../seo/longevity.mjs';
 
 let styleCache = null;
 export function loadStyle() {
@@ -27,7 +28,7 @@ const SYSTEM = `당신은 한국의 스포츠 전문 블로거입니다. 워드�
 3. 뉴스 기사 문장을 옮기거나 바꿔쓰지 않습니다. 사실을 재료로 새 글을 씁니다.
 4. AI가 쓴 티가 나지 않게, 사람이 직접 쓴 것처럼 씁니다.`;
 
-export async function writeArticle({ cluster, verification, today, focusKeyword = '' }) {
+export async function writeArticle({ cluster, verification, today, focusKeyword = '', subject = '' }) {
   const style = loadStyle();
 
   const confirmedBlock = verification.confirmed.map((c) => `- ${c.field}: ${c.value}  [확인: ${c.sources.join(', ')}]`).join('\n');
@@ -44,10 +45,24 @@ export async function writeArticle({ cluster, verification, today, focusKeyword 
     ? verification.addedValue.map((v) => `- ${v}`).join('\n')
     : '(없음)';
 
+  // 운영자가 각도를 지정했으면 그게 글의 중심이다.
+  // 2026-10-05 글 7777: 각도가 '통산 상금 1위 131억원'이었는데 이 블록이 없어서
+  // 사건 요약(일본여자오픈 우승)만 보고 썼다. 제목이 어제 쓴 글과 거의 같아졌다.
+  const 각도 = subject ? `
+
+## 🎯 이 글의 각도 — 여기가 중심이다
+**${subject}**
+
+제목과 글 맨 앞 핵심 요약은 **이 각도**로 씁니다. 위 '사건 요약'은 이 각도를
+설명하는 데 필요한 배경일 뿐입니다. 사건을 요약하는 글이 아닙니다.
+
+같은 사건을 다른 각도로 쓴 글이 이미 블로그에 있을 수 있습니다. 그 글과 겹치지
+않게 하는 것이 이 각도의 목적입니다. 각도에서 벗어나면 중복 글이 됩니다.` : '';
+
   const prompt = `오늘 날짜: ${today} (한국시간)
 종목: ${cluster.topic}
 사건 요약: ${verification.topicSummary}
-진행 상태: ${statusLabel(verification.eventStatus)}
+진행 상태: ${statusLabel(verification.eventStatus)}${각도}
 
 ## ✅ 확인된 사실 — 본문에 쓸 수 있는 것은 이것뿐입니다
 ${confirmedBlock}
@@ -193,9 +208,11 @@ ${focusKeyword ? `"${focusKeyword}"를 이 섹션에서 두 번 이상 자연스
   return t;
 }
 
-/** lintArticle이 "오래 가는 섹션"으로 인정하는 낱말. */
-export const LONGEVITY_WORDS = /배경|원리|비교|역사|규칙|계보/;
-const OLDEVITY_HEADING = '## 📌 배경과 원리, 비슷한 사례 비교';
+// 낱말 목록은 seo/longevity.mjs 한 군데서만 정한다. 예전에는 여기와
+// flow.mjs 가 각자 목록을 들고 있어서, 보완이 "완료"라고 찍은 글이 최종
+// 채점에서는 ⑤ 실패로 저장됐다(글 7793).
+export { LONGEVITY_WORDS };
+const OLDEVITY_HEADING = LONGEVITY_HEADING;
 
 /**
  * 본문에 섹션을 끼운다.
@@ -265,7 +282,12 @@ export function lintArticle({ title, body }) {
   const issues = [];
 
   if (!title) issues.push('제목이 비어 있습니다');
-  if (body.length < 2400) issues.push(`본문이 너무 짧습니다 (${body.length}자, 3,000자 이상 권장)`);
+  // 채점표(checkRankMath)와 같은 기준으로 센다 — 공백을 지운 글자 수.
+  // 기준이 다르면 lint 는 통과하는데 SEO 점수에서 떨어진다(실제로 글 7769 가 그랬다).
+  const 공백뺀길이 = body.replace(/^#+\s+/gm, '').replace(/\s+/g, '').length;
+  if (공백뺀길이 < 3000) {
+    issues.push(`본문이 짧습니다 (공백 제외 ${공백뺀길이}자 — 채점 기준 3,000자)`);
+  }
 
   // [8]-⑧ 마지막 소제목에 "마무리" 금지
   const headings = [...body.matchAll(/^##\s*(.+)$/gm)].map((m) => m[1].trim());
@@ -277,7 +299,7 @@ export function lintArticle({ title, body }) {
 
   // 글의 수명을 정하는 섹션. 두 편 연속 빠져서 검사로 올렸다.
   // 소제목만 있고 내용이 없는 경우도 잡으려고 분량까지 본다.
-  const 오래가는 = headings.find((h) => /배경|원리|비교|역사|규칙|계보/.test(h));
+  const 오래가는 = 오래가는소제목찾기(headings);
   if (!오래가는) {
     issues.push('배경·원리·비교 섹션이 없습니다 (뉴스만 있으면 한 주 뒤에 죽습니다)');
   } else {

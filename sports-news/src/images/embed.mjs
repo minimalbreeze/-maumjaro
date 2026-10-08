@@ -7,7 +7,8 @@ export const IMAGE_MARK = (i) => `<!--IMG:${i}-->`;
 export const AD_MARK = '<!--AD-->';
 
 import { WATCH_MARK } from '../seo/watch-banner.mjs';
-export { WATCH_MARK };
+import { APP_PLACEHOLDER } from '../seo/app-banner.mjs';
+export { WATCH_MARK, APP_PLACEHOLDER };
 
 /**
  * 맘운자로로 링크를 건 이미지 HTML. 사용자 요청.
@@ -43,12 +44,15 @@ ${snippet.trim()}
  * - 본문 카드는 중간 소제목 앞
  * - 광고는 글 한가운데 소제목 앞 — "자연스럽게 보이도록"
  */
-export function planPlacements(body, { sectionImages = 1, withAd = true, withWatch = false } = {}) {
+export function planPlacements(body, { sectionImages = 1, withAd = true, withWatch = false, withApp = false } = {}) {
   const lines = body.split('\n');
   const headings = [];
   lines.forEach((l, i) => { if (/^##\s+/.test(l)) headings.push({ index: i, text: l }); });
 
-  const plan = { heroAfterLine: null, sections: [], adBeforeLine: null, watchBeforeLine: null, headings };
+  const plan = {
+    heroAfterLine: null, sections: [], adBeforeLine: null, watchBeforeLine: null,
+    appBeforeLine: null, headings,
+  };
 
   // 대표 이미지: 첫 소제목 바로 앞(= 도입부 뒤)
   plan.heroAfterLine = headings.length ? headings[0].index : 0;
@@ -64,8 +68,20 @@ export function planPlacements(body, { sectionImages = 1, withAd = true, withWat
     plan.watchBeforeLine = candidate === plan.adBeforeLine ? (headings[2]?.index ?? null) : candidate;
   }
 
+  // 앱 다운로드 배너: 두 번째 소제목 앞. 중계 배너와 자리 다툼을 하지 않는다 —
+  // 한 글에 둘 다 들어갈 일은 없지만(스포츠 글 vs 앱 글), 겹치면 카드가 붙어 나온다.
+  // 받으러 가는 버튼이라 글 아래쪽보다 위쪽이 낫다. 끝까지 읽어야 보이면 안 누른다.
+  if (withApp && headings.length >= 2) {
+    for (const h of [headings[1], headings[2], headings[0]]) {
+      if (!h) continue;
+      if (h.index === plan.adBeforeLine || h.index === plan.watchBeforeLine) continue;
+      plan.appBeforeLine = h.index;
+      break;
+    }
+  }
+
   // 본문 카드: 광고·배너와 겹치지 않는 소제목 앞
-  const used = new Set([plan.heroAfterLine, plan.adBeforeLine, plan.watchBeforeLine]);
+  const used = new Set([plan.heroAfterLine, plan.adBeforeLine, plan.watchBeforeLine, plan.appBeforeLine]);
   for (const h of headings.slice(1)) {
     if (plan.sections.length >= sectionImages) break;
     if (used.has(h.index)) continue;
@@ -87,6 +103,7 @@ export function insertMarks(body, plan) {
   if (plan.heroAfterLine !== null) add(plan.heroAfterLine, IMAGE_MARK(0));
   if (plan.adBeforeLine !== null) add(plan.adBeforeLine, AD_MARK);
   if (plan.watchBeforeLine !== null) add(plan.watchBeforeLine, WATCH_MARK);
+  if (plan.appBeforeLine !== null) add(plan.appBeforeLine, APP_PLACEHOLDER);
   plan.sections.forEach((h, i) => add(h.index, IMAGE_MARK(i + 1)));
 
   const out = [];

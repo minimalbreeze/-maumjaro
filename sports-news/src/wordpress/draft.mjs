@@ -15,7 +15,7 @@ const BULLET = /^(?:[-*]\s+|[✅✔•]\s*)/;
  * 마크다운 본문을 워드프레스 블록 에디터가 알아듣는 HTML로 바꾼다.
  * 클래식 에디터에서도 그대로 보이도록 표준 태그만 쓴다.
  */
-export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: watch = '' } = {}) {
+export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: watch = '', appHtml: app = '' } = {}) {
   const out = [];
   const blocks = md.replace(/\r/g, '').split(/\n{2,}/);
 
@@ -38,6 +38,12 @@ export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: 
     // 중계 배너. 설정에 링크가 없는 종목이면 자리표시자만 조용히 사라진다.
     if (block === '<!--WATCH-->') {
       if (watch) out.push(watch);
+      continue;
+    }
+    // 앱 다운로드 배너. 설정에 주소가 없으면 자리표시자만 조용히 사라진다 —
+    // 없는 주소를 '다운로드'라고 걸지 않는다.
+    if (block === '<!--APP-->') {
+      if (app) out.push(app);
       continue;
     }
 
@@ -83,14 +89,14 @@ function escapeHtml(s) {
  * seoFields는 wp:check가 "REST로 쓸 수 있다"고 확인한 키만 들어온다.
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
  */
-export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', featuredMediaId = null }) {
+export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', featuredMediaId = null }) {
   // 본문에 자주 묻는 질문이 있으면 구조화 데이터를 끝에 붙인다.
   // 본문에 실제로 적힌 질문과 답만 들어간다 — 없는 내용을 만들어 붙이지 않는다.
   const schema = faqSchemaBlock(body);
 
   const payload = {
     title,
-    content: markdownToBlocks(body, { images, adHtml, watchHtml }) + (schema ? `\n\n${schema}` : ''),
+    content: markdownToBlocks(body, { images, adHtml, watchHtml, appHtml }) + (schema ? `\n\n${schema}` : ''),
     status: DRAFT_STATUS,
     categories: categoryId ? [categoryId] : [],
     tags: tagIds || [],

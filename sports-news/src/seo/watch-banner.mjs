@@ -93,14 +93,28 @@ export function watchBannerHtml(entry) {
         style="color:#6b2d8f;font-weight:600;text-decoration:underline;">${esc(s.text)}</a>`)
     .join(' · ');
 
+  // 다시보기는 생중계와 주소가 다르다. 끝난 경기 글에는 이쪽이 더 맞다.
+  // vod 가 설정에 없으면 버튼을 넣지 않는다 — 주소를 만들어내지 않는다.
+  // 생중계와 주소가 같으면 버튼을 넣지 않는다. 같은 곳으로 가는 버튼이 둘이면
+  // 독자가 "다시보기"를 눌렀는데 생중계 첫 화면이 나온다 — 속이는 것에 가깝다.
+  const v = entry.vod?.url && entry.vod.url !== p.url ? entry.vod : null;
+  const 다시보기 = v?.url && v?.text
+    ? `
+  <a href="${esc(v.url)}" rel="nofollow"
+     style="display:inline-block;margin-left:8px;padding:13px 28px;border-radius:999px;background:rgba(255,255,255,0.22);color:#ffffff;font-size:17px;font-weight:800;text-decoration:none;border:2px solid #ffffff;">
+    ▶ ${esc(v.text)}
+  </a>`
+    : '';
+
   return `<!-- wp:html -->
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
   <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">📺 경기 보러가기</div>
   <a href="${esc(p.url)}" rel="nofollow"
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →
-  </a>
+  </a>${다시보기}
   ${p.hint ? `<div style="color:#ffffff;font-size:13px;opacity:0.92;margin-top:10px;">${esc(p.hint)}</div>` : ''}
+  ${v?.hint ? `<div style="color:#ffffff;font-size:13px;opacity:0.92;margin-top:6px;">${esc(v.hint)}</div>` : ''}
 </div>
 ${extras ? `<p style="text-align:center;font-size:14px;margin-top:-16px;margin-bottom:28px;">${extras}</p>` : ''}
 <!-- /wp:html -->`;

@@ -226,4 +226,63 @@ check('KBL 글에는 tvN SPORTS가 붙는다', () => {
   assert.equal(r.primary.url, 'https://tvnsports.cjenm.com/ko/');
 });
 
+
+// ── 다시보기 버튼 ──────────────────────────────────────────
+check('다시보기 주소가 있으면 버튼을 넣는다', () => {
+  const b = watchBannerHtml({
+    primary: { text: '생중계 보기', url: 'https://live.example.com/' },
+    vod: { text: 'KBL 경기 다시보기', url: 'https://vod.example.com/kbl', hint: '지난 경기' },
+  });
+  assert.ok(b.includes('https://vod.example.com/kbl'), b);
+  assert.ok(b.includes('▶ KBL 경기 다시보기'), b);
+  assert.ok(b.includes('지난 경기'), '다시보기 설명이 없습니다');
+});
+
+check('생중계와 주소가 같으면 다시보기 버튼을 넣지 않는다', () => {
+  // 같은 곳으로 가는 버튼이 둘이면 "다시보기"를 눌렀는데 생중계 첫 화면이
+  // 나온다. 속이는 것에 가깝다.
+  const 같은주소 = 'https://live.example.com/';
+  const b = watchBannerHtml({
+    primary: { text: '생중계 보기', url: 같은주소 },
+    vod: { text: '다시보기', url: 같은주소 },
+  });
+  assert.ok(!b.includes('▶'), b);
+});
+
+check('다시보기 주소가 비어 있으면 버튼을 넣지 않는다', () => {
+  // 주소를 만들어내지 않는다. 설정에 확인된 주소가 없으면 버튼도 없다.
+  for (const vod of [undefined, {}, { text: '다시보기' }, { text: '다시보기', url: '' }]) {
+    const b = watchBannerHtml({ primary: { text: '생중계', url: 'https://live.example.com/' }, vod });
+    assert.ok(!b.includes('▶'), JSON.stringify(vod));
+  }
+});
+
+check('다시보기 버튼도 현재 창에서 연다', () => {
+  const b = watchBannerHtml({
+    primary: { text: '생중계', url: 'https://live.example.com/' },
+    vod: { text: '다시보기', url: 'https://vod.example.com/' },
+  });
+  const links = b.match(/<a [^>]*>/g) || [];
+  assert.equal(links.length, 2, links.join('\n'));
+  for (const a of links) {
+    assert.ok(!/target=/.test(a), a);
+    assert.ok(/rel="[^"]*nofollow/.test(a), a);
+  }
+});
+
+check('설정의 다시보기 주소는 비어 있거나 실제 주소다', () => {
+  // 지어낸 주소가 섞이면 독자가 눌러도 아무것도 안 나온다.
+  const cfg = loadWatchLinks();
+  const 모든항목 = [];
+  for (const e of Object.values(cfg.byCategory || {})) {
+    모든항목.push(e, ...(e.match || []));
+  }
+  for (const e of 모든항목) {
+    if (!e?.vod) continue;
+    const u = e.vod.url || '';
+    if (u) assert.match(u, /^https:\/\//, `다시보기 주소가 이상합니다: ${u}`);
+    else assert.ok(e.vod._비어있는이유, '비어 있는 이유를 적어두세요');
+  }
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

@@ -49,15 +49,48 @@ export function keywordDensity(body, keyword) {
 /**
  * 목표 분량에서 대표 키워드를 몇 번 써야 1.25%가 되는지 알려준다.
  *
- * 기준은 분량 상한(4,500자)으로 잡는다. 3,500자로 잡았더니 실제로 4,159자짜리
+ * 기준은 분량 상한(5,500자)으로 잡는다. 3,500자로 잡았더니 실제로 4,159자짜리
  * 글이 나와 밀도가 1.07%에 그쳤다. 글이 길어질수록 같은 횟수로는 밀도가 떨어지므로
  * 가장 긴 경우를 기준으로 잡아야 어느 길이로 나와도 1.25% 아래로 떨어지지 않는다.
  * 짧게 나와도 2.5%를 넘지 않는 선이다.
  */
-export function targetKeywordCount(targetChars = 4500) {
+export function targetKeywordCount(targetChars = 5500) {
   // 한국어는 공백 기준 한 단어가 대략 3.5자다.
   const words = Math.round(targetChars / 3.5);
   return Math.min(20, Math.max(8, Math.ceil(words * 0.0125)));
+}
+
+/**
+ * 조사가 붙은 낱말인지. 키워드 후보에서 걸러내려고 쓴다.
+ *
+ * 왜 필요한가: 글 7769 에서 대표 키워드가 "신지애가 일본여자오픈 골프선수권대회"로
+ * 잡혔다. 본문에 그대로 나오는 구절을 자동으로 찾다가 조사 '가'가 붙은 말을
+ * 집은 것이다. 사람은 "신지애가"로 검색하지 않는다. 슬러그까지 그걸로 들어갔고
+ * 제목과 어긋나서 SEO 점수가 66점으로 떨어졌다.
+ *
+ * 조사를 떼지 않고 **버린다**. 떼는 건 위험하다 — "국가"에서 '가'를 떼면 "국"이
+ * 된다. 받침 없는 2자 이상 한글 낱말 뒤에 붙은 조사만 조심스럽게 본다.
+ */
+const 조사 = /(?:은|는|이|가|을|를|에|의|와|과|도|만|로|으로|에서|에게|부터|까지|보다|처럼|라며|이라며|라고|이라고|했다|한다|이다)$/;
+export function 조사붙은낱말인가(word) {
+  const w = String(word || '').trim();
+  // 한글 낱말만 본다. 영문·숫자는 조사가 붙지 않는다(KBO, LPGA, 3R).
+  if (!/^[가-힣]{3,}$/.test(w)) return false;
+  if (!조사.test(w)) return false;
+  // 조사를 뗀 뒤에도 2자 이상 남아야 조사로 본다. "국가"→"국"은 조사가 아니다.
+  const 뗀뒤 = w.replace(조사, '');
+  return 뗀뒤.length >= 2;
+}
+
+/** 후보 구절에서 조사가 붙은 낱말이 나오면 그 앞까지만 쓴다. 없으면 빈 문자열. */
+export function 조사앞까지(phrase) {
+  const words = String(phrase || '').trim().split(/\s+/).filter(Boolean);
+  const kept = [];
+  for (const w of words) {
+    if (조사붙은낱말인가(w)) break;
+    kept.push(w);
+  }
+  return kept.join(' ');
 }
 
 /**
@@ -196,7 +229,8 @@ export function chooseFocusKeyword(body, candidates = []) {
   const pool = [];
 
   for (const c of candidates) {
-    const kw = 키워드정리(c);
+    // 조사가 붙은 낱말이 섞인 후보는 그 앞까지만 쓴다. 사람이 검색하는 말이 아니다.
+    const kw = 조사앞까지(키워드정리(c));
     if (!kw) continue;
     const words = kw.split(' ');
     // 원래 형태부터 두 낱말까지 앞에서부터 줄여가며 후보로 넣는다.

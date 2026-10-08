@@ -29,6 +29,8 @@ import { categoryIndex } from '../news/variety.mjs';
 import { pickWatchLinks, watchBannerHtml } from '../seo/watch-banner.mjs';
 import { loadEnv } from '../utils/env.mjs';
 import { log } from '../utils/logger.mjs';
+import { APP_MARK } from '../seo/app-banner.mjs';
+import { OFFICIAL_MARK } from '../seo/official-banner.mjs';
 
 /** 2단계 소제목 블록의 시작 위치들. {"level":3} 이 붙은 것은 h3 이므로 뺀다. */
 const H2_BLOCK = /<!--\s*wp:heading\s*-->/gi;
@@ -48,6 +50,18 @@ const AD_BLOCK = /<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi;
  *
  * 소제목이 둘도 없으면 null. 그때는 글 맨 끝에 붙인다.
  */
+/**
+ * 배너임을 알아보는 표시. watchBannerHtml() 이 항상 넣는 글귀다.
+ *
+ * 주소로 알아보면 안 된다. 글 7690 이 그 경우였다 — 본문 글자 안에 중계
+ * 주소가 링크로 적혀 있는데 배너 블록은 없었다. 주소만 보고 "이미 있다"고
+ * 건너뛰어서 배너가 영영 안 들어갔다.
+ */
+export const BANNER_SIGN = '📺 경기 보러가기';
+
+/** 자리를 잡을 때 "붙으면 안 되는" 배너들의 표시. */
+const 모든표식 = [BANNER_SIGN, APP_MARK, OFFICIAL_MARK];
+
 export function bannerSlot(html) {
   const body = String(html || '');
   const heads = [...body.matchAll(H2_BLOCK)].map((m) => m.index);
@@ -57,9 +71,16 @@ export function bannerSlot(html) {
     .filter((m) => /coupang|쿠팡/i.test(m[1]))
     .map((m) => m.index + m[0].length);
 
+  // 이미 있는 배너 바로 뒤도 피한다. 카드가 연달아 붙으면 둘 다 광고로 보여
+  // 아무것도 안 눌린다 — 광고를 피하는 이유와 같다.
+  const 배너끝 = [...body.matchAll(/<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi)]
+    .filter((m) => 모든표식.some((sign) => m[1].includes(sign)))
+    .map((m) => m.index + m[0].length);
+  const 피할곳 = [...광고끝, ...배너끝];
+
   for (const at of heads.slice(1)) {
-    // 바로 앞이 광고면(사이에 다른 블록이 없으면) 이 자리는 건너뛴다.
-    const 붙었나 = 광고끝.some((end) => end <= at && body.slice(end, at).trim() === '');
+    // 바로 앞이 광고나 다른 배너면(사이에 다른 블록이 없으면) 이 자리는 건너뛴다.
+    const 붙었나 = 피할곳.some((end) => end <= at && body.slice(end, at).trim() === '');
     if (!붙었나) return at;
   }
   return heads[1];
@@ -72,13 +93,17 @@ export function bannerSlot(html) {
  * 주소가 링크로 적혀 있는데 배너 블록은 없었다. 주소만 보고 "이미 있다"고
  * 건너뛰어서 배너가 영영 안 들어갔다.
  */
-const BANNER_SIGN = '📺 경기 보러가기';
 
-/** 본문에 든 배너 블록들. wp:html 블록 중 위 표시가 든 것만. */
-export function findBanners(html) {
+/**
+ * 본문에 든 배너 블록들. wp:html 블록 중 그 표시가 든 것만.
+ *
+ * sign 을 바꿔 부르면 다른 배너(앱·공식 홈페이지)도 같은 방법으로 찾는다.
+ * 기본값은 중계 배너라 기존 호출부는 그대로 동작한다.
+ */
+export function findBanners(html, sign = BANNER_SIGN) {
   const out = [];
   for (const m of String(html || '').matchAll(/<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi)) {
-    if (!m[1].includes(BANNER_SIGN)) continue;
+    if (!m[1].includes(sign)) continue;
     const url = /href="([^"]+)"/.exec(m[1])?.[1] || '';
     out.push({ start: m.index, end: m.index + m[0].length, url, block: m[0] });
   }
@@ -86,9 +111,9 @@ export function findBanners(html) {
 }
 
 /** 이 글에 이 배너가 이미 있는지. 배너 블록이 같은 주소를 가리킬 때만 '있다'. */
-export function alreadyHasBanner(html, url) {
+export function alreadyHasBanner(html, url, sign = BANNER_SIGN) {
   if (!url) return false;
-  return findBanners(html).some((b) => b.url === url);
+  return findBanners(html, sign).some((b) => b.url === url);
 }
 
 /**
@@ -98,12 +123,12 @@ export function alreadyHasBanner(html, url) {
  * - 배너가 있는데 주소가 다르면(중계처가 바뀐 경우) 그 블록만 바꾼다.
  *   자리는 그대로 둔다 — 원래 자리가 글 흐름에 맞게 잡혀 있다.
  */
-export function applyBanner(html, banner) {
+export function applyBanner(html, banner, sign = BANNER_SIGN) {
   const body = String(html || '');
   const block = String(banner || '').trim();
   if (!block) return { html: body, 한일: null };
 
-  const 있는것 = findBanners(body);
+  const 있는것 = findBanners(body, sign);
   if (있는것.length) {
     let out = body;
     for (const b of [...있는것].reverse()) out = out.slice(0, b.start) + block + out.slice(b.end);
@@ -121,10 +146,10 @@ export function applyBanner(html, banner) {
  * 저장 전 마지막 방어선이다. 양쪽에서 배너 블록을 통째로 빼고 공백을 고른 뒤
  * 글자 하나까지 같아야 한다. 넣은 경우에도 바꾼 경우에도 같은 방법으로 본다.
  */
-export function bannerOnlyChange(before, after) {
+export function bannerOnlyChange(before, after, sign = BANNER_SIGN) {
   const 벗기기 = (s) => {
     let out = String(s);
-    for (const b of [...findBanners(out)].reverse()) out = out.slice(0, b.start) + out.slice(b.end);
+    for (const b of [...findBanners(out, sign)].reverse()) out = out.slice(0, b.start) + out.slice(b.end);
     return out.replace(/\s+/g, ' ').trim();
   };
   return 벗기기(before) === 벗기기(after);
