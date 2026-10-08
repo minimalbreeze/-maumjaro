@@ -39,6 +39,7 @@ import { attachTrend, hasNaverTrend } from './news/naver-trend.mjs';
 import { checkRankMath, chooseFocusKeyword, buildSlug } from './seo/rankmath.mjs';
 import { pickWatchLinks, watchBannerHtml } from './seo/watch-banner.mjs';
 import { pickApp, appBannerHtml } from './seo/app-banner.mjs';
+import { pickOfficial, officialBannerHtml } from './seo/official-banner.mjs';
 import { checkFlow } from './seo/flow.mjs';
 import { usageSummary } from './ai/client.mjs';
 
@@ -558,10 +559,19 @@ async function attachImages({ article, seo, cluster, dryRun }) {
   const watch = pickWatchLinks(cluster.category, {
     text: `${article.title}\n${article.body}`,
   });
-  // 운영자가 만든 앱 이름이 글에 나오면 다운로드 배너를 넣는다.
-  // config/app-links.json 에 주소가 적힌 앱만 — 주소를 만들어내지 않는다.
-  const app = pickApp(`${article.title}\n${article.body}`);
-  const appHtml = app ? appBannerHtml(app) : '';
+  // 배너 자리 하나에 앱 배너 또는 공식 홈페이지 배너가 들어간다.
+  // 한 글에 둘 다 해당될 일은 없다(앱 글 vs 구단 글). 자리를 둘로 늘리면
+  // 카드가 연달아 붙어 글이 광고판처럼 보인다.
+  //
+  // 어느 쪽이든 config 에 사람이 확인해 적어둔 주소만 쓴다 —
+  // 주소를 만들어내지 않는다(app-links.json / official-links.json).
+  //
+  // 밑의 변수 이름이 app 인 것은 앱 배너가 먼저 생겼기 때문이다.
+  // 지금은 "링크 배너 자리"를 뜻한다.
+  const 글전체 = `${article.title}\n${article.body}`;
+  const app = pickApp(글전체);
+  const official = app ? null : pickOfficial(글전체);
+  const appHtml = app ? appBannerHtml(app) : (official ? officialBannerHtml(official) : '');
 
   const plan = planPlacements(article.body, {
     sectionImages: 1,
@@ -577,8 +587,12 @@ async function attachImages({ article, seo, cluster, dryRun }) {
     featuredId: null, summary: [],
   };
   if (watch) log.info(`    중계 배너: ${watch.primary.url}`);
-  if (appHtml) log.info(`    앱 배너: ${app.이름} → ${app.url}`);
-  else if (app) log.warn(`    앱 배너: ${app.이름} 은 설정에 주소가 없어 넣지 않습니다 (config/app-links.json)`);
+  const 배너대상 = app || official;
+  if (appHtml) log.info(`    ${app ? '앱' : '공식 홈페이지'} 배너: ${배너대상.이름} → ${배너대상.url}`);
+  else if (배너대상) {
+    const 설정 = app ? 'config/app-links.json' : 'config/official-links.json';
+    log.warn(`    배너: ${배너대상.이름} 은 설정에 쓸 수 있는 주소가 없어 넣지 않습니다 (${설정})`);
+  }
 
   // 카드에 찍을 라벨은 짧아야 한다. 주제를 직접 지정하면 cluster.topic이
   // 사용자가 적어 준 긴 문장이라(예: "피트 알론소 볼티모어 오리올스 …")

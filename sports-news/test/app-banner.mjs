@@ -212,7 +212,7 @@ check('main 이 앱 배너를 저장까지 넘긴다', () => {
   assert.match(src, /withApp: Boolean\(appHtml\)/, '자리 계획에 안 넘깁니다');
   assert.match(src, /appHtml: media\.app/, 'saveDraft 에 안 넘깁니다');
   // 주소가 없을 때 조용히 빠지지 않고 알려준다.
-  assert.match(src, /설정에 주소가 없어 넣지 않습니다/, '왜 안 나오는지 알려주지 않습니다');
+  assert.match(src, /설정에 쓸 수 있는 주소가 없어 넣지 않습니다/, '왜 안 나오는지 알려주지 않습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

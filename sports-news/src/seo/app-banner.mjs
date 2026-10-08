@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../utils/env.mjs';
 import { 낱말로있나 } from './watch-banner.mjs';
+import { 배너카드 } from './banner-card.mjs';
 
 // 카드 안에 늘 들어가는 글귀. 나중에 "이 글에 앱 배너가 있나"를 이걸로 찾는다
 // (watch-banner 가 '📺 경기 보러가기' 로 하는 것과 같다).
@@ -49,9 +50,6 @@ export function pickApp(text, cfg = loadAppLinks()) {
   return null;
 }
 
-const esc = (s) => String(s)
-  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
 /**
  * 앱스토어 주소가 그럴듯한 모양인지 본다.
  *
@@ -74,23 +72,26 @@ export function 앱스토어주소인가(url) {
  * 중계인지"가 글 제목에 이미 있지만, 앱 배너는 글 어디에서나 나올 수 있고
  * 독자가 "무슨 앱을 받는 건지" 한눈에 알아야 누른다.
  */
+/**
+ * 배너 HTML을 만든다.
+ *
+ * 카드 모양은 seo/banner-card.mjs 한 군데서만 그린다. 공식 홈페이지 배너와
+ * 같은 카드를 쓰므로, 복사해 두면 한쪽만 고쳤을 때 글마다 배너가 달라진다.
+ *
+ * 앱 이름은 카드 안에 쓴다 — 중계 배너와 다른 점이다. 중계 배너는 "무엇의
+ * 중계인지"가 글 제목에 이미 있지만, 앱 배너는 글 어디에서나 나올 수 있고
+ * 독자가 "무슨 앱을 받는 건지" 한눈에 알아야 누른다.
+ */
 export function appBannerHtml(app) {
   if (!app?.url || !앱스토어주소인가(app.url)) return '';
-
   const 이름 = app.이름 || '앱';
-  const cta = app.cta || `앱스토어에서 ${이름} 받기`;
-
-  return `<!-- wp:html -->
-<div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
-  <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">${esc(APP_MARK)}</div>
-  <div style="color:#ffffff;font-size:20px;font-weight:800;margin-bottom:12px;">${esc(이름)}</div>
-  <a href="${esc(app.url)}" rel="nofollow"
-     style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
-    ${esc(cta)} →
-  </a>
-  ${app.hint ? `<div style="color:#ffffff;font-size:13px;opacity:0.92;margin-top:10px;">${esc(app.hint)}</div>` : ''}
-</div>
-<!-- /wp:html -->`;
+  return 배너카드({
+    표식: APP_MARK,
+    이름,
+    cta: app.cta || `앱스토어에서 ${이름} 받기`,
+    url: app.url,
+    hint: app.hint || '',
+  });
 }
 
 /** 글에 맞는 앱 배너. 설정에 주소가 없으면 빈 글을 돌려준다. */
