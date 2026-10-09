@@ -52,6 +52,7 @@ on:
           - '앱·공식 홈페이지 배너 넣기 (미리보기 · 비용 0원)'
           - '앱·공식 홈페이지 배너 넣기 (실제 적용 · 비용 0원)'
           - '광고가 페이지에 나가는지 보기 (고치지 않음 · 비용 0원)'
+          - '색인이 안 되는 이유 찾기 (글 전체 훑기 · 비용 0원)'
       article_text:
         description: '기사 본문을 붙여넣기 (이게 있으면 뉴스 수집을 건너뛰고 이 기사를 재료로 1편 씁니다. 주제도 함께 적으세요)'
         required: false
@@ -117,7 +118,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -464,10 +465,26 @@ jobs:
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: node src/wordpress/ad-check.mjs $IN_IDS
 
+      - name: 색인이 안 되는 이유 찾기
+        # 발행된 글을 전부 받아 중복·분량·빈 SEO 필드를 센다. **읽기만 한다.**
+        #
+        # 2026-10-09 서치콘솔: 색인 8개 / "크롤링됨 - 현재 색인이 생성되지 않음"
+        # 148개. 이 상태는 오류가 아니라 구글이 읽고 "올릴 만하지 않다"고 판단한
+        # 것이라, 사이트맵 재제출로는 풀리지 않는다. 무엇을 손볼지 정하려면
+        # 먼저 세야 한다.
+        if: ${{ contains(inputs.mode, '색인이 안 되는 이유') }}
+        working-directory: sports-news
+        env:
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: node src/wordpress/index-audit.mjs
+
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
