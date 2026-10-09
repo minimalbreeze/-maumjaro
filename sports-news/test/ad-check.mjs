@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readAdsTxt, readAdMarkup, readInstallHints, 상태표시 } from '../src/wordpress/ad-check.mjs';
+import { readAdsTxt, readAdMarkup, readInstallHints, 상태표시, ads주소들 } from '../src/wordpress/ad-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -57,6 +57,35 @@ check('게시자 ID 를 통째로 돌려주지 않는다', () => {
   const a = readAdsTxt('google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0');
   assert.ok(!JSON.stringify(a).includes('pub-1234567890123456'), '게시자 ID 가 그대로 들어 있습니다');
   assert.equal(a.게시자ID있음, true);
+});
+
+check('서브도메인이면 루트 도메인 ads.txt 도 본다', () => {
+  // 2026-10-09: 애드센스에 등록된 건 minimalbreeze.com 인데 블로그는
+  // wiki.minimalbreeze.com 이다. 서브도메인만 보고 "없다"고 하면 틀린 말이 된다.
+  const 목록 = ads주소들('https://wiki.minimalbreeze.com');
+  assert.equal(목록.length, 2, '루트 도메인을 안 봅니다');
+  assert.ok(목록[0][1].includes('wiki.minimalbreeze.com/ads.txt'));
+  assert.ok(목록[1][1].includes('//minimalbreeze.com/ads.txt'));
+  assert.ok(!목록[1][1].includes('wiki.'), '루트 주소에 서브도메인이 남았습니다');
+});
+
+check('루트 도메인이면 한 번만 본다', () => {
+  assert.equal(ads주소들('https://example.com').length, 1);
+  assert.equal(ads주소들('https://www.example.com').length, 2, 'www 도 서브도메인이라 루트를 함께 봅니다');
+});
+
+check('SUBDOMAIN= 위임을 읽어낸다', () => {
+  // 루트가 서브도메인에 위임해 두면 서브도메인에 파일이 없어도 정상이다.
+  const a = readAdsTxt([
+    'SUBDOMAIN=wiki.example.com',
+    'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0',
+  ].join('\n'));
+  assert.deepEqual(a.위임, ['wiki.example.com']);
+  assert.equal(a.구글줄수, 1, '위임 줄을 google 줄로 셌습니다');
+});
+
+check('위임이 없으면 빈 목록이다', () => {
+  assert.deepEqual(readAdsTxt('google.com, pub-1234567890123456, DIRECT, x').위임, []);
 });
 
 // ── 페이지 마크업 ──────────────────────────────────────────

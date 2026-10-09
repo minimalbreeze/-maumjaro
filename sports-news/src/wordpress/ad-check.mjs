@@ -34,6 +34,25 @@ async function 받기(url) {
   return { status: res.status, ok: res.ok, text: res.ok ? await res.text() : '' };
 }
 
+/**
+ * 볼 ads.txt 주소들. 서브도메인이면 루트 도메인도 함께 본다.
+ *
+ * ads.txt 는 루트 도메인에 두는 것이 규격이고, 서브도메인은 거기서
+ * SUBDOMAIN= 로 위임한다. 서브도메인만 보고 "없다"고 하면 틀린 말이 된다.
+ */
+export function ads주소들(base) {
+  const out = [];
+  let host;
+  try { host = new URL(base).host; } catch { return [['사이트', `${base}/ads.txt`]]; }
+  out.push([host, `${base}/ads.txt`]);
+  const 조각 = host.split('.');
+  if (조각.length > 2) {
+    const 루트 = 조각.slice(-2).join('.');
+    out.push([`${루트} (루트 도메인)`, `https://${루트}/ads.txt`]);
+  }
+  return out;
+}
+
 /** ads.txt 를 본다. 없거나 비면 일부 광고 수요처가 입찰을 건너뛴다. */
 export function readAdsTxt(text) {
   const 줄 = String(text || '').split('\n')
@@ -47,6 +66,9 @@ export function readAdsTxt(text) {
     RESELLER: google.filter((l) => /\bRESELLER\b/i.test(l)).length,
     // 게시자 ID 는 ads.txt 가 원래 공개하는 값이지만, 로그에 통째로 흘리지 않는다.
     게시자ID있음: google.some((l) => /pub-\d{10,}/i.test(l)),
+    // 루트 도메인이 서브도메인에 위임해 둔 경우. 이게 있으면 서브도메인에
+    // 파일이 없어도 정상이다.
+    위임: 줄.filter((l) => /^subdomain\s*=/i.test(l)).map((l) => l.split('=')[1]?.trim()).filter(Boolean),
   };
 }
 
@@ -125,24 +147,30 @@ async function main() {
   console.log('📊 광고가 페이지에 실제로 나가는지 (읽기만 함 · 비용 0원)');
   console.log('────────────────────────────────────────────────────────');
 
-  // ① ads.txt
+  // ① ads.txt — 서브도메인이면 루트 도메인도 같이 본다.
+  //
+  //   2026-10-09: 애드센스에 등록된 사이트가 minimalbreeze.com 인데 블로그는
+  //   wiki.minimalbreeze.com 이다. 서브도메인만 보고 "없다"고 말하면 반쪽이다.
+  //   ads.txt 규격상 루트 도메인에 두고, 서브도메인은 SUBDOMAIN= 로 위임한다.
   const base = (process.env.WORDPRESS_URL || '').replace(/\/+$/, '');
   if (!base) {
     console.log('\n[ads.txt] WORDPRESS_URL 이 없어 건너뜁니다');
   } else {
-    try {
-      const r = await 받기(`${base}/ads.txt`);
-      if (!r.ok) {
-        console.log(`\n[ads.txt] ❌ 없습니다 (HTTP ${r.status})`);
-        console.log('   일부 광고 수요처가 ads.txt 없는 사이트에 입찰하지 않습니다.');
-      } else {
-        const a = readAdsTxt(r.text);
-        console.log(`\n[ads.txt] ✅ 있습니다 — 전체 ${a.줄수}줄 · google.com ${a.구글줄수}줄`);
-        console.log(`   DIRECT ${a.DIRECT} · RESELLER ${a.RESELLER} · 게시자 ID ${a.게시자ID있음 ? '있음' : '❌ 없음'}`);
-        if (!a.구글줄수) console.log('   ⚠️  google.com 줄이 없습니다 — 애드센스가 이 사이트를 자기 것으로 못 봅니다.');
+    for (const [이름, url] of ads주소들(base)) {
+      try {
+        const r = await 받기(url);
+        if (!r.ok) {
+          console.log(`\n[ads.txt · ${이름}] ❌ 없습니다 (HTTP ${r.status})`);
+        } else {
+          const a = readAdsTxt(r.text);
+          console.log(`\n[ads.txt · ${이름}] ✅ 있습니다 — 전체 ${a.줄수}줄 · google.com ${a.구글줄수}줄`);
+          console.log(`   DIRECT ${a.DIRECT} · RESELLER ${a.RESELLER} · 게시자 ID ${a.게시자ID있음 ? '있음' : '❌ 없음'}`);
+          if (a.위임) console.log(`   서브도메인 위임(SUBDOMAIN=): ${a.위임.join(', ')}`);
+          if (!a.구글줄수) console.log('   ⚠️  google.com 줄이 없습니다.');
+        }
+      } catch (err) {
+        console.log(`\n[ads.txt · ${이름}] 확인 실패 — ${err.message}`);
       }
-    } catch (err) {
-      console.log(`\n[ads.txt] 확인 실패 — ${err.message}`);
     }
   }
 
