@@ -2673,6 +2673,32 @@ await asyncTest('이어할 대본이 없으면 새로 만들지 않고 멈춘다
   assert.ok(/script\.md 이 없습니다/.test(out), `무엇이 없는지 말해야 합니다: ${out}`);
 });
 
+// 멈춘 단계가 한나절 돌지 않게.
+//
+// ffmpeg 설치(실측 24초)가 한 번 25분을 멈춰 있었다. 그대로 두면 GitHub
+// 기본값인 6시간을 다 쓴다. 효성님은 그동안 기다리기만 한다.
+test('워크플로에 시간 제한이 걸려 있다', () => {
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  // 같은 키가 두 번 있으면 GitHub 이 워크플로 자체를 거부한다 — 실행이
+  // 0초 만에 실패하고 아무 단계도 돌지 않는다. 실제로 그렇게 한 번
+  // 날렸다. 파이썬 yaml 검사는 중복 키를 통과시키므로 여기서 센다.
+  const jobLines = yml.split('\n').filter((l) => /^    timeout-minutes: \d+$/.test(l));
+  assert.equal(jobLines.length, 1, `잡 상한이 ${jobLines.length}번 있습니다 (1이어야 합니다)`);
+  const job = /\n    timeout-minutes: (\d+)/.exec(yml);
+  assert.ok(job, '잡 전체에 timeout-minutes 가 없습니다 (기본 6시간)');
+  assert.ok(Number(job[1]) <= 180, `잡 상한이 너무 깁니다: ${job[1]}분`);
+
+  const start = yml.indexOf('- name: ffmpeg와 한글 글꼴 설치');
+  assert.ok(start > 0, 'ffmpeg 설치 단계를 찾지 못했습니다');
+  const body = yml.slice(start, yml.indexOf('\n      - name:', start + 1));
+  const step = /timeout-minutes: (\d+)/.exec(body);
+  assert.ok(step, 'ffmpeg 설치 단계에 timeout-minutes 가 없습니다');
+  assert.ok(Number(step[1]) <= 15, `설치 상한이 너무 깁니다: ${step[1]}분`);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);
