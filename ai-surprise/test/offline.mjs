@@ -2605,6 +2605,74 @@ await asyncTest('음성을 만든 뒤에는 추정치가 아니라 실제 길이
   );
 });
 
+// 돈이 두 번 나가지 않게 막는 장치.
+//
+// 서버는 실행마다 지워지므로, 뒤 단계에서 실패하면 앞에서 **산 것**이 같이
+// 사라진다. 결과물을 되돌려 놓고 다시 돌릴 때 같은 것을 또 사면 안 된다.
+await asyncTest('이미 만든 것이 있으면 돈 쓰는 단계를 건너뛴다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const root = new URL('../', import.meta.url).pathname;
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'resume-'));
+  const dir = path.join(data, 'content', '001');
+  fs.mkdirSync(path.join(dir, 'assets'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'audio'), { recursive: true });
+
+  const scenes = [{
+    scene_number: 1, section: 'HOOK', duration: 20,
+    paragraphs: [{ text: '가'.repeat(40), seconds: 20 }],
+    shots: [
+      { shot_id: 'S01-01', asset_type: 'IMAGE', duration: 10, camera: 'zoom in' },
+      { shot_id: 'S01-02', asset_type: 'IMAGE', duration: 10, camera: 'static' },
+    ],
+  }];
+  fs.writeFileSync(path.join(dir, 'scenes.json'), JSON.stringify({ scenes, problems: [] }));
+  fs.writeFileSync(path.join(dir, 'script.md'), '# 대본\n');
+  for (const sid of ['S01-01', 'S01-02']) fs.writeFileSync(path.join(dir, 'assets', `${sid}.png`), 'x');
+  fs.writeFileSync(path.join(dir, 'audio', 'voice.mp3'), 'x');
+  fs.writeFileSync(
+    path.join(dir, 'audio', 'timings.json'),
+    JSON.stringify({ total_seconds: 20, count: 1, timings: [{ id: 'S01-P1', scene_number: 1, seconds: 20 }] })
+  );
+
+  // 키를 **전부 빼고** 돌린다. 하나라도 사려 들면 여기서 죽는다.
+  const env = { ...process.env, AI_SURPRISE_DATA_DIR: data };
+  delete env.ANTHROPIC_API_KEY;
+  delete env.REPLICATE_API_TOKEN;
+  delete env.GOOGLE_TTS_API_KEY;
+
+  const out = execFileSync(
+    process.execPath,
+    ['src/main.mjs', 'auto', '--resume=001', '--scenes', '--images', '--narrate', '--dry-run'],
+    { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+  );
+
+  for (const what of ['scenes.json', '그림 2장', 'voice.mp3']) {
+    assert.ok(out.includes(what), `${what} 을 건너뛴다고 알려야 합니다:\n${out}`);
+  }
+  assert.equal((out.match(/돈을 아낍니다/g) || []).length, 3, `세 단계 모두 건너뛰어야 합니다:\n${out}`);
+  fs.rmSync(data, { recursive: true, force: true });
+});
+
+// 이어할 편이 없는데 이어하라고 하면, 조용히 새로 만들지 말고 멈춰야 한다.
+// 새로 만들면 효성님은 "이어했다"고 믿는데 실제로는 돈이 다 나간다.
+await asyncTest('이어할 대본이 없으면 새로 만들지 않고 멈춘다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const root = new URL('../', import.meta.url).pathname;
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'resume-none-'));
+  const env = { ...process.env, AI_SURPRISE_DATA_DIR: data };
+  delete env.ANTHROPIC_API_KEY;
+  let out = '';
+  try {
+    execFileSync(process.execPath, ['src/main.mjs', 'auto', '--resume=001', '--scenes'], {
+      cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.fail('멈춰야 합니다');
+  } catch (err) {
+    out = `${err.stdout || ''}${err.stderr || ''}`;
+  }
+  assert.ok(/script\.md 이 없습니다/.test(out), `무엇이 없는지 말해야 합니다: ${out}`);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);
