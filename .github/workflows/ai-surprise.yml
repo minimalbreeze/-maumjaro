@@ -91,6 +91,9 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
+    # 멈춘 단계를 한나절 돌게 두지 않는다. 기본값은 6시간이다.
+    # 완성본이 가장 오래 걸리는데 실측 20분이었으므로 90분이면 넉넉하다.
+    timeout-minutes: 90
     timeout-minutes: 90
 
     steps:
@@ -206,6 +209,9 @@ jobs:
       # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
       - name: ffmpeg와 한글 글꼴 설치
         if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
+        # 실측 24초인 단계다. 한 번은 패키지 서버가 응답하지 않아 25분을
+        # 멈춰 있었고, 그대로 두면 6시간을 돈다. 빨리 죽고 다시 도는 쪽이 낫다.
+        timeout-minutes: 10
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
