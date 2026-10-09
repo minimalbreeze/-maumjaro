@@ -217,7 +217,15 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
 export function composeImagePrompt(content) {
-  return `${String(content || '').trim()}. ${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
+  // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
+  // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
+  // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
+  //
+  // 이미지 모델이 이걸로 그림을 못 그리는 건 아니지만, 우리가 100편 내내
+  // 똑같이 붙이는 고정 문구라 틀린 채로 두면 100편 내내 틀린다.
+  const body = String(content || '').trim().replace(/[.,;:\s]+$/, '');
+  if (!body) return `${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
+  return `${body}. ${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
 }
 
 /**

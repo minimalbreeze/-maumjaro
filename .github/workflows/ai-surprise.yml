@@ -25,6 +25,7 @@ on:
           - '소재 찾고 대본까지 쓰기'
           - '소재 → 대본 → 장면까지 쓰기'
           - '소재 → 대본 → 장면 → 영상·쇼츠까지 만들기'
+          - '진짜 그림까지 (이미지 생성 · 장당 돈이 나갑니다)'
       video_ratio:
         description: 'AI 영상 비중 (0.15 = 샷의 15%만 영상. 올리면 비싸집니다)'
         required: false
@@ -41,6 +42,18 @@ on:
         description: '영상 길이 (분)'
         required: false
         default: '4'
+      image_model:
+        description: '이미지 모델 (schnell = 싸고 빠름 / dev = 비싸고 정확함)'
+        required: false
+        default: 'schnell'
+        type: choice
+        options:
+          - 'schnell'
+          - 'dev'
+      max_usd:
+        description: '이미지에 쓸 돈 상한 (달러). 넘으면 멈춥니다'
+        required: false
+        default: '3'
       category:
         description: '분야 (비우면 알아서 섞습니다). 예: 과학적 미스터리'
         required: false
@@ -90,12 +103,25 @@ jobs:
           fi
           echo "ANTHROPIC_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
+      - name: 이미지 토큰이 등록되어 있는지 확인
+        if: ${{ contains(inputs.mode, '그림') }}
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+        run: |
+          if [ -z "$REPLICATE_API_TOKEN" ]; then
+            echo "::error::REPLICATE_API_TOKEN 이 등록되지 않았습니다."
+            echo "https://replicate.com/account/api-tokens 에서 토큰을 만들고,"
+            echo "리포 Settings → Secrets and variables → Actions → New repository secret 에 추가하세요."
+            exit 1
+          fi
+          echo "REPLICATE_API_TOKEN 등록되어 있습니다. (값은 출력하지 않습니다)"
+
       # 영상을 만들 때만 깐다. 다른 방식에서는 1분 넘게 기다릴 이유가 없다.
       # fonts-noto-cjk 가 없으면 자막의 한글이 전부 네모로 나온다 —
       # 그런데 ffmpeg는 오류를 내지 않으므로, 영상을 눈으로 보기 전까지
       # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
       - name: ffmpeg와 한글 글꼴 설치
-        if: ${{ contains(inputs.mode, '영상') }}
+        if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
@@ -118,7 +144,10 @@ jobs:
           IN_MINUTES: ${{ inputs.minutes }}
           IN_CATEGORY: ${{ inputs.category }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
+          IN_IMAGE_MODEL: ${{ inputs.image_model }}
+          IN_MAX_USD: ${{ inputs.max_usd }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
           # 장면 단계가 읽는다. 샷 중 몇 %를 AI 영상으로 만들지 정한다.
           VIDEO_SHOT_RATIO: ${{ inputs.video_ratio }}
         run: |
@@ -135,7 +164,18 @@ jobs:
           args=("--count=$IN_COUNT")
           [ -n "$IN_CATEGORY" ] && args+=("--category=$IN_CATEGORY")
 
+          case "$IN_MAX_USD" in
+            ''|*[!0-9.]*|*.*.*) echo "::error::돈 상한은 숫자여야 합니다: $IN_MAX_USD"; exit 1 ;;
+          esac
+
           case "$IN_MODE" in
+            *'그림'*)
+              args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--images" "--video")
+              args+=("--image-model=$IN_IMAGE_MODEL" "--max-usd=$IN_MAX_USD")
+              echo "소재 → 대본 → 장면 → 진짜 그림 → 영상·쇼츠까지 만듭니다."
+              echo "이미지 모델 $IN_IMAGE_MODEL, 돈 상한 \$$IN_MAX_USD. 30~50분 걸립니다."
+              node src/main.mjs auto "${args[@]}"
+              ;;
             *'영상'*)
               args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--video")
               echo "소재 → 대본 → 장면 → 영상·쇼츠까지 만듭니다. AI 영상 비중 $IN_VIDEO_RATIO"
@@ -197,6 +237,10 @@ jobs:
             echo "::group::📱 쇼츠 후보 content/$id"
             cat "$f"
             echo "::endgroup::"
+          done
+          for f in content/*/assets; do
+            id="${f%/assets}"; id="${id#content/}"
+            echo "만들어진 그림 content/$id: $(ls "$f" 2>/dev/null | grep -c '\.png$') 장"
           done
           echo "만들어진 영상 파일:"
           ls -lh content/*/video/final.mp4 content/*/video/shorts/*.mp4 2>/dev/null || echo "  (없음)"
