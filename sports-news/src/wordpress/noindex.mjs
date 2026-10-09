@@ -15,6 +15,10 @@
 //   뺀다. 되돌리려면 값을 지우면 된다.
 //
 // 지키는 선
+//   - **WORDPRESS_URL 이 가리키는 사이트 말고는 건드리지 않는다.** 운영자가
+//     2026-10-09 에 "wiki만 손대줘, 나머진 광고 돌리는 사이트야"라고 못박았다.
+//     이 리포의 도구는 전부 WORDPRESS_URL 하나로만 가지만, 이 도구는 한 번에
+//     수백 편을 쓰므로 글마다 공개 주소의 호스트를 확인하고 다르면 건너뛴다.
 //   - 본문·제목·슬러그·발행상태는 건드리지 않는다. robots 칸 하나만 쓴다.
 //   - 고치기 전에 원래 값을 파일로 남긴다.
 //   - **모양을 눈으로 확인하기 전에는 쓰지 않는다.** Rank Math 의 robots 는
@@ -25,7 +29,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { wpFetch } from './client.mjs';
+import { wpFetch, wpConfig } from './client.mjs';
 import { ROOT } from '../utils/env.mjs';
 import { 발행글전부, 글유형 } from './index-audit.mjs';
 
@@ -67,6 +71,21 @@ export function 뺄글고르기(글 = [], { 최대글자수 = 1500, 지난날수
   }).sort((a, b) => a.글자수 - b.글자수);
 }
 
+/**
+ * 이 글이 우리가 손대도 되는 사이트의 글인가.
+ *
+ * 운영자 지시: wiki 만 손댄다. 나머지는 광고를 돌리는 사이트라 건드리지 않는다.
+ * 글의 공개 주소 호스트가 WORDPRESS_URL 의 호스트와 다르면 손대지 않는다.
+ * 주소를 읽을 수 없으면 손대지 않는다 — 모르면 안 건드리는 쪽이다.
+ */
+export function 손대도되는글인가(link, base) {
+  try {
+    return new URL(link).host === new URL(base).host;
+  } catch {
+    return false;
+  }
+}
+
 /** 되돌릴 수 있도록 원래 값을 남긴다. 이 파일이 없으면 고치지 않는다. */
 export function saveBackup(rows) {
   const dir = path.join(ROOT, 'out', 'backup');
@@ -96,8 +115,10 @@ async function main() {
   const 적용 = process.argv.includes('--apply');
   const 확인할글 = 인자('확인');
 
+  const base = wpConfig().base;
   console.log('\n────────────────────────────────────────────────────────');
   console.log(`🗂  수명이 끝난 글을 색인에서 빼기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`);
+  console.log(`   대상 사이트: ${new URL(base).host}  ← 여기 글만 손댑니다`);
   console.log('────────────────────────────────────────────────────────');
 
   // ① 모양 확인 — 플러그인이 칸을 열었는지, 값이 어떻게 생겼는지.
@@ -154,6 +175,12 @@ async function main() {
   let 성공 = 0;
   for (const p of 대상) {
     try {
+      // 다른 사이트의 글은 손대지 않는다. 운영자 지시이고, 이 도구는 한 번에
+      // 수백 편을 쓰기 때문에 글마다 확인한다.
+      if (!손대도되는글인가(p.link, base)) {
+        console.log(`   ⏭  ${p.id} 다른 사이트의 글이라 건너뜁니다 (${p.link || '주소 없음'})`);
+        continue;
+      }
       const 현재 = await readRobots(p.id);
       if (noindex인가(현재.robots)) { console.log(`   ⏭  ${p.id} 이미 제외돼 있습니다`); continue; }
       await wpFetch(`/wp/v2/posts/${p.id}`, {

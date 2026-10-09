@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { noindex인가, noindex더하기, 뺄글고르기, ROBOTS_KEY } from '../src/wordpress/noindex.mjs';
+import { noindex인가, noindex더하기, 뺄글고르기, 손대도되는글인가, ROBOTS_KEY } from '../src/wordpress/noindex.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -98,6 +98,36 @@ check('얇은 것부터 돌려준다', () => {
   for (let i = 1; i < 대상.length; i += 1) {
     assert.ok(대상[i - 1].글자수 <= 대상[i].글자수);
   }
+});
+
+// ── 다른 사이트는 건드리지 않는다 ──────────────────────────
+// 2026-10-09 운영자 지시: "wiki만 손대줘 나머진 광고돌리는 사이트야 건들지 말어"
+check('같은 사이트의 글만 손댄다', () => {
+  const base = 'https://wiki.minimalbreeze.com';
+  assert.equal(손대도되는글인가('https://wiki.minimalbreeze.com/abc', base), true);
+  assert.equal(손대도되는글인가('https://in.minimalbreeze.com/abc', base), false);
+  assert.equal(손대도되는글인가('https://01.in.minimalbreeze.com/abc', base), false);
+  assert.equal(손대도되는글인가('https://minimalbreeze.com/abc', base), false);
+});
+
+check('주소를 모르면 손대지 않는다', () => {
+  const base = 'https://wiki.minimalbreeze.com';
+  assert.equal(손대도되는글인가('', base), false);
+  assert.equal(손대도되는글인가(undefined, base), false);
+  assert.equal(손대도되는글인가('주소아님', base), false);
+  assert.equal(손대도되는글인가('https://wiki.minimalbreeze.com/a', ''), false);
+});
+
+check('비슷하게 생긴 호스트에 속지 않는다', () => {
+  const base = 'https://wiki.minimalbreeze.com';
+  assert.equal(손대도되는글인가('https://wiki.minimalbreeze.com.evil.kr/a', base), false);
+  assert.equal(손대도되는글인가('https://notwiki.minimalbreeze.com/a', base), false);
+});
+
+check('쓰기 직전에 호스트를 확인한다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
+  assert.match(src, /손대도되는글인가\(p\.link, base\)/, '글마다 호스트를 확인하지 않습니다');
+  assert.match(src, /대상 사이트:/, '어느 사이트를 건드리는지 보여주지 않습니다');
 });
 
 // ── 안전 ───────────────────────────────────────────────────
