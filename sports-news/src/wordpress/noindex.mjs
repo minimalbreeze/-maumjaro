@@ -137,11 +137,17 @@ async function main() {
     return;
   }
 
+  // 기준은 환경변수로 넓히거나 좁힌다. 매번 코드를 고치지 않게.
+  //   NOINDEX_MAX_CHARS  (기본 1500) 이 글자수 미만만 대상
+  //   NOINDEX_MIN_DAYS   (기본 90)   이만큼 지난 글만 대상
+  const 최대글자수 = Number(process.env.NOINDEX_MAX_CHARS || 1500);
+  const 지난날수 = Number(process.env.NOINDEX_MIN_DAYS || 90);
+
   const 글 = await 발행글전부();
-  const 대상 = 뺄글고르기(글);
+  const 대상 = 뺄글고르기(글, { 최대글자수, 지난날수 });
   console.log(`\n발행 ${글.length}편 중 대상 ${대상.length}편`);
-  console.log('   기준: 중계·시청방법 유형 · 1,500자 미만 · 발행 90일 경과');
-  console.log('   (좁게 잡았습니다. 애매하면 두는 쪽입니다)');
+  console.log(`   기준: 중계·시청방법 유형 · ${최대글자수.toLocaleString()}자 미만 · 발행 ${지난날수}일 경과`);
+  console.log('   (애매하면 두는 쪽입니다. 시설·상금 유형은 절대 들어가지 않습니다)');
   if (!대상.length) { console.log('\n   뺄 글이 없습니다.\n'); return; }
 
   for (const p of 대상.slice(0, 40)) {
