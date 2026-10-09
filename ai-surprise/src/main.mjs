@@ -21,6 +21,7 @@ import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
 import { writeScript, DEFAULT_MINUTES } from './script/write.mjs';
 import { GATE, MIN_SOURCE_COUNT, KIND } from './model.mjs';
+import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
@@ -545,6 +546,9 @@ async function cmdVideo(flags) {
 
   const saved = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
   const scenes = saved.scenes || [];
+  // 제목과 소재 종류는 research.json 에 있다. 없어도 영상은 만든다 —
+  // 체크리스트의 제목 검사만 건너뛴다.
+  const research = loadContent(id)?.research || {};
   if (!scenes.length) {
     log.error('장면이 비어 있습니다.');
     process.exit(2);
@@ -587,13 +591,31 @@ async function cmdVideo(flags) {
     log.raw(`      ${s.paragraphs[0].text.slice(0, 50)}…`);
   }
 
+  // 유튜브에 올리기 전에 사람이 확인할 것. 업로드 코드가 생기기 전에도
+  // 남겨둔다 — 손으로 올려도 확인할 항목은 같다.
+  const checklist = uploadChecklist({
+    title: research.title || '',
+    kind: research.kind || KIND.EVENT,
+  });
+
   const dir = saveVideoPlan(id, {
     timeline,
     subtitleAss: ass,
     subtitleSrt: renderSrt(cues),
     shorts,
+    checklist,
   });
   log.ok(`편집 계획 저장: ${dir}`);
+
+  log.section('📋 올리기 전 확인');
+  log.error('AI 합성 콘텐츠로 반드시 고지해야 합니다 — 안 하면 계정 정지 대상입니다.');
+  log.info('  YouTube Studio → 동영상 세부정보 → "변경되거나 합성된 콘텐츠" 체크');
+  const titleProblems = checkTitle(research.title || '');
+  if (titleProblems.length) {
+    log.warn('제목에 걸리는 점이 있습니다:');
+    for (const p of titleProblems) log.info(`· ${p.why}`);
+  }
+  log.info(`전체 목록: ${dir}/올리기-전-확인.md`);
 
   if (flags['dry-run']) {
     log.raw('');

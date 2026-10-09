@@ -89,6 +89,11 @@ export const BANNED_PROMPT_WORDS = [
   'dismember', 'decapitat', 'severed',
   'stabbing', 'shooting at', 'strangl', 'torture',
   'screaming', 'terrified face', 'crying child',
+  // 2026-03 충격적인 콘텐츠 가이드라인 업데이트:
+  // 어려 보이는 피사체가 괴로워하는 장면 + 충격·혐오 요소는 광고 불가.
+  // 'crying child' 하나로는 좁아서 넓혔다.
+  'distressed child', 'frightened child', 'child in pain', 'injured child',
+  'child crying', 'infant in distress', 'minor in distress',
   'zombie', 'demon', 'monster', 'ghost face', 'jump scare',
   'nude', 'naked', 'sexual',
   'hanging body', 'noose',

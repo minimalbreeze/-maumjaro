@@ -12,6 +12,7 @@
 // 추가하면 앞의 100편이 전부 템플릿 양산물로 남는다.
 
 import { KIND } from '../model.mjs';
+import { findAdUnsafe } from '../policy.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 
@@ -74,7 +75,9 @@ export const ORIGIN_SECTION = {
   note:
     '이 이야기의 출처를 추적한 결과. 언제 어디서 처음 나왔고 어떻게 퍼졌는지. ' +
     '확인된 것은 [FACT]로 쓴다 — 이야기가 퍼진 것은 실제로 일어난 일이다. ' +
-    '끝까지 못 밝힌 부분은 [UNKNOWN]으로 남긴다.',
+    '끝까지 못 밝힌 부분은 [UNKNOWN]으로 남긴다. ' +
+    '출처를 전혀 못 찾았다면 "어디까지 찾아봤고 무엇이 없었는지"를 쓴다 — ' +
+    '그것도 훌륭한 결말이다. 살아 있는 특정인을 지목하지는 않는다.',
 };
 
 /** 소재 종류에 맞는 섹션 목록. LEGEND는 반전 다음에 ORIGIN이 들어간다. */
@@ -190,6 +193,24 @@ export function buildScriptPrompt(item, { targetMinutes = DEFAULT_MINUTES } = {}
     lines.push('5. **시청자를 속이지 않습니다.** 앞부분에서도 "~라고 전해진다",');
     lines.push('   "~라는 이야기다" 처럼 전해 들은 이야기임이 드러나게 씁니다.');
     lines.push('   7분 동안 사실인 척하다가 마지막에 뒤집는 구성은 쓰지 않습니다.');
+    lines.push('');
+    lines.push('6. **살아 있는 특정 인물을 지목하지 않습니다.** 이게 가장 중요합니다.');
+    lines.push('   이야기에 사람 이름이 나오는 것은 괜찮습니다. 전해지는 이야기니까요.');
+    lines.push('   하지만 **"누가 만들었다"고 쓰지 않습니다.** "어디서 나왔다"로 씁니다.');
+    lines.push('');
+    lines.push('     ✅ "출처를 따라가면 한 TV 프로그램에 닿는다"');
+    lines.push('     ✅ "이 사진이 어디서 처음 나왔는지는 확인되지 않았다"');
+    lines.push('     ❌ "○○○ 감독이 조작했다"');
+    lines.push('     ❌ "△△△가 꾸며낸 이야기다"');
+    lines.push('');
+    lines.push('   실존 인물을 조작범·범인으로 지목하는 순간 명예훼손이 됩니다.');
+    lines.push('   확실한 증거가 있어도 이 채널은 그 판단을 하지 않습니다.');
+    lines.push('   우리가 하는 일은 **기록이 어디까지 말해주는지 보여주는 것**입니다.');
+    lines.push('');
+    lines.push('7. **출처를 끝까지 못 밝혔으면 못 밝혔다고 씁니다.**');
+    lines.push('   그게 결말로 약한 게 아닙니다. "가장 설득력 있다던 이야기인데,');
+    lines.push('   따라가 보니 아무도 원전을 대지 못한다"가 그 자체로 결말입니다.');
+    lines.push('   없는 출처를 지어내거나 "아마 ~일 것이다"로 채우지 않습니다.');
     lines.push('');
   }
 
@@ -330,6 +351,25 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
     errors.push('[FACT] 문단이 하나도 없습니다. 확인된 사실 없이 만든 대본은 쓸 수 없습니다.');
   }
 
+  // 3-b) 광고가 막히는 표현이 나레이션에 있는가
+  //
+  // 이미지 프롬프트는 visuals.mjs가 검사했지만 **나레이션은 아무도 안 봤다.**
+  // 그림에 시체가 없어도 나레이션이 시체를 묘사하면 광고는 똑같이 막힌다.
+  //
+  // 경고로 둔다. 오류로 막지 않는 이유는 이 채널 소재가 실종·사망이라
+  // 맥락상 꼭 써야 하는 경우가 있기 때문이다. 유튜브도 비그래픽 다큐멘터리
+  // 서술은 광고를 붙여준다 — 막히는 건 그래픽한 묘사다. 그 구분은 사람이
+  // 해야 한다. 다만 **모르고 지나가는 일은 없게** 한다.
+  const adUnsafe = findAdUnsafe(narrationOnly(bodyLines));
+  if (adUnsafe.length) {
+    const words = [...new Set(adUnsafe.map((a) => a.word))];
+    warnings.push(
+      `광고가 제한될 수 있는 표현이 ${adUnsafe.length}곳 있습니다: ${words.join(', ')}. ` +
+        `첫 번째: "${adUnsafe[0].line}". ` +
+        `죽음을 다루는 것 자체는 괜찮지만 그래픽한 묘사는 광고가 막힙니다.`
+    );
+  }
+
   // 4) 인사말
   for (const re of GREETING_PATTERNS) {
     if (re.test(text)) {
@@ -338,9 +378,7 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   }
 
   // 5) 분량 — 태그와 제목을 뺀 실제 나레이션 글자 수
-  const narration = bodyLines
-    .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
-    .join(' ');
+  const narration = narrationOnly(bodyLines).replace(/\n/g, ' ');
   const chars = countNarrationChars(narration);
   const estMinutes = minutesForChars(chars);
   // 목표 길이에서 얼마나 벗어났는지로 본다. 예전에는 2.5분·6분으로 숫자를
@@ -434,4 +472,16 @@ export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model
   }
 
   return { markdown, check };
+}
+
+/**
+ * 본문 줄에서 태그를 떼어낸 순수 나레이션.
+ *
+ * 줄바꿈을 살려서 돌려준다 — 광고 표현 검사가 "몇 번째 줄인지"를 보여줘야
+ * 사람이 찾아갈 수 있기 때문이다. 분량 계산은 쓰는 쪽에서 공백으로 바꾼다.
+ */
+function narrationOnly(bodyLines) {
+  return (bodyLines || [])
+    .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
+    .join('\n');
 }
