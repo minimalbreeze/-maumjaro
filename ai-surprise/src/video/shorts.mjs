@@ -12,8 +12,18 @@
 
 import { secondsForChars, countNarrationChars } from '../narration.mjs';
 
-export const SHORTS_MIN_SECONDS = 30;
-export const SHORTS_MAX_SECONDS = 60;
+/**
+ * 쇼츠 길이.
+ *
+ * 처음엔 30~60초로 잡았다. 유튜브가 쇼츠를 3분까지 늘린 뒤로 60초 제한은
+ * 더 이상 기술적 한계가 아니다. 그리고 30초짜리는 이야기가 안 된다 —
+ * 사건을 소개하다 끝나서 "그래서 뭐?"가 된다.
+ *
+ * 60~90초면 "이상한 상황 제시 → 한 번 뒤집기"가 들어간다. 그게 끝까지
+ * 보게 만드는 최소 단위다.
+ */
+export const SHORTS_MIN_SECONDS = 60;
+export const SHORTS_MAX_SECONDS = 90;
 
 /**
  * 섹션별 쇼츠 가치.
@@ -25,6 +35,9 @@ export const SHORTS_MAX_SECONDS = 60;
  */
 const SECTION_VALUE = {
   HOOK: 100,
+  // 전설 추적 편의 ORIGIN("이 이야기는 어디서 왔나")은 그 편의 반전이다.
+  // 쇼츠로 잘라도 그 자체로 완결된다 — "다들 믿던 그 이야기, 출처가 여기다".
+  ORIGIN: 95,
   TWIST: 90,
   ODD: 70,
   CLUE: 65,
@@ -162,6 +175,7 @@ function explain(sections, duration) {
     CLUE: '새로운 단서',
     TWIST: '반전',
     OUR_READING: '우리가 주목한 것',
+    ORIGIN: '이 이야기의 출처',
     EXPLAIN: '가능한 설명',
     KNOWN: '밝혀진 사실',
     QUESTION: '마지막 질문',

@@ -423,6 +423,21 @@ test('소재가 비어 있으면 평소대로 후보를 찾는다', () => {
   }
 });
 
+test('전설 추적 모드는 사건이 아니라 이야기의 출처를 검증한다', () => {
+  const p = buildCollectPrompt({ topic: '세르게이 포노마렌코', legend: true });
+  assert.ok(p.includes('전설·괴담 추적 편'));
+  assert.ok(p.includes('가장 이른 출처'), '출처 추적 지시가 없다');
+  assert.ok(p.includes('사건이 일어났는가'), '검증 대상을 바꾼다는 설명이 없다');
+  // 출처조차 확인 안 되면 빈 손으로 와야 한다. 괴담 하나 더 퍼뜨리면 안 된다.
+  assert.ok(p.includes('빈 목록을 제출'));
+});
+
+test('--legend 없이 같은 소재를 주면 평소 검증 프롬프트가 나온다', () => {
+  const normal = buildCollectPrompt({ topic: '세르게이 포노마렌코' });
+  assert.ok(!normal.includes('전설·괴담 추적 편'));
+  assert.ok(normal.includes('1차 기록'));
+});
+
 section('4. 대본 검증 — AI가 양식을 어겼을 때 잡아내는가');
 
 /** 양식을 지킨 대본을 만든다. 글자 수를 채워 분량 경고를 피한다. */
@@ -586,6 +601,115 @@ test('모든 태그 이름이 검증기와 프롬프트에서 같다', () => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+
+section('4-b. 전설 추적 편 — 지어낸 이야기를 사실처럼 쓰지 않는가');
+
+const { KIND } = await import('../src/model.mjs');
+const { sectionsFor, ORIGIN_SECTION } = await import('../src/script/write.mjs');
+
+function legendItem(extra = {}) {
+  return makeItem({
+    title: '세르게이 포노마렌코',
+    summary: '시간여행자라고 알려진 이야기',
+    category: '실제 미스터리',
+    sources: [{ url: 'https://a.test' }, { url: 'https://b.test' }],
+    source_count: 2,
+    fact_status: 'UNVERIFIED',
+    risk_flags: ['FABRICATED'],
+    risk_score: 20,
+    kind: 'LEGEND',
+    ...extra,
+  });
+}
+
+test('1차 기록이 없어도 전설 편은 막히지 않는다', () => {
+  // EVENT라면 차단이 맞다. LEGEND는 그게 전제다.
+  const asEvent = makeItem({ ...legendItem(), kind: 'EVENT' });
+  assert.equal(evaluateGate(asEvent).gate, GATE.BLOCKED);
+  assert.equal(evaluateGate(legendItem()).gate, GATE.REVIEW_NEEDED);
+});
+
+test('전설 편은 자동 통과시키지 않는다 — 사람이 대본을 읽어야 한다', () => {
+  const g = evaluateGate(legendItem());
+  assert.notEqual(g.gate, GATE.AUTO_OK);
+  assert.ok(g.reasons.some((r) => r.includes('사실처럼')), g.reasons.join(' | '));
+});
+
+test('전설 편이어도 출처가 하나뿐이면 사람이 봐야 한다', () => {
+  const g = evaluateGate(legendItem({ sources: [{ url: 'https://a.test' }], source_count: 1 }));
+  assert.notEqual(g.gate, GATE.AUTO_OK);
+  assert.ok(g.reasons.some((r) => r.includes('출처가 1개')));
+});
+
+test('전설 편이어도 생존 인물에게 해가 되면 막는다', () => {
+  for (const flag of ['DEFAMATION', 'LIVING_PERSON_CLAIM', 'CRIMINAL_GLORIFICATION']) {
+    const g = evaluateGate(legendItem({ risk_flags: [flag] }));
+    assert.equal(g.gate, GATE.BLOCKED, `${flag} 이 막히지 않았다`);
+  }
+});
+
+test('전설 편 대본에는 출처 섹션이 들어간다', () => {
+  const keys = sectionsFor(KIND.LEGEND).map((s) => s.key);
+  assert.ok(keys.includes('ORIGIN'));
+  // 반전 뒤, 마지막 질문 앞. 맨 끝에 붙이는 변명이 아니라 절정의 자리다.
+  assert.ok(keys.indexOf('ORIGIN') > keys.indexOf('TWIST'));
+  assert.ok(keys.indexOf('ORIGIN') < keys.indexOf('QUESTION'));
+  // 일반 편에는 없어야 한다.
+  assert.ok(!sectionsFor(KIND.EVENT).map((s) => s.key).includes('ORIGIN'));
+});
+
+test('출처 섹션이 없는 전설 대본은 오류다', () => {
+  const noOrigin = fakeScript(2); // ORIGIN 없는 평범한 대본
+  const v = validateScript(noOrigin, { kind: KIND.LEGEND });
+  assert.equal(v.ok, false);
+  assert.ok(v.errors.some((e) => e.includes('ORIGIN')), v.errors.join(' | '));
+  // 같은 대본이 일반 편으로는 통과해야 한다 — ORIGIN 요구가 전설 편에만 걸린다.
+  assert.ok(!validateScript(noOrigin, { kind: KIND.EVENT }).errors.some((e) => e.includes('ORIGIN')));
+});
+
+test('출처 섹션이 제목만 있고 비어 있으면 오류다', () => {
+  // 제목만 넣고 통과시키는 건 출처를 안 밝힌 것과 같다.
+  const empty = legendScript({ originBody: '' });
+  const v = validateScript(empty, { kind: KIND.LEGEND });
+  assert.ok(v.errors.some((e) => e.includes('ORIGIN')), v.errors.join(' | '));
+});
+
+test('출처를 제대로 밝힌 전설 대본은 통과한다', () => {
+  const v = validateScript(legendScript(), { kind: KIND.LEGEND });
+  assert.equal(v.ok, true, v.errors.join(' | '));
+});
+
+test('전설 편 대본 지시가 사건을 FACT로 쓰지 말라고 말한다', () => {
+  const p = buildScriptPrompt(legendItem());
+  assert.ok(p.includes('전설 추적'));
+  assert.ok(p.includes('[FACT]로 쓰지 않습니다'), '사건을 사실로 쓰지 말라는 지시가 없다');
+  // 7분 속이고 마지막에 뒤집는 구성을 막는 지시
+  assert.ok(p.includes('사실인 척하다가'), p.slice(-600));
+  // 일반 편에는 이 지시가 없어야 한다
+  assert.ok(!buildScriptPrompt(makeItem({ ...legendItem(), kind: 'EVENT' })).includes('전설 추적'));
+});
+
+/** ORIGIN 섹션이 들어간 전설 대본. */
+function legendScript({ originBody = '[FACT] 이 이야기의 가장 이른 등장은 한 TV 프로그램이었다.' } = {}) {
+  const filler = '당시 기록에 남은 내용은 여기까지였고 그 뒤의 일은 어떤 문서로도 확인되지 않았다';
+  const lines = [];
+  for (const s of sectionsFor(KIND.LEGEND)) {
+    lines.push(`## [${s.key}] ${s.label}`);
+    if (s.key === 'ORIGIN') {
+      if (originBody) lines.push(originBody);
+    } else {
+      for (let i = 0; i < 2; i++) {
+        lines.push(`[${TAGS[i % TAGS.length]}] ${s.key} 문단 ${i + 1}입니다. ${filler}`);
+      }
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────
+
 section('5. 저장소');
 
 test('소재를 보관함에 넣고 다시 읽는다', () => {
@@ -1158,10 +1282,41 @@ test('완성된 프롬프트에 고정 스타일과 금지 목록이 붙는다',
   assert.ok(p.includes('an empty hotel lobby'));
   assert.ok(p.includes(STYLE_SUFFIX));
   assert.ok(p.includes(NEGATIVE_SUFFIX));
-  // 기획서 10번: 1990년대 TV 재연 느낌
-  assert.ok(STYLE_SUFFIX.includes('reenactment') || STYLE_SUFFIX.includes('reconstruction'));
+  // 영화 스틸컷 — 포토리얼이 아니어야 한다. 어설프게 사실적인 그림은
+  // 싸구려로 보이고 실존 인물과 닮아버릴 위험도 커진다.
+  assert.ok(STYLE_SUFFIX.includes('not photorealistic'), STYLE_SUFFIX);
+  assert.ok(/cinematic|film still/.test(STYLE_SUFFIX));
+  // 채널 색을 묶는 색감 지시
+  assert.ok(/teal|desaturated/.test(STYLE_SUFFIX));
   // 실존 인물 금지가 들어 있어야 한다
   assert.ok(NEGATIVE_SUFFIX.includes('identifiable'));
+});
+
+test('시대마다 색감이 달라진다 — 시청자가 언제인지 알아보게', () => {
+  const past = composeImagePrompt('a street', 'past');
+  const future = composeImagePrompt('a street', 'future');
+  assert.ok(past.includes('sepia'), past.slice(0, 60));
+  assert.ok(/cold|blue-white/.test(future), future.slice(0, 60));
+  assert.notEqual(past, future);
+  // 시대를 안 주면 기본 톤만 붙는다. 깨지지 않아야 한다.
+  assert.ok(composeImagePrompt('a street').includes(STYLE_SUFFIX));
+  assert.ok(composeImagePrompt('a street', '없는시대').includes(STYLE_SUFFIX));
+});
+
+test('설명 안 되는 것은 빛으로만 그리라고 지시한다', () => {
+  // 구체적인 UFO를 그리면 어설픈 CG가 되고 상상할 여지가 사라진다.
+  const p = composeImagePrompt('a man looks up at the sky', 'anomaly');
+  assert.ok(/light only/.test(p), p.slice(0, 120));
+  assert.ok(/never a detailed object/.test(p));
+});
+
+test('모르는 시대 이름은 present 로 떨어진다 (렌더가 멈추지 않게)', () => {
+
+  const r = mergeVisuals(
+    { scene_number: 1, shots: [{ shot_id: 'S01-1' }] },
+    { mood: 'mystery', visual_description: 'x', shots: [{ shot_id: 'S01-1', image_prompt: 'a room', video_prompt: '', era: '헬리콥터', camera: 'zoom in', motion_need: 3, depicts_real_person: false }] }
+  );
+  assert.equal(r.scene.shots[0].era, 'present');
 });
 
 test('화면 설계 프롬프트에 태그별 지시가 들어간다', () => {

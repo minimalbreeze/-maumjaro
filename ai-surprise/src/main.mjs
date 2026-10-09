@@ -19,8 +19,8 @@ import { missingKeys, env } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
-import { writeScript } from './script/write.mjs';
-import { GATE, MIN_SOURCE_COUNT } from './model.mjs';
+import { writeScript, DEFAULT_MINUTES } from './script/write.mjs';
+import { GATE, MIN_SOURCE_COUNT, KIND } from './model.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
@@ -101,10 +101,16 @@ async function cmdCollect(flags) {
   const count = Number(flags.count || 5);
   const category = typeof flags.category === 'string' ? flags.category : null;
   const topic = typeof flags.topic === 'string' && flags.topic.trim() ? flags.topic.trim() : null;
+  // 전설 추적 편. 사건의 1차 기록이 없는 걸 전제로, 이야기의 출처를 쫓는다.
+  const legend = Boolean(flags.legend) && Boolean(topic);
+  if (flags.legend && !topic) {
+    log.error('--legend 는 --topic 과 함께 써야 합니다. 어떤 이야기를 추적할지 정해야 합니다.');
+    process.exit(1);
+  }
 
   log.section(
     topic
-      ? `🔍 소재 조사  |  "${topic}"  |  모델 ${MODELS.collect}`
+      ? `🔍 ${legend ? '전설 추적' : '소재 조사'}  |  "${topic}"  |  모델 ${MODELS.collect}`
       : `🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`
   );
 
@@ -117,6 +123,7 @@ async function cmdCollect(flags) {
     count,
     category,
     topic,
+    legend,
     avoidTitles: topic ? [] : avoid,
     onProgress: (m) => log.step(m),
   });
@@ -131,7 +138,10 @@ async function cmdCollect(flags) {
   if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
 
   log.section(`⚖️  소재 심사  |  모델 ${MODELS.score}`);
-  const { items, failures } = await scoreAll(found.items, { onProgress: (m) => log.step(m) });
+  // 전설 추적 편은 여기서 종류를 박는다. 관문(1차 기록 없으면 차단)과
+  // 대본(ORIGIN 섹션 필수)이 둘 다 이 값을 보고 갈린다.
+  const tagged = found.items.map((i) => ({ ...i, kind: legend ? KIND.LEGEND : KIND.EVENT }));
+  const { items, failures } = await scoreAll(tagged, { onProgress: (m) => log.step(m) });
 
   for (const f of failures) log.warn(`심사 실패: ${f.title} — ${f.error}`);
 
@@ -182,7 +192,7 @@ function cmdList() {
 
 async function cmdScript(positional, flags) {
   requireApiKey();
-  const targetMinutes = Number(flags.minutes || 4);
+  const targetMinutes = Number(flags.minutes || DEFAULT_MINUTES);
 
   let id;
   let item;
@@ -684,19 +694,26 @@ async function cmdAuto(flags) {
   requireApiKey();
   const count = Number(flags.count || 5);
   const scripts = Number(flags.scripts || 1);
-  const targetMinutes = Number(flags.minutes || 4);
+  const targetMinutes = Number(flags.minutes || DEFAULT_MINUTES);
   const category = typeof flags.category === 'string' ? flags.category : null;
   const topic = typeof flags.topic === 'string' && flags.topic.trim() ? flags.topic.trim() : null;
+  // 전설 추적 편. 사건의 1차 기록이 없는 걸 전제로, 이야기의 출처를 쫓는다.
+  const legend = Boolean(flags.legend) && Boolean(topic);
+  if (flags.legend && !topic) {
+    log.error('--legend 는 --topic 과 함께 써야 합니다. 어떤 이야기를 추적할지 정해야 합니다.');
+    process.exit(1);
+  }
 
   log.section(
     topic
-      ? `🔍 소재 조사  |  "${topic}"  |  모델 ${MODELS.collect}`
+      ? `🔍 ${legend ? '전설 추적' : '소재 조사'}  |  "${topic}"  |  모델 ${MODELS.collect}`
       : `🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`
   );
   const found = await collect({
     count,
     category,
     topic,
+    legend,
     avoidTitles: topic ? [] : knownTitles(),
     onProgress: (m) => log.step(m),
   });
@@ -716,7 +733,10 @@ async function cmdAuto(flags) {
   if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
 
   log.section(`⚖️  소재 심사  |  모델 ${MODELS.score}`);
-  const { items, failures } = await scoreAll(found.items, { onProgress: (m) => log.step(m) });
+  // 전설 추적 편은 여기서 종류를 박는다. 관문(1차 기록 없으면 차단)과
+  // 대본(ORIGIN 섹션 필수)이 둘 다 이 값을 보고 갈린다.
+  const tagged = found.items.map((i) => ({ ...i, kind: legend ? KIND.LEGEND : KIND.EVENT }));
+  const { items, failures } = await scoreAll(tagged, { onProgress: (m) => log.step(m) });
   for (const f of failures) log.warn(`심사 실패: ${f.title} — ${f.error}`);
 
   const kept = [];
@@ -876,7 +896,7 @@ async function main() {
       log.raw('  node src/main.mjs auto --topic="소재 이름" --scenes --images --video');
       log.raw('      소재를 직접 지정해서 영상까지 한 번에. 소재는 사람이 고르는 게 낫습니다.');
       log.raw('');
-      log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=4] [--scenes]');
+      log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=8] [--scenes]');
       log.raw('      소재 찾기부터 한 번에. GitHub Actions가 이걸 씁니다.');
       log.raw('      관문을 통과한 소재만 대본을 씁니다.');
       log.raw('      --scenes 를 붙이면 장면·프롬프트까지 이어서 만듭니다.');
@@ -886,6 +906,11 @@ async function main() {
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
       log.raw('');
+      log.raw('  node src/main.mjs collect --topic="세르게이 포노마렌코" --legend');
+      log.raw('      전설·괴담 추적 편. 사건의 1차 기록이 없는 이야기를 다룹니다.');
+      log.raw('      사건이 아니라 "이야기가 어디서 왔나"를 검증하고, 대본에');
+      log.raw('      출처 섹션을 필수로 박습니다. --topic 과 함께 써야 합니다.');
+      log.raw('');
       log.raw('  node src/main.mjs collect --topic="플래넌 제도 등대지기 실종"');
       log.raw('      소재를 직접 지정합니다. AI가 후보를 고르지 않고 이것만 조사합니다.');
       log.raw('      검증은 그대로 걸립니다 — 원전 없는 괴담이면 빈 손으로 돌아옵니다.');
@@ -893,7 +918,7 @@ async function main() {
       log.raw('  node src/main.mjs list');
       log.raw('      보관함과 제작 중인 편을 보여줍니다.');
       log.raw('');
-      log.raw('  node src/main.mjs script <파일명> [--minutes=4] [--force]');
+      log.raw('  node src/main.mjs script <파일명> [--minutes=8] [--force]');
       log.raw('      보관함의 소재로 대본을 씁니다.');
       log.raw('');
       log.raw('  node src/main.mjs script --id=001');

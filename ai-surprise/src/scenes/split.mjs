@@ -18,9 +18,44 @@
 import { parseScript, narrationFingerprint } from './parse.mjs';
 import { secondsForChars } from '../narration.mjs';
 
-/** 기획서 7번: 장면 12~15개. */
+/**
+ * 장면 수.
+ *
+ * 기획서 7번은 "12~15개"라고 못 박았는데, 그건 **4분 영상 기준**이었다.
+ * 영상을 7~8분으로 늘리면서 그 숫자를 그대로 두면 장면 하나가 32초가 된다.
+ * 32초 동안 같은 분위기의 화면이 이어지면 시청자가 나간다.
+ *
+ * 그래서 고정값이 아니라 **길이에 비례**하게 바꿨다. 장면 하나에 18초쯤이
+ * 기준이다(4분 → 13개, 8분 → 27개). 상한을 둔 이유는 장면이 너무 잘게
+ * 쪼개지면 화면 설계(AI)를 장면마다 돌려야 해서 비용과 시간이 늘기 때문이다.
+ */
+export const SECONDS_PER_SCENE = 18;
 export const TARGET_SCENES_MIN = 12;
-export const TARGET_SCENES_MAX = 15;
+export const TARGET_SCENES_MAX = 40;
+
+/** 나레이션 길이에 맞는 목표 장면 수. */
+export function targetScenesFor(totalSeconds) {
+  return clamp(Math.round((Number(totalSeconds) || 0) / SECONDS_PER_SCENE), TARGET_SCENES_MIN, TARGET_SCENES_MAX);
+}
+
+/**
+ * 장면 하나가 너무 길거나 너무 짧은지.
+ *
+ * 장면 **개수**를 고정 범위(12~15)와 비교하던 것을 이걸로 바꿨다. 개수는
+ * 영상 길이에 따라 당연히 달라지므로 그 자체로는 아무것도 말해주지 않는다.
+ * 실제로 중요한 건 **화면이 얼마나 자주 바뀌는가**다.
+ *
+ *  - 10초보다 짧으면: 화면이 정신없이 바뀐다. 설계 비용도 쓸데없이 는다.
+ *  - 30초보다 길면: 같은 분위기가 너무 오래 간다. 여기서 시청자가 나간다.
+ */
+export const SCENE_SECONDS_MIN = 10;
+export const SCENE_SECONDS_MAX = 30;
+
+export function sceneLengthOffTarget(sceneCount, totalSeconds) {
+  if (!sceneCount || !totalSeconds) return false;
+  const average = totalSeconds / sceneCount;
+  return average < SCENE_SECONDS_MIN || average > SCENE_SECONDS_MAX;
+}
 
 /** 샷 하나의 길이 한계 (초). */
 export const SHOT_SECONDS_MAX = 8;
@@ -55,9 +90,9 @@ export function groupIntoScenes(parsed, { targetScenes = null } = {}) {
   // 2) 목표 장면 수.
   //    섹션이 9개면 장면은 최소 9개다(섹션 경계를 넘지 않으므로).
   //    문단 수보다 많은 장면도 만들 수 없다(문단을 쪼개지 않으므로).
-  //    그 두 한계 사이에서 12~15에 맞춘다.
+  //    그 두 한계 사이에서 길이에 맞는 수로 맞춘다.
   const wanted = clamp(
-    targetScenes || Math.round(totalSeconds / 18),
+    targetScenes || targetScenesFor(totalSeconds),
     Math.max(TARGET_SCENES_MIN, runs.length),
     Math.min(TARGET_SCENES_MAX, paragraphs.length)
   );
@@ -234,22 +269,25 @@ export function splitIntoScenes(markdown, { targetScenes = null } = {}) {
     );
   }
 
-  // 장면 수가 12~15를 벗어나는 건 오류가 아니다. 짧은 대본은 장면이 적은 게
+  // 장면 수가 목표에서 벗어나는 건 오류가 아니다. 짧은 대본은 장면이 적은 게
   // 맞다. problems에 넣지 않고 stats.outsideTargetRange로만 알린다.
   const sceneCount = scenes.length;
   const shots = scenes.flatMap((s) => s.shots);
+  const totalSeconds = round2(scenes.reduce((s, x) => s + x.duration, 0));
 
   return {
     scenes,
     stats: {
       sceneCount,
       shotCount: shots.length,
-      totalSeconds: round2(scenes.reduce((s, x) => s + x.duration, 0)),
+      totalSeconds,
       totalChars: parsed.totalChars,
       sectionsCovered: [...new Set(scenes.map((s) => s.section))].length,
       shortestScene: sceneCount ? Math.min(...scenes.map((s) => s.duration)) : 0,
       longestScene: sceneCount ? Math.max(...scenes.map((s) => s.duration)) : 0,
-      outsideTargetRange: sceneCount < TARGET_SCENES_MIN || sceneCount > TARGET_SCENES_MAX,
+      averageScene: sceneCount ? round2(totalSeconds / sceneCount) : 0,
+      // 장면 하나가 너무 길거나 짧은지. 장면 "개수"가 아니라 "길이"를 본다.
+      outsideTargetRange: sceneLengthOffTarget(sceneCount, totalSeconds),
     },
     problems,
   };

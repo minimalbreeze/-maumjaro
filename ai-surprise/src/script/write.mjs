@@ -11,11 +11,22 @@
 // 나중에 붙이는 게 아니라 처음부터 구조에 있어야 한다 — 100편을 만든 뒤에
 // 추가하면 앞의 100편이 전부 템플릿 양산물로 남는다.
 
+import { KIND } from '../model.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 
 /** 사실 구분 태그 (기획서 6번). 대본 모든 문단에 하나씩 붙는다. */
 export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
+
+/**
+ * 기본 영상 길이 (분).
+ *
+ * 처음엔 4분이었다. 실제로 한 편 만들어 보고 8분으로 올렸다.
+ *  - 5분 이하는 이야기가 얕다. 사건을 소개하다 끝난다.
+ *  - 10분 이상은 이탈률이 올라간다.
+ * 7~8분 30초 구간이 이 장르에서 가장 안정적이다.
+ */
+export const DEFAULT_MINUTES = 8;
 
 /**
  * 대본 흐름 (기획서 5번) + 고유 해석 섹션.
@@ -41,6 +52,41 @@ export const SECTIONS = [
   { key: 'KNOWN', label: '현재까지 밝혀진 사실', note: '확정된 것만.' },
   { key: 'QUESTION', label: '마지막 질문', note: '여운. 답을 주지 않는다.' },
 ];
+
+/**
+ * 전설·괴담 추적 편(KIND.LEGEND)에만 들어가는 섹션.
+ *
+ * 'ORIGIN'을 **필수**로 둔 이유가 이 기능의 전부다.
+ *
+ * 지어낸 이야기를 7분 동안 사실처럼 들려주고 맨 끝에 "사실은 TV 재연이었다"를
+ * 한 줄 붙이는 구조는, 시청자 입장에서 7분 동안 속은 것이다. 그게 유튜브가
+ * 말하는 inauthentic content이고, 채널이 한 번 그렇게 하면 댓글이 먼저
+ * 알아본다. 이 채널의 유일한 해자는 "여기는 거짓말을 안 한다"인데 그게 1편에
+ * 사라진다.
+ *
+ * 그래서 출처를 **구조 안의 고정된 자리**에 박는다. 반전 다음, 마지막 질문
+ * 앞이다. 거기가 가장 센 자리이기도 하다 — "가장 설득력 있다던 증거를
+ * 따라가 봤더니"가 이야기의 절정이 된다. 정직한 쪽이 더 재미있다.
+ */
+export const ORIGIN_SECTION = {
+  key: 'ORIGIN',
+  label: '이 이야기는 어디서 왔나',
+  note:
+    '이 이야기의 출처를 추적한 결과. 언제 어디서 처음 나왔고 어떻게 퍼졌는지. ' +
+    '확인된 것은 [FACT]로 쓴다 — 이야기가 퍼진 것은 실제로 일어난 일이다. ' +
+    '끝까지 못 밝힌 부분은 [UNKNOWN]으로 남긴다.',
+};
+
+/** 소재 종류에 맞는 섹션 목록. LEGEND는 반전 다음에 ORIGIN이 들어간다. */
+export function sectionsFor(kind) {
+  if (kind !== KIND.LEGEND) return SECTIONS;
+  const out = [];
+  for (const s of SECTIONS) {
+    out.push(s);
+    if (s.key === 'OUR_READING') out.push(ORIGIN_SECTION);
+  }
+  return out;
+}
 
 export const SCRIPT_SYSTEM = `당신은 "AI 서프라이즈" 채널의 작가다.
 실제로 있었던 이상한 이야기를 3~5분 영상 대본으로 쓴다.
@@ -73,7 +119,8 @@ export const SCRIPT_SYSTEM = `당신은 "AI 서프라이즈" 채널의 작가다
    기록에 이미 있는 것들 사이의 관계를 짚는 것이지, 없는 것을 더하는 게 아니다.`;
 
 /** 대본 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다. */
-export function buildScriptPrompt(item, { targetMinutes = 4 } = {}) {
+export function buildScriptPrompt(item, { targetMinutes = DEFAULT_MINUTES } = {}) {
+  const isLegend = item?.kind === KIND.LEGEND;
   // 나레이션 속도는 narration.mjs 한 곳에만 둔다. 장면 분할도 같은 값을 쓴다.
   const target = charsForMinutes(targetMinutes);
 
@@ -115,12 +162,43 @@ export function buildScriptPrompt(item, { targetMinutes = 4 } = {}) {
     lines.push('');
   }
 
+  if (isLegend) {
+    lines.push('━━━ 이 편은 "전설 추적" 편입니다 ━━━');
+    lines.push('');
+    lines.push('이 이야기는 **사건의 1차 기록이 없습니다.** 일어났다는 증거가 없다는 뜻입니다.');
+    lines.push('그런데 이 이야기가 퍼진 것, 수많은 사람이 믿은 것은 실제로 일어난 일이고');
+    lines.push('기록도 있습니다. 그게 이 편의 소재입니다.');
+    lines.push('');
+    lines.push('그래서 쓰는 방법이 다릅니다:');
+    lines.push('');
+    lines.push('1. **사건 서술은 [FACT]로 쓰지 않습니다.**');
+    lines.push('   "남자가 1958년에서 왔다고 말했다"처럼 이야기 속 내용을 적을 때는');
+    lines.push('   [UNKNOWN] 또는 [THEORY]를 씁니다. 확인된 적이 없는 일입니다.');
+    lines.push('');
+    lines.push('2. **[FACT]는 이야기 자체에 대한 사실에만 씁니다.**');
+    lines.push('   "이 이야기는 2006년부터 인터넷에 퍼졌다" — 이건 [FACT]입니다.');
+    lines.push('   "출처를 따라가면 한 TV 프로그램에 닿는다" — 이것도 [FACT]입니다.');
+    lines.push('');
+    lines.push('3. **ORIGIN 섹션이 이 편의 절정입니다.** 맨 끝에 덧붙이는 변명이 아닙니다.');
+    lines.push('   "가장 설득력 있다던 증거를 하나씩 따라가 봤더니" 가 이야기의 반전입니다.');
+    lines.push('   여기를 성의 없이 쓰면 편 전체가 무의미해집니다.');
+    lines.push('');
+    lines.push('4. **이야기를 깎아내리지 않습니다.** 믿은 사람을 비웃지 않습니다.');
+    lines.push('   왜 이렇게 많은 사람이 믿었는지 — 그 이야기의 어디가 그렇게');
+    lines.push('   그럴듯했는지를 보여주는 게 더 흥미롭습니다.');
+    lines.push('');
+    lines.push('5. **시청자를 속이지 않습니다.** 앞부분에서도 "~라고 전해진다",');
+    lines.push('   "~라는 이야기다" 처럼 전해 들은 이야기임이 드러나게 씁니다.');
+    lines.push('   7분 동안 사실인 척하다가 마지막에 뒤집는 구성은 쓰지 않습니다.');
+    lines.push('');
+  }
+
   lines.push('━━━ 대본 형식 ━━━');
   lines.push('');
   lines.push('마크다운으로 쓰고, 아래 순서를 그대로 따릅니다.');
   lines.push('각 섹션은 `## [키] 라벨` 형태의 제목으로 시작합니다.');
   lines.push('');
-  for (const s of SECTIONS) {
+  for (const s of sectionsFor(item?.kind)) {
     lines.push(`## [${s.key}] ${s.label}`);
     lines.push(`   → ${s.note}`);
   }
@@ -195,14 +273,17 @@ const GREETING_PATTERNS = [
  *  - errors 가 있으면 사람이 봐야 한다. 다음 단계로 그냥 넘기지 않는다.
  *  - warnings 는 알려만 준다.
  */
-export function validateScript(markdown, { targetMinutes = 4 } = {}) {
+export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind = KIND.EVENT } = {}) {
   const errors = [];
   const warnings = [];
   const text = String(markdown || '');
+  const sections = sectionsFor(kind);
 
   // 1) 섹션이 다 있는가, 순서가 맞는가
+  //    LEGEND면 ORIGIN(이 이야기는 어디서 왔나)이 여기 포함된다. 빠지면
+  //    오류다 — 출처를 안 밝힌 괴담 편은 내보내지 않는다.
   const foundOrder = [];
-  for (const s of SECTIONS) {
+  for (const s of sections) {
     const re = new RegExp(`^##\\s*\\[${s.key}\\]`, 'm');
     const idx = text.search(re);
     if (idx === -1) {
@@ -214,6 +295,18 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
   const sorted = [...foundOrder].sort((a, b) => a.idx - b.idx);
   if (sorted.map((s) => s.key).join(',') !== foundOrder.map((s) => s.key).join(',')) {
     errors.push(`섹션 순서가 다릅니다. 나온 순서: ${sorted.map((s) => s.key).join(' → ')}`);
+  }
+
+  // 1-b) LEGEND면 ORIGIN이 비어 있으면 안 된다. 제목만 있고 내용이 없으면
+  //      사실상 출처를 안 밝힌 것이다.
+  if (kind === KIND.LEGEND) {
+    const body = sectionBody(text, 'ORIGIN');
+    if (!countNarrationChars(body)) {
+      errors.push(
+        `[ORIGIN] ${ORIGIN_SECTION.label} 이 비어 있습니다. ` +
+          '이 이야기가 어디서 나왔는지 밝히지 않은 괴담 편은 내보낼 수 없습니다.'
+      );
+    }
   }
 
   // 2) 태그 없는 본문 문단이 있는가 — 가장 위험한 실패다
@@ -250,11 +343,20 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
     .join(' ');
   const chars = countNarrationChars(narration);
   const estMinutes = minutesForChars(chars);
-  if (estMinutes < 2.5) {
-    warnings.push(`나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 짧습니다.`);
+  // 목표 길이에서 얼마나 벗어났는지로 본다. 예전에는 2.5분·6분으로 숫자를
+  // 박아놨는데, 기본 길이를 8분으로 올리면서 8분짜리가 전부 "깁니다" 경고를
+  // 달고 나왔다. 고정 숫자는 기본값이 바뀌는 순간 틀린다.
+  const floor = targetMinutes * 0.6;
+  const ceiling = targetMinutes * 1.35;
+  if (estMinutes < floor) {
+    warnings.push(
+      `나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 짧습니다. 목표는 ${targetMinutes}분입니다.`
+    );
   }
-  if (estMinutes > 6) {
-    warnings.push(`나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 깁니다.`);
+  if (estMinutes > ceiling) {
+    warnings.push(
+      `나레이션이 ${chars}자(약 ${estMinutes.toFixed(1)}분)로 깁니다. 목표는 ${targetMinutes}분입니다.`
+    );
   }
 
   // 6) HOOK 길이 — 첫 10초가 핵심이므로 따로 본다 (기획서 22번)
@@ -301,7 +403,7 @@ export function validateScript(markdown, { targetMinutes = 4 } = {}) {
  * 대개 맞춰 온다. 두 번 다 실패하면 대본과 오류를 함께 돌려주고
  * 사람이 판단하게 한다 — 조용히 넘기지 않는다.
  */
-export async function writeScript(item, { targetMinutes = 4, model = MODELS.script, onProgress } = {}) {
+export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model = MODELS.script, onProgress } = {}) {
   const prompt = buildScriptPrompt(item, { targetMinutes });
 
   onProgress?.('대본 쓰는 중...');
@@ -311,7 +413,7 @@ export async function writeScript(item, { targetMinutes = 4, model = MODELS.scri
     model,
     maxTokens: 16000,
   });
-  let check = validateScript(markdown, { targetMinutes });
+  let check = validateScript(markdown, { targetMinutes, kind: item?.kind });
 
   if (!check.ok) {
     onProgress?.(`양식이 어긋났습니다 (${check.errors.length}건). 고쳐서 다시 씁니다.`);
@@ -328,7 +430,7 @@ export async function writeScript(item, { targetMinutes = 4, model = MODELS.scri
       model,
       maxTokens: 16000,
     });
-    check = validateScript(markdown, { targetMinutes });
+    check = validateScript(markdown, { targetMinutes, kind: item?.kind });
   }
 
   return { markdown, check };

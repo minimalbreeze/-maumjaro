@@ -123,13 +123,16 @@ export function buildCollectPrompt({
   count = 5,
   category = null,
   topic = null,
+  legend = false,
   avoidTitles = [],
   maxSearches = WEB_SEARCH_MAX_USES,
 } = {}) {
   // 소재를 사람이 지정한 경우는 아예 다른 작업이다. 후보를 찾는 게 아니라
   // 정해진 하나를 끝까지 파는 것이다.
   if (topic && String(topic).trim()) {
-    return buildTopicPrompt(String(topic).trim(), maxSearches);
+    return legend
+      ? buildLegendPrompt(String(topic).trim(), maxSearches)
+      : buildTopicPrompt(String(topic).trim(), maxSearches);
   }
 
   const lines = [];
@@ -250,7 +253,69 @@ function buildTopicPrompt(topic, maxSearches) {
   return lines.join('\n');
 }
 
-export async function collect({ count = 5, category = null, topic = null, avoidTitles = [], onProgress } = {}) {
+/**
+ * 전설·괴담 추적 프롬프트 (KIND.LEGEND).
+ *
+ * 검증 대상이 바뀐다. **사건이 일어났는가**가 아니라 **이야기가 어디서 나와
+ * 어떻게 퍼졌는가**를 확인한다. 전자는 확인할 수 없고(그래서 전설이고),
+ * 후자는 확인할 수 있다.
+ *
+ * 이 모드는 "확인이 안 되니까 그냥 넘어가자"가 아니다. 오히려 반대로,
+ * 확인되지 않았다는 사실 자체를 **영상의 중심**으로 끌어올린다.
+ */
+function buildLegendPrompt(topic, maxSearches) {
+  const lines = [];
+
+  lines.push('제작진이 고른 소재입니다. **전설·괴담 추적 편**으로 조사해 주세요.');
+  lines.push('');
+  lines.push('━━━ 소재 ━━━');
+  lines.push(topic);
+  lines.push('');
+
+  lines.push('이 소재는 사건의 1차 기록이 없을 가능성이 높습니다. 그래도 됩니다.');
+  lines.push('이 편에서 확인할 것은 **사건이 일어났는가**가 아니라');
+  lines.push('**이 이야기가 어디서 나와 어떻게 퍼졌는가** 입니다.');
+  lines.push('');
+
+  lines.push('조사할 것:');
+  lines.push('1. **가장 이른 출처.** 이 이야기가 처음 등장한 곳이 어디인가.');
+  lines.push('   TV 프로그램, 신문 기사, 포럼 게시글, 책 — 날짜와 함께.');
+  lines.push('   여기가 이 편의 핵심입니다. 끝까지 따라가 주세요.');
+  lines.push('2. **어떻게 퍼졌나.** 언제부터 널리 돌았는지, 어디를 거쳤는지.');
+  lines.push('3. **버전 차이.** 전하는 사람마다 달라지는 세부가 있는지.');
+  lines.push('   날짜·나이·지명이 버전마다 다르면 그건 중요한 단서입니다.');
+  lines.push('4. **진짜 기록이 있는 부분.** 전부 거짓인 경우는 드뭅니다.');
+  lines.push('   실존하는 장소·실제 사건이 섞여 있다면 어디까지가 그것인지.');
+  lines.push('5. **누가 반박했나.** 팩트체크·검증 글이 있으면 출처와 함께.');
+  lines.push('');
+
+  lines.push('제출할 때:');
+  lines.push('- primary_record_found 는 **사건**에 대한 1차 기록 기준으로 적습니다.');
+  lines.push('  없으면 없다고 하십시오. 그게 이 편의 전제입니다.');
+  lines.push('- what_is_strange 에는 "왜 이렇게 많은 사람이 믿었는가"를 적습니다.');
+  lines.push('- unknowns 에는 추적하다 막힌 지점을 적습니다.');
+  lines.push('- sources 에는 **이야기의 출처와 확산에 대한** 자료를 적습니다.');
+  lines.push('  사건의 증거가 아니라 이야기의 내력에 대한 자료입니다.');
+  lines.push('');
+
+  lines.push(`━━━ 검색 예산: ${maxSearches}회 ━━━`);
+  lines.push('출처 추적에 전부 쓰세요. 가장 이른 등장을 찾는 게 제일 중요합니다.');
+  lines.push('같은 내용을 베낀 페이지가 수십 개 나올 겁니다 — 그건 출처 1개로 셉니다.');
+  lines.push('');
+
+  lines.push('다음 경우에는 **빈 목록을 제출하세요:**');
+  lines.push('- 이야기의 출처조차 서로 다른 자료 2개로 확인되지 않는다');
+  lines.push('  (요약 페이지들이 서로 베낀 것만 있는 경우가 여기 해당합니다)');
+  lines.push('- 생존 인물이나 유족에게 해가 된다');
+  lines.push('- 실존 인물을 범인으로 지목하는 이야기다');
+  lines.push('');
+  lines.push('추적이 안 되면 안 된다고 하십시오. "아마 ~일 것이다"로 채우지 마십시오.');
+  lines.push('출처를 못 밝힌 괴담 편은 그냥 괴담 하나를 더 퍼뜨리는 것입니다.');
+
+  return lines.join('\n');
+}
+
+export async function collect({ count = 5, category = null, topic = null, legend = false, avoidTitles = [], onProgress } = {}) {
   const tool = {
     name: 'submit_materials',
     description: '조사한 소재 목록을 제출한다',
@@ -260,13 +325,13 @@ export async function collect({ count = 5, category = null, topic = null, avoidT
 
   onProgress?.(
     topic
-      ? `"${topic}" 를 조사하는 중... (1차 기록까지 따라가므로 몇 분 걸립니다)`
+      ? `"${topic}" ${legend ? '의 출처를 추적하는 중' : '를 조사하는 중'}... (몇 분 걸립니다)`
       : `웹검색으로 소재 ${count}건 찾는 중... (검색이 여러 번 돌아 몇 분 걸립니다)`
   );
 
   const response = await callWithSearch({
     system: COLLECT_SYSTEM,
-    prompt: buildCollectPrompt({ count, category, topic, avoidTitles }),
+    prompt: buildCollectPrompt({ count, category, topic, legend, avoidTitles }),
     tools: [tool],
     model: MODELS.collect,
     maxTokens: 24000,

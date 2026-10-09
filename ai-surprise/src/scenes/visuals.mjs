@@ -31,15 +31,42 @@ import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
  * 같아야 채널로 보인다. 프롬프트마다 다른 스타일을 쓰면 짜깁기처럼 보인다.
  */
 export const STYLE_SUFFIX =
-  'documentary reenactment still, slightly low-budget 1990s television ' +
-  'reconstruction feeling, grainy film texture, muted desaturated colors, ' +
-  'dramatic directional lighting, deep shadows, no text, no watermark, no captions';
+  // "영화 스틸컷"이라고 못 박는다. 완전한 포토리얼을 요구하면 두 가지가
+  // 나빠진다 — 실존 인물과 닮아버릴 위험이 커지고, 어설프게 사실적인 그림은
+  // 오히려 싸구려로 보인다. 스틸컷 느낌이 미스터리 톤에도 더 맞는다.
+  'cinematic film still, not photorealistic, 35mm grain, ' +
+  // 청록~회색으로 색을 묶는다. 100편의 화면 톤이 같아야 채널로 보인다.
+  'cool teal and grey color grade, desaturated, ' +
+  // 측광·역광으로 얼굴과 공간에 그림자를 만든다. 긴장은 빛이 만든다.
+  'dramatic side lighting and rim light, deep shadows, high contrast, ' +
+  'shallow depth of field, anamorphic, ' +
+  'no text, no watermark, no captions, no subtitles, no logo';
 
 /**
  * 모든 이미지·영상 프롬프트에 붙는 금지 목록.
  *
  * 이미지 모델에 넘기는 네거티브 프롬프트로도 쓰고, 아래 검사에도 쓴다.
  */
+/**
+ * 시대·성격별 색감 (기획서에 없던 항목 — 조회수 목적으로 추가).
+ *
+ * 같은 영상 안에서 과거·현재·미래가 섞이는 소재가 많다. 전부 같은 색으로
+ * 가면 시청자가 "지금 언제 이야기지?"를 계속 헷갈린다. 색으로 시대를
+ * 구분해 주면 나레이션이 설명하지 않아도 알아본다.
+ *
+ * 이상 현상(UFO, 빛, 설명 안 되는 것)을 따로 둔 이유는 다르다. **구체적인
+ * 물체를 그리지 않기 위해서**다. 빛으로만 표현하면 상상할 여지가 남고,
+ * 어설픈 CG처럼 보이지 않으며, 보는 사람이 댓글에서 "저게 뭐였을까"를
+ * 이야기한다. 그게 이 장르의 조회수다.
+ */
+export const ERA_TONES = {
+  past: 'warm sepia tone, faded aged photograph quality, slight vignette',
+  present: 'cool teal and grey, overcast daylight, modern',
+  future: 'cold clean blue-white, glass and fog, sterile',
+  anomaly: 'the unexplained thing rendered as light only — a glow, a silhouette, ' +
+    'a lens flare — never a detailed object, never a visible craft or creature',
+};
+
 export const NEGATIVE_SUFFIX =
   'no blood, no gore, no corpses, no wounds, no injury, no violence, ' +
   'no weapons pointed at people, no distressed or crying faces, ' +
@@ -93,15 +120,31 @@ export const VISUALS_SYSTEM = `당신은 다큐멘터리 재연 영상의 미술
    이건 명예훼손을 피하기 위한 것이고, 유튜브 합성 콘텐츠 정책에서도
    가장 민감한 부분이다.
 
-3. 완벽한 영화 화면을 만들지 않는다 (기획서 10번).
-   1990년대 TV 재연 프로그램 느낌을 노린다. 약간 거칠고, 조명이 과장되고,
-   색이 빠진 화면이다. 지나치게 세련된 시네마틱 연출은 이 채널의 톤이 아니다.
+3. 영화 스틸컷을 만든다. 사진이 아니다.
+   완전한 포토리얼을 노리지 않는다. 두 가지 이유다 —
+   어설프게 사실적인 그림은 오히려 싸구려로 보이고, 실존 인물과 닮아버릴
+   위험이 커진다. 색이 빠진 청록·회색 톤에 측광과 역광으로 그림자를 만든다.
+   긴장은 빛이 만든다.
 
-4. 이야기를 전달하는 화면을 고른다.
+4. 시대를 색으로 구분한다 (era).
+   한 영상 안에 과거·현재·미래가 섞이는 소재가 많다. 샷마다 era를 고르면
+   시스템이 색감을 붙인다. 나레이션이 설명하지 않아도 시청자가 알아본다.
+     past    회상, 오래된 기록, 사건 당시
+     present 지금 시점, 조사·취재·현재의 장소
+     future  미래를 말하는 화면
+     anomaly 설명되지 않는 현상이 화면의 중심인 샷
+
+5. 설명되지 않는 것은 빛으로만 그린다 (era: anomaly).
+   UFO, 이상한 물체, 정체 불명의 형체를 구체적으로 그리지 않는다.
+   빛, 실루엣, 렌즈 플레어로만 표현한다. 세 가지가 동시에 좋아진다 —
+   어설픈 CG처럼 보이지 않고, 보는 사람이 상상할 여지가 남고,
+   "저게 뭐였을까"가 댓글로 간다.
+
+6. 이야기를 전달하는 화면을 고른다.
    예쁜 화면보다 "지금 나레이션이 말하는 것"이 보이는 화면이 우선이다.
 
-5. 프롬프트는 영어로 쓴다. 이미지 모델이 영어에서 훨씬 안정적이다.
-   스타일 문구는 시스템이 자동으로 붙이므로 쓰지 않는다.
+7. 프롬프트는 영어로 쓴다. 이미지 모델이 영어에서 훨씬 안정적이다.
+   스타일 문구와 색감은 시스템이 자동으로 붙이므로 쓰지 않는다.
    장면의 내용만 쓴다.`;
 
 export const VISUALS_SCHEMA = {
@@ -129,6 +172,7 @@ export const VISUALS_SCHEMA = {
           'shot_id',
           'image_prompt',
           'video_prompt',
+          'era',
           'camera',
           'motion_need',
           'depicts_real_person',
@@ -144,6 +188,13 @@ export const VISUALS_SCHEMA = {
             type: 'string',
             description:
               '영어. 이 화면이 짧은 영상이라면 무엇이 움직이는가. 움직임이 필요 없는 화면이면 빈 문자열.',
+          },
+          era: {
+            type: 'string',
+            enum: Object.keys(ERA_TONES),
+            description:
+              '이 화면이 언제인가. past=과거 회상, present=현재 시점, future=미래, ' +
+              'anomaly=설명되지 않는 현상이 화면의 중심인 샷. 색감이 여기서 갈린다.',
           },
           camera: {
             type: 'string',
@@ -216,7 +267,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content) {
+export function composeImagePrompt(content, era = null) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -224,8 +275,11 @@ export function composeImagePrompt(content) {
   // 이미지 모델이 이걸로 그림을 못 그리는 건 아니지만, 우리가 100편 내내
   // 똑같이 붙이는 고정 문구라 틀린 채로 두면 100편 내내 틀린다.
   const body = String(content || '').trim().replace(/[.,;:\s]+$/, '');
-  if (!body) return `${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
-  return `${body}. ${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
+  // 시대 색감은 고정 스타일 **앞**에 붙인다. 뒤에 붙이면 공통 색상 지시와
+  // 충돌해서 모델이 둘 중 하나를 버린다.
+  const tone = ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
+  if (!body) return `${tone}${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
+  return `${body}. ${tone}${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
 }
 
 /**
@@ -279,7 +333,8 @@ export function mergeVisuals(scene, design) {
     byId.delete(shot.shot_id);
     return {
       ...shot,
-      image_prompt: composeImagePrompt(d.image_prompt),
+      era: ERA_TONES[d.era] ? d.era : 'present',
+      image_prompt: composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present'),
       image_prompt_content: d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
       camera: IMAGE_CAMERA_MOVES.includes(d.camera) ? d.camera : 'zoom in',
