@@ -124,6 +124,36 @@ check('애널리틱스·Clarity 로 코드 삽입이 살아 있는지 가른다'
   assert.equal(죽어있음.클라리티, 0);
 });
 
+check('게시자 ID 가 자리표시자면 잡아낸다', () => {
+  // 2026-10-09 에 실제로 난 일. 예시의 한글 자리표시자가 그대로 붙여넣어졌다.
+  // 스크립트는 1개로 세어지니 "됐다"고 착각하기 딱 좋다.
+  const 가짜 = readAdMarkup('<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-네번호" crossorigin="anonymous"></script>');
+  assert.equal(가짜.애드센스스크립트, 1, '스크립트는 있다고 세야 합니다');
+  assert.equal(가짜.게시자ID정상, false, '가짜 ID 를 정상이라고 합니다');
+  assert.equal(가짜.게시자ID자리만, true, '자리표시자를 못 잡았습니다');
+});
+
+check('자리수가 모자라거나 남는 ID 도 잡는다', () => {
+  for (const 틀린것 of ['ca-pub-123', 'ca-pub-12345678901234567890', 'ca-pub-XXXXXXXXXXXXXXXX']) {
+    const r = readAdMarkup(`<script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${틀린것}"></script>`);
+    assert.equal(r.게시자ID정상, false, `${틀린것} 를 정상이라고 합니다`);
+  }
+});
+
+check('제대로 된 16자리 ID 는 통과시킨다', () => {
+  const 진짜 = readAdMarkup('<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456" crossorigin="anonymous"></script>');
+  assert.equal(진짜.게시자ID정상, true);
+  // data-ad-client 쪽으로 들어가도 통과해야 한다.
+  const 슬롯 = readAdMarkup('<ins class="adsbygoogle" data-ad-client="ca-pub-1234567890123456"></ins>');
+  assert.equal(슬롯.게시자ID정상, true);
+});
+
+check('애드센스가 없는 페이지를 "ID 틀림"이라고 하지 않는다', () => {
+  const r = readAdMarkup('<html><body><p>광고 없음</p></body></html>');
+  assert.equal(r.게시자ID정상, false);
+  assert.equal(r.게시자ID자리만, false, '없는 것을 자리표시자라고 합니다');
+});
+
 // ── 어디에 깔려 있나 ───────────────────────────────────────
 check('테마와 광고 플러그인을 가려낸다', () => {
   // "애드센스 가서 고쳐"는 답이 아니다. 어느 스위치인지 알려면 이게 필요하다.

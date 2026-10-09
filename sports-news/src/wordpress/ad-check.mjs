@@ -67,6 +67,12 @@ export function readAdMarkup(html) {
     // 그러면 "플러그인이 꺼져서"가 아니라 "코드를 안 넣어서"가 된다.
     애널리틱스: 세기(/googletagmanager\.com\/gtag|gtag\s*\(/gi),
     클라리티: 세기(/clarity\.ms/gi),
+    // 게시자 ID 가 진짜인지. ca-pub- 뒤는 16자리 숫자다.
+    // 2026-10-09: 내가 예시에 한글 플레이스홀더(ca-pub-네번호)를 써서 그게
+    // 그대로 붙여넣어졌다. 코드는 들어갔는데 광고는 안 나오는 상태라
+    // "스크립트 1개"만 보고는 됐다고 착각한다. 그래서 따로 본다.
+    게시자ID정상: /[?&]client=ca-pub-\d{16}\b/.test(h) || /data-ad-client\s*=\s*["']ca-pub-\d{16}["']/.test(h),
+    게시자ID자리만: /ca-pub-(?!\d{16}\b)[^"'&\s>]+/.test(h),
     // fix-links.mjs 와 같은 모양으로 쓴다. 공백이 끼어도 잡고(target = "_blank"),
     // "링크를 만들 때 target 을 쓰지 않는다"는 검사에도 걸리지 않는다 — 이 줄은
     // 링크를 만드는 게 아니라 세는 것이다.
@@ -199,6 +205,12 @@ async function main() {
       console.log(`   쿠팡 광고 ${r.쿠팡}개 · 새 창으로 여는 링크 ${r.새창링크}개`);
       console.log(`   애널리틱스 ${r.애널리틱스}개 · Clarity ${r.클라리티}개  ← 코드 삽입 플러그인이 살아 있는지`);
       console.log(`   페이지 ${r.길이.toLocaleString()}바이트 · 글자 ${r.본문글자수.toLocaleString()}자`);
+      if (r.게시자ID자리만 && !r.게시자ID정상) {
+        console.log('   ❌ 게시자 ID 가 올바르지 않습니다 — ca-pub- 뒤는 16자리 숫자여야 합니다.');
+        console.log('      (예시 글자를 그대로 붙여넣은 상태일 수 있습니다. 애드센스에서 코드를 통째로 복사하세요.)');
+      } else if (r.애드센스스크립트 && r.게시자ID정상) {
+        console.log('   ✅ 게시자 ID 모양이 정상입니다.');
+      }
       if (!r.애드센스스크립트) console.log('   ⚠️  이 페이지에 애드센스 코드가 아예 없습니다.');
       else if (!r.광고슬롯) console.log('   ℹ️  스크립트는 있는데 <ins> 슬롯이 없습니다 — 자동 광고만 쓰는 상태일 수 있습니다.');
       if (r.새창링크) console.log('   ⚠️  새 창 링크가 다시 생겼습니다 (전에 걷어낸 문제입니다).');
