@@ -2478,6 +2478,28 @@ await asyncTest('빈 목록에도 죽지 않는다', async () => {
   assert.equal(r.stoppedBy, null);
 });
 
+// voice --voices 는 **편과 무관한 명령**이다. 키가 살아 있는지 돈 안 쓰고
+// 확인하는 유일한 수단이므로, 아직 만든 편이 하나도 없을 때도 돌아야 한다.
+// 예전에는 --id 와 scenes.json 을 먼저 요구해서 바로 그 상황에서 못 썼다.
+await asyncTest('voice --voices 는 --id 없이도 키 문제를 먼저 알려준다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const env = { ...process.env };
+  delete env.GOOGLE_TTS_API_KEY;
+  let out = '';
+  try {
+    execFileSync(process.execPath, ['src/main.mjs', 'voice', '--voices'], {
+      env,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    assert.fail('키가 없으면 멈춰야 합니다');
+  } catch (err) {
+    out = `${err.stdout || ''}${err.stderr || ''}`;
+  }
+  assert.ok(/GOOGLE_TTS_API_KEY/.test(out), `키 안내가 나와야 합니다: ${out}`);
+  assert.ok(!/--id/.test(out), `--id 를 요구하면 안 됩니다: ${out}`);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);
