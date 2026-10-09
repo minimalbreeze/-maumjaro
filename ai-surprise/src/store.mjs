@@ -293,3 +293,44 @@ function renderChecklist(checklist) {
   lines.push('');
   return lines.join('\n');
 }
+
+/**
+ * 나레이션 결과를 저장한다.
+ *
+ * timings 가 이 파일의 존재 이유다. 영상 쪽(자막·장면 전환)이 "330자에 1분"
+ * 추정치 대신 **실제로 잰 길이**를 쓰게 하는 다리다. 음성 파일만 있으면
+ * 영상 코드가 그걸 다시 분석해야 하는데, 이미 만들 때 쟀으므로 적어둔다.
+ */
+export function saveNarration(id, { timings = [], totalSeconds = 0, voice = '', track = null }) {
+  const dir = contentPath(id, 'audio');
+  ensureDir(dir);
+  fs.writeFileSync(
+    path.join(dir, 'timings.json'),
+    JSON.stringify(
+      {
+        voice,
+        total_seconds: totalSeconds,
+        // 쓴 곡. 출처 표기가 필요하면 업로드할 때 설명란에 넣는다.
+        bgm: track ? { file: track.file, title: track.title || '', attribution: track.attribution || '' } : null,
+        count: timings.length,
+        timings,
+      },
+      null,
+      2
+    ) + '\n',
+    'utf8'
+  );
+  return dir;
+}
+
+/** 저장해 둔 나레이션 타이밍. 없으면 null — 영상은 추정치로 간다. */
+export function loadNarration(id) {
+  try {
+    const file = contentPath(id, 'audio', 'timings.json');
+    if (!fs.existsSync(file)) return null;
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return (parsed?.timings || []).length ? parsed : null;
+  } catch {
+    return null;
+  }
+}

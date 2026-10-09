@@ -26,6 +26,7 @@ on:
           - '소재 → 대본 → 장면까지 쓰기'
           - '소재 → 대본 → 장면 → 영상·쇼츠까지 만들기'
           - '진짜 그림까지 (이미지 생성 · 장당 돈이 나갑니다)'
+          - '완성본 (그림 + 목소리 + 배경음악)'
       topic:
         description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
         required: false
@@ -51,6 +52,10 @@ on:
         description: '영상 길이 (분)'
         required: false
         default: '8'
+      tts_voice:
+        description: '목소리 (비우면 ko-KR-Neural2-C). 목록은 voice --voices 로 봅니다'
+        required: false
+        default: ''
       image_model:
         description: '이미지 모델 (schnell = 싸고 빠름 / dev = 비싸고 정확함)'
         required: false
@@ -112,10 +117,25 @@ jobs:
           fi
           echo "ANTHROPIC_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
+      - name: 목소리 키가 등록되어 있는지 확인
+        if: ${{ contains(inputs.mode, '완성본') }}
+        env:
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+        run: |
+          if [ -z "$GOOGLE_TTS_API_KEY" ]; then
+            echo "::error::GOOGLE_TTS_API_KEY 가 등록되지 않았습니다."
+            echo "console.cloud.google.com 에서 프로젝트를 만들고 Cloud Text-to-Speech API 를"
+            echo "사용 설정한 뒤, API 키를 만들어 리포 Settings → Secrets 에 추가하세요."
+            exit 1
+          fi
+          echo "GOOGLE_TTS_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
+
       - name: 이미지 토큰이 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '그림') }}
+        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          TTS_VOICE: ${{ inputs.tts_voice }}
         run: |
           if [ -z "$REPLICATE_API_TOKEN" ]; then
             echo "::error::REPLICATE_API_TOKEN 이 등록되지 않았습니다."
@@ -130,7 +150,7 @@ jobs:
       # 그런데 ffmpeg는 오류를 내지 않으므로, 영상을 눈으로 보기 전까지
       # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
       - name: ffmpeg와 한글 글꼴 설치
-        if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') }}
+        if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
@@ -197,6 +217,13 @@ jobs:
           esac
 
           case "$IN_MODE" in
+            *'완성본'*)
+              args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--images" "--narrate" "--video")
+              args+=("--image-model=$IN_IMAGE_MODEL" "--max-usd=$IN_MAX_USD")
+              echo "소재 → 대본 → 장면 → 그림 → 목소리·배경음악 → 영상·쇼츠."
+              echo "자막과 장면 전환이 실제 음성 길이에 맞춰집니다. 40~60분 걸립니다."
+              node src/main.mjs auto "${args[@]}"
+              ;;
             *'그림'*)
               args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--images" "--video")
               args+=("--image-model=$IN_IMAGE_MODEL" "--max-usd=$IN_MAX_USD")
