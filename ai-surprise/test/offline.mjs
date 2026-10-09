@@ -745,6 +745,111 @@ function legendScript({ originBody = '[FACT] 이 이야기의 가장 이른 등�
 
 // ─────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-c. 유튜브 정책 — 올려서 막히지 않는가');
+
+const {
+  findAdUnsafe,
+  checkTitle,
+  uploadChecklist,
+  AD_UNSAFE_NARRATION,
+  SYNTHETIC_DISCLOSURE,
+} = await import('../src/policy.mjs');
+
+test('나레이션의 그래픽한 묘사를 잡는다 — 그림만 막아서는 소용없다', () => {
+  // 그림에 시체가 없어도 나레이션이 시체를 묘사하면 광고는 똑같이 막힌다.
+  const found = findAdUnsafe('[FACT] 시신은 심하게 훼손되어 있었다.');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].word, '훼손');
+  assert.ok(found[0].line.includes('훼손'), '어디서 걸렸는지 알려줘야 한다');
+});
+
+test('죽음을 다루는 것 자체는 막지 않는다', () => {
+  // 유튜브도 비그래픽 다큐멘터리 서술에는 광고를 붙인다. 이 채널 소재가
+  // 실종·사망이라 "죽음"을 막아버리면 아무것도 못 만든다.
+  for (const line of [
+    '1900년 12월, 등대지기 세 명이 사라졌다.',
+    '세 사람은 끝내 발견되지 않았다.',
+    '해변에서 신원 불명의 시신이 발견됐다.',
+    '사인은 끝내 밝혀지지 않았다.',
+  ]) {
+    assert.equal(findAdUnsafe(line).length, 0, `막으면 안 되는 문장이 걸렸다: ${line}`);
+  }
+});
+
+test('자해·자살 방법 묘사를 잡는다 — 유튜브가 가장 엄격한 영역', () => {
+  assert.ok(findAdUnsafe('그는 목을 매 숨진 채 발견됐다').length > 0);
+});
+
+test('빈 글에도 죽지 않는다', () => {
+  for (const input of ['', null, undefined]) assert.deepEqual(findAdUnsafe(input), []);
+  assert.deepEqual(checkTitle(null), []);
+});
+
+test('영상이 지키지 못할 약속을 하는 제목을 잡는다', () => {
+  // 처벌이 광고 제한이 아니라 영상 삭제다. 미스터리 채널은 답을 주지 않는
+  // 장르라서 "진실 공개" 같은 제목이 바로 위반이 된다.
+  const p = checkTitle('드디어 밝혀진 충격 실화!!!');
+  assert.ok(p.length >= 3, JSON.stringify(p));
+  assert.ok(p.some((x) => x.why.includes('밝혀졌다')));
+  assert.ok(p.some((x) => x.why.includes('충격')));
+});
+
+test('멀쩡한 제목은 통과시킨다', () => {
+  assert.deepEqual(checkTitle('세 명이 사라졌는데 외투는 두 벌만 없었다'), []);
+});
+
+test('제목이 모바일에서 잘릴 길이면 알려준다', () => {
+  const long = '가'.repeat(61);
+  assert.ok(checkTitle(long).some((p) => p.pattern === 'length'));
+  assert.equal(checkTitle('가'.repeat(60)).length, 0);
+});
+
+test('AI 합성 고지가 필수 항목으로 들어간다 — 빠뜨리면 계정이 날아간다', () => {
+  const c = uploadChecklist({ title: '세 명이 사라졌다' });
+  const item = c.items.find((i) => i.key === 'synthetic_disclosure');
+  assert.ok(item, '합성 고지 항목이 없다');
+  assert.equal(item.required, true);
+  assert.ok(item.how.includes('합성된 콘텐츠'), '어디를 눌러야 하는지 없다');
+  assert.equal(SYNTHETIC_DISCLOSURE.required, true);
+});
+
+test('체크리스트가 제목 문제를 자동으로 잡아서 담는다', () => {
+  const c = uploadChecklist({ title: '진실 공개!!!' });
+  const item = c.items.find((i) => i.key === 'title_not_misleading');
+  assert.ok(item.problems.length > 0, '제목 문제를 안 담았다');
+});
+
+test('전설 편에만 "전해지는 이야기임이 드러나는가" 항목이 붙는다', () => {
+  const legend = uploadChecklist({ kind: 'LEGEND' }).items.map((i) => i.key);
+  const event = uploadChecklist({ kind: 'EVENT' }).items.map((i) => i.key);
+  assert.ok(legend.includes('legend_framing'));
+  assert.ok(!event.includes('legend_framing'));
+});
+
+test('양산형 포맷 경고가 들어 있다 — 우리한테 제일 큰 위험이다', () => {
+  const c = uploadChecklist({});
+  const item = c.items.find((i) => i.key === 'not_templated');
+  assert.ok(item, '양산 경고 항목이 없다');
+  assert.ok(item.why.includes('채널 전체'), '단속이 채널 단위라는 설명이 없다');
+});
+
+test('대본 검증이 광고 위험 표현을 경고로 알린다', () => {
+  const withGore = SECTIONS.map(
+    (s) =>
+      `## [${s.key}] ${s.label}\n[FACT] ${s.key} 문단입니다. 기록은 여기까지였다.` +
+      (s.key === 'CASE' ? ' 시신은 심하게 훼손되어 있었다.' : '')
+  ).join('\n\n');
+  const v = validateScript(withGore);
+  assert.ok(v.warnings.some((w) => w.includes('광고가 제한')), v.warnings.join(' | '));
+  // 오류가 아니라 경고여야 한다 — 맥락상 꼭 써야 하는 경우가 있고,
+  // 그 판단은 사람이 한다.
+  assert.ok(!v.errors.some((e) => e.includes('광고')), '오류로 막으면 안 된다');
+});
+
+// ─────────────────────────────────────────────────────────────
+
 section('5. 저장소');
 
 test('소재를 보관함에 넣고 다시 읽는다', () => {

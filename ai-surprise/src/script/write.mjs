@@ -12,6 +12,7 @@
 // 추가하면 앞의 100편이 전부 템플릿 양산물로 남는다.
 
 import { KIND } from '../model.mjs';
+import { findAdUnsafe } from '../policy.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 
@@ -350,6 +351,25 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
     errors.push('[FACT] 문단이 하나도 없습니다. 확인된 사실 없이 만든 대본은 쓸 수 없습니다.');
   }
 
+  // 3-b) 광고가 막히는 표현이 나레이션에 있는가
+  //
+  // 이미지 프롬프트는 visuals.mjs가 검사했지만 **나레이션은 아무도 안 봤다.**
+  // 그림에 시체가 없어도 나레이션이 시체를 묘사하면 광고는 똑같이 막힌다.
+  //
+  // 경고로 둔다. 오류로 막지 않는 이유는 이 채널 소재가 실종·사망이라
+  // 맥락상 꼭 써야 하는 경우가 있기 때문이다. 유튜브도 비그래픽 다큐멘터리
+  // 서술은 광고를 붙여준다 — 막히는 건 그래픽한 묘사다. 그 구분은 사람이
+  // 해야 한다. 다만 **모르고 지나가는 일은 없게** 한다.
+  const adUnsafe = findAdUnsafe(narrationOnly(bodyLines));
+  if (adUnsafe.length) {
+    const words = [...new Set(adUnsafe.map((a) => a.word))];
+    warnings.push(
+      `광고가 제한될 수 있는 표현이 ${adUnsafe.length}곳 있습니다: ${words.join(', ')}. ` +
+        `첫 번째: "${adUnsafe[0].line}". ` +
+        `죽음을 다루는 것 자체는 괜찮지만 그래픽한 묘사는 광고가 막힙니다.`
+    );
+  }
+
   // 4) 인사말
   for (const re of GREETING_PATTERNS) {
     if (re.test(text)) {
@@ -358,9 +378,7 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   }
 
   // 5) 분량 — 태그와 제목을 뺀 실제 나레이션 글자 수
-  const narration = bodyLines
-    .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
-    .join(' ');
+  const narration = narrationOnly(bodyLines).replace(/\n/g, ' ');
   const chars = countNarrationChars(narration);
   const estMinutes = minutesForChars(chars);
   // 목표 길이에서 얼마나 벗어났는지로 본다. 예전에는 2.5분·6분으로 숫자를
@@ -454,4 +472,16 @@ export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model
   }
 
   return { markdown, check };
+}
+
+/**
+ * 본문 줄에서 태그를 떼어낸 순수 나레이션.
+ *
+ * 줄바꿈을 살려서 돌려준다 — 광고 표현 검사가 "몇 번째 줄인지"를 보여줘야
+ * 사람이 찾아갈 수 있기 때문이다. 분량 계산은 쓰는 쪽에서 공백으로 바꾼다.
+ */
+function narrationOnly(bodyLines) {
+  return (bodyLines || [])
+    .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
+    .join('\n');
 }

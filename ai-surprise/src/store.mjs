@@ -219,7 +219,13 @@ export function saveScript(id, markdown, check) {
  * 자막은 따로 저장한다 — 렌더가 중간에 죽어도 같은 계획으로 이어서 할 수
  * 있어야 하고, 사람이 "이 샷만 다시"라고 말할 수 있어야 한다.
  */
-export function saveVideoPlan(id, { timeline, subtitleAss, subtitleSrt = null, shorts = [] }) {
+export function saveVideoPlan(id, {
+  timeline,
+  subtitleAss,
+  subtitleSrt = null,
+  shorts = [],
+  checklist = null,
+}) {
   const dir = contentPath(id, 'video');
   ensureDir(dir);
 
@@ -242,5 +248,48 @@ export function saveVideoPlan(id, { timeline, subtitleAss, subtitleSrt = null, s
     'utf8'
   );
 
+  // 업로드 전에 사람이 확인해야 하는 것.
+  //
+  // 업로드 코드(Phase 7)는 아직 없다. 그래도 지금 남긴다 — 손으로 올리든
+  // 코드로 올리든 확인할 항목은 같고, 가장 위험한 항목(AI 합성 고지)은
+  // 빠뜨리면 광고 수익이 아니라 **계정**이 날아가기 때문이다.
+  if (checklist) {
+    fs.writeFileSync(path.join(dir, 'upload-checklist.json'), JSON.stringify(checklist, null, 2) + '\n', 'utf8');
+    fs.writeFileSync(path.join(dir, '올리기-전-확인.md'), renderChecklist(checklist), 'utf8');
+  }
+
   return dir;
+}
+
+/** 체크리스트를 사람이 읽는 형태로. JSON만 두면 아무도 안 읽는다. */
+function renderChecklist(checklist) {
+  const lines = ['# 올리기 전 확인', ''];
+  lines.push('유튜브에서 실제로 문제 삼는 항목만 모았습니다. 근거는 결정사항.md에 있습니다.');
+  lines.push('');
+
+  for (const item of checklist.items || []) {
+    lines.push(`## ${item.required ? '🔴 필수' : '🟡 권장'} — ${item.label}`);
+    lines.push('');
+    lines.push(`- **어떻게:** ${item.how}`);
+    lines.push(`- **왜:** ${item.why}`);
+    if (item.auto) lines.push('- 코드가 자동으로 검사한 항목입니다.');
+    if (item.problems?.length) {
+      lines.push('- **걸린 것:**');
+      for (const p of item.problems) lines.push(`  - ${p.why}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push('처벌이 서로 다릅니다. 가벼운 순서가 아닙니다:');
+  lines.push('');
+  lines.push('| 위반 | 결과 |');
+  lines.push('|---|---|');
+  lines.push('| AI 합성 미고지 | **계정 정지** 또는 광고 수익 박탈 |');
+  lines.push('| 오해를 부르는 제목·썸네일 | **영상 삭제** |');
+  lines.push('| 그래픽한 묘사 | 광고 제한 또는 없음 |');
+  lines.push('| 양산형 포맷 | 채널 수익화 자격 상실 |');
+  lines.push('');
+  return lines.join('\n');
 }
