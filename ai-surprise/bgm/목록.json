@@ -1,4 +1,54 @@
 {
   "note": "유튜브 오디오 보관함에서 받은 곡. 파일은 이 폴더에 두고 여기에 적는다. README.md 참고.",
-  "tracks": []
+  "주의": "attribution 은 보관함이 '저작자 표시 필요'라고 알려준 곡에만 그 문구를 그대로 넣는다. 아래 여섯 곡은 받을 때 표시 요구가 없었음을 2026-10-09 효성님이 확인했으므로 비워 둔다. 새로 곡을 추가할 때는 그 곡에 표시가 붙었는지 다시 확인해야 한다 — 안 적으면 저작권 신고가 들어온다.",
+  "tracks": [
+    {
+      "file": "Final Girl - Jeremy Blake.mp3",
+      "title": "Final Girl",
+      "artist": "Jeremy Blake",
+      "seconds": 185,
+      "moods": ["mystery", "tension", "somber"],
+      "attribution": ""
+    },
+    {
+      "file": "Challenge Accepted - The Soundings.mp3",
+      "title": "Challenge Accepted",
+      "artist": "The Soundings",
+      "seconds": 155,
+      "moods": ["mystery", "tension"],
+      "attribution": ""
+    },
+    {
+      "file": "Deified - The Grey Room _ Density & Time.mp3",
+      "title": "Deified",
+      "artist": "The Grey Room / Density & Time",
+      "seconds": 181,
+      "moods": ["tension", "twist"],
+      "attribution": ""
+    },
+    {
+      "file": "Y2K Heist - Rod Kim.mp3",
+      "title": "Y2K Heist",
+      "artist": "Rod Kim",
+      "seconds": 120,
+      "moods": ["twist", "record"],
+      "attribution": ""
+    },
+    {
+      "file": "Duty Calls - Rod Kim.mp3",
+      "title": "Duty Calls",
+      "artist": "Rod Kim",
+      "seconds": 103,
+      "moods": ["somber", "mystery"],
+      "attribution": ""
+    },
+    {
+      "file": "Beginnings (Intro) - The Tower of Light.mp3",
+      "title": "Beginnings (Intro)",
+      "artist": "The Tower of Light",
+      "seconds": 106,
+      "moods": ["calm", "record"],
+      "attribution": ""
+    }
+  ]
 }

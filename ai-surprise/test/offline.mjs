@@ -27,6 +27,8 @@ const { buildScriptPrompt, validateScript, sectionBody, SECTIONS, TAGS } = await
   '../src/script/write.mjs'
 );
 const store = await import('../src/store.mjs');
+const { loadTracks: loadBgmTracks } = await import('../src/audio/bgm.mjs');
+const { MOODS: SCENE_MOODS } = await import('../src/scenes/assets.mjs');
 
 let passed = 0;
 let failed = 0;
@@ -2498,6 +2500,34 @@ await asyncTest('voice --voices 는 --id 없이도 키 문제를 먼저 알려�
   }
   assert.ok(/GOOGLE_TTS_API_KEY/.test(out), `키 안내가 나와야 합니다: ${out}`);
   assert.ok(!/--id/.test(out), `--id 를 요구하면 안 됩니다: ${out}`);
+});
+
+// 실제 bgm/목록.json 을 검사한다.
+//
+// 곡을 추가하다 파일 이름을 한 글자 틀리면 **에러가 나지 않는다** —
+// loadTracks 가 조용히 그 곡을 건너뛰고, 배경음악만 안 깔린 채 영상이
+// 나온다. 영상을 끝까지 들어보기 전에는 모른다. 그래서 여기서 잡는다.
+test('bgm 목록에 적힌 곡은 파일이 실제로 있다', () => {
+  const dir = new URL('../bgm/', import.meta.url).pathname;
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, '목록.json'), 'utf8'));
+  const listed = manifest.tracks || [];
+  assert.ok(listed.length > 0, '곡이 하나도 적혀 있지 않습니다');
+  for (const t of listed) {
+    assert.ok(fs.existsSync(path.join(dir, t.file)), `파일이 없습니다: ${t.file}`);
+  }
+  const usable = loadBgmTracks(dir);
+  assert.equal(usable.length, listed.length, '적힌 곡과 쓸 수 있는 곡의 수가 다릅니다');
+});
+
+// 어떤 분위기가 나와도 곡이 하나는 걸려야 한다. 안 걸리면 pickTrack 이
+// 전체 목록에서 고르므로 밝은 곡이 무거운 장면에 깔릴 수 있다.
+test('장면 분위기 6종이 모두 어떤 곡엔가 걸려 있다', () => {
+  const dir = new URL('../bgm/', import.meta.url).pathname;
+  const tracks = loadBgmTracks(dir);
+  for (const mood of SCENE_MOODS) {
+    const matching = tracks.filter((t) => (t.moods || []).includes(mood));
+    assert.ok(matching.length > 0, `'${mood}' 분위기에 걸리는 곡이 없습니다`);
+  }
 });
 
 console.log(`\n${'═'.repeat(60)}`);
