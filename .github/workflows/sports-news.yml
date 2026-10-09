@@ -75,6 +75,10 @@ on:
         description: "새 메타 설명 (제목·설명 고치기에서만 씁니다. 비우면 설명은 그대로)"
         required: false
         default: ''
+      noindex_max_chars:
+        description: '색인에서 뺄 기준 글자수 (비우면 1500). 넓히려면 3000'
+        required: false
+        default: ''
       count:
         description: '만들 글 수 (메타 설명 채우기에서는 한 번에 채울 글 수)'
         required: false
@@ -491,6 +495,8 @@ jobs:
         working-directory: sports-news
         env:
           IN_MODE: ${{ inputs.mode }}
+          # 기준은 count 칸으로 넓힌다. 비워두면 기본값(1500자)이다.
+          NOINDEX_MAX_CHARS: ${{ inputs.noindex_max_chars }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
