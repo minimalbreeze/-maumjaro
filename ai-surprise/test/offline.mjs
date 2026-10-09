@@ -850,6 +850,167 @@ test('대본 검증이 광고 위험 표현을 경고로 알린다', () => {
 
 // ─────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-d. 소리 — 자막·그림이 실제 음성에 맞는가');
+
+const { estimateUsd: ttsUsd, createClient: createTts, MAX_CHARS_PER_REQUEST } =
+  await import('../src/audio/tts.mjs');
+const {
+  narrate,
+  narrationUnits,
+  applyTimings,
+  looksLikeMp3,
+  concatArgs: audioConcatArgs,
+  PAUSE_SECONDS,
+} = await import('../src/audio/narrate.mjs');
+const { loadTracks, pickTrack, mixArgs, attributionText, BGM_GAIN_DB } =
+  await import('../src/audio/bgm.mjs');
+
+const MP3_HEAD = Buffer.from([0xff, 0xfb, 0x90, 0x00]);
+function fakeMp3(size = 2048) {
+  return Buffer.concat([MP3_HEAD, Buffer.alloc(size - 4, 3)]);
+}
+
+function voiceScenes() {
+  return [
+    {
+      scene_number: 1,
+      section: 'HOOK',
+      mood: 'mystery',
+      duration: 20,
+      paragraphs: [
+        { tag: 'FACT', text: '첫 문단입니다.', seconds: 10 },
+        { tag: 'UNKNOWN', text: '둘째 문단입니다.', seconds: 10 },
+      ],
+      shots: [
+        { shot_id: 'S01-1', duration: 10 },
+        { shot_id: 'S01-2', duration: 10 },
+      ],
+    },
+  ];
+}
+
+test('TTS 키가 없으면 부르기 전에 막고, 어디서 받는지 알려준다', () => {
+  assert.throws(
+    () => createTts({ apiKey: '' }),
+    (err) => err.code === 'TTS_KEY_MISSING' && /Text-to-Speech/.test(err.message)
+  );
+});
+
+test('문단 단위가 자막·장면과 같아야 타이밍을 맞출 수 있다', () => {
+  const units = narrationUnits(voiceScenes());
+  assert.deepEqual(units.map((u) => u.id), ['S01-P1', 'S01-P2']);
+  // 빈 문단은 읽을 게 없으므로 빠진다.
+  const withEmpty = voiceScenes();
+  withEmpty[0].paragraphs.push({ tag: 'FACT', text: '   ' });
+  assert.equal(narrationUnits(withEmpty).length, 2);
+  assert.deepEqual(narrationUnits(null), []);
+});
+
+test('비용이 글자 수에 비례한다', () => {
+  assert.equal(ttsUsd(0), 0);
+  assert.ok(Math.abs(ttsUsd(2600) - ttsUsd(1300) * 2) < 1e-6);
+  // 8분 1편이 1달러를 넘으면 뭔가 잘못 계산한 것이다.
+  assert.ok(ttsUsd(2600) < 1);
+});
+
+test('받다 만 파일을 mp3로 인정하지 않는다', () => {
+  assert.equal(looksLikeMp3(fakeMp3()), true);
+  assert.equal(looksLikeMp3(Buffer.from('<html>오류</html>')), false);
+  assert.equal(looksLikeMp3(Buffer.alloc(0)), false);
+  assert.equal(looksLikeMp3(MP3_HEAD), false, '4바이트짜리는 음성이 아니다');
+});
+
+await asyncTest('너무 긴 문단은 부르기 전에 잡는다', async () => {
+  const scenes = voiceScenes();
+  scenes[0].paragraphs[0].text = '가'.repeat(MAX_CHARS_PER_REQUEST + 1);
+  await assert.rejects(
+    () => narrate(scenes, { workDir: path.join(TMP, 'tts-long'), client: {}, sleepFn: async () => {} }),
+    /너무 깁니다/
+  );
+});
+
+test('이어 붙일 때 다시 인코딩한다 — 틈이 쌓이면 자막이 밀린다', () => {
+  const args = audioConcatArgs({ listPath: 'l.txt', outputPath: 'v.mp3' });
+  // -c copy 였다면 mp3 프레임 경계 때문에 오차가 쌓인다.
+  assert.ok(!args.includes('copy'), '복사로 붙이면 타이밍이 어긋난다');
+  assert.ok(args.includes('libmp3lame'));
+});
+
+test('장면·샷 길이가 실제 음성 길이로 바뀐다 — 자막만 고치면 그림이 어긋난다', () => {
+  // 추정은 문단당 10초였는데 실제로는 6초와 14초였다고 하자.
+  const timings = [
+    { id: 'S01-P1', seconds: 6 },
+    { id: 'S01-P2', seconds: 14 },
+  ];
+  const fixed = applyTimings(voiceScenes(), timings);
+
+  assert.equal(fixed[0].paragraphs[0].seconds, 6 + PAUSE_SECONDS);
+  assert.equal(fixed[0].paragraphs[1].seconds, 14 + PAUSE_SECONDS);
+
+  // 장면 길이가 문단 합계와 같아야 한다.
+  const sum = fixed[0].paragraphs.reduce((s, p) => s + p.seconds, 0);
+  assert.ok(Math.abs(fixed[0].duration - sum) < 0.02);
+
+  // 샷 길이 합계도 장면 길이와 같아야 한다. 여기가 어긋나면 그림이 밀린다.
+  const shotSum = fixed[0].shots.reduce((s, x) => s + x.duration, 0);
+  assert.ok(Math.abs(shotSum - fixed[0].duration) < 0.05, `샷 ${shotSum} vs 장면 ${fixed[0].duration}`);
+
+  // 샷의 개수와 번호는 그대로여야 한다 — 그림이 이미 그 번호로 만들어져 있다.
+  assert.deepEqual(fixed[0].shots.map((x) => x.shot_id), ['S01-1', 'S01-2']);
+});
+
+test('타이밍이 없으면 장면을 건드리지 않는다', () => {
+  const before = voiceScenes();
+  assert.deepEqual(applyTimings(before, []), before);
+  assert.deepEqual(applyTimings(before, null), before);
+});
+
+test('배경음악이 없어도 멈추지 않는다', () => {
+  assert.deepEqual(loadTracks(path.join(TMP, '없는폴더')), []);
+  assert.equal(pickTrack(voiceScenes(), [], {}), null);
+});
+
+test('장면 분위기에 맞는 곡을 고른다', () => {
+  const tracks = [
+    { file: 'calm.mp3', moods: ['calm'] },
+    { file: 'dark.mp3', moods: ['mystery'] },
+  ];
+  assert.equal(pickTrack(voiceScenes(), tracks, { seed: 0 }).file, 'dark.mp3');
+  // 맞는 분위기가 없으면 아무거나 쓴다 — 음악이 없는 것보다 낫다.
+  assert.ok(pickTrack([{ mood: '없는분위기' }], tracks, { seed: 0 }));
+});
+
+test('같은 편은 늘 같은 곡, 다른 편은 다른 곡', () => {
+  const tracks = [{ file: 'a.mp3', moods: [] }, { file: 'b.mp3', moods: [] }];
+  assert.equal(pickTrack([], tracks, { seed: 3 }).file, pickTrack([], tracks, { seed: 3 }).file);
+  assert.notEqual(pickTrack([], tracks, { seed: 2 }).file, pickTrack([], tracks, { seed: 3 }).file);
+});
+
+test('배경음악을 나레이션 밑으로 깐다', () => {
+  const args = mixArgs({ voicePath: 'v.mp3', bgmPath: 'b.mp3', outputPath: 'o.mp3', seconds: 100 });
+  const filter = args[args.indexOf('-filter_complex') + 1];
+  assert.ok(filter.includes(`volume=${BGM_GAIN_DB}dB`), '음량을 안 낮췄다');
+  assert.ok(BGM_GAIN_DB <= -15, '음악이 나레이션을 덮는다');
+  assert.ok(filter.includes('afade=t=in'), '페이드 인이 없다');
+  assert.ok(filter.includes('afade=t=out'), '페이드 아웃이 없다');
+  // 음악이 더 길어도 영상이 늘어나면 안 된다.
+  assert.ok(filter.includes('duration=first'));
+  assert.ok(args.includes('-stream_loop'), '음악이 짧으면 반복해야 한다');
+});
+
+test('출처 표기가 필요한 곡만 문구를 뽑는다', () => {
+  assert.equal(attributionText({ attribution: '' }), '');
+  assert.equal(attributionText(null), '');
+  const text = attributionText({ attribution: 'Music: Dark Drone by Someone' });
+  assert.ok(text.includes('Dark Drone'));
+  // 보관함이 준 문구를 고치지 않고 그대로 넣어야 표기로 인정된다.
+  assert.ok(text.includes('Music: Dark Drone by Someone'));
+});
+
+// ─────────────────────────────────────────────────────────────
+
 section('5. 저장소');
 
 test('소재를 보관함에 넣고 다시 읽는다', () => {
