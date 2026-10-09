@@ -16,6 +16,19 @@ import { wpFetch } from './client.mjs';
 
 const UA = 'Mozilla/5.0 (compatible; maumjaro-adcheck/1.0)';
 
+/**
+ * 플러그인 상태를 사람 말로 바꾼다.
+ *
+ * 멀티사이트에서는 네트워크 전체로 켜 둔 것(network-active)이 따로 있다.
+ * 모르는 값이 오면 그대로 보여준다 — 지어내지 않는다.
+ */
+export function 상태표시(status) {
+  if (status === 'active') return '✅ 켜짐';
+  if (status === 'network-active') return '🌐 네트워크 전체로 켜짐';
+  if (status === 'inactive') return '⬜ 꺼짐';
+  return `❔ ${status}`;
+}
+
 async function 받기(url) {
   const res = await fetch(url, { headers: { 'user-agent': UA }, redirect: 'follow' });
   return { status: res.status, ok: res.ok, text: res.ok ? await res.text() : '' };
@@ -48,6 +61,12 @@ export function readAdMarkup(html) {
     push호출: 세기(/adsbygoogle\s*=\s*window\.adsbygoogle\s*\|\|\s*\[\]/gi),
     클라이언트ID있음: /data-ad-client\s*=|client=ca-pub-/i.test(h),
     쿠팡: 세기(/ads-partners\.coupang\.com/gi),
+    // Head & Footer Code 플러그인이 실제로 동작하는지 가르는 잣대.
+    // 2026-10-09: 그 플러그인 HEAD 박스에 애널리틱스·Clarity 는 들어 있는데
+    // 애드센스는 없었다. 이 둘이 페이지에 나오면 플러그인은 살아 있다는 뜻이고,
+    // 그러면 "플러그인이 꺼져서"가 아니라 "코드를 안 넣어서"가 된다.
+    애널리틱스: 세기(/googletagmanager\.com\/gtag|gtag\s*\(/gi),
+    클라리티: 세기(/clarity\.ms/gi),
     // fix-links.mjs 와 같은 모양으로 쓴다. 공백이 끼어도 잡고(target = "_blank"),
     // "링크를 만들 때 target 을 쓰지 않는다"는 검사에도 걸리지 않는다 — 이 줄은
     // 링크를 만드는 게 아니라 세는 것이다.
@@ -146,11 +165,21 @@ async function main() {
   try {
     const { data } = await wpFetch('/wp/v2/plugins', { query: { context: 'edit' } });
     const 목록 = Array.isArray(data) ? data : [];
-    const 광고 = 목록.filter((pl) => /(adsense|site-kit|ad-inserter|advanced-ads|quads|ads|ezoic|header|footer|code)/i
+    console.log(`\n[플러그인] 전체 ${목록.length}개`);
+    // 상태를 그대로 보여준다. 멀티사이트에서는 active / inactive 말고
+    // network-active 가 따로 있다 — 2026-10-09 에 "네트워크 활성" 링크를 보고
+    // 알았다. 둘로만 찍으면 네트워크로 켜 둔 것을 "꺼짐"이라고 잘못 말한다.
+    for (const pl of 목록) {
+      console.log(`   ${상태표시(pl.status)} ${pl.name}  [${pl.plugin}]`);
+    }
+    const 광고 = 목록.filter((pl) => /(adsense|site-kit|ad-inserter|advanced-ads|quads|ezoic|header|footer|code|snippet)/i
       .test(`${pl.plugin} ${pl.name}`));
-    console.log(`\n[플러그인] 전체 ${목록.length}개 · 광고/코드 삽입 관련 ${광고.length}개`);
-    for (const pl of 광고) console.log(`   ${pl.status === 'active' ? '✅ 켜짐' : '⬜ 꺼짐'} — ${pl.name}`);
-    if (!광고.length) console.log('   광고를 넣어 주는 플러그인이 보이지 않습니다.');
+    if (광고.length) {
+      console.log(`\n   ↑ 이 중 코드를 끼워 넣을 수 있는 것 ${광고.length}개:`);
+      for (const pl of 광고) console.log(`      ${상태표시(pl.status)} ${pl.name}`);
+    } else {
+      console.log('\n   코드를 끼워 넣어 주는 플러그인이 보이지 않습니다.');
+    }
   } catch (err) {
     console.log(`\n[플러그인] 목록을 못 읽었습니다 — ${err.message}`);
     console.log('   (앱 비밀번호로는 막혀 있을 수 있습니다. 워드프레스 관리자에서 직접 보세요.)');
@@ -168,6 +197,7 @@ async function main() {
       if (r.error) { console.log(`   ${r.error}`); continue; }
       console.log(`   애드센스 스크립트 ${r.애드센스스크립트}개 · 광고 슬롯(<ins>) ${r.광고슬롯}개 · 클라이언트 ID ${r.클라이언트ID있음 ? '있음' : '❌ 없음'}`);
       console.log(`   쿠팡 광고 ${r.쿠팡}개 · 새 창으로 여는 링크 ${r.새창링크}개`);
+      console.log(`   애널리틱스 ${r.애널리틱스}개 · Clarity ${r.클라리티}개  ← 코드 삽입 플러그인이 살아 있는지`);
       console.log(`   페이지 ${r.길이.toLocaleString()}바이트 · 글자 ${r.본문글자수.toLocaleString()}자`);
       if (!r.애드센스스크립트) console.log('   ⚠️  이 페이지에 애드센스 코드가 아예 없습니다.');
       else if (!r.광고슬롯) console.log('   ℹ️  스크립트는 있는데 <ins> 슬롯이 없습니다 — 자동 광고만 쓰는 상태일 수 있습니다.');

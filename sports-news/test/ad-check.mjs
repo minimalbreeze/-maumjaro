@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readAdsTxt, readAdMarkup, readInstallHints } from '../src/wordpress/ad-check.mjs';
+import { readAdsTxt, readAdMarkup, readInstallHints, 상태표시 } from '../src/wordpress/ad-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -108,6 +108,22 @@ check('본문 글자수에서 스크립트·태그를 뺀다', () => {
   assert.ok(r.본문글자수 >= 6, `본문을 못 셌습니다: ${r.본문글자수}자`);
 });
 
+check('애널리틱스·Clarity 로 코드 삽입이 살아 있는지 가른다', () => {
+  // 이 둘이 나오면 플러그인은 동작한다 → 애드센스가 없는 건 코드를 안 넣은 것.
+  // 이 둘도 없으면 플러그인 자체가 안 도는 것. 원인이 완전히 다르다.
+  const 살아있음 = readAdMarkup([
+    '<script src="https://www.googletagmanager.com/gtag/js?id=G-XXXX"></script>',
+    '<script>gtag("js", new Date());</script>',
+    '<script>t.src="https://www.clarity.ms/tag/"+i;</script>',
+  ].join(''));
+  assert.ok(살아있음.애널리틱스 >= 2, `애널리틱스를 못 셌습니다: ${살아있음.애널리틱스}`);
+  assert.equal(살아있음.클라리티, 1);
+
+  const 죽어있음 = readAdMarkup('<html><body><p>아무 스크립트도 없음</p></body></html>');
+  assert.equal(죽어있음.애널리틱스, 0);
+  assert.equal(죽어있음.클라리티, 0);
+});
+
 // ── 어디에 깔려 있나 ───────────────────────────────────────
 check('테마와 광고 플러그인을 가려낸다', () => {
   // "애드센스 가서 고쳐"는 답이 아니다. 어느 스위치인지 알려면 이게 필요하다.
@@ -135,6 +151,20 @@ check('흔적이 없으면 없다고 한다', () => {
   assert.deepEqual(i.광고플러그인, []);
   assert.equal(i.사이트킷, false);
   assert.equal(i.구글소유확인, false);
+});
+
+check('멀티사이트의 네트워크 활성을 꺼짐이라고 하지 않는다', () => {
+  // 2026-10-09: "네트워크 활성" 링크를 보고 알았다. 둘로만 찍으면
+  // 네트워크로 켜 둔 플러그인을 "꺼짐"이라고 잘못 말한다.
+  assert.match(상태표시('network-active'), /네트워크/);
+  assert.ok(!/꺼짐/.test(상태표시('network-active')), '네트워크 활성을 꺼짐이라고 합니다');
+  assert.match(상태표시('active'), /켜짐/);
+  assert.match(상태표시('inactive'), /꺼짐/);
+});
+
+check('모르는 상태값을 지어내지 않는다', () => {
+  assert.match(상태표시('must-use'), /must-use/);
+  assert.match(상태표시('드롭인'), /드롭인/);
 });
 
 // ── 안전 ───────────────────────────────────────────────────
