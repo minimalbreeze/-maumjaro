@@ -26,6 +26,10 @@ on:
           - '소재 → 대본 → 장면까지 쓰기'
           - '소재 → 대본 → 장면 → 영상·쇼츠까지 만들기'
           - '진짜 그림까지 (이미지 생성 · 장당 돈이 나갑니다)'
+      topic:
+        description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
+        required: false
+        default: ''
       video_ratio:
         description: 'AI 영상 비중 (0.15 = 샷의 15%만 영상. 올리면 비싸집니다)'
         required: false
@@ -143,6 +147,7 @@ jobs:
           IN_SCRIPTS: ${{ inputs.scripts }}
           IN_MINUTES: ${{ inputs.minutes }}
           IN_CATEGORY: ${{ inputs.category }}
+          IN_TOPIC: ${{ inputs.topic }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
           IN_MAX_USD: ${{ inputs.max_usd }}
@@ -163,6 +168,12 @@ jobs:
 
           args=("--count=$IN_COUNT")
           [ -n "$IN_CATEGORY" ] && args+=("--category=$IN_CATEGORY")
+          if [ -n "$IN_TOPIC" ]; then
+            args+=("--topic=$IN_TOPIC")
+            echo "소재를 직접 지정했습니다: $IN_TOPIC"
+            echo "AI가 후보를 고르지 않고 이것만 조사합니다. 검증은 그대로 걸립니다 —"
+            echo "1차 기록이 없거나 출처가 하나뿐이면 대본을 쓰지 않고 멈춥니다."
+          fi
 
           case "$IN_MAX_USD" in
             ''|*[!0-9.]*|*.*.*) echo "::error::돈 상한은 숫자여야 합니다: $IN_MAX_USD"; exit 1 ;;

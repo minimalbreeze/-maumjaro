@@ -122,9 +122,16 @@ export const COLLECT_SCHEMA = {
 export function buildCollectPrompt({
   count = 5,
   category = null,
+  topic = null,
   avoidTitles = [],
   maxSearches = WEB_SEARCH_MAX_USES,
 } = {}) {
+  // 소재를 사람이 지정한 경우는 아예 다른 작업이다. 후보를 찾는 게 아니라
+  // 정해진 하나를 끝까지 파는 것이다.
+  if (topic && String(topic).trim()) {
+    return buildTopicPrompt(String(topic).trim(), maxSearches);
+  }
+
   const lines = [];
 
   lines.push(`"실제로 있었던 이상한 이야기" 소재를 ${count}건 찾아 주세요.`);
@@ -182,7 +189,68 @@ export function buildCollectPrompt({
  *
  * 도구 호출로 결과를 받으므로, 검색과 도구를 한 호출에 함께 붙인다.
  */
-export async function collect({ count = 5, category = null, avoidTitles = [], onProgress } = {}) {
+/**
+ * 사람이 고른 소재 하나를 조사하는 프롬프트.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 사람이 고르는 쪽을 따로 두는가
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 처음에는 AI가 후보를 찾아 점수를 매기고 1등으로 대본을 썼다. 그렇게 나온
+ * 1편이 "하늘에서 고기가 떨어졌다"였는데, 기록은 확실했지만 재미가 없었다.
+ *
+ * 이유가 있다. **검증 가능성과 재미는 자주 반대로 간다.** 기록이 깔끔하게
+ * 남은 사건은 대개 그냥 일어났고 설명도 끝난 사건이다. 전제가 뒤집히는
+ * 순간이 없다. 반대로 사람을 붙잡는 이야기는 "A인 줄 알았는데 B였다"거나
+ * "아직도 설명이 안 된다"로 끝나는데, 그런 건 점수로 집어내기 어렵다.
+ *
+ * 사람의 감이 AI 점수보다 낫다. 그래서 소재는 사람이 고르고, AI는 고른
+ * 소재를 **검증**한다. 역할이 바뀐 게 아니라 제자리를 찾은 것이다.
+ *
+ * 중요한 것: 사람이 골랐다고 검증을 건너뛰지 않는다. 지정한 소재가 알고 보니
+ * 원전 없는 괴담이면 그대로 돌려보내야 한다. 그래서 아래 프롬프트의 마지막
+ * 문단이 "억지로 통과시키지 말라"다.
+ */
+function buildTopicPrompt(topic, maxSearches) {
+  const lines = [];
+
+  lines.push(`제작진이 고른 소재입니다. 이 하나만 조사해 주세요.`);
+  lines.push('');
+  lines.push(`━━━ 소재 ━━━`);
+  lines.push(topic);
+  lines.push('');
+
+  lines.push('다른 후보를 찾지 마세요. 검색 예산을 전부 이 소재에 쓰세요.');
+  lines.push('');
+
+  lines.push('조사할 것:');
+  lines.push('1. 이 사건이 실제로 있었는지. 당대 신문, 공문서, 판결문, 경찰 기록, 학술 자료.');
+  lines.push('2. 널리 퍼진 이야기 중 **어디까지가 기록이고 어디부터가 덧붙은 것인지.**');
+  lines.push('   유명한 사건일수록 원전에 없는 세부가 섞여 있습니다. 그 경계를 분명히 적어 주세요.');
+  lines.push('3. 지금도 설명되지 않은 지점이 무엇인지 (unknowns).');
+  lines.push('4. 전제가 뒤집히는 지점이 있는지 — "A인 줄 알았는데 사실 B였다".');
+  lines.push('   있으면 what_is_strange에 그 지점을 분명히 적어 주세요. 영상의 중심이 됩니다.');
+  lines.push('');
+
+  lines.push(`━━━ 검색 예산: ${maxSearches}회 ━━━`);
+  lines.push('소재가 하나뿐이니 넉넉합니다. 1차 기록까지 끝까지 따라가 주세요.');
+  lines.push('같은 내용을 베낀 페이지는 출처 1개로 셉니다. 서로 다른 출처를 찾으세요.');
+  lines.push('');
+
+  lines.push('이 소재가 기준에 못 미치면 **빈 목록을 제출하세요.**');
+  lines.push('제작진이 골랐다는 이유로 억지로 통과시키지 마세요. 못 미치는 경우는 이렇습니다:');
+  lines.push('- 1차 기록을 찾을 수 없다 (널리 퍼졌지만 원전이 없는 이야기)');
+  lines.push('- 서로 다른 출처가 1개뿐이다');
+  lines.push('- 생존 인물이나 유족에게 해가 된다');
+  lines.push('- 음모론이다 (신뢰할 수 있는 기록과 어긋나는 주장)');
+  lines.push('');
+  lines.push('왜 못 미치는지 search_notes에 적어 주세요. 제작진이 읽고 다른 소재를 고릅니다.');
+  lines.push('빈 목록을 내는 것은 실패가 아닙니다. 근거 없는 이야기를 방송하는 것이 실패입니다.');
+
+  return lines.join('\n');
+}
+
+export async function collect({ count = 5, category = null, topic = null, avoidTitles = [], onProgress } = {}) {
   const tool = {
     name: 'submit_materials',
     description: '조사한 소재 목록을 제출한다',
@@ -190,11 +258,15 @@ export async function collect({ count = 5, category = null, avoidTitles = [], on
     input_schema: COLLECT_SCHEMA,
   };
 
-  onProgress?.(`웹검색으로 소재 ${count}건 찾는 중... (검색이 여러 번 돌아 몇 분 걸립니다)`);
+  onProgress?.(
+    topic
+      ? `"${topic}" 를 조사하는 중... (1차 기록까지 따라가므로 몇 분 걸립니다)`
+      : `웹검색으로 소재 ${count}건 찾는 중... (검색이 여러 번 돌아 몇 분 걸립니다)`
+  );
 
   const response = await callWithSearch({
     system: COLLECT_SYSTEM,
-    prompt: buildCollectPrompt({ count, category, avoidTitles }),
+    prompt: buildCollectPrompt({ count, category, topic, avoidTitles }),
     tools: [tool],
     model: MODELS.collect,
     maxTokens: 24000,

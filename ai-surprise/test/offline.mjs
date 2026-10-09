@@ -398,6 +398,31 @@ await asyncTest('스키마에 API가 거부하는 옵션이 없다', async () =>
 });
 
 // ─────────────────────────────────────────────────────────────
+test('소재를 지정하면 그것만 조사하는 프롬프트가 된다', () => {
+  const p = buildCollectPrompt({ topic: '플래넌 제도 등대지기 실종', count: 5 });
+  assert.ok(p.includes('플래넌 제도 등대지기 실종'));
+  assert.ok(p.includes('이 하나만 조사'), p.slice(0, 80));
+  assert.ok(p.includes('다른 후보를 찾지 마세요'));
+  // 후보를 여러 개 찾으라는 말이 남아 있으면 안 된다.
+  assert.ok(!p.includes('소재를 5건'), '여러 건 찾으라는 말이 남아 있다');
+});
+
+test('소재를 지정해도 검증을 건너뛰지 않는다', () => {
+  // 사람이 골랐다는 이유로 원전 없는 괴담을 통과시키면 이 시스템의 의미가 없다.
+  const p = buildCollectPrompt({ topic: '어떤 괴담' });
+  assert.ok(p.includes('빈 목록을 제출'), '기준 미달일 때 빈 손으로 오라는 지시가 없다');
+  assert.ok(p.includes('억지로 통과시키지 마세요'));
+  assert.ok(p.includes('1차 기록'));
+});
+
+test('소재가 비어 있으면 평소대로 후보를 찾는다', () => {
+  for (const topic of [null, '', '   ', undefined]) {
+    const p = buildCollectPrompt({ topic, count: 3 });
+    assert.ok(p.includes('소재를 3건'), `topic=${JSON.stringify(topic)} 일 때 평소 프롬프트가 아니다`);
+    assert.ok(!p.includes('다른 후보를 찾지 마세요'));
+  }
+});
+
 section('4. 대본 검증 — AI가 양식을 어겼을 때 잡아내는가');
 
 /** 양식을 지킨 대본을 만든다. 글자 수를 채워 분량 경고를 피한다. */

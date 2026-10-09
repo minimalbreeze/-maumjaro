@@ -100,17 +100,31 @@ async function cmdCollect(flags) {
   requireApiKey();
   const count = Number(flags.count || 5);
   const category = typeof flags.category === 'string' ? flags.category : null;
+  const topic = typeof flags.topic === 'string' && flags.topic.trim() ? flags.topic.trim() : null;
 
-  log.section(`🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`);
+  log.section(
+    topic
+      ? `🔍 소재 조사  |  "${topic}"  |  모델 ${MODELS.collect}`
+      : `🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`
+  );
 
   const avoid = knownTitles();
-  if (avoid.length) log.info(`이미 다룬 소재 ${avoid.length}건은 제외합니다.`);
+  // 소재를 지정했으면 "이미 다룬 것 제외"를 걸지 않는다. 같은 소재를 다시
+  // 만들려는 것일 수도 있고, 어차피 하나만 조사하므로 제외 목록이 방해만 된다.
+  if (!topic && avoid.length) log.info(`이미 다룬 소재 ${avoid.length}건은 제외합니다.`);
 
-  const found = await collect({ count, category, avoidTitles: avoid, onProgress: (m) => log.step(m) });
+  const found = await collect({
+    count,
+    category,
+    topic,
+    avoidTitles: topic ? [] : avoid,
+    onProgress: (m) => log.step(m),
+  });
 
   if (!found.items.length) {
-    log.warn('기준을 통과한 소재가 없습니다.');
+    log.warn(topic ? `"${topic}" 는 기준을 통과하지 못했습니다.` : '기준을 통과한 소재가 없습니다.');
     if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
+    if (topic) log.info('위 메모를 읽고 다른 소재를 골라 주세요. 억지로 통과시키지 않는 게 맞습니다.');
     return;
   }
   log.ok(`${found.items.length}건을 찾았습니다. 이제 심사합니다.`);
@@ -672,17 +686,29 @@ async function cmdAuto(flags) {
   const scripts = Number(flags.scripts || 1);
   const targetMinutes = Number(flags.minutes || 4);
   const category = typeof flags.category === 'string' ? flags.category : null;
+  const topic = typeof flags.topic === 'string' && flags.topic.trim() ? flags.topic.trim() : null;
 
-  log.section(`🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`);
+  log.section(
+    topic
+      ? `🔍 소재 조사  |  "${topic}"  |  모델 ${MODELS.collect}`
+      : `🔍 소재 수집  |  ${count}건 요청  |  모델 ${MODELS.collect}`
+  );
   const found = await collect({
     count,
     category,
-    avoidTitles: knownTitles(),
+    topic,
+    avoidTitles: topic ? [] : knownTitles(),
     onProgress: (m) => log.step(m),
   });
 
   if (!found.items.length) {
-    log.warn('기준을 통과한 소재가 없습니다. 다시 돌려보시거나 분야를 바꿔보세요.');
+    if (topic) {
+      log.warn(`"${topic}" 는 기준을 통과하지 못했습니다. 대본을 쓰지 않습니다.`);
+      log.info('1차 기록이 없거나, 출처가 하나뿐이거나, 다루면 해가 되는 소재입니다.');
+      log.info('아래 조사 메모를 읽고 다른 소재를 골라 주세요.');
+    } else {
+      log.warn('기준을 통과한 소재가 없습니다. 다시 돌려보시거나 분야를 바꿔보세요.');
+    }
     if (found.searchNotes) log.info(`조사 메모: ${found.searchNotes}`);
     return;
   }
@@ -847,6 +873,9 @@ async function main() {
     default:
       log.raw('AI 서프라이즈 — 소재 수집 · 심사 · 대본 · 장면');
       log.raw('');
+      log.raw('  node src/main.mjs auto --topic="소재 이름" --scenes --images --video');
+      log.raw('      소재를 직접 지정해서 영상까지 한 번에. 소재는 사람이 고르는 게 낫습니다.');
+      log.raw('');
       log.raw('  node src/main.mjs auto [--count=5] [--scripts=1] [--minutes=4] [--scenes]');
       log.raw('      소재 찾기부터 한 번에. GitHub Actions가 이걸 씁니다.');
       log.raw('      관문을 통과한 소재만 대본을 씁니다.');
@@ -856,6 +885,10 @@ async function main() {
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
+      log.raw('');
+      log.raw('  node src/main.mjs collect --topic="플래넌 제도 등대지기 실종"');
+      log.raw('      소재를 직접 지정합니다. AI가 후보를 고르지 않고 이것만 조사합니다.');
+      log.raw('      검증은 그대로 걸립니다 — 원전 없는 괴담이면 빈 손으로 돌아옵니다.');
       log.raw('');
       log.raw('  node src/main.mjs list');
       log.raw('      보관함과 제작 중인 편을 보여줍니다.');
