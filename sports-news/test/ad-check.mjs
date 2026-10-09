@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readAdsTxt, readAdMarkup } from '../src/wordpress/ad-check.mjs';
+import { readAdsTxt, readAdMarkup, readInstallHints } from '../src/wordpress/ad-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -106,6 +106,35 @@ check('본문 글자수에서 스크립트·태그를 뺀다', () => {
   assert.ok(!String(r.본문글자수).includes('NaN'));
   assert.ok(r.본문글자수 < 20, `스크립트를 글자로 셌습니다: ${r.본문글자수}자`);
   assert.ok(r.본문글자수 >= 6, `본문을 못 셌습니다: ${r.본문글자수}자`);
+});
+
+// ── 어디에 깔려 있나 ───────────────────────────────────────
+check('테마와 광고 플러그인을 가려낸다', () => {
+  // "애드센스 가서 고쳐"는 답이 아니다. 어느 스위치인지 알려면 이게 필요하다.
+  const i = readInstallHints([
+    '<link href="/wp-content/themes/astra/style.css">',
+    '<script src="/wp-content/plugins/google-site-kit/dist/a.js"></script>',
+    '<script src="/wp-content/plugins/contact-form-7/f.js"></script>',
+    '<script src="/wp-content/plugins/ad-inserter/js/ai.js"></script>',
+  ].join(''));
+  assert.deepEqual(i.테마, ['astra']);
+  assert.deepEqual(i.광고플러그인.sort(), ['ad-inserter', 'google-site-kit']);
+  // 광고와 무관한 플러그인을 광고 플러그인이라고 하지 않는다.
+  assert.ok(!i.광고플러그인.includes('contact-form-7'));
+  assert.ok(i.플러그인.includes('contact-form-7'), '전체 목록에는 있어야 합니다');
+});
+
+check('같은 플러그인이 여러 번 나와도 한 번만 센다', () => {
+  const i = readInstallHints('/wp-content/plugins/ad-inserter/a.js /wp-content/plugins/ad-inserter/b.js');
+  assert.deepEqual(i.플러그인, ['ad-inserter']);
+});
+
+check('흔적이 없으면 없다고 한다', () => {
+  const i = readInstallHints('<html><body><p>아무것도 없음</p></body></html>');
+  assert.deepEqual(i.테마, []);
+  assert.deepEqual(i.광고플러그인, []);
+  assert.equal(i.사이트킷, false);
+  assert.equal(i.구글소유확인, false);
 });
 
 // ── 안전 ───────────────────────────────────────────────────

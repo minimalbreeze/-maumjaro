@@ -60,6 +60,28 @@ export function readAdMarkup(html) {
   };
 }
 
+/**
+ * 테마 이름과 광고 플러그인 흔적을 HTML 에서 읽는다.
+ *
+ * "애드센스 가서 고쳐"는 답이 아니다. 어디에 어떻게 깔려 있는지를 알아야
+ * 어느 스위치인지 말할 수 있다.
+ */
+export function readInstallHints(html) {
+  const h = String(html || '');
+  const 테마 = [...h.matchAll(/\/wp-content\/themes\/([^/'"?]+)/gi)].map((m) => m[1]);
+  const 플러그인 = [...h.matchAll(/\/wp-content\/plugins\/([^/'"?]+)/gi)].map((m) => m[1]);
+  const uniq = (a) => [...new Set(a)];
+  // 광고를 넣는 흔한 플러그인들. 이 중 하나가 있으면 거기 설정에 스위치가 있다.
+  const 광고플러그인후보 = /(google-site-kit|ad-inserter|advanced-ads|quick-adsense|wp-quads|easy-ads|adsense|ezoic|adrotate|insert-headers-and-footers|header-footer-code-manager|wpcode)/i;
+  return {
+    테마: uniq(테마),
+    플러그인: uniq(플러그인),
+    광고플러그인: uniq(플러그인).filter((n) => 광고플러그인후보.test(n)),
+    사이트킷: /googlesitekit/i.test(h),
+    구글소유확인: /google-site-verification/i.test(h),
+  };
+}
+
 /** 글 하나를 공개 주소로 받아 광고 흔적을 센다. */
 export async function checkPost(postId) {
   const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
@@ -99,7 +121,42 @@ async function main() {
     }
   }
 
-  // ② 글마다 광고 흔적
+  // ② 첫 화면 — 글 페이지에만 없는 건지, 사이트 전체에 없는 건지 가른다.
+  //    이 구분이 "어디를 고쳐야 하나"를 정한다.
+  if (base) {
+    try {
+      const r = await 받기(`${base}/`);
+      if (!r.ok) {
+        console.log(`\n[첫 화면] 받지 못했습니다 (HTTP ${r.status})`);
+      } else {
+        const m = readAdMarkup(r.text);
+        const i = readInstallHints(r.text);
+        console.log(`\n[첫 화면] 애드센스 스크립트 ${m.애드센스스크립트}개 · 광고 슬롯 ${m.광고슬롯}개 · 쿠팡 ${m.쿠팡}개`);
+        console.log(`   테마: ${i.테마.join(', ') || '못 찾음'}`);
+        console.log(`   광고 넣는 플러그인: ${i.광고플러그인.join(', ') || '없음'}`);
+        console.log(`   사이트킷 ${i.사이트킷 ? '있음' : '없음'} · 구글 소유확인 메타 ${i.구글소유확인 ? '있음' : '없음'}`);
+        if (i.플러그인.length) console.log(`   (앞단에서 보이는 플러그인 ${i.플러그인.length}개: ${i.플러그인.slice(0, 12).join(', ')})`);
+      }
+    } catch (err) {
+      console.log(`\n[첫 화면] 확인 실패 — ${err.message}`);
+    }
+  }
+
+  // ③ 설치된 플러그인 — 앞단에 흔적을 안 남기는 것도 있어서 관리자 API 로 본다.
+  try {
+    const { data } = await wpFetch('/wp/v2/plugins', { query: { context: 'edit' } });
+    const 목록 = Array.isArray(data) ? data : [];
+    const 광고 = 목록.filter((pl) => /(adsense|site-kit|ad-inserter|advanced-ads|quads|ads|ezoic|header|footer|code)/i
+      .test(`${pl.plugin} ${pl.name}`));
+    console.log(`\n[플러그인] 전체 ${목록.length}개 · 광고/코드 삽입 관련 ${광고.length}개`);
+    for (const pl of 광고) console.log(`   ${pl.status === 'active' ? '✅ 켜짐' : '⬜ 꺼짐'} — ${pl.name}`);
+    if (!광고.length) console.log('   광고를 넣어 주는 플러그인이 보이지 않습니다.');
+  } catch (err) {
+    console.log(`\n[플러그인] 목록을 못 읽었습니다 — ${err.message}`);
+    console.log('   (앱 비밀번호로는 막혀 있을 수 있습니다. 워드프레스 관리자에서 직접 보세요.)');
+  }
+
+  // ④ 글마다 광고 흔적
   if (!ids.length) {
     console.log('\n글 번호를 적으면 그 글의 광고 흔적도 셉니다. 예: node src/wordpress/ad-check.mjs 7797 7801');
     return;
