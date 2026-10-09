@@ -149,6 +149,22 @@ async function cmdCollect(flags) {
   for (const item of items) {
     if (item.gate === GATE.BLOCKED) {
       log.warn(`버림: ${item.title} — ${(item.gate_reasons || []).join(', ')}`);
+      // 왜 막혔는지 자세히 찍는다.
+      //
+      // 예전에는 한 줄("생존 인물에 대한 근거 없는 의혹")만 찍고 끝냈다.
+      // 그런데 막힌 소재는 보관함에도 안 들어가므로, 사람이 **판단할 자료가
+      // 하나도 없이** 결과만 통보받는 꼴이었다. 관문이 과하게 걸린 건지
+      // 진짜 위험한 건지 알 길이 없다.
+      //
+      // 관문의 목적은 사람을 대신해 결정하는 게 아니라 사람이 결정할 수
+      // 있게 하는 것이다. 그래서 심사 메모와 출처를 같이 보여준다.
+      if (item.risk_notes) log.info(`  심사 메모: ${item.risk_notes}`);
+      if (item.what_is_strange) log.info(`  이상한 점: ${item.what_is_strange}`);
+      if ((item.risk_flags || []).length) log.info(`  위험 표시: ${item.risk_flags.join(', ')}`);
+      for (const src of (item.sources || []).slice(0, 5)) {
+        log.info(`  출처: [${src.kind || '?'}] ${src.name || ''} ${src.url || ''}`);
+      }
+      log.info('  이 판정이 과하다고 보시면 소재를 좁혀 다시 지정하거나, 사람이 직접 확인해 주세요.');
       continue;
     }
     saveToInbox(item);
@@ -743,6 +759,22 @@ async function cmdAuto(flags) {
   for (const item of items) {
     if (item.gate === GATE.BLOCKED) {
       log.warn(`버림: ${item.title} — ${(item.gate_reasons || []).join(', ')}`);
+      // 왜 막혔는지 자세히 찍는다.
+      //
+      // 예전에는 한 줄("생존 인물에 대한 근거 없는 의혹")만 찍고 끝냈다.
+      // 그런데 막힌 소재는 보관함에도 안 들어가므로, 사람이 **판단할 자료가
+      // 하나도 없이** 결과만 통보받는 꼴이었다. 관문이 과하게 걸린 건지
+      // 진짜 위험한 건지 알 길이 없다.
+      //
+      // 관문의 목적은 사람을 대신해 결정하는 게 아니라 사람이 결정할 수
+      // 있게 하는 것이다. 그래서 심사 메모와 출처를 같이 보여준다.
+      if (item.risk_notes) log.info(`  심사 메모: ${item.risk_notes}`);
+      if (item.what_is_strange) log.info(`  이상한 점: ${item.what_is_strange}`);
+      if ((item.risk_flags || []).length) log.info(`  위험 표시: ${item.risk_flags.join(', ')}`);
+      for (const src of (item.sources || []).slice(0, 5)) {
+        log.info(`  출처: [${src.kind || '?'}] ${src.name || ''} ${src.url || ''}`);
+      }
+      log.info('  이 판정이 과하다고 보시면 소재를 좁혀 다시 지정하거나, 사람이 직접 확인해 주세요.');
       continue;
     }
     saveToInbox(item);
