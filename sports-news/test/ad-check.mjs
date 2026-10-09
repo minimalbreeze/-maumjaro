@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readAdsTxt, readAdMarkup, readInstallHints, 상태표시, ads주소들 } from '../src/wordpress/ad-check.mjs';
+import { readAdsTxt, readAdMarkup, readInstallHints, 상태표시, ads주소들, 내보낸곳 } from '../src/wordpress/ad-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -224,6 +224,49 @@ check('멀티사이트의 네트워크 활성을 꺼짐이라고 하지 않는�
 check('모르는 상태값을 지어내지 않는다', () => {
   assert.match(상태표시('must-use'), /must-use/);
   assert.match(상태표시('드롭인'), /드롭인/);
+});
+
+// ── 누가 내보냈나 ──────────────────────────────────────────
+// 2026-10-09: public_html 에 ads.txt 파일이 없는데 루트 주소로는 내용이 나온다.
+// 누가 만들어 내보내는지 모르면 그 자리에 파일을 만들었다가 지금 잘 되는 것을
+// 덮어쓴다. 헤더로 가른다.
+check('정적 파일과 프로그램이 만든 응답을 가른다', () => {
+  const 파일 = 내보낸곳({ 'last-modified': 'Thu, 09 Oct 2026 01:00:00 GMT', 'content-type': 'text/plain' });
+  assert.match(파일.추정, /정적 파일/);
+  const 프로그램 = 내보낸곳({ 'x-powered-by': 'PHP/8.2', 'cache-control': 'no-cache, must-revalidate' });
+  assert.match(프로그램.추정, /프로그램/);
+});
+
+check('last-modified 가 있어도 캐시를 막으면 정적이라고 하지 않는다', () => {
+  const r = 내보낸곳({ 'last-modified': 'Thu, 09 Oct 2026 01:00:00 GMT', 'cache-control': 'no-store' });
+  assert.match(r.추정, /프로그램/);
+});
+
+check('헤더가 없으면 지어내지 않는다', () => {
+  const r = 내보낸곳({});
+  assert.deepEqual(r.단서, []);
+  assert.equal(r.옮겨간주소, '');
+});
+
+check('헤더 이름 대소문자를 가리지 않고 단서를 모은다', () => {
+  const r = 내보낸곳({ server: 'nginx', 'cf-ray': 'abc123', 'x-cache': 'HIT' });
+  assert.ok(r.단서.some((d) => /nginx/.test(d)));
+  assert.ok(r.단서.some((d) => /Cloudflare/.test(d)));
+  assert.ok(r.단서.some((d) => /HIT/.test(d)));
+});
+
+check('다른 주소로 넘어갔으면 그걸 알려준다', () => {
+  const 이동 = 내보낸곳({}, 'https://minimalbreeze.com/ads.txt', 'https://wiki.minimalbreeze.com/ads.txt');
+  assert.equal(이동.옮겨간주소, 'https://minimalbreeze.com/ads.txt');
+  // 끝 슬래시 차이만으로 "넘어갔다"고 하지 않는다.
+  const 그대로 = 내보낸곳({}, 'https://a.com/ads.txt', 'https://a.com/ads.txt');
+  assert.equal(그대로.옮겨간주소, '');
+});
+
+check('게시자 ID 를 단서에 흘리지 않는다', () => {
+  // 헤더만 읽는다. 본문은 보지 않는다.
+  const r = 내보낸곳({ server: 'nginx', 'content-type': 'text/plain' });
+  assert.ok(!r.단서.join(' ').includes('pub-'));
 });
 
 // ── 안전 ───────────────────────────────────────────────────

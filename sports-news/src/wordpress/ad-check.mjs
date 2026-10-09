@@ -31,7 +31,44 @@ export function 상태표시(status) {
 
 async function 받기(url) {
   const res = await fetch(url, { headers: { 'user-agent': UA }, redirect: 'follow' });
-  return { status: res.status, ok: res.ok, text: res.ok ? await res.text() : '' };
+  const headers = {};
+  for (const [k, v] of res.headers) headers[k.toLowerCase()] = v;
+  return { status: res.status, ok: res.ok, url: res.url, headers, text: res.ok ? await res.text() : '' };
+}
+
+/**
+ * 이 응답을 누가 내보냈는지 읽는다.
+ *
+ * 2026-10-09: 운영자가 WP 파일 관리자에서 `public_html` 을 뒤졌는데 ads.txt
+ * 파일이 없었다. 그런데 minimalbreeze.com/ads.txt 는 내용이 나온다. 파일 없이
+ * 만들어 내보내는 무언가가 있다는 뜻이다. 그게 플러그인인지 호스팅인지
+ * CDN인지 모르는 채로 그 자리에 진짜 파일을 만들면 **지금 잘 되는 것을
+ * 덮어쓴다.** 그래서 손대기 전에 누구인지 본다.
+ *
+ * 헤더 값을 지어내지 않는다 — 없으면 없는 대로 둔다.
+ */
+export function 내보낸곳(headers = {}, finalUrl = '', 요청한주소 = '') {
+  const h = (k) => headers[k] || '';
+  const 단서 = [];
+  if (h('server')) 단서.push(`server: ${h('server')}`);
+  if (h('x-powered-by')) 단서.push(`x-powered-by: ${h('x-powered-by')}`);
+  // CDN 이 앞단에 있으면 원 서버를 못 본다. 그것도 알아야 할 정보다.
+  if (h('cf-ray') || /cloudflare/i.test(h('server'))) 단서.push('Cloudflare 통과');
+  if (h('x-cache')) 단서.push(`x-cache: ${h('x-cache')}`);
+  if (h('content-type')) 단서.push(`content-type: ${h('content-type')}`);
+  if (h('last-modified')) 단서.push(`last-modified: ${h('last-modified')}`);
+  if (h('cache-control')) 단서.push(`cache-control: ${h('cache-control')}`);
+  // 진짜 파일이면 보통 last-modified 가 붙고 캐시를 막지 않는다. PHP 가 만들어
+  // 내보내면 last-modified 가 없거나 no-cache 가 붙는다. 확실한 증거는 아니라
+  // '보입니다'로 적는다 — 단정하지 않는다.
+  const 진짜파일같음 = Boolean(h('last-modified')) && !/no-cache|no-store/i.test(h('cache-control'));
+  const 다듬기 = (u) => String(u).replace(/\/+$/, '');
+  const 옮겨감 = Boolean(finalUrl) && Boolean(요청한주소) && 다듬기(finalUrl) !== 다듬기(요청한주소);
+  return {
+    단서,
+    옮겨간주소: 옮겨감 ? finalUrl : '',
+    추정: 진짜파일같음 ? '정적 파일로 보입니다' : '프로그램이 만들어 내보내는 것으로 보입니다',
+  };
 }
 
 /**
@@ -165,9 +202,15 @@ async function main() {
           const a = readAdsTxt(r.text);
           console.log(`\n[ads.txt · ${이름}] ✅ 있습니다 — 전체 ${a.줄수}줄 · google.com ${a.구글줄수}줄`);
           console.log(`   DIRECT ${a.DIRECT} · RESELLER ${a.RESELLER} · 게시자 ID ${a.게시자ID있음 ? '있음' : '❌ 없음'}`);
-          if (a.위임) console.log(`   서브도메인 위임(SUBDOMAIN=): ${a.위임.join(', ')}`);
+          if (a.위임?.length) console.log(`   서브도메인 위임(SUBDOMAIN=): ${a.위임.join(', ')}`);
           if (!a.구글줄수) console.log('   ⚠️  google.com 줄이 없습니다.');
         }
+        // 200 이든 404 든 누가 응답했는지는 본다. 서버에 파일이 없는데 내용이
+        // 나오는 상황에서, 그 자리를 건드려도 되는지 가를 유일한 단서다.
+        const 출처 = 내보낸곳(r.headers, r.url, url);
+        if (출처.옮겨간주소) console.log(`   ↪︎ ${출처.옮겨간주소} 로 넘어갔습니다`);
+        if (출처.단서.length) console.log(`   보낸 곳: ${출처.단서.join(' · ')}`);
+        if (r.ok) console.log(`   → ${출처.추정}`);
       } catch (err) {
         console.log(`\n[ads.txt · ${이름}] 확인 실패 — ${err.message}`);
       }
