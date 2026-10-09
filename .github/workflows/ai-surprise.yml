@@ -135,8 +135,6 @@ jobs:
         if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
-          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
-          TTS_VOICE: ${{ inputs.tts_voice }}
         run: |
           if [ -z "$REPLICATE_API_TOKEN" ]; then
             echo "::error::REPLICATE_API_TOKEN 이 등록되지 않았습니다."
@@ -180,6 +178,8 @@ jobs:
           IN_MAX_USD: ${{ inputs.max_usd }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
+          TTS_VOICE: ${{ inputs.tts_voice }}
           # 장면 단계가 읽는다. 샷 중 몇 %를 AI 영상으로 만들지 정한다.
           VIDEO_SHOT_RATIO: ${{ inputs.video_ratio }}
         run: |

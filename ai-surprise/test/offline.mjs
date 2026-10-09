@@ -2530,6 +2530,29 @@ test('장면 분위기 6종이 모두 어떤 곡엔가 걸려 있다', () => {
   }
 });
 
+// 워크플로의 「실행」 단계가 코드가 읽는 비밀값을 전부 넘기는지 본다.
+//
+// 실제로 당한 사고: GOOGLE_TTS_API_KEY 를 「이미지 토큰 확인」 단계에만
+// 적어 두고 「실행」 단계에 빠뜨렸다. 등록 확인 단계는 초록으로 통과하고
+// 정작 node 를 돌리는 단계에서 "키가 없습니다"로 죽었다. 확인 단계가
+// 통과했으니 키 문제가 아니라고 착각하기 딱 좋은 모양이었다.
+test('워크플로 실행 단계가 코드가 읽는 비밀값을 모두 넘긴다', () => {
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  // 「실행」 단계의 env 블록만 떼어 낸다 (다음 단계가 시작되기 전까지).
+  const start = yml.indexOf('- name: 실행');
+  assert.ok(start > 0, '「실행」 단계를 찾지 못했습니다');
+  const body = yml.slice(start, yml.indexOf('\n      - name:', start + 1));
+  for (const key of ['ANTHROPIC_API_KEY', 'REPLICATE_API_TOKEN', 'GOOGLE_TTS_API_KEY']) {
+    assert.ok(
+      body.includes(`${key}: \${{ secrets.${key} }}`),
+      `「실행」 단계에 ${key} 가 없습니다 — 등록 확인은 통과하고 실행에서 죽습니다`
+    );
+  }
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);
