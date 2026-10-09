@@ -323,6 +323,19 @@ async function cmdScenes(flags) {
     process.exit(1);
   }
 
+  // 이미 만들어 둔 장면이 있으면 다시 만들지 않는다.
+  //
+  // 장면 만들기는 AI를 부르므로 돈이 든다. 실행이 뒤 단계에서 실패해 다시
+  // 돌릴 때, 똑같은 장면을 또 사느라 돈을 내는 일이 없어야 한다.
+  //
+  // **조사 기록을 읽기 전에** 본다. 장면이 이미 있으면 research.json 이
+  // 빠져 있어도 할 일이 없는데, 뒤에 두면 그 때문에 멈춰 버린다.
+  if (fs.existsSync(contentPath(id, 'scenes.json')) && !flags.force) {
+    log.ok(`content/${id}/scenes.json 이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
+    log.info('새로 만들려면 --force 를 붙이세요.');
+    return;
+  }
+
   const loaded = loadContent(id);
   if (!loaded) {
     log.error(`content/${id} 을 찾을 수 없습니다. node src/main.mjs list 로 확인해 주세요.`);
@@ -441,6 +454,16 @@ async function cmdScenes(flags) {
  *  - 비용 상한이 걸려 있고, 넘으면 멈춘다
  *  - --dry-run 으로 몇 장에 얼마인지 먼저 볼 수 있다 (비용 0원)
  */
+/** 그 편의 샷 번호 목록. scenes.json 이 없으면 빈 목록. */
+function shotIdsOf(id) {
+  try {
+    const saved = JSON.parse(fs.readFileSync(contentPath(id, 'scenes.json'), 'utf8'));
+    return (saved.scenes || []).flatMap((sc) => (sc.shots || []).map((sh) => sh.shot_id)).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 async function cmdImages(flags) {
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
@@ -448,6 +471,18 @@ async function cmdImages(flags) {
     log.info('  node src/main.mjs list               제작 중인 편 보기');
     log.info('  node src/main.mjs images --id=001    그 편의 이미지 만들기');
     process.exit(1);
+  }
+
+  // 샷마다 그림이 이미 다 있으면 할 일이 없다.
+  //
+  // 이어할 때 중요하다. prompts.json 은 결과물이 아니라 중간 파일이어서
+  // 빠질 수 있는데, 그 때문에 **이미 돈 주고 산 그림을 다시 사는** 일이
+  // 있어서는 안 된다. 그림이 다 있으면 prompts.json 이 없어도 넘어간다.
+  const needed = shotIdsOf(id);
+  if (needed.length && needed.every((sid) => fs.existsSync(contentPath(id, 'assets', `${sid}.png`)))) {
+    log.ok(`content/${id} 의 그림 ${needed.length}장이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
+    log.info('새로 만들려면 content/<편>/assets 의 파일을 지우세요.');
+    return;
   }
 
   const promptsPath = contentPath(id, 'prompts.json');
@@ -597,6 +632,17 @@ async function cmdVoice(flags) {
     log.error(`${scenesPath} 이 없습니다. 먼저 장면을 만들어야 합니다:`);
     log.info(`  node src/main.mjs scenes --id=${id}`);
     process.exit(1);
+  }
+
+  // 이미 만든 음성이 있으면 다시 만들지 않는다. 글자 수만큼 돈이 든다.
+  if (
+    !flags.force &&
+    fs.existsSync(contentPath(id, 'audio', 'voice.mp3')) &&
+    fs.existsSync(contentPath(id, 'audio', 'timings.json'))
+  ) {
+    log.ok(`content/${id}/audio/voice.mp3 이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
+    log.info('새로 만들려면 --force 를 붙이세요.');
+    return;
   }
 
   const scenes = JSON.parse(fs.readFileSync(scenesPath, 'utf8')).scenes || [];
@@ -920,7 +966,80 @@ function fmtTime(seconds) {
  *   - 어차피 결과는 파일로만 나온다. 유튜브에 아무것도 올라가지 않는다.
  *     사람은 대본을 읽고 승인한 뒤에 다음 Phase를 시작한다.
  */
+/**
+ * 대본이 있는 편 하나를 장면 → 그림 → 목소리 → 영상 순서로 만든다.
+ *
+ * 처음부터 돌릴 때와 이어할 때가 **같은 코드를 지나야** 한다. 갈래가 둘이면
+ * 한쪽에서만 나는 버그가 생기고, 그 버그는 비싼 쪽에서 난다.
+ *
+ * 단계마다 따로 try 를 두는 이유: 그림을 못 만들어도 영상은 만들어야 한다
+ * (실패한 샷만 자리표시로 나온다). 목소리도 마찬가지다 — 무음으로라도 나온다.
+ */
+async function runStages(id, flags) {
+  // 장면 (Phase 2). 이미 있으면 cmdScenes 가 건너뛴다.
+  if (flags.scenes) {
+    try {
+      await cmdScenes({ id });
+    } catch (err) {
+      log.fail(`content/${id} 장면 만들기 실패`, err);
+    }
+  }
+
+  // 그림 (Phase 3). 장당 돈이 나간다. 상한은 cmdImages 가 지킨다.
+  if (flags.images && flags.scenes) {
+    try {
+      await cmdImages({ id, model: flags['image-model'], 'max-usd': flags['max-usd'] });
+    } catch (err) {
+      log.fail(`content/${id} 이미지 만들기 실패`, err);
+    }
+  }
+
+  // 목소리와 배경음악 (Phase 4).
+  // 영상보다 **먼저** 만들어야 한다 — 영상이 음성 길이에 맞춰 잘리기 때문이다.
+  if (flags.narrate && flags.scenes) {
+    try {
+      await cmdVoice({ id, voice: flags['tts-voice'], 'max-usd': flags['tts-max-usd'] });
+    } catch (err) {
+      log.fail(`content/${id} 목소리 만들기 실패`, err);
+    }
+  }
+
+  // 영상 (Phase 5). AI를 안 쓰므로 추가로 드는 돈은 없다.
+  if (flags.video && flags.scenes) {
+    try {
+      await cmdVideo({ id });
+    } catch (err) {
+      log.fail(`content/${id} 영상 만들기 실패`, err);
+    }
+  }
+}
+
 async function cmdAuto(flags) {
+  // ── 이어하기
+  //
+  // GitHub Actions 서버는 실행이 끝나면 통째로 지워진다. 그래서 뒤 단계에서
+  // 한 번 실패하면 앞에서 **돈 주고 산 것**(조사·대본·장면·그림·음성)이 같이
+  // 사라지고, 다시 돌리면 처음부터 다시 산다. 실제로 그렇게 두 번 날렸다.
+  //
+  // 앞 실행의 결과물을 content/ 에 되돌려 놓고 --resume=<번호> 로 부르면,
+  // 조사와 대본을 건너뛰고 **없는 것만** 만든다. 각 단계도 이미 있는 결과는
+  // 건너뛰므로(cmdScenes·cmdImages·cmdVoice), 남은 일만 돈이 든다.
+  const resumeId = typeof flags.resume === 'string' && flags.resume.trim()
+    ? String(flags.resume).trim().padStart(3, '0')
+    : null;
+  if (resumeId) {
+    if (!fs.existsSync(contentPath(resumeId, 'script.md'))) {
+      log.error(`content/${resumeId}/script.md 이 없습니다. 이어할 수 없습니다.`);
+      log.info('앞 실행의 결과물(content 폴더)이 제자리에 있는지 확인해 주세요.');
+      process.exit(1);
+    }
+    log.section(`↩️  이어하기  |  content/${resumeId}`);
+    log.info('조사와 대본은 건너뜁니다. 이미 만들어 둔 것은 그대로 씁니다.');
+    await runStages(resumeId, flags);
+    printUsage();
+    return;
+  }
+
   requireApiKey();
   const count = Number(flags.count || 5);
   const scripts = Number(flags.scripts || 1);
@@ -1076,67 +1195,11 @@ async function cmdAuto(flags) {
     }
   }
 
-  // 장면까지 이어서 만든다 (Phase 2).
-  // 양식을 통과한 대본만 넘긴다 — 깨진 대본으로 장면을 만들면 돈만 쓴다.
-  if (flags.scenes && scripted.length) {
-    for (const id of scripted) {
-      try {
-        await cmdScenes({ id });
-      } catch (err) {
-        log.fail(`content/${id} 장면 만들기 실패`, err);
-      }
-    }
-  } else if (flags.scenes) {
-    log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
+  if (!scripted.length) {
+    if (flags.scenes) log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
   }
-
-  // 진짜 그림까지 만든다 (Phase 3).
-  // 여기서 처음으로 장당 돈이 나간다. 상한은 cmdImages가 지킨다.
-  if (flags.images && flags.scenes && scripted.length) {
-    for (const id of scripted) {
-      try {
-        await cmdImages({
-          id,
-          model: flags['image-model'],
-          'max-usd': flags['max-usd'],
-        });
-      } catch (err) {
-        // 그림을 못 만들어도 영상은 만든다 — 실패한 샷만 자리표시로 나온다.
-        log.fail(`content/${id} 이미지 만들기 실패`, err);
-      }
-    }
-  } else if (flags.images) {
-    log.warn('장면이 없어 이미지를 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
-  }
-
-  // 목소리와 배경음악 (Phase 4).
-  // 영상보다 **먼저** 만들어야 한다 — 영상이 음성 길이에 맞춰 잘리기 때문이다.
-  if (flags.narrate && flags.scenes && scripted.length) {
-    for (const id of scripted) {
-      try {
-        await cmdVoice({ id, voice: flags['tts-voice'], 'max-usd': flags['tts-max-usd'] });
-      } catch (err) {
-        // 목소리를 못 만들어도 영상은 만든다 — 무음으로 나온다.
-        log.fail(`content/${id} 목소리 만들기 실패`, err);
-      }
-    }
-  } else if (flags.narrate) {
-    log.warn('장면이 없어 목소리를 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
-  }
-
-  // 영상까지 이어서 만든다 (Phase 5).
-  // AI를 안 쓰므로 여기서 추가로 드는 돈은 없다. 시간만 든다.
-  // 장면 단계에서 문제가 남은 편은 cmdVideo가 스스로 거른다.
-  if (flags.video && flags.scenes && scripted.length) {
-    for (const id of scripted) {
-      try {
-        await cmdVideo({ id });
-      } catch (err) {
-        log.fail(`content/${id} 영상 만들기 실패`, err);
-      }
-    }
-  } else if (flags.video) {
-    log.warn('장면이 없어 영상을 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
+  for (const id of scripted) {
+    await runStages(id, flags);
   }
 
   log.raw('');
