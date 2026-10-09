@@ -2682,6 +2682,11 @@ test('워크플로에 시간 제한이 걸려 있다', () => {
     new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
     'utf8'
   );
+  // 같은 키가 두 번 있으면 GitHub 이 워크플로 자체를 거부한다 — 실행이
+  // 0초 만에 실패하고 아무 단계도 돌지 않는다. 실제로 그렇게 한 번
+  // 날렸다. 파이썬 yaml 검사는 중복 키를 통과시키므로 여기서 센다.
+  const jobLines = yml.split('\n').filter((l) => /^    timeout-minutes: \d+$/.test(l));
+  assert.equal(jobLines.length, 1, `잡 상한이 ${jobLines.length}번 있습니다 (1이어야 합니다)`);
   const job = /\n    timeout-minutes: (\d+)/.exec(yml);
   assert.ok(job, '잡 전체에 timeout-minutes 가 없습니다 (기본 6시간)');
   assert.ok(Number(job[1]) <= 180, `잡 상한이 너무 깁니다: ${job[1]}분`);
