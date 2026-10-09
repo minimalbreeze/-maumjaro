@@ -1,13 +1,18 @@
-// 색인에서 빼는 도구가 안전선을 지키는지 검사.
+// 구글 색인에서만 빼는 도구가 안전선을 지키는지 검사.
 //
 // 발행된 글 수백 편을 한 번에 건드리는 도구다. 잘못 고르면 유입이 있는 글이
-// 검색에서 사라진다. 고르는 눈과 값을 만드는 손을 둘 다 검사한다.
+// 검색에서 사라진다.
+//
+// 2026-10-09 운영자가 짚은 것: "네이버는 색인이 잘되어 있어서". 그 전 설계는
+// Rank Math 의 robots 칸에 noindex 를 넣었고, 그건 name="robots" 라 모든
+// 검색엔진에게 하는 말이었다. 네이버 유입까지 끊을 뻔했다. 지금은 우리
+// 플러그인이 구글에게만 말한다. 그 선을 테스트가 지킨다.
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { noindex인가, noindex더하기, 뺄글고르기, 손대도되는글인가, ROBOTS_KEY } from '../src/wordpress/noindex.mjs';
+import { 구글제외인가, 깃발세우기, 뺄글고르기, 손대도되는글인가, FLAG_KEY } from '../src/wordpress/noindex.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -18,40 +23,51 @@ const check = (name, fn) => {
 
 console.log('\n[색인에서 빼기]');
 
-// ── 값 만들기 ──────────────────────────────────────────────
-check('빈 값에서도 noindex 를 만든다', () => {
-  assert.deepEqual(noindex더하기(undefined), ['noindex']);
-  assert.deepEqual(noindex더하기(null), ['noindex']);
-  assert.deepEqual(noindex더하기([]), ['noindex']);
+// ── 네이버를 끊지 않는다 (제일 중요한 선) ────────────────
+check('Rank Math 의 robots 칸을 쓰지 않는다', () => {
+  // rank_math_robots 는 <meta name="robots"> 를 만든다. 그건 네이버에게도
+  // 하는 말이라 네이버 유입이 끊긴다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
+  const 주석뺀것 = src.replace(/\/\/.*$/gm, '');
+  assert.ok(!/rank_math_robots/.test(주석뺀것), 'Rank Math robots 칸을 건드립니다');
+  assert.equal(FLAG_KEY, 'maumjaro_google_noindex');
 });
 
-check('원래 들어 있던 다른 지시어를 지우지 않는다', () => {
-  // Rank Math 는 nofollow·noarchive 를 같이 담는다. 우리 일은 색인 제외뿐이다.
-  assert.deepEqual(noindex더하기(['nofollow', 'noarchive']), ['nofollow', 'noarchive', 'noindex']);
+// 주석에는 "name=robots 를 쓰면 네이버까지 끊긴다"는 설명이 들어 있다.
+// 그 설명은 남겨야 다음 사람이 왜 이렇게 했는지 안다. 그래서 검사는 주석을
+// 걷어낸 코드만 본다.
+const phpCode = () => fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '');
+
+check('플러그인이 구글에게만 말한다', () => {
+  const php = phpCode();
+  assert.match(php, /name="googlebot" content="noindex"/, '구글 전용 메타를 찍지 않습니다');
+  // name="robots" 를 만들면 네이버까지 끊긴다. 절대 만들지 않는다.
+  assert.ok(!/name="robots"/.test(php), 'name="robots" 를 만듭니다 — 네이버까지 끊깁니다');
+  const 전체 = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
+  assert.match(전체, /1\.2\.0/, '버전을 올리지 않았습니다');
 });
 
-check('index 와 noindex 를 함께 두지 않는다', () => {
-  // 둘이 같이 있으면 뜻이 충돌한다.
-  const r = noindex더하기(['index', 'nofollow']);
-  assert.ok(!r.includes('index'));
-  assert.ok(r.includes('noindex'));
-  assert.ok(r.includes('nofollow'));
+check('깃발 값은 1 하나뿐이다', () => {
+  assert.equal(깃발세우기(), '1');
+  assert.equal(구글제외인가('1'), true);
+  assert.equal(구글제외인가(''), false);
+  assert.equal(구글제외인가(undefined), false);
+  assert.equal(구글제외인가(1), false, '문자열만 받아야 합니다');
 });
 
-check('이미 걸려 있으면 그대로 둔다 (중복으로 넣지 않는다)', () => {
-  assert.deepEqual(noindex더하기(['noindex']), ['noindex']);
-  assert.equal(noindex더하기(['noindex', 'nofollow']).filter((v) => v === 'noindex').length, 1);
+check('플러그인이 1 말고는 저장하지 않는다', () => {
+  const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
+  assert.match(php, /maumjaro_seo_clean_flag/);
+  // 오타 하나로 색인이 꼬이지 않게 값 자체를 못 박는다.
+  assert.match(php, /\?\s*'1'\s*:\s*''/);
 });
 
-check('문자열이 아닌 값은 버린다', () => {
-  assert.deepEqual(noindex더하기([null, 42, 'nofollow']), ['nofollow', 'noindex']);
-});
-
-check('지금 상태를 바르게 읽는다', () => {
-  assert.equal(noindex인가(['noindex']), true);
-  assert.equal(noindex인가(['nofollow']), false);
-  assert.equal(noindex인가(undefined), false);
-  assert.equal(noindex인가('noindex'), false, '문자열을 배열로 착각합니다');
+check('글 하나하나에만 붙는다 (사이트 전체가 아니다)', () => {
+  const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
+  assert.match(php, /is_singular\('post'\)/, '글 페이지인지 확인하지 않습니다');
+  assert.match(php, /get_post_meta\(get_the_ID\(\)/, '글마다 깃발을 보지 않습니다');
 });
 
 // ── 고르기 ─────────────────────────────────────────────────
@@ -131,14 +147,11 @@ check('쓰기 직전에 호스트를 확인한다', () => {
 });
 
 // ── 안전 ───────────────────────────────────────────────────
-check('robots 칸 말고 다른 것을 쓰지 않는다', () => {
+check('깃발 칸 말고 다른 것을 쓰지 않는다', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
   // 본문·제목·슬러그·상태를 보내면 안 된다.
   assert.ok(!/body:\s*{[^}]*\b(content|title|slug|status)\b/.test(src), '본문·제목·슬러그·상태를 보냅니다');
-  // 코드는 상수(ROBOTS_KEY)로 쓴다. 그 상수가 실제로 robots 칸을 가리키는지와,
-  // meta 로 보내는 것이 그 상수 하나뿐인지를 본다.
-  assert.equal(ROBOTS_KEY, 'rank_math_robots');
-  assert.match(src, /meta:\s*\{\s*\[ROBOTS_KEY\]:/, 'robots 칸만 보내는 모양이 아닙니다');
+  assert.match(src, /meta:\s*\{\s*\[FLAG_KEY\]:/, '깃발 칸만 보내는 모양이 아닙니다');
   assert.ok(!/method:\s*['"]DELETE['"]/.test(src), '삭제 요청이 들어 있습니다');
 });
 
@@ -148,12 +161,11 @@ check('미리보기가 기본이고 --apply 가 있어야 쓴다', () => {
   assert.match(src, /if \(!적용\)/, '미리보기에서 빠져나가는 길이 없습니다');
 });
 
-check('모양을 확인하기 전에는 쓰지 않는다', () => {
-  // Rank Math 의 robots 는 PHP 직렬화 배열이고 공개 문서가 구조를 확정해 주지
-  // 않는다. 리포 지시서: 실제 필드 구조를 확인하지 않고 저장하지 않는다.
+check('칸이 열려 있지 않으면 쓰지 않는다', () => {
+  // 플러그인을 안 올렸는데 쓰면 조용히 아무 일도 안 일어난다. 그걸 막는다.
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
-  assert.match(src, /robots있음/, '칸이 열렸는지 확인하지 않습니다');
-  assert.match(src, /Array\.isArray\(표본\.robots\)/, '값이 배열인지 확인하지 않습니다');
+  assert.match(src, /칸열림/, '칸이 열렸는지 확인하지 않습니다');
+  assert.match(src, /1\.2\.0/, '어느 플러그인 버전이 필요한지 알려주지 않습니다');
 });
 
 check('되돌릴 수 있게 원래 값을 남긴다', () => {
@@ -162,17 +174,11 @@ check('되돌릴 수 있게 원래 값을 남긴다', () => {
 });
 
 // ── 플러그인 ───────────────────────────────────────────────
-check('플러그인이 robots 칸을 배열로 열었다', () => {
+check('기존 SEO 세 칸은 그대로 열려 있다', () => {
   const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
-  assert.match(php, /rank_math_robots/, 'robots 칸을 열지 않았습니다');
-  assert.match(php, /'type'\s*=>\s*'array'/, '배열로 등록하지 않았습니다');
-  assert.match(php, /1\.1\.0/, '버전을 올리지 않았습니다');
-});
-
-check('플러그인이 아는 지시어만 받는다', () => {
-  const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
-  assert.match(php, /MAUMJARO_SEO_ROBOTS_ALLOWED/);
-  assert.match(php, /in_array\(\$one, MAUMJARO_SEO_ROBOTS_ALLOWED, true\)/);
+  for (const k of ['rank_math_title', 'rank_math_description', 'rank_math_focus_keyword']) {
+    assert.ok(php.includes(k), `${k} 가 사라졌습니다`);
+  }
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

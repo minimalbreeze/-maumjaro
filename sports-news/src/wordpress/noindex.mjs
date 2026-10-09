@@ -1,4 +1,4 @@
-// 끝난 대회의 중계 안내처럼 수명이 끝난 글을 색인 대상에서 뺀다.
+// 끝난 대회의 중계 안내처럼 수명이 끝난 글을 **구글 색인에서만** 뺀다.
 //
 //   node src/wordpress/noindex.mjs                  대상만 보여준다 (기본)
 //   node src/wordpress/noindex.mjs --확인=7801      한 글의 현재 robots 값을 본다
@@ -13,6 +13,21 @@
 // 왜 삭제가 아닌가
 //   삭제는 되돌릴 수 없고 링크가 깨진다. noindex 는 글을 그대로 두고 색인에서만
 //   뺀다. 되돌리려면 값을 지우면 된다.
+//
+// 왜 구글에만인가 (2026-10-09 운영자 지적)
+//   운영자: "329편 색인 구글에서 뺀다는 거지? 네이버는 색인이 잘되어 있어서".
+//   맞는 지적이었고, 그 전 설계는 틀렸다. Rank Math 의 robots 칸은
+//   <meta name="robots" content="noindex"> 를 만드는데 그건 **모든 검색엔진**
+//   에게 하는 말이라 네이버 유입까지 끊긴다.
+//
+//   그래서 Rank Math 칸을 쓰지 않는다. 우리 플러그인이 구글에게만 말하는
+//   <meta name="googlebot" content="noindex"> 를 찍게 하고, 이 도구는 그
+//   깃발(maumjaro_google_noindex)만 세운다. **name="robots" 줄은 아예 만들지
+//   않는다** — 네이버에게 하는 말이 페이지에 없으면 네이버가 무엇을 따르든
+//   영향이 없다.
+//
+//   네이버가 meta robots 를 어떻게 다루는지는 공식 문서에서 확인하지 못했다.
+//   확인 못 한 것에 기대지 않는 설계를 택한 것이다.
 //
 // 지키는 선
 //   - **WORDPRESS_URL 이 가리키는 사이트 말고는 건드리지 않는다.** 운영자가
@@ -33,24 +48,19 @@ import { wpFetch, wpConfig } from './client.mjs';
 import { ROOT } from '../utils/env.mjs';
 import { 발행글전부, 글유형 } from './index-audit.mjs';
 
-export const ROBOTS_KEY = 'rank_math_robots';
+// 우리 플러그인이 만든 칸. 값이 '1'이면 그 글에만 구글 전용 색인 제외가 나간다.
+// Rank Math 의 rank_math_robots 는 건드리지 않는다 — 그건 name="robots" 를
+// 만들어 네이버까지 끊는다.
+export const FLAG_KEY = 'maumjaro_google_noindex';
 
-/** 지금 이 글이 색인에서 빠져 있나. */
-export function noindex인가(robots) {
-  return Array.isArray(robots) && robots.includes('noindex');
+/** 지금 이 글이 구글 색인에서 빠져 있나. */
+export function 구글제외인가(flag) {
+  return flag === '1';
 }
 
-/**
- * robots 값에 noindex 를 더한다. 원래 들어 있던 다른 지시어는 그대로 둔다.
- *
- * Rank Math 는 여기에 nofollow·noarchive 같은 것도 함께 담는다. 우리가 원하는
- * 것은 색인에서 빼는 것뿐이므로 나머지를 지우지 않는다.
- */
-export function noindex더하기(robots) {
-  const 기존 = Array.isArray(robots) ? robots.filter((v) => typeof v === 'string') : [];
-  if (기존.includes('noindex')) return 기존;
-  // 'index' 와 'noindex' 가 함께 있으면 뜻이 충돌한다. index 만 걷어낸다.
-  return [...기존.filter((v) => v !== 'index'), 'noindex'];
+/** 세울 깃발 값. 플러그인이 '1' 말고는 저장하지 않는다. */
+export function 깃발세우기() {
+  return '1';
 }
 
 /**
@@ -95,14 +105,14 @@ export function saveBackup(rows) {
   return file;
 }
 
-/** 글 하나의 현재 robots 값을 그대로 읽는다. 모양 확인용이다. */
-export async function readRobots(postId) {
+/** 글 하나의 현재 깃발 값을 그대로 읽는다. 칸이 열렸는지 확인용이기도 하다. */
+export async function readFlag(postId) {
   const { data } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
   return {
     id: postId,
     title: data?.title?.raw || data?.title?.rendered || '',
-    robots: data?.meta?.[ROBOTS_KEY],
-    robots있음: Object.prototype.hasOwnProperty.call(data?.meta || {}, ROBOTS_KEY),
+    flag: data?.meta?.[FLAG_KEY],
+    칸열림: Object.prototype.hasOwnProperty.call(data?.meta || {}, FLAG_KEY),
   };
 }
 
@@ -117,23 +127,25 @@ async function main() {
 
   const base = wpConfig().base;
   console.log('\n────────────────────────────────────────────────────────');
-  console.log(`🗂  수명이 끝난 글을 색인에서 빼기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`);
+  console.log(`🗂  수명이 끝난 글을 구글 색인에서만 빼기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`);
+  console.log('   네이버·빙 등 다른 검색엔진에는 아무 말도 하지 않습니다');
   console.log(`   대상 사이트: ${new URL(base).host}  ← 여기 글만 손댑니다`);
   console.log('────────────────────────────────────────────────────────');
 
   // ① 모양 확인 — 플러그인이 칸을 열었는지, 값이 어떻게 생겼는지.
   if (확인할글) {
-    const r = await readRobots(Number(확인할글));
+    const r = await readFlag(Number(확인할글));
     console.log(`\n[${r.id}] ${r.title}`);
-    if (!r.robots있음) {
-      console.log('   ❌ robots 칸이 REST 에 안 보입니다.');
-      console.log('      워드프레스 플러그인 "맘운자로 SEO REST 열기"를 1.1.0 으로 올려주세요.');
+    if (!r.칸열림) {
+      console.log('   ❌ 구글 색인 제외 칸이 REST 에 안 보입니다.');
+      console.log('      워드프레스 플러그인 "맘운자로 SEO REST 열기"를 1.2.0 으로 올려주세요.');
       process.exitCode = 1;
       return;
     }
-    console.log(`   현재 값: ${JSON.stringify(r.robots)}`);
-    console.log(`   색인 제외 상태인가: ${noindex인가(r.robots) ? '예' : '아니오'}`);
-    console.log(`   이 글에 걸면 이렇게 됩니다: ${JSON.stringify(noindex더하기(r.robots))}`);
+    console.log(`   현재 값: ${JSON.stringify(r.flag)}`);
+    console.log(`   구글 색인에서 빠져 있나: ${구글제외인가(r.flag) ? '예' : '아니오'}`);
+    console.log('   걸면 이 글에만 <meta name="googlebot" content="noindex"> 가 나갑니다.');
+    console.log('   네이버를 비롯한 다른 검색엔진에게는 아무 말도 하지 않습니다.');
     return;
   }
 
@@ -160,17 +172,11 @@ async function main() {
     return;
   }
 
-  // ② 쓰기 전 안전 검사 — 모양을 못 봤으면 쓰지 않는다.
-  const 표본 = await readRobots(대상[0].id);
-  if (!표본.robots있음) {
-    console.log('\n❌ robots 칸이 REST 에 안 보입니다. 플러그인을 1.1.0 으로 올린 뒤 다시 돌려주세요.');
+  // ② 쓰기 전 안전 검사 — 칸이 열려 있지 않으면 쓰지 않는다.
+  const 표본 = await readFlag(대상[0].id);
+  if (!표본.칸열림) {
+    console.log('\n❌ 구글 색인 제외 칸이 REST 에 안 보입니다. 플러그인을 1.2.0 으로 올린 뒤 다시 돌려주세요.');
     console.log('   (확인: node src/wordpress/noindex.mjs --확인=' + 대상[0].id + ')');
-    process.exitCode = 1;
-    return;
-  }
-  if (표본.robots !== undefined && 표본.robots !== null && !Array.isArray(표본.robots)) {
-    console.log(`\n❌ robots 값이 배열이 아닙니다 (${typeof 표본.robots}). 모양을 모르는 채로 쓰지 않습니다.`);
-    console.log(`   받은 값: ${JSON.stringify(표본.robots)}`);
     process.exitCode = 1;
     return;
   }
@@ -187,11 +193,11 @@ async function main() {
         console.log(`   ⏭  ${p.id} 다른 사이트의 글이라 건너뜁니다 (${p.link || '주소 없음'})`);
         continue;
       }
-      const 현재 = await readRobots(p.id);
-      if (noindex인가(현재.robots)) { console.log(`   ⏭  ${p.id} 이미 제외돼 있습니다`); continue; }
+      const 현재 = await readFlag(p.id);
+      if (구글제외인가(현재.flag)) { console.log(`   ⏭  ${p.id} 이미 제외돼 있습니다`); continue; }
       await wpFetch(`/wp/v2/posts/${p.id}`, {
         method: 'POST',
-        body: { meta: { [ROBOTS_KEY]: noindex더하기(현재.robots) } },
+        body: { meta: { [FLAG_KEY]: 깃발세우기() } },
       });
       성공 += 1;
       console.log(`   ✅ ${p.id} ${p.title.slice(0, 40)}`);
@@ -200,7 +206,8 @@ async function main() {
       process.exitCode = 1;
     }
   }
-  console.log(`\n${성공}편을 색인에서 뺐습니다. 되돌리려면 Rank Math 에서 값을 지우면 됩니다.\n`);
+  console.log(`\n${성공}편을 **구글** 색인에서 뺐습니다. 네이버는 그대로입니다.`);
+  console.log('되돌리려면 워드프레스에서 그 글의 maumjaro_google_noindex 값을 지우면 됩니다.\n');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) await main();
