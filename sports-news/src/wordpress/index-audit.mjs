@@ -115,6 +115,35 @@ export function 비슷한글묶기(posts, 기준 = 0.35) {
   return 묶음.sort((a, b) => b.length - a.length);
 }
 
+// 글의 유형. 리포 실측(config/search-demand.md · config/revenue.md)이 어느
+// 유형이 돈이 되는지 이미 말해 주고 있는데, 그게 글 목록과 이어져 있지 않았다.
+//
+//   1위 유입: "대회명 + 상금" (어스몬다민컵우승상금 134클릭·CTR 18.7%)
+//   CTR 10~25%: "시설명 + 이용방법/예약/복장/가격/가는 길"
+//   운영자 확인: 광고 클릭이 나는 글은 남서울CC 파3 (시설 글)
+//
+// 반대로 "중계·시청방법·다시보기"는 대회가 끝나면 검색이 사라진다.
+// 유형별로 몇 편이고 얼마나 얇은지를 알면, 어디를 두껍게 할지 추측 없이 정한다.
+//
+// 두 글자 이상 낱말로만 가린다 — 한 글자 패턴은 쓰지 않는다(리포 지시서).
+const 유형규칙 = [
+  // '주차'는 앞에 숫자가 오면 주차장이 아니라 "3주차"(몇 번째 주)다.
+  // 실제로 "VNL 여자배구대표팀 3주차 경기 중계"가 시설 글로 잡혔다.
+  // 리포 지시서가 경고한 그 사고(한 글자·부분 일치가 엉뚱한 말을 먹는 것)와 같다.
+  ['시설', /이용료|예약|파크골프장|골프장|파3|가는 ?길|(?<!\d)주차장?(?!기)|요금표|이용 ?방법/],
+  ['상금', /상금|연봉|몸값|계약금|누적상금|배당/],
+  ['중계', /중계|시청|다시보기|생중계|하이라이트/],
+  ['일정', /일정|대진|출전|참가 ?선수|명단/],
+  ['결과', /우승|준우승|결승|승리|패배|순위|성적/],
+];
+
+/** 제목으로 글의 유형을 가린다. 먼저 걸리는 것이 이긴다 — 돈 되는 쪽이 앞이다. */
+export function 글유형(title) {
+  const t = String(title || '');
+  for (const [이름, 규칙] of 유형규칙) if (규칙.test(t)) return 이름;
+  return '기타';
+}
+
 /** 글 하나가 색인에서 밀릴 만한 이유를 모은다. 확실한 것만 적는다. */
 export function 색인위험(post, { 최소글자수 = 3000 } = {}) {
   const 이유 = [];
@@ -194,11 +223,38 @@ async function main() {
   const 빈키워드 = 글.filter((p) => !p.focusKeyword);
   console.log(`\n[③ 비어 있는 SEO 필드] 메타 설명 ${빈메타.length}편 · 대표 키워드 ${빈키워드.length}편`);
 
-  // ④ 분량 분포 — 전체 그림을 한 줄로.
+  // ④ 유형별 — 어디를 두껍게 할지 정하는 자리.
+  //    리포 실측이 "시설 > 상금" 순으로 돈이 된다고 말한다. 그 유형의 글이
+  //    얇으면 그게 제일 아까운 자리다.
+  const 유형별 = new Map();
+  for (const p of 글) {
+    const t = 글유형(p.title);
+    if (!유형별.has(t)) 유형별.set(t, []);
+    유형별.get(t).push(p);
+  }
+  console.log('\n[④ 유형별 — 리포 실측상 시설·상금이 돈이 된다]');
+  const 중앙 = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)] || 0;
+  for (const [이름, 목록] of [...유형별].sort((a, b) => b[1].length - a[1].length)) {
+    const 얇은것 = 목록.filter((p) => p.글자수 < 3000).length;
+    console.log(`   ${이름.padEnd(4)} ${String(목록.length).padStart(4)}편 · 중앙값 ${중앙(목록.map((p) => p.글자수)).toLocaleString().padStart(6)}자 · 3,000자 미만 ${얇은것}편`);
+  }
+
+  // 돈 되는 유형 중 얇은 글 — 보강 1순위다.
+  const 보강후보 = 글
+    .filter((p) => ['시설', '상금'].includes(글유형(p.title)) && p.글자수 < 3000)
+    .sort((a, b) => b.글자수 - a.글자수);
+  console.log(`\n[⑤ 보강 1순위 — 돈 되는 유형인데 얇은 글] ${보강후보.length}편`);
+  console.log('   (두꺼운 것부터 — 조금만 보태면 기준을 넘는 글이다)');
+  for (const p of 보강후보.slice(0, 25)) {
+    console.log(`   ${p.id}  ${p.date}  ${p.글자수.toLocaleString().padStart(6)}자  ${p.title}`);
+  }
+  if (보강후보.length > 25) console.log(`   … 그 밖에 ${보강후보.length - 25}편`);
+
+  // ⑥ 분량 분포 — 전체 그림을 한 줄로.
   const 정렬 = [...글].map((p) => p.글자수).sort((a, b) => a - b);
   const 중앙값 = 정렬[Math.floor(정렬.length / 2)] || 0;
   const 평균 = Math.round(정렬.reduce((s, n) => s + n, 0) / (정렬.length || 1));
-  console.log(`\n[④ 분량] 중앙값 ${중앙값.toLocaleString()}자 · 평균 ${평균.toLocaleString()}자 · 가장 짧은 글 ${(정렬[0] || 0).toLocaleString()}자`);
+  console.log(`\n[⑥ 분량] 중앙값 ${중앙값.toLocaleString()}자 · 평균 ${평균.toLocaleString()}자 · 가장 짧은 글 ${(정렬[0] || 0).toLocaleString()}자`);
 
   console.log('\n이 도구는 숫자만 셉니다. 무엇을 지우고 무엇을 살릴지는 사람이 정합니다.\n');
 }
