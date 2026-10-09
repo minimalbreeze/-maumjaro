@@ -29,6 +29,31 @@ export const CATEGORIES = [
  * 인터넷에 도는 미스터리 상당수는 출처를 따라가면 나오는 게 없다.
  * 그래서 등급을 네 단계로 분명히 나눈다.
  */
+/**
+ * 소재의 종류.
+ *
+ * EVENT  실제로 일어난 사건. 1차 기록으로 확인된다. 기본값이다.
+ * LEGEND 사건의 1차 기록은 없지만 **이야기가 퍼진 것 자체는 기록된** 소재.
+ *        도시전설, 인터넷 괴담, TV 재연물에서 시작된 이야기.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 LEGEND를 따로 뒀는가
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 처음엔 1차 기록이 없는 소재를 전부 막았다. 맞는 판단이었지만, 그 규칙이
+ * 멀쩡한 소재까지 같이 막았다 — "수백만 명이 믿은 이야기가 사실은 어디서
+ * 왔나"는 **진짜로 있었던 일**이고, 기록도 있다. 믿어진 것이 기록이다.
+ *
+ * 둘의 차이는 무엇을 검증하느냐다.
+ *   EVENT  → 사건이 일어났는가를 확인한다
+ *   LEGEND → 이야기가 어디서 나와 어떻게 퍼졌는가를 확인한다
+ *
+ * LEGEND에서 사건 서술은 전부 [UNKNOWN]/[THEORY]로 나간다. 사실처럼 쓰면
+ * 그게 바로 이 채널이 하지 않기로 한 일이다. 대본에 'ORIGIN'(이 이야기는
+ * 어디서 왔나) 섹션을 **필수**로 박아 그 선을 지킨다.
+ */
+export const KIND = { EVENT: 'EVENT', LEGEND: 'LEGEND' };
+
 export const FACT_STATUS = {
   /** 1차 기록(신문·판결문·공문서·학술자료)으로 확인됨 */
   CONFIRMED: 'CONFIRMED',
@@ -154,13 +179,24 @@ export function evaluateGate(item) {
 
   // 1) 다루면 안 되는 것 — 되돌릴 수 없는 피해가 생기는 쪽
   const blocking = [];
-  if (flags.includes('FABRICATED')) blocking.push(RISK_FLAGS.FABRICATED);
+  // FABRICATED(지어낸 이야기)는 EVENT에서만 막는다. LEGEND는 지어낸
+  // 이야기를 추적하는 게 목적이므로 막으면 소재 자체가 성립하지 않는다.
+  if (flags.includes('FABRICATED') && item?.kind !== KIND.LEGEND) {
+    blocking.push(RISK_FLAGS.FABRICATED);
+  }
   if (flags.includes('DEFAMATION')) blocking.push(RISK_FLAGS.DEFAMATION);
   if (flags.includes('LIVING_PERSON_CLAIM')) blocking.push(RISK_FLAGS.LIVING_PERSON_CLAIM);
   if (flags.includes('CRIMINAL_GLORIFICATION')) blocking.push(RISK_FLAGS.CRIMINAL_GLORIFICATION);
 
+  const isLegend = item?.kind === KIND.LEGEND;
+
   // 1차 기록이 전혀 없는 이야기는 이 채널의 소재가 아니다.
-  if (item?.fact_status === FACT_STATUS.UNVERIFIED) {
+  //
+  // LEGEND는 예외다. 사건에 1차 기록이 없는 게 그 소재의 전제이기 때문이다.
+  // 대신 **이야기의 출처와 확산**에 기록이 있어야 하고, 그건 아래 출처 수
+  // 검사가 본다. 'FABRICATED'(지어낸 이야기)도 같은 이유로 막지 않는다 —
+  // 지어낸 이야기라는 게 바로 그 편의 내용이다.
+  if (!isLegend && item?.fact_status === FACT_STATUS.UNVERIFIED) {
     blocking.push('1차 기록으로 확인되지 않는 이야기');
   }
 
@@ -181,6 +217,11 @@ export function evaluateGate(item) {
   }
   if (item?.fact_status === FACT_STATUS.DISPUTED) {
     reasons.push('신뢰할 수 있는 출처끼리 서로 반박합니다 — 양쪽을 다 보여줄지 판단해 주세요');
+  }
+  // LEGEND는 자동으로 통과시키지 않는다. 지어낸 이야기를 다루는 편이므로
+  // 대본이 그것을 사실처럼 쓰지 않았는지 사람이 한 번은 읽어야 한다.
+  if (isLegend) {
+    reasons.push('전설·괴담 추적 편입니다 — 대본이 이야기를 사실처럼 쓰지 않았는지 읽어봐 주세요');
   }
   const risk = Number(item?.risk_score);
   if (Number.isFinite(risk) && risk >= 50) {
@@ -229,6 +270,7 @@ export function makeItem(raw, { dateFound } = {}) {
     source_name: sources[0]?.name || String(raw?.source_name || ''),
     source_count: sources.length || Number(raw?.source_count) || 0,
 
+    kind: KIND[raw?.kind] || KIND.EVENT,
     fact_status: FACT_STATUS[raw?.fact_status] || FACT_STATUS.UNVERIFIED,
     fact_notes: String(raw?.fact_notes || '').trim(),
 

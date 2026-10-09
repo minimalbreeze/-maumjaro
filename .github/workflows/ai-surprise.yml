@@ -30,6 +30,11 @@ on:
         description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
         required: false
         default: ''
+      legend:
+        description: '전설·괴담 추적 편 (사건 기록이 없는 이야기. 출처를 쫓습니다). 소재 지정 필요'
+        required: false
+        default: false
+        type: boolean
       video_ratio:
         description: 'AI 영상 비중 (0.15 = 샷의 15%만 영상. 올리면 비싸집니다)'
         required: false
@@ -45,7 +50,7 @@ on:
       minutes:
         description: '영상 길이 (분)'
         required: false
-        default: '4'
+        default: '8'
       image_model:
         description: '이미지 모델 (schnell = 싸고 빠름 / dev = 비싸고 정확함)'
         required: false
@@ -148,6 +153,7 @@ jobs:
           IN_MINUTES: ${{ inputs.minutes }}
           IN_CATEGORY: ${{ inputs.category }}
           IN_TOPIC: ${{ inputs.topic }}
+          IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
           IN_MAX_USD: ${{ inputs.max_usd }}
@@ -168,8 +174,19 @@ jobs:
 
           args=("--count=$IN_COUNT")
           [ -n "$IN_CATEGORY" ] && args+=("--category=$IN_CATEGORY")
+          if [ "$IN_LEGEND" = "true" ] && [ -z "$IN_TOPIC" ]; then
+            echo "::error::전설 추적 편은 소재를 지정해야 합니다. '소재를 직접 지정' 칸을 채워 주세요."
+            exit 1
+          fi
+
           if [ -n "$IN_TOPIC" ]; then
             args+=("--topic=$IN_TOPIC")
+            if [ "$IN_LEGEND" = "true" ]; then
+              args+=("--legend")
+              echo "전설·괴담 추적 편입니다: $IN_TOPIC"
+              echo "사건이 일어났는지가 아니라, 이 이야기가 어디서 나와 어떻게 퍼졌는지를 조사합니다."
+              echo "대본에 '이 이야기는 어디서 왔나' 섹션이 필수로 들어갑니다."
+            fi
             echo "소재를 직접 지정했습니다: $IN_TOPIC"
             echo "AI가 후보를 고르지 않고 이것만 조사합니다. 검증은 그대로 걸립니다 —"
             echo "1차 기록이 없거나 출처가 하나뿐이면 대본을 쓰지 않고 멈춥니다."
