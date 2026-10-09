@@ -179,16 +179,36 @@ export function evaluateGate(item) {
 
   // 1) 다루면 안 되는 것 — 되돌릴 수 없는 피해가 생기는 쪽
   const blocking = [];
+  const isLegendKind = item?.kind === KIND.LEGEND;
   // FABRICATED(지어낸 이야기)는 EVENT에서만 막는다. LEGEND는 지어낸
   // 이야기를 추적하는 게 목적이므로 막으면 소재 자체가 성립하지 않는다.
   if (flags.includes('FABRICATED') && item?.kind !== KIND.LEGEND) {
     blocking.push(RISK_FLAGS.FABRICATED);
   }
   if (flags.includes('DEFAMATION')) blocking.push(RISK_FLAGS.DEFAMATION);
-  if (flags.includes('LIVING_PERSON_CLAIM')) blocking.push(RISK_FLAGS.LIVING_PERSON_CLAIM);
+  // 생존 인물 문제는 EVENT에서는 차단, LEGEND(썰)에서는 대본 제약으로 넘긴다.
+  //
+  // ─────────────────────────────────────────────────────────────
+  // 왜 LEGEND에서는 차단하지 않는가
+  // ─────────────────────────────────────────────────────────────
+  //
+  // 세르게이 포노마렌코 편이 이 플래그로 막혔다. 그런데 막힌 진짜 이유를
+  // 뜯어보면 "이야기에 살아 있는 사람 이름이 나온다"였지, "우리가 그 사람을
+  // 범인으로 지목한다"가 아니었다.
+  //
+  // 전해지는 이야기에 사람 이름이 나오는 건 당연하다. 그걸로 주제를 막으면
+  // 도시전설을 아예 다룰 수 없다. 위험한 건 이름이 나오는 것이 아니라
+  // **우리가 특정인을 지목하는 것**이고, 그건 소재가 아니라 **대본이 정한다.**
+  //
+  // 그래서 가드를 옮겼다 — 주제를 막는 대신 (1) 사람이 반드시 읽게 하고
+  // (2) 대본 지시에 "살아 있는 특정인을 지목하지 않는다"를 박았다.
+  // DEFAMATION은 그대로 차단한다. 그 플래그는 "이름이 나온다"가 아니라
+  // "실제로 명예를 훼손한다"는 판정이기 때문이다.
+  if (flags.includes('LIVING_PERSON_CLAIM') && !isLegendKind) {
+    blocking.push(RISK_FLAGS.LIVING_PERSON_CLAIM);
+  }
   if (flags.includes('CRIMINAL_GLORIFICATION')) blocking.push(RISK_FLAGS.CRIMINAL_GLORIFICATION);
 
-  const isLegend = item?.kind === KIND.LEGEND;
 
   // 1차 기록이 전혀 없는 이야기는 이 채널의 소재가 아니다.
   //
@@ -196,7 +216,7 @@ export function evaluateGate(item) {
   // 대신 **이야기의 출처와 확산**에 기록이 있어야 하고, 그건 아래 출처 수
   // 검사가 본다. 'FABRICATED'(지어낸 이야기)도 같은 이유로 막지 않는다 —
   // 지어낸 이야기라는 게 바로 그 편의 내용이다.
-  if (!isLegend && item?.fact_status === FACT_STATUS.UNVERIFIED) {
+  if (!isLegendKind && item?.fact_status === FACT_STATUS.UNVERIFIED) {
     blocking.push('1차 기록으로 확인되지 않는 이야기');
   }
 
@@ -220,8 +240,14 @@ export function evaluateGate(item) {
   }
   // LEGEND는 자동으로 통과시키지 않는다. 지어낸 이야기를 다루는 편이므로
   // 대본이 그것을 사실처럼 쓰지 않았는지 사람이 한 번은 읽어야 한다.
-  if (isLegend) {
+  if (isLegendKind) {
     reasons.push('전설·괴담 추적 편입니다 — 대본이 이야기를 사실처럼 쓰지 않았는지 읽어봐 주세요');
+    if (flags.includes('LIVING_PERSON_CLAIM')) {
+      reasons.push(
+        '이 이야기에 생존 인물이 나옵니다 — 대본이 특정인을 지목하지 않는지 꼭 확인해 주세요. ' +
+          '"누가 만들었다"가 아니라 "어디서 나왔다"로 쓰여야 합니다'
+      );
+    }
   }
   const risk = Number(item?.risk_score);
   if (Number.isFinite(risk) && risk >= 50) {

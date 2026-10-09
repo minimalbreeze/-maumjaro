@@ -642,11 +642,46 @@ test('전설 편이어도 출처가 하나뿐이면 사람이 봐야 한다', ()
   assert.ok(g.reasons.some((r) => r.includes('출처가 1개')));
 });
 
-test('전설 편이어도 생존 인물에게 해가 되면 막는다', () => {
-  for (const flag of ['DEFAMATION', 'LIVING_PERSON_CLAIM', 'CRIMINAL_GLORIFICATION']) {
+test('전설 편이어도 명예훼손·범죄 미화는 막는다', () => {
+  for (const flag of ['DEFAMATION', 'CRIMINAL_GLORIFICATION']) {
     const g = evaluateGate(legendItem({ risk_flags: [flag] }));
     assert.equal(g.gate, GATE.BLOCKED, `${flag} 이 막히지 않았다`);
   }
+});
+
+test('전설 편에 사람 이름이 나오는 것만으로는 막지 않는다', () => {
+  // 세르게이 포노마렌코 편이 이걸로 막혔다. 막힌 이유를 뜯어보니
+  // "우리가 누군가를 지목한다"가 아니라 "이야기에 이름이 나온다"였다.
+  // 전해지는 이야기에 사람 이름이 나오는 건 당연하고, 그걸로 주제를 막으면
+  // 도시전설을 아예 다룰 수 없다.
+  const g = evaluateGate(legendItem({ risk_flags: ['LIVING_PERSON_CLAIM'] }));
+  assert.equal(g.gate, GATE.REVIEW_NEEDED);
+  // 막지 않는 대신, 무엇을 봐야 하는지 분명히 알려줘야 한다.
+  assert.ok(g.reasons.some((r) => r.includes('특정인을 지목')), g.reasons.join(' | '));
+
+  // 같은 소재를 EVENT로 주면 여전히 막힌다 — 실화 편은 기준이 다르다.
+  const asEvent = makeItem({ ...legendItem({ risk_flags: ['LIVING_PERSON_CLAIM'] }), kind: 'EVENT' });
+  assert.equal(evaluateGate(asEvent).gate, GATE.BLOCKED);
+});
+
+test('가드가 사라진 게 아니라 대본 지시로 옮겨갔다', () => {
+  // 관문에서 뺐으면 대본에서 막아야 한다. 둘 다 없으면 그냥 구멍이다.
+  const p = buildScriptPrompt(legendItem());
+  assert.ok(p.includes('살아 있는 특정 인물을 지목하지 않습니다'), '지목 금지 지시가 없다');
+  assert.ok(p.includes('"어디서 나왔다"로 씁니다'), '대안 표현 지시가 없다');
+  assert.ok(p.includes('명예훼손'), '왜 안 되는지 설명이 없다');
+});
+
+test('출처를 못 찾아도 빈손으로 오지 말라고 한다', () => {
+  // 예전에는 "출처 2개 확인 안 되면 빈 목록"이었다. 그러면 도시전설은
+  // 거의 전부 빈손으로 돌아온다 — 원전이 없는 게 그 장르의 속성이니까.
+  const p = buildCollectPrompt({ topic: '어떤 괴담', legend: true });
+  assert.ok(p.includes('출처를 못 찾아도 제출'), p.slice(-700));
+  assert.ok(p.includes('어디까지'), '무엇을 대신 적으라는 지시가 없다');
+  // 지어내는 건 여전히 금지
+  assert.ok(p.includes('지어내거나'));
+  // 지목해야만 성립하는 이야기는 여전히 거른다
+  assert.ok(p.includes('지목해야만 성립'));
 });
 
 test('전설 편 대본에는 출처 섹션이 들어간다', () => {
