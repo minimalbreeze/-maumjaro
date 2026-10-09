@@ -2553,6 +2553,58 @@ test('워크플로 실행 단계가 코드가 읽는 비밀값을 모두 넘긴�
   }
 });
 
+// 실행 #11 이 여기서 죽었다.
+//
+// 음성을 만들고 나면 샷 길이는 **실제 음성**에 맞춰진다. 그런데 검사는
+// totalSeconds() — 글자 수로 계산하는 추정치 — 와 비교하고 있었다. 맞춘
+// 것을 틀렸다고 판정하고 멈춘 것이다. 그림 66장과 음성을 다 만든 뒤였다.
+await asyncTest('음성을 만든 뒤에는 추정치가 아니라 실제 길이와 비교한다', async () => {
+  const { applyTimings, PAUSE_SECONDS } = await import('../src/audio/narrate.mjs');
+
+  // 글자 수 추정치와 실제 음성 길이가 다른 상황을 만든다. 한국어는 글자마다
+  // 읽는 속도가 달라서 실제로 늘 다르다.
+  const scenes = [];
+  const timings = [];
+  let spoken = 0;
+  let units = 0;
+  for (let n = 1; n <= 6; n++) {
+    const paragraphs = [];
+    for (let i = 1; i <= 3; i++) {
+      const seconds = 11 + ((n + i) % 5); // 추정치와 겹치지 않는 값
+      const id = `S0${n}-P${i}`;
+      paragraphs.push({ text: '가'.repeat(60), seconds: 10 });
+      timings.push({ id, scene_number: n, section: 'BODY', seconds });
+      spoken += seconds;
+      units++;
+    }
+    scenes.push({
+      scene_number: n,
+      section: 'BODY',
+      duration: 30,
+      paragraphs,
+      shots: [
+        { shot_id: `S0${n}-01`, asset_type: 'IMAGE', duration: 15, camera: 'zoom in' },
+        { shot_id: `S0${n}-02`, asset_type: 'IMAGE', duration: 15, camera: 'pan right' },
+      ],
+    });
+  }
+
+  // 실제 voice.mp3 길이 = 말한 시간 + 문단 사이 쉼 (마지막 뒤에는 없다)
+  const realSeconds = spoken + (units - 1) * PAUSE_SECONDS;
+  const fitted = applyTimings(scenes, timings);
+
+  const withReal = buildTimeline(fitted, { format: FORMATS.wide, narrationSeconds: realSeconds });
+  assert.deepEqual(withReal.problems, [], `실제 길이와는 맞아야 합니다: ${withReal.problems.join(' / ')}`);
+  assert.equal(withReal.narration_seconds, Math.round(realSeconds * 100) / 100);
+
+  // 같은 장면을 추정치와 비교하면 어긋난다 — 고치기 전의 동작이다.
+  const withEstimate = buildTimeline(fitted, { format: FORMATS.wide });
+  assert.ok(
+    withEstimate.narration_seconds !== withReal.narration_seconds,
+    '이 테스트는 추정치와 실제가 다른 상황을 가정합니다'
+  );
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

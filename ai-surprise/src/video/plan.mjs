@@ -22,7 +22,10 @@ export const TRANSITION_SECONDS = 0.4;
  * @param format   FORMATS.wide 또는 FORMATS.shorts
  * @param assetDir 에셋이 들어 있는 폴더 이름 (타임라인에는 상대 경로만 적는다)
  */
-export function buildTimeline(scenes, { format = FORMATS.wide, fps = DEFAULT_FPS, assetDir = 'assets' } = {}) {
+export function buildTimeline(
+  scenes,
+  { format = FORMATS.wide, fps = DEFAULT_FPS, assetDir = 'assets', narrationSeconds = null } = {}
+) {
   const clips = [];
   const problems = [];
   let cursor = 0;
@@ -65,7 +68,13 @@ export function buildTimeline(scenes, { format = FORMATS.wide, fps = DEFAULT_FPS
 
   // 샷 길이 합계와 나레이션 길이가 맞는지 본다. 어긋나면 Phase 5에서
   // 영상과 음성이 안 맞는데 원인을 찾기 어려워진다.
-  const narration = round2(totalSeconds(scenes));
+  //
+  // **실제 음성 파일이 있으면 그 길이로 본다.** totalSeconds() 는 글자 수로
+  // 계산하는 추정치(330자/분)다. 음성을 만든 뒤에는 샷 길이가 실제 음성에
+  // 맞춰져 있으므로, 추정치와 비교하면 **맞춘 것을 틀렸다고 판정한다.**
+  // 실제로 그렇게 걸려서 완성본 한 번을 날렸다.
+  const narration =
+    Number(narrationSeconds) > 0 ? round2(Number(narrationSeconds)) : round2(totalSeconds(scenes));
   if (Math.abs(duration - narration) > 1) {
     problems.push(
       `샷 길이 합계(${duration}초)와 나레이션 길이(${narration}초)가 ${Math.abs(duration - narration).toFixed(1)}초 어긋납니다.`
