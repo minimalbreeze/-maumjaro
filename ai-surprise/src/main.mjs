@@ -775,13 +775,45 @@ async function cmdAuto(flags) {
   kept.sort((a, b) => b.final_score - a.final_score).forEach((item, i) => printCard(item, i + 1));
 
   // 관문을 통과한 소재만 대본을 쓴다.
-  const ready = kept.filter((i) => i.gate === GATE.AUTO_OK);
-  const held = kept.filter((i) => i.gate === GATE.REVIEW_NEEDED);
+  // 검토 필요(REVIEW_NEEDED) 소재로 대본을 쓸 것인가.
+  //
+  // ─────────────────────────────────────────────────────────────
+  // 소재를 사람이 지정했으면 쓴다
+  // ─────────────────────────────────────────────────────────────
+  //
+  // 원래는 AUTO_OK만 대본을 썼다. AI가 소재를 고르던 시절엔 그게 맞았다 —
+  // 아무도 안 본 소재로 돈을 쓰면 안 되니까.
+  //
+  // 그런데 전설 추적 편(LEGEND)을 만들면서 설계가 자기모순이 됐다.
+  // LEGEND는 **항상** REVIEW_NEEDED로 나오게 해뒀는데(지어낸 이야기를
+  // 사실처럼 쓰지 않았는지 사람이 읽어야 하므로), REVIEW_NEEDED는 대본을
+  // 안 쓴다. **읽을 대본을 안 만들어 놓고 읽으라고 하는 꼴**이었다.
+  //
+  // 검토해야 할 대상이 소재가 아니라 **대본**이기 때문에 생긴 문제다.
+  // 그리고 --topic 으로 소재를 지정했다는 건 고르는 판단을 사람이 이미
+  // 했다는 뜻이다. 남은 검토는 결과물에 대한 것이다.
+  //
+  // 그래서: 소재를 지정했으면 REVIEW_NEEDED도 대본을 쓴다. 대신 **올리기
+  // 전에 읽어야 한다는 것을 분명히 말한다.** BLOCKED는 그대로 막는다.
+  const autoOk = kept.filter((i) => i.gate === GATE.AUTO_OK);
+  const needsReview = kept.filter((i) => i.gate === GATE.REVIEW_NEEDED);
+  const writeHeld = Boolean(topic);
+
+  const ready = writeHeld ? [...autoOk, ...needsReview] : autoOk;
+  const held = writeHeld ? [] : needsReview;
 
   log.raw('');
   if (held.length) {
     log.warn(`${held.length}건은 검토가 필요해 대본을 쓰지 않습니다:`);
     for (const h of held) log.info(`· ${h.title} — ${(h.gate_reasons || []).join(', ')}`);
+    log.info('소재를 직접 지정(--topic)하면 검토 필요 소재로도 대본을 씁니다.');
+  }
+  if (writeHeld && needsReview.length) {
+    log.warn(`소재를 지정하셨으므로 검토 필요 소재로도 대본을 씁니다 (${needsReview.length}건).`);
+    for (const h of needsReview) {
+      for (const reason of h.gate_reasons || []) log.info(`· ${reason}`);
+    }
+    log.error('만들어진 대본은 올리기 전에 반드시 읽어 주세요.');
   }
 
   if (!ready.length) {
