@@ -767,7 +767,7 @@ async function cmdVideo(flags) {
     log.warn('나레이션이 없어 추정치(330자/분)로 길이를 잡습니다. 무음 영상이 나옵니다.');
     log.info(`  목소리를 먼저 만들면 자막·장면 전환이 실제 음성에 맞습니다: node src/main.mjs voice --id=${id}`);
   }
-  const timeline = buildTimeline(scenes, { format: FORMATS.wide });
+  const timeline = buildTimeline(scenes, { format: FORMATS.wide, narrationSeconds: narration?.total_seconds });
   log.ok(`클립 ${timeline.clips.length}개, ${timeline.duration}초 (약 ${(timeline.duration / 60).toFixed(1)}분)`);
   log.info(`나레이션 길이 ${timeline.narration_seconds}초 — 샷 길이 합계와 ${Math.abs(timeline.duration - timeline.narration_seconds).toFixed(2)}초 차이`);
   if (timeline.problems.length) {
