@@ -15,7 +15,7 @@ import process from 'node:process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { log } from './utils/logger.mjs';
-import { missingKeys, env } from './utils/env.mjs';
+import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
@@ -25,7 +25,20 @@ import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
+import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
+import {
+  narrate,
+  narrationUnits,
+  applyTimings,
+  DEFAULT_MAX_USD as DEFAULT_TTS_MAX_USD,
+} from './audio/narrate.mjs';
+import {
+  createClient as createTtsClient,
+  estimateUsd as estimateTtsUsd,
+  DEFAULT_VOICE,
+} from './audio/tts.mjs';
+import { loadTracks, pickTrack, mixArgs, attributionText } from './audio/bgm.mjs';
 import { modelFor, DEFAULT_IMAGE_MODEL } from './assets/replicate.mjs';
 import { FORMATS, buildAss, buildCues, renderSrt } from './video/subtitle.mjs';
 import { buildTimeline } from './video/plan.mjs';
@@ -40,6 +53,8 @@ import {
   saveScript,
   saveScenes,
   saveVideoPlan,
+  saveNarration,
+  loadNarration,
   loadContent,
   INBOX_DIR,
   contentPath,
@@ -535,6 +550,156 @@ async function cmdImages(flags) {
 }
 
 /**
+ * 대본 → 나레이션 음성 + 배경음악 (Phase 4).
+ *
+ * 문단마다 따로 만들어 이어 붙인다. 그래야 **문단별 실제 길이**를 재서
+ * 자막과 장면 전환을 추정치가 아닌 진짜 타이밍에 맞출 수 있다.
+ */
+async function cmdVoice(flags) {
+  const id = String(flags.id || '').padStart(3, '0');
+  if (!flags.id) {
+    log.error('어떤 편의 목소리를 만들지 알려주세요.');
+    log.info('  node src/main.mjs list             제작 중인 편 보기');
+    log.info('  node src/main.mjs voice --id=001   그 편의 목소리 만들기');
+    process.exit(1);
+  }
+
+  const scenesPath = contentPath(id, 'scenes.json');
+  if (!fs.existsSync(scenesPath)) {
+    log.error(`${scenesPath} 이 없습니다. 먼저 장면을 만들어야 합니다:`);
+    log.info(`  node src/main.mjs scenes --id=${id}`);
+    process.exit(1);
+  }
+
+  const scenes = JSON.parse(fs.readFileSync(scenesPath, 'utf8')).scenes || [];
+  const units = narrationUnits(scenes);
+  if (!units.length) {
+    log.error('읽을 문단이 없습니다.');
+    process.exit(2);
+  }
+
+  const chars = units.reduce((s, u) => s + u.chars, 0);
+  const voice = typeof flags.voice === 'string' ? flags.voice : env('TTS_VOICE', DEFAULT_VOICE);
+  const maxUsd = flags['max-usd'] !== undefined ? Number(flags['max-usd']) : DEFAULT_TTS_MAX_USD;
+
+  log.section(`🎙  나레이션  |  content/${id}  |  ${voice}`);
+  log.info(`문단 ${units.length}개, ${chars.toLocaleString()}자`);
+  log.info(`예상 비용 약 $${estimateTtsUsd(chars)} (추정치), 상한 $${maxUsd}`);
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    for (const u of units.slice(0, 3)) log.raw(`  ${u.id}  ${u.text.slice(0, 50)}…`);
+    if (units.length > 3) log.raw(`  … 그리고 ${units.length - 3}개 더`);
+    return;
+  }
+
+  const apiKey = env('GOOGLE_TTS_API_KEY');
+  if (!apiKey) {
+    log.error('GOOGLE_TTS_API_KEY 가 없습니다.');
+    log.info('  1) https://console.cloud.google.com 에서 프로젝트를 만들고');
+    log.info('  2) "Cloud Text-to-Speech API" 를 사용 설정한 뒤');
+    log.info('  3) API 및 서비스 → 사용자 인증 정보 → API 키 만들기');
+    log.info('  4) GitHub 리포 Settings → Secrets → GOOGLE_TTS_API_KEY');
+    process.exit(1);
+  }
+
+  // 목소리 목록만 보고 끝내기. 이름이 자주 바뀌므로 코드에 박지 않았다.
+  if (flags.voices) {
+    const list = await createTtsClient({ apiKey }).listVoices();
+    log.section(`🗣  쓸 수 있는 한국어 목소리 ${list.length}개`);
+    for (const v of list) log.raw(`  ${v.name.padEnd(28)} ${v.gender}`);
+    log.info('마음에 드는 것을 --voice=이름 또는 TTS_VOICE 환경변수로 쓰세요.');
+    return;
+  }
+
+  const workDir = contentPath(id, 'audio');
+  const started = Date.now();
+  const result = await narrate(scenes, {
+    workDir,
+    apiKey,
+    voice,
+    maxUsd,
+    force: Boolean(flags.force),
+    onProgress: (m) => log.step(m),
+  });
+
+  if (!result.voicePath) {
+    log.error('음성을 하나도 만들지 못했습니다.');
+    for (const f of result.failed.slice(0, 5)) log.info(`· ${f.id}: ${f.reason}`);
+    process.exit(2);
+  }
+
+  log.raw('');
+  log.ok(`나레이션 완성: ${result.voicePath}`);
+  log.info(`${result.totalSeconds}초 (약 ${(result.totalSeconds / 60).toFixed(1)}분), ${((Date.now() - started) / 1000).toFixed(0)}초 걸림`);
+  log.info(`쓴 돈 약 $${result.spentUsd} (추정치). 실제 금액은 Google Cloud 콘솔에서 확인하세요.`);
+
+  if (result.stoppedBy === 'budget') {
+    log.warn(`비용 상한 $${maxUsd}에 걸려 멈췄습니다. 다시 돌리면 이어서 만듭니다.`);
+  }
+  if (result.failed.length) {
+    log.error(`만들지 못한 문단 ${result.failed.length}개:`);
+    for (const f of result.failed.slice(0, 5)) log.info(`· ${f.id}: ${f.reason}`);
+    log.info('같은 명령을 다시 돌리면 실패한 것만 다시 만듭니다.');
+  }
+
+  // ── 배경음악
+  const bgmDir = path.join(ROOT, 'bgm');
+  const tracks = loadTracks(bgmDir);
+  let track = null;
+
+  if (!tracks.length) {
+    log.warn('배경음악이 없습니다. 나레이션만 들어갑니다.');
+    log.info(`유튜브 오디오 보관함에서 받아 ${bgmDir} 에 넣어주세요. 방법은 bgm/README.md 에 있습니다.`);
+  } else {
+    track = pickTrack(scenes, tracks, { seed: Number(id) });
+    log.section('🎵 배경음악');
+    log.ok(`${track.title || track.file} (${track.mood})`);
+    const mixed = path.join(workDir, 'voice-with-bgm.mp3');
+    await runFfmpegArgs(
+      mixArgs({
+        voicePath: result.voicePath,
+        bgmPath: path.join(bgmDir, track.file),
+        outputPath: mixed,
+        seconds: result.totalSeconds,
+      })
+    );
+    // 섞은 것을 voice.mp3 자리에 놓는다. 영상 쪽은 바뀔 게 없다.
+    fs.renameSync(mixed, result.voicePath);
+    log.ok('나레이션 아래로 깔았습니다.');
+
+    const credit = attributionText(track);
+    if (credit) {
+      log.warn('이 곡은 설명란에 출처를 적어야 합니다:');
+      for (const line of credit.split('\n').filter(Boolean)) log.info(`  ${line}`);
+    }
+  }
+
+  saveNarration(id, { timings: result.timings, totalSeconds: result.totalSeconds, voice, track });
+
+  log.raw('');
+  log.info(`다음: node src/main.mjs video --id=${id}`);
+  log.info('자막과 장면 전환이 이제 추정치가 아니라 실제 음성 길이에 맞춰집니다.');
+}
+
+/** ffmpeg 한 번. render.mjs의 것과 같은 일이지만 여기선 소리만 다룬다. */
+function runFfmpegArgs(args) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    let err = '';
+    proc.stderr.on('data', (d) => {
+      err += d.toString();
+      if (err.length > 4000) err = err.slice(-4000);
+    });
+    proc.on('error', (e) => reject(new Error(`ffmpeg를 실행할 수 없습니다: ${e.message}`)));
+    proc.on('close', (code) =>
+      code === 0 ? resolve() : reject(new Error(`ffmpeg 실패 (${code})\n${err.trim().split('\n').slice(-8).join('\n')}`))
+    );
+  });
+}
+
+/**
  * 장면 → 실제 영상 파일 (Phase 5).
  *
  * AI를 한 번도 부르지 않는다. 전부 계산과 ffmpeg다. 그래서 공짜다 —
@@ -561,7 +726,12 @@ async function cmdVideo(flags) {
   }
 
   const saved = JSON.parse(fs.readFileSync(scenesPath, 'utf8'));
-  const scenes = saved.scenes || [];
+  // 나레이션을 이미 만들었으면 **장면 데이터 자체**를 실제 음성 길이로
+  // 고쳐서 쓴다. 자막에만 넘기면 그림은 여전히 추정치로 잘려 서로 어긋난다.
+  const narration = loadNarration(id);
+  const scenes = narration
+    ? applyTimings(saved.scenes || [], narration.timings)
+    : saved.scenes || [];
   // 제목과 소재 종류는 research.json 에 있다. 없어도 영상은 만든다 —
   // 체크리스트의 제목 검사만 건너뛴다.
   const research = loadContent(id)?.research || {};
@@ -580,6 +750,12 @@ async function cmdVideo(flags) {
 
   // ── 1단계: 편집 계획 (비용 0원)
   log.section(`🎬 편집 계획  |  content/${id}  |  코드가 처리 (비용 0원)`);
+  if (narration) {
+    log.ok(`실제 음성 길이에 맞춥니다 (문단 ${narration.timings.length}개, ${narration.total_seconds}초).`);
+  } else {
+    log.warn('나레이션이 없어 추정치(330자/분)로 길이를 잡습니다. 무음 영상이 나옵니다.');
+    log.info(`  목소리를 먼저 만들면 자막·장면 전환이 실제 음성에 맞습니다: node src/main.mjs voice --id=${id}`);
+  }
   const timeline = buildTimeline(scenes, { format: FORMATS.wide });
   log.ok(`클립 ${timeline.clips.length}개, ${timeline.duration}초 (약 ${(timeline.duration / 60).toFixed(1)}분)`);
   log.info(`나레이션 길이 ${timeline.narration_seconds}초 — 샷 길이 합계와 ${Math.abs(timeline.duration - timeline.narration_seconds).toFixed(2)}초 차이`);
@@ -593,6 +769,10 @@ async function cmdVideo(flags) {
   }
 
   // ── 2단계: 자막
+  //
+  // 나레이션을 이미 만들었으면 **실제로 잰 문단 길이**를 쓴다. 없으면
+  // "330자에 1분" 추정치로 간다. 추정은 문장마다 조금씩 틀리고 그 오차가
+  // 쌓여서 8분 영상이면 뒤로 갈수록 자막이 눈에 띄게 밀린다.
   log.section('💬 자막');
   const ass = buildAss(scenes, { format: FORMATS.wide });
   const cues = buildCues(scenes, { format: FORMATS.wide });
@@ -642,7 +822,8 @@ async function cmdVideo(flags) {
   // ── 4단계: 실제 렌더링
   const assetDir = flags.assets ? path.resolve(String(flags.assets)) : contentPath(id, 'assets');
   const hasAssets = fs.existsSync(assetDir);
-  const audioPath = flags.audio ? path.resolve(String(flags.audio)) : contentPath(id, 'voice.mp3');
+  // 나레이션은 audio/voice.mp3 에 있다 (배경음악까지 섞인 파일).
+  const audioPath = flags.audio ? path.resolve(String(flags.audio)) : contentPath(id, 'audio', 'voice.mp3');
   const hasAudio = fs.existsSync(audioPath);
 
   log.section(`🖥  렌더링  |  ${timeline.width}x${timeline.height} @ ${timeline.fps}fps`);
@@ -917,6 +1098,21 @@ async function cmdAuto(flags) {
     log.warn('장면이 없어 이미지를 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
   }
 
+  // 목소리와 배경음악 (Phase 4).
+  // 영상보다 **먼저** 만들어야 한다 — 영상이 음성 길이에 맞춰 잘리기 때문이다.
+  if (flags.narrate && flags.scenes && scripted.length) {
+    for (const id of scripted) {
+      try {
+        await cmdVoice({ id, voice: flags['tts-voice'], 'max-usd': flags['tts-max-usd'] });
+      } catch (err) {
+        // 목소리를 못 만들어도 영상은 만든다 — 무음으로 나온다.
+        log.fail(`content/${id} 목소리 만들기 실패`, err);
+      }
+    }
+  } else if (flags.narrate) {
+    log.warn('장면이 없어 목소리를 만들지 않았습니다. --scenes 와 함께 써야 합니다.');
+  }
+
   // 영상까지 이어서 만든다 (Phase 5).
   // AI를 안 쓰므로 여기서 추가로 드는 돈은 없다. 시간만 든다.
   // 장면 단계에서 문제가 남은 편은 cmdVideo가 스스로 거른다.
@@ -974,6 +1170,8 @@ async function main() {
       return cmdScenes(flags);
     case 'images':
       return cmdImages(flags);
+    case 'voice':
+      return cmdVoice(flags);
     case 'video':
       return cmdVideo(flags);
     default:
@@ -988,6 +1186,7 @@ async function main() {
       log.raw('      --scenes 를 붙이면 장면·프롬프트까지 이어서 만듭니다.');
       log.raw('      --scenes --video 를 붙이면 영상 파일과 쇼츠까지 만듭니다.');
       log.raw('      --scenes --images --video 를 붙이면 진짜 그림까지 만듭니다 (장당 돈이 나갑니다).');
+      log.raw('      --narrate 를 더하면 목소리와 배경음악까지 넣습니다.');
       log.raw('');
       log.raw('  node src/main.mjs collect [--count=5] [--category="실제 미스터리"]');
       log.raw('      웹에서 소재를 찾아 심사하고 보관함에 넣습니다.');
@@ -1018,6 +1217,11 @@ async function main() {
       log.raw('      화면 프롬프트로 실제 이미지를 만듭니다. 장당 돈이 나갑니다.');
       log.raw('      --dry-run 은 몇 장에 얼마인지만 보여줍니다 (비용 0원).');
       log.raw('      이미 만든 이미지는 건너뜁니다. 중간에 죽어도 돈을 다시 안 씁니다.');
+      log.raw('');
+      log.raw('  node src/main.mjs voice --id=001 [--dry-run] [--voice=이름] [--voices]');
+      log.raw('      대본을 읽는 목소리를 만들고 배경음악을 깝니다.');
+      log.raw('      문단마다 따로 만들어 실제 길이를 재므로, 자막이 추정치가 아니라');
+      log.raw('      진짜 음성에 맞습니다. --voices 는 쓸 수 있는 목소리 목록만 봅니다.');
       log.raw('');
       log.raw('  node src/main.mjs video --id=001 [--dry-run] [--no-shorts]');
       log.raw('      장면을 실제 영상 파일로 만듭니다. 쇼츠도 함께 자릅니다.');
