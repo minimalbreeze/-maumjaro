@@ -550,12 +550,40 @@ async function cmdImages(flags) {
 }
 
 /**
+ * TTS 키를 읽는다. 없으면 무엇을 해야 하는지 알려주고 멈춘다.
+ * 두 곳(목록 보기 · 실제 합성)에서 쓰므로 한 군데에 모아 둔다.
+ */
+function requireTtsKey() {
+  const apiKey = env('GOOGLE_TTS_API_KEY');
+  if (!apiKey) {
+    log.error('GOOGLE_TTS_API_KEY 가 없습니다.');
+    log.info('  1) https://console.cloud.google.com 에서 프로젝트를 만들고');
+    log.info('  2) "Cloud Text-to-Speech API" 를 사용 설정한 뒤');
+    log.info('  3) API 및 서비스 → 사용자 인증 정보 → API 키 만들기');
+    log.info('  4) GitHub 리포 Settings → Secrets → GOOGLE_TTS_API_KEY');
+    process.exit(1);
+  }
+  return apiKey;
+}
+
+/**
  * 대본 → 나레이션 음성 + 배경음악 (Phase 4).
  *
  * 문단마다 따로 만들어 이어 붙인다. 그래야 **문단별 실제 길이**를 재서
  * 자막과 장면 전환을 추정치가 아닌 진짜 타이밍에 맞출 수 있다.
  */
 async function cmdVoice(flags) {
+  // 목소리 목록은 **편과 무관하다.** 키가 살아 있는지 공짜로 확인하는
+  // 용도이기도 하므로, 아직 만든 편이 하나도 없어도 돌아가야 한다.
+  if (flags.voices) {
+    const apiKey = requireTtsKey();
+    const list = await createTtsClient({ apiKey }).listVoices();
+    log.section(`🗣  쓸 수 있는 한국어 목소리 ${list.length}개`);
+    for (const v of list) log.raw(`  ${v.name.padEnd(28)} ${v.gender}`);
+    log.info('마음에 드는 것을 --voice=이름 또는 TTS_VOICE 환경변수로 쓰세요.');
+    return;
+  }
+
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
     log.error('어떤 편의 목소리를 만들지 알려주세요.');
@@ -594,24 +622,7 @@ async function cmdVoice(flags) {
     return;
   }
 
-  const apiKey = env('GOOGLE_TTS_API_KEY');
-  if (!apiKey) {
-    log.error('GOOGLE_TTS_API_KEY 가 없습니다.');
-    log.info('  1) https://console.cloud.google.com 에서 프로젝트를 만들고');
-    log.info('  2) "Cloud Text-to-Speech API" 를 사용 설정한 뒤');
-    log.info('  3) API 및 서비스 → 사용자 인증 정보 → API 키 만들기');
-    log.info('  4) GitHub 리포 Settings → Secrets → GOOGLE_TTS_API_KEY');
-    process.exit(1);
-  }
-
-  // 목소리 목록만 보고 끝내기. 이름이 자주 바뀌므로 코드에 박지 않았다.
-  if (flags.voices) {
-    const list = await createTtsClient({ apiKey }).listVoices();
-    log.section(`🗣  쓸 수 있는 한국어 목소리 ${list.length}개`);
-    for (const v of list) log.raw(`  ${v.name.padEnd(28)} ${v.gender}`);
-    log.info('마음에 드는 것을 --voice=이름 또는 TTS_VOICE 환경변수로 쓰세요.');
-    return;
-  }
+  const apiKey = requireTtsKey();
 
   const workDir = contentPath(id, 'audio');
   const started = Date.now();
