@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { 본문글자수, 제목낱말, 조사떼기, 닮은정도, 비슷한글묶기, 색인위험 } from '../src/wordpress/index-audit.mjs';
+import { 본문글자수, 제목낱말, 조사떼기, 닮은정도, 비슷한글묶기, 색인위험, 글유형 } from '../src/wordpress/index-audit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -137,6 +137,40 @@ check('짧은 글과 빈 SEO 필드를 짚는다', () => {
 
 check('기준을 넘긴 글에는 이유를 달지 않는다', () => {
   assert.deepEqual(색인위험({ 글자수: 4000, description: '설명', focusKeyword: '키워드' }), []);
+});
+
+// ── 유형 ───────────────────────────────────────────────────
+// 리포 실측(config/search-demand.md · config/revenue.md)이 어느 유형이 돈이
+// 되는지 말해 준다. 그 분류가 틀리면 엉뚱한 글을 보강하게 된다.
+check('돈이 되는 유형을 실측대로 가린다', () => {
+  // CTR 10~25% · 운영자가 광고 클릭을 확인한 유형
+  assert.equal(글유형('남서울CC 파3 골프장: 이용료 및 예약 방법 안내'), '시설');
+  assert.equal(글유형('정읍 신태인파크골프장: 이용료 및 예약 방법 안내'), '시설');
+  // 유입 1위 유형
+  assert.equal(글유형('어스몬다민컵 우승상금과 역대 상금 순위'), '상금');
+});
+
+check('대회가 끝나면 죽는 유형을 따로 센다', () => {
+  assert.equal(글유형('2025 VNL 여자배구대표팀 3주차 경기 중계 및 일정'), '중계');
+  assert.equal(글유형('KPGA 골프존 오픈 2025 결과 다시보기'), '중계');
+});
+
+check('"3주차"를 주차장으로 읽지 않는다', () => {
+  // 실제로 걸렸던 사고. 숫자가 앞에 오면 몇 번째 주라는 뜻이다.
+  assert.notEqual(글유형('VNL 3주차 경기 중계'), '시설');
+  // 진짜 주차 안내는 여전히 시설로 잡아야 한다.
+  assert.equal(글유형('남서울CC 가는 길과 주차 안내'), '시설');
+  assert.equal(글유형('파크골프장 주차장 이용 안내'), '시설');
+});
+
+check('돈 되는 유형이 중계보다 먼저 걸린다', () => {
+  // 제목에 둘 다 들어 있으면 보강 대상으로 잡혀야 한다. 중계로 가면 놓친다.
+  assert.equal(글유형('남서울CC 파3 이용료·예약 방법과 중계 시청 안내'), '시설');
+});
+
+check('가릴 수 없으면 기타로 둔다 (지어내지 않는다)', () => {
+  assert.equal(글유형('미니멀리즘 스윙: 골프의 심장을 전하는 철학'), '기타');
+  assert.equal(글유형(''), '기타');
 });
 
 // ── 안전 ───────────────────────────────────────────────────
