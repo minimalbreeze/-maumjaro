@@ -28,7 +28,7 @@
   'use strict';
 
   const CFG = Object.assign(
-    { on: false, dailyRxLimit: 0, lockedTabs: [] },
+    { on: false, dailyRxLimit: 0, lockedTabs: [], seoExempt: false },
     window.MAUMJARO_GATE || {}
   );
   if (!CFG.on) return;
@@ -79,6 +79,63 @@
 
   function gateActive() {
     return CFG.on && !unlocked() && !isDesktop();
+  }
+
+  // ---------- 검색으로 들어온 사람 예외 ----------
+  // 네이버 검색 유입은 사실상 전부 타로·MBTI다(30일 TOP30 기준 노출의 70% 이상).
+  // 그 사람들은 /tarot/여사제/ 같은 정적 페이지에 먼저 내려앉고, 거기 CTA로 앱에 들어온다.
+  // 들어오자마자 찾던 그 기능이 잠겨 있으면 그냥 나가고, 그 이탈이 다시 순위를 깎는다.
+  // 그래서 "찾아온 그 기능 하나만" 이번 방문 동안 열어 준다.
+  //
+  // 왜 referrer인가: 생성 페이지 수십 개의 링크를 고치지 않아도 되고, CTA 말고
+  // 로고·하단 링크 등 어디로 넘어와도 똑같이 잡힌다. 같은 출처 이동이라
+  // referrer에 경로까지 그대로 온다.
+  //
+  // 왜 sessionStorage인가: 이번 방문에서만 열린다. 다음에 다시 오면 잠금이 그대로다.
+  // 잠금 실험 자체를 무력화하지 않으면서 유입 길목만 뚫는 선이 여기다.
+  const GRANT_KEY = 'maumjaro:seoGrant';
+
+  // 어떤 정적 페이지가 어떤 탭을 여는가. 타로는 운세 탭 안에 있다(rx-category-tile[data-fortune=tarot]).
+  function viewsForPath(path) {
+    if (/^\/tarot(\/|$)/.test(path)) return ['fortune'];
+    if (/^\/mbti(\/|$)/.test(path)) return ['mbti'];
+    return [];
+  }
+
+  function readGrant() {
+    try {
+      const a = JSON.parse(sessionStorage.getItem(GRANT_KEY) || '[]');
+      return Array.isArray(a) ? a : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function captureGrant() {
+    const have = readGrant();
+    if (!CFG.seoExempt) return have;
+    let views = [];
+    try {
+      if (document.referrer) {
+        const u = new URL(document.referrer, location.href);
+        if (u.origin === location.origin) views = viewsForPath(u.pathname);
+      }
+    } catch (e) { /* referrer를 못 읽으면 예외 없이 간다 */ }
+    if (!views.length) return have;
+    views.forEach((v) => { if (have.indexOf(v) === -1) have.push(v); });
+    try { sessionStorage.setItem(GRANT_KEY, JSON.stringify(have)); } catch (e) { /* 무시 */ }
+    return have;
+  }
+
+  const GRANT = captureGrant();
+  function granted(view) { return CFG.seoExempt && GRANT.indexOf(view) !== -1; }
+
+  // 통과를 셀 때 같은 탭을 여러 번 눌러도 한 번만 센다.
+  const passLogged = {};
+  function logPass(view) {
+    if (passLogged[view]) return;
+    passLogged[view] = true;
+    track('gate_seo_pass', { what: LABEL[view] || view });
   }
 
   // ---------- 오늘 주사 횟수 ----------
@@ -156,6 +213,7 @@
   function markTabs() {
     if (!gateActive()) return;
     (CFG.lockedTabs || []).forEach((v) => {
+      if (granted(v)) return;   // 열어 준 탭에 자물쇠를 붙이면 거짓말이 된다
       const btn = document.querySelector(`.tab-btn[data-view="${v}"]`);
       if (btn && !btn.querySelector('.gate-badge')) {
         const b = document.createElement('i');
@@ -175,6 +233,8 @@
     if (tab) {
       const view = tab.dataset.view;
       if ((CFG.lockedTabs || []).indexOf(view) !== -1) {
+        // 검색으로 그 기능을 찾아온 사람은 통과시킨다.
+        if (granted(view)) { logPass(view); return; }
         e.preventDefault();
         e.stopPropagation();
         openLock(LABEL[view] || view, 'tab');
@@ -212,10 +272,14 @@
     if (!gateActive()) return;
     const card = document.querySelector('.ob-card');
     if (!card || card.querySelector('.gate-note')) return;
+    // 열어 준 기능까지 "잠겨 있다"고 적으면 거짓말이 된다. 실제로 잠긴 것만 적는다.
+    const NAME = { fortune: '운세 · 타로', mbti: 'MBTI', rx: '처방센터', history: '기록' };
+    const still = (CFG.lockedTabs || []).filter((v) => !granted(v)).map((v) => NAME[v] || v);
+    if (!still.length) return;
     const note = document.createElement('p');
     note.className = 'gate-note';
     note.innerHTML = '🔒 <b>오늘의 마음 주사</b>는 바로 쓸 수 있어요.<br>'
-      + '운세 · 타로 · MBTI · 기록은 <b>홈 화면에 추가</b>하고 <b>맘운 프로필</b>을 등록하면 열려요.';
+      + still.join(' · ') + '은(는) <b>홈 화면에 추가</b>하고 <b>맘운 프로필</b>을 등록하면 열려요.';
     card.appendChild(note);
   }
 
