@@ -61,6 +61,9 @@ on:
           - '시설 글 제목 다시 맞추기 (실제 적용 · 비용 0원)'
           - '글끼리 링크 걸기 (미리보기 · 비용 0원)'
           - '글끼리 링크 걸기 (실제 적용 · 비용 0원)'
+          - '오타 후보 찾기 (안 고침 · 비용 0원)'
+          - '제목·본문 오타 고치기 (미리보기 · 비용 0원)'
+          - '제목·본문 오타 고치기 (실제 적용 · 비용 0원)'
       article_text:
         description: '기사 본문을 붙여넣기 (이게 있으면 뉴스 수집을 건너뛰고 이 기사를 재료로 1편 씁니다. 주제도 함께 적으세요)'
         required: false
@@ -130,7 +133,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -514,6 +517,33 @@ jobs:
           esac
           node src/wordpress/noindex.mjs $how
 
+      - name: 오타 고치기
+        # 제목·본문의 오타를 고친다. **표에 적힌 것만** 고친다 — 한국어
+        # 맞춤법을 코드가 판단할 수는 없고, 글이 633편이라 한 번 잘못 고치면
+        # 633편이 틀린다.
+        #
+        # '오타 후보 찾기' 는 아무것도 고치지 않는다. 딱 한 번 나오고 자주
+        # 나오는 말과 한 글자만 다른 낱말을 보여줄 뿐이다. 사람이 보고 맞다고
+        # 판단한 것만 바로잡기 표에 들어간다.
+        #
+        # 슬러그는 보내지 않는다 — 주소가 바뀌면 네이버가 들고 있는 주소가
+        # 깨진다 (네이버 색인을 끊지 않는다는 안전선).
+        if: ${{ contains(inputs.mode, '오타') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          how=''
+          case "$IN_MODE" in
+            *후보\ 찾기*) how='--찾기' ;;
+            *실제\ 적용*) how='--apply' ;;
+          esac
+          node src/wordpress/typo-fix.mjs $how
+
       - name: 구글 색인에 다시 들여보내기
         # 걸어 둔 googlebot noindex 깃발을 내린다.
         #
@@ -581,7 +611,7 @@ jobs:
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
