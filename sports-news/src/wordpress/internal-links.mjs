@@ -309,6 +309,11 @@ async function main() {
 
   let 성공 = 0;
   let 이미 = 0;
+  // 목록이 그대로여서 저장할 것이 없는 글. **남은 것과 구분해야 한다** —
+  // 2026-10-10 에 이걸 안 세서 "613편이 남았습니다"가 찍혔다. 사실은 613편
+  // 전부 바뀔 것이 없어 건너뛴 것이었고, 작업은 끝나 있었다. 그 문구를 보고
+  // 다시 돌리면 영원히 끝나지 않는다.
+  let 그대로 = 0;
   for (const { post, 이어줄 } of 할일) {
     if (!손대도되는글인가(post.link, base)) {
       console.log(`   ⏭  ${post.id} 다른 사이트의 글이라 건너뜁니다`);
@@ -322,7 +327,7 @@ async function main() {
       // 이미 블록이 있으면 넘어간다. 이어서 돌릴 수 있게 하는 핵심이다.
       if (!다시 && 이미있나(before)) { 이미 += 1; continue; }
       const after = 붙이기(before, 블록만들기(이어줄));
-      if (after === before) { console.log(`   ⏭  ${post.id} 바뀔 것이 없습니다`); continue; }
+      if (after === before) { 그대로 += 1; console.log(`   ⏭  ${post.id} 바뀔 것이 없습니다`); continue; }
       if (!블록만바뀌었나(before, after)) {
         console.log(`   ❌ ${post.id} 블록 말고 다른 곳이 바뀝니다 — 건너뜁니다`);
         process.exitCode = 1;
@@ -340,10 +345,16 @@ async function main() {
   if (이미) {
     console.log(`이미 블록이 있어 건너뛴 글 ${이미}편 (--다시 를 붙이면 갈아 끼웁니다).`);
   }
-  const 남은것 = 할일.length - 성공 - 이미;
+  if (그대로) {
+    console.log(`링크 목록이 그대로여서 저장하지 않은 글 ${그대로}편 (이미 맞춰져 있습니다).`);
+  }
+  // 손도 못 댄 글만 "남은 것"이다. 건너뛴 글(이미 있음·그대로)은 끝난 것이다.
+  const 남은것 = 할일.length - 성공 - 이미 - 그대로;
   if (남은것 > 0) {
-    console.log(`\n⚠ ${남은것}편이 남았습니다 — 30분 제한에 걸렸거나 실패한 글입니다.`);
+    console.log(`\n⚠ ${남은것}편이 남았습니다 — 시간 제한에 걸렸거나 실패한 글입니다.`);
     console.log('  같은 모드를 한 번 더 돌리면 남은 것만 이어서 씁니다.');
+  } else {
+    console.log('남은 글은 없습니다. 전부 끝났습니다.');
   }
   console.log('되돌리려면 본문에서 그 블록을 지우면 됩니다 (표식: ' + LINK_SIGN + ').\n');
 }

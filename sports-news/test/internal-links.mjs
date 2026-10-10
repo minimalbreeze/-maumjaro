@@ -272,6 +272,17 @@ check('남은 편수를 알려준다', () => {
   assert.match(src, /한 번 더 돌리면/, '어떻게 끝내는지 알려주지 않습니다');
 });
 
+check('바뀔 것이 없는 글을 "남은 것"으로 세지 않는다', () => {
+  // 실측 사고 (2026-10-10): 634편을 다시 맞췄더니 21편이 저장되고 613편은
+  // 목록이 그대로여서 건너뛰었다. **작업은 끝났는데** 화면에는
+  // "613편이 남았습니다 — 30분 제한에 걸렸거나 실패한 글입니다" 가 찍혔다.
+  // 그 문구를 보고 다시 돌리면 영원히 끝나지 않는다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
+  assert.match(src, /그대로 \+= 1;/, '그대로인 글을 세지 않습니다');
+  assert.match(src, /할일\.length - 성공 - 이미 - 그대로/, '남은 것 계산에서 빠지지 않습니다');
+  assert.match(src, /남은 글은 없습니다/, '다 끝났다는 것을 알려주지 않습니다');
+});
+
 check('색인 제외 깃발을 글마다 따로 부르지 않는다', () => {
   // 633번의 공짜 호출이 30분 제한의 원인이었다. 목록 응답에 meta 가 있다.
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
