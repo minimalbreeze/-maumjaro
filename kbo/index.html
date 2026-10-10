@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>KBO 명당지도 | 야구장 좌석·시야·날씨·예매 한눈에</title>
+<meta name="description" content="야구장 가기 전에 내 자리를 미리 본다. 구장별 좌석 명당과 시야, 직관 날씨, 먹거리·굿즈샵·교통 정보를 한 곳에서 확인하세요." />
+<link rel="stylesheet" href="css/base.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="inner">
+    <h1><a href="./">⚾ KBO 명당지도</a></h1>
+    <p class="tagline">야구장 가기 전에, 내 자리를 미리 본다.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2 class="section-title">오늘 경기</h2>
+  <div id="today-games" aria-live="polite">
+    <div class="empty">경기 정보를 불러오는 중…</div>
+  </div>
+
+  <h2 class="section-title">야구장 찾기</h2>
+  <div id="stadium-list" class="chips"></div>
+
+  <h2 class="section-title">나에게 맞는 명당 찾기</h2>
+  <div class="card">
+    <p style="margin:0 0 10px;font-size:14.5px;color:var(--dim)">
+      무엇이 가장 중요하세요? (복수 선택 가능)
+    </p>
+    <div id="pref-chips" class="chips"></div>
+    <p id="pref-hint" class="meta"></p>
+  </div>
+
+</div>
+
+<div class="sticky-cta" id="home-cta" hidden>
+  <div class="inner">
+    <a class="btn btn-primary btn-block" id="home-cta-link" href="#">명당 보러가기</a>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/services/dataService.js"></script>
+<script src="js/services/gameService.js"></script>
+<script src="js/services/shareService.js"></script>
+<script src="js/recommend.js"></script>
+<script src="js/ui/render.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>
