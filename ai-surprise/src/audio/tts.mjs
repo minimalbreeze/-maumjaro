@@ -35,15 +35,15 @@ export function supportsPitch(voice) {
 /**
  * 기본 목소리.
  *
- * 다큐멘터리 나레이션이라 낮고 차분한 남성 목소리를 기본으로 둔다.
- * Neural2 계열은 오래 유지돼 온 안정적인 목소리다.
+ * 첫 완성본의 나레이션이 "너무 딱딱하다"는 말을 들었다. 그때 쓰던
+ * ko-KR-Neural2-C 는 뉴스 읽는 톤에 가깝다. 같은 문장을 여덟 목소리로
+ * 만들어 들어보고(`voice --sample`) 효성님이 Iapetus 를 골랐다.
  *
- * Google은 더 새로운 계열(Chirp3-HD 등)을 계속 내놓는데, 이름이 자주
- * 바뀌므로 코드에 박아두지 않았다. 대신 `voices` 명령으로 **지금 실제로
- * 쓸 수 있는 목록을 받아볼 수 있게** 했다. 마음에 드는 걸 찾으면
- * TTS_VOICE 환경변수로 바꾸면 된다.
+ * 이름만 보고 고르지 않는다 — 들어보고 고른다. 목록은 Google 이 계속
+ * 바꾸므로 `voice --voices` 로 지금 쓸 수 있는 것을 확인할 수 있고,
+ * TTS_VOICE 환경변수나 --voice 로 언제든 바꿀 수 있다.
  */
-export const DEFAULT_VOICE = 'ko-KR-Neural2-C';
+export const DEFAULT_VOICE = 'ko-KR-Chirp3-HD-Iapetus';
 export const DEFAULT_LANGUAGE = 'ko-KR';
 
 /**
@@ -52,7 +52,13 @@ export const DEFAULT_LANGUAGE = 'ko-KR';
  * 1.0이 기본인데 이 채널에는 빠르다. 기획서 6번이 "뉴스 아나운서보다 낮고
  * 느리게"라고 했고, 미스터리 나레이션은 사이를 두어야 긴장이 생긴다.
  */
-export const DEFAULT_SPEAKING_RATE = 0.92;
+export const DEFAULT_SPEAKING_RATE = 0.95;
+
+/**
+ * 음높이. **Chirp 계열에는 보내지 않는다**(supportsPitch 참고) — 기본
+ * 목소리가 Chirp 이므로 지금은 쓰이지 않지만, 다른 계열로 바꿨을 때를
+ * 위해 남겨 둔다.
+ */
 export const DEFAULT_PITCH = -2;
 
 /**

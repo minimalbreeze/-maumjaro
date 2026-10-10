@@ -2786,6 +2786,61 @@ await asyncTest('Chirp 목소리에는 pitch 를 보내지 않는다', async () 
   assert.equal('pitch' in sent[1].audioConfig, true, 'Neural2 에는 pitch 를 보내야 합니다');
 });
 
+// 목소리를 바꿨는데 옛 음성이 그대로 쓰이면, 바꾼 줄 알고 있다가
+// 완성본에서야 안 바뀐 걸 알게 된다. 그때는 영상까지 다 만든 뒤다.
+await asyncTest('목소리를 바꾸면 이미 있는 음성이어도 다시 만든다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const root = new URL('../', import.meta.url).pathname;
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'voice-swap-'));
+  const dir = path.join(data, 'content', '001');
+  fs.mkdirSync(path.join(dir, 'audio'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'scenes.json'), JSON.stringify({
+    scenes: [{
+      scene_number: 1, section: 'HOOK', duration: 10,
+      paragraphs: [{ text: '가'.repeat(30), seconds: 10 }],
+      shots: [{ shot_id: 'S01-01', asset_type: 'IMAGE', duration: 10, camera: 'zoom in' }],
+    }],
+    problems: [],
+  }));
+  fs.writeFileSync(path.join(dir, 'audio', 'voice.mp3'), 'x');
+  fs.writeFileSync(path.join(dir, 'audio', 'timings.json'), JSON.stringify({
+    voice: 'ko-KR-Neural2-C', total_seconds: 10, count: 1,
+    timings: [{ id: 'S01-P1', scene_number: 1, seconds: 10 }],
+  }));
+
+  const env = { ...process.env, AI_SURPRISE_DATA_DIR: data };
+  delete env.GOOGLE_TTS_API_KEY;
+  delete env.TTS_VOICE;
+
+  // 같은 목소리면 건너뛴다 — 키가 없어도 성공해야 한다.
+  const same = execFileSync(process.execPath,
+    ['src/main.mjs', 'voice', '--id=001', '--voice=ko-KR-Neural2-C'],
+    { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  assert.ok(/다시 만들지 않습니다/.test(same), `같은 목소리는 건너뛰어야 합니다:\n${same}`);
+
+  // 다른 목소리면 다시 만들려 들고, 키가 없으니 키를 달라고 멈춘다.
+  let out = '';
+  try {
+    execFileSync(process.execPath,
+      ['src/main.mjs', 'voice', '--id=001', '--voice=ko-KR-Chirp3-HD-Iapetus'],
+      { cwd: root, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    assert.fail('키가 없으면 멈춰야 합니다');
+  } catch (err) {
+    out = `${err.stdout || ''}${err.stderr || ''}`;
+  }
+  assert.ok(/목소리가 다르므로 다시 만듭니다/.test(out), `바뀐 것을 알아채야 합니다:\n${out}`);
+  assert.ok(!/다시 만들지 않습니다/.test(out), `건너뛰면 안 됩니다:\n${out}`);
+  fs.rmSync(data, { recursive: true, force: true });
+});
+
+// 효성님이 샘플을 듣고 고른 목소리. 바뀌면 영상 톤이 통째로 달라지므로
+// 모르는 사이에 바뀌지 않게 못 박는다.
+await asyncTest('기본 목소리가 효성님이 고른 것으로 되어 있다', async () => {
+  const { DEFAULT_VOICE, DEFAULT_SPEAKING_RATE } = await import('../src/audio/tts.mjs');
+  assert.equal(DEFAULT_VOICE, 'ko-KR-Chirp3-HD-Iapetus');
+  assert.equal(DEFAULT_SPEAKING_RATE, 0.95);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

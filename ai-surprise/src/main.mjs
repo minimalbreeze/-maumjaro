@@ -673,14 +673,27 @@ async function cmdVoice(flags) {
   }
 
   // 이미 만든 음성이 있으면 다시 만들지 않는다. 글자 수만큼 돈이 든다.
+  //
+  // 단, **같은 목소리일 때만** 그렇다. 목소리를 바꿨는데 옛 음성을 그대로
+  // 쓰면 바꾼 줄 알고 있다가 완성본에서야 안 바뀐 걸 알게 된다. 그때는
+  // 이미 영상까지 다 만든 뒤다.
+  const wantVoice = typeof flags.voice === 'string' && flags.voice
+    ? flags.voice
+    : env('TTS_VOICE', DEFAULT_VOICE);
   if (
     !flags.force &&
     fs.existsSync(contentPath(id, 'audio', 'voice.mp3')) &&
     fs.existsSync(contentPath(id, 'audio', 'timings.json'))
   ) {
-    log.ok(`content/${id}/audio/voice.mp3 이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
-    log.info('새로 만들려면 --force 를 붙이세요.');
-    return;
+    const made = loadNarration(id)?.voice || '';
+    if (made && made !== wantVoice) {
+      log.warn(`만들어 둔 음성은 ${made} 로 읽은 것입니다. 지금 쓰려는 것은 ${wantVoice} 입니다.`);
+      log.info('목소리가 다르므로 다시 만듭니다.');
+    } else {
+      log.ok(`content/${id}/audio/voice.mp3 이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
+      log.info('새로 만들려면 --force 를 붙이세요.');
+      return;
+    }
   }
 
   const scenes = JSON.parse(fs.readFileSync(scenesPath, 'utf8')).scenes || [];
@@ -691,7 +704,7 @@ async function cmdVoice(flags) {
   }
 
   const chars = units.reduce((s, u) => s + u.chars, 0);
-  const voice = typeof flags.voice === 'string' ? flags.voice : env('TTS_VOICE', DEFAULT_VOICE);
+  const voice = wantVoice;  // 위에서 한 번만 정한다 — 두 곳에서 따로 정하면 어긋난다
   const maxUsd = flags['max-usd'] !== undefined ? Number(flags['max-usd']) : DEFAULT_TTS_MAX_USD;
 
   log.section(`🎙  나레이션  |  content/${id}  |  ${voice}`);
