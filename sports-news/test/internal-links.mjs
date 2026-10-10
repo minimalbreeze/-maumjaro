@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   LINK_SIGN, 이미있나, 블록걷어내기, 가까운정도, 이어줄글, 블록만들기, 붙이기, 블록만바뀌었나,
+  같은종목인가, 겹치는낱말수,
 } from '../src/wordpress/internal-links.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -132,6 +133,78 @@ check('미리보기가 기본이고 --apply 가 있어야 쓴다', () => {
   assert.match(src, /includes\('--apply'\)/);
   assert.match(src, /if \(!적용\)/);
   assert.ok(!/method:\s*['"]DELETE['"]/.test(src), '삭제 요청이 들어 있습니다');
+});
+
+// ── 소음 링크를 걸지 않는다 (2026-10-10, 미리보기에서 잡음) ──
+// 처음 판은 "같은 유형이면 2점"만으로 이었다. 유형이 '기타'·'일정'인 글들이
+// 종목과 무관하게 다 이어졌다. 실제 미리보기에서 나온 두 건을 그대로 둔다.
+console.log('\n[소음 링크]');
+
+const 아이폰 = { id: 7789, title: '아이폰 사진첩 정리, 지우지 말고 애초에 안 쌓이게 하는 법 (페이드캠으로 1일·7일·30일 뒤 자동 삭제)', categories: [9], date: '2026-10-08' };
+const 근로장려금 = { id: 7001, title: "근로장려금 신청 총정리! 최대 330만원! '국가가 주는 돈', 놓치지 말고 꼭 받자!", categories: [11], date: '2026-09-01' };
+const 당구 = { id: 7793, title: '2026 경남고성군수배 전국당구대회 일정 (조명우 2연패 도전과 서서아 복귀, 상금은 얼마인가)', categories: [5], date: '2026-10-08' };
+const 골프대회 = { id: 7500, title: '2026 KLPGA OK저축은행 읏맨 오픈 (김민솔 상금 1위 탈환, 방신실 2연패 도전!)', categories: [3], date: '2026-09-20' };
+const 당구2 = { id: 7400, title: '2026 전국당구선수권 조명우 결승 진출 (우승 상금과 중계는?)', categories: [5], date: '2026-09-10' };
+
+check('종목이 다르고 겹치는 낱말도 없으면 잇지 않는다', () => {
+  assert.equal(가까운정도(아이폰, 근로장려금), 0,
+    '아이폰 글과 근로장려금 글이 이어집니다 — 미리보기에서 실제로 나온 사고입니다');
+  assert.equal(가까운정도(당구, 골프대회), 0,
+    '당구 글과 골프 대회 글이 이어집니다 — 둘 다 "일정" 유형이라는 이유였습니다');
+});
+
+check('연도·회차만 겹치는 것은 겹친 것으로 안 본다', () => {
+  // 그 해에 나온 글은 다 "2026"을 달고 있다. 당구 ↔ 골프가 그래서 이어졌다.
+  assert.equal(겹치는낱말수(당구, 골프대회), 0, '"2026" 을 주제로 셉니다');
+  const a = { title: '제16회 롯데 오픈 중계' };
+  const b = { title: '제16회 전국체전 배구 일정' };
+  assert.equal(겹치는낱말수(a, b), 0, '회차를 주제로 셉니다');
+});
+
+check('조사·흔한 꾸밈말만 겹치는 것도 안 본다', () => {
+  // 아이폰 ↔ 근로장려금이 이어진 이유는 겹친 낱말 "말고" 하나였다.
+  assert.equal(겹치는낱말수(아이폰, 근로장려금), 0, '"말고" 를 주제로 셉니다');
+});
+
+check('닮은정도(중복 판정)의 실측 기준은 건드리지 않는다', () => {
+  // 중복 판정 기준값(0.55 / 0.13)이 실측으로 잡혀 있다. 낱말 목록을 거기서
+  // 바꾸면 그 숫자가 전부 흔들리므로, 걸러내기는 링크 쪽에만 둔다.
+  const audit = fs.readFileSync(path.join(ROOT, 'src/wordpress/index-audit.mjs'), 'utf8');
+  assert.ok(!/뜻없는낱말|주제가아닌꼴/.test(audit),
+    '걸러내기가 index-audit 으로 넘어갔습니다 — 중복 판정 기준이 흔들립니다');
+});
+
+check('같은 카테고리(= 같은 종목)면 잇는다', () => {
+  assert.ok(가까운정도(당구, 당구2) > 0, '같은 종목 글을 못 잇습니다');
+});
+
+check('제목 낱말이 겹치면 카테고리가 달라도 잇는다', () => {
+  // 같은 선수·대회를 다룬 글은 카테고리가 갈려 있어도 이어야 한다.
+  const a = { id: 1, title: '신지애 일본여자오픈 우승', categories: [3], date: '2026-10-05' };
+  const b = { id: 2, title: '신지애 누적 상금 1위', categories: [7], date: '2026-10-01' };
+  assert.ok(가까운정도(a, b) > 0, '같은 선수 글을 못 잇습니다');
+});
+
+check('겹치는 낱말이 많을수록 앞에 온다', () => {
+  const 나 = { id: 1, title: '신지애 일본여자오픈 우승 상금', categories: [3], date: '2026-10-05' };
+  const 많이 = { id: 2, title: '신지애 일본여자오픈 3라운드', categories: [3], date: '2026-10-04' };
+  const 조금 = { id: 3, title: '신지애 통산 기록', categories: [3], date: '2026-10-03' };
+  const 고른것 = 이어줄글(나, [조금, 많이], { 개수: 2 });
+  assert.equal(고른것[0].id, 2, '덜 가까운 글이 먼저 옵니다');
+});
+
+check('이을 글이 없으면 블록을 안 붙인다 (빈 링크보다 낫다)', () => {
+  // 엉뚱한 링크를 받는 것보다 안 받는 것이 낫다. 그 선택이 코드에 남아 있어야 한다.
+  assert.deepEqual(이어줄글(아이폰, [근로장려금, 당구, 골프대회]), []);
+  assert.equal(블록만들기([]), '');
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
+  assert.match(src, /엉뚱한 링크를 받는 것보다 안 받는 것이 낫다/);
+});
+
+check('카테고리를 실제로 받아온다', () => {
+  // 안 받아오면 같은종목인가() 가 늘 false 가 되고 링크가 거의 안 걸린다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/index-audit.mjs'), 'utf8');
+  assert.match(src, /categories: Array\.isArray\(p\.categories\)/, '발행글전부가 카테고리를 안 담습니다');
 });
 
 // ── 새 글은 쓰면서 바로 링크를 받는다 (2026-10-10) ────────
