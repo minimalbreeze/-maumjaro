@@ -255,6 +255,16 @@ check('이미 블록이 있는 글은 건너뛴다 (기본)', () => {
   assert.match(src, /includes\('--다시'\)/, '갈아 끼울 방법이 없습니다');
 });
 
+check('워크플로에 다시 맞추기 모드가 있다', () => {
+  // 새 글을 발행하면 **기존 글 → 새 글** 방향 링크가 있어야 구글이 찾는다.
+  // 기본 모드는 이미 블록이 있는 글을 건너뛰므로 그 방향이 안 생긴다.
+  const yml = fs.readFileSync(path.join(ROOT, '../.github/workflows/sports-news.yml'), 'utf8');
+  assert.match(yml, /글끼리 링크 다시 맞추기/, '다시 맞추기 모드가 없습니다');
+  assert.match(yml, /how='--apply --다시'/, '--다시 로 이어지지 않습니다');
+  // 그 모드도 AI 실행 단계에서는 빠져야 한다 (0원이어야 한다).
+  assert.match(yml, /!contains\(inputs\.mode, '글끼리 링크'\)/);
+});
+
 check('남은 편수를 알려준다', () => {
   // 몇 편이 남았는지 모르면 다 됐는지 알 수 없다.
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
