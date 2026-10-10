@@ -47,7 +47,10 @@ for (const file of files) {
   check(`${file}: 표현식이 알려진 컨텍스트만 쓴다`, () => {
     const known = /^(secrets|inputs|github|env|vars|matrix|needs|steps|job|runner|strategy|always|success|failure|cancelled|hashFiles|format|toJSON|fromJSON|contains|startsWith|endsWith|join)\b/;
     // 부정(!)으로 시작하는 조건도 정상이다: if: ${{ !contains(inputs.mode, '...') }}
-    const bad = exprs.map((m) => m[1].trim().replace(/^!+\s*/, '')).filter((e) => !known.test(e));
+    // 여는 괄호로 시작하는 조건도 정상이다 — 2026-10-10 에 '파일로 올리기'
+    // 모드를 넣으면서 폰트 조건이 `(A && B) || C` 꼴이 됐고, 괄호를 안 벗기면
+    // 멀쩡한 조건이 "알 수 없는 표현식"으로 걸렸다.
+    const bad = exprs.map((m) => m[1].trim().replace(/^[!(\s]+/, '')).filter((e) => !known.test(e));
     assert.equal(bad.length, 0, `알 수 없는 표현식: ${bad.join(' / ')}`);
   });
 }
@@ -69,10 +72,17 @@ if (fs.existsSync(sports)) {
   check('sports-news: 리포에 쓰기 권한을 요구하지 않는다', () => {
     assert.ok(/contents: read/.test(text));
   });
-  check('sports-news: 한글 폰트 설치 조건이 실행 단계와 같다', () => {
+  check('sports-news: 한글 폰트 설치 조건이 이미지를 만드는 단계와 맞는다', () => {
     // 폰트는 텍스트 카드에만 쓴다. 조건이 어긋나면 둘 중 하나가 난다.
     //   더 좁으면 → 글은 쓰는데 폰트가 없어 카드 글씨가 깨진다
     //   더 넓으면 → 0원 방식에서 apt로 2분을 그냥 버린다
+    //
+    // 2026-10-10: 규칙을 다시 적었다. 예전에는 "실행 단계와 글자 그대로
+    // 같다"로 묶었는데, **AI 를 안 부르면서 이미지는 만드는 모드**가
+    // 생겼다 — '파일로 올리기'다(이미 만든 글을 임시글로 저장하고, 텍스트
+    // 카드는 로컬에서 그린다). 실제 규칙은 "실행 단계와 같다"가 아니라
+    // **"이미지를 만드는 단계에서 필요하다"** 였다. 그래서 실행 조건에
+    // 그 모드를 OR 로 더한 꼴인지를 본다.
     const 조건 = (이름) => {
       const m = new RegExp(`- name: ${이름}\\n([\\s\\S]*?)(?=\\n {6}- |$)`).exec(text);
       assert.ok(m, `${이름} 단계를 못 찾았습니다`);
@@ -80,7 +90,10 @@ if (fs.existsSync(sports)) {
       assert.ok(i, `${이름} 단계에 if 조건이 없습니다`);
       return i[1].trim();
     };
-    assert.equal(조건('한글 폰트 설치'), 조건('실행'));
+    const 실행 = 조건('실행');
+    assert.equal(조건('한글 폰트 설치'), `(${실행}) || contains(inputs.mode, '파일로 올리기')`);
+    // 실행 단계는 그 모드에서 돌지 않아야 한다 — 돌면 AI 를 부르고 돈이 든다.
+    assert.match(실행, /!contains\(inputs\.mode, '파일로 올리기'\)/);
   });
 }
 

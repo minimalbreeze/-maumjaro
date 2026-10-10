@@ -156,13 +156,17 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const file = process.argv[2];
+  const args = process.argv.slice(2);
+  // --no-image: 이미지를 만들지 않는다. 한글 폰트가 없는 환경에서 텍스트
+  // 카드를 만들면 글씨가 깨져 나오므로, 그럴 때 쓴다.
+  const 이미지없이 = args.includes('--no-image');
+  const file = args.find((a) => !a.startsWith('--'));
   if (!file) {
-    console.error('사용법: node src/wordpress/from-file.mjs <글 파일.md>');
+    console.error('사용법: node src/wordpress/from-file.mjs <글 파일.md> [--no-image]');
     process.exit(1);
   }
   try {
-    await publishFromFile(file);
+    await publishFromFile(file, { withImages: !이미지없이 });
   } catch (err) {
     log.fail('올리기 실패', err);
     process.exitCode = 1;
