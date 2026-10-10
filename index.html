@@ -1277,6 +1277,29 @@
 </script>
 <script src="gate.js?v=34"></script>
 
+<!-- 서비스 워커 등록.
+     이게 있어야 (1) 안드로이드에서 Chrome 설치 창(beforeinstallprompt)이 뜨고
+     (2) Play 스토어 TWA 품질 기준을 넘고 (3) 네트워크가 끊겨도 앱이 열린다.
+     sw.js는 네트워크 우선이라 배포 반영이 늦어지지 않는다 — sw.js 머리말 참고.
+     등록이 실패해도 앱은 지금까지와 똑같이 돈다. 있으면 좋은 것이지 전제가 아니다. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        // 새 버전이 대기 중이면 바로 넘어가게 한다(탭을 닫았다 열지 않아도 되게).
+        if (reg.waiting) reg.waiting.postMessage('skip-waiting');
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          if (!sw) return;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'installed' && navigator.serviceWorker.controller) sw.postMessage('skip-waiting');
+          });
+        });
+      }).catch(() => { /* 등록 실패해도 앱은 그대로 돈다 */ });
+    });
+  }
+</script>
+
 <!-- Cloudflare Web Analytics — 방문/유입 경로만 집계한다.
      쿠키를 쓰지 않으므로 동의 배너가 필요 없고, 감정 기록·사주 정보는 전송되지 않는다
      (그 데이터는 계속 기기의 localStorage에만 남는다). 토큰은 공개용 식별자다. -->
