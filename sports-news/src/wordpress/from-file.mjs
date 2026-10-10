@@ -18,6 +18,8 @@ import { createHeroImage, createSectionImage } from '../images/provider.mjs';
 import { uploadMedia, safeFileName } from '../images/upload.mjs';
 import { planPlacements, insertMarks, imageHtml, adHtml } from '../images/embed.mjs';
 import { pickWatchLinks, watchBannerHtml } from '../seo/watch-banner.mjs';
+import { pickApp, appBannerHtml } from '../seo/app-banner.mjs';
+import { pickOfficial, officialBannerHtml } from '../seo/official-banner.mjs';
 
 /**
  * writeDryRunFile이 만든 .md를 거꾸로 읽는다.
@@ -86,13 +88,30 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
   const cat = resolveCategory(parsed.category, siteCategories);
   log.info(`카테고리: ${cat.name} (id=${cat.id}, ${cat.matched})`);
 
-  // 이미지·광고·중계 배너 자리를 잡는다
+  // 이미지·광고·중계·앱 배너 자리를 잡는다
   const watch = pickWatchLinks(cat.name || parsed.category);
   if (watch) log.info(`중계 배너: ${watch.primary.url}`);
+
+  // 앱·공식 홈페이지 배너. **이게 빠져 있었다** (2026-10-10).
+  //
+  // 페이드캠 글(8521)을 이 도구로 올렸는데 **다운로드 링크가 안 들어갔다.**
+  // main.mjs 는 넣는데 여기만 빠져 있었던 것이다. 앱을 소개하는 글에
+  // 받는 곳이 없으면 글의 목적이 사라진다.
+  //
+  // 순서는 main.mjs 와 같다 — 앱이 먼저다. 운영자가 만든 앱 글에 구단
+  // 링크를 걸 일은 없다. 주소는 config/app-links.json·official-links.json
+  // 에 적힌 것만 쓴다. 코드가 주소를 만들어내지 않는다.
+  const 글전체 = `${parsed.title}\n${parsed.body}`;
+  const app = pickApp(글전체);
+  const official = app ? null : pickOfficial(글전체);
+  const appHtml = app ? appBannerHtml(app) : (official ? officialBannerHtml(official) : '');
+  if (appHtml) log.info(`${app ? '앱' : '공식 홈페이지'} 배너: ${(app || official).이름} → ${(app || official).url}`);
+
   const plan = planPlacements(parsed.body, {
     sectionImages: withImages ? 1 : 0,
     withAd: Boolean(AD_SNIPPET),
     withWatch: Boolean(watch),
+    withApp: Boolean(appHtml),
   });
   const body = insertMarks(parsed.body, plan);
   const blocks = [];
@@ -139,6 +158,7 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
     images: blocks,
     adHtml: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
     watchHtml: watch ? watchBannerHtml(watch) : '',
+    appHtml,
     featuredMediaId: featuredId,
   });
 

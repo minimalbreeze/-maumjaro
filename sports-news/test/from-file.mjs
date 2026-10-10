@@ -157,4 +157,41 @@ fs.rmSync(tmp, { force: true });
 wp.server.close();
 Object.assign(process.env, prevEnv);
 
+// ── 앱 배너가 빠지지 않는다 (2026-10-10) ──────────────────
+// 페이드캠 글(8521)을 이 도구로 올렸는데 **다운로드 링크가 안 들어갔다.**
+// main.mjs 는 앱 배너를 넣는데 from-file.mjs 만 빠져 있었다. 앱을 소개하는
+// 글에 받는 곳이 없으면 글의 목적이 사라진다.
+console.log('\n[앱 배너]');
+
+check('from-file 이 앱·공식 배너를 넣는다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/from-file.mjs'), 'utf8');
+  assert.match(src, /import \{ pickApp, appBannerHtml \}/, '앱 배너 도구를 안 씁니다');
+  assert.match(src, /import \{ pickOfficial, officialBannerHtml \}/, '공식 배너 도구를 안 씁니다');
+  assert.match(src, /withApp: Boolean\(appHtml\)/, '배너 자리를 잡지 않습니다');
+  assert.match(src, /^\s*appHtml,$/m, 'saveDraft 에 배너를 안 넘깁니다');
+});
+
+check('앱이 먼저다 (main.mjs 와 같은 순서)', () => {
+  // 운영자가 만든 앱 글에 구단 링크를 걸 일은 없다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/from-file.mjs'), 'utf8');
+  assert.match(src, /const official = app \? null : pickOfficial\(글전체\)/);
+});
+
+check('제목과 본문을 함께 보고 고른다', () => {
+  // 앱 이름이 제목에만 있는 글이 있다. 본문만 보면 놓친다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/from-file.mjs'), 'utf8');
+  assert.match(src, /const 글전체 = `\$\{parsed\.title\}/);
+});
+
+check('페이드캠 글이 실제로 배너를 받는다', async () => {
+  const { pickApp, appBannerHtml } = await import('../src/seo/app-banner.mjs');
+  const 글 = '중고거래 사진 정리, 당근 거래가 끝난 사진은 왜 안 지워질까 (페이드캠 7일 자동 삭제)';
+  const app = pickApp(글);
+  assert.ok(app, '페이드캠을 못 찾습니다');
+  assert.equal(app.이름, '페이드캠');
+  const html = appBannerHtml(app);
+  assert.ok(html.includes('id6818920687'), '앱 주소가 배너에 없습니다');
+  assert.ok(!/target=/.test(html), '새 창으로 엽니다 (리포 규칙 위반)');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
