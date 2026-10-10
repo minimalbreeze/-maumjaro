@@ -535,6 +535,50 @@ check('복장·가는 길 같은 검색어에도 가점이 있다', () => {
   }
 });
 
+// ── 티스토리 실측 (2026-10-10) ────────────────────────────
+// 1년 넘게 손 안 댄 블로그의 인기글 17편 중 9편(53%)이 선수 신상 글이었다.
+// 2025년 3~6월 글이 2026년 10월에도 조회된다. 점수표에 그 유형이 없었다.
+check('선수 연봉 글감이 경기 결과보다 높다', () => {
+  assert.ok(점수('김선빈 연봉 재계약 합의') > 점수('김선빈 3안타 맹활약'),
+    `${점수('김선빈 연봉 재계약 합의')} vs ${점수('김선빈 3안타 맹활약')}`);
+});
+
+check('프로필·이적 글감에도 가점이 있다', () => {
+  for (const kw of ['프로필 공개', '이적 확정', '몸값 협상', 'FA 계약 체결']) {
+    assert.ok(점수(`선수 ${kw}`) > 점수('선수 소식'), kw);
+  }
+});
+
+check('"키"를 한 글자 패턴으로 쓰지 않는다', () => {
+  // 한 글자는 어디에나 들어 있다. `구매의도` 가점이 "김채영"의 채,
+  // "화성시"의 화를 먹었던 사고를 되풀이하지 않는다.
+  const src = fs.readFileSync(path.join(HERE, '../src/news/rank.mjs'), 'utf8');
+  const 실전 = src.slice(src.indexOf('const 실전_유입'), src.indexOf('const LONG_TERM'));
+  assert.ok(!/\(키\||\|키\)|\|키\|/.test(실전), '한 글자 "키" 가 패턴에 들어왔습니다');
+  // 사람 이름에 든 글자가 가점을 먹지 않는지 직접 확인한다.
+  assert.equal(점수('김채영 8강 진출'), 점수('선수 8강 진출'), '이름 글자가 가점을 먹습니다');
+});
+
+check('선수 신상 가점이 상금보다 낮다', () => {
+  // 티스토리 조회수(1~11)는 상금 실측(134클릭)보다 훨씬 약한 근거다.
+  const src = fs.readFileSync(path.join(HERE, '../src/news/rank.mjs'), 'utf8');
+  const 상금 = /\{ re: \/\(상금[^}]*w: (\d+)/.exec(src);
+  const 연봉 = /\{ re: \/\(연봉[^}]*w: (\d+)/.exec(src);
+  assert.ok(상금 && 연봉, '두 항목을 못 찾았습니다');
+  assert.ok(Number(연봉[1]) < Number(상금[1]),
+    `연봉 ${연봉[1]} 이 상금 ${상금[1]} 보다 낮아야 합니다`);
+});
+
+check('티스토리 실측이 문서로 남아 있다', () => {
+  const md = fs.readFileSync(path.join(HERE, '../config/search-demand.md'), 'utf8');
+  assert.match(md, /티스토리 실측/, '실측 기록이 없습니다');
+  // 한계를 숨기지 않는다 — 숫자가 약하다는 것을 함께 적어야 한다.
+  assert.match(md, /기간을 모른다/);
+  assert.match(md, /숫자가 작다/);
+  // 사생활 안전선도 함께 남긴다.
+  assert.match(md, /확인되지 않은 사생활을 쓰면 안 된다/);
+});
+
 check('실측 데이터 원본이 문서로 남아 있다', () => {
   const file = path.join(HERE, '..', 'config', 'search-demand.md');
   assert.ok(fs.existsSync(file), 'config/search-demand.md가 없습니다');
