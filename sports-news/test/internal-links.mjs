@@ -134,4 +134,48 @@ check('미리보기가 기본이고 --apply 가 있어야 쓴다', () => {
   assert.ok(!/method:\s*['"]DELETE['"]/.test(src), '삭제 요청이 들어 있습니다');
 });
 
+// ── 새 글은 쓰면서 바로 링크를 받는다 (2026-10-10) ────────
+// 손으로 거는 것을 잊어서 633편이 고아 페이지로 쌓였다. 그래서 작성
+// 파이프라인 안에서 건다. 그 연결이 끊어지면 같은 일이 또 쌓인다.
+console.log('\n[새 글 자동 링크]');
+
+check('작성 파이프라인이 저장 직후에 링크를 건다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  assert.match(src, /import \{ 새글에붙이기 \}/, 'main.mjs 가 링크 도구를 안 씁니다');
+  assert.match(src, /새글에붙이기\(saved\.id/, '저장한 글에 링크를 걸지 않습니다');
+});
+
+check('링크가 실패해도 글을 잃지 않는다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  const at = src.indexOf('새글에붙이기(saved.id');
+  assert.ok(at > 0);
+  const 앞 = src.slice(Math.max(0, at - 400), at);
+  assert.match(앞, /try \{/, '링크 호출이 try 밖에 있습니다 — 실패하면 실행이 끊깁니다');
+  // 저장이 먼저여야 한다. 링크가 먼저면 실패했을 때 글이 사라진다.
+  assert.ok(src.indexOf('await saveDraft(') < at, '저장보다 링크가 먼저입니다');
+});
+
+check('끄는 손잡이가 있다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/main.mjs'), 'utf8');
+  assert.match(src, /env\('INTERNAL_LINKS', 'on'\) !== 'off'/);
+});
+
+check('새 글도 같은 안전 확인을 거친다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
+  const at = src.indexOf('export async function 새글에붙이기');
+  assert.ok(at > 0, '새글에붙이기 가 없습니다');
+  const 몸 = src.slice(at, src.indexOf('\n}\n', at));
+  assert.match(몸, /블록만바뀌었나\(before, after\)/, '본문이 함께 바뀌는지 확인하지 않습니다');
+  assert.match(몸, /손대도되는글인가/, '다른 사이트 글을 거르지 않습니다');
+  assert.match(몸, /색인제외/, '색인에서 뺀 글로 링크를 보냅니다');
+  // 633편 전부의 meta 를 부르면 한 편 저장이 몇 분 걸린다. 좁혀서 부른다.
+  assert.match(몸, /넓게/, '후보를 좁히지 않고 전부 조회합니다');
+});
+
+check('들어오는 링크는 발행 뒤에 거는 것임을 밝힌다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/internal-links.mjs'), 'utf8');
+  // 임시글로 보내는 링크는 독자에게 빈 주소다. 그 이유가 코드에 남아 있어야 한다.
+  assert.match(src, /들어오는 링크[\s\S]{0,200}임시글/);
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

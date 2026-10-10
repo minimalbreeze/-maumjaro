@@ -8,7 +8,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { callForText } from './client.mjs';
 import { ROOT, env } from '../utils/env.mjs';
-import { targetKeywordCount } from '../seo/rankmath.mjs';
 import { LONGEVITY_WORDS, LONGEVITY_HEADING, 오래가는소제목찾기 } from '../seo/longevity.mjs';
 
 let styleCache = null;
@@ -89,19 +88,28 @@ ${focusKeyword ? `## 🔑 검색 키워드 배치
 
 이 글의 대표 검색 키워드는 **"${focusKeyword}"** 입니다.
 
-반드시 들어가야 할 자리:
+반드시 들어가야 할 자리는 네 곳뿐입니다.
 - 제목 (앞쪽에)
 - 글 맨 앞 핵심 요약의 **첫 문장**
 - 소제목 중 최소 하나
 - 자주 묻는 질문의 질문 문장 중 하나
 
-그리고 본문 전체에서 **"${focusKeyword}"를 ${targetKeywordCount()}회 이상** 씁니다.
-검색엔진이 키워드 밀도 1.25% 이상을 요구하기 때문입니다.
+**그 네 곳에 들어갔으면 충분합니다. 횟수를 채우려고 반복하지 마세요.**
 
-억지로 끼워 넣으라는 뜻이 아닙니다. "이 대회", "그 선수" 같은 대명사로 받을
-자리에 이름을 그대로 한 번 더 쓰면 자연스럽게 채워집니다. 어차피 AI가 문단을
-떼어 인용할 때도 대명사보다 이름이 들어 있는 문장이 인용됩니다.
-다만 한 문단에 세 번 넣는 식으로 몰아 쓰지는 마세요.
+구글 "검색엔진 최적화(SEO) 기본 가이드"가 직접 이렇게 적어 두었습니다.
+
+> "같은 단어를 과도하게 반복하면 ... 유인 키워드 반복은 Google의 스팸 정책에
+> 위반됩니다."
+> "**단어를 다르게 작성하면**(반복되지 않도록 자연스럽게 작성) 키워드를 더 많이
+> 사용하기 때문에 Google 검색에 표시될 가능성이 더 높습니다."
+
+그래서 나머지 자리에서는 **같은 말을 다르게 씁니다.** 대회 정식명칭 → 줄여 부르는
+이름 → 종목+성격, 선수 풀네임 → 성+직함 → 소속·기록으로 부르는 식입니다. 사람이
+실제로 쓰는 표현이 여러 개 들어가면 그만큼 많은 검색어에 걸립니다.
+
+다만 **대명사로 문장을 시작하지는 마세요**("그는", "이 대회는"). 그건 반복을
+피하는 방법이 아니라 문장을 떼어 읽을 수 없게 만드는 방법입니다 — AI가 인용할
+때 버려집니다. 대명사 대신 **다른 이름**을 쓰세요.
 ` : ''}
 ## ⚠️ 반드시 들어가야 할 두 섹션
 
@@ -280,13 +288,20 @@ export const AI_TELLS = {
 /** 지시서가 금지한 것들이 실제로 안 들어갔는지 코드로 확인한다. */
 export function lintArticle({ title, body }) {
   const issues = [];
+  // notes 는 "알려만 주고 되돌리지는 않는 것". 분량처럼 구글이 순위 요소가
+  // 아니라고 밝힌 항목은 여기로 간다.
+  const notes = [];
 
   if (!title) issues.push('제목이 비어 있습니다');
   // 채점표(checkRankMath)와 같은 기준으로 센다 — 공백을 지운 글자 수.
   // 기준이 다르면 lint 는 통과하는데 SEO 점수에서 떨어진다(실제로 글 7769 가 그랬다).
+  // 분량은 **권고다**(2026-10-10). 구글: "콘텐츠 길이 자체는 순위 결정과
+  // 관련 없습니다." 예전에는 공백 제외 3,000자 미달을 issues 로 올려 글을
+  // 되돌렸다 — 그래서 할 말이 끝난 글에 군더더기를 붙이게 됐다. 이제는
+  // notes 로만 적는다. 짧아도 확인된 사실로만 채운 글이 길고 빈 글보다 낫다.
   const 공백뺀길이 = body.replace(/^#+\s+/gm, '').replace(/\s+/g, '').length;
   if (공백뺀길이 < 3000) {
-    issues.push(`본문이 짧습니다 (공백 제외 ${공백뺀길이}자 — 채점 기준 3,000자)`);
+    notes.push(`본문 ${공백뺀길이}자 (공백 제외) — 권고 3,000자보다 짧습니다. 할 말이 남았는지만 보고, 채우려고 늘리지는 마세요`);
   }
 
   // [8]-⑧ 마지막 소제목에 "마무리" 금지
@@ -337,5 +352,5 @@ export function lintArticle({ title, body }) {
   if (/!\[.*\]\(/.test(body)) issues.push('이미지가 들어 있습니다');
   if (/#[가-힣A-Za-z0-9]+/.test(body)) issues.push('본문에 # 해시태그가 들어 있습니다');
 
-  return { ok: issues.length === 0, issues, headings };
+  return { ok: issues.length === 0, issues, notes, headings };
 }

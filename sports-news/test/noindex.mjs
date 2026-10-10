@@ -181,4 +181,54 @@ check('기존 SEO 세 칸은 그대로 열려 있다', () => {
   }
 });
 
+// ── 되돌리기 (2026-10-10 운영자 지시) ─────────────────────
+// "끝난 글도 좋다 다시 파악해서 재구성한뒤 수정한다. 뭐 과거를 찾는 사람도
+// 있으니까" — 걸어 둔 329편을 구글 색인에 다시 들여보낸다.
+console.log('\n[되돌리기]');
+
+check('깃발을 내리는 값은 빈 문자열이다', async () => {
+  const { 깃발내리기, 구글제외인가 } = await import('../src/wordpress/noindex.mjs');
+  assert.equal(깃발내리기(), '');
+  // 플러그인은 값이 '1' 일 때만 줄을 찍는다. '' 면 meta 줄 자체가 사라진다.
+  assert.equal(구글제외인가(깃발내리기()), false);
+});
+
+check('플러그인이 1 말고는 깃발로 보지 않는다', () => {
+  const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
+  // '' 를 저장했을 때 googlebot 줄이 안 나가야 되돌리기가 실제로 동작한다.
+  assert.match(php, /!==\s*'1'\s*\)\s*\{\s*return;/,
+    "값이 '1' 이 아닐 때 줄을 안 찍는지 확인할 수 없습니다");
+});
+
+check('--undo 가 있고, 미리보기가 기본이다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
+  assert.match(src, /includes\('--undo'\)/);
+  const at = src.indexOf('if (되돌리기) {');
+  assert.ok(at > 0, '되돌리기 경로가 없습니다');
+  const 몸 = src.slice(at, at + 2600);
+  assert.match(몸, /if \(!적용\)/, '--apply 없이도 쓰려 합니다');
+  assert.match(몸, /손대도되는글인가/, '다른 사이트 글을 거릅니다');
+  assert.match(몸, /saveBackup\(/, '되돌린 목록을 남기지 않습니다');
+});
+
+check('되돌리기도 name="robots" 를 만들지 않는다', () => {
+  // 네이버 색인을 끊지 않는다는 안전선. 되돌리는 쪽에서도 같다.
+  // 주석으로 "쓰지 않는다"고 적어 둔 줄은 괜찮다. 코드가 쓰는 것만 본다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
+  const 코드 = src.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/rank_math_robots/.test(코드), 'rank_math_robots 를 코드가 씁니다');
+  const php = fs.readFileSync(path.join(ROOT, 'wordpress-plugin/maumjaro-seo-rest.php'), 'utf8');
+  const php코드 = php.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*|#)/.test(l)).join('\n');
+  assert.ok(!/name="robots"/.test(php코드), 'name="robots" 를 찍습니다 — 네이버가 끊깁니다');
+  // 찍는 줄은 구글 전용 하나뿐이어야 한다.
+  assert.match(php코드, /<meta name="googlebot" content="noindex">/);
+});
+
+check('왜 되돌리는지가 코드에 남아 있다', () => {
+  // 다음에 누가 "얇은 글은 빼야 한다"고 되돌리려 할 때 근거를 보게 한다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/noindex.mjs'), 'utf8');
+  assert.match(src, /콘텐츠 길이 자체는 순위 결정과 관련\s*\n?\s*\*?\s*없습니다/);
+  assert.match(src, /직접 조치가 부과되지는/);
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

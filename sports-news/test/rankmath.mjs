@@ -65,9 +65,40 @@ check('슬러그의 하이픈 때문에 키워드를 놓치지 않는다', () =>
   assert.ok(r.items.find((i) => i.id === 'kw-slug').ok, '하이픈 비교가 틀렸습니다');
 });
 
-check('본문이 짧으면 짚어낸다', () => {
+// 2026-10-10: 분량은 점수에서 빠졌다. 구글 '무시해야 할 사항' —
+//   "콘텐츠 길이 자체는 순위 결정과 관련 없습니다."
+check('본문이 짧아도 점수를 깎지 않는다 — 글자 수만 보여준다', () => {
   const r = checkRankMath({ ...good, body: '짧은 글\n\n## 소제목\n\n내용' });
-  assert.ok(r.missing.some((m) => m.id === 'length'));
+  assert.ok(!r.missing.some((m) => m.id === 'length'), '분량이 아직 감점 항목입니다');
+  const 항목 = r.items.find((i) => i.id === 'length');
+  assert.ok(항목, 'length 항목이 사라졌습니다 — 보여는 줘야 합니다');
+  assert.equal(항목.정보, true);
+  assert.match(항목.label, /\d+자/, 항목.label);
+});
+
+// 밀도는 **상한만** 본다. 구글: "유인 키워드 반복은 스팸 정책에 위반됩니다."
+check('키워드를 한 번만 써도 감점하지 않는다', () => {
+  const body = ['KBO 신인 드래프트 결과를 정리합니다.', '## ✨ 개요',
+    '내용입니다 '.repeat(400), '## ❓ 자주 묻는 질문',
+    '**Q. KBO 신인 드래프트는 언제 열렸나요?**\n\n9월입니다.'].join('\n\n');
+  const r = checkRankMath({ ...good, body });
+  const d = r.items.find((i) => i.id === 'kw-density');
+  assert.ok(d.ok, `${d.label} — 한 번 쓴 것을 감점했습니다`);
+});
+
+check('키워드를 2.5% 넘게 반복하면 짚어낸다', () => {
+  const body = ['KBO 신인 드래프트', 'KBO 신인 드래프트 '.repeat(40)].join('\n\n');
+  const r = checkRankMath({ ...good, body });
+  const d = r.items.find((i) => i.id === 'kw-density');
+  assert.ok(!d.ok, `${d.label} — 과도한 반복을 통과시켰습니다`);
+  assert.match(d.fix, /스팸/, d.fix);
+});
+
+check('키워드가 본문에 한 번도 안 나오면 짚어낸다', () => {
+  const r = checkRankMath({ ...good, body: '## 소제목\n\n' + '관계없는 내용 '.repeat(200) });
+  const d = r.items.find((i) => i.id === 'kw-density');
+  assert.ok(!d.ok, d.label);
+  assert.match(d.fix, /한 번도 나오지 않습니다/, d.fix);
 });
 
 check('첫 문단에 키워드가 없으면 짚어낸다', () => {

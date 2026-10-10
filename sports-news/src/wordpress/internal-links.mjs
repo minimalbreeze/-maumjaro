@@ -113,6 +113,57 @@ export function 붙이기(html, 블록) {
   return `${본문}\n\n${블록}`;
 }
 
+/**
+ * 새로 만든 글 한 편에 "같이 읽을 글" 블록을 붙인다.
+ *
+ * 왜 작성 직후에 하나 — 구글은 링크로 페이지를 찾는다. 글을 쓸 때마다
+ * 손으로 거는 것을 잊으면 또 고아 페이지가 쌓인다. 633편이 그렇게 쌓였다.
+ * 그래서 **작성 파이프라인 안에서** 건다. AI 를 부르지 않으니 0원이다.
+ *
+ * 들어오는 링크(기존 글 → 새 글)는 여기서 걸지 않는다. 새 글은 아직
+ * 임시글이라 그쪽으로 보내면 독자가 빈 주소를 만난다. 발행한 뒤
+ * `글끼리 링크 걸기 --apply` 를 돌리면 양방향이 맞춰진다.
+ *
+ * 후보를 두 단계로 고르는 이유: 색인 제외 여부는 글마다 REST 를 한 번씩
+ * 불러야 안다. 633편을 다 부르면 한 편 저장에 몇 분이 걸린다. 그래서
+ * 제목으로 먼저 가까운 12편을 고르고, 그 12편만 확인한 뒤 4편을 쓴다.
+ */
+export async function 새글에붙이기(postId, { title, 개수 = 4 } = {}) {
+  const base = wpConfig().base;
+  const 모든글 = await 발행글전부();
+  const 나 = { id: Number(postId), title: String(title || '') };
+
+  const 넓게 = 이어줄글(나, 모든글, { 개수: Math.max(개수 * 3, 12) });
+  for (const p of 넓게) {
+    try {
+      const { data } = await wpFetch(`/wp/v2/posts/${p.id}`, {
+        query: { context: 'edit', _fields: 'meta' },
+      });
+      p.색인제외 = data?.meta?.[FLAG_KEY] === '1';
+    } catch {
+      p.색인제외 = false;   // 모르면 살아 있는 것으로 본다
+    }
+  }
+  const 이어줄 = 이어줄글(나, 넓게, { 개수 });
+  if (!이어줄.length) return { 붙임: 0, 이어줄: [] };
+
+  const { data } = await wpFetch(`/wp/v2/posts/${postId}`, {
+    query: { context: 'edit', _fields: 'content,link' },
+  });
+  // 임시글은 link 가 비어 있을 수 있다. 그때는 우리 사이트의 글로 본다
+  // (방금 이 도구가 WORDPRESS_URL 에 저장한 글이다).
+  const 내주소 = data?.link || '';
+  if (내주소 && !손대도되는글인가(내주소, base)) return { 붙임: 0, 이어줄: [], 건너뜀: '다른 사이트' };
+
+  const before = data?.content?.raw || '';
+  const after = 붙이기(before, 블록만들기(이어줄));
+  if (after === before) return { 붙임: 0, 이어줄 };
+  if (!블록만바뀌었나(before, after)) return { 붙임: 0, 이어줄, 건너뜀: '본문이 함께 바뀜' };
+
+  await wpFetch(`/wp/v2/posts/${postId}`, { method: 'POST', body: { content: after } });
+  return { 붙임: 이어줄.length, 이어줄 };
+}
+
 /** 블록 말고 아무것도 안 바뀌었나. 보내기 전 마지막 확인. */
 export function 블록만바뀌었나(before, after) {
   return 블록걷어내기(before).trim() === 블록걷어내기(after).trim();
