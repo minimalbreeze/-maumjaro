@@ -33,6 +33,7 @@ import {
   applyTimings,
   DEFAULT_MAX_USD as DEFAULT_TTS_MAX_USD,
 } from './audio/narrate.mjs';
+import { SAMPLE_TEXT, pickSampleVoices, sampleFileName } from './audio/sample.mjs';
 import {
   createClient as createTtsClient,
   estimateUsd as estimateTtsUsd,
@@ -616,6 +617,43 @@ async function cmdVoice(flags) {
     log.section(`🗣  쓸 수 있는 한국어 목소리 ${list.length}개`);
     for (const v of list) log.raw(`  ${v.name.padEnd(28)} ${v.gender}`);
     log.info('마음에 드는 것을 --voice=이름 또는 TTS_VOICE 환경변수로 쓰세요.');
+    return;
+  }
+
+  // 같은 문장을 여러 목소리로 만들어 둔다. 편과 무관하고, 몇 센트면 끝난다.
+  // 이름만 보고 고르면 $3짜리 완성본을 돌려서야 톤을 알게 된다.
+  if (flags.sample) {
+    const apiKey = requireTtsKey();
+    const client = createTtsClient({ apiKey });
+    const rate = flags.rate !== undefined ? Number(flags.rate) : 0.95;
+    const voices = pickSampleVoices(await client.listVoices(), {
+      current: typeof flags.voice === 'string' ? flags.voice : DEFAULT_VOICE,
+    });
+    if (!voices.length) {
+      log.error('들어볼 수 있는 한국어 목소리를 찾지 못했습니다.');
+      process.exit(2);
+    }
+    const dir = contentPath('_목소리', '');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, '읽은-문장.txt'), `${SAMPLE_TEXT}\n\n속도 ${rate}\n`, 'utf8');
+
+    log.section(`🗣  목소리 들어보기  |  ${voices.length}개  |  속도 ${rate}`);
+    log.info(`읽는 문장: ${SAMPLE_TEXT.slice(0, 40)}…`);
+    let chars = 0;
+    for (const voice of voices) {
+      try {
+        const mp3 = await client.synthesize(SAMPLE_TEXT, { voice, speakingRate: rate });
+        fs.writeFileSync(path.join(dir, sampleFileName(voice, rate)), mp3);
+        chars += SAMPLE_TEXT.length;
+        log.ok(voice);
+      } catch (err) {
+        // 한 목소리가 안 돼도 나머지는 만든다. 계열마다 받는 설정이 다르다.
+        log.warn(`${voice}: ${err.message}`);
+      }
+    }
+    log.raw('');
+    log.info(`${dir} 에 넣었습니다. 받아서 듣고 마음에 드는 이름을 알려 주세요.`);
+    log.info(`쓴 돈 약 $${estimateTtsUsd(chars)} (추정치).`);
     return;
   }
 
