@@ -22,6 +22,7 @@ on:
         options:
           - '테스트만 (비용 0원 · 처음엔 이걸로)'
           - '소리 점검만 (TTS 키가 되는지 · 비용 0원)'
+          - '목소리 들어보기 (같은 문장을 여러 목소리로 · 약 $0.05)'
           - '소재만 찾기 (대본 안 씀)'
           - '소재 찾고 대본까지 쓰기'
           - '소재 → 대본 → 장면까지 쓰기'
@@ -165,7 +166,7 @@ jobs:
           echo "이미 있는 것은 다시 사지 않습니다."
 
       - name: 비밀값이 등록되어 있는지 확인
-        if: ${{ !contains(inputs.mode, '테스트만') && !contains(inputs.mode, '소리 점검') }}
+        if: ${{ !contains(inputs.mode, '테스트만') && !contains(inputs.mode, '소리 점검') && !contains(inputs.mode, '목소리 들어보기') }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -177,7 +178,7 @@ jobs:
           echo "ANTHROPIC_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
       - name: 목소리 키가 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '완성본') || contains(inputs.mode, '소리 점검') }}
+        if: ${{ contains(inputs.mode, '완성본') || contains(inputs.mode, '소리 점검') || contains(inputs.mode, '목소리 들어보기') }}
         env:
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
         run: |
@@ -279,6 +280,11 @@ jobs:
           esac
 
           case "$IN_MODE" in
+            *'목소리 들어보기'*)
+              echo "같은 문장을 여러 목소리로 만듭니다. 그림도 영상도 만들지 않습니다."
+              echo "끝나면 Artifacts 의 content/_목소리 에서 받아 들어 보세요."
+              node src/main.mjs voice --sample
+              ;;
             *'소리 점검'*)
               # 키가 진짜 되는지만 본다. 목소리 목록을 받아오는 호출은
               # 글자를 합성하지 않으므로 돈이 들지 않는다.

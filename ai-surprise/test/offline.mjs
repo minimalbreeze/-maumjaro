@@ -28,7 +28,7 @@ const { buildScriptPrompt, validateScript, sectionBody, SECTIONS, TAGS } = await
 );
 const store = await import('../src/store.mjs');
 const { loadTracks: loadBgmTracks } = await import('../src/audio/bgm.mjs');
-const { MOODS: SCENE_MOODS } = await import('../src/scenes/assets.mjs');
+const { MOODS: SCENE_MOODS, IMAGE_CAMERA_MOVES } = await import('../src/scenes/assets.mjs');
 
 let passed = 0;
 let failed = 0;
@@ -2070,7 +2070,7 @@ test('빈 장면에도 죽지 않는다', () => {
 
 section('15. ffmpeg 명령 조립 — 오타 하나로 다른 그림이 나오는 부분');
 
-const { cameraFilter, clipArgs, concatArgs, concatList, finishArgs, shortsArgs, escapeFilterPath } =
+const { cameraFilter, PRESCALE, clipArgs, concatArgs, concatList, finishArgs, shortsArgs, escapeFilterPath } =
   await import('../src/video/ffmpeg.mjs');
 
 test('카메라 움직임마다 프레임 수가 길이×fps와 맞는다', () => {
@@ -2079,8 +2079,12 @@ test('카메라 움직임마다 프레임 수가 길이×fps와 맞는다', () =
     assert.ok(f.includes('d=240'), `${camera}: d= 가 240이 아니다 — ${f}`);
     assert.ok(f.includes('s=1920x1080'), `${camera}: 출력 크기가 없다`);
     assert.ok(f.includes('fps=30'), `${camera}: fps가 없다`);
-    // 계단을 막으려고 먼저 2배로 키운다.
-    assert.ok(f.startsWith('scale=3840:2160'), `${camera}: 미리 키우지 않았다`);
+    // 계단과 끊김을 막으려고 먼저 키운다. 배수는 PRESCALE 이 정한다 —
+    // 숫자를 여기 박아 두면 배수를 올릴 때 테스트가 막는다.
+    assert.ok(
+      f.startsWith(`scale=${1920 * PRESCALE}:${1080 * PRESCALE}`),
+      `${camera}: 미리 ${PRESCALE}배로 키우지 않았다 — ${f.slice(0, 60)}`
+    );
     // 따옴표 짝이 맞아야 한다. 하나라도 어긋나면 필터 전체가 깨진다.
     assert.equal((f.match(/'/g) || []).length % 2, 0, `${camera}: 따옴표가 안 맞는다`);
   }
@@ -2697,6 +2701,89 @@ test('워크플로에 시간 제한이 걸려 있다', () => {
   const step = /timeout-minutes: (\d+)/.exec(body);
   assert.ok(step, 'ffmpeg 설치 단계에 timeout-minutes 가 없습니다');
   assert.ok(Number(step[1]) <= 15, `설치 상한이 너무 깁니다: ${step[1]}분`);
+});
+
+// 화면이 중간에 멈추지 않게.
+//
+// 실제 영상을 보고 발견했다. 예전에는 프레임당 고정량(0.0012)을 더해
+// 확대했는데, 한계(1.3배)에 먼저 닿는 클립은 **남은 시간 동안 완전히
+// 정지**했다. 10초 클립이면 마지막 1.6초가 멈춰 있었다.
+//
+// 여기서는 식만 본다. 진짜 매끄러운지는 렌더해서 재야 하고, 그건
+// tools/움직임-재보기.mjs 가 한다 (클립당 25초라 여기 넣지 않았다).
+test('모든 카메라 움직임이 클립 길이에 맞춰 퍼진다', async () => {
+  const frames = 300;
+  for (const camera of IMAGE_CAMERA_MOVES) {
+    const f = cameraFilter(camera, { width: 1920, height: 1080, fps: 30, duration: 10 });
+    assert.ok(
+      f.includes(`/${frames}`),
+      `${camera}: 길이로 나누지 않습니다 — 긴 클립에서 중간에 멈춥니다\n${f}`
+    );
+    // zoom+0.001 처럼 앞 프레임 값에 더하는 꼴은 한계에 닿으면 멈춘다.
+    assert.ok(
+      !/zoom\s*[+-]\s*0?\./.test(f),
+      `${camera}: 프레임마다 더하는 방식입니다 — 한계에 닿으면 멈춥니다\n${f}`
+    );
+  }
+});
+
+// zoompan 은 자를 위치를 정수로만 계산한다. 미리 크게 키워 두지 않으면
+// 느린 움직임이 같은 정수로 반올림되어 툭툭 멈춘다. 2배에서 pan 의
+// 16.7%가 멈췄고 4배에서 0%가 됐다 — 실측값이다.
+test('앞확대가 4배 이상이다 (느린 움직임이 정수로 뭉개지지 않게)', () => {
+  assert.ok(PRESCALE >= 4, `앞확대가 ${PRESCALE}배입니다. 4배 아래면 pan 이 끊깁니다.`);
+  const f = cameraFilter('pan right', { width: 1920, height: 1080, fps: 30, duration: 10 });
+  assert.ok(f.includes(`scale=${1920 * PRESCALE}:${1080 * PRESCALE}`), `앞확대가 식에 반영되지 않았습니다:\n${f}`);
+});
+
+// 흔들림은 배율이 고정이면 사인파 꼭대기에서 멈춘다 (실측 40%).
+// 아주 약한 확대를 밑에 깔아 항상 움직이게 한다.
+test('흔들림에도 밑에 깔린 움직임이 있다', () => {
+  const f = cameraFilter('slow camera shake', { width: 1920, height: 1080, fps: 30, duration: 10 });
+  assert.ok(!/zoompan=z=[\d.]+:/.test(f), `배율이 고정입니다 — 사인파 꼭대기에서 멈춥니다:\n${f}`);
+});
+
+// 목소리 고르기.
+//
+// 첫 완성본의 나레이션이 "너무 딱딱하다"는 말을 듣고 넣었다. 이름만 보고
+// 바꾸면 $3짜리 완성본을 돌려서야 톤을 안다.
+await asyncTest('들어볼 목소리에 지금 쓰는 것이 반드시 들어간다', async () => {
+  const { pickSampleVoices, sampleFileName, SAMPLE_TEXT } = await import('../src/audio/sample.mjs');
+  const available = [
+    { name: 'ko-KR-Neural2-C' }, { name: 'ko-KR-Chirp3-HD-Charon' },
+    { name: 'ko-KR-Chirp3-HD-Umbriel' }, { name: 'ko-KR-Wavenet-C' },
+    { name: 'ko-KR-Standard-A' },
+  ];
+  const picked = pickSampleVoices(available, { current: 'ko-KR-Neural2-C' });
+  // 비교 대상이 없으면 "전보다 나은가"를 판단할 수 없다.
+  assert.ok(picked.includes('ko-KR-Neural2-C'), '지금 쓰는 목소리가 빠졌습니다');
+  assert.ok(picked.length > 1, '비교할 후보가 없습니다');
+  assert.equal(new Set(picked).size, picked.length, '같은 목소리가 두 번 들어갔습니다');
+  // 목록에 없는 이름을 부르면 합성이 실패한다.
+  for (const v of picked) assert.ok(available.some((a) => a.name === v), `쓸 수 없는 목소리: ${v}`);
+
+  assert.ok(SAMPLE_TEXT.length > 40, '들어볼 문장이 너무 짧으면 톤을 판단할 수 없습니다');
+  assert.ok(!/[/\\]/.test(sampleFileName('ko-KR-Chirp3-HD-Charon', 0.95)), '파일 이름에 경로 문자가 들어갔습니다');
+});
+
+// Chirp 계열에 pitch 를 보내면 합성 전체가 거부될 수 있다. 문서가 엇갈려
+// 확실하지 않으므로 보내지 않는다 — 안 보내도 중립 음높이일 뿐이다.
+await asyncTest('Chirp 목소리에는 pitch 를 보내지 않는다', async () => {
+  const { supportsPitch, createClient } = await import('../src/audio/tts.mjs');
+  assert.equal(supportsPitch('ko-KR-Chirp3-HD-Charon'), false);
+  assert.equal(supportsPitch('ko-KR-Neural2-C'), true);
+
+  const sent = [];
+  const fakeFetch = async (url, init) => {
+    sent.push(JSON.parse(init.body));
+    const payload = JSON.stringify({ audioContent: Buffer.from('x').toString('base64') });
+    return { ok: true, status: 200, text: async () => payload, json: async () => JSON.parse(payload) };
+  };
+  const client = createClient({ apiKey: 'test', fetchFn: fakeFetch });
+  await client.synthesize('안녕하세요 시험입니다', { voice: 'ko-KR-Chirp3-HD-Charon' });
+  await client.synthesize('안녕하세요 시험입니다', { voice: 'ko-KR-Neural2-C' });
+  assert.equal('pitch' in sent[0].audioConfig, false, 'Chirp 에 pitch 를 보냈습니다');
+  assert.equal('pitch' in sent[1].audioConfig, true, 'Neural2 에는 pitch 를 보내야 합니다');
 });
 
 console.log(`\n${'═'.repeat(60)}`);

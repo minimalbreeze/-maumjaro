@@ -22,6 +22,17 @@
 const API_ROOT = 'https://texttospeech.googleapis.com/v1';
 
 /**
+ * 이 목소리가 pitch 를 받아들이는가.
+ *
+ * Chirp 3: HD 계열은 받지 않는다는 문서와 받는다는 문서가 섞여 있다.
+ * 확실하지 않은 쪽으로 요청을 보내면 합성 전체가 실패하므로, 애매하면
+ * 보내지 않는다. 안 보내도 중립 음높이로 읽을 뿐이다.
+ */
+export function supportsPitch(voice) {
+  return !/chirp/i.test(String(voice || ''));
+}
+
+/**
  * 기본 목소리.
  *
  * 다큐멘터리 나레이션이라 낮고 차분한 남성 목소리를 기본으로 둔다.
@@ -148,7 +159,10 @@ export function createClient({ apiKey, fetchFn = globalThis.fetch, sleepFn = (ms
         audioConfig: {
           audioEncoding: 'MP3',
           speakingRate,
-          pitch,
+          // Chirp 계열에는 pitch 를 보내지 않는다. 지원 여부가 문서마다
+          // 다르고, 지원하지 않으면 요청 자체가 거부된다. 안 보내면
+          // 중립값으로 읽을 뿐이라 잃는 것이 없다.
+          ...(supportsPitch(voice) ? { pitch } : {}),
           // 나레이션이라 말소리 대역을 또렷하게. 유튜브가 어차피 다시
           // 인코딩하므로 여기서 과하게 손대지 않는다.
           effectsProfileId: ['headphone-class-device'],

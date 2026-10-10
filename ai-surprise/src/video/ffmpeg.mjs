@@ -19,69 +19,93 @@
 // 느린 대신 고치기 쉽다. 이 단계에서는 그게 맞는 교환이다.
 
 /**
+ * 앞확대 배수.
+ *
+ * zoompan은 자를 위치(x·y)를 **정수로만** 계산한다. 그래서 느리게 움직이면
+ * 여러 프레임이 같은 위치로 반올림되어 화면이 툭툭 멈춘다. 미리 크게 키워
+ * 두면 같은 움직임이 더 큰 정수 단위가 되어 멈춤이 사라진다.
+ *
+ * 2배로는 모자랐다. 실측: 10초 pan에서 2배는 프레임의 16.7%가 멈췄고,
+ * 4배에서 0%가 됐다. 대신 렌더가 3배 느려진다(10초 클립당 8초 → 25초).
+ * 돈이 드는 게 아니라 시간만 드는 쪽이므로 4배를 쓴다.
+ */
+export const PRESCALE = 4;
+
+/** 움직임의 총량. 길이에 상관없이 클립 전체에 걸쳐 이만큼 움직인다. */
+export const ZOOM_RANGE = 0.3;
+export const PAN_ZOOM = 1.15;
+
+/**
  * 이미지에 걸 카메라 움직임 (기획서 8번).
  *
- * zoompan은 "입력 프레임 하나"를 확대·이동하며 여러 프레임을 뽑는 필터다.
- * 원본 해상도 그대로 쓰면 확대할 때 계단이 생기므로, 먼저 2배로 키운 뒤
- * zoompan을 걸고 목표 크기로 뽑는다. 이게 흔들림 없는 줌을 얻는 방법이다.
- *
- * d= 는 뽑을 프레임 수다. 길이(초) × fps.
+ * **움직임은 반드시 클립 길이로 나눈다(on/frames).** 예전에는 프레임당
+ * 고정량(0.0012)을 더했는데, 그러면 한계(1.3배)에 먼저 닿는 클립은 남은
+ * 시간 동안 **완전히 정지**한다. 10초 클립에서 마지막 1.6초가 멈춰 있었다.
+ * 실제 영상을 보고서야 발견했다 — 민무늬 시험 그림으로는 안 보인다.
  */
 export function cameraFilter(camera, { width, height, fps, duration }) {
   const frames = Math.max(1, Math.round(duration * fps));
-  // 2배로 키워 두면 1.0~1.4배 확대해도 원본 해상도 아래로 안 떨어진다.
-  const pre = `scale=${width * 2}:${height * 2}:force_original_aspect_ratio=increase,crop=${width * 2}:${height * 2}`;
+  const bigW = width * PRESCALE;
+  const bigH = height * PRESCALE;
+  const pre = `scale=${bigW}:${bigH}:force_original_aspect_ratio=increase,crop=${bigW}:${bigH}`;
   const out = `:s=${width}x${height}:fps=${fps}`;
 
   // 화면 중앙을 기준으로 확대/축소할 때 쓰는 좌표.
   const centerX = `x='iw/2-(iw/zoom/2)'`;
   const centerY = `y='ih/2-(ih/zoom/2)'`;
 
-  // 확대율. 0.0012/프레임이면 30fps·8초에 약 1.29배가 된다.
-  // 기획서 10번이 "과장된 줌인"을 요구하지만, 이보다 빠르면 멀미가 난다.
-  const step = 0.0012;
+  // 흔들림·시차의 진폭은 앞확대 배수에 맞춰 키운다. 안 그러면 배수를
+  // 올릴 때마다 움직임이 그만큼 작아 보인다.
+  const amp = (px) => Math.round(px * (PRESCALE / 2));
 
   switch (camera) {
     case 'zoom out':
-      // 1.3배에서 시작해 1.0으로 줄인다.
+      // 1.3배에서 시작해 클립이 끝날 때 1.0이 된다.
       return (
-        `${pre},zoompan=z='if(eq(on,0),1.3,max(1.0,zoom-${step}))':d=${frames}:` +
+        `${pre},zoompan=z='${1 + ZOOM_RANGE}-${ZOOM_RANGE}*on/${frames}':d=${frames}:` +
         `${centerX}:${centerY}${out}`
       );
 
     case 'pan left':
-      // 1.15배로 고정하고 오른쪽에서 왼쪽으로 민다.
+      // 고정 배율로 오른쪽에서 왼쪽으로 민다.
       return (
-        `${pre},zoompan=z=1.15:d=${frames}:` +
+        `${pre},zoompan=z=${PAN_ZOOM}:d=${frames}:` +
         `x='(iw-iw/zoom)*(1-on/${frames})':y='ih/2-(ih/zoom/2)'${out}`
       );
 
     case 'pan right':
       return (
-        `${pre},zoompan=z=1.15:d=${frames}:` +
+        `${pre},zoompan=z=${PAN_ZOOM}:d=${frames}:` +
         `x='(iw-iw/zoom)*(on/${frames})':y='ih/2-(ih/zoom/2)'${out}`
       );
 
     case 'slow camera shake':
       // 아주 느린 흔들림. 재연 느낌을 주는 장치다 (기획서 10번).
       // 진폭을 크게 하면 싸구려로 보인다.
+      //
+      // 배율을 고정하면 **사인파가 꼭대기에 닿을 때마다 화면이 멈춘다** —
+      // 그 근처에서는 프레임당 움직임이 1픽셀을 못 넘기기 때문이다. 실측
+      // 40%가 멈췄다. 밑에 아주 약한 확대를 깔아 항상 움직이게 한다.
+      // 보기에도 그쪽이 낫다 — 드리프트 없는 흔들림은 정지 사진이 떠는
+      // 것처럼 보인다.
       return (
-        `${pre},zoompan=z=1.12:d=${frames}:` +
-        `x='iw/2-(iw/zoom/2)+sin(on/18)*12':y='ih/2-(ih/zoom/2)+cos(on/23)*9'${out}`
+        `${pre},zoompan=z='1.08+0.08*on/${frames}':d=${frames}:` +
+        `x='iw/2-(iw/zoom/2)+sin(on/18)*${amp(12)}':` +
+        `y='ih/2-(ih/zoom/2)+cos(on/23)*${amp(9)}'${out}`
       );
 
     case 'parallax':
       // 진짜 시차는 레이어가 나뉘어야 가능하다. 한 장짜리 이미지로는
       // 흉내만 낸다 — 느린 가로 이동에 아주 약한 확대를 겹친다.
       return (
-        `${pre},zoompan=z='min(1.25,1.05+${step / 2}*on)':d=${frames}:` +
+        `${pre},zoompan=z='1.05+0.20*on/${frames}':d=${frames}:` +
         `x='(iw-iw/zoom)*(0.35+0.3*on/${frames})':y='ih/2-(ih/zoom/2)'${out}`
       );
 
     case 'zoom in':
     default:
       return (
-        `${pre},zoompan=z='min(zoom+${step},1.3)':d=${frames}:` +
+        `${pre},zoompan=z='1+${ZOOM_RANGE}*on/${frames}':d=${frames}:` +
         `${centerX}:${centerY}${out}`
       );
   }
