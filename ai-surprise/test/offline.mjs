@@ -2841,6 +2841,53 @@ await asyncTest('기본 목소리가 효성님이 고른 것으로 되어 있다
   assert.equal(DEFAULT_SPEAKING_RATE, 0.95);
 });
 
+// 말투가 딱딱한지 숫자로 본다.
+//
+// 첫 완성본을 듣고 "너무 딱딱하다"는 말이 나왔다. 규칙만 바꿔 두면 다음에
+// AI 가 슬그머니 다큐체로 돌아가도 영상을 끝까지 들어보기 전에는 모른다.
+await asyncTest('다큐체와 구어체를 숫자로 가른다', async () => {
+  const { toneStats, SPOKEN_ENDING_MIN, LONG_SENTENCE_MAX_RATIO } = await import('../src/script/write.mjs');
+
+  const 다큐체 =
+    '1958년 4월 키예프의 한 거리에서 촬영된 것으로 알려진 이 사진에는 당시로서는 ' +
+    '존재하지 않았던 물건을 손에 든 남자가 찍혀 있었다. 이 사진은 오랫동안 진위 논란의 ' +
+    '대상이 되어 왔다. 전문가들은 해당 물건이 현대의 휴대전화와 유사하다고 분석하였다. ' +
+    '그러나 이를 뒷받침하는 1차 기록은 발견되지 않았다.';
+  const 구어체 =
+    '1958년 4월, 키예프의 어느 거리였어요. 사진 한 장이 찍혔습니다. ' +
+    '남자가 손에 뭔가를 들고 있었는데요. 작고, 검은 물건이었습니다. ' +
+    '그런데 그게 문제였거든요. 그 물건은 당시에 존재하지 않았습니다. ' +
+    '왜 아무도 그 날짜를 확인해 보지 않았을까요?';
+
+  const a = toneStats(다큐체);
+  const b = toneStats(구어체);
+
+  // 다큐체는 두 기준 모두 걸려야 한다.
+  assert.ok(a.spokenRatio < SPOKEN_ENDING_MIN, `다큐체를 못 잡습니다: 입말 ${a.spokenRatio}`);
+  assert.ok(a.longRatio > LONG_SENTENCE_MAX_RATIO, `긴 문장을 못 잡습니다: ${a.longRatio}`);
+
+  // 구어체는 둘 다 통과해야 한다. 잘못 잡으면 좋은 대본이 경고를 달고 나온다.
+  assert.ok(b.spokenRatio >= SPOKEN_ENDING_MIN, `구어체를 잘못 잡습니다: 입말 ${b.spokenRatio}`);
+  assert.ok(b.longRatio <= LONG_SENTENCE_MAX_RATIO, `구어체를 잘못 잡습니다: 긴문장 ${b.longRatio}`);
+
+  assert.deepEqual(toneStats('').sentences, 0, '빈 글에도 죽지 않아야 합니다');
+});
+
+// 프롬프트가 실제로 구어체를 시키는지. 여기가 다시 다큐체로 돌아가면
+// 위 숫자 검사는 경고만 낼 뿐 막지 못한다.
+await asyncTest('대본 규칙이 구어체와 궁금증을 요구한다', async () => {
+  const { SCRIPT_SYSTEM } = await import('../src/script/write.mjs');
+  for (const must of ['거든요', '잖아요', '짧게 끊는다', '궁금']) {
+    assert.ok(SCRIPT_SYSTEM.includes(must), `규칙에 "${must}" 가 없습니다`);
+  }
+  // 낚시 금지 — 궁금하게 만들라고만 하고 답하라고 안 하면 정책 위험이 된다.
+  assert.ok(SCRIPT_SYSTEM.includes('반드시 답한다'), '던진 질문에 답하라는 규칙이 없습니다');
+  // 말투가 풀렸다고 사실까지 풀리면 안 된다.
+  assert.ok(SCRIPT_SYSTEM.includes('지어내도 된다는 뜻이 아니다'), '사실 규칙이 느슨해졌습니다');
+  // 예전 다큐체 지시가 남아 있으면 안 된다.
+  assert.ok(!SCRIPT_SYSTEM.includes('차분한 다큐멘터리 나레이션'), '다큐체 지시가 남아 있습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

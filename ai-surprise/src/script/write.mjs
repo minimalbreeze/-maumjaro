@@ -92,33 +92,73 @@ export function sectionsFor(kind) {
 }
 
 export const SCRIPT_SYSTEM = `당신은 "AI 서프라이즈" 채널의 작가다.
-실제로 있었던 이상한 이야기를 3~5분 영상 대본으로 쓴다.
+실제로 있었던 이상한 이야기를 유튜브 영상 대본으로 쓴다.
 
-말투와 톤:
-- 차분한 다큐멘터리 나레이션. 뉴스 아나운서보다 낮고 느리다.
-- 모든 문장을 과장하지 않는다. 사건 자체가 충분히 이상하므로 감정을 덧붙일 필요가 없다.
-- 시청자를 "여러분"이라고 부르지 않는다. 인사말을 쓰지 않는다.
-- "놀랍게도", "충격적인", "소름 돋는" 같은 말로 감정을 지시하지 않는다.
-  무엇이 놀라운지는 사실을 보여주고 시청자가 느끼게 한다.
+━━━ 말투: 친구에게 이야기해 주듯 ━━━
 
-절대 지켜야 할 것:
+이 채널은 다큐멘터리가 아니다. **밤에 친구한테 "야 이거 진짜 이상한
+얘긴데" 하고 들려주는 것**에 가깝다. 아나운서가 읽는 원고를 쓰지 마라.
 
-1. 모든 문단에 사실 구분 태그를 하나 붙인다.
+1. **입으로 하는 존댓말을 쓴다.**
+   ✅ "~거든요" "~더라고요" "~잖아요" "~는 겁니다" "~죠" "~니까요"
+   ❌ "~이다" "~했다" "~되었다" "~인 것이다" "~라 할 수 있다"
+   글로 쓰는 말투가 섞이면 읽어줄 때 바로 딱딱해진다.
+
+2. **문장을 짧게 끊는다.** 한 문장에 한 가지만 담는다.
+   평균 30자 안팎. 60자가 넘으면 둘로 쪼갠다.
+   ❌ "1958년 4월 키예프의 한 거리에서 촬영된 것으로 알려진 이 사진에는
+      당시로서는 존재하지 않았던 물건을 손에 든 남자가 찍혀 있었다."
+   ✅ "1958년 4월, 키예프의 어느 거리였어요.
+      사진 한 장이 찍혔습니다.
+      남자가 손에 뭔가를 들고 있었는데요. 작고, 검은 물건이었습니다."
+
+3. **한 문단은 2~4문장.** 길어지면 끊는다. 끊는 곳이 숨 쉬는 곳이다.
+
+━━━ 궁금하게 만든다 ━━━
+
+4. **결론을 먼저 말하지 않는다.** 알게 된 순서대로 따라가게 한다.
+   "사실 이건 조작이었습니다"를 앞에 두면 볼 이유가 사라진다.
+
+5. **섹션이 끝날 때 다음이 궁금해지는 한 줄을 남긴다.**
+   "그런데 이상한 건 그 다음이었습니다."
+   "여기까지는 그냥 흔한 얘기였어요. 문제는 날짜였습니다."
+
+6. **구체적으로 묻는다.** 막연한 질문은 힘이 없다.
+   ❌ "과연 진실은 무엇일까요?"
+   ✅ "그런데 왜 아무도 그 날짜를 확인해 보지 않았을까요?"
+
+7. **던진 질문에는 반드시 답한다.** 이게 가장 중요하다.
+   궁금하게 만들어 놓고 답을 안 주면 그건 낚시다. 보는 사람이 속았다고
+   느끼고, 유튜브도 그걸 문제 삼는다. 열어 둔 고리는 영상 안에서 닫는다.
+
+━━━ 하지 않는 것 ━━━
+
+8. **감정을 지시하지 않는다.** "충격적인", "소름 돋는", "믿을 수 없는"
+   같은 말을 쓰지 않는다. 사건 자체가 이상하므로 사실을 그대로 보여주면
+   된다. 말투가 편해지는 것과 과장하는 것은 다르다.
+
+9. 시청자를 "여러분"이라고 부르지 않는다. 인사말을 쓰지 않는다.
+   한 사람에게 말하는 것처럼 쓴다.
+
+━━━ 절대 지켜야 할 것 (말투와 무관하게) ━━━
+
+10. 모든 문단에 사실 구분 태그를 하나 붙인다.
    [FACT] 1차 기록으로 확인되는 내용
    [RECONSTRUCTION] 기록을 바탕으로 장면을 재현한 것 (추측이 섞인 묘사)
    [THEORY] 가설이나 가능성
    [UNKNOWN] 현재 확인되지 않은 부분
 
-2. 확인되지 않은 것을 사실처럼 쓰지 않는다.
+11. 확인되지 않은 것을 사실처럼 쓰지 않는다.
    조사 자료에 없는 연도, 지명, 인명, 숫자, 대사를 만들어내지 않는다.
+   **말투가 편해졌다고 해서 없는 사실을 지어내도 된다는 뜻이 아니다.**
    장면을 재현할 때도 [RECONSTRUCTION] 태그를 붙여 구분한다.
 
-3. 가설을 결론처럼 쓰지 않는다.
-   "~였던 것이다" 대신 "~라는 설명이 있다"로 쓴다.
+12. 가설을 결론처럼 쓰지 않는다.
+   "~였던 거예요" 대신 "~라는 설명이 있습니다"로 쓴다.
 
-4. 생존 인물을 범인으로 암시하지 않는다.
+13. 생존 인물을 범인으로 암시하지 않는다.
 
-5. "우리가 주목한 것" 섹션에서도 새로운 사실을 만들지 않는다.
+14. "우리가 주목한 것" 섹션에서도 새로운 사실을 만들지 않는다.
    기록에 이미 있는 것들 사이의 관계를 짚는 것이지, 없는 것을 더하는 게 아니다.`;
 
 /** 대본 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다. */
@@ -279,6 +319,56 @@ export function sectionBody(markdown, key) {
   return out;
 }
 
+/**
+ * 말투가 딱딱한지 숫자로 본다.
+ *
+ * 왜 필요한가: 첫 완성본의 나레이션이 "너무 딱딱하다"는 말을 들었다.
+ * 규칙만 바꿔 두면 다음에 AI가 슬그머니 다큐체로 돌아가도 **아무도
+ * 모른다** — 영상을 끝까지 들어보기 전에는. 그래서 센다.
+ *
+ * 두 가지만 본다. 둘 다 세기 쉽고, 둘 다 듣는 느낌에 직결된다.
+ *   - 문장이 긴가 (긴 문장은 읽어줄 때 숨이 차고 글처럼 들린다)
+ *   - 문장 끝이 글투인가 ("~했다"는 눈으로 읽는 말, "~했거든요"는 입으로 하는 말)
+ *
+ * 경고로만 낸다. 막지 않는다 — 말투는 주관이고, 잘못 막으면 그 실행에서
+ * 나오는 게 아무것도 없다. 사람이 읽고 판단할 수 있게 알려만 준다.
+ */
+/** 한 문장이 이보다 길면 "긴 문장"으로 센다. 프롬프트에 쓴 규칙과 같은 값이다. */
+export const LONG_SENTENCE_CHARS = 60;
+/** 긴 문장이 이 비율을 넘으면 알려준다. */
+export const LONG_SENTENCE_MAX_RATIO = 0.15;
+/** 입으로 하는 어미가 이 비율 아래면 알려준다. */
+export const SPOKEN_ENDING_MIN = 0.25;
+
+/** 입으로 하는 존댓말 어미. 이걸로 끝나면 말하는 느낌이 난다. */
+const SPOKEN_ENDINGS = /(거든요|더라고요|더군요|잖아요|니까요|는데요|까요|죠|군요|습니다|해요|예요|이에요|데요)[.!?…]*$/;
+/** 글로 쓰는 어미. 읽어주면 보고서처럼 들린다. */
+const WRITTEN_ENDINGS = /(이다|한다|했다|였다|된다|되었다|있다|없다|아니다|것이다|셈이다)[.!?…]*$/;
+
+export function toneStats(narration) {
+  const sentences = String(narration || '')
+    .split(/(?<=[.!?…])\s+/)
+    .map((x) => x.trim())
+    .filter((x) => x.length > 1);
+  if (!sentences.length) {
+    return { sentences: 0, avgChars: 0, spokenRatio: 0, longRatio: 0, long: 0, written: 0, longest: 0 };
+  }
+
+  const total = sentences.reduce((sum, x) => sum + x.length, 0);
+  const spoken = sentences.filter((x) => SPOKEN_ENDINGS.test(x)).length;
+  const written = sentences.filter((x) => WRITTEN_ENDINGS.test(x)).length;
+  const long = sentences.filter((x) => x.length > LONG_SENTENCE_CHARS).length;
+  return {
+    sentences: sentences.length,
+    avgChars: Math.round((total / sentences.length) * 10) / 10,
+    spokenRatio: Math.round((spoken / sentences.length) * 100) / 100,
+    longRatio: Math.round((long / sentences.length) * 100) / 100,
+    long,
+    written,
+    longest: Math.max(...sentences.map((x) => x.length)),
+  };
+}
+
 const GREETING_PATTERNS = [
   /안녕하세요/,
   /여러분/,
@@ -384,6 +474,24 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   // 목표 길이에서 얼마나 벗어났는지로 본다. 예전에는 2.5분·6분으로 숫자를
   // 박아놨는데, 기본 길이를 8분으로 올리면서 8분짜리가 전부 "깁니다" 경고를
   // 달고 나왔다. 고정 숫자는 기본값이 바뀌는 순간 틀린다.
+  // 말투가 딱딱한지 본다. 막지 않고 알려만 준다.
+  const tone = toneStats(narration);
+  if (tone.sentences) {
+    if (tone.longRatio > LONG_SENTENCE_MAX_RATIO) {
+      warnings.push(
+        `긴 문장이 많습니다 (${LONG_SENTENCE_CHARS}자 넘는 문장 ${tone.long}개 / ` +
+          `${tone.sentences}문장, 평균 ${tone.avgChars}자, 가장 긴 것 ${tone.longest}자). ` +
+          `읽어주면 숨이 차고 글처럼 들립니다. 둘로 쪼개 주세요.`
+      );
+    }
+    if (tone.spokenRatio < SPOKEN_ENDING_MIN) {
+      warnings.push(
+        `말투가 딱딱합니다 (입으로 하는 어미 ${Math.round(tone.spokenRatio * 100)}%, ` +
+          `"~했다" 같은 글투 ${tone.written}문장). "~거든요" "~잖아요" 쪽으로 바꿔 주세요.`
+      );
+    }
+  }
+
   const floor = targetMinutes * 0.6;
   const ceiling = targetMinutes * 1.35;
   if (estMinutes < floor) {
@@ -428,6 +536,7 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
       targetMinutes,
       hookChars,
       tagCounts,
+      tone,
       sectionsFound: foundOrder.length,
       sectionsExpected: SECTIONS.length,
     },
