@@ -2888,6 +2888,69 @@ await asyncTest('대본 규칙이 구어체와 궁금증을 요구한다', async
   assert.ok(!SCRIPT_SYSTEM.includes('차분한 다큐멘터리 나레이션'), '다큐체 지시가 남아 있습니다');
 });
 
+// 훅 길이.
+//
+// 첫 구어체 대본의 훅이 141자(약 26초)로 나왔다. 프롬프트에 **길이를 아예
+// 적지 않았기 때문**이다. 예시만 주고 숫자를 안 주면 AI 는 길게 쓴다.
+await asyncTest('프롬프트와 검사가 같은 훅 길이를 본다', async () => {
+  const { buildScriptPrompt, validateScript, HOOK_CHARS_TARGET, HOOK_CHARS_MAX } =
+    await import('../src/script/write.mjs');
+
+  assert.ok(HOOK_CHARS_TARGET < HOOK_CHARS_MAX, '목표가 상한보다 커서는 안 됩니다');
+  assert.ok(HOOK_CHARS_MAX <= 90, `상한 ${HOOK_CHARS_MAX}자는 첫 10초에 못 들어갑니다`);
+
+  // 숫자를 프롬프트에 **직접** 적어야 한다. 예시만으로는 AI 가 길게 쓴다.
+  const prompt = buildScriptPrompt({ title: '시험' }, { targetMinutes: 8 });
+  assert.ok(prompt.includes(`${HOOK_CHARS_TARGET}자 안팎`), '프롬프트에 목표 길이가 없습니다');
+  assert.ok(prompt.includes(`${HOOK_CHARS_MAX}자를 넘기지`), '프롬프트에 상한이 없습니다');
+
+  // 프롬프트의 예시가 옛 다큐체면 AI 를 그쪽으로 끌고 간다.
+  assert.ok(!prompt.includes('호텔에 들어왔습니다'), '예시가 옛 다큐체 그대로입니다');
+  assert.ok(/있었어요|거든요|습니다/.test(prompt), '예시가 비어 있습니다');
+});
+
+// 프롬프트가 "48자입니다"라고 적어 두고 실제로는 다른 길이면, AI 에게
+// 틀린 기준을 주는 것이다. 세어서 맞춘다.
+await asyncTest('프롬프트 예시에 적은 글자 수가 실제와 같다', async () => {
+  const { buildScriptPrompt } = await import('../src/script/write.mjs');
+  const { countNarrationChars } = await import('../src/narration.mjs');
+  const prompt = buildScriptPrompt({ title: '시험' }, { targetMinutes: 8 });
+
+  // 예시는 따옴표로 묶인 두 줄이다. 그 뒤에 (N자입니다) 가 온다.
+  const claimed = /\((\d+)자입니다/.exec(prompt);
+  assert.ok(claimed, '예시 길이를 적어두지 않았습니다');
+  const quoted = /"([\s\S]*?)"/.exec(prompt.slice(prompt.indexOf('이런 식입니다')));
+  assert.ok(quoted, '예시 문장을 찾지 못했습니다');
+  const real = countNarrationChars(quoted[1].replace(/\s+/g, ' '));
+  assert.equal(
+    Number(claimed[1]), real,
+    `프롬프트는 ${claimed[1]}자라고 적었는데 실제로는 ${real}자입니다`
+  );
+});
+
+// 길면 알려주고, 알맞으면 조용해야 한다. 잘못 잡으면 좋은 대본이 경고를 단다.
+await asyncTest('긴 훅은 알려주고 짧은 훅은 통과시킨다', async () => {
+  const { validateScript, SECTIONS, HOOK_CHARS_MAX } = await import('../src/script/write.mjs');
+  const body = (hook) =>
+    SECTIONS.map((sec) =>
+      `## [${sec.key}] ${sec.label}\n\n[FACT] ${sec.key === 'HOOK' ? hook : '가'.repeat(200)}\n`
+    ).join('\n');
+
+  const 긴훅 =
+    '신분증에는 1932년생이라고 적혀 있었다고 해요. 그런데 그걸 가진 사람은 청년이었습니다. ' +
+    '2006년 4월, 키이우에서 있었다고 전해지는 이야기예요. 영어권에서는 가장 설득력 있는 ' +
+    '시간여행자 이야기라고 부르기도 했거든요.';
+  const 짧은훅 = '신분증에는 1932년생이라고 적혀 있었어요. 그런데 그걸 들고 있던 사람은, 스물몇 살짜리 청년이었습니다.';
+
+  const long = validateScript(body(긴훅), { targetMinutes: 8 });
+  const short = validateScript(body(짧은훅), { targetMinutes: 8 });
+  const hookWarn = (r) => r.warnings.filter((w) => w.startsWith('HOOK이'));
+
+  assert.equal(hookWarn(long).length, 1, `긴 훅을 못 잡습니다:\n${long.warnings.join('\n')}`);
+  assert.equal(hookWarn(short).length, 0, `짧은 훅을 잘못 잡습니다:\n${short.warnings.join('\n')}`);
+  assert.ok(hookWarn(long)[0].includes('초'), '몇 초인지 알려줘야 고칠 수 있습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

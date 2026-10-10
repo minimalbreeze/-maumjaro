@@ -30,6 +30,22 @@ export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
 export const DEFAULT_MINUTES = 8;
 
 /**
+ * 훅 길이.
+ *
+ * 첫 완성본의 훅이 141자(약 26초)로 나왔다. 프롬프트에 **길이를 아예 적지
+ * 않았기 때문**이다. 예시만 보여주고 숫자를 안 주면 AI는 길게 쓴다.
+ *
+ * 330자/분 기준으로 10초가 55자다(NARRATION_CHARS_PER_MINUTE). Iapetus 로
+ * 실제 잰 값은 317자/분이었으니 거의 같다.
+ *
+ * **이 숫자를 프롬프트와 검사가 함께 본다.** 두 곳에 따로 적으면 한쪽만
+ * 고치고 끝나서 어긋난다 — 이 저장소에서 이미 두 번 겪은 일이다.
+ */
+export const HOOK_CHARS_TARGET = 55;
+/** 이보다 길면 알려준다. 약 14초. */
+export const HOOK_CHARS_MAX = 75;
+
+/**
  * 대본 흐름 (기획서 5번) + 고유 해석 섹션.
  *
  * 'OUR_READING'이 기획서에 없는 항목이다. 위에 적은 정책 대응으로 넣었다.
@@ -279,10 +295,18 @@ export function buildScriptPrompt(item, { targetMinutes = DEFAULT_MINUTES } = {}
   lines.push('');
   lines.push('━━━ 첫 10초 ━━━');
   lines.push('HOOK은 가장 중요합니다. 인사말·채널 소개·"오늘은" 같은 말을 쓰지 않고');
-  lines.push('첫 문장부터 사건 안에 들어갑니다. 이런 식입니다:');
+  lines.push('첫 문장부터 사건 안에 들어갑니다.');
   lines.push('');
-  lines.push('  "1987년, 한 남자가 호텔에 들어왔습니다.');
-  lines.push('   다음날 직원이 CCTV를 확인하다 이상한 사실을 발견합니다."');
+  lines.push(`**길이: 2~3문장, 전체 ${HOOK_CHARS_TARGET}자 안팎. 길어도 ${HOOK_CHARS_MAX}자를 넘기지 않습니다.**`);
+  lines.push('첫 10초에 들어가야 하기 때문입니다. 여기서 길어지면 사람들이 나갑니다.');
+  lines.push('뒷이야기는 다음 섹션에서 하면 됩니다. 훅에 다 담으려고 하지 마세요.');
+  lines.push('');
+  lines.push('이런 식입니다:');
+  lines.push('');
+  lines.push('  "신분증에는 1932년생이라고 적혀 있었어요.');
+  lines.push('   그런데 그걸 들고 있던 사람은, 스물몇 살짜리 청년이었습니다."');
+  lines.push('');
+  lines.push('(48자입니다. 한 장면만 보여주고 바로 끊습니다.)');
   lines.push('');
   lines.push('대본 외의 설명은 쓰지 마세요. 대본만 출력합니다.');
 
@@ -522,8 +546,11 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   if (hookChars === 0) {
     // 경고가 아니라 오류다. 훅 없는 영상은 아무도 안 본다.
     errors.push('HOOK 섹션에 나레이션이 없습니다. 첫 10초가 이 채널에서 가장 중요합니다.');
-  } else if (hookChars > 120) {
-    warnings.push(`HOOK이 ${hookChars}자입니다. 첫 10초면 약 55자가 적당합니다.`);
+  } else if (hookChars > HOOK_CHARS_MAX) {
+    warnings.push(
+      `HOOK이 ${hookChars}자입니다 (약 ${(minutesForChars(hookChars) * 60).toFixed(0)}초). ` +
+        `첫 10초에 들어가려면 ${HOOK_CHARS_TARGET}자 안팎이어야 합니다. 뒷이야기는 다음 섹션으로 넘기세요.`
+    );
   }
 
   return {
