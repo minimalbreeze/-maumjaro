@@ -339,6 +339,8 @@ async function processCluster(cluster, ctx) {
   log.info(`    제목: ${article.title}`);
   log.info(`    본문 ${article.body.length}자 · 소제목 ${lint.headings.length}개`);
   if (!lint.ok) for (const i of lint.issues) log.warn(`    양식 확인 필요: ${i}`);
+  // notes 는 되돌릴 일이 아니라 알려만 줄 것 (분량 등). 경고로 찍지 않는다.
+  for (const n of lint.notes || []) log.info(`    참고: ${n}`);
 
   // ⑤ 배경·원리·비교가 빠졌으면 그 섹션만 받아서 끼운다.
   //

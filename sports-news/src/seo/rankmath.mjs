@@ -23,11 +23,19 @@ const KEY_IN = (text, kw) => {
 };
 
 /**
- * 키워드 밀도를 Rank Math와 같은 방식으로 센다.
+ * 키워드 밀도를 센다. **이제는 "너무 많이 썼는지"만 보려고 센다.**
  *
- * Rank Math는 본문을 공백으로 끊어 단어 수를 세고, 대표 키워드가 몇 번
- * 나오는지로 밀도를 계산한다. 권장 구간은 1~2.5%다. 1.25% 아래면 "키워드가
- * 부족하다"고 점수를 깎고, 2.5%를 넘으면 반대로 남용으로 본다.
+ * 2026-10-10 에 구글 "검색엔진 최적화(SEO) 기본 가이드"의 '무시해야 할 사항'
+ * 절을 직접 읽고 하한을 걷어냈다. 문서가 이렇게 쓰여 있다.
+ *
+ *   "같은 단어를 과도하게 반복하면 ... 유인 키워드 반복은 Google의 스팸
+ *    정책에 위반됩니다."
+ *   "단어를 다르게 작성하면(반복되지 않도록 자연스럽게 작성) 키워드를 더
+ *    많이 사용하기 때문에 Google 검색에 표시될 가능성이 더 높습니다."
+ *
+ * 우리는 그동안 1.25% 하한을 **강제**했다. 구글이 스팸으로 본다고 적어 둔
+ * 쪽으로 글을 밀고 있었던 것이다. 지금 기준은 하나뿐이다 — 대표 키워드가
+ * 본문에 그대로 **한 번은** 나오고, **2.5%를 넘지 않는다.** 그 사이는 자유다.
  *
  * 마크다운 기호와 소제목 표시는 빼고 센다 — 사람이 읽는 글이 기준이다.
  */
@@ -49,10 +57,12 @@ export function keywordDensity(body, keyword) {
 /**
  * 목표 분량에서 대표 키워드를 몇 번 써야 1.25%가 되는지 알려준다.
  *
- * 기준은 분량 상한(5,500자)으로 잡는다. 3,500자로 잡았더니 실제로 4,159자짜리
- * 글이 나와 밀도가 1.07%에 그쳤다. 글이 길어질수록 같은 횟수로는 밀도가 떨어지므로
- * 가장 긴 경우를 기준으로 잡아야 어느 길이로 나와도 1.25% 아래로 떨어지지 않는다.
- * 짧게 나와도 2.5%를 넘지 않는 선이다.
+ * **더 이상 지시서에 쓰지 않는다 (2026-10-10).** 구글 문서가 키워드 반복을
+ * 스팸 정책 위반으로 명시하고 있어서, 이 숫자를 작성 지시로 넘기는 것을
+ * 멈췄다. 함수는 남겨 둔다 — 어떤 글의 반복이 과한지 거꾸로 가늠할 때
+ * 상한의 눈금으로 쓸 수 있고, 지우면 기존 테스트가 함께 사라진다.
+ *
+ * 기준은 분량 상한(5,500자)으로 잡는다. 한국어는 공백 기준 한 단어가 대략 3.5자다.
  */
 export function targetKeywordCount(targetChars = 5500) {
   // 한국어는 공백 기준 한 단어가 대략 3.5자다.
@@ -131,13 +141,16 @@ export function checkRankMath(a) {
       fix: '소제목 중 하나에 대표 키워드를 넣으세요' },
     { id: 'kw-alt', label: '이미지 alt에 키워드', ok: (a.imageAlts || []).some((t) => KEY_IN(t, kw)), weight: 2,
       fix: '이미지 대체텍스트에 대표 키워드를 넣으세요' },
-    { id: 'kw-density', label: `키워드 밀도 ${dens.density.toFixed(2)}% (${dens.count}회 / ${dens.words}단어)`,
-      ok: dens.density >= 1.25 && dens.density <= 2.5, weight: 3,
+    // 밀도는 상한만 본다. 하한을 강제하면 구글이 스팸으로 보는 쪽으로 글이 밀린다.
+    { id: 'kw-density', label: `키워드 반복 ${dens.count}회 / ${dens.words}단어 (${dens.density.toFixed(2)}%)`,
+      ok: dens.count >= 1 && dens.density <= 2.5, weight: 2,
       fix: dens.density > 2.5
-        ? '대표 키워드가 너무 자주 나옵니다. 2.5% 아래로 줄이세요'
-        : `대표 키워드를 ${Math.max(0, Math.ceil(dens.words * 0.0125) - dens.count)}회 더 넣어 1.25% 이상으로 올리세요` },
-    { id: 'length', label: `본문이 충분히 길다 (${textOnly.length}자)`, ok: textOnly.length >= 3000, weight: 3,
-      fix: '본문을 3,000자 이상으로 늘리세요' },
+        ? '대표 키워드가 너무 자주 나옵니다. 구글은 "유인 키워드 반복"을 스팸 정책 위반으로 봅니다 — 2.5% 아래로 줄이고 나머지는 다른 표현으로 바꿔 쓰세요'
+        : '대표 키워드가 본문에 그대로 한 번도 나오지 않습니다. 첫 문단에 한 번 쓰세요' },
+    // 분량은 권고다. 구글: "콘텐츠 길이 자체는 순위 결정과 관련 없습니다."
+    { id: 'length', label: `본문 ${textOnly.length}자 (공백 제외 · 권고 3,000자, 점수에는 넣지 않는다)`,
+      ok: true, weight: 0, 정보: true,
+      fix: '' },
     { id: 'headings', label: `소제목이 충분하다 (${headings.length}개)`, ok: headings.length >= 6, weight: 2,
       fix: '소제목을 6개 이상 두세요' },
     { id: 'faq', label: '자주 묻는 질문 섹션이 있다', ok: hasFaq, weight: 2,
@@ -148,12 +161,14 @@ export function checkRankMath(a) {
       fix: '내 사이트의 다른 글로 가는 링크를 하나 넣으세요' },
   ];
 
-  const total = items.reduce((s, i) => s + i.weight, 0);
-  const got = items.filter((i) => i.ok).reduce((s, i) => s + i.weight, 0);
+  // 정보 항목(분량)은 점수에 넣지 않는다. 보여만 주고 깎지 않는다.
+  const 채점대상 = items.filter((i) => !i.정보);
+  const total = 채점대상.reduce((s, i) => s + i.weight, 0);
+  const got = 채점대상.filter((i) => i.ok).reduce((s, i) => s + i.weight, 0);
   return {
     items,
     score: Math.round((got / total) * 100),
-    missing: items.filter((i) => !i.ok),
+    missing: 채점대상.filter((i) => !i.ok),
   };
 }
 
@@ -248,11 +263,17 @@ export function chooseFocusKeyword(body, candidates = []) {
     .sort((a, b) => {
       // 일반명사는 밀도가 아무리 높아도 뒤로 민다. 1페이지에 갈 수 없는 말이다.
       if (a.일반 !== b.일반) return a.일반 ? 1 : -1;
-      // 1.25~2.5% 안에 드는 것이 최우선. 그중에서는 긴 쪽(더 구체적인 쪽)을 쓴다.
-      const inRange = (x) => x.density >= 1.25 && x.density <= 2.5;
-      if (inRange(a) !== inRange(b)) return inRange(a) ? -1 : 1;
-      if (inRange(a) && inRange(b)) return b.keyword.length - a.keyword.length;
-      // 아무도 범위에 못 들면 밀도가 높은 쪽.
+      // ① 본문에 그대로 나오기는 하는가. Rank Math 는 있는 그대로 찾는다.
+      const 나오나 = (x) => x.count >= 1;
+      if (나오나(a) !== 나오나(b)) return 나오나(a) ? -1 : 1;
+      // ② 2.5%를 넘는 것은 뒤로. 구글이 "유인 키워드 반복"으로 보는 구간이다.
+      const 과하다 = (x) => x.density > 2.5;
+      if (과하다(a) !== 과하다(b)) return 과하다(a) ? 1 : -1;
+      // ③ 둘 다 멀쩡하면 긴 쪽 = 더 구체적인 쪽. 밀도 하한은 보지 않는다
+      //    (2026-10-10, 구글 '무시해야 할 사항'). 예전에는 1.25~2.5% 구간을
+      //    최우선으로 삼아서, 더 구체적인 키워드가 밀도 때문에 밀려났다.
+      if (나오나(a) && 나오나(b)) return b.keyword.length - a.keyword.length;
+      // ④ 아무도 본문에 안 나오면 밀도가 높은 쪽(= 0에 가까운 것들 중 나은 쪽).
       return b.density - a.density;
     });
 

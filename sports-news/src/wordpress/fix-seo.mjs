@@ -79,9 +79,16 @@ export async function fixPostSeo(postId, { apply = true } = {}) {
   if (껍데기) {
     result.reason = '키워드에 따옴표·괄호가 붙어 있습니다';
   } else {
-    // 지금 것이 이미 권장 구간 안이면 건드리지 않는다.
-    if (before.density >= 1.25 && before.density <= 2.5) return result;
-    if (picked.density <= before.density) return result;
+    // 지금 키워드가 본문에 그대로 나오고 과하게 반복되지도 않으면 건드리지 않는다.
+    //
+    // 2026-10-10: 예전 조건은 "밀도 1.25~2.5% 안이면 그대로"였다. 밀도 하한을
+    // 걷어내면서(구글 '무시해야 할 사항' — 키워드 반복은 스팸 정책 위반) 기준도
+    // 바꿨다. Rank Math 가 대표 키워드를 "있는 그대로" 찾으므로 **한 번은 나와야**
+    // 하고, 2.5%를 넘으면 반대로 과하다. 그 사이면 멀쩡한 것이다.
+    const 멀쩡하다 = before.count >= 1 && before.density <= 2.5;
+    if (멀쩡하다) return result;
+    // 바꿀 값도 본문에 안 나오면 바꿔봐야 나아지지 않는다.
+    if (picked.count < 1) return result;
   }
 
   if (apply) {

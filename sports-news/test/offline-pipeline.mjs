@@ -17,7 +17,7 @@ import { resolveCategory, normalizeTags } from '../src/wordpress/taxonomy.mjs';
 import { lintArticle, splitTitleAndBody, AI_TELLS } from '../src/ai/write.mjs';
 import { extractFaq, faqSchemaBlock } from '../src/seo/faq-schema.mjs';
 import { imageHtml } from '../src/images/embed.mjs';
-import { keywordDensity, targetKeywordCount } from '../src/seo/rankmath.mjs';
+import { keywordDensity, targetKeywordCount, checkRankMath } from '../src/seo/rankmath.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -174,28 +174,39 @@ ${'라운드마다 흐름이 바뀌는 코스라 마지막 홀까지 순위를 �
 const lintGood = lintArticle(good);
 check('올바른 글은 양식 검사를 통과한다', () => assert.ok(lintGood.ok, lintGood.issues.join(' / ')));
 check('소제목을 모두 인식한다', () => assert.equal(lintGood.headings.length, 7));
-check('짧은 글은 작성 직후에 걸린다', () => {
-  // 채점표와 같은 기준(공백 제외 3,000자)으로 센다. 기준이 다르면 lint 는
-  // 통과하는데 SEO 점수에서 떨어진다 — 글 7769 가 그랬다.
+// ── 분량은 권고다 (2026-10-10) ────────────────────────────
+// 구글 "검색엔진 최적화(SEO) 기본 가이드" — '무시해야 할 사항':
+//   "콘텐츠 길이 자체는 순위 결정과 관련 없습니다."
+// 예전에는 공백 제외 3,000자 미달을 issues 로 올려 글을 되돌렸다. 그래서 할
+// 말이 끝난 글에 군더더기를 붙이는 쪽으로 글이 밀렸다. 이제는 notes 로만 간다.
+check('짧은 글을 되돌리지 않는다 — notes 로만 알린다', () => {
   const 짧은글 = { title: '제목', body: '## 📌 배경과 원리, 비교\n\n' + '가나다라마바사아자차. '.repeat(100) };
   const r = lintArticle(짧은글);
-  const 분량문제 = r.issues.filter((i) => /짧습니다/.test(i));
-  assert.equal(분량문제.length, 1, r.issues.join(' / '));
-  assert.match(분량문제[0], /공백 제외/, 분량문제[0]);
+  assert.equal(r.issues.filter((i) => /짧습니다/.test(i)).length, 0,
+    `분량이 아직 issues 에 있습니다: ${r.issues.join(' / ')}`);
+  const 참고 = (r.notes || []).filter((n) => /짧습니다/.test(n));
+  assert.equal(참고.length, 1, JSON.stringify(r.notes));
+  assert.match(참고[0], /공백 제외/, 참고[0]);
+  // 숫자를 보고 길이를 늘리게 두지 않는다. 늘리지 말라는 말이 같이 있어야 한다.
+  assert.match(참고[0], /늘리지는/, 참고[0]);
 });
 
 check('분량 미달이 비싼 보완을 부르지는 않는다', () => {
-  // 보완은 ⑤ 섹션이 빠졌을 때만 돈다(AI를 한 번 더 부른다). 분량이 조금 모자란
-  // 것만으로 매번 다시 부르면 한 편 값이 올라간다. main.mjs 의 실제 트리거
-  // 조건을 꺼내 분량 문구에 대 본다.
+  // 보완은 ⑤ 섹션이 빠졌을 때만 돈다(AI를 한 번 더 부른다). 분량이 issues 에서
+  // 빠졌으므로 트리거에 닿을 길 자체가 없어야 한다 — 양쪽을 다 확인한다.
   const src = fs.readFileSync(path.join(HERE, '../src/main.mjs'), 'utf8');
   const m = /const 수명문제 = lint\.issues\.filter\(\(i\) => (\/.+?\/)\.test\(i\)\);/.exec(src);
   assert.ok(m, '보완 트리거 조건을 못 찾았습니다');
   const 트리거 = new RegExp(m[1].slice(1, -1));
-  const 분량문구 = lintArticle({ title: '제목', body: '## 📌 배경과 원리, 비교\n\n짧다.' })
-    .issues.find((i) => /본문이 짧습니다/.test(i));
-  assert.ok(분량문구, '분량 문구가 안 나왔습니다');
-  assert.ok(!트리거.test(분량문구), `분량 미달이 보완을 부릅니다: ${m[1]}`);
+  const r = lintArticle({ title: '제목', body: '## 📌 배경과 원리, 비교\n\n짧다.' });
+  // 분량 문구("본문 N자 (공백 제외)")가 issues 에 아예 없어야 한다.
+  // ⑤ 섹션이 비어서 나는 "섹션이 너무 짧습니다" 는 별개이고, 그건 보완을
+  // 불러야 맞다 — 그래서 '공백 제외' 로 분량 문구만 골라 본다.
+  assert.ok(!r.issues.some((i) => /공백 제외/.test(i)),
+    `분량 미달이 보완을 부릅니다: ${m[1]} / ${r.issues.join(' / ')}`);
+  const 참고 = (r.notes || []).find((n) => /짧습니다/.test(n));
+  assert.ok(참고, '분량 참고 문구가 안 나왔습니다');
+  assert.ok(!트리거.test(참고), '참고 문구가 보완 트리거에 걸립니다');
 });
 
 
@@ -263,17 +274,29 @@ check('옵션을 제대로 읽는다', () => {
   assert.equal(a.limit, 3);
   assert.equal(a.fixture, 'x.json');
 });
-check('지시서 분량과 채점 기준이 같은 것을 가리킨다', () => {
-  // 지시서는 "공백 포함", 채점표는 "공백 제외"로 재던 탓에 지시를 지킨 글이
-  // 떨어졌다(글 7769: 공백 포함 3,651자 → 공백 제외 2,782자). 기준이 어긋나면
-  // 작성자가 아무리 지켜도 점수가 깎인다.
+check('지시서가 분량을 권고로만 말한다', () => {
+  // 구글: "콘텐츠 길이 자체는 순위 결정과 관련 없습니다." 지시서가 분량을
+  // 통과 조건처럼 말하면, 채점표에서 뺀 의미가 없어진다 — 작성 단계에서
+  // 이미 군더더기가 붙어 나온다.
   const warp = fs.readFileSync(path.join(HERE, '../config/style-warp.md'), 'utf8');
-  const m = /본문 \*\*([\d,]+)~([\d,]+)자\*\*\(공백 포함\)/.exec(warp);
-  assert.ok(m, '지시서에서 분량 규칙을 못 찾았습니다');
-  const 하한 = Number(m[1].replace(/,/g, ''));
-  // 한국어는 공백이 글자 수의 4분의 1쯤 된다. 공백 제외 3,000자를 채우려면
-  // 공백 포함 하한이 3,750자 이상이어야 한다.
-  assert.ok(하한 >= 3750, `지시서 하한 ${하한}자 — 공백 제외 3,000자를 채울 수 없습니다`);
+  const m = /본문 \*\*([\d,]+)~([\d,]+)자\*\*\(공백 포함\)를 \*\*권고\*\*한다/.exec(warp);
+  assert.ok(m, '지시서 분량 규칙이 권고로 적혀 있지 않습니다');
+  assert.match(warp, /콘텐츠 길이 자체는 순위 결정과\s*\n?>?\s*관련 없습니다/,
+    '구글 문서의 근거가 지시서에 안 적혀 있습니다');
+  assert.match(warp, /## 분량 — 권고다\. 하한이 아니다/, '분량 절 제목이 아직 하한처럼 읽힙니다');
+});
+
+check('채점표가 분량으로 점수를 깎지 않는다', () => {
+  // 같은 글을 분량만 다르게 해서 점수가 같은지 본다.
+  const 짧게 = { title: 'a', seoTitle: 'a', body: '본문', metaDescription: 'a', focusKeyword: '', slug: '' };
+  const 길게 = { ...짧게, body: '본문 '.repeat(4000) };
+  const a = checkRankMath(짧게);
+  const b = checkRankMath(길게);
+  const 분량항목 = a.items.find((i) => i.id === 'length');
+  assert.ok(분량항목, 'length 항목이 사라졌습니다 — 보여는 줘야 합니다');
+  assert.equal(분량항목.정보, true, '분량이 아직 채점 대상입니다');
+  assert.ok(!a.missing.some((i) => i.id === 'length'), '분량이 missing 에 올라옵니다');
+  assert.equal(a.score, b.score, `분량만 달라도 점수가 다릅니다 (${a.score} vs ${b.score})`);
 });
 
 check('샘플 날짜를 지금 기준으로 옮긴다', async () => {
@@ -449,15 +472,15 @@ check('목표 횟수는 분량에 비례한다', () => {
   assert.ok(targetKeywordCount(4200) <= 20);
 });
 
-// 실제로 당한 일: 3,500자를 기준으로 목표를 잡았는데 글이 4,159자로 나와
-// 밀도가 1.07%에 그쳤다. 분량이 규격(3,000~4,500자) 어디에 떨어지든
-// 1.25~2.5% 안에 들어야 한다.
-check('규격 분량 어디에 떨어져도 권장 구간 안에 든다', () => {
+// 밀도는 **상한만** 본다 (2026-10-10). 구글 '무시해야 할 사항':
+//   "유인 키워드 반복은 Google의 스팸 정책에 위반됩니다."
+// 하한을 강제하던 시절의 목표 횟수가 상한을 넘지는 않는지만 남겨 둔다.
+check('목표 횟수가 스팸 구간(2.5%)을 넘지 않는다', () => {
   const n = targetKeywordCount();
   for (const chars of [3000, 3500, 4000, 4500]) {
     const words = Math.round(chars / 3.5);
     const density = (n / words) * 100;
-    assert.ok(density >= 1.25, `${chars}자에서 ${density.toFixed(2)}% — 너무 낮습니다`);
+    assert.ok(density <= 2.5, `${chars}자에서 ${density.toFixed(2)}% — 구글이 스팸으로 봅니다`);
     assert.ok(density <= 2.5, `${chars}자에서 ${density.toFixed(2)}% — 남용입니다`);
   }
 });
