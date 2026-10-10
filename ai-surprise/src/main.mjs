@@ -34,6 +34,8 @@ import {
   DEFAULT_MAX_USD as DEFAULT_TTS_MAX_USD,
 } from './audio/narrate.mjs';
 import { SAMPLE_TEXT, pickSampleVoices, sampleFileName } from './audio/sample.mjs';
+import { makeUploadPack, finishDescription } from './upload/pack.mjs';
+import { thumbnailArgs, pickThumbnailMoments } from './upload/thumbnail.mjs';
 import {
   createClient as createTtsClient,
   estimateUsd as estimateTtsUsd,
@@ -59,6 +61,7 @@ import {
   loadContent,
   INBOX_DIR,
   contentPath,
+  saveUploadPack,
 } from './store.mjs';
 
 function parseArgs(argv) {
@@ -455,6 +458,117 @@ async function cmdScenes(flags) {
  *  - 비용 상한이 걸려 있고, 넘으면 멈춘다
  *  - --dry-run 으로 몇 장에 얼마인지 먼저 볼 수 있다 (비용 0원)
  */
+/**
+ * 올릴 때 필요한 것들을 만든다 (제목·썸네일·설명문·태그).
+ *
+ * 썸네일은 **완성된 영상에서 프레임을 떼어** 글자를 얹는다. 따로 그리면
+ * "영상에 없는 장면"이 되기 쉽고, 그건 유튜브가 영상을 내리는 사유다.
+ */
+async function cmdUpload(flags) {
+  const id = String(flags.id || '').padStart(3, '0');
+  if (!flags.id) {
+    log.error('어떤 편의 올릴 거리를 만들지 알려주세요.');
+    log.info('  node src/main.mjs upload --id=001');
+    process.exit(1);
+  }
+  requireApiKey();
+
+  const loaded = loadContent(id);
+  if (!loaded?.script) {
+    log.error(`content/${id} 에 대본이 없습니다. 제목은 대본을 읽고 짓습니다.`);
+    process.exit(1);
+  }
+  const videoPath = contentPath(id, 'video', 'final.mp4');
+  const hasVideo = fs.existsSync(videoPath);
+
+  log.section(`📤 올릴 거리 만들기  |  content/${id}  |  모델 ${MODELS.script}`);
+  const narration = loadNarration(id);
+  const minutes = narration?.total_seconds ? narration.total_seconds / 60 : 0;
+  const pack = await makeUploadPack(loaded.research, {
+    scriptMarkdown: loaded.script,
+    minutes: Math.round(minutes * 10) / 10,
+  });
+
+  log.ok(`제목 후보 ${pack.titles.length}개` + (pack.droppedTitles.length ? ` (${pack.droppedTitles.length}개는 걸러냄)` : ''));
+  for (const t of pack.titles) log.raw(`  · ${t.text}  (${t.text.length}자)`);
+  for (const t of pack.droppedTitles) log.warn(`거름: ${t.text} — ${t.problems.join(', ')}`);
+
+  // 설명문에 고지와 음악 출처는 **코드가** 붙인다. 부탁하지 않는다.
+  const description = finishDescription(pack.descriptionBody, {
+    track: narration?.bgm || null,
+    sources: loaded.research?.sources || [],
+  });
+  log.ok(`설명문 ${description.length}자, 태그 ${pack.tags.length}개`);
+
+  // ── 썸네일
+  let moments = [];
+  // 실제로 만들어진 썸네일만 기록한다. 안내 문서가 없는 파일을 가리키면
+  // 효성님이 폴더를 열어 보고 나서야 없다는 걸 알게 된다.
+  let madeThumbs = [];
+  if (!hasVideo) {
+    log.warn(`${videoPath} 가 없어 썸네일을 만들지 않습니다. 영상을 먼저 만들어 주세요.`);
+  } else if (!pack.thumbnails.length) {
+    log.warn('규격을 통과한 썸네일 문구가 없어 썸네일을 만들지 않았습니다.');
+    for (const t of pack.droppedThumbs) log.info(`· ${t.problems.join(', ')}`);
+  } else {
+    const scenesFile = contentPath(id, 'scenes.json');
+    const saved = fs.existsSync(scenesFile) ? JSON.parse(fs.readFileSync(scenesFile, 'utf8')) : { scenes: [] };
+    const scenes = narration ? applyTimings(saved.scenes || [], narration.timings) : saved.scenes || [];
+    moments = pickThumbnailMoments(scenes, { count: pack.thumbnails.length });
+    // 뽑을 지점보다 문구가 많으면 문구를 줄인다. 지점이 없으면 at 이 0이
+    // 되고, 0초는 보통 까맣다 — 까만 썸네일을 만들어 내놓지 않는다.
+    const copies = pack.thumbnails.slice(0, moments.length);
+    madeThumbs = copies;
+    if (copies.length < pack.thumbnails.length) {
+      log.info(`영상이 짧아 썸네일을 ${copies.length}장만 만듭니다.`);
+    }
+    const dir = contentPath(id, 'upload');
+    fs.mkdirSync(dir, { recursive: true });
+    for (const [i, copy] of copies.entries()) {
+      const at = moments[i].at;
+      // 글자는 파일로 넘긴다 — 한글과 따옴표를 명령줄에 직접 넣으면 깨진다.
+      const f1 = path.join(dir, `.line1-${i}.txt`);
+      // 아랫줄이 비어 있으면 파일을 만들지 않는다. 빈 파일을 drawtext 에
+      // 넘기면 ffmpeg 가 거기서 죽는다.
+      const f2 = copy.line2 ? path.join(dir, `.line2-${i}.txt`) : null;
+      fs.writeFileSync(f1, copy.line1, 'utf8');
+      if (f2) fs.writeFileSync(f2, copy.line2, 'utf8');
+      try {
+        await runFfmpegArgs(
+          thumbnailArgs({
+            videoPath,
+            seconds: at,
+            line1: copy.line1,
+            line2: copy.line2 || null,
+            line1File: f1,
+            line2File: f2,
+            outputPath: path.join(dir, `thumb-${i + 1}.jpg`),
+          })
+        );
+        log.ok(`thumb-${i + 1}.jpg — "${copy.line1} / ${copy.line2}" (${at}초 지점)`);
+      } catch (err) {
+        log.fail(`thumb-${i + 1}.jpg 실패`, err);
+      }
+      fs.rmSync(f1, { force: true });
+      if (f2) fs.rmSync(f2, { force: true });
+    }
+  }
+
+  const dir = saveUploadPack(id, {
+    titles: pack.titles,
+    droppedTitles: pack.droppedTitles,
+    thumbnails: madeThumbs,
+    droppedThumbs: pack.droppedThumbs,
+    description,
+    tags: pack.tags,
+    moments,
+  });
+  log.raw('');
+  log.ok(`저장: ${dir}`);
+  log.info('올릴 때는 이 폴더의 `올릴때-쓸것.md` 하나만 보면 됩니다.');
+  log.error('AI 합성 콘텐츠 체크는 설명문으로 대신할 수 없습니다. Studio 에서 따로 켜 주세요.');
+}
+
 /** 그 편의 샷 번호 목록. scenes.json 이 없으면 빈 목록. */
 function shotIdsOf(id) {
   try {
@@ -1297,6 +1411,9 @@ async function main() {
       return cmdImages(flags);
     case 'voice':
       return cmdVoice(flags);
+    case 'upload':
+      await cmdUpload(flags);
+      break;
     case 'video':
       return cmdVideo(flags);
     default:
@@ -1351,6 +1468,11 @@ async function main() {
       log.raw('  node src/main.mjs video --id=001 [--dry-run] [--no-shorts]');
       log.raw('      장면을 실제 영상 파일로 만듭니다. 쇼츠도 함께 자릅니다.');
       log.raw('      AI를 안 쓰므로 비용 0원입니다. --dry-run 은 계획만 세웁니다.');
+      log.raw('');
+      log.raw('  node src/main.mjs upload --id=001');
+      log.raw('      올릴 때 쓸 것들을 만듭니다 — 제목 후보, 썸네일 3장, 설명문, 태그.');
+      log.raw('      썸네일은 완성된 영상에서 떼어냅니다. 그래서 "영상에 없는 장면"이');
+      log.raw('      되지 않습니다. 영상을 먼저 만들어 두세요.');
       log.raw('');
       log.raw('  npm test');
       log.raw('      API 키 없이 돌아가는 테스트입니다.');

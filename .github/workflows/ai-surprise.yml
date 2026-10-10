@@ -30,6 +30,7 @@ on:
           - '소재 → 대본 → 장면 → 영상·쇼츠까지 만들기'
           - '진짜 그림까지 (이미지 생성 · 장당 돈이 나갑니다)'
           - '완성본 (그림 + 목소리 + 배경음악)'
+          - '올릴 거리만 만들기 (제목·썸네일·설명문 · 이어하기 번호 필요 · 약 $0.1)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
@@ -209,7 +210,7 @@ jobs:
       # 그런데 ffmpeg는 오류를 내지 않으므로, 영상을 눈으로 보기 전까지
       # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
       - name: ffmpeg와 한글 글꼴 설치
-        if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
+        if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리') }}
         # 실측 24초인 단계다. 한 번은 패키지 서버가 응답하지 않아 25분을
         # 멈춰 있었고, 그대로 두면 6시간을 돈다. 빨리 죽고 다시 도는 쪽이 낫다.
         timeout-minutes: 10
@@ -280,7 +281,25 @@ jobs:
             ''|*[!0-9.]*|*.*.*) echo "::error::돈 상한은 숫자여야 합니다: $IN_MAX_USD"; exit 1 ;;
           esac
 
+          # 어느 편을 다룰지 정한다. 이어하기면 그 편, 아니면 방금 만든 편.
+          # content 아이디는 0으로 채운 숫자라 사전순 마지막이 최신이다.
+          pick_id() {
+            if [ -n "$RESUME_ID" ]; then echo "$RESUME_ID"; return; fi
+            local last=''
+            for d in content/*/; do last="${d%/}"; last="${last#content/}"; done
+            echo "$last"
+          }
+
           case "$IN_MODE" in
+            *'올릴 거리'*)
+              if [ -z "$RESUME_ID" ]; then
+                echo "::error::'이어하기' 칸에 앞 실행 번호를 넣어 주세요. 그 편의 올릴 거리를 만듭니다."
+                exit 1
+              fi
+              echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
+              echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
+              node src/main.mjs upload --id="$RESUME_ID"
+              ;;
             *'대본만 다시 쓰기'*)
               if [ -z "$RESUME_ID" ]; then
                 echo "::error::'이어하기' 칸에 앞 실행 번호를 넣어 주세요. 그 편의 대본을 다시 씁니다."
@@ -313,6 +332,16 @@ jobs:
                 echo "자막과 장면 전환이 실제 음성 길이에 맞춰집니다. 40~60분 걸립니다."
               fi
               node src/main.mjs auto "${args[@]}"
+              # 영상까지 다 만들었으면 올릴 거리도 함께 만든다. 썸네일은
+              # 방금 만든 영상에서 떼어내므로 여기서 해야 맞다.
+              #
+              # 실패해도 실행을 죽이지 않는다. 영상은 이미 돈을 주고 만들었고,
+              # 올릴 거리는 upload 모드로 따로 다시 만들 수 있다.
+              up_id="$(pick_id)"
+              if [ -n "$up_id" ]; then
+                node src/main.mjs upload --id="$up_id" \
+                  || echo "::warning::올릴 거리 만들기에 실패했습니다. 영상은 그대로 있습니다. '올릴 거리만 만들기' 모드로 다시 만들 수 있습니다."
+              fi
               ;;
             *'그림'*)
               args+=("--scripts=$IN_SCRIPTS" "--minutes=$IN_MINUTES" "--scenes" "--images" "--video")
@@ -374,6 +403,12 @@ jobs:
           for f in content/*/scenes.json; do
             id="${f%/scenes.json}"; id="${id#content/}"
             echo "::group::🎬 장면 content/$id/scenes.json"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          for f in content/*/upload/올릴때-쓸것.md; do
+            id="${f%/upload/올릴때-쓸것.md}"; id="${id#content/}"
+            echo "::group::📤 올릴 때 쓸 것 content/$id"
             cat "$f"
             echo "::endgroup::"
           done

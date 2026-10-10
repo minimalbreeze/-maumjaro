@@ -2951,6 +2951,302 @@ await asyncTest('긴 훅은 알려주고 짧은 훅은 통과시킨다', async (
   assert.ok(hookWarn(long)[0].includes('초'), '몇 초인지 알려줘야 고칠 수 있습니다');
 });
 
+
+// ─────────────────────────────────────────────────────────────
+// 올릴 거리 — 제목·썸네일·설명문·태그 (Phase 6)
+// ─────────────────────────────────────────────────────────────
+//
+// 여기서 막아야 하는 것은 "제목이 심심한가"가 아니다. 그건 효성님이 보고
+// 고르면 된다. 코드가 막아야 하는 것은 **처벌이 삭제인 실수**다 —
+// 영상에 없는 것을 약속하는 제목, 화면 밖으로 나가는 썸네일 글자,
+// 빠진 AI 합성 고지.
+
+const {
+  TITLE_CHARS_MAX,
+  UPLOAD_SCHEMA,
+  filterCandidates,
+  finishDescription,
+  buildUploadPrompt,
+} = await import('../src/upload/pack.mjs');
+const {
+  THUMB_WIDTH,
+  THUMB_HEIGHT,
+  MAX_LINE_CHARS,
+  LINE_BOX,
+  layoutText,
+  thumbnailArgs,
+  pickThumbnailMoments,
+} = await import('../src/upload/thumbnail.mjs');
+
+test('두 줄이 어떤 길이여도 화면 안에 들어간다', () => {
+  // 처음에 아랫줄이 잘렸다. y 계산이 글자 상자 높이를 빼먹었기 때문이다.
+  // 눈으로 한 번 확인하는 것으로는 다음에 또 잘린다.
+  const cases = [
+    ['1958년 신분증', '2006년의 청년'],
+    ['가', '나'],
+    ['열세글자를다채운줄', '여기도열세글자를다'],
+    ['짧다', '여기만열세글자다아'],
+    ['한 줄만 있는 경우', null],
+  ];
+  for (const [a, b] of cases) {
+    const L = layoutText(a, b);
+    assert.ok(L.y1 >= L.bandY, `"${a}" 윗줄이 띠 위로 올라갔습니다 (y1=${L.y1}, bandY=${L.bandY})`);
+    assert.ok(L.bottom <= THUMB_HEIGHT, `"${a}/${b}" 가 ${L.bottom}px 로 화면(${THUMB_HEIGHT})을 넘습니다`);
+    if (b) assert.ok(L.y2 > L.y1, '아랫줄이 윗줄보다 위에 있습니다');
+  }
+});
+
+test('아랫줄이 윗줄보다 크지 않다', () => {
+  // 아랫줄이 더 크면 어디를 먼저 읽어야 할지 알 수 없다.
+  const L = layoutText('아주 긴 윗줄을 넣는다', '짧다');
+  assert.ok(L.size2 <= L.size1, `아랫줄(${L.size2})이 윗줄(${L.size1})보다 큽니다`);
+});
+
+test('글자 상자 높이를 1보다 크게 잡는다 (한글 받침)', () => {
+  // 1.0 으로 두면 받침이 아래 줄과 겹친다.
+  assert.ok(LINE_BOX > 1, '한글은 글자 크기보다 세로로 더 차지합니다');
+});
+
+test('썸네일 글자를 명령줄이 아니라 파일로 넘긴다', () => {
+  const args = thumbnailArgs({
+    videoPath: '/x/final.mp4',
+    seconds: 12.5,
+    line1: "1958년 '신분증'",
+    line2: '2006년: 청년',
+    line1File: '/x/.line1-0.txt',
+    line2File: '/x/.line2-0.txt',
+    outputPath: '/x/thumb-1.jpg',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.ok(vf.includes('textfile='), 'textfile 로 넘기지 않습니다');
+  // drawtext= 자체에도 "text=" 가 들어 있으므로 옵션 자리의 text= 만 본다.
+  assert.ok(!/[,:]text=/.test(vf), '글자를 필터에 직접 박으면 한글·따옴표에서 깨집니다');
+  // 따옴표와 콜론이 들어간 글자가 필터 문법을 깨뜨리지 않아야 한다.
+  assert.ok(!vf.includes("'신분증'"), '글자가 필터 안에 그대로 들어갔습니다');
+});
+
+test('썸네일은 유튜브 규격으로 자른다', () => {
+  const args = thumbnailArgs({
+    videoPath: '/x/final.mp4', line1: '가', line1File: '/x/a.txt', outputPath: '/x/t.jpg',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.ok(vf.includes(`crop=${THUMB_WIDTH}:${THUMB_HEIGHT}`), `${THUMB_WIDTH}x${THUMB_HEIGHT} 로 자르지 않습니다`);
+  assert.equal(args[args.indexOf('-frames:v') + 1], '1', '한 장만 뽑아야 합니다');
+  // -ss 가 -i 보다 앞에 있어야 빨리 찾아간다.
+  assert.ok(args.indexOf('-ss') < args.indexOf('-i'), '-ss 가 -i 뒤에 있으면 긴 영상에서 느립니다');
+});
+
+test('아랫줄이 없으면 글자를 한 번만 그린다', () => {
+  const args = thumbnailArgs({
+    videoPath: '/x/f.mp4', line1: '한 줄', line1File: '/x/a.txt', outputPath: '/x/t.jpg',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.equal((vf.match(/drawtext/g) || []).length, 1);
+});
+
+test('낚시 제목과 긴 제목을 거른다', () => {
+  const r = filterCandidates({
+    titles: [
+      { text: '1958년 신분증을 들고 2006년에 나타난 남자', why: '대본 4단락' },
+      { text: '충격 실화! 시간여행자의 진실 공개!!!', why: '' },
+      { text: '가'.repeat(TITLE_CHARS_MAX + 1), why: '' },
+    ],
+  });
+  assert.equal(r.titles.length, 1, `남긴 제목: ${r.titles.map((t) => t.text).join(' / ')}`);
+  assert.equal(r.droppedTitles.length, 2);
+  // 왜 걸렀는지 말해 줘야 다시 쓸 수 있다.
+  for (const d of r.droppedTitles) assert.ok(d.problems.length, `${d.text} 를 이유 없이 걸렀습니다`);
+  assert.ok(r.droppedTitles.some((d) => d.problems.some((p) => p.includes(`${TITLE_CHARS_MAX}자`))));
+});
+
+test('화면을 넘길 썸네일 문구를 거른다', () => {
+  const r = filterCandidates({
+    thumbnails: [
+      { line1: '1958년 신분증', line2: '2006년의 청년' },
+      { line1: '가'.repeat(MAX_LINE_CHARS + 1), line2: '나' },
+    ],
+  });
+  assert.equal(r.thumbnails.length, 1);
+  assert.equal(r.droppedThumbs.length, 1);
+  assert.ok(r.droppedThumbs[0].problems[0].includes(`${MAX_LINE_CHARS}자`));
+});
+
+test('설명문에 AI 합성 고지가 반드시 들어간다', () => {
+  // 고지를 AI 에게 부탁하지 않는 이유: 한 번 빠지면 계정 정지다.
+  const d = finishDescription('1958년 신분증 이야기입니다.', {});
+  assert.ok(d.includes('AI로 만든 이미지'), `고지가 없습니다:\n${d}`);
+  assert.ok(d.includes(SYNTHETIC_DISCLOSURE.text.split('\n')[0]));
+});
+
+test('설명문에 내부용 경고 문구를 넣지 않는다', () => {
+  // SYNTHETIC_DISCLOSURE.why 는 효성님에게 하는 말이다. 시청자가
+  // "계정 정지 대상입니다"를 읽으면 안 된다.
+  const d = finishDescription('본문', {});
+  assert.ok(!d.includes('계정 정지'), `시청자에게 보일 글에 내부 경고가 들어갔습니다:\n${d}`);
+  assert.ok(!d.includes(SYNTHETIC_DISCLOSURE.why));
+});
+
+test('배경음악 출처와 참고 자료를 코드가 붙인다', () => {
+  const d = finishDescription('본문', {
+    track: { title: 'Dark Hallway', attribution: 'Dark Hallway — Audio Library' },
+    sources: [{ name: '키이우 경찰 기록', url: 'https://example.org/a' }],
+  });
+  assert.ok(d.includes('Dark Hallway — Audio Library'), '음악 출처가 빠졌습니다');
+  assert.ok(d.includes('https://example.org/a'), '참고 자료가 빠졌습니다');
+});
+
+test('출처 표기가 없는 곡은 제목만 적는다', () => {
+  const d = finishDescription('본문', { track: { title: 'Quiet Room', attribution: '' } });
+  assert.ok(d.includes('Quiet Room'));
+});
+
+test('제목 프롬프트가 대본 전문을 함께 넘긴다', () => {
+  // 대본을 안 주면 AI 는 영상에 없는 것을 약속하게 된다.
+  const p = buildUploadPrompt(
+    { title: '세르게이 포노마렌코', kind: 'EVENT', what_is_strange: '1958년 신분증' },
+    { scriptMarkdown: '## [HOOK] 훅\n\n[FACT] 신분증에는 1932년생이라고', minutes: 8.2 }
+  );
+  assert.ok(p.includes('[FACT] 신분증에는'), '대본이 프롬프트에 없습니다');
+  assert.ok(p.includes('삭제'), '제목을 과장하면 어떻게 되는지 알려주지 않습니다');
+});
+
+test('전설 편에는 단정하지 말라고 따로 알려준다', () => {
+  const legend = buildUploadPrompt({ title: 'x', kind: 'LEGEND' }, {});
+  const event = buildUploadPrompt({ title: 'x', kind: 'EVENT' }, {});
+  assert.ok(legend.includes('추적'), '전설 편 지시가 없습니다');
+  assert.ok(!event.includes('"실화"라고 단정'));
+});
+
+test('썸네일 지점을 서로 떨어뜨려 고른다', () => {
+  const scenes = [
+    { duration: 40, mood: 'calm', section: 'HOOK' },
+    { duration: 40, mood: 'twist', section: 'TWIST' },
+    { duration: 40, mood: 'tension', section: 'DIG' },
+    { duration: 40, mood: 'mystery', section: 'DIG' },
+    { duration: 40, mood: 'twist', section: 'TWIST' },
+    { duration: 40, mood: 'somber', section: 'CLOSE' },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  for (let i = 1; i < picked.length; i++) {
+    assert.ok(picked[i].at - picked[i - 1].at >= 20, `${picked[i - 1].at}초와 ${picked[i].at}초가 너무 가깝습니다`);
+  }
+  // 센 분위기를 먼저 집는다.
+  assert.ok(picked.some((p) => p.mood === 'twist'), '반전 장면을 하나도 안 집었습니다');
+});
+
+test('맨 앞과 맨 끝은 피한다 (어둡거나 비어 있다)', () => {
+  const scenes = Array.from({ length: 10 }, (_, i) => ({ duration: 30, mood: i === 0 ? 'twist' : 'mystery' }));
+  const total = 300;
+  for (const p of pickThumbnailMoments(scenes, { count: 3 })) {
+    assert.ok(p.at > total * 0.08 && p.at < total * 0.92, `${p.at}초는 양 끝입니다`);
+  }
+});
+
+test('짧은 편에서도 요청한 수만큼 돌려준다', () => {
+  // 간격을 지킬 수 없으면 간격을 포기한다. 썸네일이 없는 것보다 낫다.
+  const scenes = [{ duration: 10, mood: 'twist' }, { duration: 10, mood: 'mystery' }];
+  assert.equal(pickThumbnailMoments(scenes, { count: 3 }).length, 2);
+});
+
+test('장면이 없으면 빈 목록을 돌려준다 (죽지 않는다)', () => {
+  assert.deepEqual(pickThumbnailMoments([], { count: 3 }), []);
+  assert.deepEqual(pickThumbnailMoments(null, { count: 3 }), []);
+});
+
+test('올릴 거리 스키마가 strict 요건을 지킨다', () => {
+  // additionalProperties:false 가 하나라도 빠지면 호출이 400으로 죽는다.
+  // 대본을 다 쓰고 나서 죽으면 그 돈은 날아간다.
+  const missing = [];
+  const walk = (node, at) => {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'object' && node.additionalProperties !== false) missing.push(at);
+    for (const [k, v] of Object.entries(node.properties || {})) walk(v, `${at}.${k}`);
+    if (node.items) walk(node.items, `${at}[]`);
+  };
+  walk(UPLOAD_SCHEMA, 'UPLOAD_SCHEMA');
+  assert.deepEqual(missing, [], `additionalProperties:false 가 없는 곳: ${missing.join(', ')}`);
+  assert.ok(UPLOAD_SCHEMA.required.length);
+});
+
+test('올릴 때 쓸 파일들을 한 폴더에 저장한다', () => {
+  const dir = store.saveUploadPack('901', {
+    titles: [{ text: '1958년 신분증을 들고 2006년에 나타난 남자', why: '대본 4단락' }],
+    droppedTitles: [{ text: '충격 실화', problems: ['"충격"은 광고주 친화 기준에서도 불리합니다'] }],
+    thumbnails: [{ line1: '1958년 신분증', line2: '2006년의 청년' }],
+    droppedThumbs: [],
+    description: finishDescription('본문입니다.', {}),
+    tags: ['미스터리', '시간여행'],
+    moments: [{ at: 185.5, mood: 'twist', section: 'TWIST' }],
+  });
+  for (const f of ['upload.json', '설명문.txt', '태그.txt', '올릴때-쓸것.md']) {
+    assert.ok(fs.existsSync(path.join(dir, f)), `${f} 가 없습니다`);
+  }
+  const md = fs.readFileSync(path.join(dir, '올릴때-쓸것.md'), 'utf8');
+  assert.ok(md.includes('1958년 신분증을 들고'), '제목 후보가 안 적혔습니다');
+  assert.ok(md.includes('거른 제목'), '거른 이유가 안 적혔습니다');
+  assert.ok(md.includes('3분 6초'), `썸네일 지점이 몇 분 몇 초인지 안 적혔습니다:\n${md}`);
+  // 설명문 파일은 그대로 복사해 붙일 수 있어야 한다.
+  assert.ok(fs.readFileSync(path.join(dir, '설명문.txt'), 'utf8').includes('AI로 만든 이미지'));
+});
+
+
+test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
+  // 모드를 하나 늘릴 때 case 에 안 적으면, 셸은 오류를 내지 않고 맨 끝
+  // *) 로 떨어진다. 그러면 "올릴 거리를 만들어 줘"를 눌렀는데 소재만
+  // 찾고 끝난다 — 아무 에러 없이. 그래서 여기서 막는다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+
+  // 1) 고를 수 있는 모드
+  const optBlock = yml.slice(yml.indexOf('        options:'), yml.indexOf('      resume_run:'));
+  const modes = [...optBlock.matchAll(/^\s+- '(.+)'$/gm)].map((m) => m[1]);
+  assert.ok(modes.length >= 10, `모드를 못 읽었습니다 (${modes.length}개)`);
+
+  // 2) 실행 단계의 case 분기 — 적힌 순서가 곧 우선순위다
+  const runStep = yml.slice(yml.indexOf('- name: 실행'), yml.indexOf('\n      - name:', yml.indexOf('- name: 실행') + 1));
+  const caseBody = runStep.slice(runStep.indexOf('case "$IN_MODE" in'));
+  const branches = [...caseBody.matchAll(/^\s+(\*(?:'([^']+)')?\*?)\)\s*$/gm)].map((m) => m[2] || null);
+  assert.ok(branches.length >= 8, `case 분기를 못 읽었습니다 (${branches.length}개)`);
+  assert.equal(branches[branches.length - 1], null, '맨 끝에 기본 분기(*)가 없습니다');
+
+  // 3) 모드마다 어디로 가는지. 셸 case 와 같은 "처음 맞는 것" 규칙.
+  const route = (mode) => branches.find((b) => b === null || mode.includes(b));
+  const expected = {
+    '소리 점검': '소리 점검',
+    '목소리 들어보기': '목소리 들어보기',
+    '대본만 다시 쓰기': '대본만 다시 쓰기',
+    '올릴 거리': '올릴 거리',
+    '완성본': '완성본',
+    '그림': '그림',
+    '영상': '영상',
+    '장면까지': '장면까지',
+    '대본까지': '대본까지',
+    '소재만': null, // 기본 분기 = 소재만 찾기
+    '테스트만': null, // 이 단계 자체가 건너뛰어진다
+  };
+  for (const mode of modes) {
+    const key = Object.keys(expected).find((k) => mode.includes(k));
+    assert.ok(key, `"${mode}" 가 어디로 가야 하는지 이 테스트가 모릅니다. 표를 고쳐 주세요`);
+    assert.equal(route(mode), expected[key], `"${mode}" 가 엉뚱한 분기로 갑니다`);
+  }
+});
+
+test('올릴 거리 모드가 ffmpeg와 한글 글꼴을 깐다', () => {
+  // 썸네일도 ffmpeg 로 만들고 글자도 얹는다. 글꼴이 없으면 ffmpeg 는
+  // 오류 없이 네모를 그린다 — 받아서 열어 보기 전까지 모른다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const start = yml.indexOf('- name: ffmpeg와 한글 글꼴 설치');
+  assert.ok(start > 0, 'ffmpeg 설치 단계를 찾지 못했습니다');
+  const cond = yml.slice(start, yml.indexOf('\n        timeout-minutes', start));
+  assert.ok(cond.includes("contains(inputs.mode, '올릴 거리')"), '올릴 거리 모드에 ffmpeg·글꼴이 안 깔립니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

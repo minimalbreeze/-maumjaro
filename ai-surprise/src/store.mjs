@@ -219,6 +219,63 @@ export function saveScript(id, markdown, check) {
  * 자막은 따로 저장한다 — 렌더가 중간에 죽어도 같은 계획으로 이어서 할 수
  * 있어야 하고, 사람이 "이 샷만 다시"라고 말할 수 있어야 한다.
  */
+/**
+ * 올릴 때 필요한 것들을 한 폴더에 모은다.
+ *
+ * content/<편>/upload/ 안에 제목 후보, 썸네일 3장, 설명문, 태그를 둔다.
+ * 유튜브 창을 열어 두고 이 폴더만 보면 되도록 — 여러 파일을 뒤져가며
+ * 올리면 고지 체크 같은 걸 빠뜨린다.
+ */
+export function saveUploadPack(id, { titles = [], droppedTitles = [], thumbnails = [], droppedThumbs = [], description = '', tags = [], moments = [] } = {}) {
+  const dir = contentPath(id, 'upload');
+  ensureDir(dir);
+
+  fs.writeFileSync(
+    path.join(dir, 'upload.json'),
+    JSON.stringify({ titles, droppedTitles, thumbnails, droppedThumbs, description, tags, moments }, null, 2) + '\n',
+    'utf8'
+  );
+  fs.writeFileSync(path.join(dir, '설명문.txt'), description + '\n', 'utf8');
+  fs.writeFileSync(path.join(dir, '태그.txt'), tags.join(', ') + '\n', 'utf8');
+
+  const md = ['# 올릴 때 쓸 것들', ''];
+  md.push('## 제목 후보', '');
+  if (titles.length) {
+    titles.forEach((t, i) => {
+      md.push(`${i + 1}. ${t.text}  (${t.text.length}자)`);
+      if (t.why) md.push(`   - ${t.why}`);
+    });
+  } else {
+    md.push('(규격을 통과한 제목이 없습니다. 아래 거른 목록을 보고 직접 정해 주세요.)');
+  }
+  if (droppedTitles.length) {
+    md.push('', '### 거른 제목', '');
+    for (const t of droppedTitles) md.push(`- ${t.text}`, ...t.problems.map((p) => `  - ${p}`));
+  }
+
+  md.push('', '## 썸네일', '');
+  md.push('`upload/` 안의 `thumb-1.jpg` ~ `thumb-3.jpg` 중에서 고르세요.');
+  md.push('');
+  md.push('세 장 모두 **완성된 영상에서 떼어낸 장면**입니다. 그래서');
+  md.push('"썸네일이 영상에 없는 장면"이라는 문제가 생기지 않습니다.');
+  md.push('');
+  thumbnails.forEach((t, i) => {
+    const at = moments[i]?.at;
+    md.push(`- thumb-${i + 1}.jpg — "${t.line1} / ${t.line2}"${at != null ? ` (영상 ${Math.floor(at / 60)}분 ${Math.round(at % 60)}초 지점)` : ''}`);
+  });
+  if (droppedThumbs.length) {
+    md.push('', '### 거른 썸네일 문구', '');
+    for (const t of droppedThumbs) md.push(`- ${t.line1} / ${t.line2}`, ...t.problems.map((p) => `  - ${p}`));
+  }
+
+  md.push('', '## 설명문', '', '```', description, '```');
+  md.push('', '## 태그', '', tags.join(', '));
+  md.push('', '---', '', '올리기 전에 `video/올리기-전-확인.md` 를 꼭 읽어 주세요.');
+  fs.writeFileSync(path.join(dir, '올릴때-쓸것.md'), md.join('\n') + '\n', 'utf8');
+
+  return dir;
+}
+
 export function saveVideoPlan(id, {
   timeline,
   subtitleAss,
