@@ -103,6 +103,34 @@ check('② 제목에 질문이 없으면 짚어낸다', () => {
   assert.ok(r.missing.some((m) => m.id === 'title-q'), r.missing.map((m) => m.id).join(','));
 });
 
+// 2026-10-10: 글 7806 의 제목에 "우승상금 얼마?" 가 있는데 ② 가 ❌ 로 떨어졌다.
+// 제목이 아니라 이 검사가 틀렸다 — 목록에 "얼마"가 없었다. 실제 제목을 둔다.
+check('② "얼마?" 도 질문으로 본다 (글 7806)', () => {
+  const title = '취저우 란커배 세계바둑오픈전 우승상금 얼마? 대국 규칙과 역대 우승자 계보 정리 (10월 9일 16강)';
+  const r = checkFlow({ ...좋은글, title });
+  assert.ok(!r.missing.some((m) => m.id === 'title-q'),
+    `제목에 질문이 있는데 ❌ 입니다: ${title}`);
+});
+
+check('② 물음표가 있으면 질문으로 본다', () => {
+  // 낱말 목록으로 한국어 질문을 다 잡을 수는 없다. 물음표는 쓴 사람이
+  // "이건 질문이다"라고 직접 표시한 것이다.
+  const r = checkFlow({ ...좋은글, title: '2026 박신자컵 개막 상금 규모는?' });
+  assert.ok(!r.missing.some((m) => m.id === 'title-q'), r.missing.map((m) => m.id).join(','));
+});
+
+check('② 질문이 정말 없으면 여전히 짚어낸다', () => {
+  // 목록을 늘린 뒤 검사가 무력해지지 않았는지 확인한다.
+  for (const title of [
+    '2026 박신자컵 개막',
+    '남서울CC 파3 이용료 13,000원 (예약 방법)',
+    '신지애 일본여자오픈 우승 (JLPGA 통산 30승)',
+  ]) {
+    const r = checkFlow({ ...좋은글, title });
+    assert.ok(r.missing.some((m) => m.id === 'title-q'), `통과해서는 안 됩니다: ${title}`);
+  }
+});
+
 check('③ 인사말로 시작하면 짚어낸다', () => {
   const r = checkFlow({ ...좋은글, body: `안녕하세요, 농구 팬 여러분!\n\n${좋은글.body}` });
   assert.ok(r.missing.some((m) => m.id === 'lead-answer'), r.missing.map((m) => m.id).join(','));
