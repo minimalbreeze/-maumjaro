@@ -64,6 +64,23 @@ export function 깃발세우기() {
 }
 
 /**
+ * 깃발을 내린다 = 구글 색인에 다시 들어갈 수 있게 한다.
+ *
+ * 2026-10-10 운영자 지시: "끝난 글도 좋다 다시 파악해서 재구성한뒤 수정한다.
+ * 뭐 과거를 찾는 사람도 있으니까" — 그래서 329편을 다시 살린다.
+ *
+ * 애초에 329편을 뺀 근거가 **내 잘못된 판단이었다는 것도 함께 밝혀둔다.**
+ * 나는 "얇은 글·중복 글이 색인을 막는다"고 봤는데, 구글 "검색엔진 최적화(SEO)
+ * 기본 가이드"는 반대로 적어 두었다 — "콘텐츠 길이 자체는 순위 결정과 관련
+ * 없습니다", "중복 콘텐츠는 비효율적이지만, 이로 인해 직접 조치가 부과되지는
+ * 않습니다." 짧다는 이유로 뺄 근거가 없었다.
+ *
+ * 빈 문자열을 보내면 `maumjaro_seo_clean_flag` 가 '' 로 저장하고,
+ * 플러그인은 값이 '1' 일 때만 줄을 찍으므로 meta 줄 자체가 사라진다.
+ */
+export function 깃발내리기() { return ''; }
+
+/**
  * 색인에서 뺄 글을 고른다.
  *
  * 좁게 잡는다. 애매하면 두는 쪽이다 — 잘못 빼면 유입이 사라지는데,
@@ -123,11 +140,14 @@ const 인자 = (name) => {
 
 async function main() {
   const 적용 = process.argv.includes('--apply');
+  const 되돌리기 = process.argv.includes('--undo');
   const 확인할글 = 인자('확인');
 
   const base = wpConfig().base;
   console.log('\n────────────────────────────────────────────────────────');
-  console.log(`🗂  수명이 끝난 글을 구글 색인에서만 빼기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`);
+  console.log(되돌리기
+    ? `🗂  구글 색인에 다시 들여보내기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`
+    : `🗂  수명이 끝난 글을 구글 색인에서만 빼기 ${적용 ? '(실제 적용)' : '(미리보기 · 비용 0원)'}`);
   console.log('   네이버·빙 등 다른 검색엔진에는 아무 말도 하지 않습니다');
   console.log(`   대상 사이트: ${new URL(base).host}  ← 여기 글만 손댑니다`);
   console.log('────────────────────────────────────────────────────────');
@@ -146,6 +166,52 @@ async function main() {
     console.log(`   구글 색인에서 빠져 있나: ${구글제외인가(r.flag) ? '예' : '아니오'}`);
     console.log('   걸면 이 글에만 <meta name="googlebot" content="noindex"> 가 나갑니다.');
     console.log('   네이버를 비롯한 다른 검색엔진에게는 아무 말도 하지 않습니다.');
+    return;
+  }
+
+  // ①-2 되돌리기 — 걸어 둔 글을 전부 구글 색인에 다시 들여보낸다.
+  if (되돌리기) {
+    const 글 = await 발행글전부();
+    console.log(`\n발행 ${글.length}편의 깃발을 확인합니다 (글마다 REST 한 번 — 몇 분 걸립니다)`);
+    const 걸린것 = [];
+    for (const p of 글) {
+      if (!손대도되는글인가(p.link, base)) continue;
+      try {
+        const r = await readFlag(p.id);
+        if (구글제외인가(r.flag)) 걸린것.push(p);
+      } catch { /* 모르면 건너뛴다. 억지로 쓰지 않는다 */ }
+    }
+    console.log(`   구글 색인에서 빠져 있는 글 ${걸린것.length}편`);
+    if (!걸린것.length) { console.log('\n   되돌릴 글이 없습니다.\n'); return; }
+    for (const p of 걸린것.slice(0, 40)) {
+      console.log(`   ${p.id}  ${p.date}  ${p.글자수.toLocaleString().padStart(6)}자  ${p.title}`);
+    }
+    if (걸린것.length > 40) console.log(`   … 그 밖에 ${걸린것.length - 40}편`);
+
+    if (!적용) {
+      console.log('\n실제로 되돌리려면 --apply 를 붙이세요. 지금은 아무것도 바꾸지 않았습니다.\n');
+      return;
+    }
+    const 백업 = saveBackup(걸린것.map((p) => ({ id: p.id, title: p.title, 되돌림: true })));
+    console.log(`\n되돌린 목록을 남겼습니다: ${백업}`);
+
+    let 되돌림 = 0;
+    for (const p of 걸린것) {
+      try {
+        await wpFetch(`/wp/v2/posts/${p.id}`, {
+          method: 'POST',
+          body: { meta: { [FLAG_KEY]: 깃발내리기() } },
+        });
+        되돌림 += 1;
+        console.log(`   ✅ ${p.id} ${p.title.slice(0, 40)}`);
+      } catch (err) {
+        console.log(`   ❌ ${p.id} 실패 — ${err.message}`);
+        process.exitCode = 1;
+      }
+    }
+    console.log(`\n${되돌림}편을 구글 색인에 다시 들여보냈습니다.`);
+    console.log('이제 <meta name="googlebot" content="noindex"> 줄이 그 글들에서 사라집니다.');
+    console.log('그다음 할 일: "글끼리 링크 걸기 (실제 적용)" — 구글이 링크로 페이지를 찾습니다.\n');
     return;
   }
 

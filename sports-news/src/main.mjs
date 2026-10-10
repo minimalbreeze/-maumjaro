@@ -22,6 +22,7 @@ import { recentCategories, categoryIndex } from './news/variety.mjs';
 import { findRelatedPosts, judgeDuplication, VERDICT_LABEL } from './duplicate/check.mjs';
 import { loadSiteCategories, resolveCategory, resolveTagIds } from './wordpress/taxonomy.mjs';
 import { saveDraft } from './wordpress/draft.mjs';
+import { 새글에붙이기 } from './wordpress/internal-links.mjs';
 
 import { createHeroImage, createSectionImage, hasAiImage } from './images/provider.mjs';
 import { uploadMedia, safeFileName } from './images/upload.mjs';
@@ -474,6 +475,27 @@ async function processCluster(cluster, ctx) {
   result.wordpress = saved;
   log.ok(`  임시글 저장 완료 (ID ${saved.id}, 상태 ${saved.status})`);
   if (saved.adminUrl) log.info(`    편집: ${saved.adminUrl}`);
+
+  // 글끼리 링크를 건다. 구글은 **링크로 페이지를 찾는다** — 사이트맵만으로는
+  // 안 찾는다("사이트맵을 제출할 수도 있지만 이것이 필수는 아니며...").
+  // 633편이 고아 페이지로 쌓인 뒤에 알았다. 그래서 작성 흐름 안에서 건다.
+  // AI 를 부르지 않으니 0원이고, 실패해도 글은 이미 저장돼 있다.
+  if (saved.id && env('INTERNAL_LINKS', 'on') !== 'off') {
+    try {
+      const 링크 = await 새글에붙이기(saved.id, { title: article.title });
+      if (링크.붙임) {
+        log.ok(`    같이 읽을 글 ${링크.붙임}개를 본문 끝에 걸었습니다`);
+        for (const t of 링크.이어줄) log.info(`      → ${t.title}`);
+        log.info('    발행한 뒤 "글끼리 링크 걸기"를 돌리면 들어오는 링크까지 맞춰집니다');
+      } else {
+        log.warn(`    걸 만한 글을 못 찾았습니다${링크.건너뜀 ? ` (${링크.건너뜀})` : ''}`);
+      }
+    } catch (err) {
+      // 링크 때문에 글을 잃지 않는다. 저장은 이미 끝났다.
+      log.warn(`    글끼리 링크를 못 걸었습니다 — ${err.message}`);
+      log.info('    나중에 "글끼리 링크 걸기 (실제 적용)" 으로 한 번에 걸 수 있습니다');
+    }
+  }
 
   if (saved.savedMeta.length) {
     log.info(`    SEO 필드 저장됨: ${saved.savedMeta.join(', ')}`);
