@@ -182,6 +182,10 @@ export async function 발행글전부({ perPage = 100, max = 2000 } = {}) {
         // 제목 낱말만으로는 종목이 같은지 알 수 없다 — 당구 글과 골프 글이
         // 둘 다 '일정' 유형이라는 이유로 이어진 적이 있다.
         categories: Array.isArray(p.categories) ? p.categories : [],
+        // 구글 색인 제외 깃발. context=edit 이라 목록 응답에 meta 가 이미
+        // 들어 있다 — 글마다 따로 부르면 633번이 공짜로 더 든다.
+        // (실제로 그래서 633편 링크 작업이 30분 제한에 걸려 잘렸다)
+        구글제외: p.meta?.maumjaro_google_noindex === '1',
       });
     }
     if (목록.length < perPage) break;
