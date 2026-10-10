@@ -104,7 +104,11 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 633편의 본문을 쓰는 0원 모드(글끼리 링크·오타 고치기)는 30분을 넘긴다.
+    # 실제로 547편까지 쓰고 잘렸다. 이어서 돌릴 수 있게 만들어 뒀지만, 한 번에
+    # 끝나는 쪽이 낫다. AI 모드의 비용은 시간이 아니라 호출 수로 묶여 있으므로
+    # 이 숫자를 올려도 돈이 더 들지는 않는다.
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4

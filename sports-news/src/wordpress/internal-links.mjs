@@ -41,7 +41,25 @@ export function 이미있나(html) {
   return String(html || '').includes(LINK_SIGN);
 }
 
-/** 블록을 걷어낸다. 다시 넣을 때 쓰고, 지울 때도 쓴다. */
+/**
+ * 블록을 걷어낸다. 다시 넣을 때 쓰고, 지울 때도 쓴다.
+ *
+ * **빈 줄을 정규화하지 않는다 (2026-10-10 에 고친 버그).**
+ *
+ * 처음 판은 블록을 찾았을 때만 `\n{3,}` → `\n\n` 과 `trim()` 을 걸었다.
+ * 블록이 없는 글은 그대로 돌려줬다. 그래서 빈 줄이 3개 이상 있는 글에서
+ *
+ *     블록걷어내기(원본)        = 원본          (블록이 없으니 그대로)
+ *     블록걷어내기(붙인 결과)   = 정규화된 원본  (블록이 있으니 정규화)
+ *
+ * 둘이 달라지고, `블록만바뀌었나` 가 "블록 말고 다른 곳도 바뀐다"고 보고
+ * 그 글을 거부했다. 633편을 돌렸을 때 **5편이 이것 때문에 막혔다**
+ * (4763·4827·4941·4947·4963). 안전장치가 제 일을 한 것이지만, 막은 이유가
+ * 실제 위험이 아니라 내 정규화였다.
+ *
+ * 지금은 우리가 붙인 것만 정확히 떼어낸다 — 블록과, 그 앞에 우리가 넣은
+ * 빈 줄 하나까지. 원본의 공백은 글자 하나도 건드리지 않는다.
+ */
 export function 블록걷어내기(html) {
   const 글 = String(html || '');
   const at = 글.indexOf(`<!-- wp:html -->\n<aside class="maumjaro-related"`);
@@ -49,7 +67,9 @@ export function 블록걷어내기(html) {
   const 끝표식 = '<!-- /wp:html -->';
   const end = 글.indexOf(끝표식, at);
   if (end < 0) return 글;
-  return (글.slice(0, at) + 글.slice(end + 끝표식.length)).replace(/\n{3,}/g, '\n\n').trim();
+  // 붙일 때 블록 앞에 '\n\n' 을 넣었다. 떼어낼 때 그것만 함께 뗀다.
+  const 시작 = 글.slice(at - 2, at) === '\n\n' ? at - 2 : at;
+  return 글.slice(0, 시작) + 글.slice(end + 끝표식.length);
 }
 
 /**
@@ -234,6 +254,11 @@ export function 블록만바뀌었나(before, after) {
 
 async function main() {
   const 적용 = process.argv.includes('--apply');
+  // 이미 블록이 있는 글을 **건너뛴다(기본)**. 633편을 한 번에 쓰면 30분
+  // 제한에 걸려 잘린다 — 실제로 547편까지 쓰고 81편을 못 쓰고 끝났다.
+  // 그래서 "남은 것만" 이 기본이고, 여러 번 돌려 끝내면 된다.
+  // --다시 를 붙이면 이미 있는 블록까지 새 목록으로 갈아 끼운다.
+  const 다시 = process.argv.includes('--다시');
   const base = wpConfig().base;
 
   console.log('\n────────────────────────────────────────────────────────');
@@ -244,19 +269,13 @@ async function main() {
   const 글 = await 발행글전부();
   console.log(`\n발행 ${글.length}편`);
 
-  // 구글 색인에서 뺀 글을 표시한다. 링크 대상에서 빼기 위해서다.
-  // 한 번에 받을 수 없으므로 글마다 메타를 본다 — 미리보기에서도 정확해야 한다.
+  // 색인 제외 깃발은 **목록 응답에 이미 들어 있다**(context=edit).
+  // 처음 판은 글마다 REST 를 한 번씩 더 불렀다 — 633번이 공짜로 들었고,
+  // 그 때문에 적용이 30분 제한에 걸려 81편을 못 쓰고 잘렸다.
   let 제외수 = 0;
   for (const p of 글) {
-    try {
-      const { data } = await wpFetch(`/wp/v2/posts/${p.id}`, {
-        query: { context: 'edit', _fields: 'meta' },
-      });
-      p.색인제외 = data?.meta?.[FLAG_KEY] === '1';
-      if (p.색인제외) 제외수 += 1;
-    } catch {
-      p.색인제외 = false;   // 모르면 살아 있는 것으로 본다
-    }
+    p.색인제외 = p.구글제외 === true;
+    if (p.색인제외) 제외수 += 1;
   }
   console.log(`   구글 색인에서 뺀 글 ${제외수}편 — 링크 대상에서 제외합니다`);
 
@@ -289,6 +308,7 @@ async function main() {
   console.log(`\n대상 목록을 남겼습니다: ${백업}`);
 
   let 성공 = 0;
+  let 이미 = 0;
   for (const { post, 이어줄 } of 할일) {
     if (!손대도되는글인가(post.link, base)) {
       console.log(`   ⏭  ${post.id} 다른 사이트의 글이라 건너뜁니다`);
@@ -299,6 +319,8 @@ async function main() {
         query: { context: 'edit', _fields: 'content' },
       });
       const before = data?.content?.raw || '';
+      // 이미 블록이 있으면 넘어간다. 이어서 돌릴 수 있게 하는 핵심이다.
+      if (!다시 && 이미있나(before)) { 이미 += 1; continue; }
       const after = 붙이기(before, 블록만들기(이어줄));
       if (after === before) { console.log(`   ⏭  ${post.id} 바뀔 것이 없습니다`); continue; }
       if (!블록만바뀌었나(before, after)) {
@@ -315,6 +337,14 @@ async function main() {
     }
   }
   console.log(`\n${성공}편에 "같이 읽을 글" 블록을 넣었습니다.`);
+  if (이미) {
+    console.log(`이미 블록이 있어 건너뛴 글 ${이미}편 (--다시 를 붙이면 갈아 끼웁니다).`);
+  }
+  const 남은것 = 할일.length - 성공 - 이미;
+  if (남은것 > 0) {
+    console.log(`\n⚠ ${남은것}편이 남았습니다 — 30분 제한에 걸렸거나 실패한 글입니다.`);
+    console.log('  같은 모드를 한 번 더 돌리면 남은 것만 이어서 씁니다.');
+  }
   console.log('되돌리려면 본문에서 그 블록을 지우면 됩니다 (표식: ' + LINK_SIGN + ').\n');
 }
 
