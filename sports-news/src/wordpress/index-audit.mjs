@@ -178,6 +178,10 @@ export async function 발행글전부({ perPage = 100, max = 2000 } = {}) {
         글자수: 본문글자수(p.content?.raw || p.content?.rendered || ''),
         description: p.meta?.rank_math_description || '',
         focusKeyword: p.meta?.rank_math_focus_keyword || '',
+        // 카테고리는 글끼리 링크를 걸 때 "같은 종목인가"를 보는 데 쓴다.
+        // 제목 낱말만으로는 종목이 같은지 알 수 없다 — 당구 글과 골프 글이
+        // 둘 다 '일정' 유형이라는 이유로 이어진 적이 있다.
+        categories: Array.isArray(p.categories) ? p.categories : [],
       });
     }
     if (목록.length < perPage) break;
