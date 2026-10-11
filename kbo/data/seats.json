@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "note": [
+    "sections가 비어 있으면 좌석지도는 '좌석 배치도 준비 중'을 표시한다.",
+    "점수(viewScore 등)는 공식 정보가 아니라 '직관 경험 기반 참고 지표'다.",
+    "화면에서 반드시 그렇게 표기하고, 확인 없이 채우지 않는다."
+  ],
+  "scoreFields": [
+    { "key": "viewScore",     "label": "시야",        "emoji": "👀" },
+    { "key": "gameScore",     "label": "경기 몰입도", "emoji": "⚾" },
+    { "key": "cheerScore",    "label": "응원 분위기", "emoji": "🔥" },
+    { "key": "photoScore",    "label": "사진 촬영",   "emoji": "📸" },
+    { "key": "valueScore",    "label": "가성비",      "emoji": "💰" },
+    { "key": "sunScore",      "label": "햇빛 영향",   "emoji": "☀️" },
+    { "key": "weatherScore",  "label": "날씨 영향",   "emoji": "🌧️" },
+    { "key": "facilityScore", "label": "편의시설",    "emoji": "🚻" }
+  ],
+  "stadiums": {
+    "gwangju": {
+      "seatTypes": [
+        { "id": "champion", "name": "챔피언석",   "category": "premium", "blocks": null, "verified": false },
+        { "id": "k9",       "name": "K9석",       "category": "infield", "blocks": null, "verified": false },
+        { "id": "k8",       "name": "K8석",       "category": "infield", "blocks": null, "verified": false },
+        { "id": "k5",       "name": "K5석",       "category": "infield", "blocks": null, "verified": false },
+        { "id": "ev",       "name": "EV석",       "category": "infield", "blocks": null, "verified": false },
+        { "id": "table",    "name": "테이블석",   "category": "table",   "blocks": null, "verified": false },
+        { "id": "outfield", "name": "외야 자유석", "category": "outfield","blocks": null, "verified": false }
+      ],
+      "seatTypesNote": "등급 이름만 2차 출처에서 확인됨. 블록 번호·배치·가격은 공식 좌석도 확인 후 채울 것.",
+      "sections": []
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "teams": [
+    {
+      "id": "kia",
+      "name": "KIA 타이거즈",
+      "shortName": "KIA",
+      "homeStadium": "gwangju",
+      "officialUrl": "https://tigers.co.kr/",
+      "shopUrl": null,
+      "color": "#ea0029",
+      "verified": { "name": true, "officialUrl": true, "color": false },
+      "updatedAt": "2026-09-11"
+    }
+  ]
+}

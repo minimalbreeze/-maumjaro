@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "note": "검증되지 않은 역명·출구·버스번호·주차 정보는 넣지 않는다.",
+  "stadiums": {
+    "gwangju": {
+      "subway": null,
+      "bus": null,
+      "parking": { "spaces": 1658, "verified": false, "note": "2차 출처 기준. 공식 확인 필요." },
+      "entrance": null,
+      "exit": null,
+      "tips": null,
+      "updatedAt": "2026-09-11"
+    }
+  }
+}

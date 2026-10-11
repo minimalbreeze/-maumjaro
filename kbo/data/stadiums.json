@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "note": "값이 null이면 UI는 '정보 준비 중'을 표시한다. 확인되지 않은 값을 채우지 말 것.",
+  "stadiums": [
+    {
+      "id": "gwangju",
+      "name": "광주-기아 챔피언스 필드",
+      "shortName": "광주",
+      "city": "광주광역시",
+      "homeTeams": ["kia"],
+      "address": "광주광역시 북구 서림로 10",
+      "openedYear": 2014,
+      "capacity": 20500,
+      "roof": "open",
+      "coordinates": { "lat": 35.1682, "lng": 126.8892, "precision": "approximate" },
+      "description": "KIA 타이거즈의 홈구장. 2014년 개장한 야구 전용 구장이다.",
+      "image": null,
+      "officialUrl": "https://tigers.co.kr/",
+      "ticket": { "official": true, "name": null, "url": null },
+      "gates": null,
+      "mapUrl": null,
+      "verified": {
+        "address": true,
+        "openedYear": true,
+        "capacity": false,
+        "coordinates": false,
+        "officialUrl": true,
+        "ticket": false
+      },
+      "sources": [
+        {
+          "field": "address, openedYear, capacity",
+          "name": "복수 2차 출처(나무위키 등)에서 일치",
+          "url": "https://namu.wiki/w/%EA%B4%91%EC%A3%BC-%EA%B8%B0%EC%95%84%20%EC%B1%94%ED%94%BC%EC%96%B8%EC%8A%A4%20%ED%95%84%EB%93%9C",
+          "checkedAt": "2026-09-11",
+          "note": "공식 홈페이지(tigers.co.kr) 직접 확인 필요. capacity/coordinates는 아직 1차 출처 미확인."
+        }
+      ],
+      "updatedAt": "2026-09-11"
+    }
+  ]
+}

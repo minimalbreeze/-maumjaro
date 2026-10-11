@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "note": [
+    "KBO는 공개 API를 제공하지 않는다. 이 파일은 사람이 확인해 채우는 큐레이션 데이터다.",
+    "경기 취소·지연 여부는 이 파일에서 단정하지 않는다.",
+    "status는 기본값 'unknown'이며, 화면은 공식 발표 링크를 함께 보여준다."
+  ],
+  "statusCodes": {
+    "scheduled": { "emoji": "🟢", "label": "경기 진행 예정" },
+    "unknown":   { "emoji": "🟡", "label": "공식 발표 확인 필요" },
+    "canceled":  { "emoji": "🔴", "label": "경기 취소" },
+    "delayed":   { "emoji": "🟠", "label": "경기 지연" }
+  },
+  "officialStatusUrl": "https://www.koreabaseball.com/Schedule/Schedule.aspx",
+  "games": [],
+  "updatedAt": null
+}
