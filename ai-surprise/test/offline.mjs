@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // store.mjs 를 불러오기 전에 저장 위치를 임시 폴더로 바꾼다.
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-surprise-test-'));
@@ -3235,6 +3236,29 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     assert.ok(key, `"${mode}" 가 어디로 가야 하는지 이 테스트가 모릅니다. 표를 고쳐 주세요`);
     assert.equal(route(mode), expected[key], `"${mode}" 가 엉뚱한 분기로 갑니다`);
   }
+});
+
+test('동화는 배경음악을 끄고 만든다', () => {
+  // bgm/ 의 여섯 곡은 전부 미스터리·스릴러용이다. 조용한 동화에 깔면
+  // 그 자리에서 어긋난다. 안 맞는 음악은 없는 음악보다 나쁘다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const at = yml.indexOf("*'동화'*)");
+  assert.ok(at > 0, '동화 분기를 찾지 못했습니다');
+  const branch = yml.slice(at, yml.indexOf("            *'대본만 다시 쓰기'*)", at));
+  assert.ok(branch.includes('--no-bgm'), '동화 완성본이 미스터리용 음악을 깝니다');
+  assert.ok(branch.includes('--script='), '써 둔 대본을 쓰는 길이 없습니다');
+
+  // 그리고 그 음악 파일들이 실제로 미스터리용인지 — 목록이 바뀌면 이
+  // 판단도 다시 해야 한다.
+  // new URL(...).pathname 은 한글을 퍼센트 인코딩해서 돌려준다. 그대로
+  // 열면 ENOENT 가 난다 — fileURLToPath 를 써야 한다.
+  const listFile = fileURLToPath(new URL('../bgm/목록.json', import.meta.url));
+  const list = JSON.parse(fs.readFileSync(listFile, 'utf8'));
+  const moods = new Set(list.tracks.flatMap((t) => t.moods || []));
+  assert.ok(moods.has('tension') || moods.has('twist'), 'bgm 목록 성격이 바뀌었습니다 — 동화에 쓸 수 있는지 다시 보세요');
 });
 
 test('동화 완성본이 비밀값 확인을 모두 거친다', () => {

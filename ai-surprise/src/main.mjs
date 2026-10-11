@@ -19,7 +19,7 @@ import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
-import { writeScript, DEFAULT_MINUTES, TALE_MINUTES } from './script/write.mjs';
+import { writeScript, validateScript, DEFAULT_MINUTES, TALE_MINUTES } from './script/write.mjs';
 import { GATE, MIN_SOURCE_COUNT, KIND, makeTale } from './model.mjs';
 import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
@@ -482,15 +482,51 @@ async function cmdScenes(flags) {
  * 전개를 혼자 정하는데, 그러면 편마다 전개가 비슷해진다 — 양산물로 보이는
  * 가장 빠른 길이다. 되도록 넘긴다.
  */
+/**
+ * 기획·대본 파일을 찾는다.
+ *
+ * ROOT 는 ai-surprise 폴더인데, 기획 파일은 리포 맨 위의 이상한동화/ 에
+ * 있다. 그래서 "이상한동화/1화.json" 을 그대로 쓰면 못 찾고, 쓰는 쪽이
+ * ../ 를 붙여야 했다. 그건 틀리기 쉽고, 틀리면 워크플로가 그 자리에서
+ * 죽는다. 두 군데를 다 본다.
+ */
+function findPlanFile(given) {
+  const raw = String(given);
+  if (path.isAbsolute(raw)) return fs.existsSync(raw) ? raw : null;
+  for (const base of [ROOT, path.join(ROOT, '..')]) {
+    const full = path.resolve(base, raw);
+    if (fs.existsSync(full)) return full;
+  }
+  return null;
+}
+
 async function cmdTale(flags) {
-  requireApiKey();
+  // 사람이 쓴 대본을 그대로 쓰는 길.
+  //
+  // ─────────────────────────────────────────────────────────────
+  // 왜 이 입구가 필요한가
+  // ─────────────────────────────────────────────────────────────
+  //
+  // AI에게 대본을 시키면 **한 번 뽑고 끝**이다. 마음에 안 들면 돈을 다시
+  // 쓰고 다시 뽑아야 하고, 어디가 왜 좋아졌는지는 아무도 모른다.
+  //
+  // 글은 고쳐 쓰는 물건이다. 쓰고, 재고, 고치고, 사람이 읽고 또 고친다.
+  // 그 과정을 파일 하나로 두면 고친 것이 그대로 남고, 비용이 0원이고,
+  // **효성님이 직접 손댄 문장이 그대로 영상이 된다.**
+  //
+  // 그리고 이게 '진정성 없는 콘텐츠' 쪽에서도 유일하게 진짜 방어다.
+  // AI가 쓰든 사람이 쓰든, 사람이 읽고 고친 흔적이 남는 것이 중요하다.
+  const scriptFile = flags.script ? String(flags.script) : null;
+  // 대본을 주면 AI를 아예 안 부른다. 그래서 키도 필요 없다.
+  if (!scriptFile) requireApiKey();
 
   // 기획 파일로 받는 쪽이 기본이다. 비트 시트를 명령줄에 넣을 수는 없다.
   let plan = {};
   if (flags.plan) {
-    const file = path.isAbsolute(flags.plan) ? flags.plan : path.join(ROOT, flags.plan);
-    if (!fs.existsSync(file)) {
-      log.error(`기획 파일이 없습니다: ${file}`);
+    const file = findPlanFile(flags.plan);
+    if (!file) {
+      log.error(`기획 파일을 찾을 수 없습니다: ${flags.plan}`);
+      log.info(`${ROOT} 와 그 윗 폴더에서 찾아봤습니다.`);
       process.exit(1);
     }
     try {
@@ -520,7 +556,10 @@ async function cmdTale(flags) {
 
   const targetMinutes = Number(flags.minutes) > 0 ? Number(flags.minutes) : TALE_MINUTES;
 
-  log.section(`📖 이상한 동화  |  약 ${targetMinutes}분  |  모델 ${MODELS.script}`);
+  log.section(
+    `📖 이상한 동화  |  약 ${targetMinutes}분  |  ` +
+      (scriptFile ? '사람이 쓴 대본 (비용 0원)' : `모델 ${MODELS.script}`)
+  );
   log.info(`제목: ${item.title}`);
   if (item.summary) log.info(`설정: ${item.summary}`);
   log.info(`비트 ${item.beats.length}개` + (item.beats.length ? '' : ' — 전개를 AI가 혼자 정합니다'));
@@ -532,10 +571,26 @@ async function cmdTale(flags) {
   const { id } = promoteToContent(item);
   log.ok(`content/${id} 으로 올렸습니다.`);
 
-  const { markdown, check } = await writeScript(item, {
-    targetMinutes,
-    onProgress: (m) => log.step(m),
-  });
+  let markdown;
+  let check;
+  if (scriptFile) {
+    const file = findPlanFile(scriptFile);
+    if (!file) {
+      log.error(`대본 파일을 찾을 수 없습니다: ${scriptFile}`);
+      log.info(`${ROOT} 와 그 윗 폴더에서 찾아봤습니다.`);
+      process.exit(1);
+    }
+    markdown = fs.readFileSync(file, 'utf8');
+    log.ok(`대본을 읽었습니다: ${scriptFile}`);
+    // 사람이 썼다고 검사를 건너뛰지 않는다. 섹션이 빠지거나 태그가 틀리면
+    // 다음 단계가 조용히 이상하게 돌아간다.
+    check = validateScript(markdown, { targetMinutes, kind: item.kind });
+  } else {
+    ({ markdown, check } = await writeScript(item, {
+      targetMinutes,
+      onProgress: (m) => log.step(m),
+    }));
+  }
   saveScript(id, markdown, check);
 
   log.raw('');
@@ -959,11 +1014,20 @@ async function cmdVoice(flags) {
   }
 
   // ── 배경음악
+  //
+  // 끌 수 있어야 한다. 지금 들어 있는 여섯 곡은 전부 미스터리·스릴러용이라
+  // 조용한 동화에 깔면 그 자리에서 어긋난다. **안 맞는 음악은 없는 음악보다
+  // 나쁘다** — 없으면 담백하고, 안 맞으면 싸구려로 들린다.
+  //
+  // 곡을 고르는 것은 사람 일이다. 오디오 보관함에서 받을 때 저작자 표시가
+  // 붙는지도 확인해야 하므로(bgm/목록.json 참고) 코드가 대신 정할 수 없다.
   const bgmDir = path.join(ROOT, 'bgm');
-  const tracks = loadTracks(bgmDir);
+  const tracks = flags['no-bgm'] ? [] : loadTracks(bgmDir);
   let track = null;
 
-  if (!tracks.length) {
+  if (flags['no-bgm']) {
+    log.info('배경음악을 끄고 나레이션만 넣습니다 (--no-bgm).');
+  } else if (!tracks.length) {
     log.warn('배경음악이 없습니다. 나레이션만 들어갑니다.');
     log.info(`유튜브 오디오 보관함에서 받아 ${bgmDir} 에 넣어주세요. 방법은 bgm/README.md 에 있습니다.`);
   } else {
@@ -1255,7 +1319,14 @@ async function runStages(id, flags) {
   // 영상보다 **먼저** 만들어야 한다 — 영상이 음성 길이에 맞춰 잘리기 때문이다.
   if (flags.narrate && flags.scenes) {
     try {
-      await cmdVoice({ id, voice: flags['tts-voice'], 'max-usd': flags['tts-max-usd'] });
+      // --no-bgm 을 여기서 넘기지 않으면 auto 로 돌릴 때만 음악이 깔린다.
+      // 같은 플래그가 경로에 따라 다르게 먹히는 것이 제일 찾기 어려운 버그다.
+      await cmdVoice({
+        id,
+        voice: flags['tts-voice'],
+        'max-usd': flags['tts-max-usd'],
+        'no-bgm': flags['no-bgm'],
+      });
     } catch (err) {
       log.fail(`content/${id} 목소리 만들기 실패`, err);
     }
@@ -1555,7 +1626,7 @@ async function main() {
       log.raw('      --dry-run 은 몇 장에 얼마인지만 보여줍니다 (비용 0원).');
       log.raw('      이미 만든 이미지는 건너뜁니다. 중간에 죽어도 돈을 다시 안 씁니다.');
       log.raw('');
-      log.raw('  node src/main.mjs voice --id=001 [--dry-run] [--voice=이름] [--voices]');
+      log.raw('  node src/main.mjs voice --id=001 [--dry-run] [--voice=이름] [--voices] [--no-bgm]');
       log.raw('      대본을 읽는 목소리를 만들고 배경음악을 깝니다.');
       log.raw('      문단마다 따로 만들어 실제 길이를 재므로, 자막이 추정치가 아니라');
       log.raw('      진짜 음성에 맞습니다. --voices 는 쓸 수 있는 목소리 목록만 봅니다.');
@@ -1567,6 +1638,7 @@ async function main() {
       log.raw('  node src/main.mjs tale --plan=이상한동화/1화.json');
       log.raw('      창작 동화 한 편을 시작합니다 (조사 없음, 대본값만 듭니다).');
       log.raw('      --title / --premise / --strange / --last-line 으로도 넘길 수 있습니다.');
+      log.raw('      --script=파일.md 를 주면 그 대본을 그대로 씁니다 (AI 안 부름, 비용 0원).');
       log.raw('      기본 4분입니다. 실화 편(8분)과 다릅니다.');
       log.raw('');
       log.raw('  node src/main.mjs upload --id=001');
