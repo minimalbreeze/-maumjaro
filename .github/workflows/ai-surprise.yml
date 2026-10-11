@@ -31,10 +31,16 @@ on:
           - '진짜 그림까지 (이미지 생성 · 장당 돈이 나갑니다)'
           - '완성본 (그림 + 목소리 + 배경음악)'
           - '올릴 거리만 만들기 (제목·썸네일·설명문 · 이어하기 번호 필요 · 약 $0.1)'
+          - '이상한 동화 — 대본만 (기획 파일 필요 · 약 $0.5)'
+          - '이상한 동화 — 완성본 (그림 + 목소리 + 영상 · 약 $0.7)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
         default: ''
+      tale_plan:
+        description: '이상한 동화 기획 파일 (예: 이상한동화/1화.json). 동화 방식에서만 씁니다'
+        required: false
+        default: '이상한동화/1화.json'
       topic:
         description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
         required: false
@@ -210,6 +216,8 @@ jobs:
       # 그런데 ffmpeg는 오류를 내지 않으므로, 영상을 눈으로 보기 전까지
       # 모른다. 그래서 깐 다음 실제로 글자가 그려지는지 확인한다.
       - name: ffmpeg와 한글 글꼴 설치
+        # 동화 완성본도 이름에 '완성본' 이 들어 있어 여기 걸린다. 동화 대본만
+        # 만드는 방식에는 ffmpeg 가 필요 없으므로 따로 넣지 않는다.
         if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리') }}
         # 실측 24초인 단계다. 한 번은 패키지 서버가 응답하지 않아 25분을
         # 멈춰 있었고, 그대로 두면 6시간을 돈다. 빨리 죽고 다시 도는 쪽이 낫다.
@@ -236,6 +244,7 @@ jobs:
           IN_MINUTES: ${{ inputs.minutes }}
           IN_CATEGORY: ${{ inputs.category }}
           IN_TOPIC: ${{ inputs.topic }}
+          IN_TALE_PLAN: ${{ inputs.tale_plan }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
@@ -299,6 +308,39 @@ jobs:
               echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
               echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
               node src/main.mjs upload --id="$RESUME_ID"
+              ;;
+            *'동화'*)
+              # 이 분기가 '완성본'·'그림' 분기보다 **반드시 앞에** 있어야 한다.
+              # 모드 이름에 '완성본' 이 들어 있어서, 뒤에 두면 실화 쪽으로 샌다.
+              case "$IN_TALE_PLAN" in
+                ''|*..*) echo "::error::기획 파일 경로가 이상합니다: $IN_TALE_PLAN"; exit 1 ;;
+              esac
+              if [ ! -f "../$IN_TALE_PLAN" ]; then
+                echo "::error::기획 파일이 없습니다: $IN_TALE_PLAN"
+                echo "리포에 그 파일이 있는지 확인해 주세요."
+                exit 1
+              fi
+              echo "이상한 동화를 만듭니다. 기획 파일: $IN_TALE_PLAN"
+              echo "조사 단계가 없습니다 — 창작물이라 찾을 출처가 없습니다."
+              node src/main.mjs tale --plan="../$IN_TALE_PLAN"
+              tale_id="$(pick_id)"
+              # case 를 중첩하지 않는다. 안쪽 case 의 기본 분기(*)가 바깥
+              # case 의 분기들 사이에 끼어들어 읽기도 검사하기도 어려워진다.
+              # 문자열이 들어 있는지만 보면 되므로 파라미터 확장으로 본다.
+              if [ "${IN_MODE%%완성본*}" != "$IN_MODE" ]; then
+                if [ -z "$tale_id" ]; then
+                  echo "::error::대본은 썼는데 편 번호를 못 찾았습니다."
+                  exit 1
+                fi
+                echo "content/$tale_id — 장면·그림·목소리·영상까지 이어서 만듭니다."
+                node src/main.mjs auto --resume="$tale_id" \
+                  --scenes --images --narrate --video \
+                  --image-model="$IN_IMAGE_MODEL" --max-usd="$IN_MAX_USD"
+                node src/main.mjs upload --id="$tale_id" \
+                  || echo "::warning::올릴 거리 만들기에 실패했습니다. 영상은 그대로 있습니다."
+              else
+                echo "대본까지만 만들었습니다. 읽어보고 괜찮으면 완성본으로 돌려 주세요."
+              fi
               ;;
             *'대본만 다시 쓰기'*)
               if [ -z "$RESUME_ID" ]; then

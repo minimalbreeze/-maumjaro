@@ -23,6 +23,7 @@
 
 import { callForJson, MODELS } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
+import { KIND } from '../model.mjs';
 
 /**
  * 이 채널의 고정 화면 스타일 (기획서 10번).
@@ -66,6 +67,39 @@ export const ERA_TONES = {
   anomaly: 'the unexplained thing rendered as light only — a glow, a silhouette, ' +
     'a lens flare — never a detailed object, never a visible craft or creature',
 };
+
+/**
+ * 창작 동화(KIND.TALE)의 고정 화면 스타일.
+ *
+ * 실화 쪽의 시네마틱 톤과 정반대로 간다. 저쪽은 "실제로 찍힌 것처럼"이
+ * 목적이고, 동화는 **그림책처럼** 보여야 한다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 작가 이름을 쓰지 않는다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * "○○풍", "△△ 스타일" 같은 지시를 쓰지 않는다. 화풍 자체는 저작권
+ * 대상이 아니지만, 특정 작가나 작품을 지목하는 순간 성격이 달라진다.
+ * **인쇄 기법 용어로만** 쓴다 — 아래가 전부 기법 이름이다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 이 화풍이 기술적으로도 유리한 이유
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 사실적인 화풍일수록 컷마다 **얼굴이 다른 사람이 된다.** 리소그래프
+ * 스타일은 얼굴 디테일이 적어서 그 문제가 훨씬 덜하다. 멋과 실리가 같은
+ * 방향인 드문 경우다.
+ */
+export const TALE_STYLE_SUFFIX =
+  // 인쇄 질감. 잉크가 살짝 어긋나 겹치는 느낌이 이 화풍의 핵심이다.
+  'risograph print illustration, grainy recycled paper texture, ' +
+  'slight ink misregistration, visible halftone dots, ' +
+  // 색을 3~4가지로 묶는다. 편마다 바꾸지 않는다 — 바꾸면 채널로 안 보인다.
+  'limited 4-color palette: deep indigo ink, sunset orange, muted teal, warm paper white, ' +
+  // 굵은 선 + 평면 채색. 그라데이션을 쓰면 리소 느낌이 사라진다.
+  'thick rough ink outlines, flat color blocking, minimal gradient, ' +
+  'simple stylized faces, storybook composition, ' +
+  'no text, no watermark, no captions, no subtitles, no logo';
 
 export const NEGATIVE_SUFFIX =
   'no blood, no gore, no corpses, no wounds, no injury, no violence, ' +
@@ -272,7 +306,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content, era = null) {
+export function composeImagePrompt(content, era = null, { kind = null } = {}) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -282,9 +316,14 @@ export function composeImagePrompt(content, era = null) {
   const body = String(content || '').trim().replace(/[.,;:\s]+$/, '');
   // 시대 색감은 고정 스타일 **앞**에 붙인다. 뒤에 붙이면 공통 색상 지시와
   // 충돌해서 모델이 둘 중 하나를 버린다.
-  const tone = ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
-  if (!body) return `${tone}${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
-  return `${body}. ${tone}${STYLE_SUFFIX}. ${NEGATIVE_SUFFIX}`;
+  //
+  // 동화는 **시대 색감을 쓰지 않는다.** 팔레트가 고정이라 era 색을 더하면
+  // 그 고정이 깨지고, 편마다 색이 달라 보인다.
+  const isTale = kind === KIND.TALE;
+  const style = isTale ? TALE_STYLE_SUFFIX : STYLE_SUFFIX;
+  const tone = !isTale && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
+  if (!body) return `${tone}${style}. ${NEGATIVE_SUFFIX}`;
+  return `${body}. ${tone}${style}. ${NEGATIVE_SUFFIX}`;
 }
 
 /**
@@ -323,7 +362,7 @@ export function checkPrompts(shots) {
  * AI가 샷을 빠뜨리거나 없는 샷 번호를 보내는 경우를 여기서 흡수한다.
  * 합치지 못한 샷은 problems로 알린다.
  */
-export function mergeVisuals(scene, design) {
+export function mergeVisuals(scene, design, { kind = null } = {}) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
   );
@@ -339,7 +378,7 @@ export function mergeVisuals(scene, design) {
     return {
       ...shot,
       era: ERA_TONES[d.era] ? d.era : 'present',
-      image_prompt: composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present'),
+      image_prompt: composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', { kind }),
       image_prompt_content: d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
       camera: IMAGE_CAMERA_MOVES.includes(d.camera) ? d.camera : 'zoom in',
@@ -406,7 +445,7 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
     check = checkPrompts(design?.shots);
   }
 
-  const merged = mergeVisuals(scene, design);
+  const merged = mergeVisuals(scene, design, { kind: item?.kind });
   const problems = [...merged.problems];
   if (!check.ok) {
     problems.push(

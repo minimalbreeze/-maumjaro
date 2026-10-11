@@ -52,7 +52,23 @@ export const CATEGORIES = [
  * 그게 바로 이 채널이 하지 않기로 한 일이다. 대본에 'ORIGIN'(이 이야기는
  * 어디서 왔나) 섹션을 **필수**로 박아 그 선을 지킨다.
  */
-export const KIND = { EVENT: 'EVENT', LEGEND: 'LEGEND' };
+/**
+ * 편의 종류.
+ *
+ * EVENT·LEGEND 는 **실제로 있었던 일**을 다룬다. 그래서 1차 기록과 출처가
+ * 관문이다.
+ *
+ * TALE 은 **지어낸 이야기**다. 창작이므로 출처라는 개념 자체가 없고,
+ * 그 관문을 그대로 들이대면 한 편도 통과하지 못한다. 관문을 느슨하게
+ * 만드는 게 아니라, **다른 관문을 쓰는 것**이다 — 실화 쪽 기준은 그대로
+ * 둔 채 TALE 에만 예외를 둔다. 실화의 엄격함을 창작 때문에 깎지 않는다.
+ */
+export const KIND = { EVENT: 'EVENT', LEGEND: 'LEGEND', TALE: 'TALE' };
+
+/** 지어낸 이야기인가. 출처·1차 기록 관문을 건너뛰는 유일한 조건이다. */
+export function isFiction(item) {
+  return item?.kind === KIND.TALE;
+}
 
 export const FACT_STATUS = {
   /** 1차 기록(신문·판결문·공문서·학술자료)으로 확인됨 */
@@ -180,9 +196,11 @@ export function evaluateGate(item) {
   // 1) 다루면 안 되는 것 — 되돌릴 수 없는 피해가 생기는 쪽
   const blocking = [];
   const isLegendKind = item?.kind === KIND.LEGEND;
+  const isTale = item?.kind === KIND.TALE;
   // FABRICATED(지어낸 이야기)는 EVENT에서만 막는다. LEGEND는 지어낸
   // 이야기를 추적하는 게 목적이므로 막으면 소재 자체가 성립하지 않는다.
-  if (flags.includes('FABRICATED') && item?.kind !== KIND.LEGEND) {
+  // TALE 도 막지 않는다. 지어낸 이야기라는 것이 그 편의 전제다.
+  if (flags.includes('FABRICATED') && !isLegendKind && !isTale) {
     blocking.push(RISK_FLAGS.FABRICATED);
   }
   if (flags.includes('DEFAMATION')) blocking.push(RISK_FLAGS.DEFAMATION);
@@ -204,6 +222,9 @@ export function evaluateGate(item) {
   // (2) 대본 지시에 "살아 있는 특정인을 지목하지 않는다"를 박았다.
   // DEFAMATION은 그대로 차단한다. 그 플래그는 "이름이 나온다"가 아니라
   // "실제로 명예를 훼손한다"는 판정이기 때문이다.
+  //
+  // TALE(창작 동화)에서는 **차단을 유지한다.** 지어낸 이야기에 실존 인물이
+  // 나올 이유가 없고, 나온다면 그건 창작이 아니라 그 사람에 대한 주장이다.
   if (flags.includes('LIVING_PERSON_CLAIM') && !isLegendKind) {
     blocking.push(RISK_FLAGS.LIVING_PERSON_CLAIM);
   }
@@ -216,7 +237,9 @@ export function evaluateGate(item) {
   // 대신 **이야기의 출처와 확산**에 기록이 있어야 하고, 그건 아래 출처 수
   // 검사가 본다. 'FABRICATED'(지어낸 이야기)도 같은 이유로 막지 않는다 —
   // 지어낸 이야기라는 게 바로 그 편의 내용이다.
-  if (!isLegendKind && item?.fact_status === FACT_STATUS.UNVERIFIED) {
+  //
+  // TALE 도 예외다. 창작물에 "1차 기록"이라는 개념이 없다.
+  if (!isLegendKind && !isTale && item?.fact_status === FACT_STATUS.UNVERIFIED) {
     blocking.push('1차 기록으로 확인되지 않는 이야기');
   }
 
@@ -225,6 +248,23 @@ export function evaluateGate(item) {
   }
 
   // 2) 사람이 반드시 봐야 하는 것
+  //
+  // 창작 동화는 여기서 일찍 빠진다. 출처 수·단일 출처·음모론·반박은 전부
+  // "실제로 있었던 일인가"를 묻는 검사라서 창작물에는 물을 수가 없다.
+  //
+  // 대신 **사람이 읽는 것은 면제하지 않는다.** 창작이라고 아무 글이나
+  // 나가도 되는 것은 아니고, 광고가 막히는 표현은 창작에서 오히려 나오기
+  // 쉽다(대본 검사가 따로 본다).
+  if (isTale) {
+    return {
+      gate: GATE.REVIEW_NEEDED,
+      reasons: [
+        '창작 동화입니다 — 출처 검사를 하지 않습니다. 지어낸 이야기이기 때문입니다',
+        '대본이 나오면 한 번 읽어봐 주세요. 실존 인물·실제 사건을 연상시키지 않는지 봅니다',
+      ],
+    };
+  }
+
   const sourceCount = Number(item?.source_count);
   if (!Number.isFinite(sourceCount) || sourceCount < MIN_SOURCE_COUNT) {
     reasons.push(`출처가 ${Number.isFinite(sourceCount) ? sourceCount : 0}개입니다 — ${MIN_SOURCE_COUNT}개 이상 직접 확인해 주세요`);
@@ -275,6 +315,54 @@ export function isRecommended(item) {
  * AI 출력을 그대로 저장하지 않는다. 필드가 빠지거나 타입이 달라지면
  * 뒤 단계가 조용히 깨지기 때문이다.
  */
+/**
+ * 창작 동화 한 편의 소재 레코드를 만든다.
+ *
+ * 실화 쪽 makeItem 과 달리 **AI를 부르지 않는다.** 조사할 것이 없기
+ * 때문이다. 사람이 준 한 줄 설정과 비트 시트를 그대로 담는다. 비용 0원이다.
+ *
+ * 점수(final_score)도 매기지 않는다. 실화의 점수는 "얼마나 조사가 잘 됐나"를
+ * 재는 것이라 창작물에 들이댈 수 없다. 어느 편을 만들지는 사람이 고른다.
+ */
+export function makeTale({ title, premise = '', strange = '', beats = [], lastLine = '' } = {}) {
+  const item = {
+    title: String(title || '').trim(),
+    summary: String(premise || '').trim(),
+    category: '이상한 동화',
+    date_found: new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10),
+
+    // 창작물이므로 출처가 없다. 빈 값을 넣되 **0이라는 사실을 숨기지 않는다** —
+    // 나중에 이 레코드를 보는 사람이 "출처를 못 찾은 실화"와 헷갈리면 안 된다.
+    sources: [],
+    source_url: '',
+    source_name: '',
+    source_count: 0,
+
+    kind: KIND.TALE,
+    fact_status: FACT_STATUS.UNVERIFIED,
+    fact_notes: '창작물입니다. 실제로 있었던 일이 아닙니다.',
+
+    what_is_strange: String(strange || '').trim(),
+    beats: (Array.isArray(beats) ? beats : [])
+      .filter((b) => b?.key && b?.what)
+      .map((b) => ({ key: String(b.key), what: String(b.what).trim() })),
+    last_line: String(lastLine || '').trim(),
+
+    risk_flags: [],
+    risk_score: 0,
+    risk_notes: '',
+
+    status: 'IDEA',
+  };
+
+  const { gate, reasons } = evaluateGate(item);
+  item.gate = gate;
+  item.gate_reasons = reasons;
+  item.recommended = false;
+
+  return item;
+}
+
 export function makeItem(raw, { dateFound } = {}) {
   const scores = {};
   for (const key of SCORE_KEYS) {

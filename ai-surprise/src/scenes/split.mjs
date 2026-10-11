@@ -249,8 +249,9 @@ export function planShots(sceneSeconds, sceneNumber = 1) {
  * 반환: { scenes, stats, problems }
  *   problems 가 비어 있지 않으면 다음 단계로 넘기지 않는다.
  */
-export function splitIntoScenes(markdown, { targetScenes = null } = {}) {
-  const parsed = parseScript(markdown);
+export function splitIntoScenes(markdown, { targetScenes = null, kind = undefined } = {}) {
+  // kind 를 넘기지 않으면 parseScript 의 기본값(실화 편)이 쓰인다.
+  const parsed = kind ? parseScript(markdown, { kind }) : parseScript(markdown);
   const problems = [...parsed.problems];
 
   if (problems.length) {

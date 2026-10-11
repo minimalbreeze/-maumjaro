@@ -3219,6 +3219,9 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     '목소리 들어보기': '목소리 들어보기',
     '대본만 다시 쓰기': '대본만 다시 쓰기',
     '올릴 거리': '올릴 거리',
+    // '이상한 동화 — 완성본' 에도 '완성본' 이 들어 있다. 표에서도 분기에서도
+    // 동화가 **먼저** 와야 한다. 순서가 뒤바뀌면 동화가 실화로 샌다.
+    '동화': '동화',
     '완성본': '완성본',
     '그림': '그림',
     '영상': '영상',
@@ -3234,6 +3237,33 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
   }
 });
 
+test('동화 완성본이 비밀값 확인을 모두 거친다', () => {
+  // 전에 한 번 겪은 실패다 — 키 확인은 초록불이었는데 실행 단계에 키를
+  // 안 넘겨서 거기서 죽었다. 방식을 늘릴 때마다 이게 다시 생길 수 있다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const optBlock = yml.slice(yml.indexOf('        options:'), yml.indexOf('      tale_plan:'));
+  const modes = [...optBlock.matchAll(/^\s+- '(.+)'$/gm)].map((m) => m[1]);
+  const taleFull = modes.find((m) => m.includes('동화') && m.includes('완성본'));
+  assert.ok(taleFull, '동화 완성본 방식이 없습니다');
+
+  // 각 확인 단계의 if 조건을 떼어내 이 모드가 걸리는지 본다.
+  const condOf = (name) => {
+    const at = yml.indexOf(`- name: ${name}`);
+    assert.ok(at > 0, `${name} 단계를 찾지 못했습니다`);
+    return yml.slice(at, yml.indexOf('\n        env:', at));
+  };
+  // contains(inputs.mode, 'X') 를 모아 이 모드가 하나라도 맞는지 본다.
+  const hits = (cond) =>
+    [...cond.matchAll(/contains\(inputs\.mode, '([^']+)'\)/g)].some((m) => taleFull.includes(m[1]));
+
+  assert.ok(hits(condOf('목소리 키가 등록되어 있는지 확인')), '동화 완성본에 TTS 키 확인이 안 걸립니다');
+  assert.ok(hits(condOf('이미지 토큰이 등록되어 있는지 확인')), '동화 완성본에 이미지 토큰 확인이 안 걸립니다');
+  assert.ok(hits(condOf('ffmpeg와 한글 글꼴 설치')), '동화 완성본에 ffmpeg·글꼴이 안 깔립니다');
+});
+
 test('올릴 거리 모드가 ffmpeg와 한글 글꼴을 깐다', () => {
   // 썸네일도 ffmpeg 로 만들고 글자도 얹는다. 글꼴이 없으면 ffmpeg 는
   // 오류 없이 네모를 그린다 — 받아서 열어 보기 전까지 모른다.
@@ -3245,6 +3275,188 @@ test('올릴 거리 모드가 ffmpeg와 한글 글꼴을 깐다', () => {
   assert.ok(start > 0, 'ffmpeg 설치 단계를 찾지 못했습니다');
   const cond = yml.slice(start, yml.indexOf('\n        timeout-minutes', start));
   assert.ok(cond.includes("contains(inputs.mode, '올릴 거리')"), '올릴 거리 모드에 ffmpeg·글꼴이 안 깔립니다');
+});
+
+
+// ─────────────────────────────────────────────────────────────
+// 창작 동화 (KIND.TALE)
+// ─────────────────────────────────────────────────────────────
+//
+// 여기서 막는 것은 두 방향이다.
+//
+//  1) 창작 때문에 **실화의 엄격함이 깎이지 않는가.** 출처 관문을 느슨하게
+//     만든 게 아니라 TALE 에만 예외를 둔 것이므로, EVENT 가 그대로인지
+//     매번 확인한다.
+//  2) 동화가 **실화 규칙에 걸려 한 편도 못 나가지 않는가.**
+
+const {
+  TALE_SECTIONS,
+  TALE_TAGS,
+  TALE_MINUTES,
+  TALE_SYSTEM,
+  TALE_HOOK_EXAMPLE,
+  ALL_TAGS,
+  tagsFor,
+  buildTalePrompt,
+  sectionsFor: sectionsForKind,
+  HOOK_CHARS_MAX: TALE_HOOK_MAX,
+  DEFAULT_MINUTES: DEFAULT_MINUTES_SCRIPT,
+} = await import('../src/script/write.mjs');
+const { splitIntoScenes: splitScenes } = await import('../src/scenes/split.mjs');
+const { makeTale, isFiction } = await import('../src/model.mjs');
+const { TALE_STYLE_SUFFIX, STYLE_SUFFIX: EVENT_STYLE, composeImagePrompt: composeImg } = await import('../src/scenes/visuals.mjs');
+const { countNarrationChars: countChars } = await import('../src/narration.mjs');
+
+const taleBody = (opts = {}) =>
+  TALE_SECTIONS.map((sec) => {
+    const text = sec.key === 'HOOK' ? (opts.hook ?? TALE_HOOK_EXAMPLE) : '가'.repeat(120);
+    return `## [${sec.key}] ${sec.label}\n\n[STORY] ${text}\n`;
+  }).join('\n');
+
+test('창작 동화는 출처 없이도 관문을 통과한다', () => {
+  // 출처 0개, 1차 기록 없음. 실화였다면 전부 막히는 조건이다.
+  const t = makeTale({ title: '그림자가 먼저 집에 가는 아이', premise: '매일 저녁 그림자가 먼저 간다' });
+  assert.notEqual(t.gate, GATE.BLOCKED, `창작물이 막혔습니다: ${t.gate_reasons.join(' / ')}`);
+  assert.equal(t.source_count, 0);
+  assert.ok(isFiction(t));
+});
+
+test('창작이라고 사람이 읽는 것까지 면제하지 않는다', () => {
+  const t = makeTale({ title: 'x' });
+  assert.equal(t.gate, GATE.REVIEW_NEEDED, '자동 통과시키면 아무 글이나 나갑니다');
+  assert.ok(t.gate_reasons.length, '왜 봐야 하는지 알려주지 않습니다');
+  assert.equal(t.recommended, false, '창작물에 추천 표시를 달면 안 됩니다');
+});
+
+test('실화의 출처 관문은 그대로다 (동화 때문에 깎이지 않았는가)', () => {
+  // 이 테스트가 이 기능 전체에서 가장 중요하다. 예외를 하나 뚫으면
+  // 그 구멍으로 실화가 같이 빠져나가기 쉽다.
+  const 실화 = makeItem({
+    title: '출처 없는 사건',
+    kind: 'EVENT',
+    fact_status: 'UNVERIFIED',
+    sources: [],
+  });
+  assert.equal(실화.gate, GATE.BLOCKED, '출처 없는 실화가 통과했습니다');
+});
+
+test('창작 동화에 실존 인물 주장이 있으면 막는다', () => {
+  // 창작물에 실존 인물이 나올 이유가 없다. 나왔다면 그건 창작이 아니라
+  // 그 사람에 대한 주장이다.
+  const t = makeTale({ title: 'x' });
+  t.risk_flags = ['LIVING_PERSON_CLAIM'];
+  const again = evaluateGate(t);
+  assert.equal(again.gate, GATE.BLOCKED, `생존 인물 주장이 통과했습니다: ${again.reasons.join(' / ')}`);
+});
+
+test('종류마다 쓸 수 있는 태그가 다르다', () => {
+  assert.deepEqual(tagsFor('TALE'), TALE_TAGS);
+  assert.ok(!tagsFor('EVENT').includes('STORY'));
+  // 파서는 양쪽을 다 읽을 수 있어야 한다. 모르는 태그를 만나면 그 문단을
+  // 통째로 잃어버리는데, 그게 제일 조용한 실패다.
+  for (const t of [...TALE_TAGS, 'FACT']) assert.ok(ALL_TAGS.includes(t), `${t} 를 파서가 모릅니다`);
+});
+
+test('동화는 6섹션, 실화는 9섹션을 쓴다', () => {
+  const tale = sectionsForKind('TALE').map((s) => s.key);
+  const event = sectionsForKind('EVENT').map((s) => s.key);
+  assert.deepEqual(tale, ['HOOK', 'SETUP', 'NOTICE', 'FOLLOW', 'TURN', 'CLOSE']);
+  assert.ok(event.includes('OUR_READING'), '실화 섹션이 바뀌었습니다');
+  assert.ok(!tale.includes('OUR_READING'), '동화에 실화 전용 섹션이 들어갔습니다');
+});
+
+test('동화 대본이 실화 섹션을 요구받지 않는다', () => {
+  // kind 를 안 넘기면 9섹션을 기대해서 전부 "섹션이 없습니다"로 막힌다.
+  const r = validateScript(taleBody(), { targetMinutes: TALE_MINUTES, kind: 'TALE' });
+  assert.deepEqual(r.errors, [], `동화 대본이 막혔습니다:\n${r.errors.join('\n')}`);
+  assert.equal(r.stats.sectionsExpected, 6, '기대 섹션 수가 실화 기준으로 찍힙니다');
+});
+
+test('동화에 [FACT] 를 쓰면 막는다', () => {
+  // 지어낸 이야기를 사실이라고 표시한 대본은 그대로 시청자를 속인다.
+  const bad = taleBody().replace('[STORY]', '[FACT]');
+  const r = validateScript(bad, { targetMinutes: TALE_MINUTES, kind: 'TALE' });
+  assert.ok(r.errors.some((e) => e.includes('[FACT]')), `[FACT] 를 못 잡습니다:\n${r.errors.join('\n')}`);
+});
+
+test('실화에 [STORY] 를 쓰면 막는다', () => {
+  const body = SECTIONS.map((sec) => `## [${sec.key}] ${sec.label}\n\n[STORY] ${'가'.repeat(150)}\n`).join('\n');
+  const r = validateScript(body, { targetMinutes: 8, kind: 'EVENT' });
+  assert.ok(r.errors.some((e) => e.includes('[STORY]')), `실화에 창작 태그가 통과했습니다:\n${r.errors.join('\n')}`);
+});
+
+test('훅 길이를 잴 때 [STORY] 태그를 벗긴다', () => {
+  // 태그를 안 벗기면 훅이 7자 길게 재어진다. 멀쩡한 훅이 경고를 단다.
+  const r = validateScript(taleBody(), { targetMinutes: TALE_MINUTES, kind: 'TALE' });
+  assert.equal(r.stats.hookChars, countChars(TALE_HOOK_EXAMPLE), '태그가 글자 수에 섞였습니다');
+});
+
+test('프롬프트에 적은 훅 예시가 실제로 짧다', () => {
+  // 예시가 길면 AI 가 그 길이를 따라 쓴다. 숫자를 적을 때는 재서 적는다.
+  const n = countChars(TALE_HOOK_EXAMPLE);
+  assert.ok(n <= TALE_HOOK_MAX, `훅 예시가 ${n}자입니다 (${TALE_HOOK_MAX}자 이내여야 합니다)`);
+});
+
+test('동화 기본 길이가 실화보다 짧다', () => {
+  // 같은 길이로 끌면 설명이 들어가고, 설명이 들어가면 동화가 아니게 된다.
+  assert.ok(TALE_MINUTES < DEFAULT_MINUTES_SCRIPT, '동화가 실화만큼 깁니다');
+  assert.equal(TALE_MINUTES, 4);
+});
+
+test('동화 프롬프트가 비트 시트를 그대로 넘긴다', () => {
+  const p = buildTalePrompt({
+    title: '그림자가 먼저 집에 가는 아이',
+    summary: '매일 저녁 그림자가 먼저 간다',
+    strange: '그림자가 혼자 걸어간다',
+    beats: [{ key: 'TURN', what: '그림자가 식탁에 앉아 저녁을 먹고 있다' }],
+    last_line: '밖에 남은 쪽에는 그림자가 없다',
+  }, { targetMinutes: TALE_MINUTES });
+
+  assert.ok(p.includes('식탁에 앉아'), '비트가 프롬프트에 없습니다');
+  assert.ok(p.includes('밖에 남은 쪽'), '마지막 장면이 프롬프트에 없습니다');
+  assert.ok(p.includes('[STORY]'), '쓸 태그를 안 알려줍니다');
+  assert.ok(!p.includes('[FACT]') || p.includes('[FACT] 같은'), '쓰면 안 되는 태그를 예시로 보여줍니다');
+  // 섹션을 전부 적어 줘야 순서대로 쓴다.
+  for (const s of TALE_SECTIONS) assert.ok(p.includes(`## [${s.key}]`), `${s.key} 가 프롬프트에 없습니다`);
+});
+
+test('동화 규칙이 설명·교훈을 금지한다', () => {
+  // 이 둘이 이 포맷을 죽이는 가장 흔한 방법이다.
+  assert.ok(TALE_SYSTEM.includes('설명하지 않는다'));
+  assert.ok(TALE_SYSTEM.includes('교훈'));
+  assert.ok(TALE_SYSTEM.includes('실존 인물'), '창작물에 실존 인물을 금지하지 않습니다');
+});
+
+test('동화 화면은 코믹스체, 실화는 시네마틱 — 섞이지 않는다', () => {
+  const tale = composeImg('a boy at a doorway', 'past', { kind: 'TALE' });
+  const event = composeImg('a boy at a doorway', 'past');
+
+  assert.ok(tale.includes('risograph'), '동화에 코믹스체가 안 붙었습니다');
+  assert.ok(!tale.includes('cinematic film still'), '동화에 실화 톤이 섞였습니다');
+  // 동화는 팔레트가 고정이라 시대 색감을 쓰지 않는다.
+  assert.ok(!tale.includes('sepia'), '동화에 시대 색감이 섞여 편마다 색이 달라집니다');
+
+  assert.ok(event.includes('cinematic film still'), '실화 톤이 바뀌었습니다');
+  assert.ok(!event.includes('risograph'), '실화에 코믹스체가 섞였습니다');
+});
+
+test('코믹스체 프롬프트에 작가·작품 이름이 없다', () => {
+  // 화풍 자체는 저작권 대상이 아니지만, 특정 이름을 지목하면 성격이 달라진다.
+  // 기법 용어로만 쓴다.
+  const banned = /ghibli|disney|pixar|miyazaki|지브리|디즈니|픽사|in the style of/i;
+  assert.ok(!banned.test(TALE_STYLE_SUFFIX), `작가·작품 이름이 들어갔습니다: ${TALE_STYLE_SUFFIX}`);
+  assert.ok(!banned.test(EVENT_STYLE));
+  // 팔레트가 고정이어야 채널이 한 덩어리로 보인다.
+  assert.ok(TALE_STYLE_SUFFIX.includes('palette'), '팔레트를 고정하지 않았습니다');
+});
+
+test('동화 대본도 장면으로 쪼개진다', () => {
+  // kind 를 안 넘기면 파서가 실화 섹션을 기대해 통째로 막힌다.
+  const { scenes, problems } = splitScenes(taleBody(), { kind: 'TALE' });
+  assert.deepEqual(problems, [], `동화가 장면으로 안 쪼개집니다:\n${problems.join('\n')}`);
+  assert.ok(scenes.length, '장면이 하나도 안 나왔습니다');
+  const tags = new Set(scenes.flatMap((s) => (s.paragraphs || []).map((p) => p.tag)));
+  assert.deepEqual([...tags], ['STORY'], `태그가 잘못 읽혔습니다: ${[...tags].join(', ')}`);
 });
 
 console.log(`\n${'═'.repeat(60)}`);

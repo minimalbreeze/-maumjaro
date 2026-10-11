@@ -9,14 +9,15 @@
 // 그래서 글자는 코드가 다룬다. 한 글자도 바꾸지 않고, 버리지 않는다.
 // AI는 "이 장면에 어떤 그림이 어울리나"만 설계한다 (visuals.mjs).
 
-import { SECTIONS, TAGS } from '../script/write.mjs';
+import { ALL_TAGS, sectionsFor } from '../script/write.mjs';
+import { KIND } from '../model.mjs';
 import { countNarrationChars, secondsForText } from '../narration.mjs';
 
 const SECTION_RE = /^##\s*\[([A-Z_]+)\]\s*(.*)$/;
-const TAG_RE = new RegExp(`^\\[(${TAGS.join('|')})\\]\\s*(.*)$`);
-
-/** 섹션 키 → 라벨. 대본에 라벨이 빠져 있어도 채워 넣는다. */
-const SECTION_LABEL = new Map(SECTIONS.map((s) => [s.key, s.label]));
+// 파서는 **모든** 태그를 읽는다. 어느 태그가 허용되는지는 validateScript 가
+// 판단한다. 파서가 모르는 태그를 만나면 그 문단을 통째로 잃어버리는데,
+// 그건 "쓰면 안 되는 태그"보다 훨씬 조용하고 나쁜 실패다.
+const TAG_RE = new RegExp(`^\\[(${ALL_TAGS.join('|')})\\]\\s*(.*)$`);
 
 /**
  * 대본을 읽는다.
@@ -32,7 +33,10 @@ const SECTION_LABEL = new Map(SECTIONS.map((s) => [s.key, s.label]));
  * problems 가 비어 있지 않으면 장면 분할로 넘기지 않는다. 깨진 대본으로
  * 장면을 만들면 Phase 3에서 돈을 쓴 뒤에야 문제를 발견한다.
  */
-export function parseScript(markdown) {
+export function parseScript(markdown, { kind = KIND.EVENT } = {}) {
+  const expectedSections = sectionsFor(kind);
+  // 섹션 키 → 라벨. 대본에 라벨이 빠져 있어도 채워 넣는다.
+  const SECTION_LABEL = new Map(expectedSections.map((x) => [x.key, x.label]));
   const problems = [];
   const sections = [];
   const paragraphs = [];
@@ -94,7 +98,7 @@ export function parseScript(markdown) {
   // 섹션이 다 있는지, 순서가 맞는지. validateScript와 같은 검사지만
   // 여기서 한 번 더 본다 — 저장된 대본을 사람이 고쳤을 수 있다.
   const foundKeys = sections.map((s) => s.key);
-  const expectedKeys = SECTIONS.map((s) => s.key);
+  const expectedKeys = expectedSections.map((s) => s.key);
   for (const key of expectedKeys) {
     if (!foundKeys.includes(key)) problems.push(`섹션이 없습니다: [${key}]`);
   }
