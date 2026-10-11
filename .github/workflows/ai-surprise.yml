@@ -41,6 +41,10 @@ on:
         description: '이상한 동화 기획 파일 (예: 이상한동화/1화.json). 동화 방식에서만 씁니다'
         required: false
         default: '이상한동화/1화.json'
+      tale_script:
+        description: '이미 써 둔 동화 대본 파일. 넣으면 AI가 다시 쓰지 않습니다 (비용 0원). 비우면 AI가 씁니다'
+        required: false
+        default: '이상한동화/1화-대본.md'
       topic:
         description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
         required: false
@@ -245,6 +249,7 @@ jobs:
           IN_CATEGORY: ${{ inputs.category }}
           IN_TOPIC: ${{ inputs.topic }}
           IN_TALE_PLAN: ${{ inputs.tale_plan }}
+          IN_TALE_SCRIPT: ${{ inputs.tale_script }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
@@ -322,7 +327,22 @@ jobs:
               fi
               echo "이상한 동화를 만듭니다. 기획 파일: $IN_TALE_PLAN"
               echo "조사 단계가 없습니다 — 창작물이라 찾을 출처가 없습니다."
-              node src/main.mjs tale --plan="../$IN_TALE_PLAN"
+
+              tale_args=(--plan="$IN_TALE_PLAN")
+              if [ -n "$IN_TALE_SCRIPT" ]; then
+                case "$IN_TALE_SCRIPT" in
+                  *..*) echo "::error::대본 파일 경로가 이상합니다: $IN_TALE_SCRIPT"; exit 1 ;;
+                esac
+                if [ ! -f "../$IN_TALE_SCRIPT" ]; then
+                  echo "::error::대본 파일이 없습니다: $IN_TALE_SCRIPT"
+                  exit 1
+                fi
+                tale_args+=(--script="$IN_TALE_SCRIPT")
+                echo "써 둔 대본을 그대로 씁니다: $IN_TALE_SCRIPT (AI를 부르지 않으므로 비용 0원)"
+              else
+                echo "대본이 지정되지 않아 AI가 씁니다."
+              fi
+              node src/main.mjs tale "${tale_args[@]}"
               tale_id="$(pick_id)"
               # case 를 중첩하지 않는다. 안쪽 case 의 기본 분기(*)가 바깥
               # case 의 분기들 사이에 끼어들어 읽기도 검사하기도 어려워진다.
@@ -333,8 +353,11 @@ jobs:
                   exit 1
                 fi
                 echo "content/$tale_id — 장면·그림·목소리·영상까지 이어서 만듭니다."
+                # 배경음악을 끈다. 지금 bgm/ 에 있는 여섯 곡은 전부
+                # 미스터리·스릴러용이라 조용한 동화에 깔면 어긋난다.
+                # 동화에 맞는 곡을 넣은 뒤에 이 옵션을 떼면 된다.
                 node src/main.mjs auto --resume="$tale_id" \
-                  --scenes --images --narrate --video \
+                  --scenes --images --narrate --video --no-bgm \
                   --image-model="$IN_IMAGE_MODEL" --max-usd="$IN_MAX_USD"
                 node src/main.mjs upload --id="$tale_id" \
                   || echo "::warning::올릴 거리 만들기에 실패했습니다. 영상은 그대로 있습니다."
