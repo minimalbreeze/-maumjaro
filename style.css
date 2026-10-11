@@ -18,23 +18,32 @@
      실제로 바뀐 건 CTA와 탭바가 거의 다 덮고 있는 아래쪽뿐이었다.
      스플래시에서 피어오르는 색과 같은 값으로 올려서, 스플래시가 걷히고 홈이 나와도
      같은 화면이 이어진 것처럼 보이게 한다. 흰 카드도 이 위에서야 비로소 떠 보인다. */
-  --bg-top: #fff1e6;
-  --bg-mid: #ffe6ee;
-  --bg-bottom: #efe5fb;
+  /* 2026-10-11 약국 톤으로 전환(효성님 지시).
+     새 색을 지어내지 않았다 — 마스코트가 이미 민트 후드(#8fd6c6→#4fa392)에
+     딥틸 외곽선(#1f5c50)이고, 딥틸은 CLAUDE.md가 적어둔 브랜드 색이다.
+     즉 "약국 분위기"는 이 앱 안에 이미 있던 색을 배경으로 끌어올린 것이다.
+     주사기의 코랄~옐로(--accent-a/b)와 보라~핑크 CTA는 그대로 둔다. 그 둘이
+     흰 민트 위에 놓여야 약국 안의 주사기처럼 보인다. */
+  --bg-top: #f6fbf9;
+  --bg-mid: #ecf6f2;
+  --bg-bottom: #e3f0ec;
   /* 카드는 반투명이 아니라 흰색이다. 배경 위에 떠 있어야 목록으로 읽힌다. */
   --card: #ffffff;
-  --card-border: rgba(214,170,185,0.18);
+  --card-border: rgba(31,92,80,0.13);
   /* 카드가 "떠 있다"는 느낌을 만드는 그림자. 한 군데에서만 정의하고 전부 이걸 쓴다 —
      카드마다 그림자를 따로 적으면 화면마다 높이가 달라 보여 톤이 흩어진다.
      회색이 아니라 분홍기가 도는 그림자다. 파스텔 배경 위에서 회색 그림자는 때처럼 보인다. */
-  --card-shadow: 0 6px 18px rgba(190,140,160,0.10);
-  --card-shadow-sm: 0 3px 10px rgba(190,140,160,0.09);
+  --card-shadow: 0 6px 18px rgba(31,92,80,0.10);
+  --card-shadow-sm: 0 3px 10px rgba(31,92,80,0.09);
   /* 카드 모서리도 토큰으로. 16과 22가 섞여 있으면 같은 화면에서 서로 다른 앱처럼 보인다. */
   --card-radius: 22px;
-  --text: #6b4657;
+  --text: #24514a;
   /* 배경 아래쪽이 라벤더로 어두워진 만큼 보조 텍스트도 한 단계 진하게 —
      기존 #b98a9a는 라벤더 위에서 명암비 2.08까지 떨어졌다(3.1로 회복). */
-  --text-dim: #9c6b7d;
+  /* 측정하고 골랐다. 가장 어두운 배경(#e3f0ec) 위에서 명암비 4.51 — AA를 넘긴다.
+     바꾸기 전 값(#9c6b7d)은 같은 자리에서 3.59로 미달이었다. 색만 바꾼 게 아니라
+     읽히는 정도가 올라간 것이다. 더 흐리게 조정하고 싶으면 이 숫자부터 다시 재야 한다. */
+  --text-dim: #4e7368;
   --accent-a: #ff9166;
   --accent-b: #ffc66b;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -58,14 +67,17 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard", sans-serif;
-  /* 위(마음)는 금빛 온기, 아래(운세·타로)는 보라빛 밤으로 넘어가는 4겹 배경.
+  /* 약국의 흰 민트. 위에서 아래로 아주 옅게 가라앉고, 코랄 한 점만 남긴다 —
+     그 한 점이 주사기다. 배경을 완전히 중성으로 만들면 약국이 아니라 병원이 된다.
      투명 끝점을 transparent 대신 alpha 0인 같은 색으로 쓴다 — transparent는
-     rgba(0,0,0,0)이라 중간이 탁한 회색으로 번지는 브라우저가 있다. */
+     rgba(0,0,0,0)이라 중간이 탁한 회색으로 번지는 브라우저가 있다.
+     운세·타로 탭에서는 아래 :root[data-mood="tarot"]가 이 배경을 통째로 바꾼다. */
   background:
-    radial-gradient(125% 55% at 50% -5%, rgba(255,186,138,0.34), rgba(255,186,138,0) 64%),
-    radial-gradient(120% 52% at 50% 103%, rgba(168,140,220,0.20), rgba(168,140,220,0) 64%),
-    radial-gradient(72% 34% at 12% 90%, rgba(255,150,185,0.20), rgba(255,150,185,0) 70%),
+    radial-gradient(125% 55% at 50% -5%, rgba(143,214,198,0.30), rgba(143,214,198,0) 64%),
+    radial-gradient(120% 52% at 50% 103%, rgba(79,163,146,0.16), rgba(79,163,146,0) 64%),
+    radial-gradient(72% 34% at 12% 90%, rgba(255,145,102,0.10), rgba(255,145,102,0) 70%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 44%, var(--bg-bottom) 100%);
+  transition: background 420ms ease;
   color: var(--text);
   min-height: 100vh;
   /* dvh는 브라우저 툴바가 차지하는 높이를 뺀 "실제로 보이는" 높이다.
@@ -76,21 +88,33 @@ body {
   overflow: hidden;
 }
 
-/* 홈 배경 장식 — "여기가 마음 + 운세 + 타로를 다루는 곳"임을 알려준다.
-   세 심볼을 배경 그라데이션의 색 순서와 맞춰 위에서 아래로 놓는다:
-     마음(코랄 하트) → 운세(금빛 초승달·별) → 타로(보라 카드 부채꼴)
-   원칙: 주인공인 주사기를 가리지 않도록 화면 가장자리에만 배치한다(브랜드 원칙 1).
-   이미지 파일 없이 SVG 하나로 처리해 용량 0. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 375 812'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M44 452 C22 434 32 414 44 426 C56 414 66 434 44 452 Z' stroke='%23f2607f' stroke-width='2.8' opacity='.28'/%3E%3Cpath d='M318 268 a30 30 0 1 1 -6 58' stroke='%23c9853f' stroke-width='8' opacity='.24'/%3E%3Crect x='14' y='600' width='60' height='95' rx='7' transform='rotate(-17 44 647)' stroke='%237c5cc4' stroke-width='1.8' opacity='.16'/%3E%3Crect x='28' y='592' width='60' height='95' rx='7' transform='rotate(-6 58 639)' stroke='%237c5cc4' stroke-width='2' opacity='.22'/%3E%3Crect x='301' y='608' width='60' height='95' rx='7' transform='rotate(16 331 655)' stroke='%237c5cc4' stroke-width='1.8' opacity='.16'/%3E%3Crect x='287' y='600' width='60' height='95' rx='7' transform='rotate(5 317 647)' stroke='%237c5cc4' stroke-width='2' opacity='.22'/%3E%3C/g%3E%3Cg fill='%23c9853f'%3E%3Cpath d='M300 88 l2.9 8.4 8.4 2.9 -8.4 2.9 -2.9 8.4 -2.9-8.4 -8.4-2.9 8.4-2.9z' opacity='.26'/%3E%3Cpath d='M348 236 l2 5.6 5.6 2 -5.6 2 -2 5.6 -2-5.6 -5.6-2 5.6-2z' opacity='.22'/%3E%3Cpath d='M338 190 l1.7 4.6 4.6 1.7 -4.6 1.7 -1.7 4.6 -1.7-4.6 -4.6-1.7 4.6-1.7z' opacity='.20'/%3E%3Cpath d='M36 240 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8-5 -5-1.8 5-1.8z' opacity='.20'/%3E%3Cpath d='M292 344 l2.3 6.5 6.5 2.3 -6.5 2.3 -2.3 6.5 -2.3-6.5 -6.5-2.3 6.5-2.3z' opacity='.20'/%3E%3C/g%3E%3Cg fill='%237c5cc4'%3E%3Cpath d='M92 726 l1.8 5 5 1.8 -5 1.8 -1.8 5 -1.8-5 -5-1.8 5-1.8z' opacity='.22'/%3E%3Cpath d='M286 742 l2 5.6 5.6 2 -5.6 2 -2 5.6 -2-5.6 -5.6-2 5.6-2z' opacity='.20'/%3E%3Ccircle cx='24' cy='548' r='2.4' opacity='.18'/%3E%3Ccircle cx='352' cy='520' r='2.2' opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
+/* 배경 장식은 뺐다(2026-10-11, 효성님 지시).
+   예전에는 body::before에 하트·초승달·타로카드를 그린 SVG를 깔아 "여기가 마음 +
+   운세 + 타로를 다루는 곳"이라고 말했다. 약국 톤으로 바꾸면서 그 셋이 전부 사라진다 —
+   약국은 깨끗한 흰 벽이어야 하고, 벽에 무늬가 있으면 선반 위의 약이 안 보인다.
+   장소를 말하는 일은 이제 색이 한다(민트=약국, 보라=타로). 그림은 캐릭터만 한다. */
+
+/* ---------- 운세·타로 무드 ----------
+   theme.js가 운세·MBTI 화면이 보일 때 <html data-mood="tarot">를 붙인다.
+   색만 바꾼다 — 구조도 배치도 그대로다. 홈이 기본 목적지라는 원칙(CLAUDE.md)은
+   오히려 강해진다: 타로는 "다른 방"으로 보이고, 나오면 약국으로 돌아온다.
+   값은 명암비를 재고 골랐다(본문 8.70, 보조 4.68 — 가장 어두운 배경 기준). */
+:root[data-mood="tarot"] {
+  --bg-top: #f1edfc;
+  --bg-mid: #e8e1f8;
+  --bg-bottom: #ded4f2;
+  --text: #3a2c5e;
+  --text-dim: #645488;
+  --card-border: rgba(90,66,150,0.14);
+  --card-shadow: 0 6px 18px rgba(80,55,140,0.12);
+  --card-shadow-sm: 0 3px 10px rgba(80,55,140,0.10);
+}
+:root[data-mood="tarot"] body {
+  background:
+    radial-gradient(125% 55% at 50% -5%, rgba(168,140,220,0.26), rgba(168,140,220,0) 64%),
+    radial-gradient(120% 52% at 50% 103%, rgba(124,92,196,0.18), rgba(124,92,196,0) 64%),
+    radial-gradient(72% 34% at 12% 90%, rgba(255,150,185,0.14), rgba(255,150,185,0) 70%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 44%, var(--bg-bottom) 100%);
 }
 
 #app {
@@ -4882,7 +4906,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
      ⚠️ 이 값은 "첫 프레임의 색"이라 절대 그라디언트로 바꾸지 않는다. 색을 입히는
      일은 아래 ::before가 투명에서 서서히 올라오며 한다 — 그래야 OS 화면과 이어지면서도
      화면이 살아난다. 여기에 바로 그라디언트를 쓰면 OS 스플래시에서 툭 튄다. */
-  background: #fdf3ee;
+  background: #f2f9f6;
   overflow: hidden;
   /* 이 화면의 총 길이(ms). 아래 animation의 지연 3100 + 길이 400과 같아야 한다.
      splash.js가 이 값을 읽어서 안전망 타이머를 잡는다 — 예전에는 JS에 2600을
@@ -4911,9 +4935,9 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   position: absolute;
   inset: -10%;
   background:
-    radial-gradient(90% 55% at 50% 12%, #fff3e4 0%, rgba(255,243,228,0) 70%),
-    radial-gradient(75% 45% at 15% 78%, #ffe0ea 0%, rgba(255,224,234,0) 72%),
-    radial-gradient(85% 50% at 88% 92%, #ece2fa 0%, rgba(236,226,250,0) 70%),
+    radial-gradient(90% 55% at 50% 12%, #e9f7f1 0%, rgba(233,247,241,0) 70%),
+    radial-gradient(75% 45% at 15% 78%, #ffe8dc 0%, rgba(255,232,220,0) 72%),
+    radial-gradient(85% 50% at 88% 92%, #dff0ea 0%, rgba(223,240,234,0) 70%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 52%, var(--bg-bottom) 100%);
   animation: mj-splash-bloom 1100ms ease-out both;
   pointer-events: none;
@@ -4934,7 +4958,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   height: 420px;
   margin: -210px 0 0 -210px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,214,196,0.55) 0%, rgba(255,214,196,0) 68%);
+  background: radial-gradient(circle, rgba(180,228,214,0.55) 0%, rgba(180,228,214,0) 68%);
   animation: mj-splash-halo 1500ms cubic-bezier(0.22, 1, 0.3, 1) 180ms both;
   pointer-events: none;
 }
@@ -5040,10 +5064,12 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   margin-top: 14px;
   padding: 16px 28px;
   border-radius: 24px;
-  /* 홈 배경의 중간색. 새 색을 만들지 않고 앱이 이미 쓰는 분홍을 그대로 쓴다. */
-  background: linear-gradient(160deg, #ffeef4, #ffe2ec);
-  box-shadow: 0 8px 22px rgba(190,140,160,0.14);
-  color: #6b4657;
+  /* 홈 배경의 중간색. 새 색을 만들지 않고 앱이 이미 쓰는 민트를 그대로 쓴다.
+     (약국 톤으로 바꾸기 전에는 분홍이었다 — 배경이 민트가 된 뒤에도 그대로 두면
+     켜는 화면에서 말풍선만 분홍으로 튄다. 홈이 바뀌면 여기도 같이 바뀌어야 한다.) */
+  background: linear-gradient(160deg, #eaf7f1, #dcefe8);
+  box-shadow: 0 8px 22px rgba(31,92,80,0.14);
+  color: #24514a;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.5;
@@ -5059,7 +5085,7 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   margin-left: -11px;
   border-left: 11px solid transparent;
   border-right: 11px solid transparent;
-  border-bottom: 11px solid #ffeef4;
+  border-bottom: 11px solid #eaf7f1;
 }
 @keyframes mj-splash-bubble {
   from { opacity: 0; transform: translateY(-6px) scale(0.86); }
@@ -5084,11 +5110,11 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   gap: 12px;
   padding: 11px 18px;
   /* 알약(99)에서 앱의 카드 모서리(22)로. 2px 초록 테두리는 선이 굵어 스플래시가
-     안내문처럼 보였다 — 테두리를 지우고 홈과 같은 분홍 그림자로 띄운다.
+     안내문처럼 보였다 — 테두리를 지우고 홈과 같은 그림자로 띄운다.
      스플래시가 걷히고 홈이 나왔을 때 같은 앱으로 읽혀야 한다. */
   border-radius: var(--card-radius);
   background: #fff;
-  border: 1px solid rgba(214,170,185,0.20);
+  border: 1px solid rgba(31,92,80,0.15);
   box-shadow: var(--card-shadow);
   color: #2f6f5e;
   font-size: 16px;

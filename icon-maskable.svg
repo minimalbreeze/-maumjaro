@@ -1,67 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ff9166"/>
-      <stop offset="100%" stop-color="#ffc66b"/>
+    <linearGradient id="mBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff9166"/><stop offset="100%" stop-color="#ffc66b"/>
     </linearGradient>
-    <linearGradient id="liq" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#ff9166"/>
-      <stop offset="100%" stop-color="#ffc66b"/>
+    <linearGradient id="mHood" x1="0.2" y1="0" x2="0.6" y2="1">
+      <stop offset="0%" stop-color="#8fd6c6"/><stop offset="100%" stop-color="#4fa392"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
-      <stop offset="50%" stop-color="rgba(255,255,255,0.55)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0.05)"/>
+    <linearGradient id="mSkin" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#fff1da"/><stop offset="100%" stop-color="#ffd9ab"/>
+    </linearGradient>
+    <linearGradient id="mLiq" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff9166"/><stop offset="100%" stop-color="#ffc66b"/>
     </linearGradient>
   </defs>
+  <rect width="512" height="512" fill="url(#mBg)"/>
 
-  <!-- 마스커블 아이콘: 런처가 원형 등으로 마스킹해도 잘리지 않도록 배경은 꽉 채우고,
-       주사기 그림은 안전 영역(중앙 약 70%) 안으로 축소/중앙 정렬했다. -->
-  <rect width="512" height="512" fill="url(#bg)"/>
-
-  <g transform="translate(76.8 76.8) scale(0.7)">
-    <!-- sparkles -->
-    <g fill="#fff6e6">
-      <path d="M120 120 l6 16 l16 6 l-16 6 l-6 16 l-6 -16 l-16 -6 l16 -6 z" opacity="0.9"/>
-      <path d="M400 150 l4 11 l11 4 l-11 4 l-4 11 l-4 -11 l-11 -4 l11 -4 z" opacity="0.8"/>
-      <path d="M392 330 l5 13 l13 5 l-13 5 l-5 13 l-5 -13 l-13 -5 l13 -5 z" opacity="0.7"/>
+  <g transform="translate(109.75,94.05000000000001) scale(1.95)">
+    <!-- 몸통 -->
+    <path d="M75 78 c27 0 41 19 41 40 c0 17 -9 28 -41 28 s-41 -11 -41 -28 c0 -21 14 -40 41 -40 z"
+          fill="url(#mHood)" stroke="#1f5c50" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="75" cy="124" rx="31" ry="22" fill="url(#mSkin)"/>
+    <ellipse cx="64" cy="116" rx="10" ry="6" fill="rgba(255,255,255,0.45)"/>
+    <ellipse cx="57" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4"/>
+    <ellipse cx="93" cy="147" rx="12" ry="7.5" fill="#3d8a7c" stroke="#1f5c50" stroke-width="4"/>
+    <!-- 후드 + 얼굴 -->
+    <circle cx="75" cy="52" r="43" fill="url(#mHood)" stroke="#1f5c50" stroke-width="4"/>
+    <ellipse cx="75" cy="58" rx="33.5" ry="31.5" fill="rgba(20,70,60,0.28)"/>
+    <ellipse cx="75" cy="57" rx="31" ry="29" fill="url(#mSkin)" stroke="#1f5c50" stroke-width="3.6"/>
+    <ellipse cx="63" cy="44" rx="12" ry="7.5" fill="rgba(255,255,255,0.5)"/>
+    <path d="M58 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M78 60 q7 -9 14 0" fill="none" stroke="#1f5c50" stroke-width="3.6" stroke-linecap="round"/>
+    <ellipse cx="52" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85"/>
+    <ellipse cx="98" cy="68" rx="7.5" ry="4.8" fill="#ffa8ae" opacity=".85"/>
+    <path d="M67 69 q8 8 16 0" fill="none" stroke="#1f5c50" stroke-width="3.2" stroke-linecap="round"/>
+    <!-- 품에 안은 주사기. 하트 자리에 주사기를 둔다 — 브랜드 심볼은 이쪽이다.
+         ⚠️ 처음에 작게 그렸더니 180px(iOS 홈 화면)에서 배 무늬처럼 뭉개졌다.
+         아이콘에서 주사기가 안 보이면 CLAUDE.md의 "주사기를 주 모티프로" 조건을
+         글자로만 지킨 셈이 된다. 그래서 몸통을 가로지르는 크기로 키우고,
+         바늘이 실루엣 밖으로 나오게 해서 윤곽만 봐도 주사기로 읽히게 했다. -->
+    <g transform="rotate(-26 75 122)">
+      <!-- 바늘: 실루엣 밖으로 조금 나온다. 윤곽만 봐도 주사기로 읽히게 하는 건 이 선이다. -->
+      <path d="M110 122 h16" stroke="#1f5c50" stroke-width="4" stroke-linecap="round"/>
+      <!-- 약통 -->
+      <rect x="54" y="110" width="54" height="25" rx="6" fill="#fffaf2" stroke="#1f5c50" stroke-width="4"/>
+      <rect x="58" y="114" width="28" height="17" rx="3.5" fill="url(#mLiq)"/>
+      <!-- 밀대 손잡이 -->
+      <rect x="45" y="106" width="9" height="33" rx="3.5" fill="#fffaf2" stroke="#1f5c50" stroke-width="3.8"/>
     </g>
-
-    <!-- flange -->
-    <g>
-      <rect x="204" y="424" width="104" height="26" rx="9" fill="#fdfbf6" stroke="#1f5c50" stroke-width="13"/>
-      <line x1="228" y1="430" x2="228" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
-      <line x1="256" y1="430" x2="256" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
-      <line x1="284" y1="430" x2="284" y2="444" stroke="#1f5c50" stroke-width="7" stroke-linecap="round"/>
-    </g>
-
-    <!-- plunger rod -->
-    <rect x="234" y="326" width="44" height="104" rx="8" fill="#fdfbf6" stroke="#1f5c50" stroke-width="12" stroke-linejoin="round"/>
-
-    <!-- barrel -->
-    <rect x="180" y="222" width="152" height="214" rx="42" fill="#fdfbf6" stroke="#1f5c50" stroke-width="17"/>
-
-    <!-- liquid -->
-    <rect x="197" y="304" width="118" height="118" rx="16" fill="url(#liq)"/>
-
-    <!-- plunger head -->
-    <g>
-      <rect x="190" y="290" width="132" height="38" rx="11" fill="#ef6a54" stroke="#1f5c50" stroke-width="12"/>
-      <rect x="200" y="296" width="112" height="9" rx="4" fill="rgba(255,255,255,0.4)"/>
-      <line x1="212" y1="304" x2="212" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
-      <line x1="240" y1="304" x2="240" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
-      <line x1="268" y1="304" x2="268" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
-      <line x1="296" y1="304" x2="296" y2="317" stroke="#fdfbf6" stroke-width="6" stroke-linecap="round"/>
-    </g>
-
-    <!-- glass shine over barrel -->
-    <rect x="180" y="222" width="152" height="214" rx="42" fill="url(#shine)"/>
-
-    <!-- needle hub -->
-    <path d="M198 222 L314 222 L272 172 L240 172 Z" fill="#5fb3a3" stroke="#1f5c50" stroke-width="13" stroke-linejoin="round"/>
-
-    <!-- needle -->
-    <rect x="238" y="96" width="36" height="80" fill="#eef1f5" stroke="#1f5c50" stroke-width="11" stroke-linejoin="round"/>
-    <path d="M238 96 L274 96 L256 48 Z" fill="#eef1f5" stroke="#1f5c50" stroke-width="11" stroke-linejoin="round"/>
+    <!-- 손은 주사기 위에 그린다 — 그래야 "들고 있다"가 된다. -->
+    <circle cx="61" cy="129" r="8.5" fill="url(#mSkin)" stroke="#1f5c50" stroke-width="3.5"/>
+    <circle cx="92" cy="117" r="8.5" fill="url(#mSkin)" stroke="#1f5c50" stroke-width="3.5"/>
   </g>
 </svg>
