@@ -644,6 +644,8 @@ async function cmdUpload(flags) {
   const description = finishDescription(pack.descriptionBody, {
     track: narration?.bgm || null,
     sources: loaded.research?.sources || [],
+    // 창작 편이면 고지문이 다르고 출처를 적지 않는다.
+    kind: loaded.research?.kind,
   });
   log.ok(`설명문 ${description.length}자, 태그 ${pack.tags.length}개`);
 
