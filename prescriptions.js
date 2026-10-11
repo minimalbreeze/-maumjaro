@@ -1234,6 +1234,43 @@
     };
   }
 
+  // ---------- 감정에 맞춘 오늘의 처방 ----------
+  // 왜 필요한가: pickTodaysPrescription()은 날짜 해시로만 뽑는다. 사용자가 홈에서
+  // "외로움"을 골라도 오늘의 처방은 전혀 다른 것이 떠 있었다. 브랜드 원칙이
+  // 운 → 마음 → 처방 → 주사인데 마음과 처방 사이가 끊겨 있던 셈이다.
+  // 감정별 카테고리 대응표는 emotion-rx.js가 들고 있고, 여기서는 "그 카테고리에서
+  // 오늘 치를 하나 골라 카드에 박아 준다"만 한다.
+  //
+  // 같은 날 같은 감정이면 같은 처방이 나와야 한다 — "오늘의 처방"이 볼 때마다
+  // 바뀌면 그 이름이 거짓말이 된다. 그래서 날짜와 감정을 같이 해시한다.
+  function setTodayPrescriptionFor(catId, seedKey) {
+    // 주사가 진행 중일 때 카드를 갈아끼우면 눌린 버튼과 다른 처방이 들어간다.
+    if (genericState !== 'idle') return null;
+    const pool = ALL_PRESCRIPTIONS.filter((p) => p.category === catId);
+    if (!pool.length) return null;
+    const today = todayKey();
+    const picked = pool[hashStr(`${today}|${seedKey || catId}|${personalSalt()}`) % pool.length];
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(RX_RECENT_KEY) || 'null'); } catch (e) { /* 깨졌으면 새로 쓴다 */ }
+    const recent = (saved && Array.isArray(saved.recent)) ? saved.recent : [];
+    try {
+      // pickTodaysPrescription()과 같은 규격으로 저장한다 — 새로고침해도 이 처방이 남는다.
+      localStorage.setItem(RX_RECENT_KEY, JSON.stringify({
+        date: today,
+        id: picked.id,
+        recent: recent.concat([picked.id]).slice(-RX_RECENT_DAYS),
+      }));
+    } catch (e) { /* 저장이 막혀도 화면에는 떠야 한다 */ }
+
+    todayRxEmoji.textContent = picked.emoji;
+    todayRxTitle.textContent = picked.title;
+    todayRxDiagnosis.textContent = picked.diagnosis;
+    todayRxCard.hidden = false;
+    wireGenericTrigger(todayRxBtn, picked);
+    return picked;
+  }
+
   // ---------- 오늘의 처방 카드 렌더 ----------
   function renderTodayCard() {
     const p = pickTodaysPrescription();
@@ -2157,6 +2194,8 @@
     // 타지 않으므로, 자기 후처리를 끝낸 뒤 이걸 호출해 주사 상태를 idle로 되돌려야 한다.
     // 호출하지 않으면 genericState가 'injecting'에 머물러 이후 모든 주사가 막힌다.
     resetGenericFlowState,
+    // 감정 → 처방을 잇는 유일한 통로(emotion-rx.js). 고른 처방을 돌려준다.
+    setTodayPrescriptionFor,
     goToRxCategory(catId) {
       const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
       if (rxTabBtn) rxTabBtn.click();
