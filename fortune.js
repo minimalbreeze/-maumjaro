@@ -2929,7 +2929,7 @@
         <button class="rx-back-btn" id="tarot-back" type="button">‹</button>
         <span class="rx-nav-title">🌙 타로</span>
       </div>
-      <p class="tarot-hint">무엇이 궁금한지 골라주세요</p>
+      <p class="tarot-hint">무엇이 궁금한지 골라주세요 <b class="tarot-free">${TAROT_TOPICS.length}가지 · 매일 무료</b></p>
       <div class="rx-category-grid">
         ${TAROT_TOPICS.map((t) => {
           const done = !!getTarotDraw(t.key);
@@ -3156,6 +3156,8 @@
     });
     const advice = cards[2]; // 세 번째 자리 = 무엇을 할까 → 처방으로 이어진다
     const topic = tarotTopicOf(entry.topic);
+    // 아래 안내에서 "다른 주제"라고 뭉개지 않고 한 주제를 집어 준다. 다 봤으면 없을 수도 있다.
+    const nextTopic = TAROT_TOPICS.find((t) => t.key !== topic.key && !getTarotDraw(t.key)) || null;
     const verdict = tarotVerdictOf(cards, topic);
     // 종합 결과에 맞춰 실제 처방을 자동으로 골라준다(사용자가 따로 고르지 않아도 되게).
     const autoRx = pickTarotPrescription(cards, topic, advice);
@@ -3202,11 +3204,14 @@
         </div>
         <p class="rx-slip-text">${autoRx ? autoRx.diagnosis : advice.side.line}</p>
         <p class="rx-slip-text" style="color:var(--text-dim);font-size:12px;">종합 결과에 맞춰 자동으로 처방됐어요. 주사는 카드를 열 때 이미 맞았어요 💉</p>
-        <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">다른 처방도 보기 ›</button>
+        <button class="rx-friend-quick-btn" id="tarot-goto-rx-btn" type="button" style="margin-top:6px;">💉 ${topic.label}에 놓을 처방 고르기 ›</button>
       </div>
-      <button class="action-btn" id="tarot-slip-btn" type="button" style="width:100%;margin-top:12px;">📝 처방전 보기</button>
-      <button class="rx-slip-photo-btn" id="tarot-share-btn" type="button" style="margin-top:9px;">🌙 타로 결과 공유하기</button>
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${topic.label} 타로는 오늘 이걸로 고정돼요. 다른 주제는 지금 바로 볼 수 있어요</p>
+      <div id="tarot-threads-slot"></div>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${topic.label} 타로는 오늘 이걸로 고정돼요.${nextTopic ? ` ${nextTopic.emoji} ${nextTopic.label} 타로는 지금 바로 볼 수 있어요` : ''}</p>
+      <div class="tarot-actions">
+        <button class="action-btn tarot-act-main" id="tarot-slip-btn" type="button">📝 처방전 보기</button>
+        <button class="rx-slip-photo-btn tarot-act-sub" id="tarot-share-btn" type="button">🌙 공유</button>
+      </div>
     `;
 
     document.getElementById('tarot-back').addEventListener('click', () => renderTarotTopics(profile));
@@ -3222,7 +3227,8 @@
     // 카드 이름 세 장을 다 넘기면 문구가 카드 설명이 돼버리므로, 주제와 종합 결과만 넘긴다.
     if (window.MaumjaroThreads) {
       window.MaumjaroThreads.mountButton({
-        after: shareBtn, kind: 'tarot', fact: `${topic.label} 타로 · ${verdict.title}`,
+        after: document.getElementById('tarot-threads-slot') || shareBtn,
+        kind: 'tarot', fact: `${topic.label} 타로 · ${verdict.title}`,
       });
     }
     // 사용자가 결과를 읽는 동안 공유 이미지를 미리 만들어 둔다.
