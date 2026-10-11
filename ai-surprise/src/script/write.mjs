@@ -16,8 +16,27 @@ import { findAdUnsafe } from '../policy.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 
-/** 사실 구분 태그 (기획서 6번). 대본 모든 문단에 하나씩 붙는다. */
+/** 사실 구분 태그 (기획서 6번). 실화 편의 모든 문단에 하나씩 붙는다. */
 export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
+
+/**
+ * 창작 동화의 태그.
+ *
+ * 전부 지어낸 이야기라서 FACT/THEORY 로 가를 것이 없다. 그렇다고 태그를
+ * 없애면 대본 파서가 문단을 못 읽는다. 그래서 **한 종류만** 둔다.
+ *
+ * 태그가 하나뿐인 것이 오히려 안전장치다 — 창작 편에 [FACT] 가 섞이면
+ * 검사가 잡는다. 지어낸 이야기를 사실이라고 표시한 대본은 내보낼 수 없다.
+ */
+export const TALE_TAGS = ['STORY'];
+
+/** 파서가 읽을 수 있는 모든 태그. 어느 태그가 **허용되는지**는 kind 가 정한다. */
+export const ALL_TAGS = [...TAGS, ...TALE_TAGS];
+
+/** 이 종류의 편에 쓸 수 있는 태그. */
+export function tagsFor(kind) {
+  return kind === KIND.TALE ? TALE_TAGS : TAGS;
+}
 
 /**
  * 기본 영상 길이 (분).
@@ -97,7 +116,45 @@ export const ORIGIN_SECTION = {
 };
 
 /** 소재 종류에 맞는 섹션 목록. LEGEND는 반전 다음에 ORIGIN이 들어간다. */
+/**
+ * 창작 동화(KIND.TALE)의 흐름.
+ *
+ * 실화 쪽 9섹션을 쓰지 않는다. 그쪽은 **조사한 사실을 쌓는** 구조고,
+ * 동화는 **금 하나가 벌어지는** 구조다. 출처도 가설도 없으므로
+ * EXPLAIN·KNOWN 같은 섹션이 들어갈 자리가 없다.
+ *
+ * 'OUR_READING'(우리가 주목한 것)도 없다. 실화에서 그 섹션은 "남들이
+ * 안 짚은 것을 우리가 짚는다"는 뜻인데, 창작에서는 이야기 전체가 이미
+ * 우리 것이다. 대신 **TURN 이 그 자리를 대신한다** — 뒤집는 방식이
+ * 이 채널의 고유함이 된다.
+ */
+export const TALE_SECTIONS = [
+  { key: 'HOOK', label: '첫 줄', note: '이상한 사실 한 줄. 설명하지 않는다. 약 10초.' },
+  { key: 'SETUP', label: '평범한 일상', note: '딱 한 가지만 이상하다. 나머지는 지극히 평범하다. 약 40초.' },
+  { key: 'NOTICE', label: '알아챔', note: '주인공이 이상한 것을 본다. 아직 무섭지 않다. 약 50초.' },
+  { key: 'FOLLOW', label: '따라감', note: '확인하려 한다. 여기서 긴장이 쌓인다. 약 60초.' },
+  { key: 'TURN', label: '뒤집힘', note: '여기가 이 편의 전부다. 한 장면으로 끝낸다. 약 40초.' },
+  { key: 'CLOSE', label: '여운', note: '설명하지 않고 끝낸다. 마지막 문장이 가장 짧다. 약 20초.' },
+];
+
+/**
+ * 창작 동화의 기본 길이.
+ *
+ * 실화 편은 8분이다. 동화는 4분이다 — 같은 길이로 끌면 **설명이 들어가고,
+ * 설명이 들어가면 동화가 아니게 된다.** 짧은 것이 이 포맷의 규칙이지
+ * 돈을 아끼려는 타협이 아니다.
+ */
+export const TALE_MINUTES = 4;
+
+/**
+ * 훅 예시. 실제로 센 값이 25자다(countNarrationChars 기준, 약 4.5초).
+ * 프롬프트에 숫자를 적을 때는 **반드시 재서 적는다** — 이 저장소에서
+ * 어림짐작으로 적었다가 두 번 틀렸다.
+ */
+export const TALE_HOOK_EXAMPLE = '그 동네 아이들은 해가 지면 그림자를 먼저 집에 보냈습니다.';
+
 export function sectionsFor(kind) {
+  if (kind === KIND.TALE) return TALE_SECTIONS;
   if (kind !== KIND.LEGEND) return SECTIONS;
   const out = [];
   for (const s of SECTIONS) {
@@ -176,6 +233,138 @@ export const SCRIPT_SYSTEM = `당신은 "AI 서프라이즈" 채널의 작가다
 
 14. "우리가 주목한 것" 섹션에서도 새로운 사실을 만들지 않는다.
    기록에 이미 있는 것들 사이의 관계를 짚는 것이지, 없는 것을 더하는 게 아니다.`;
+
+// ─────────────────────────────────────────────────────────────
+// 창작 동화 (KIND.TALE)
+// ─────────────────────────────────────────────────────────────
+//
+// 실화 쪽 규칙을 그대로 쓸 수 없다. 저쪽의 핵심은 "지어내지 마라"인데
+// 여기서는 지어내는 것이 일이기 때문이다.
+//
+// 그래서 금지 규칙을 **다른 것으로 바꾼다.** 창작이라고 아무거나 되는 게
+// 아니다. 동화에는 동화의 규칙이 있고, 그걸 어기면 그냥 짧은 소설이 된다.
+
+export const TALE_SYSTEM = `당신은 "이상한 동화" 채널의 작가다.
+어른이 보는 4분짜리 동화를 쓴다.
+
+━━━ 이 채널이 쓰는 것 ━━━
+
+동화의 **형식**을 쓰되, 동화의 **결말**을 쓰지 않는다.
+왕자도 용도 마법사도 나오지 않는다. 평범한 일상에 금이 하나 가 있고,
+주인공이 그 금을 들여다보다가 뒤집힌다.
+
+━━━ 말투 ━━━
+
+1. **읽어 주는 말투로 쓴다.** 나레이터 한 사람이 끝까지 들려준다.
+   ✅ "소년은 천천히 문을 열었습니다."
+   ✅ "그런데 이상한 일이 있었어요."
+   등장인물의 대사를 연기하지 않는다. 대사가 필요하면 나레이터가 전한다.
+
+2. **문장을 짧게 끊는다.** 평균 25자 안팎. 동화는 긴 문장을 쓰지 않는다.
+   한 문단은 2~3문장.
+
+3. **같은 말을 반복해도 된다.** 동화의 리듬이다.
+   "매일 저녁이었습니다. 매일, 저녁마다."
+
+━━━ 지켜야 할 것 ━━━
+
+4. **설명하지 않는다.** 이게 가장 중요하다.
+   왜 그런 일이 생겼는지 끝까지 말하지 않는다. 동화는 원래 이유를 대지
+   않는다 — 늑대가 왜 말을 하는지 아무도 묻지 않는다.
+   ❌ "그것은 아이의 외로움이 만들어낸 환영이었습니다."
+   ✅ (그냥 일어난 일로 둔다)
+
+5. **교훈을 붙이지 않는다.**
+   ❌ "그래서 우리는 ~해야 합니다" "이 이야기가 주는 교훈은"
+   어른이 보는 동화다. 가르치려 들면 바로 끈다.
+
+6. **마지막 문장이 가장 짧다.** 길게 마무리하면 여운이 죽는다.
+   한 줄, 혹은 반 줄로 끝낸다.
+
+7. **딱 한 가지만 이상하다.** 세계 전체를 이상하게 만들지 않는다.
+   나머지는 지극히 평범해야 이상한 하나가 무섭다.
+
+8. **TURN 은 한 장면으로 끝낸다.** 뒤집는 데 여러 단계를 쓰지 않는다.
+   보는 사람이 "아" 하는 지점은 하나다.
+
+━━━ 하지 않는 것 ━━━
+
+9. **실존 인물·실제 사건을 연상시키지 않는다.** 창작물이다.
+   실제 지명도 쓰지 않는다. "그 마을", "어느 동네"로 둔다.
+
+10. **감정을 지시하지 않는다.** "소름 끼치는", "충격적인", "무서운"
+    같은 말을 쓰지 않는다. 일어난 일을 담담하게 쓰면 읽는 사람이 느낀다.
+    담담할수록 더 무섭다.
+
+11. **잔인한 묘사를 쓰지 않는다.** 피도 시체도 필요 없다.
+    이 채널이 다루는 무서움은 **자리가 바뀌는 것**이지 다치는 것이 아니다.
+
+12. **인사말을 쓰지 않는다.** "안녕하세요" "오늘은" 없이 첫 문장부터
+    이야기 안으로 들어간다.`;
+
+/** 창작 동화 대본 프롬프트. 순수 함수. */
+export function buildTalePrompt(item, { targetMinutes = TALE_MINUTES } = {}) {
+  const target = charsForMinutes(targetMinutes);
+  const lines = [];
+
+  lines.push('아래 설정으로 동화 대본을 써 주세요.');
+  lines.push('');
+  lines.push('━━━ 이 편 ━━━');
+  lines.push(`제목: ${item?.title || '(없음)'}`);
+  if (item?.summary) {
+    lines.push('');
+    lines.push('한 줄 설정:');
+    lines.push(item.summary);
+  }
+  if (item?.what_is_strange) {
+    lines.push('');
+    lines.push(`이상한 것 (딱 이 하나다): ${item.what_is_strange}`);
+  }
+  if ((item?.beats || []).length) {
+    lines.push('');
+    lines.push('섹션별로 일어나는 일 — **이대로 씁니다.** 순서를 바꾸지 않습니다:');
+    for (const b of item.beats) {
+      lines.push(`- [${b.key}] ${b.what}`);
+    }
+  }
+  if (item?.last_line) {
+    lines.push('');
+    lines.push(`마지막 장면: ${item.last_line}`);
+    lines.push('이 그림으로 끝냅니다. 그 뒤에 설명을 붙이지 않습니다.');
+  }
+  lines.push('');
+
+  lines.push('━━━ 대본 형식 ━━━');
+  lines.push('');
+  lines.push('마크다운으로 쓰고, 아래 순서를 그대로 따릅니다.');
+  lines.push('각 섹션은 `## [키] 라벨` 형태의 제목으로 시작합니다.');
+  lines.push('');
+  for (const s of TALE_SECTIONS) {
+    lines.push(`## [${s.key}] ${s.label}`);
+    lines.push(`   → ${s.note}`);
+  }
+  lines.push('');
+  lines.push('각 섹션 안의 문단은 모두 아래 형태로 씁니다.');
+  lines.push('');
+  lines.push('[STORY] 그 동네 아이들은 해가 지면 그림자를 먼저 집에 보냈습니다.');
+  lines.push('');
+  lines.push('태그는 [STORY] 하나만 씁니다. 전부 지어낸 이야기이므로');
+  lines.push('[FACT] 같은 사실 태그를 쓰면 안 됩니다 — 지어낸 것을 사실이라고');
+  lines.push('표시하는 셈이 됩니다.');
+  lines.push('');
+  lines.push('━━━ 분량 ━━━');
+  lines.push(`나레이션 전체 ${target}자 안팎 (약 ${targetMinutes}분).`);
+  lines.push('태그와 섹션 제목은 글자 수에서 제외합니다.');
+  lines.push('');
+  lines.push('━━━ 첫 줄 ━━━');
+  lines.push('HOOK 은 **한두 문장**입니다. 이상한 사실 하나를 던지고 설명하지');
+  lines.push('않습니다. 여기서 설명하면 볼 이유가 사라집니다.');
+  lines.push('');
+  lines.push(`✅ "${TALE_HOOK_EXAMPLE}"`);
+  lines.push('');
+
+  return lines.join('\n');
+}
 
 /** 대본 프롬프트를 만든다. 순수 함수 — 테스트로 검증한다. */
 export function buildScriptPrompt(item, { targetMinutes = DEFAULT_MINUTES } = {}) {
@@ -449,19 +638,35 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#') && !l.startsWith('→') && !l.startsWith('━'));
-  const untagged = bodyLines.filter((l) => !TAGS.some((t) => l.startsWith(`[${t}]`)));
+  const allowed = tagsFor(kind);
+  const untagged = bodyLines.filter((l) => !ALL_TAGS.some((t) => l.startsWith(`[${t}]`)));
   if (untagged.length) {
     errors.push(
-      `사실 구분 태그가 없는 문단이 ${untagged.length}개 있습니다. 첫 번째: "${untagged[0].slice(0, 60)}..."`
+      `구분 태그가 없는 문단이 ${untagged.length}개 있습니다. 첫 번째: "${untagged[0].slice(0, 60)}..."`
+    );
+  }
+  // 이 종류에 쓰면 안 되는 태그가 섞였는가.
+  //
+  // 창작 편에 [FACT] 가 들어가는 것이 가장 위험하다 — 지어낸 이야기를
+  // 사실이라고 표시한 대본이 되고, 그건 그대로 시청자를 속이는 것이다.
+  const wrongTags = ALL_TAGS.filter(
+    (t) => !allowed.includes(t) && new RegExp(`^\\[${t}\\]`, 'm').test(text)
+  );
+  if (wrongTags.length) {
+    errors.push(
+      `이 편에 쓸 수 없는 태그가 있습니다: ${wrongTags.map((t) => `[${t}]`).join(', ')}. ` +
+        `쓸 수 있는 것: ${allowed.map((t) => `[${t}]`).join(', ')}`
     );
   }
 
   // 3) 태그별 개수
   const tagCounts = {};
-  for (const t of TAGS) {
+  for (const t of allowed) {
     tagCounts[t] = (text.match(new RegExp(`\\[${t}\\]`, 'g')) || []).length;
   }
-  if (tagCounts.FACT === 0) {
+  if (kind === KIND.TALE) {
+    if (!tagCounts.STORY) errors.push('[STORY] 문단이 하나도 없습니다.');
+  } else if (tagCounts.FACT === 0) {
     errors.push('[FACT] 문단이 하나도 없습니다. 확인된 사실 없이 만든 대본은 쓸 수 없습니다.');
   }
 
@@ -541,7 +746,9 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   // 그래서 정규식을 버리고 줄 단위로 읽는다.
   const hookLines = sectionBody(text, 'HOOK');
   const hookChars = countNarrationChars(
-    hookLines.map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, '')).join(' ')
+    // 태그 목록을 여기 또 적지 않는다. [STORY] 를 빠뜨리면 훅이 7자 길게
+    // 재어지고, 그 7자 때문에 멀쩡한 훅이 경고를 단다.
+    hookLines.map((l) => l.replace(new RegExp(`^\\[(${ALL_TAGS.join('|')})\\]\\s*`), '')).join(' ')
   );
   if (hookChars === 0) {
     // 경고가 아니라 오류다. 훅 없는 영상은 아무도 안 본다.
@@ -565,7 +772,9 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
       tagCounts,
       tone,
       sectionsFound: foundOrder.length,
-      sectionsExpected: SECTIONS.length,
+      // 이 편이 요구하는 섹션 수다. SECTIONS.length 로 두면 동화 편(6섹션)이
+      // 9섹션을 기대한 것으로 찍힌다.
+      sectionsExpected: sections.length,
     },
   };
 }
@@ -577,17 +786,26 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
  * 대개 맞춰 온다. 두 번 다 실패하면 대본과 오류를 함께 돌려주고
  * 사람이 판단하게 한다 — 조용히 넘기지 않는다.
  */
-export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model = MODELS.script, onProgress } = {}) {
-  const prompt = buildScriptPrompt(item, { targetMinutes });
+export async function writeScript(item, { targetMinutes = null, model = MODELS.script, onProgress } = {}) {
+  // 창작 동화는 규칙도 기본 길이도 다르다. 같은 프롬프트로 쓰게 두면
+  // "지어내지 마라"는 지시를 받고 지어내야 하는 모순에 빠진다.
+  const isTale = item?.kind === KIND.TALE;
+  const minutes = Number(targetMinutes) > 0
+    ? Number(targetMinutes)
+    : (isTale ? TALE_MINUTES : DEFAULT_MINUTES);
+  const system = isTale ? TALE_SYSTEM : SCRIPT_SYSTEM;
+  const prompt = isTale
+    ? buildTalePrompt(item, { targetMinutes: minutes })
+    : buildScriptPrompt(item, { targetMinutes: minutes });
 
   onProgress?.('대본 쓰는 중...');
   let markdown = await callForText({
-    system: SCRIPT_SYSTEM,
+    system,
     prompt,
     model,
     maxTokens: 16000,
   });
-  let check = validateScript(markdown, { targetMinutes, kind: item?.kind });
+  let check = validateScript(markdown, { targetMinutes: minutes, kind: item?.kind });
 
   if (!check.ok) {
     onProgress?.(`양식이 어긋났습니다 (${check.errors.length}건). 고쳐서 다시 씁니다.`);
@@ -599,12 +817,14 @@ export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model
     ].join('\n');
 
     markdown = await callForText({
-      system: SCRIPT_SYSTEM,
+      // 다시 쓸 때도 같은 규칙으로 쓴다. 여기서 SCRIPT_SYSTEM 으로 돌아가면
+      // 동화가 두 번째 시도에서 갑자기 실화 규칙을 받는다.
+      system,
       prompt: retryPrompt,
       model,
       maxTokens: 16000,
     });
-    check = validateScript(markdown, { targetMinutes, kind: item?.kind });
+    check = validateScript(markdown, { targetMinutes: minutes, kind: item?.kind });
   }
 
   return { markdown, check };
@@ -618,6 +838,6 @@ export async function writeScript(item, { targetMinutes = DEFAULT_MINUTES, model
  */
 function narrationOnly(bodyLines) {
   return (bodyLines || [])
-    .map((l) => l.replace(/^\[(FACT|RECONSTRUCTION|THEORY|UNKNOWN)\]\s*/, ''))
+    .map((l) => l.replace(new RegExp(`^\\[(${ALL_TAGS.join('|')})\\]\\s*`), ''))
     .join('\n');
 }

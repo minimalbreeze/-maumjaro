@@ -19,8 +19,8 @@ import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
-import { writeScript, DEFAULT_MINUTES } from './script/write.mjs';
-import { GATE, MIN_SOURCE_COUNT, KIND } from './model.mjs';
+import { writeScript, DEFAULT_MINUTES, TALE_MINUTES } from './script/write.mjs';
+import { GATE, MIN_SOURCE_COUNT, KIND, makeTale } from './model.mjs';
 import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
@@ -228,8 +228,9 @@ function cmdList() {
 
 async function cmdScript(positional, flags) {
   requireApiKey();
-  const targetMinutes = Number(flags.minutes || DEFAULT_MINUTES);
-
+  // 기본 길이는 **편의 종류가 정한다.** 여기서 8분을 박아두면 동화도
+  // 8분으로 쓰라고 시키게 되고, 8분짜리 동화는 설명이 들어간다.
+  // 소재를 읽기 전이라 아래에서 다시 정한다.
   let id;
   let item;
 
@@ -280,6 +281,10 @@ async function cmdScript(positional, flags) {
     ({ id } = promoteToContent(item));
     log.ok(`content/${id} 으로 올렸습니다.`);
   }
+
+  const targetMinutes = Number(flags.minutes) > 0
+    ? Number(flags.minutes)
+    : (item?.kind === KIND.TALE ? TALE_MINUTES : DEFAULT_MINUTES);
 
   log.section(`✍️  대본 작성  |  content/${id}  |  약 ${targetMinutes}분  |  모델 ${MODELS.script}`);
   log.info(`소재: ${item.title}`);
@@ -367,6 +372,9 @@ async function cmdScenes(flags) {
   log.section(`✂️  장면 분할  |  content/${id}  |  코드가 처리 (비용 0원)`);
   const split = splitIntoScenes(loaded.script, {
     targetScenes: flags.scenes ? Number(flags.scenes) : null,
+    // 창작 동화는 섹션도 태그도 다르다. 안 넘기면 실화 기준으로 읽고
+    // "섹션이 없습니다"로 전부 막힌다.
+    kind: loaded.research?.kind,
   });
 
   if (split.problems.length) {
@@ -464,6 +472,90 @@ async function cmdScenes(flags) {
  * 썸네일은 **완성된 영상에서 프레임을 떼어** 글자를 얹는다. 따로 그리면
  * "영상에 없는 장면"이 되기 쉽고, 그건 유튜브가 영상을 내리는 사유다.
  */
+/**
+ * 창작 동화 한 편을 시작한다 (KIND.TALE).
+ *
+ * 조사 단계가 없다. 소재를 웹에서 찾지 않고 **사람이 준다.** 그래서
+ * 여기서 돈이 드는 것은 대본 한 번뿐이다.
+ *
+ * 비트 시트(beats)를 넘기면 대본이 그 순서대로 나온다. 안 넘기면 AI가
+ * 전개를 혼자 정하는데, 그러면 편마다 전개가 비슷해진다 — 양산물로 보이는
+ * 가장 빠른 길이다. 되도록 넘긴다.
+ */
+async function cmdTale(flags) {
+  requireApiKey();
+
+  // 기획 파일로 받는 쪽이 기본이다. 비트 시트를 명령줄에 넣을 수는 없다.
+  let plan = {};
+  if (flags.plan) {
+    const file = path.isAbsolute(flags.plan) ? flags.plan : path.join(ROOT, flags.plan);
+    if (!fs.existsSync(file)) {
+      log.error(`기획 파일이 없습니다: ${file}`);
+      process.exit(1);
+    }
+    try {
+      plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (err) {
+      log.fail(`기획 파일을 읽을 수 없습니다: ${file}`, err);
+      process.exit(1);
+    }
+  }
+
+  // 명령줄 값이 파일보다 우선한다. 파일을 그대로 두고 제목만 바꿔볼 수 있다.
+  const title = String(flags.title || plan.title || '').trim();
+  if (!title) {
+    log.error('제목을 알려주세요.');
+    log.info('  node src/main.mjs tale --title="그림자가 먼저 집에 가는 아이" --premise="..."');
+    log.info('  node src/main.mjs tale --plan=이상한동화/1화.json');
+    process.exit(1);
+  }
+
+  const item = makeTale({
+    title,
+    premise: flags.premise || plan.premise || '',
+    strange: flags.strange || plan.strange || '',
+    beats: plan.beats || [],
+    lastLine: flags['last-line'] || plan.last_line || '',
+  });
+
+  const targetMinutes = Number(flags.minutes) > 0 ? Number(flags.minutes) : TALE_MINUTES;
+
+  log.section(`📖 이상한 동화  |  약 ${targetMinutes}분  |  모델 ${MODELS.script}`);
+  log.info(`제목: ${item.title}`);
+  if (item.summary) log.info(`설정: ${item.summary}`);
+  log.info(`비트 ${item.beats.length}개` + (item.beats.length ? '' : ' — 전개를 AI가 혼자 정합니다'));
+  if (!item.beats.length) {
+    log.warn('비트 시트 없이 쓰면 편마다 전개가 비슷해집니다. --plan 으로 넘기는 쪽을 권합니다.');
+  }
+  for (const r of item.gate_reasons || []) log.info(`· ${r}`);
+
+  const { id } = promoteToContent(item);
+  log.ok(`content/${id} 으로 올렸습니다.`);
+
+  const { markdown, check } = await writeScript(item, {
+    targetMinutes,
+    onProgress: (m) => log.step(m),
+  });
+  saveScript(id, markdown, check);
+
+  log.raw('');
+  log.info(`나레이션 ${check.stats.narrationChars}자 (약 ${check.stats.estimatedMinutes}분)`);
+  log.info(`HOOK ${check.stats.hookChars}자`);
+  log.info(`섹션 ${check.stats.sectionsFound}/${check.stats.sectionsExpected}개`);
+  for (const w of check.warnings) log.warn(w);
+
+  if (check.ok) {
+    log.ok(`대본 완성: ${contentPath(id, 'script.md')}`);
+    log.raw('');
+    log.info(`다음: node src/main.mjs auto --resume=${id} --scenes --images --narrate --video`);
+  } else {
+    log.error('대본이 양식을 통과하지 못했습니다:');
+    for (const e of check.errors) log.info(`· ${e}`);
+    log.info(`대본은 저장했습니다: ${contentPath(id, 'script.md')}`);
+    process.exitCode = 2;
+  }
+}
+
 async function cmdUpload(flags) {
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
@@ -1411,6 +1503,9 @@ async function main() {
       return cmdImages(flags);
     case 'voice':
       return cmdVoice(flags);
+    case 'tale':
+      await cmdTale(flags);
+      break;
     case 'upload':
       await cmdUpload(flags);
       break;
@@ -1468,6 +1563,11 @@ async function main() {
       log.raw('  node src/main.mjs video --id=001 [--dry-run] [--no-shorts]');
       log.raw('      장면을 실제 영상 파일로 만듭니다. 쇼츠도 함께 자릅니다.');
       log.raw('      AI를 안 쓰므로 비용 0원입니다. --dry-run 은 계획만 세웁니다.');
+      log.raw('');
+      log.raw('  node src/main.mjs tale --plan=이상한동화/1화.json');
+      log.raw('      창작 동화 한 편을 시작합니다 (조사 없음, 대본값만 듭니다).');
+      log.raw('      --title / --premise / --strange / --last-line 으로도 넘길 수 있습니다.');
+      log.raw('      기본 4분입니다. 실화 편(8분)과 다릅니다.');
       log.raw('');
       log.raw('  node src/main.mjs upload --id=001');
       log.raw('      올릴 때 쓸 것들을 만듭니다 — 제목 후보, 썸네일 3장, 설명문, 태그.');
