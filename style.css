@@ -4845,32 +4845,8 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   background: #ef6a54;
 }
 
-/* 기록 탭 맨 아래의 한마디 입구. 카드로 만들지 않는다 —
-   위의 기록 카드들과 같은 무게로 보이면 기록의 일부처럼 읽힌다. */
-.history-feedback {
-  text-align: center;
-  padding: 22px 0 8px;
-  margin-top: 6px;
-  border-top: 1px solid var(--card-border);
-}
-.history-feedback-text {
-  font-size: 12.5px;
-  color: var(--text-dim);
-  margin: 0 0 10px;
-}
-.history-feedback-btn {
-  border: 1px solid var(--card-border);
-  background: var(--card);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 9px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.history-feedback-btn:active {
-  transform: scale(0.97);
-}
+/* 기록 탭의 한마디 입구(.history-feedback*)는 2026-10-11에 뺐다.
+   설정에 같은 입구가 있어 두 군데였다. 마크업과 함께 규칙도 지운다. */
 
 /* ═══════════════════════════════════════════════════════════════════════
    실행 스플래시 — 앱을 켤 때 마스코트가 먼저, 그 다음 홈
