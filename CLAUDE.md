@@ -52,6 +52,11 @@
   og:image, canonical, sitemap.xml)은 항상 커스텀 도메인 기준으로 유지한다.
 - `app.js`(마음 주사 핵심 로직)는 원칙적으로 무수정. 다른 파일이 재사용해야 할
   기능은 `window.MaumjaroCore` export를 통해서만 접근한다.
+  단 하나의 예외: `SYMPTOMS`에 **감정 항목을 더하는 것**은 데이터 추가라 허용한다
+  (2026-10-11 연애·친구 감정 5개를 그렇게 넣었다). 로직은 한 줄도 바꾸지 않는다.
+  더할 때 지킬 것 — mg는 기존 눈금(가벼움 1 ~ 분노 15.5)에서 **비어 있는 값**을 고르고,
+  `emoji·label·mg·color·caption`과 **메시지 10줄**을 모두 채운다. 감정 수가 바뀌면
+  홍보 글의 "감정 N개"도 같이 고쳐야 한다.
 - `prescriptions.js`(처방 시스템)도 최소 수정. 외부 재사용은
   `window.MaumjaroRx` export를 통해서만 한다.
 - 새 기능은 분리된 파일(`fortune.js`/`fortune-data.js`처럼)로 만들고, 기존
