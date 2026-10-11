@@ -2968,6 +2968,8 @@ const {
   filterCandidates,
   finishDescription,
   buildUploadPrompt,
+  channelNameFor,
+  uploadSystemFor,
 } = await import('../src/upload/pack.mjs');
 const {
   THUMB_WIDTH,
@@ -3236,6 +3238,51 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     assert.ok(key, `"${mode}" 가 어디로 가야 하는지 이 테스트가 모릅니다. 표를 고쳐 주세요`);
     assert.equal(route(mode), expected[key], `"${mode}" 가 엉뚱한 분기로 갑니다`);
   }
+});
+
+test('창작 편 고지문이 "조사했다"고 말하지 않는다', () => {
+  // 1화에서 실제로 나간 글이다. 지어낸 이야기를 "사람이 조사하고 썼습니다"로
+  // 고지했다. 고지문은 속이지 않으려고 붙이는 글인데 그 글이 거짓이면
+  // 붙이는 의미가 없다.
+  const tale = finishDescription('본문', { kind: 'TALE' });
+  assert.ok(!tale.includes('조사하고'), `창작 편이 조사했다고 말합니다:\n${tale}`);
+  assert.ok(tale.includes('지어낸') || tale.includes('창작'), '창작물임을 안 밝힙니다');
+
+  // 실화 쪽 문구는 그대로여야 한다.
+  const event = finishDescription('본문', { kind: 'EVENT' });
+  assert.ok(event.includes('조사하고 썼습니다'), '실화 고지문이 바뀌었습니다');
+});
+
+test('창작 편 설명문에 출처 항목을 만들지 않는다', () => {
+  // 창작물에 출처가 있을 수 없다. 실수로 들어오면 적지 않는다.
+  const tale = finishDescription('본문', {
+    kind: 'TALE',
+    sources: [{ name: '있으면 안 되는 출처', url: 'https://example.org/a' }],
+  });
+  assert.ok(!tale.includes('참고한 자료'), `창작 편에 출처가 적혔습니다:\n${tale}`);
+  assert.ok(!tale.includes('example.org'));
+});
+
+test('채널 이름이 종류마다 다르다', () => {
+  // 1화 설명문에 "AI 서프라이즈에서 만든 창작물입니다"가 적혀 나갔다.
+  // 프롬프트에 채널 이름이 박혀 있었기 때문이다.
+  assert.equal(channelNameFor('TALE'), '마지막 장');
+  assert.equal(channelNameFor('EVENT'), 'AI 서프라이즈');
+
+  const taleSys = uploadSystemFor('TALE');
+  assert.ok(taleSys.includes('마지막 장'), '동화 프롬프트에 채널 이름이 없습니다');
+  assert.ok(!taleSys.includes('AI 서프라이즈'), '동화 프롬프트에 실화 채널 이름이 섞였습니다');
+  assert.ok(taleSys.includes('창작'), '창작물임을 밝히라고 알려주지 않습니다');
+
+  assert.ok(uploadSystemFor('EVENT').includes('AI 서프라이즈'), '실화 채널 이름이 바뀌었습니다');
+
+  // 대본 작가 쪽도 같아야 한다. (아래 동화 블록의 TALE_SYSTEM 은 이 시점에
+  // 아직 초기화 전이라 여기서 따로 읽는다.)
+  const writeSrc = fs.readFileSync(fileURLToPath(new URL('../src/script/write.mjs', import.meta.url)), 'utf8');
+  assert.ok(
+    /TALE_SYSTEM = `당신은 "마지막 장" 채널의 작가다/.test(writeSrc),
+    '동화 대본 규칙의 채널 이름이 다릅니다'
+  );
 });
 
 test('동화는 배경음악을 끄고 만든다', () => {

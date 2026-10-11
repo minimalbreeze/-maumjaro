@@ -13,12 +13,48 @@
 
 import { callForJson, MODELS } from '../ai/client.mjs';
 import { checkTitle, SYNTHETIC_DISCLOSURE } from '../policy.mjs';
+import { KIND } from '../model.mjs';
 import { MAX_LINE_CHARS } from './thumbnail.mjs';
+
+/**
+ * 채널 이름.
+ *
+ * 실화와 창작은 **다른 채널**이다. 이름을 프롬프트에 박아 두면 창작 편
+ * 설명문에 실화 채널 이름이 적혀 나간다 — 실제로 1화에서 그렇게 나왔다.
+ */
+export const CHANNEL_NAMES = {
+  [KIND.EVENT]: 'AI 서프라이즈',
+  [KIND.LEGEND]: 'AI 서프라이즈',
+  [KIND.TALE]: '마지막 장',
+};
+
+export function channelNameFor(kind) {
+  return CHANNEL_NAMES[kind] || CHANNEL_NAMES[KIND.EVENT];
+}
 
 /** 유튜브가 검색 결과에서 잘라내기 시작하는 지점. */
 export const TITLE_CHARS_MAX = 45;
 
-export const UPLOAD_SYSTEM = `당신은 "AI 서프라이즈" 채널의 편집자다.
+export function uploadSystemFor(kind) {
+  const channel = channelNameFor(kind);
+  const extra =
+    kind === KIND.TALE
+      ? `
+
+━━━ 이 채널은 창작 동화 채널이다 ━━━
+
+11. 지어낸 이야기다. **실화인 것처럼 쓰지 않는다.**
+    설명문 첫 줄 근처에 창작물임을 한 줄로 밝힌다.
+
+12. 출처를 적지 않는다. 창작물이라 출처라는 것이 없다.
+    "출처: 없음" 같은 말도 쓰지 않는다 — 안 쓰면 그만이다.
+
+13. 태그에 다른 채널 이름을 쓰지 않는다. 이 채널 이름은 "${channel}" 이다.`
+      : '';
+  return UPLOAD_SYSTEM_BASE.replace('{{CHANNEL}}', channel) + extra;
+}
+
+const UPLOAD_SYSTEM_BASE = `당신은 "{{CHANNEL}}" 채널의 편집자다.
 완성된 영상에 붙일 제목·썸네일 문구·설명문·태그를 만든다.
 
 ━━━ 제목 ━━━
@@ -132,13 +168,17 @@ export function filterCandidates({ titles = [], thumbnails = [] } = {}) {
  * AI 에게 "고지를 넣어 주세요"라고 부탁하지 않는다. 한 번이라도 빠지면
  * 계정 정지 대상이고, 부탁은 언젠가 안 지켜진다. 코드가 붙인다.
  */
-export function finishDescription(body, { track = null, sources = [] } = {}) {
+export function finishDescription(body, { track = null, sources = [], kind = null } = {}) {
+  const isTale = kind === KIND.TALE;
   const out = [String(body || '').trim()];
 
   out.push('', '━━━━━━━━━━━━━━━━');
-  out.push(SYNTHETIC_DISCLOSURE.text);
+  // 창작 편에 실화용 고지문을 붙이면 "조사하고 썼습니다"가 나간다.
+  // 고지문은 속이지 않으려고 붙이는 글이다. 그 글이 거짓이면 의미가 없다.
+  out.push(isTale ? SYNTHETIC_DISCLOSURE.taleText : SYNTHETIC_DISCLOSURE.text);
 
-  if (sources.length) {
+  // 창작물에는 출처가 없다. 빈 '참고한 자료' 제목만 남기지 않는다.
+  if (!isTale && sources.length) {
     out.push('', '참고한 자료');
     for (const s of sources.slice(0, 8)) {
       const name = s?.name || s?.title || '';
@@ -186,7 +226,7 @@ export function buildUploadPrompt(item, { scriptMarkdown = '', minutes = 0 } = {
 
 export async function makeUploadPack(item, { scriptMarkdown = '', minutes = 0, model = MODELS.script } = {}) {
   const raw = await callForJson({
-    system: UPLOAD_SYSTEM,
+    system: uploadSystemFor(item?.kind),
     prompt: buildUploadPrompt(item, { scriptMarkdown, minutes }),
     toolName: 'submit_upload_pack',
     description: '올릴 때 쓸 제목·썸네일 문구·설명문·태그를 제출한다',
