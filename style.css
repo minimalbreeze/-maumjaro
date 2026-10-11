@@ -5364,3 +5364,38 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   padding: 12px 16px;
   white-space: nowrap;
 }
+
+/* ---------- 기록 백업 · 복원 (설정 안) ---------- */
+.backup-panel {
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--card-border);
+}
+.backup-note {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  word-break: keep-all;
+}
+.backup-warn { margin: 8px 0 0; }
+.backup-copy {
+  width: 100%;
+  margin: 0 0 10px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+/* 백업 코드는 길다. 줄바꿈해서 보여주고, 한 번에 선택되게 한다. */
+.backup-input {
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+  word-break: break-all;
+}
