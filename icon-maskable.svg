@@ -6,11 +6,15 @@
          주황과 초록을 직접 섞으면 중간이 카키로 탁해진다(RGB 보간의 고질병).
          그래서 바탕은 두고, 캐릭터 뒤에만 앱의 민트를 깔았다(아래 mGlow).
          코랄 테두리 안에 민트 창이 난 모양이 되어, 약국 안을 들여다보는 꼴이 된다. -->
-    <linearGradient id="mBg" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0%" stop-color="#ff9166"/>
-      <stop offset="38%" stop-color="#ffc281"/>
-      <stop offset="62%" stop-color="#fdefdb"/>
-      <stop offset="100%" stop-color="#d7eee4"/>
+    <!-- 바탕 = 앱 메인 화면 배경색 그대로(2026-10-11, 효성님 지시).
+         style.css의 --bg-top(#f6fbf9) → --bg-bottom(#e3f0ec), 방향도 앱과 같은 위→아래.
+         앱을 열면 아이콘 색이 그대로 이어진다.
+         ⚠️ 여기에 주황을 섞지 않는다. 코랄에서 민트로 내려가는 그라디언트를 만들어 봤는데
+         중간이 탁해져서 멍든 것처럼 보였다. 주황은 주사기 약물에만 남긴다 —
+         연한 민트 위에서 캐릭터의 딥틸 외곽선과 코랄 주사기가 가장 또렷하다. -->
+    <linearGradient id="mBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f6fbf9"/>
+      <stop offset="100%" stop-color="#e3f0ec"/>
     </linearGradient>
     <linearGradient id="mHood" x1="0.2" y1="0" x2="0.6" y2="1">
       <stop offset="0%" stop-color="#8fd6c6"/><stop offset="100%" stop-color="#4fa392"/>
