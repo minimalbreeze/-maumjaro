@@ -98,23 +98,51 @@ if (fs.existsSync(sports)) {
 }
 
 
+/**
+ * 그 줄이 "영문 아닌 셸 변수명에 값을 넣는 줄"인가.
+ *
+ * bash 변수명은 영문·숫자·밑줄만 된다. 주제="..." 는 할당이 아니라 명령으로
+ * 해석되어 'command not found' 로 죽는다. 실제로 '공식 페이지 받아보기'
+ * 스텝이 그래서 죽었다. YAML 문법 검사로는 안 잡히므로 따로 본다.
+ *
+ * 걸리면 그 토큰을, 멀쩡하면 null 을 돌려준다.
+ */
+export function 나쁜변수명(line) {
+  // run 블록 안쪽은 깊게 들여쓰여 있다. 줄 맨 앞 토큰이 곧바로 = 를 만나면 할당이다.
+  // args+=("x") 같은 배열 추가도 정상 할당이므로 += 를 허용한다.
+  const m = /^\s{6,}([^\s=#|>&$'"]+?)\+?=(?!=)/.exec(line);
+  if (!m) return null;
+  // 여러 줄로 이어진 명령의 인자 줄은 할당이 아니다. bash 변수명은 '-' 로
+  // 시작할 수 없으므로 --flag=값 은 애초에 할당일 수가 없다.
+  // 실측 2026-10-12: ai-surprise.yml 의 `--image-model="$IN_IMAGE_MODEL"` 가
+  // 걸려 main 의 자체 검사가 빨개졌고, 그 바람에 모든 모드가 돌지 못했다.
+  if (m[1].startsWith('-')) return null;
+  if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(m[1])) return null;
+  return m[1];
+}
+
 check('셸 변수명에 한글을 쓰지 않는다', () => {
-  // bash 변수명은 영문·숫자·밑줄만 된다. 주제="..." 는 할당이 아니라 명령으로
-  // 해석되어 'command not found' 로 죽는다. 실제로 '공식 페이지 받아보기'
-  // 스텝이 그래서 죽었다. YAML 문법 검사로는 안 잡히므로 따로 본다.
   const 나쁜것 = [];
   for (const file of files) {
     const text = fs.readFileSync(path.join(WORKFLOWS, file), 'utf8');
     text.split('\n').forEach((line, i) => {
-      // run 블록 안쪽은 깊게 들여쓰여 있다. 줄 맨 앞 토큰이 곧바로 = 를 만나면 할당이다.
-      // args+=("x") 같은 배열 추가도 정상 할당이므로 += 를 허용한다.
-      const m = /^\s{6,}([^\s=#|>&$'"]+?)\+?=(?!=)/.exec(line);
-      if (!m) return;
-      if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(m[1])) return;
-      나쁜것.push(`${file}:${i + 1} "${m[1]}"`);
+      const 토큰 = 나쁜변수명(line);
+      if (토큰) 나쁜것.push(`${file}:${i + 1} "${토큰}"`);
     });
   }
   assert.equal(나쁜것.length, 0, `셸 변수명에 영문 아닌 글자: ${나쁜것.join(' / ')}`);
+});
+
+check('명령의 --flag=값 줄을 변수 할당으로 보지 않는다', () => {
+  // 잡아야 하는 것
+  assert.equal(나쁜변수명('        주제="오늘의 글감"'), '주제');
+  assert.equal(나쁜변수명('        제목2="x"'), '제목2');
+  // 잡으면 안 되는 것
+  assert.equal(나쁜변수명('          --image-model="$IN_IMAGE_MODEL" --max-usd="$IN_MAX_USD"'), null);
+  assert.equal(나쁜변수명('          --resume="$tale_id" \\'), null);
+  assert.equal(나쁜변수명('        TOPIC="야구"'), null);
+  assert.equal(나쁜변수명('        args+=("--dry-run")'), null);
+  assert.equal(나쁜변수명('        echo "a == b"'), null);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
