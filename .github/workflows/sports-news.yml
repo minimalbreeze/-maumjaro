@@ -520,7 +520,7 @@ jobs:
           # '겹치는 글 전부 보기' 는 목록을 자르지 않는다. 겹친 글의 각도를
           # 손보려면 25묶음만 봐서는 못 하기 때문이다.
           all=''
-          case "$IN_MODE" in *겹치는\ 글\ 전부*) all='--전부' ;; esac
+          case "$IN_MODE" in *겹치는\ 글\ 전부*) all='--겹침만' ;; esac
           node src/wordpress/index-audit.mjs $all
 
       - name: 수명 끝난 글 색인에서 빼기
