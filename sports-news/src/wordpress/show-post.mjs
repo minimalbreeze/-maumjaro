@@ -18,7 +18,7 @@
 //   - 워드프레스 블록 주석은 걷어내고 사람이 읽는 글만 찍는다. 다만 찾아
 //     바꾸기에 쓸 것이므로 **글자는 그대로 둔다** — 따옴표·공백을 다듬지 않는다.
 
-import { wpFetch } from './client.mjs';
+import { wpFetch, wpConfig } from './client.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 
 /**
@@ -53,8 +53,10 @@ export function 문단으로(html) {
 /** 글 하나를 읽어 문단 목록으로 돌려준다. 고치지 않는다. */
 export async function 본문읽기(postId) {
   const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
-  if (!손대도되는글인가(post)) {
-    return { id: postId, skip: 'wiki 밖의 글입니다 — 보지 않습니다' };
+  // 손대도되는글인가 는 (글의 공개 주소, 기준 사이트 주소) 를 받는다.
+  // 글 객체를 넘기면 전부 '밖'으로 판정된다 — 처음 판이 그렇게 틀렸다.
+  if (!손대도되는글인가(post?.link, wpConfig().base)) {
+    return { id: postId, skip: `wiki 밖의 글입니다 — 보지 않습니다 (${post?.link || '주소 없음'})` };
   }
   const content = post?.content?.raw ?? post?.content?.rendered ?? '';
   return {
