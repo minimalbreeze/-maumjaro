@@ -97,6 +97,10 @@ on:
         description: "올해 글 안내가 가리킬 주소 (올해 글 안내 넣기에서만 씁니다). 내 블로그 안의 올해 글 주소"
         required: false
         default: ''
+      notice_to:
+        description: "올해 글 안내가 가리킬 글 번호 (주소 대신 이걸 주면 워드프레스에서 실제 주소를 받아옵니다). 예: 1538"
+        required: false
+        default: ''
       file_path:
         description: '파일로 올리기: 올릴 글 파일 경로 (예: 블로그초안/05-페이드캠-중고거래-사진-정리.md)'
         required: false
@@ -585,6 +589,7 @@ jobs:
           IN_IDS: ${{ inputs.post_ids }}
           IN_TEXT: ${{ inputs.notice_text }}
           IN_URL: ${{ inputs.notice_url }}
+          IN_TO: ${{ inputs.notice_to }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
@@ -593,13 +598,13 @@ jobs:
           if [ -z "$IN_IDS" ]; then
             echo "::error::안내를 넣을 글 번호를 적어주세요 (post_ids)"; exit 1
           fi
-          if [ -z "$IN_TEXT" ] || [ -z "$IN_URL" ]; then
-            echo "::error::안내 문구(notice_text)와 주소(notice_url)를 둘 다 적어주세요"; exit 1
+          if [ -z "$IN_URL" ] && [ -z "$IN_TO" ]; then
+            echo "::error::가리킬 주소(notice_url)나 글 번호(notice_to) 중 하나는 적어주세요"; exit 1
           fi
           apply=''
           case "$IN_MODE" in *실제\ 적용*) apply='--apply' ;; esac
-          node src/wordpress/add-notice.mjs $IN_IDS \
-            --text="$IN_TEXT" --url="$IN_URL" $apply
+          node src/wordpress/add-notice.mjs $IN_IDS $apply \
+            ${IN_TEXT:+--text="$IN_TEXT"} ${IN_URL:+--url="$IN_URL"} ${IN_TO:+--to="$IN_TO"}
 
       - name: 파일로 올리기
         # 이미 만들어 둔 .md 를 워드프레스 **임시글**로 저장한다.

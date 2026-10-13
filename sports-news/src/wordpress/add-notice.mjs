@@ -106,6 +106,21 @@ export function noticeOnlyChange(before, after) {
  *
  * apply 가 false 면 무엇이 바뀌는지만 알려주고 저장하지 않는다(미리보기).
  */
+/**
+ * 안내가 가리킬 글의 실제 주소를 워드프레스에서 받아온다.
+ *
+ * 주소를 손으로 적으면 오타 하나에 독자가 404 를 본다. 글 번호를 주면
+ * 워드프레스가 돌려주는 link 를 그대로 쓴다 — 코드가 주소를 만들어내지 않는다.
+ * 문구를 안 적었으면 그 글의 제목을 그대로 쓴다.
+ */
+export async function 가리킬곳(toId) {
+  const { data: post } = await wpFetch(`/wp/v2/posts/${toId}`, { query: { context: 'edit' } });
+  const url = post?.link || '';
+  const title = post?.title?.raw || post?.title?.rendered || '';
+  if (!url) throw new Error(`${toId}번 글의 주소를 받지 못했습니다`);
+  return { url, title, status: post?.status };
+}
+
 export async function addNoticeToPost(postId, { text, url, apply = false } = {}) {
   const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
   const content = post?.content?.raw ?? post?.content?.rendered ?? '';
@@ -144,12 +159,25 @@ async function main() {
   const args = process.argv.slice(2);
   // 적용은 명시해야 한다. 아무 플래그 없이 돌리면 미리보기다.
   const apply = args.includes('--apply') && !args.includes('--dry-run');
-  const text = 값(args, 'text');
-  const url = 값(args, 'url');
+  let text = 값(args, 'text');
+  let url = 값(args, 'url');
+  const to = 값(args, 'to');
+
+  // --to=글번호 를 주면 그 글의 실제 주소를 워드프레스에서 받아 쓴다.
+  if (to) {
+    const 대상 = await 가리킬곳(to);
+    url = 대상.url;
+    if (!text) text = `${대상.title} 보러가기`;
+    console.log(`\n→ 가리킬 글 [${to}] ${대상.status} · ${대상.title}`);
+    console.log(`   ${url}`);
+    if (대상.status !== 'publish') {
+      console.log('   ⚠️ 발행된 글이 아닙니다. 독자가 못 봅니다 — 발행 뒤에 다시 돌리세요.');
+    }
+  }
   const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
   if (!ids.length) {
-    console.error('글 번호를 적어주세요. 예: node src/wordpress/add-notice.mjs 2878 --text="..." --url="https://..." --apply');
+    console.error('글 번호를 적어주세요. 예: node src/wordpress/add-notice.mjs 481 --to=1538 --apply');
     process.exit(1);
   }
 
