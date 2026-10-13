@@ -40,6 +40,9 @@ import { 손대도되는글인가, saveBackup } from './noindex.mjs';
  *   이유 : 왜 오타라고 판단했는지. 나중에 누가 봐도 알 수 있게
  *   가드 : 이 꼴이면 **건드리지 않는다**. 같은 글자가 멀쩡한 낱말에도
  *          들어 있을 때 쓴다. 없으면 생략한다.
+ *   글   : **이 글 번호들에서만** 고친다. 없으면 모든 글에 적용한다.
+ *          사실을 바로잡을 때 쓴다 — "공동 1위"를 640편 전체에서 바꾸면
+ *          멀쩡한 글이 망가진다. 그 한 편에서만 고쳐야 한다.
  *
  * 새 항목을 넣기 전에 `--찾기` 로 실제 글에서 확인한다. 머릿속에서 만들어
  * 넣지 않는다.
@@ -106,11 +109,23 @@ export function 한항목고치기(text, 항목) {
   return { after: 결과, 횟수 };
 }
 
-/** 표 전체를 글에 적용한다. */
-export function 고치기(text, 표 = 바로잡기) {
+/**
+ * 그 항목을 이 글에 적용해도 되나. `글` 이 적힌 항목은 거기 적힌 글에서만.
+ *
+ * postId 를 안 넘기면(옛 호출부·검사) 글 범위가 없는 항목만 적용한다 —
+ * 모르는 글에 사실 수정을 흘리지 않는다.
+ */
+export function 이글에쓰나(항목, postId) {
+  if (!항목.글) return true;
+  return postId != null && 항목.글.includes(Number(postId));
+}
+
+/** 표 전체를 글에 적용한다. postId 를 주면 그 글에 매인 항목도 함께 본다. */
+export function 고치기(text, 표 = 바로잡기, postId = null) {
   let 결과 = String(text || '');
   const 바뀐것 = [];
   for (const 항목 of 표) {
+    if (!이글에쓰나(항목, postId)) continue;
     const r = 한항목고치기(결과, 항목);
     결과 = r.after;
     if (r.횟수) 바뀐것.push({ 틀린: 항목.틀린, 맞는: 항목.맞는, 횟수: r.횟수 });
@@ -124,8 +139,8 @@ export function 고치기(text, 표 = 바로잡기) {
  * 원래 글에 표를 한 번 더 적용해서 보낼 글과 **글자 하나까지 같은지** 본다.
  * 다르면 그 글은 건너뛴다 — 내가 모르는 변화가 섞였다는 뜻이다.
  */
-export function 오타만바뀌었나(before, after, 표 = 바로잡기) {
-  return 고치기(before, 표).after === after;
+export function 오타만바뀌었나(before, after, 표 = 바로잡기, postId = null) {
+  return 고치기(before, 표, postId).after === after;
 }
 
 // ── 오타 후보 찾기 (고치지 않는다) ─────────────────────────
@@ -278,8 +293,8 @@ async function main() {
       console.log(`   ⏭  ${p.id} 본문을 못 읽었습니다 — ${err.message}`);
       continue;
     }
-    const 제목 = 고치기(p.title);
-    const 본문 = 고치기(content);
+    const 제목 = 고치기(p.title, 바로잡기, p.id);
+    const 본문 = 고치기(content, 바로잡기, p.id);
     if (!제목.바뀐것.length && !본문.바뀐것.length) continue;
     할일.push({ post: p, content, 제목, 본문 });
   }
@@ -315,7 +330,7 @@ async function main() {
     try {
       const body = {};
       if (t.제목.바뀐것.length) {
-        if (!오타만바뀌었나(t.post.title, t.제목.after)) {
+        if (!오타만바뀌었나(t.post.title, t.제목.after, 바로잡기, t.post.id)) {
           console.log(`   ❌ ${t.post.id} 제목에서 표 밖의 것이 바뀝니다 — 건너뜁니다`);
           process.exitCode = 1;
           continue;
@@ -323,7 +338,7 @@ async function main() {
         body.title = t.제목.after;
       }
       if (t.본문.바뀐것.length) {
-        if (!오타만바뀌었나(t.content, t.본문.after)) {
+        if (!오타만바뀌었나(t.content, t.본문.after, 바로잡기, t.post.id)) {
           console.log(`   ❌ ${t.post.id} 본문에서 표 밖의 것이 바뀝니다 — 건너뜁니다`);
           process.exitCode = 1;
           continue;
