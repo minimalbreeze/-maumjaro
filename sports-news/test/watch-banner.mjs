@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, WATCH_MARK } from '../src/seo/watch-banner.mjs';
+import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, WATCH_MARK, watchLabel, allWatchLabels, DEFAULT_WATCH_LABEL } from '../src/seo/watch-banner.mjs';
 import { planPlacements, insertMarks } from '../src/images/embed.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -36,9 +36,16 @@ check('설정에 없는 종목은 배너를 넣지 않는다', () => {
 check('설정의 모든 링크가 https 절대주소다', () => {
   const cfg = loadWatchLinks();
   for (const [name, e] of Object.entries(cfg.byCategory || {})) {
-    const urls = [e.primary?.url, ...(e.secondary || []).map((s) => s.url)].filter(Boolean);
-    assert.ok(urls.length, `${name}: 링크가 없습니다`);
-    for (const u of urls) assert.ok(/^https:\/\/[^\s"']+$/.test(u), `${name}: ${u}`);
+    // 카테고리 기본값 없이 match 로만 고르는 카테고리가 있다 — '생활정보'
+    // 처럼 성격이 섞인 카테고리는 기본값을 두면 엉뚱한 글에 배너가 붙는다.
+    // 그런 카테고리는 match 쪽 링크를 본다.
+    const 항목들 = e.primary?.url ? [e] : (e.match || []);
+    assert.ok(항목들.length, `${name}: 기본 링크도 match 도 없습니다`);
+    for (const 항목 of 항목들) {
+      const urls = [항목.primary?.url, ...(항목.secondary || []).map((x) => x.url), 항목.vod?.url].filter(Boolean);
+      assert.ok(urls.length, `${name}: 링크가 없습니다`);
+      for (const u of urls) assert.ok(/^https:\/\/[^\s"']+$/.test(u), `${name}: ${u}`);
+    }
   }
 });
 
@@ -282,6 +289,52 @@ check('설정의 다시보기 주소는 비어 있거나 실제 주소다', () =
     const u = e.vod.url || '';
     if (u) assert.match(u, /^https:\/\//, `다시보기 주소가 이상합니다: ${u}`);
     else assert.ok(e.vod._비어있는이유, '비어 있는 이유를 적어두세요');
+  }
+});
+
+// ── 머리글 (2026-10-13) ────────────────────────────────────
+// 축제는 경기가 아니다. '경기 보러가기' 라고 쓰면 틀린 말이 된다.
+
+check('라벨을 안 적은 항목은 예전 머리글 그대로다', () => {
+  // 이미 올린 글 수백 편이 이 글귀로 들어가 있다. 바뀌면 전부 못 찾는다.
+  assert.equal(DEFAULT_WATCH_LABEL, '📺 경기 보러가기');
+  assert.equal(watchLabel({ primary: { url: 'https://a.example', text: 'x' } }), '📺 경기 보러가기');
+  const kbl = pickWatchLinks('농구', { text: 'KBL 창원 LG 경기일정' });
+  assert.ok(watchBannerHtml(kbl).includes('📺 경기 보러가기'), '농구 배너 머리글이 바뀌었습니다');
+});
+
+check('라벨을 적은 항목은 그 머리글을 쓴다', () => {
+  const e = pickWatchLinks('생활정보', { text: '2025 서울세계불꽃축제 한화TV 생중계 다시보기' });
+  assert.ok(e, '불꽃축제 글에서 항목을 못 골랐습니다');
+  assert.equal(watchLabel(e), '📺 영상 보러가기');
+  const html = watchBannerHtml(e);
+  assert.ok(html.includes('📺 영상 보러가기'), '적어둔 머리글이 안 나옵니다');
+  assert.ok(!html.includes('📺 경기 보러가기'), '축제 글에 "경기 보러가기" 가 들어갔습니다');
+});
+
+check('설정에 있는 머리글을 모두 모은다', () => {
+  // 하나만 보면, 기본 글귀로 들어간 옛 배너를 못 찾고 하나 더 넣는다.
+  const all = allWatchLabels();
+  assert.ok(all.includes(DEFAULT_WATCH_LABEL), '기본 머리글이 빠졌습니다');
+  assert.ok(all.includes('📺 영상 보러가기'), 'match 안의 머리글이 빠졌습니다');
+  assert.equal(new Set(all).size, all.length, '중복이 있습니다');
+});
+
+check('생활정보에는 기본값이 없다 — 엉뚱한 글에 안 붙는다', () => {
+  // 생활정보에는 축제·시설·행사 글이 섞여 있다. 기본값을 두면 불꽃축제와
+  // 상관없는 글 전부에 유튜브 배너가 붙는다.
+  assert.equal(pickWatchLinks('생활정보', { text: '동네 도서관 이용 시간 안내' }), null);
+  assert.equal(pickWatchLinks('생활정보', { text: '쓰레기 분리배출 요일' }), null);
+});
+
+check('불꽃축제 배너는 유튜브로 가고 nofollow 가 붙는다', () => {
+  const e = pickWatchLinks('생활정보', { text: '서울세계불꽃축제 다시보기' });
+  const html = watchBannerHtml(e);
+  assert.ok(html.includes('youtube.com/watch?v=IPNxeKx_nso'), '주소가 다릅니다');
+  // 바깥 사이트로 나가는 링크다.
+  for (const a of html.match(/<a [^>]*>/g) || []) {
+    assert.ok(/rel="[^"]*nofollow/.test(a), `nofollow 가 없습니다: ${a}`);
+    assert.ok(!/target=/.test(a), `새 창으로 띄웁니다: ${a}`);
   }
 });
 

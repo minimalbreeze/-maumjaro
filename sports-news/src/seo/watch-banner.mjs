@@ -13,6 +13,40 @@ import { ROOT } from '../utils/env.mjs';
 
 export const WATCH_MARK = '<!--WATCH-->';
 
+/**
+ * 배너 머리글의 기본값. 이 글귀가 "중계 배너임"을 알아보는 표시이기도 하다.
+ * 이미 올린 글 수백 편에 이 글귀로 박혀 있으므로 바꾸지 않는다.
+ */
+export const DEFAULT_WATCH_LABEL = '📺 경기 보러가기';
+
+/**
+ * 그 항목이 쓸 머리글.
+ *
+ * 2026-10-13: 불꽃축제 글에 다시보기 배너를 달면서 필요해졌다. 축제는 경기가
+ * 아니라 "경기 보러가기"가 틀린 말이 된다. 설정에 `라벨` 을 적은 항목만
+ * 그 글귀를 쓰고, 안 적은 항목은 예전 그대로다 — 기존 글은 하나도 안 바뀐다.
+ */
+export function watchLabel(entry) {
+  const v = String(entry?.라벨 || '').trim();
+  return v || DEFAULT_WATCH_LABEL;
+}
+
+/**
+ * 설정에 있는 모든 머리글. 이미 올린 글에서 배너를 찾을 때 이걸 다 본다.
+ *
+ * 하나만 보면 안 된다. 어떤 글에 기본 글귀로 배너가 들어가 있는데 나중에 그
+ * 카테고리에 `라벨` 이 생기면, 새 글귀로만 찾다가 못 찾고 배너를 하나 더
+ * 넣게 된다.
+ */
+export function allWatchLabels(config = loadWatchLinks()) {
+  const out = new Set([DEFAULT_WATCH_LABEL]);
+  for (const entry of Object.values(config?.byCategory || {})) {
+    out.add(watchLabel(entry));
+    for (const m of entry?.match || []) out.add(watchLabel(m));
+  }
+  return [...out];
+}
+
 let cache = null;
 export function loadWatchLinks() {
   if (cache) return cache;
@@ -108,7 +142,7 @@ export function watchBannerHtml(entry) {
 
   return `<!-- wp:html -->
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
-  <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">📺 경기 보러가기</div>
+  <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">${esc(watchLabel(entry))}</div>
   <a href="${esc(p.url)}" rel="nofollow"
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →

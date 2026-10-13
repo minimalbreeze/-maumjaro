@@ -26,7 +26,7 @@
 import { wpFetch } from './client.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { categoryIndex } from '../news/variety.mjs';
-import { pickWatchLinks, watchBannerHtml } from '../seo/watch-banner.mjs';
+import { pickWatchLinks, watchBannerHtml, allWatchLabels, DEFAULT_WATCH_LABEL } from '../seo/watch-banner.mjs';
 import { loadEnv } from '../utils/env.mjs';
 import { log } from '../utils/logger.mjs';
 import { APP_MARK } from '../seo/app-banner.mjs';
@@ -57,10 +57,10 @@ const AD_BLOCK = /<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi;
  * 주소가 링크로 적혀 있는데 배너 블록은 없었다. 주소만 보고 "이미 있다"고
  * 건너뛰어서 배너가 영영 안 들어갔다.
  */
-export const BANNER_SIGN = '📺 경기 보러가기';
+export const BANNER_SIGN = DEFAULT_WATCH_LABEL;
 
 /** 자리를 잡을 때 "붙으면 안 되는" 배너들의 표시. */
-const 모든표식 = [BANNER_SIGN, APP_MARK, OFFICIAL_MARK];
+const 모든표식 = () => [...allWatchLabels(), APP_MARK, OFFICIAL_MARK];
 
 export function bannerSlot(html) {
   const body = String(html || '');
@@ -74,7 +74,7 @@ export function bannerSlot(html) {
   // 이미 있는 배너 바로 뒤도 피한다. 카드가 연달아 붙으면 둘 다 광고로 보여
   // 아무것도 안 눌린다 — 광고를 피하는 이유와 같다.
   const 배너끝 = [...body.matchAll(/<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi)]
-    .filter((m) => 모든표식.some((sign) => m[1].includes(sign)))
+    .filter((m) => 모든표식().some((sign) => m[1].includes(sign)))
     .map((m) => m.index + m[0].length);
   const 피할곳 = [...광고끝, ...배너끝];
 
@@ -101,9 +101,13 @@ export function bannerSlot(html) {
  * 기본값은 중계 배너라 기존 호출부는 그대로 동작한다.
  */
 export function findBanners(html, sign = BANNER_SIGN) {
+  // 표시를 여러 개 받을 수 있다. 중계 배너는 카테고리마다 머리글이 다를 수
+  // 있어서(불꽃축제 글의 '영상 보러가기') 하나만 보면 이미 있는 배너를
+  // 못 찾고 하나 더 넣는다.
+  const signs = (Array.isArray(sign) ? sign : [sign]).filter(Boolean);
   const out = [];
   for (const m of String(html || '').matchAll(/<!--\s*wp:html\s*-->([\s\S]*?)<!--\s*\/wp:html\s*-->/gi)) {
-    if (!m[1].includes(sign)) continue;
+    if (!signs.some((x) => m[1].includes(x))) continue;
     const url = /href="([^"]+)"/.exec(m[1])?.[1] || '';
     out.push({ start: m.index, end: m.index + m[0].length, url, block: m[0] });
   }
@@ -174,7 +178,10 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
   const url = entry.primary.url;
 
   const banner = watchBannerHtml(entry);
-  const { html, 한일 } = applyBanner(content, banner);
+  // 이미 들어 있는 배너는 머리글이 지금 것과 다를 수 있다. 설정에 있는
+  // 머리글을 다 보고 찾는다 — 못 찾으면 배너가 둘이 된다.
+  const 표시들 = allWatchLabels();
+  const { html, 한일 } = applyBanner(content, banner, 표시들);
   if (!한일) return { ...base, url, skip: '배너 HTML이 비었습니다' };
 
   // 글자 하나까지 같으면 보내지 않는다. 이게 멱등성을 지킨다 — 두 번 돌려도
@@ -185,7 +192,7 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     return { ...base, url, skip: '배너가 이미 지금 모양으로 들어 있습니다' };
   }
 
-  if (!bannerOnlyChange(content, html)) {
+  if (!bannerOnlyChange(content, html, 표시들)) {
     throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
   }
 
