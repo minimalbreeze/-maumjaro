@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  바로잡기, 한항목고치기, 고치기, 오타만바뀌었나, 글자거리, 한글낱말, 오타후보, 붙은꼴인가,
+  바로잡기, 한항목고치기, 고치기, 오타만바뀌었나, 글자거리, 한글낱말, 오타후보, 붙은꼴인가, 이글에쓰나
 } from '../src/wordpress/typo-fix.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -124,8 +124,10 @@ check('미리보기가 기본이고 --apply 가 있어야 쓴다', () => {
 
 check('보내기 직전에 제목과 본문을 각각 확인한다', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/typo-fix.mjs'), 'utf8');
-  assert.match(src, /오타만바뀌었나\(t\.post\.title, t\.제목\.after\)/, '제목 확인이 없습니다');
-  assert.match(src, /오타만바뀌었나\(t\.content, t\.본문\.after\)/, '본문 확인이 없습니다');
+  // 글 번호까지 넘겨야 한다. 특정 글에만 매인 항목(사실 수정)이 있어서,
+  // 번호 없이 확인하면 그 항목이 빠진 채로 비교해 "표 밖이 바뀌었다"가 된다.
+  assert.match(src, /오타만바뀌었나\(t\.post\.title, t\.제목\.after, 바로잡기, t\.post\.id\)/, '제목 확인이 없습니다');
+  assert.match(src, /오타만바뀌었나\(t\.content, t\.본문\.after, 바로잡기, t\.post\.id\)/, '본문 확인이 없습니다');
 });
 
 // ── 오타 후보 찾기 ────────────────────────────────────────
@@ -232,6 +234,37 @@ check('찾기만 할 때는 쓰기를 하지 않는다', () => {
   // 화면에도 "안 고친다"고 밝힌다. 사람이 결과를 보고 다 끝났다고 믿으면 안 된다.
   assert.match(src, /아무것도 고치지 않습니다/);
   assert.match(몸, /후보일 뿐입니다/, '후보라는 사실을 알려주지 않습니다');
+});
+
+
+// ── 글에 매인 항목 (2026-10-13) ───────────────────────────
+// 사실을 바로잡을 때 쓴다. "공동 1위"를 640편 전체에서 바꾸면 멀쩡한 글이
+// 망가진다. 그 한 편에서만 고쳐야 한다.
+
+check('글 범위가 없는 항목은 모든 글에 적용된다', () => {
+  const 표 = [{ 틀린: '랭팅', 맞는: '랭킹', 이유: '검사' }];
+  assert.equal(고치기('랭팅 40위', 표, 111).after, '랭킹 40위');
+  assert.equal(고치기('랭팅 40위', 표, null).after, '랭킹 40위');
+});
+
+check('글 범위가 있는 항목은 그 글에서만 고친다', () => {
+  const 표 = [{ 틀린: '공동 1위', 맞는: '2위', 이유: '검사', 글: [8559] }];
+  assert.equal(고치기('홈런 공동 1위다', 표, 8559).after, '홈런 2위다');
+  // 다른 글은 건드리지 않는다.
+  assert.equal(고치기('홈런 공동 1위다', 표, 1234).after, '홈런 공동 1위다');
+});
+
+check('글 번호를 모르면 매인 항목을 적용하지 않는다', () => {
+  // 모르는 글에 사실 수정을 흘리지 않는다.
+  const 표 = [{ 틀린: '공동 1위', 맞는: '2위', 이유: '검사', 글: [8559] }];
+  assert.equal(고치기('홈런 공동 1위다', 표, null).after, '홈런 공동 1위다');
+});
+
+check('이글에쓰나 가 범위를 그대로 말한다', () => {
+  assert.equal(이글에쓰나({ 틀린: 'a', 맞는: 'b' }, 999), true);
+  assert.equal(이글에쓰나({ 틀린: 'a', 맞는: 'b', 글: [8559] }, 8559), true);
+  assert.equal(이글에쓰나({ 틀린: 'a', 맞는: 'b', 글: [8559] }, 8560), false);
+  assert.equal(이글에쓰나({ 틀린: 'a', 맞는: 'b', 글: [8559] }, null), false);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
