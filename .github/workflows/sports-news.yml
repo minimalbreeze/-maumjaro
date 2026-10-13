@@ -66,6 +66,8 @@ on:
           - '오타 후보 찾기 (안 고침 · 비용 0원)'
           - '제목·본문 오타 고치기 (미리보기 · 비용 0원)'
           - '제목·본문 오타 고치기 (실제 적용 · 비용 0원)'
+          - '올해 글 안내 넣기 (미리보기 · 비용 0원)'
+          - '올해 글 안내 넣기 (실제 적용 · 비용 0원)'
       article_text:
         description: '기사 본문을 붙여넣기 (이게 있으면 뉴스 수집을 건너뛰고 이 기사를 재료로 1편 씁니다. 주제도 함께 적으세요)'
         required: false
@@ -84,6 +86,14 @@ on:
         default: ''
       new_desc:
         description: "새 메타 설명 (제목·설명 고치기에서만 씁니다. 비우면 설명은 그대로)"
+        required: false
+        default: ''
+      notice_text:
+        description: "올해 글 안내 문구 (올해 글 안내 넣기에서만 씁니다). 예: 2026 서울세계불꽃축제 다시보기는 여기로"
+        required: false
+        default: ''
+      notice_url:
+        description: "올해 글 안내가 가리킬 주소 (올해 글 안내 넣기에서만 씁니다). 내 블로그 안의 올해 글 주소"
         required: false
         default: ''
       file_path:
@@ -143,7 +153,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ (!contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기')) || contains(inputs.mode, '파일로 올리기') }}
+        if: ${{ (!contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기')) || contains(inputs.mode, '파일로 올리기') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -554,6 +564,36 @@ jobs:
           esac
           node src/wordpress/typo-fix.mjs $how
 
+      - name: 올해 글 안내 넣기
+        # 작년 글 맨 위에 "올해 글로 가는 한 줄"을 넣는다. 작년 글은 이미
+        # 색인이 붙어 노출을 받는데 들어온 사람이 찾는 건 올해 날짜다.
+        # 지우면 그 순위를 통째로 버리게 되므로, 지우지 않고 흘려보낸다.
+        #
+        # content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
+        # 주소는 운영자가 적은 것만 쓴다 — 코드가 만들어내지 않는다.
+        if: ${{ contains(inputs.mode, '올해 글 안내') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
+          IN_TEXT: ${{ inputs.notice_text }}
+          IN_URL: ${{ inputs.notice_url }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_IDS" ]; then
+            echo "::error::안내를 넣을 글 번호를 적어주세요 (post_ids)"; exit 1
+          fi
+          if [ -z "$IN_TEXT" ] || [ -z "$IN_URL" ]; then
+            echo "::error::안내 문구(notice_text)와 주소(notice_url)를 둘 다 적어주세요"; exit 1
+          fi
+          apply=''
+          case "$IN_MODE" in *실제\ 적용*) apply='--apply' ;; esac
+          node src/wordpress/add-notice.mjs $IN_IDS \
+            --text="$IN_TEXT" --url="$IN_URL" $apply
+
       - name: 파일로 올리기
         # 이미 만들어 둔 .md 를 워드프레스 **임시글**로 저장한다.
         # AI 를 부르지 않는다 — 글은 이미 있고, 이미지도 OPENAI_API_KEY 가
@@ -659,7 +699,7 @@ jobs:
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
