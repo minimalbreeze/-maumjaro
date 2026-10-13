@@ -3,6 +3,11 @@
 // 따옴표나 공백이 바뀌면 표가 글을 못 찾는다.
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
 import { 문단으로 } from '../src/wordpress/show-post.mjs';
 
 let passed = 0;
@@ -53,6 +58,17 @@ check('빈 본문이어도 던지지 않는다', () => {
   assert.deepEqual(문단으로(''), []);
   assert.deepEqual(문단으로(null), []);
   assert.deepEqual(문단으로(undefined), []);
+});
+
+
+// ── 2026-10-13: 처음 판이 여기서 틀렸다 ───────────────────
+// 손대도되는글인가 는 (글의 공개 주소, 기준 사이트 주소) 를 받는데 글 객체를
+// 넘겼다. 그래서 멀쩡한 wiki 글이 전부 "밖의 글"로 판정돼 하나도 못 봤다.
+
+check('손대도되는글인가를 주소 두 개로 부른다', () => {
+  const src = fs.readFileSync(path.join(HERE, '../src/wordpress/show-post.mjs'), 'utf8');
+  assert.match(src, /손대도되는글인가\(post\?\.link, wpConfig\(\)\.base\)/, '주소 두 개로 부르지 않습니다');
+  assert.ok(!/손대도되는글인가\(post\)/.test(src), '글 객체를 넘기고 있습니다');
 });
 
 console.log(`\n  ${passed}개 통과`);
