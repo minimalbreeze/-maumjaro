@@ -194,6 +194,10 @@ export async function 발행글전부({ perPage = 100, max = 2000 } = {}) {
 }
 
 async function main() {
+  // --전부 를 주면 목록을 자르지 않고 다 찍는다. 겹치는 글의 각도를 손보려면
+  // 25묶음만 봐서는 못 한다 — 어떤 글끼리 겹쳤는지 전부 알아야 한다.
+  const 전부 = process.argv.slice(2).includes('--전부');
+  const 자르기 = (arr, n) => (전부 ? arr : arr.slice(0, n));
   console.log('\n────────────────────────────────────────────────────────');
   console.log('🔎 색인이 안 되는 이유를 센다 (읽기만 함 · 비용 0원)');
   console.log('────────────────────────────────────────────────────────');
@@ -209,22 +213,22 @@ async function main() {
   if (!묶음.length) {
     console.log('   없습니다.');
   } else {
-    for (const 무리 of 묶음.slice(0, 25)) {
+    for (const 무리 of 자르기(묶음, 25)) {
       console.log('');
       for (const p of 무리) {
         console.log(`   ${p.id}  ${p.date}  ${p.글자수.toLocaleString()}자  ${p.title}`);
       }
     }
-    if (묶음.length > 25) console.log(`\n   … 그 밖에 ${묶음.length - 25}묶음`);
+    if (!전부 && 묶음.length > 25) console.log(`\n   … 그 밖에 ${묶음.length - 25}묶음 (전부 보려면 --전부)`);
   }
 
   // ② 분량 — 채점표와 같은 기준으로 센다.
   const 짧은글 = 글.filter((p) => p.글자수 < 3000).sort((a, b) => a.글자수 - b.글자수);
   console.log(`\n[② 본문이 3,000자(공백 제외)에 못 미치는 글] ${짧은글.length}편 / ${글.length}편`);
-  for (const p of 짧은글.slice(0, 20)) {
+  for (const p of 자르기(짧은글, 20)) {
     console.log(`   ${p.id}  ${p.date}  ${p.글자수.toLocaleString()}자  ${p.title}`);
   }
-  if (짧은글.length > 20) console.log(`   … 그 밖에 ${짧은글.length - 20}편`);
+  if (!전부 && 짧은글.length > 20) console.log(`   … 그 밖에 ${짧은글.length - 20}편`);
 
   // ③ SEO 필드가 빈 글
   const 빈메타 = 글.filter((p) => !p.description);
@@ -253,10 +257,10 @@ async function main() {
     .sort((a, b) => b.글자수 - a.글자수);
   console.log(`\n[⑤ 보강 1순위 — 돈 되는 유형인데 얇은 글] ${보강후보.length}편`);
   console.log('   (두꺼운 것부터 — 조금만 보태면 기준을 넘는 글이다)');
-  for (const p of 보강후보.slice(0, 25)) {
+  for (const p of 자르기(보강후보, 25)) {
     console.log(`   ${p.id}  ${p.date}  ${p.글자수.toLocaleString().padStart(6)}자  ${p.title}`);
   }
-  if (보강후보.length > 25) console.log(`   … 그 밖에 ${보강후보.length - 25}편`);
+  if (!전부 && 보강후보.length > 25) console.log(`   … 그 밖에 ${보강후보.length - 25}편`);
 
   // ⑥ 분량 분포 — 전체 그림을 한 줄로.
   const 정렬 = [...글].map((p) => p.글자수).sort((a, b) => a - b);
