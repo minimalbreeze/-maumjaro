@@ -14,7 +14,14 @@
 //   스레드는 올린 뒤 첫 1시간의 답글 수가 도달을 크게 가른다(스레드양식 5번).
 //   링크가 든 댓글이 늦게 붙으면 그 시간을 놓친다. 그래서 본문 게시 직후 바로 단다.
 
-import { buildTodayThread } from './threads-content.mjs';
+/* 어떤 글을 올릴지는 CONTENT 로 고른다. 게시하는 일(컨테이너 만들고 올리고
+ * 댓글 붙이는 것)은 어느 쪽이든 똑같아서 이 파일 하나로 둔다.
+ *   CONTENT=fadecam  페이드캠 홍보 (scripts/fadecam-content.mjs)
+ *   CONTENT=maum     맘운자로     (scripts/threads-content.mjs)  ← 기본값 */
+const SOURCES = {
+  fadecam: './fadecam-content.mjs',
+  maum: './threads-content.mjs',
+};
 
 const API = 'https://graph.threads.net/v1.0';
 
@@ -85,13 +92,19 @@ async function main() {
   const dryRun = /^(1|true|yes)$/i.test(process.env.DRY_RUN || '');
   const userId = process.env.THREADS_USER_ID;
   const token = process.env.THREADS_TOKEN;
+  const which = (process.env.CONTENT || 'maum').toLowerCase();
 
-  const post = await buildTodayThread();
+  const src = SOURCES[which];
+  if (!src) {
+    fail(`CONTENT=${which} 는 모르는 값입니다. ${Object.keys(SOURCES).join(' / ')} 중에서 고르세요.`);
+  }
+  const mod = await import(src);
+  const post = await mod.buildTodayThread();
 
   // 올라간 글은 항상 로그에 남긴다. 나중에 "그날 뭐가 올라갔지?"를 볼 수 있어야 한다.
   // 토큰은 어디에도 출력하지 않는다.
   console.log('─'.repeat(52));
-  console.log(`📅 ${post.today.key} (한국시간) · 모양 ${post.shape} · ${post.kind}`);
+  console.log(`📅 ${post.today.key} (한국시간) · ${which} · ${post.shape} · ${post.kind}`);
   console.log('─'.repeat(52));
   console.log(post.text);
   console.log(`\n   (본문 ${post.text.length}자 · 링크 없음)`);
