@@ -480,17 +480,25 @@ export async function buildTodayThread(now = new Date()) {
   return { today, shape, kind: post.kind, text: post.text, reply, link };
 }
 
-// 단독 실행하면 오늘 글을 찍어 본다:  node scripts/threads-content.mjs
+/* 단독 실행 — 오늘 글을 찍어 본다
+ *   node scripts/threads-content.mjs        오늘 것만
+ *   node scripts/threads-content.mjs 14     앞으로 14일치 미리보기
+ */
 if (process.argv[1] && process.argv[1].endsWith('threads-content.mjs')) {
-  buildTodayThread().then((p) => {
-    console.log('─'.repeat(52));
-    console.log(`📅 ${p.today.key} · 모양 ${p.shape} · ${p.kind}`);
-    console.log('─'.repeat(52));
-    console.log(p.text);
-    console.log(`\n   (본문 ${p.text.length}자)`);
-    console.log('─'.repeat(52));
-    console.log('💬 댓글');
-    console.log(p.reply);
-    console.log('─'.repeat(52));
-  });
+  const days = Math.max(1, Math.min(60, Number(process.argv[2]) || 1));
+  (async () => {
+    const now = Date.now();
+    for (let i = 0; i < days; i++) {
+      const p = await buildTodayThread(new Date(now + i * 86400000));
+      console.log('─'.repeat(52));
+      console.log(`📅 ${p.today.key} · 모양 ${p.shape} · ${p.kind}`);
+      console.log('─'.repeat(52));
+      console.log(p.text);
+      console.log(`\n   (본문 ${p.text.length}자 · 링크 없음)`);
+      console.log('💬 댓글 ─────────────────────────────────────');
+      console.log(p.reply);
+      console.log('');
+    }
+    if (days > 1) console.log(`※ ${days}일치 미리보기입니다. 실제로 올리려면 Actions 탭에서 돌리세요.`);
+  })();
 }
