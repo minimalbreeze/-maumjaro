@@ -309,6 +309,8 @@ check('라벨을 적은 항목은 그 머리글을 쓴다', () => {
   assert.equal(watchLabel(e), '📺 영상 보러가기');
   const html = watchBannerHtml(e);
   assert.ok(html.includes('📺 영상 보러가기'), '적어둔 머리글이 안 나옵니다');
+  // 2026-10-14: 운영자가 2026년 영상이라고 확인해 줬다. 연도를 버튼에 넣는다.
+  assert.ok(html.includes('2026 한화TV 한국팀 피날레 풀영상'), '연도가 빠졌습니다');
   assert.ok(!html.includes('📺 경기 보러가기'), '축제 글에 "경기 보러가기" 가 들어갔습니다');
 });
 
