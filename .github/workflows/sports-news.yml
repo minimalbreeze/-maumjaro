@@ -55,6 +55,7 @@ on:
           - '색인이 안 되는 이유 찾기 (글 전체 훑기 · 비용 0원)'
           - '겹치는 글 전부 보기 (각도 손보기용 · 비용 0원)'
           - '글 본문 보기 (고치지 않음 · 비용 0원)'
+          - '글 본문 보기 — 저장된 그대로 raw (고치지 않음 · 비용 0원)'
           - '수명 끝난 글 색인에서 빼기 (미리보기 · 비용 0원)'
           - '수명 끝난 글 색인에서 빼기 (실제 적용 · 비용 0원)'
           - '구글 색인에 다시 들여보내기 (미리보기 · 비용 0원)'
@@ -589,6 +590,7 @@ jobs:
         if: ${{ contains(inputs.mode, '글 본문 보기') }}
         working-directory: sports-news
         env:
+          IN_MODE: ${{ inputs.mode }}
           IN_IDS: ${{ inputs.post_ids }}
           IN_FIND: ${{ inputs.find_query }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
@@ -600,7 +602,11 @@ jobs:
             echo "::error::볼 글 번호를 적어주세요 (post_ids)"; exit 1
           fi
           # find_query 를 주면 그 말이 든 문단만 찍는다.
-          node src/wordpress/show-post.mjs $IN_IDS ${IN_FIND:+--찾기="$IN_FIND"}
+          # 'raw' 모드는 태그를 걷어내지 않는다 — 찾아 바꾸기에 쓸 문자열을
+          # 정확히 잡아야 할 때 쓴다.
+          raw=''
+          case "$IN_MODE" in *raw*) raw='--raw' ;; esac
+          node src/wordpress/show-post.mjs $IN_IDS $raw ${IN_FIND:+--찾기="$IN_FIND"}
 
       - name: 올해 글 안내 넣기
         # 작년 글 맨 위에 "올해 글로 가는 한 줄"을 넣는다. 작년 글은 이미

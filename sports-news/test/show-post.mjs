@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-import { 문단으로 } from '../src/wordpress/show-post.mjs';
+import { 문단으로, raw줄로 } from '../src/wordpress/show-post.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -69,6 +69,35 @@ check('손대도되는글인가를 주소 두 개로 부른다', () => {
   const src = fs.readFileSync(path.join(HERE, '../src/wordpress/show-post.mjs'), 'utf8');
   assert.match(src, /손대도되는글인가\(post\?\.link, wpConfig\(\)\.base\)/, '주소 두 개로 부르지 않습니다');
   assert.ok(!/손대도되는글인가\(post\)/.test(src), '글 객체를 넘기고 있습니다');
+});
+
+// ── raw 보기 (2026-10-14) ─────────────────────────────────
+// 2922 의 첫 문단을 고치려다 못 걸었다. 문단으로() 가 <strong> 을 걷어내서,
+// 거기서 본 문장을 그대로 오타 표에 적으면 raw HTML 과 안 맞는다.
+// --raw 는 저장된 그대로를 보여준다.
+
+check('raw 는 태그를 걷어내지 않는다', () => {
+  const 줄 = raw줄로('<p>짜릿한 <strong>실시간 경마중계</strong>에 대해</p>');
+  assert.ok(줄.join('').includes('<strong>'), '태그가 사라졌습니다');
+  assert.ok(줄.join('').includes('</strong>에 대해'), '태그 뒤 글자가 안 붙어 있습니다');
+});
+
+check('raw 는 블록 주석 뒤에서 줄을 끊는다', () => {
+  // 한 줄이 너무 길면 로그에서 못 읽는다.
+  const 줄 = raw줄로('<!-- wp:paragraph --><p>가</p><!-- /wp:paragraph -->');
+  assert.ok(줄.length >= 2, `안 끊겼습니다: ${JSON.stringify(줄)}`);
+  assert.equal(줄[0], '<!-- wp:paragraph -->');
+});
+
+check('raw 는 글자를 하나도 바꾸지 않는다', () => {
+  // 여기서 본 문장을 그대로 오타 표에 옮겨 적어야 한다.
+  const 원본 = '<p>타율 0.306 · 141경기 &amp; "따옴표"</p>';
+  assert.equal(raw줄로(원본).join(''), 원본);
+});
+
+check('raw 가 빈 값에도 던지지 않는다', () => {
+  assert.deepEqual(raw줄로(''), []);
+  assert.deepEqual(raw줄로(null), []);
 });
 
 console.log(`\n  ${passed}개 통과`);
