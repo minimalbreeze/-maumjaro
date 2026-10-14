@@ -599,6 +599,30 @@ ${best.length ? `<p>${esc(best[0].l.line)}</p>
   });
 
   // 띠
+  //
+  // 출생연도 ↔ 띠. 2026-10-13 네이버 데이터에서 "호랑이띠 삼합, 육합, 충"이
+  // 클릭 2 / 노출 8 (CTR 25%)로 전체 1위였다. 같은 기간 타로 문서 하나는
+  // 노출 102에 클릭 0이었다. 띠가 노출당 10배 넘게 효율이 좋다 —
+  // 답이 정해진 구체적 질문이라 경쟁 문서가 적어서다.
+  // 그런데 정작 "몇년생"은 열두 장 어디에도 없었다. 그 자리를 채운다.
+  //
+  // ⚠️ 띠의 경계는 1월 1일이 아니라 입춘(양력 2월 4일 전후)이다.
+  // 앱은 lunar-javascript의 연주 지지(getYearZhi)를 쓰는데 그게 입춘 기준이다.
+  // 그래서 "1998년생은 호랑이띠"라고만 적으면 1월 생은 앱과 답이 달라진다.
+  // 표에는 양력 해를 적되, 경계 주의를 같은 자리에서 반드시 같이 말한다.
+  // 적당히 뭉개면 글을 보고 들어온 사람이 앱에서 다른 답을 보고 바로 알아챈다.
+  const YEAR_FROM = 1936;
+  const YEAR_TO = 2032;
+  // 1900년이 경자년(쥐)이라 (해 - 4) % 12 가 CHINESE_ZODIAC의 자리와 맞물린다.
+  // 검산: 2020 % 12 === 4 → 쥐띠, 2022 % 12 === 6 → 호랑이띠. 실제와 같다.
+  const animalIndexOfYear = (y) => ((y - 4) % 12 + 12) % 12;
+  const yearsOf = (z) => {
+    const want = CHINESE_ZODIAC.findIndex((x) => x.key === z.key);
+    const out = [];
+    for (let y = YEAR_FROM; y <= YEAR_TO; y++) if (animalIndexOfYear(y) === want) out.push(y);
+    return out;
+  };
+
   const inSam = (a, b) => Z.SAMHAP.some((g) => g.includes(a) && g.includes(b));
   const pk = (a, b) => [a, b].sort().join('-');
   const inList = (l, a, b) => l.some((p) => pk(p[0], p[1]) === pk(a, b));
@@ -658,6 +682,15 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 <ul>${bad.map((r) => `<li><a href="/animal/${r.o.key}/">${esc(r.o.name)}</a> (${esc(r.d.label)}) — ${esc(r.d.line)}</li>`).join('')}</ul>
 <p>충이나 원진이라고 해서 만나면 안 되는 사이는 아닙니다. 부딪히는 지점이 어디인지 미리 알고 있으면 대부분 넘어갑니다.</p>
 
+<h2>${esc(z.name)}는 몇년생인가</h2>
+<p>${esc(z.name)}는 십이지의 <strong>${esc(z.zhi)}</strong>에 해당하는 해에 태어난 사람입니다. 12년마다 돌아옵니다.</p>
+<div class="tw"><table>
+  <thead><tr><th>${esc(z.name)} 출생연도</th></tr></thead>
+  <tbody><tr><td>${yearsOf(z).map((y) => `<strong>${y}</strong>년`).join(' · ')}</td></tr></tbody>
+</table></div>
+<p class="k" style="margin-top:10px;"><strong>1~2월에 태어났다면 한 번 더 확인하세요.</strong> 띠가 바뀌는 기준은 1월 1일이 아니라 <strong>입춘(양력 2월 4일 전후)</strong>입니다. 예를 들어 ${yearsOf(z)[Math.floor(yearsOf(z).length / 2)]}년 1월에 태어났다면 ${esc(z.name)}가 아니라 앞 해의 ${esc(CHINESE_ZODIAC[(animalIndexOfYear(yearsOf(z)[Math.floor(yearsOf(z).length / 2)]) + 11) % 12].name)}입니다. 맘운자로는 생년월일을 넣으면 이 경계까지 자동으로 맞춰 계산합니다.</p>
+<p><a href="/animal/years/">출생연도로 내 띠 찾기 (1936~2032 전체 표) ›</a></p>
+
 <h2>${esc(z.name)} 오늘의 운세</h2>
 <p>맘운자로에서 ${esc(z.name)}의 오늘 기운을 무료로 볼 수 있습니다. 생년월일을 넣으면 <strong>띠가 자동으로 계산</strong>됩니다. 태어난 시간은 몰라도 됩니다.</p>
 <p>하루의 기운은 ${Z.SIGN_DAY_SEED.length}가지 유형 중 하나로 나옵니다.</p>
@@ -689,6 +722,10 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         a: `띠 궁합은 태어난 해만 봅니다. 사주 궁합은 태어난 날까지 봅니다. `
            + `맘운자로의 생년월일 궁합은 두 사람의 일간(태어난 날의 천간) 오행 관계를 보고 띠 관계는 보조 점수로만 쓰기 때문에, `
            + `서로를 살리는 사이인지 한쪽이 끌고 가는 사이인지까지 방향을 구분해 알려줍니다.` },
+      { q: `${z.name}는 몇년생인가요?`,
+        a: `${yearsOf(z).filter((y) => y >= 1960 && y <= 2020).join('년, ')}년생이 ${z.name}입니다. 12년마다 돌아옵니다. `
+           + `다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, `
+           + `1~2월 초에 태어났다면 앞 해의 띠가 됩니다. 맘운자로는 이 경계까지 자동으로 맞춰 계산합니다.` },
       { q: `내 띠는 어떻게 계산하나요?`,
         a: `태어난 해의 지지로 정합니다. 맘운자로는 생년월일을 넣으면 자동으로 계산해 주므로 직접 따질 필요가 없습니다. `
            + `양력 1~2월에 태어났다면 해가 바뀌는 기준 때문에 앞 해의 띠가 되는 경우가 있는데, 이것도 앱이 알아서 맞춰 줍니다.` },
@@ -700,9 +737,9 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         url,
         answer,
         faq,
-        title: `${z.name} 성격과 띠 궁합 (삼합·육합·충) | 맘운자로`,
-        desc: `${z.name}의 성격과 잘 맞는 띠, 조심할 띠. 삼합·육합·충·원진 전통 규칙 기준. 무료 띠별 운세도 함께.`,
-        keywords: `${z.name}, ${z.name} 성격, ${z.name} 궁합, 띠 궁합, 띠별 운세, 삼합, 육합, 무료 운세`,
+        title: `${z.name} 몇년생? 성격과 띠 궁합 (삼합·육합·충) | 맘운자로`,
+        desc: `${z.name} 출생연도와 성격, 잘 맞는 띠와 조심할 띠. 삼합·육합·충·원진 전통 규칙 기준. 입춘 경계까지 자동 계산.`,
+        keywords: `${z.name}, ${z.name} 몇년생, ${z.name} 출생연도, ${z.name} 성격, ${z.name} 궁합, 띠 궁합, 띠별 운세, 삼합, 육합, 원진, 무료 운세`,
         h1: `${z.emoji} ${z.name}`,
         sub: `십이지 ${z.zhi} · ${z.keyword}`,
         breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 띠 › ${esc(z.name)}`,
@@ -710,6 +747,61 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
       }),
     });
   });
+
+  // ---------- 출생연도 → 띠 (허브) ----------
+  // 띠 페이지는 "내 띠가 뭔지 아는 사람"이 찾는다. 반대 방향이 비어 있었다 —
+  // "1998년생 무슨 띠"처럼 연도만 들고 오는 검색이다. 열두 장에 흩어 두면
+  // 어느 장에도 안 걸리므로 한 장에 모은다.
+  {
+    const url = '/animal/years/';
+    const rows = [];
+    for (let y = YEAR_TO; y >= YEAR_FROM; y--) {
+      const z = CHINESE_ZODIAC[animalIndexOfYear(y)];
+      rows.push(`<tr><td><strong>${y}</strong>년생</td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td><td>${esc(z.zhi)}</td><td>${esc(z.keyword)}</td></tr>`);
+    }
+    const body = `
+<div class="card">
+  <p class="k">1936 ~ 2032년생</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">태어난 해만 알면 띠가 나옵니다</p>
+</div>
+
+<h2>먼저 알아야 할 것 — 띠는 1월 1일에 바뀌지 않습니다</h2>
+<p>흔한 오해입니다. 띠가 바뀌는 기준은 새해 첫날이 아니라 <strong>입춘(양력 2월 4일 전후)</strong>입니다. 사주에서 한 해의 시작을 입춘으로 보기 때문입니다.</p>
+<p>그래서 <strong>1월에서 2월 초 사이에 태어났다면 아래 표의 띠가 아니라 앞 해의 띠</strong>일 수 있습니다. 예를 들어 1998년 1월생은 호랑이띠가 아니라 소띠입니다.</p>
+<p>맘운자로에 생년월일을 넣으면 이 경계까지 맞춰서 자동으로 계산합니다. 태어난 시간은 몰라도 됩니다.</p>
+
+<h2>출생연도별 띠 표</h2>
+<div class="tw"><table>
+  <thead><tr><th>출생연도</th><th>띠</th><th>지지</th><th>키워드</th></tr></thead>
+  <tbody>${rows.join('')}</tbody>
+</table></div>
+
+<h2>12띠 전체</h2>
+<div class="grid">${CHINESE_ZODIAC.map((x) => `<a href="/animal/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: '띠는 태어난 해의 지지로 정합니다. 다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, 1월에서 2월 초에 태어났다면 앞 해의 띠가 됩니다. 1936년생부터 2032년생까지의 띠를 표로 정리했습니다.',
+        faq: [
+          { q: '1998년생은 무슨 띠인가요?',
+            a: '호랑이띠입니다. 다만 1998년 1월에서 2월 초 사이에 태어났다면 입춘 전이라 앞 해의 소띠가 됩니다. 맘운자로에 생년월일을 넣으면 이 경계까지 자동으로 계산합니다.' },
+          { q: '띠는 양력 기준인가요, 음력 기준인가요?',
+            a: '둘 다 아닙니다. 사주에서 쓰는 한 해의 시작은 입춘(양력 2월 4일 전후)입니다. 음력 설과도 날짜가 다를 수 있습니다. 그래서 1~2월생은 양력 해로만 따지면 틀릴 수 있습니다.' },
+          { q: '1월생인데 어느 띠로 봐야 하나요?',
+            a: '태어난 날이 그 해의 입춘보다 앞이면 앞 해의 띠입니다. 입춘 날짜는 해마다 2월 3일에서 5일 사이로 조금씩 다릅니다. 맘운자로는 생년월일을 넣으면 그 해의 실제 입춘을 기준으로 맞춰 줍니다.' },
+        ],
+        title: '출생연도별 띠 찾기 (1936~2032) | 맘운자로',
+        desc: '태어난 해로 내 띠를 찾는 표. 1936년생부터 2032년생까지. 1~2월생이 주의해야 할 입춘 기준까지 정리했습니다.',
+        keywords: '띠 계산, 출생연도 띠, 몇년생 무슨 띠, 띠별 나이, 입춘 띠 기준, 내 띠 찾기, 띠 궁합, 무료 운세',
+        h1: '🐾 출생연도로 띠 찾기',
+        sub: '1936 ~ 2032년생',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 띠 › 출생연도',
+        body,
+      }),
+    });
+  }
 }
 
 // 감정 페이지.
