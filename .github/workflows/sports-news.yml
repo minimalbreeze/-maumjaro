@@ -98,6 +98,10 @@ on:
         description: "올해 글 안내가 가리킬 주소 (올해 글 안내 넣기에서만 씁니다). 내 블로그 안의 올해 글 주소"
         required: false
         default: ''
+      new_keyword:
+        description: "새 대표 키워드 (제목·설명 고치기에서만 씁니다. 비우면 그대로). 예: 페이드캠 후기"
+        required: false
+        default: ''
       notice_to:
         description: "올해 글 안내가 가리킬 글 번호 (주소 대신 이걸 주면 워드프레스에서 실제 주소를 받아옵니다). 예: 1538"
         required: false
@@ -416,6 +420,7 @@ jobs:
           IN_IDS: ${{ inputs.post_ids }}
           IN_TITLE: ${{ inputs.new_title }}
           IN_DESC: ${{ inputs.new_desc }}
+          IN_KW: ${{ inputs.new_keyword }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
@@ -436,7 +441,8 @@ jobs:
             # retitle.mjs 는 set 서브커맨드를 먼저 받는다 (argv[2]=set, argv[3]=글번호).
             node src/wordpress/retitle.mjs set "$id" $dry \
               ${IN_TITLE:+--title="$IN_TITLE"} \
-              ${IN_DESC:+--desc="$IN_DESC"}
+              ${IN_DESC:+--desc="$IN_DESC"} \
+              ${IN_KW:+--kw="$IN_KW"}
           done
 
       - name: 중계 배너 넣기
