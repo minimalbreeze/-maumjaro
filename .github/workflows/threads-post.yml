@@ -1,0 +1,43 @@
+name: 스레드 자동 홍보
+
+on:
+  schedule:
+    # 09:00 UTC = 한국시간 오후 6시.
+    # 아침(페이스북과 같은 시간)이 아니라 저녁인 이유: 스레드는 올린 뒤 첫 1시간의
+    # 답글이 도달을 크게 가르는데, 그 시간에 사람이 깨어 있어야 답글이 붙는다.
+    # 새벽에 올리면 아무도 없는 시간에 첫 1시간을 다 써버린다.
+    # 예약 실행은 혼잡할 때 5~15분 늦게 도는 경우가 있다(정상 동작).
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '실제로 올리지 않고 글만 확인하기'
+        type: boolean
+        default: true
+
+# 스레드에 글을 쓰는 일이라 리포 자체에는 아무 권한도 필요 없다.
+permissions:
+  contents: read
+
+concurrency:
+  # 예약 실행과 수동 실행이 겹쳐 같은 글이 두 번 올라가는 것을 막는다.
+  group: threads-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 오늘의 스레드 게시
+        env:
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          # 예약 실행일 때 inputs.dry_run은 비어 있으므로 실제 게시가 된다.
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/threads-post.mjs
