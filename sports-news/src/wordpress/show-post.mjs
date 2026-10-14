@@ -66,7 +66,22 @@ export async function 본문읽기(postId) {
     slug: post?.slug,
     문단: 문단으로(content),
     글자수: 문단으로(content).join('').replace(/\s/g, '').length,
+    // 저장된 그대로의 HTML. 찾아 바꾸기는 이것과 글자가 맞아야 걸린다 —
+    // 문단으로() 가 걷어낸 <strong> 같은 태그가 여기엔 그대로 들어 있다.
+    raw: content,
   };
+}
+
+/**
+ * raw HTML 을 줄 단위로 자른다. 한 줄이 너무 길면 로그에서 못 읽으므로
+ * 워드프레스 블록 경계에서도 끊는다. **글자는 하나도 바꾸지 않는다.**
+ */
+export function raw줄로(html) {
+  return String(html || '')
+    .split('\n')
+    .flatMap((line) => line.split(/(?<=-->)/))
+    .map((s) => s.trimEnd())
+    .filter((s) => s.trim());
 }
 
 function 값(args, 이름) {
@@ -78,6 +93,9 @@ function 값(args, 이름) {
 async function main() {
   const args = process.argv.slice(2);
   const 찾기 = 값(args, '찾기');
+  // --raw 는 태그를 걷어내지 않고 저장된 그대로 찍는다. 찾아 바꾸기에 쓸
+  // 문자열을 정확히 잡아야 할 때 쓴다 — 태그가 어디 끼어 있는지 보인다.
+  const raw = args.includes('--raw');
   const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
   if (!ids.length) {
@@ -92,11 +110,13 @@ async function main() {
       if (r.skip) { console.log(`[${id}] 건너뜀 — ${r.skip}`); continue; }
       console.log(`[${r.id}] ${r.status} · ${r.title}`);
       console.log(`주소: ${r.slug} · 본문 ${r.글자수.toLocaleString()}자(공백 제외) · 문단 ${r.문단.length}개`);
-      if (찾기) console.log(`'${찾기}' 가 든 문단만 찍습니다`);
+      if (raw) console.log('저장된 그대로(raw HTML)를 찍습니다 — 태그를 걷어내지 않았습니다');
+      if (찾기) console.log(`'${찾기}' 가 든 ${raw ? '줄' : '문단'}만 찍습니다`);
       console.log(`────────────────────────────────────────────────────────`);
-      const 볼것 = 찾기 ? r.문단.filter((p) => p.includes(찾기)) : r.문단;
+      const 줄들 = raw ? raw줄로(r.raw) : r.문단;
+      const 볼것 = 찾기 ? 줄들.filter((p) => p.includes(찾기)) : 줄들;
       if (!볼것.length) {
-        console.log(`   '${찾기}' 가 든 문단이 없습니다.`);
+        console.log(`   '${찾기}' 가 든 ${raw ? '줄' : '문단'}이 없습니다.`);
         continue;
       }
       볼것.forEach((p, i) => console.log(`${String(i + 1).padStart(3)} | ${p}`));
