@@ -41,7 +41,7 @@ function explain(e) {
   if (!e) return '';
   const c = e.code;
   if (c === 190) return '   → 토큰이 만료·무효입니다. 가이드 ③을 다시 해서 THREADS_TOKEN을 갱신하세요.';
-  if (c === 10 || c === 200) return '   → 권한 부족입니다. threads_basic / threads_content_publish 두 개가 붙은 토큰인지 확인하세요.';
+  if (c === 10 || c === 200) return '   → 권한 부족입니다. threads_basic / threads_content_publish 가 붙은 토큰인지 확인하세요.';
   if (c === 100) return '   → THREADS_USER_ID가 잘못됐을 수 있습니다. 스레드 사용자 ID여야 합니다(페이스북 페이지 ID 아님).';
   if (c === 4 || c === 32 || c === 613) return '   → 호출 한도에 걸렸습니다. 24시간에 글 250개·답글 1,000개가 상한입니다.';
   return '';
