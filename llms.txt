@@ -22,9 +22,9 @@
 ## 시작점
 
 - [맘운자로 홈](https://maumjaro.minimalbreeze.com/): 감정을 고르고 주사를 놓는 앱 본체(JavaScript로 그려진다)
-- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): 감정·MBTI·타로·별자리·띠 콘텐츠 90장의 입구. 앱 소개와 FAQ도 여기 있다
+- [전체 목록](https://maumjaro.minimalbreeze.com/guide/): 감정·MBTI·타로·별자리·띠 콘텐츠 97장의 입구. 앱 소개와 FAQ도 여기 있다
 
-## 감정 23가지 (앱의 출발점)
+## 감정 28가지 (앱의 출발점)
 
 오늘 기분을 하나 고르면 그 마음에 맞는 '마음 처방'이 나온다. 각 페이지에 그 감정일 때
 앱이 건네는 문장 10개와 네 단계 흐름 설명, FAQ가 있다. 괄호 안은 감정의 무게를 주사
@@ -53,6 +53,11 @@
 - [허탈함 (9.5mg)](https://maumjaro.minimalbreeze.com/emotion/deflated/): 힘이 쭉 빠진 마음, 천천히 채워드릴게요
 - [식욕 폭발 (4.5mg)](https://maumjaro.minimalbreeze.com/emotion/craving/): 당기는 마음, 그대로 인정해드릴게요
 - [자책 (8.5mg)](https://maumjaro.minimalbreeze.com/emotion/selfblame/): 스스로를 너무 모질게 대하는 마음, 말려드릴게요
+- [짝사랑 (6.5mg)](https://maumjaro.minimalbreeze.com/emotion/crush/): 말 못 한 마음도 마음이에요
+- [어색함 (7.5mg)](https://maumjaro.minimalbreeze.com/emotion/awkward/): 편해지는 데도 시간이 들어요
+- [비교 (10mg)](https://maumjaro.minimalbreeze.com/emotion/compare/): 남의 속도에 내 시계를 맞추지 않아도 돼요
+- [배신감 (12.5mg)](https://maumjaro.minimalbreeze.com/emotion/betrayed/): 믿었던 만큼 아픈 거예요
+- [이별 (14mg)](https://maumjaro.minimalbreeze.com/emotion/breakup/): 오늘 하루치만 버텨요
 
 ## MBTI 16유형
 
