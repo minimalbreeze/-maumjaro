@@ -21,6 +21,14 @@
 //   그래서 효성님이 답하면 다음 실행에서 자동으로 목록에서 빠진다.
 //   안 답하면 계속 올라온다 — 그게 맞는 동작이다.
 //
+// 필요한 토큰 권한
+//   threads_basic        모든 호출의 기본
+//   threads_read_replies 댓글 읽기(GET). 이 스크립트가 쓰는 것
+//   ⚠️ threads_manage_replies 가 아니다. 그건 댓글을 숨기거나 답글을 쓰는(POST)
+//      권한이다. 처음에 이걸로 적었다가 고쳤다 — 메타 문서가 둘을 나눠 두었다.
+//      메타 사이트가 작업 환경에서 막혀 공식 페이지를 직접 확인하지는 못했으므로,
+//      앱 설정에서는 둘 다 켜 두는 쪽을 권한다(개발 모드에서는 심사가 없어 손해가 없다).
+//
 // 수동 확인:
 //   THREADS_USER_ID=... THREADS_TOKEN=... ANTHROPIC_API_KEY=... node scripts/threads-replies.mjs
 //   HOURS=72 을 붙이면 최근 72시간을 본다(기본 48시간).
@@ -215,8 +223,9 @@ async function main() {
     if (r.error) {
       const e = r.error;
       fail(`댓글을 읽을 권한이 없습니다 [code: ${e.code}]\n   ${e.message}\n`
-        + '   → 토큰에 threads_manage_replies 권한이 붙어 있어야 합니다.\n'
-        + '      메타 앱 설정에서 권한을 켜고 토큰을 다시 발급하세요(가이드 ②-5, ③).');
+        + '   → 토큰에 threads_read_replies 권한이 붙어 있어야 합니다(읽기 전용 권한).\n'
+        + '      threads_manage_replies 는 숨기기·답글 쓰기용이라 이것만으론 안 될 수 있습니다.\n'
+        + '      메타 앱 설정에서 둘 다 켜고 토큰을 다시 발급하세요(가이드 ②-5, ③).');
     }
     const rows = r.rows || [];
     if (!rows.length) continue;
