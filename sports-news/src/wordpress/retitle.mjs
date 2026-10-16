@@ -103,9 +103,14 @@ export async function restoreFromBackup(file) {
   return saved;
 }
 
+// 2026-10-16: 여기서 `.replace(/^["']|["']$/g, '')` 로 앞뒤 따옴표를 벗기고
+// 있었다. 셸이 이미 문법 따옴표를 먹고 넘기므로 남아 있는 따옴표는 **내용**인데
+// 그걸 감싸는 기호로 보고 벗겼다. 메타 설명을 따옴표로 시작하게 썼더니
+// (`"남서울 CC 파3 이용료"와 …`) 맨 앞 따옴표가 사라져 짝이 깨졌다.
+// 미리보기에서 잡았다. 벗기지 않는다 — 받은 값을 그대로 쓴다.
 function arg(name) {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
-  return hit ? hit.slice(name.length + 3).replace(/^["']|["']$/g, '') : '';
+  return hit ? hit.slice(name.length + 3) : '';
 }
 
 async function main() {
