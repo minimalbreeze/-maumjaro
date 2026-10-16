@@ -2002,7 +2002,7 @@ test('빈 장면에도 죽지 않는다', () => {
 
 section('14. 쇼츠 후보 — 말이 끊기지 않는 구간을 고르는가');
 
-const { pickShorts, SHORTS_MIN_SECONDS, SHORTS_MAX_SECONDS } = await import('../src/video/shorts.mjs');
+const { pickShorts, SHORTS_MIN_SECONDS, SHORTS_MAX_SECONDS, spoilerSectionsFor } = await import('../src/video/shorts.mjs');
 
 test('30~60초 구간 3개를 고른다', () => {
   const picks = pickShorts(videoScenes(), { count: 3 });
@@ -3283,6 +3283,68 @@ test('채널 이름이 종류마다 다르다', () => {
     /TALE_SYSTEM = `당신은 "마지막 장" 채널의 작가다/.test(writeSrc),
     '동화 대본 규칙의 채널 이름이 다릅니다'
   );
+});
+
+test('동화 쇼츠에 뒤집힘·여운이 들어가지 않는다', async () => {
+  // 1화에서 실제로 난 일이다. 쇼츠 2번이 94~169초로 잘려 뒤집힘과
+  // 여운이 통째로 들어갔다. 그걸 보면 본편을 볼 이유가 사라진다.
+  const { splitIntoScenes: split } = await import('../src/scenes/split.mjs');
+  const { TALE_SECTIONS: TS } = await import('../src/script/write.mjs');
+
+  // 1화와 비슷한 분량의 동화 대본을 만든다.
+  const md = TS.map((sec) => {
+    const lines = Array.from({ length: 4 }, (_, i) => `[STORY] ${sec.key}문단${i} ${'가'.repeat(40)}`);
+    return `## [${sec.key}] ${sec.label}\n\n${lines.join('\n\n')}\n`;
+  }).join('\n');
+
+  const { scenes: taleScenes, problems } = split(md, { kind: 'TALE' });
+  assert.deepEqual(problems, []);
+
+  const picks = pickShorts(taleScenes, { count: 3, kind: 'TALE' });
+  assert.ok(picks.length, '쇼츠가 하나도 안 나왔습니다');
+  for (const p of picks) {
+    assert.ok(!p.sections.includes('TURN'), `쇼츠 ${p.rank}에 뒤집힘이 들어갔습니다: ${p.sections.join(' → ')}`);
+    assert.ok(!p.sections.includes('CLOSE'), `쇼츠 ${p.rank}에 여운이 들어갔습니다: ${p.sections.join(' → ')}`);
+  }
+
+  // kind 를 안 넘기면 막히지 않는다는 것도 확인한다 — 그래야 이 가드가
+  // 실제로 일하고 있다는 뜻이다.
+  const unguarded = pickShorts(taleScenes, { count: 3 });
+  assert.ok(
+    unguarded.some((p) => p.sections.includes('TURN') || p.sections.includes('CLOSE')),
+    'kind 없이도 결말이 안 나온다면 이 테스트가 가드를 재고 있지 않습니다'
+  );
+});
+
+test('동화 쇼츠가 본편에서 끊긴 구간을 이어 붙이지 않는다', async () => {
+  // 결말 문단을 빼고 나면 남은 문단들이 본편에서는 떨어져 있을 수 있다.
+  // 그걸 그냥 이어 붙이면 영상이 건너뛴 것처럼 보인다.
+  const { splitIntoScenes: split } = await import('../src/scenes/split.mjs');
+  const { TALE_SECTIONS: TS } = await import('../src/script/write.mjs');
+  const md = TS.map((sec) => {
+    const lines = Array.from({ length: 4 }, (_, i) => `[STORY] ${sec.key}문단${i} ${'가'.repeat(40)}`);
+    return `## [${sec.key}] ${sec.label}\n\n${lines.join('\n\n')}\n`;
+  }).join('\n');
+  const { scenes: taleScenes } = split(md, { kind: 'TALE' });
+
+  for (const p of pickShorts(taleScenes, { count: 3, kind: 'TALE' })) {
+    // 구간 길이와 문단 길이 합이 같아야 끊긴 데가 없는 것이다.
+    const sum = p.paragraphs.reduce((a, x) => a + x.seconds, 0);
+    assert.ok(
+      Math.abs(sum - p.duration) < 0.1,
+      `쇼츠 ${p.rank}이 ${p.duration}초인데 문단 합은 ${sum.toFixed(2)}초입니다 — 중간이 끊겼습니다`
+    );
+  }
+});
+
+test('실화 쇼츠는 그대로 반전을 쓴다', () => {
+  // 미스터리는 반전을 보여줘도 "그래서 어떻게 된 건데"가 남는다.
+  // 동화 때문에 실화 쪽을 같이 막으면 안 된다.
+  const picks = pickShorts(videoScenes(), { count: 3 });
+  assert.ok(picks.length, '실화 쇼츠가 안 나옵니다');
+  assert.equal(spoilerSectionsFor('EVENT').length, 0, '실화에 결말 금지가 걸렸습니다');
+  assert.equal(spoilerSectionsFor('LEGEND').length, 0);
+  assert.deepEqual(spoilerSectionsFor('TALE'), ['TURN', 'CLOSE']);
 });
 
 test('동화는 배경음악을 끄고 만든다', () => {
