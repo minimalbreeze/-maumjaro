@@ -1161,7 +1161,12 @@ async function cmdVideo(flags) {
 
   // ── 3단계: 쇼츠 후보
   log.section('📱 쇼츠 후보');
-  const shorts = pickShorts(scenes, { count: Number(flags.shorts ?? 3) });
+  // 동화는 뒤집힘·여운이 쇼츠에 들어가면 안 된다. kind 를 안 넘기면
+  // 결말이 통째로 든 쇼츠가 나온다 — 1화에서 실제로 그랬다.
+  const shorts = pickShorts(scenes, {
+    count: Number(flags.shorts ?? 3),
+    kind: loaded.research?.kind,
+  });
   for (const s of shorts) {
     log.raw(`  ${s.rank}순위  ${fmtTime(s.start)}~${fmtTime(s.end)}  ${s.duration}초  ${s.reason}`);
     log.raw(`      ${s.paragraphs[0].text.slice(0, 50)}…`);

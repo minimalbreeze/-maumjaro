@@ -11,6 +11,7 @@
 // 그래서 문단 경계에서만 자른다.
 
 import { secondsForChars, countNarrationChars } from '../narration.mjs';
+import { KIND } from '../model.mjs';
 
 /**
  * 쇼츠 길이.
@@ -35,6 +36,18 @@ export const SHORTS_MAX_SECONDS = 90;
  */
 const SECTION_VALUE = {
   HOOK: 100,
+  // ── 창작 동화(KIND.TALE)의 섹션
+  //
+  // TURN·CLOSE 는 **점수를 매기지 않는다.** 아래 SPOILER_SECTIONS 가
+  // 아예 후보에서 빼기 때문이다. 점수를 주면 "쓸 수도 있다"는 뜻이 되어
+  // 다음 사람이 헷갈린다.
+  //
+  // NOTICE 가 FOLLOW 보다 높다. 이상한 것을 **처음 알아채는 순간**이
+  // 쇼츠 한 편으로 완결되기 때문이다. FOLLOW 는 쫓아가는 중간이라
+  // 그 자체로는 끝맺음이 없다.
+  NOTICE: 85,
+  FOLLOW: 70,
+  SETUP: 50,
   // 전설 추적 편의 ORIGIN("이 이야기는 어디서 왔나")은 그 편의 반전이다.
   // 쇼츠로 잘라도 그 자체로 완결된다 — "다들 믿던 그 이야기, 출처가 여기다".
   ORIGIN: 95,
@@ -49,6 +62,31 @@ const SECTION_VALUE = {
 };
 
 /**
+ * 쇼츠에 넣으면 안 되는 섹션.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 1화에서 실제로 난 일
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 1화(174초)의 쇼츠 2번이 94~169초로 잘렸다. 뒤집힘과 여운이 **통째로**
+ * 들어갔다 — 그림자가 식탁에 앉는 장면도, 엄마가 창문을 안 보는 것도,
+ * 발밑이 비어 있다는 마지막 줄도. 그걸 보고 나면 본편을 볼 이유가 없다.
+ *
+ * 실화 편에서는 이 문제가 없었다. 미스터리는 반전을 보여줘도 "그래서
+ * 어떻게 된 건데"가 남기 때문이다. **동화는 뒤집히는 순간이 끝이다.**
+ *
+ * 쇼츠의 일은 본편으로 데려오는 것이지 본편을 대신하는 것이 아니다.
+ * 그래서 동화에서는 TURN·CLOSE 가 든 구간을 후보에서 아예 뺀다.
+ */
+export const SPOILER_SECTIONS = {
+  [KIND.TALE]: ['TURN', 'CLOSE'],
+};
+
+export function spoilerSectionsFor(kind) {
+  return SPOILER_SECTIONS[kind] || [];
+}
+
+/**
  * 본편에서 쇼츠 후보 구간을 고른다.
  *
  * 반환: [{ rank, start, end, duration, sections, reason, paragraphs }]
@@ -59,7 +97,9 @@ const SECTION_VALUE = {
  *  2) 구간마다 점수를 낸다 (섹션 가치 + 길이 적합도)
  *  3) 점수 높은 순으로 고르되, 이미 고른 구간과 많이 겹치면 건너뛴다
  */
-export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS } = {}) {
+export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null } = {}) {
+  const spoilers = spoilerSectionsFor(kind);
+  const isSpoiler = (section) => spoilers.includes(section);
   // 문단을 평평하게 펴고 각자의 시작·끝 시각을 계산한다.
   const paragraphs = [];
   let cursor = 0;
@@ -80,21 +120,29 @@ export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS,
   }
   if (!paragraphs.length) return [];
 
+  // 결말이 든 문단은 후보 재료에서 뺀다. 점수를 낮추는 것으로는 부족하다 —
+  // 낮은 점수도 후보가 셋뿐이면 뽑히기 때문이다.
+  const usable = spoilers.length ? paragraphs.filter((p) => !isSpoiler(p.section)) : paragraphs;
+  if (!usable.length) return [];
+
   // 모든 연속 구간 중 길이 조건을 만족하는 것을 모은다.
   const candidates = [];
-  for (let i = 0; i < paragraphs.length; i++) {
+  for (let i = 0; i < usable.length; i++) {
     let seconds = 0;
-    for (let j = i; j < paragraphs.length; j++) {
-      seconds += paragraphs[j].seconds;
+    for (let j = i; j < usable.length; j++) {
+      // 결말 문단을 뺐으므로 usable 안에서 이웃이어도 본편에서는 떨어져
+      // 있을 수 있다. 그런 구간을 이어 붙이면 영상이 건너뛴 것처럼 보인다.
+      if (j > i && usable[j].start > usable[j - 1].end + 0.01) break;
+      seconds += usable[j].seconds;
       if (seconds > maxSeconds) break;
       if (seconds < minSeconds) continue;
 
-      const slice = paragraphs.slice(i, j + 1);
+      const slice = usable.slice(i, j + 1);
       candidates.push({
         from: i,
         to: j,
-        start: round2(paragraphs[i].start),
-        end: round2(paragraphs[j].end),
+        start: round2(usable[i].start),
+        end: round2(usable[j].end),
         duration: round2(seconds),
         paragraphs: slice,
         score: scoreSlice(slice, seconds, { minSeconds, maxSeconds }),
@@ -103,17 +151,21 @@ export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS,
   }
 
   if (!candidates.length) {
-    // 대본이 짧아 30초짜리 구간이 안 나오는 경우. 전체를 하나로 돌려준다.
-    const seconds = round2(cursor);
+    // 대본이 짧아 구간이 안 나오는 경우. 쓸 수 있는 데까지를 하나로 돌려준다.
+    // **여기서도 결말은 넣지 않는다.** 짧다는 이유로 결말을 흘리면
+    // 위에서 막은 것이 무의미해진다.
+    const first = usable[0];
+    const last = usable[usable.length - 1];
+    const seconds = round2(last.end - first.start);
     return [
       {
         rank: 1,
-        start: 0,
-        end: seconds,
+        start: round2(first.start),
+        end: round2(last.end),
         duration: seconds,
-        sections: [...new Set(paragraphs.map((p) => p.section))],
-        reason: `대본이 ${seconds}초뿐이라 ${minSeconds}초 구간을 만들 수 없었습니다. 전체를 썼습니다.`,
-        paragraphs,
+        sections: [...new Set(usable.map((p) => p.section))],
+        reason: `쓸 수 있는 구간이 ${seconds}초뿐이라 ${minSeconds}초 구간을 만들 수 없었습니다. 그대로 썼습니다.`,
+        paragraphs: usable,
       },
     ];
   }
