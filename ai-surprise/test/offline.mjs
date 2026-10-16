@@ -3592,6 +3592,60 @@ test('동화 대본도 장면으로 쪼개진다', () => {
   assert.deepEqual([...tags], ['STORY'], `태그가 잘못 읽혔습니다: ${[...tags].join(', ')}`);
 });
 
+
+// ─────────────────────────────────────────────────────────────
+// 영상 계획 단계를 실제로 돌려 본다
+// ─────────────────────────────────────────────────────────────
+//
+// 실행 #20 이 여기서 죽었다. 쇼츠에 kind 를 넘기려고 한 줄을 넣었는데
+// 그 함수에 없는 변수 이름(loaded)을 썼다. 바로 두 줄 아래에 맞는 이름
+// (research)이 있었는데도.
+//
+//   ❌ content/001 영상 만들기 실패: loaded is not defined
+//
+// 문법 오류가 아니라 **실행해야만 나는 오류**라서 node --check 도,
+// 다른 어떤 테스트도 못 잡았다. 그림 26장과 음성을 다 산 뒤에 터졌다.
+//
+// 그래서 CLI 를 진짜로 한 번 돌린다. --dry-run 이면 ffmpeg 도 AI 도
+// 쓰지 않으므로 공짜고 빠르다. 그러면서 편집 계획·자막·쇼츠·체크리스트
+// 경로를 전부 지나간다 — 거기 있는 ReferenceError 는 다 걸린다.
+await asyncTest('영상 계획 단계가 실제로 끝까지 돈다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const id = '950';
+  const dir = store.contentPath(id);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const item = makeTale({ title: '테스트 동화', premise: '한 줄', strange: '이상한 것' });
+  fs.writeFileSync(path.join(dir, 'research.json'), JSON.stringify(item, null, 2), 'utf8');
+
+  const md = TALE_SECTIONS.map((sec) => {
+    const lines = Array.from({ length: 4 }, (_, i) => `[STORY] ${sec.key}문단${i} ${'가'.repeat(40)}`);
+    return `## [${sec.key}] ${sec.label}\n\n${lines.join('\n\n')}\n`;
+  }).join('\n');
+  fs.writeFileSync(path.join(dir, 'script.md'), md, 'utf8');
+
+  const { scenes: s950, stats, problems } = splitScenes(md, { kind: 'TALE' });
+  assert.deepEqual(problems, []);
+  store.saveScenes(id, { scenes: s950, stats, problems });
+
+  let out = '';
+  try {
+    out = execFileSync('node', ['src/main.mjs', 'video', `--id=${id}`, '--dry-run'], {
+      env: { ...process.env, AI_SURPRISE_DATA_DIR: TMP },
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    const text = `${err.stdout || ''}${err.stderr || ''}`;
+    assert.fail(`video --dry-run 이 실패했습니다:\n${text.split('\n').slice(-12).join('\n')}`);
+  }
+
+  // 돌다가 조용히 건너뛴 게 아니라 정말 지나갔는지 본다.
+  assert.ok(/편집 계획/.test(out), `편집 계획 단계가 안 보입니다:\n${out.slice(-400)}`);
+  assert.ok(/쇼츠 후보/.test(out), `쇼츠 단계가 안 보입니다:\n${out.slice(-400)}`);
+  assert.ok(!/is not defined/.test(out), out.slice(-400));
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

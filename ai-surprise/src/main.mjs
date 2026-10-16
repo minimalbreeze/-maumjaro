@@ -1165,7 +1165,7 @@ async function cmdVideo(flags) {
   // 결말이 통째로 든 쇼츠가 나온다 — 1화에서 실제로 그랬다.
   const shorts = pickShorts(scenes, {
     count: Number(flags.shorts ?? 3),
-    kind: loaded.research?.kind,
+    kind: research.kind,
   });
   for (const s of shorts) {
     log.raw(`  ${s.rank}순위  ${fmtTime(s.start)}~${fmtTime(s.end)}  ${s.duration}초  ${s.reason}`);
