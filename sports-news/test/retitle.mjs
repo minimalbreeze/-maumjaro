@@ -120,6 +120,31 @@ check('바뀔 게 없으면 저장하지 않는다', () => {
   assert.equal(변화없음.backup, null);
 });
 
+// ── 따옴표로 시작하는 값 (2026-10-16) ─────────────────────
+//
+// arg() 가 앞뒤 따옴표를 무조건 벗기고 있었다. 메타 설명을
+//   "남서울 CC 파3 이용료"와 "남서울 CC 파3 예약방법"을 …
+// 로 쓰면 **맨 앞 따옴표가 사라져 짝이 깨진다.** 미리보기에서 잡았다.
+// 셸이 문법 따옴표를 이미 먹고 넘기므로 남은 따옴표는 내용이다.
+check('따옴표로 시작하는 값을 그대로 넘긴다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/retitle.mjs'), 'utf8');
+  // 주석에 옛 코드를 인용해 두었으므로 **함수 본문만** 본다.
+  const 본문 = src.slice(src.indexOf('function arg(name)'));
+  const 끝 = 본문.indexOf('\n}');
+  assert.ok(끝 > 0, 'arg() 본문을 찾지 못했습니다');
+  assert.ok(!/\.replace\(/.test(본문.slice(0, 끝)),
+    'arg() 가 받은 값을 다시 손대고 있습니다');
+});
+
+const 따옴표설명 = '"남서울 CC 파3 이용료"와 "남서울 CC 파3 예약방법"을 정리했습니다.';
+const 따옴표결과 = await retitlePost(1234, { description: 따옴표설명 });
+check('따옴표가 든 메타 설명이 글자 그대로 저장된다', () => {
+  const 마지막 = wp.state.updated.filter((u) => u.id === 1234).pop();
+  assert.equal(마지막.meta.rank_math_description, 따옴표설명, '따옴표가 바뀌었습니다');
+  assert.equal(마지막.slug, undefined, '슬러그를 보냈습니다');
+  assert.ok(따옴표결과.changed);
+});
+
 // 뒷정리
 fs.rmSync(path.join(ROOT, 'out', 'backup'), { recursive: true, force: true });
 wp.server.close();
