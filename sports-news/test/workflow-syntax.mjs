@@ -172,4 +172,19 @@ if (fs.existsSync(sports)) {
     const code = fs.readFileSync(src, 'utf8');
     assert.ok(/process\.argv\[3\]/.test(code), 'retitle.mjs 의 인자 위치가 바뀌었습니다');
   });
+
+// ── 테스트가 npm test 에서 실제로 돌고 있나 (2026-10-17) ────────
+//
+// move-coupang 과 show-post 의 검사를 만들어 놓고 package.json 의 test
+// 목록에 넣지 않아, **한 번도 돌지 않은 채로** 있었다. 541편을 건드린
+// 도구의 검사였다. 파일만 만들고 끝내지 않게 여기서 막는다.
+check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
+  const dir = HERE;
+  const 도우미 = new Set(['mock-anthropic.mjs', 'mock-wordpress.mjs']);
+  const 파일 = fs.readdirSync(dir).filter((f) => f.endsWith('.mjs') && !도우미.has(f));
+  const cmd = JSON.parse(fs.readFileSync(path.resolve(HERE, '../package.json'), 'utf8')).scripts.test;
+  const 빠진것 = 파일.filter((f) => !cmd.includes(`test/${f}`));
+  assert.deepEqual(빠진것, [], `npm test 에서 빠진 검사: ${빠진것.join(', ')}`);
+});
+
 }
