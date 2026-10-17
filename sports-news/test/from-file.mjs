@@ -194,4 +194,39 @@ check('페이드캠 글이 실제로 배너를 받는다', async () => {
   assert.ok(!/target=/.test(html), '새 창으로 엽니다 (리포 규칙 위반)');
 });
 
+// ── 블로그초안/ 파일들이 실제로 이 양식인지 (2026-10-17) ────────
+//
+// 13번 초안을 **다른 양식**으로 써서 올렸다가 제목이 글자 그대로 "제목"이
+// 되고 카테고리가 Uncategorized 로 떨어졌다. 파서는 첫 `# ` 줄을 제목으로
+// 읽고 `**카테고리**:` 꼴의 굵은 라벨만 본다. 양식이 다르면 조용히
+// 엉뚱한 값으로 올라간다 — 에러가 안 난다. 그래서 파일 쪽에서 막는다.
+//
+// 그리고 파서는 `## ✍️ 본문` **이후 전부**를 워드프레스로 넘긴다. 내부
+// 메모('안 쓴 것')를 본문 아래에 두면 그대로 글에 실린다. 12번이 그렇게
+// 올라갔다(메모 320자). 메모는 `## ✍️ 본문` 위에 둔다.
+const 초안디렉터리 = path.join(ROOT, '..', '블로그초안');
+if (fs.existsSync(초안디렉터리)) {
+  for (const name of fs.readdirSync(초안디렉터리).filter((f) => f.endsWith('.md')).sort()) {
+    const 글 = fs.readFileSync(path.join(초안디렉터리, name), 'utf8');
+    // 01~04 처럼 네이버 블로그에 손으로 붙여넣는 글은 이 업로더용이 아니다.
+    // '워드프레스에 넣을 값' 을 적어 둔 파일만, 즉 **스스로 업로더용이라고
+    // 밝힌 파일만** 본다.
+    if (!글.includes('## 📋 워드프레스에 넣을 값')) continue;
+    const p = parseDraftFile(글);
+    check(`초안 ${name} 이 양식에 맞는다`, () => {
+      assert.ok(p.title && p.title !== '제목', `제목을 못 읽었습니다: ${JSON.stringify(p.title)}`);
+      assert.ok(p.category, '카테고리가 비어 있습니다 (**카테고리**: 꼴로 적어야 합니다)');
+      assert.ok(p.tags.length > 0, '태그가 비어 있습니다');
+      assert.ok(p.focusKeyword, '대표 키워드가 비어 있습니다');
+      assert.ok(p.metaDescription, '메타 설명이 비어 있습니다');
+      assert.ok(글.includes('## ✍️ 본문'), '`## ✍️ 본문` 표시가 없습니다');
+    });
+    check(`초안 ${name} 본문에 내부 메모가 안 섞인다`, () => {
+      assert.ok(!/안 쓴 것|쓰지 않은 것/.test(p.body),
+        '내부 메모가 본문에 들어갑니다 — `## ✍️ 본문` 위로 옮기세요');
+      assert.ok(!/처리 기록/.test(p.body), '처리 기록이 본문에 들어갑니다');
+    });
+  }
+}
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
