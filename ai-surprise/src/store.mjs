@@ -226,7 +226,39 @@ export function saveScript(id, markdown, check) {
  * 유튜브 창을 열어 두고 이 폴더만 보면 되도록 — 여러 파일을 뒤져가며
  * 올리면 고지 체크 같은 걸 빠뜨린다.
  */
-export function saveUploadPack(id, { titles = [], droppedTitles = [], thumbnails = [], droppedThumbs = [], description = '', tags = [], moments = [] } = {}) {
+/**
+ * 제목을 파일 이름에 쓸 수 있는 조각으로 바꾼다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 필요한가
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 실행마다 content 가 비어 있는 상태로 시작하므로 **모든 편이 001** 이다.
+ * 그래서 1화와 2화의 결과물을 나란히 풀어 놓으면 파일 이름이 똑같다.
+ *
+ *   ai-surprise-19/content/001/upload/thumb-2.jpg   ← 1화
+ *   ai-surprise-22/content/001/upload/thumb-2.jpg   ← 2화
+ *
+ * 실제로 두 번 헷갈렸다. 한 번은 1화의 short-2(결말이 든 것)를 올리려다
+ * 멈췄고, 한 번은 2화 영상에 1화 썸네일을 붙였다. 영상에 없는 장면을
+ * 썸네일로 쓰면 유튜브가 영상을 내린다.
+ *
+ * 사람이 조심해서 될 일이 아니다. 이름이 같으면 언젠가 또 틀린다.
+ */
+export function fileSlug(title, { max = 18 } = {}) {
+  const cleaned = String(title || '')
+    // 파일 이름에 쓸 수 없는 글자와 공백을 없앤다.
+    .replace(/[\\/:*?"<>|]/g, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+  const cut = cleaned.slice(0, max);
+  // 제목이 비었거나 전부 걸러졌을 때. 이름 없는 파일을 만들지 않는다.
+  return cut || '편';
+}
+
+export function saveUploadPack(id, { titles = [], droppedTitles = [], thumbnails = [], droppedThumbs = [], description = '', tags = [], moments = [], thumbFiles = [] } = {}) {
   const dir = contentPath(id, 'upload');
   ensureDir(dir);
 
@@ -254,14 +286,17 @@ export function saveUploadPack(id, { titles = [], droppedTitles = [], thumbnails
   }
 
   md.push('', '## 썸네일', '');
-  md.push('`upload/` 안의 `thumb-1.jpg` ~ `thumb-3.jpg` 중에서 고르세요.');
+  md.push('`upload/` 안에서 아래 파일 중 하나를 고르세요.');
   md.push('');
-  md.push('세 장 모두 **완성된 영상에서 떼어낸 장면**입니다. 그래서');
+  md.push('모두 **완성된 영상에서 떼어낸 장면**입니다. 그래서');
   md.push('"썸네일이 영상에 없는 장면"이라는 문제가 생기지 않습니다.');
   md.push('');
   thumbnails.forEach((t, i) => {
     const at = moments[i]?.at;
-    md.push(`- thumb-${i + 1}.jpg — "${t.line1} / ${t.line2}"${at != null ? ` (영상 ${Math.floor(at / 60)}분 ${Math.round(at % 60)}초 지점)` : ''}`);
+    // 파일 이름을 그대로 적는다. 편마다 이름이 달라서, 다른 편 폴더의
+    // 파일을 집었는지 여기서 바로 알 수 있다.
+    const name = thumbFiles[i] || `thumb-${i + 1}.jpg`;
+    md.push(`- ${name} — "${t.line1} / ${t.line2}"${at != null ? ` (영상 ${Math.floor(at / 60)}분 ${Math.round(at % 60)}초 지점)` : ''}`);
   });
   if (droppedThumbs.length) {
     md.push('', '### 거른 썸네일 문구', '');

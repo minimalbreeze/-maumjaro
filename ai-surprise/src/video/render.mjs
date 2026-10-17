@@ -188,17 +188,22 @@ export async function renderShort(short, {
   audioPath = null,
   index = 1,
   fps = 30,
+  // 편 이름. 붙여 두면 여러 편의 결과물을 나란히 풀어도 섞이지 않는다.
+  // 비우면 예전처럼 short-1.mp4 가 된다.
+  prefix = '',
 }) {
   await requireFfmpeg();
   fs.mkdirSync(workDir, { recursive: true });
 
+  const stem = prefix ? `${prefix}-쇼츠-${index}` : `short-${index}`;
+
   let subtitleName = null;
   if (subtitle) {
-    subtitleName = `short-${index}.ass`;
+    subtitleName = `${stem}.ass`;
     fs.writeFileSync(path.join(workDir, subtitleName), subtitle, 'utf8');
   }
 
-  const outputName = `short-${index}.mp4`;
+  const outputName = `${stem}.mp4`;
   await runFfmpeg(
     shortsArgs({
       videoPath: path.relative(workDir, sourceVideo),
