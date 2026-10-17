@@ -3120,6 +3120,14 @@ test('전설 편에는 단정하지 말라고 따로 알려준다', () => {
   assert.ok(!event.includes('"실화"라고 단정'));
 });
 
+test('동화는 "사건 편"이라고 적지 않는다', () => {
+  // 3화(숨바꼭질)에서 설명문에 "마지막 장 | 사건 편"이 나왔다.
+  // 지어낸 이야기를 사건이라고 적으면 보는 사람이 실화로 읽는다.
+  const tale = buildUploadPrompt({ title: 'x', kind: 'TALE' }, {});
+  assert.ok(tale.includes('창작 동화 편'), '동화 종류 표기가 없습니다');
+  assert.ok(!tale.includes('사건 편'), '동화를 사건 편이라고 적었습니다');
+});
+
 test('썸네일 지점을 서로 떨어뜨려 고른다', () => {
   const scenes = [
     { duration: 40, mood: 'calm', section: 'HOOK' },

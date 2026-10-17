@@ -199,6 +199,13 @@ export function finishDescription(body, { track = null, sources = [], kind = nul
   return out.join('\n');
 }
 
+// 설명문에 들어가는 "종류" 한 줄. 동화는 실화가 아니므로 '사건 편'이라고 쓰면 안 된다.
+const KIND_LABELS = {
+  [KIND.EVENT]: '사건 편',
+  [KIND.LEGEND]: '전설·괴담 추적 편',
+  [KIND.TALE]: '창작 동화 편',
+};
+
 export function buildUploadPrompt(item, { scriptMarkdown = '', minutes = 0 } = {}) {
   const lines = [];
   lines.push('완성된 영상에 붙일 제목·썸네일 문구·설명문·태그를 만들어 주세요.');
@@ -206,7 +213,7 @@ export function buildUploadPrompt(item, { scriptMarkdown = '', minutes = 0 } = {
   lines.push('━━━ 이 영상 ━━━');
   lines.push(`제목(작업용): ${item?.title || '(없음)'}`);
   if (minutes) lines.push(`길이: 약 ${minutes}분`);
-  if (item?.kind) lines.push(`종류: ${item.kind === 'LEGEND' ? '전설·괴담 추적 편' : '사건 편'}`);
+  if (item?.kind) lines.push(`종류: ${KIND_LABELS[item.kind] || KIND_LABELS[KIND.EVENT]}`);
   if (item?.what_is_strange) lines.push(`이상한 점: ${item.what_is_strange}`);
   lines.push('');
   if (scriptMarkdown) {
