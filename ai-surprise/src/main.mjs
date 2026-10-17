@@ -62,6 +62,7 @@ import {
   INBOX_DIR,
   contentPath,
   saveUploadPack,
+  fileSlug,
 } from './store.mjs';
 
 function parseArgs(argv) {
@@ -654,6 +655,7 @@ async function cmdUpload(flags) {
   // 실제로 만들어진 썸네일만 기록한다. 안내 문서가 없는 파일을 가리키면
   // 효성님이 폴더를 열어 보고 나서야 없다는 걸 알게 된다.
   let madeThumbs = [];
+  const thumbFiles = [];
   if (!hasVideo) {
     log.warn(`${videoPath} 가 없어 썸네일을 만들지 않습니다. 영상을 먼저 만들어 주세요.`);
   } else if (!pack.thumbnails.length) {
@@ -673,6 +675,7 @@ async function cmdUpload(flags) {
     }
     const dir = contentPath(id, 'upload');
     fs.mkdirSync(dir, { recursive: true });
+    const slug = fileSlug(loaded.research?.title);
     for (const [i, copy] of copies.entries()) {
       const at = moments[i].at;
       // 글자는 파일로 넘긴다 — 한글과 따옴표를 명령줄에 직접 넣으면 깨진다.
@@ -691,10 +694,11 @@ async function cmdUpload(flags) {
             line2: copy.line2 || null,
             line1File: f1,
             line2File: f2,
-            outputPath: path.join(dir, `thumb-${i + 1}.jpg`),
+            outputPath: path.join(dir, `${slug}-썸네일-${i + 1}.jpg`),
           })
         );
-        log.ok(`thumb-${i + 1}.jpg — "${copy.line1} / ${copy.line2}" (${at}초 지점)`);
+        thumbFiles.push(`${slug}-썸네일-${i + 1}.jpg`);
+        log.ok(`${slug}-썸네일-${i + 1}.jpg — "${copy.line1} / ${copy.line2}" (${at}초 지점)`);
       } catch (err) {
         log.fail(`thumb-${i + 1}.jpg 실패`, err);
       }
@@ -707,6 +711,7 @@ async function cmdUpload(flags) {
     titles: pack.titles,
     droppedTitles: pack.droppedTitles,
     thumbnails: madeThumbs,
+    thumbFiles,
     droppedThumbs: pack.droppedThumbs,
     description,
     tags: pack.tags,
@@ -1263,6 +1268,7 @@ async function cmdVideo(flags) {
         subtitle: shortAss,
         index: s.rank,
         fps: timeline.fps,
+        prefix: fileSlug(research.title),
       });
       const si = await probe(out);
       log.ok(`쇼츠 ${s.rank}: ${si.width}x${si.height}, ${si.duration.toFixed(1)}초 — ${out}`);

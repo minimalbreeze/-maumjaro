@@ -3347,6 +3347,44 @@ test('실화 쇼츠는 그대로 반전을 쓴다', () => {
   assert.deepEqual(spoilerSectionsFor('TALE'), ['TURN', 'CLOSE']);
 });
 
+test('결과물 파일 이름에 편 제목이 들어간다', () => {
+  // 실행마다 content 가 비어 있게 시작하므로 모든 편이 001 이다. 그래서
+  // 1화와 2화를 나란히 풀면 thumb-2.jpg 가 둘 다 있다. 실제로 두 번
+  // 헷갈렸다 — 결말이 든 쇼츠를 올릴 뻔했고, 2화 영상에 1화 썸네일을 붙였다.
+  assert.equal(store.fileSlug('이름을 파는 가게'), '이름을파는가게');
+  assert.equal(store.fileSlug('그림자가 먼저 집에 가는 아이'), '그림자가먼저집에가는아이');
+
+  // 파일 이름에 못 쓰는 글자는 빠진다.
+  assert.ok(!/[\\/:*?"<>|]/.test(store.fileSlug('가/나:다*라?마')));
+  // 제목이 비어도 이름 없는 파일을 만들지 않는다.
+  assert.equal(store.fileSlug(''), '편');
+  assert.equal(store.fileSlug('   '), '편');
+  // 너무 길면 자른다.
+  assert.ok(store.fileSlug('가'.repeat(100)).length <= 18);
+
+  // 편이 다르면 이름도 달라야 한다 — 이게 이 기능의 전부다.
+  assert.notEqual(
+    store.fileSlug('그림자가 먼저 집에 가는 아이'),
+    store.fileSlug('이름을 파는 가게')
+  );
+});
+
+test('올릴 거리 문서가 실제 파일 이름을 적는다', () => {
+  // 문서가 thumb-1.jpg 라고 적는데 폴더에는 다른 이름이 있으면,
+  // 효성님이 폴더를 열어 보고 나서야 어긋난 걸 알게 된다.
+  const dir = store.saveUploadPack('902', {
+    titles: [{ text: '이름을 파는 가게', why: '' }],
+    thumbnails: [{ line1: '값은', line2: '이름입니다' }],
+    thumbFiles: ['이름을파는가게-썸네일-1.jpg'],
+    description: '본문',
+    tags: ['창작동화'],
+    moments: [{ at: 16.8 }],
+  });
+  const md = fs.readFileSync(path.join(dir, '올릴때-쓸것.md'), 'utf8');
+  assert.ok(md.includes('이름을파는가게-썸네일-1.jpg'), `실제 파일 이름이 안 적혔습니다:\n${md}`);
+  assert.ok(!md.includes('thumb-1.jpg ~ thumb-3.jpg'), '예전 고정 문구가 남아 있습니다');
+});
+
 test('동화는 배경음악을 끄고 만든다', () => {
   // bgm/ 의 여섯 곡은 전부 미스터리·스릴러용이다. 조용한 동화에 깔면
   // 그 자리에서 어긋난다. 안 맞는 음악은 없는 음악보다 나쁘다.
