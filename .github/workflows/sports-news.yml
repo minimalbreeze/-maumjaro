@@ -761,9 +761,10 @@ jobs:
           fi
           apply=''
           case "$IN_MODE" in *실제\ 적용*) apply='--apply' ;; esac
-          node src/wordpress/add-notice.mjs $IN_IDS $apply \ 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          node src/wordpress/add-notice.mjs $IN_IDS $apply \
+            ${IN_TEXT:+--text="$IN_TEXT"} ${IN_URL:+--url="$IN_URL"} ${IN_TO:+--to="$IN_TO"} \
+            2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
-            ${IN_TEXT:+--text="$IN_TEXT"} ${IN_URL:+--url="$IN_URL"} ${IN_TO:+--to="$IN_TO"}
 
       - name: 파일로 올리기
         # 이미 만들어 둔 .md 를 워드프레스 **임시글**로 저장한다.
