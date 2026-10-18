@@ -235,7 +235,8 @@ jobs:
             echo "::error::주제를 적어주세요 (subject). 예: 남서울CC 파3 이용료"
             exit 1
           fi
-          node src/main.mjs --official --subject="$SUBJ"
+          node src/main.mjs --official --subject="$SUBJ" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 오늘의 글감 후보 보기
         # 뉴스를 모아 점수만 매겨 보여주고 멈춘다. AI를 한 번도 부르지 않으므로
@@ -303,7 +304,8 @@ jobs:
               *) ids+=("$id") ;;
             esac
           done
-          node src/wordpress/fix-seo.mjs "${ids[@]}"
+          node src/wordpress/fix-seo.mjs "${ids[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 이미 올린 글 링크 현재창으로
         # 본문의 target="_blank"만 걷어낸다. 글의 상태(발행/임시글)는 건드리지 않는다.
@@ -347,7 +349,8 @@ jobs:
               *) ids+=("$id") ;;
             esac
           done
-          node src/wordpress/fix-links.mjs "${ids[@]}"
+          node src/wordpress/fix-links.mjs "${ids[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 글에서 소제목 섹션 빼기
         # 소제목 하나와 그 아래 내용을 통째로 뺀다. 본문만 보내고,
@@ -371,7 +374,8 @@ jobs:
           # 소제목은 new_title 칸으로 받는다. 비우면 '안 쓴 것' 이다.
           args=""
           if [ -n "$IN_HEADING" ]; then args="--heading=$IN_HEADING"; fi
-          node src/wordpress/drop-section.mjs $IN_POST_IDS $apply ${args:+"$args"}
+          node src/wordpress/drop-section.mjs $IN_POST_IDS $apply ${args:+"$args"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 글에 섹션 끼워넣기 · 섹션 내용 갈아끼우기
         # 이미 색인된 글 하나를 계속 갱신하기 위한 단계다. 대회가 진행되는
@@ -424,7 +428,8 @@ jobs:
               ;;
             *) args+=( "--heading=$IN_ANCHOR" ) ;;
           esac
-          node src/wordpress/update-section.mjs "${args[@]}"
+          node src/wordpress/update-section.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 글 찾기
         # 검색어로 글을 찾아 제목·슬러그·현재 SEO 값을 보여준다. 아무것도 바꾸지 않는다.
@@ -441,7 +446,8 @@ jobs:
             echo "::error::찾을 말을 적어주세요 (예: 파3 예약)"
             exit 1
           fi
-          node src/wordpress/retitle.mjs find "$IN_FIND_QUERY"
+          node src/wordpress/retitle.mjs find "$IN_FIND_QUERY" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 메타 설명 채우기
         # 메타 설명이 비어 있는 글만 본문에서 뽑아 채운다.
@@ -555,7 +561,8 @@ jobs:
             *상태\ 보기*) how='--show --html' ;;
             *미리보기*) how='--dry-run' ;;
           esac
-          node src/wordpress/add-watch.mjs $IN_IDS $how
+          node src/wordpress/add-watch.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 앱·공식 홈페이지 배너 넣기
         # 이미 올린 글에 앱 다운로드·구단 공식 홈페이지 배너를 넣는다.
@@ -581,7 +588,8 @@ jobs:
           case "$IN_MODE" in
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/add-banner.mjs $IN_IDS $how
+          node src/wordpress/add-banner.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 광고가 페이지에 나가는지 보기
         # ads.txt 와 발행된 페이지를 받아 광고 흔적을 센다. **읽기만 한다** —
@@ -618,7 +626,8 @@ jobs:
           # 손보려면 25묶음만 봐서는 못 하기 때문이다.
           all=''
           case "$IN_MODE" in *겹치는\ 글\ 전부*) all='--겹침만' ;; esac
-          node src/wordpress/index-audit.mjs $all
+          node src/wordpress/index-audit.mjs $all 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 수명 끝난 글 색인에서 빼기
         # 끝난 대회의 중계 안내처럼 수명이 끝난 글을 색인 대상에서 뺀다.
@@ -639,7 +648,8 @@ jobs:
           case "$IN_MODE" in
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/noindex.mjs $how
+          node src/wordpress/noindex.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 오타 고치기
         # 제목·본문의 오타를 고친다. **표에 적힌 것만** 고친다 — 한국어
@@ -666,7 +676,8 @@ jobs:
             *후보\ 찾기*) how='--찾기' ;;
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/typo-fix.mjs $how
+          node src/wordpress/typo-fix.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 쿠팡 광고를 첫 문단 뒤로
         # 본문 맨 앞에 박힌 쿠팡 블록을 첫 문단 뒤로 내린다.
@@ -719,7 +730,8 @@ jobs:
           # 정확히 잡아야 할 때 쓴다.
           raw=''
           case "$IN_MODE" in *raw*) raw='--raw' ;; esac
-          node src/wordpress/show-post.mjs $IN_IDS $raw ${IN_FIND:+--찾기="$IN_FIND"}
+          node src/wordpress/show-post.mjs $IN_IDS $raw ${IN_FIND:+--찾기="$IN_FIND"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 올해 글 안내 넣기
         # 작년 글 맨 위에 "올해 글로 가는 한 줄"을 넣는다. 작년 글은 이미
@@ -749,7 +761,8 @@ jobs:
           fi
           apply=''
           case "$IN_MODE" in *실제\ 적용*) apply='--apply' ;; esac
-          node src/wordpress/add-notice.mjs $IN_IDS $apply \
+          node src/wordpress/add-notice.mjs $IN_IDS $apply \ 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
             ${IN_TEXT:+--text="$IN_TEXT"} ${IN_URL:+--url="$IN_URL"} ${IN_TO:+--to="$IN_TO"}
 
       - name: 파일로 올리기
@@ -781,7 +794,8 @@ jobs:
             echo "::error::파일을 찾을 수 없습니다: $IN_FILE_PATH"
             exit 1
           fi
-          node src/wordpress/from-file.mjs "$target"
+          node src/wordpress/from-file.mjs "$target" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 구글 색인에 다시 들여보내기
         # 걸어 둔 googlebot noindex 깃발을 내린다.
@@ -807,7 +821,8 @@ jobs:
           case "$IN_MODE" in
             *실제\ 적용*) how='--undo --apply' ;;
           esac
-          node src/wordpress/noindex.mjs $how
+          node src/wordpress/noindex.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 시설 글 제목 다시 맞추기
         # 시설 글의 제목과 대표 키워드를 검색되는 형태로 다시 맞춘다.
@@ -826,7 +841,8 @@ jobs:
           case "$IN_MODE" in
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/facility-retitle.mjs $how
+          node src/wordpress/facility-retitle.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 글끼리 링크 걸기
         # 본문 끝에 "같이 읽을 글" 블록을 붙인다. 기존 본문은 고치지 않는다.
@@ -852,7 +868,8 @@ jobs:
             *다시\ 맞추기*) how='--apply --다시' ;;
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/internal-links.mjs $how
+          node src/wordpress/internal-links.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
@@ -916,7 +933,8 @@ jobs:
             *)
               echo "미리보기입니다. 워드프레스에 저장하지 않습니다." ;;
           esac
-          node src/main.mjs "${args[@]}"
+          node src/main.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 결과물 올리기 (본문·SEO 값)
         if: always()
@@ -928,3 +946,25 @@ jobs:
             logs/
           if-no-files-found: ignore
           retention-days: 30
+
+
+      - name: 도구가 찍은 것 다시 보기 (로그 맨 끝)
+        # **왜 이 단계가 있나** (2026-10-19)
+        #
+        # 깃허브 잡 로그를 꼬리부터 읽는데, 바로 앞의 아티팩트 업로드 단계가
+        # 수십 줄을 쏟아내서 **정작 도구가 찍은 결과가 꼬리 밖으로 밀려났다.**
+        # 2026-10-18 하루에만 여섯 번 넘게 "run 은 성공했는데 몇 편이
+        # 바뀌었는지는 못 읽었다"로 끝났다.
+        #
+        # 그래서 각 도구의 출력을 $RUNNER_TEMP/sn.log 에 함께 남기고,
+        # **잡의 맨 마지막 단계**에서 그것을 다시 찍는다. 꼬리부터 읽으면
+        # 언제나 이 줄들이 먼저 걸린다.
+        if: always()
+        run: |
+          echo "════════ 도구 출력 요약 ════════"
+          if [ -f "$RUNNER_TEMP/sn.log" ]; then
+            tail -60 "$RUNNER_TEMP/sn.log"
+          else
+            echo "(도구가 아무것도 찍지 않았습니다)"
+          fi
+          echo "════════ 요약 끝 ════════"
