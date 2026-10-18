@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../utils/env.mjs';
-// 낱말 경계는 watch-banner 의 것과 같다 — 낱말횟수() 가 같은 정규식을 쓴다.
+import { 낱말로있나 } from './watch-banner.mjs';
 import { 배너카드 } from './banner-card.mjs';
 
 export const OFFICIAL_MARK = '🏟️ 공식 홈페이지';
@@ -68,13 +68,32 @@ export function 낱말횟수(text, word) {
 export function pickOfficial(text, cfg = loadOfficialLinks()) {
   const 글 = String(text || '');
   if (!글.trim()) return null;
+
   let 고른것 = null; let 최다 = 0;
   for (const site of cfg.sites) {
     const 이름들 = [site.이름, ...(site.match || [])].filter(Boolean);
     const 횟수 = 이름들.reduce((n, w) => n + 낱말횟수(글, w), 0);
     if (횟수 > 최다) { 최다 = 횟수; 고른것 = site; }
   }
-  return 고른것;
+
+  // 선수 이름으로 못 박은 투어가 있으면 그것을 **기본값**으로 쓴다.
+  //
+  // 투어 이름이 한 번도 안 나오는 글이 있다. 선수 프로필·통산 기록만 있는
+  // 글이 그렇다 — 횟수로만 고르면 그런 글에는 배너가 안 붙는다. 그런데
+  // 기록을 보러 갈 곳은 분명히 있다.
+  //
+  // 2026-10-18 운영자가 정한 것: "최혜진은 LPGA 로 진출. 국내 대회 안
+  // 나오면 LPGA 적용." 그래서 선수가 나오면 그 투어를 깔고, **다른 투어가
+  // 더 많이 나올 때만** 그쪽으로 넘긴다(최혜진이 KLPGA 대회에 나가는 글).
+  const 선수 = (cfg.선수 || []).find((p) => p?.이름 && 낱말로있나(글, p.이름));
+  if (!선수) return 고른것;
+  const 선수투어 = cfg.sites.find((s) => s.이름 === 선수.사이트);
+  if (!선수투어) return 고른것;
+  if (!고른것 || 고른것 === 선수투어) return 선수투어;
+
+  const 선수투어횟수 = [선수투어.이름, ...(선수투어.match || [])]
+    .filter(Boolean).reduce((n, w) => n + 낱말횟수(글, w), 0);
+  return 최다 > 선수투어횟수 ? 고른것 : 선수투어;
 }
 
 /** 배너 HTML. 주소가 없거나 모양이 이상하면 빈 글. */

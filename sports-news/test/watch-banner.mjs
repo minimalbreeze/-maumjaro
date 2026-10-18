@@ -28,7 +28,10 @@ check('설정에 있는 종목은 배너 링크를 찾는다', () => {
 });
 
 check('설정에 없는 종목은 배너를 넣지 않는다', () => {
-  assert.equal(pickWatchLinks('바둑'), null);
+  // 2026-10-18: 예전에는 '바둑'을 '설정에 없는 종목'의 예로 썼다. 운영자가
+  // 바둑TV 주소를 줘서 바둑이 설정에 들어왔으니 더는 예가 되지 않는다.
+  // 검사의 뜻(설정에 없으면 배너를 안 넣는다)은 그대로 두고 예시만 바꿨다.
+  assert.equal(pickWatchLinks('승마'), null);
   assert.equal(pickWatchLinks('존재하지않는종목'), null);
   assert.equal(watchBannerHtml(null), '');
 });

@@ -192,4 +192,33 @@ check('이름이 안 나오는 글에는 배너를 안 붙인다', () => {
   assert.equal(officialBannerFor('동네 파3 골프장 이용료'), '');
 });
 
+// ── 선수가 뛰는 투어를 못 박는다 (2026-10-18 운영자 지시) ──────
+check('투어 이름이 한 번도 안 나와도 선수 이름으로 고른다', () => {
+  // 선수 프로필·통산 기록만 있는 글에는 투어 이름이 안 나온다. 그래도
+  // 기록을 보러 갈 곳은 분명히 있다.
+  assert.equal(pickOfficial('최혜진 프로필과 통산 성적')?.url, 'https://www.lpga.com/');
+  assert.equal(pickOfficial('정찬민 나이와 데뷔')?.url, 'https://www.kpga.co.kr/');
+  assert.equal(pickOfficial('스롱 피아비 국적과 데뷔 과정')?.url, 'https://www.pbatour.org/ko/index');
+});
+
+check('국내 대회 글이면 선수 매핑을 넘어선다', () => {
+  // 운영자가 정한 것: "최혜진은 LPGA 로 진출. 국내 대회 안 나오면 LPGA 적용."
+  // 뒤집어 말하면 국내 대회에 나가는 글은 KLPGA 다.
+  const 국내 = '최혜진 KLPGA 챔피언십 출전. KLPGA 상금 순위와 KLPGA 기록.';
+  assert.equal(pickOfficial(국내)?.url, 'https://klpga.co.kr/web/main/index');
+  const 미국 = 'LPGA 투어 최혜진. KLPGA 출신인 최혜진은 LPGA 에서 LPGA 준우승을 했다.';
+  assert.equal(pickOfficial(미국)?.url, 'https://www.lpga.com/');
+});
+
+check('선수 목록의 사이트 이름이 실제로 설정에 있다', () => {
+  // 사이트 이름을 고치면서 선수 목록을 안 고치면 매핑이 조용히 죽는다.
+  const cfg = loadOfficialLinks();
+  const 있는이름 = new Set(cfg.sites.map((s) => s.이름));
+  for (const p of cfg.선수 || []) {
+    assert.ok(p.이름, '이름 없는 선수 항목이 있습니다');
+    assert.ok(있는이름.has(p.사이트), `${p.이름}: '${p.사이트}' 라는 사이트가 설정에 없습니다`);
+    assert.ok(p.비고, `${p.이름}: 왜 이 투어인지 적혀 있지 않습니다`);
+  }
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
