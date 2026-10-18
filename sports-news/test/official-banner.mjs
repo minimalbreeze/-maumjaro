@@ -114,7 +114,11 @@ check('관계없는 글에는 배너를 넣지 않는다', () => {
   const cfg = { sites: [KIA] };
   assert.equal(pickOfficial('신지애 통산 상금 1위', cfg), null);
   assert.equal(pickOfficial('', cfg), null);
-  assert.equal(officialBannerFor('윤이나 LPGA 2026시즌 성적'), '');
+  // 2026-10-18: 예전에는 '윤이나 LPGA 2026시즌 성적'을 썼다. LPGA 가 설정에
+  // 없던 때라 배너가 안 붙는 게 맞았는데, 이제 LPGA 공식 홈페이지가 들어왔으니
+  // 그 글에는 **붙는 게 맞다.** 검사의 뜻(설정에 없는 대상이면 안 붙는다)은
+  // 그대로 두고 예시만 설정에 없는 것으로 바꿨다.
+  assert.equal(officialBannerFor('윤이나 2026시즌 드라이버 비거리'), '');
 });
 
 // ── 설정 파일 ──────────────────────────────────────────────
@@ -143,6 +147,49 @@ check('main 이 앱 배너가 없을 때만 공식 배너를 쓴다', () => {
   assert.match(src, /pickOfficial\(/, '공식 배너를 찾지 않습니다');
   assert.match(src, /app \? null : pickOfficial/, '앱 배너가 있어도 공식 배너를 또 찾습니다');
   assert.match(src, /officialBannerHtml\(official\)/, '공식 배너를 만들지 않습니다');
+});
+
+// ── 골프 투어 아홉 곳 (2026-10-18 운영자가 주소를 줬다) ──────────
+check('골프 투어 아홉 곳이 각자 제 주소로 나간다', () => {
+  const 짝 = [
+    ['정찬민 KPGA 코리안투어 통산 3승', 'https://www.kpga.co.kr/'],
+    ['KLPGA 국내 대회 우승', 'https://klpga.co.kr/web/main/index'],
+    ['임성재 PGA 투어 시즌 개막', 'https://www.pgatour.com/'],
+    ['최혜진 LPGA 준우승', 'https://www.lpga.com/'],
+    ['DP 월드 투어 레이스 투 두바이', 'https://www.europeantour.com/dpworld-tour/'],
+    ['LIV 골프 팀 순위', 'https://www.livgolf.com/'],
+    ['JLPGA 일본여자프로골프 투어', 'https://www.lpga.or.jp/'],
+    ['TGL 개막전', 'https://tglgolf.com/'],
+    ['GTOUR 스크린골프 대회', 'https://www.gtour.com/'],
+  ];
+  for (const [글, url] of 짝) {
+    const html = officialBannerFor(글);
+    assert.ok(html, `배너가 나가지 않았습니다: ${글}`);
+    assert.ok(html.includes(url), `${글} → 주소가 다릅니다: ${html.slice(0, 200)}`);
+  }
+});
+
+check('LPGA 가 KLPGA·JLPGA 안에서 걸리지 않는다', () => {
+  // 낱말 경계가 영문·숫자만 막는다. 이게 깨지면 국내 대회 글에 LPGA 배너가 붙는다.
+  assert.equal(pickOfficial('KLPGA 신인상')?.url, 'https://klpga.co.kr/web/main/index');
+  assert.equal(pickOfficial('JLPGA 투어 상금왕')?.url, 'https://www.lpga.or.jp/');
+  assert.equal(pickOfficial('KPGA 선수권')?.url, 'https://www.kpga.co.kr/');
+});
+
+check('투어 이름이 둘 다 나오면 더 많이 나온 쪽을 쓴다', () => {
+  // 최혜진 글에는 'KLPGA 출신'이 한 번 나오고 LPGA 가 내내 나온다.
+  // 국내 대회 글에는 'LPGA 진출'이 한 번 나온다. 순서로 고르면 한쪽은 반드시 틀린다.
+  const lpga글 = 'LPGA 투어 최혜진. KLPGA 출신인 최혜진은 LPGA 에서 LPGA 다섯 번째 준우승을 했다.';
+  assert.equal(pickOfficial(lpga글)?.url, 'https://www.lpga.com/', 'LPGA 글에 LPGA 배너가 아닙니다');
+  const klpga글 = 'KLPGA 챔피언십. KLPGA 상금 1위 선수가 LPGA 진출을 노린다. KLPGA 기록.';
+  assert.equal(pickOfficial(klpga글)?.url, 'https://klpga.co.kr/web/main/index', 'KLPGA 글에 KLPGA 배너가 아닙니다');
+});
+
+check('이름이 안 나오는 글에는 배너를 안 붙인다', () => {
+  // 횟수로 고르게 바꿨으니 0번인 것을 고르지 않는지 확인한다.
+  assert.equal(pickOfficial('오늘 날씨가 좋다'), null);
+  assert.equal(pickOfficial(''), null);
+  assert.equal(officialBannerFor('동네 파3 골프장 이용료'), '');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

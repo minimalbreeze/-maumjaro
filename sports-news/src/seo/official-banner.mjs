@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../utils/env.mjs';
-import { 낱말로있나 } from './watch-banner.mjs';
+// 낱말 경계는 watch-banner 의 것과 같다 — 낱말횟수() 가 같은 정규식을 쓴다.
 import { 배너카드 } from './banner-card.mjs';
 
 export const OFFICIAL_MARK = '🏟️ 공식 홈페이지';
@@ -45,15 +45,36 @@ export function 공식주소인가(url) {
   return true;
 }
 
-/** 글에 이름이 나오는 공식 사이트를 찾는다. 없으면 null. */
+/** 그 말이 글에 낱말로 몇 번 나오나. 낱말로있나() 와 같은 경계를 쓴다. */
+export function 낱말횟수(text, word) {
+  const w = String(word || '').trim();
+  if (!w) return 0;
+  const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, 'gi');
+  return (String(text || '').match(re) || []).length;
+}
+
+/**
+ * 글에 이름이 나오는 공식 사이트를 찾는다. 없으면 null.
+ *
+ * **가장 많이 나온 곳을 쓴다**(2026-10-18 고침). 예전에는 설정에 적힌 순서대로
+ * 첫 번째로 걸린 곳을 썼는데, 골프 투어를 아홉 개 넣으면서 그게 무너졌다 —
+ * 최혜진(LPGA) 글에 'KLPGA 출신'이라는 한마디가 들어 있고, 국내 KLPGA 대회
+ * 글에는 'LPGA 진출'이 들어 있다. 순서로 고르면 둘 중 한쪽은 반드시 틀린
+ * 배너가 붙는다. 그 글이 무엇에 관한 글인지는 **몇 번 나오는지**가 말해 준다.
+ *
+ * 횟수가 같으면 설정에 적힌 순서를 따른다 — 예전과 같은 결과다.
+ */
 export function pickOfficial(text, cfg = loadOfficialLinks()) {
   const 글 = String(text || '');
   if (!글.trim()) return null;
+  let 고른것 = null; let 최다 = 0;
   for (const site of cfg.sites) {
     const 이름들 = [site.이름, ...(site.match || [])].filter(Boolean);
-    if (이름들.some((n) => 낱말로있나(글, n))) return site;
+    const 횟수 = 이름들.reduce((n, w) => n + 낱말횟수(글, w), 0);
+    if (횟수 > 최다) { 최다 = 횟수; 고른것 = site; }
   }
-  return null;
+  return 고른것;
 }
 
 /** 배너 HTML. 주소가 없거나 모양이 이상하면 빈 글. */
