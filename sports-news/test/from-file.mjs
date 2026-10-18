@@ -194,6 +194,31 @@ check('페이드캠 글이 실제로 배너를 받는다', async () => {
   assert.ok(!/target=/.test(html), '새 창으로 엽니다 (리포 규칙 위반)');
 });
 
+// ── 중계 배너를 고를 때 글 내용을 넘기는가 (2026-10-18) ─────────
+//
+// from-file 이 카테고리만 넘기고 제목·본문을 안 넘겼다. 그래서
+// watch-links.json 에 `match` 로만 적어 둔 항목이 **영영 안 붙었다.**
+// 기본값(entry.primary)이 없는 카테고리는 match 로만 걸리기 때문이다.
+// 15번 초안(전국체육대회)을 올리고 나서야 발견했다 — 공식 배너는 붙었는데
+// 중계 배너만 빠져 있었다.
+check('중계 배너를 고를 때 제목·본문을 함께 넘긴다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/from-file.mjs'), 'utf8');
+  const i = src.indexOf('pickWatchLinks(');
+  assert.ok(i > 0, 'pickWatchLinks 를 부르지 않습니다');
+  const 호출 = src.slice(i, i + 200);
+  assert.ok(/text:/.test(호출), 'pickWatchLinks 에 text 를 넘기지 않습니다 — match 항목이 영영 안 걸립니다');
+  assert.ok(/parsed\.title/.test(호출) && /parsed\.body/.test(호출),
+    'text 에 제목과 본문을 함께 넣어야 합니다');
+});
+
+check('match 로만 적은 항목이 실제로 걸린다', async () => {
+  const { pickWatchLinks } = await import('../src/seo/watch-banner.mjs');
+  const 없을때 = pickWatchLinks('스포츠');
+  const 있을때 = pickWatchLinks('스포츠', { text: '107회 전국체육대회 중계와 일정' });
+  assert.equal(없을때, null, '기본값이 없어야 상관없는 글에 안 붙습니다');
+  assert.ok(있을때?.primary?.url, '제목을 줬는데도 match 가 안 걸립니다');
+});
+
 // ── 블로그초안/ 파일들이 실제로 이 양식인지 (2026-10-17) ────────
 //
 // 13번 초안을 **다른 양식**으로 써서 올렸다가 제목이 글자 그대로 "제목"이
