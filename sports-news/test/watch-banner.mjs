@@ -348,7 +348,7 @@ check('같은 종목에 투어가 여럿이면 더 많이 나온 쪽을 쓴다',
   // 임성재 마카오 오픈 글은 아시안투어를 여덟 번, 'PGA 투어'를 두 번 쓴다.
   // 순서로 고르면 PGA TOUR 중계가 붙는다 — 눌러도 그 경기가 없다.
   const 마카오 = '임성재 마카오 오픈. 아시안투어 대회다. 아시안투어 상금. 아시안투어 순위. PGA 투어 선수.';
-  assert.equal(pickWatchLinks('골프', { text: 마카오 })?.primary.url, 'https://www.asiantour.com/');
+  assert.equal(pickWatchLinks('골프', { text: 마카오 })?.primary.url, 'https://www.youtube.com/@theasiantour');
   const pga = 'PGA 투어 개막. PGA 투어 페덱스컵 순위. 아시안투어 출신 선수.';
   assert.equal(pickWatchLinks('골프', { text: pga })?.primary.url, 'https://www.youtube.com/@PGATour');
 });
