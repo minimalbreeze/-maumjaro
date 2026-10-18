@@ -145,6 +145,43 @@ check('명령의 --flag=값 줄을 변수 할당으로 보지 않는다', () => 
   assert.equal(나쁜변수명('        echo "a == b"'), null);
 });
 
+// ── 도구 출력이 로그 꼬리에서 읽히는가 (2026-10-19) ──────────
+// 깃허브 잡 로그를 꼬리부터 읽는데 아티팩트 업로드 단계가 수십 줄을
+// 쏟아내서, 정작 도구가 찍은 결과가 꼬리 밖으로 밀려났다. 2026-10-18
+// 하루에만 여섯 번 넘게 "run 은 성공했는데 몇 편이 바뀌었는지는 못
+// 읽었다"로 끝났다. 그래서 도구 출력을 파일에 남기고 잡의 맨 마지막
+// 단계에서 다시 찍는다. 이 장치가 조용히 없어지면 같은 일이 반복된다.
+check('도구 출력을 로그 파일에 함께 남긴다', () => {
+  const wf = fs.readFileSync(sports, 'utf8');
+  const 호출 = [...wf.matchAll(/^ {10}node src\/.*$/gm)].map((m) => m[0]);
+  assert.ok(호출.length >= 10, `node 호출을 찾지 못했습니다 (${호출.length}개)`);
+  for (const 줄 of 호출) {
+    assert.match(줄, /\| tee -a "\$RUNNER_TEMP\/sn\.log"/,
+      `tee 가 빠진 줄이 있습니다: ${줄.trim().slice(0, 60)}`);
+  }
+});
+
+check('파이프를 걸어도 종료 코드를 잃지 않는다', () => {
+  const wf = fs.readFileSync(sports, 'utf8');
+  // node ... | tee 로 끝내면 tee 의 종료 코드가 남아 **실패가 성공으로
+  // 찍힌다.** PIPESTATUS 로 node 의 코드를 되살려야 한다.
+  const tee수 = (wf.match(/\| tee -a "\$RUNNER_TEMP\/sn\.log"/g) || []).length;
+  const 되살림수 = (wf.match(/exit "\$\{PIPESTATUS\[0\]\}"/g) || []).length;
+  assert.equal(되살림수, tee수,
+    `tee ${tee수}곳 중 종료 코드를 되살리는 곳이 ${되살림수}곳뿐입니다`);
+});
+
+check('잡의 맨 마지막 단계가 도구 출력을 다시 찍는다', () => {
+  const wf = fs.readFileSync(sports, 'utf8');
+  const 단계들 = [...wf.matchAll(/^ {6}- name: (.+)$/gm)].map((m) => m[1]);
+  const 마지막 = 단계들[단계들.length - 1];
+  assert.match(마지막, /도구가 찍은 것 다시 보기/,
+    `맨 마지막 단계가 요약이 아닙니다: ${마지막}`);
+  assert.match(wf, /tail -60 "\$RUNNER_TEMP\/sn\.log"/, '요약이 로그를 찍지 않습니다');
+  assert.match(wf, /if: always\(\)\n        run: \|\n          echo "════════ 도구 출력 요약/,
+    '요약 단계가 실패했을 때도 돌지 않습니다');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
 
 // 워크플로가 부르는 CLI 형태가 실제 스크립트와 맞는지.
