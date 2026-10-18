@@ -89,7 +89,16 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
   log.info(`카테고리: ${cat.name} (id=${cat.id}, ${cat.matched})`);
 
   // 이미지·광고·중계·앱 배너 자리를 잡는다
-  const watch = pickWatchLinks(cat.name || parsed.category);
+  //
+  // **제목과 본문을 함께 넘긴다**(2026-10-18 고침). 예전에는 카테고리만
+  // 넘겨서, watch-links.json 에 `match` 로만 적어 둔 항목이 **영영 걸리지
+  // 않았다.** 생활정보의 불꽃축제 항목과 스포츠의 전국체육대회 항목이 그랬다.
+  // 둘 다 기본값(entry.primary)을 일부러 두지 않은 항목이다 — 기본값을 두면
+  // 상관없는 글 전부에 배너가 붙기 때문이다. add-watch.mjs 는 처음부터
+  // text 를 넘기고 있어서 이쪽만 어긋나 있었다.
+  const watch = pickWatchLinks(cat.name || parsed.category, {
+    text: `${parsed.title}\n${parsed.body}`,
+  });
   if (watch) log.info(`중계 배너: ${watch.primary.url}`);
 
   // 앱·공식 홈페이지 배너. **이게 빠져 있었다** (2026-10-10).
