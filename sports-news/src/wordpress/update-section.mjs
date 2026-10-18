@@ -99,6 +99,63 @@ export function updateSection(html, 말, 새내용) {
 }
 
 /**
+ * **새 소제목과 내용을 그 섹션 뒤에 끼운다.** 기존 본문은 한 글자도 안 바꾼다.
+ *
+ * 왜 필요한가 — 대회가 진행되는 동안 결과가 하루에 한 번씩 나온다. 그때마다
+ * 새 글을 쓰면 대회가 끝나는 순간 그 글들이 다 죽는다(중계 유형 357편이
+ * 그렇게 죽었다). 이미 색인된 대회 글 하나에 결과를 **쌓아 가는** 쪽이
+ * 노출도 수익도 오래 간다. 그러려면 섹션을 새로 끼울 수 있어야 한다.
+ *
+ * 자리는 '기준 소제목' 섹션이 끝나는 곳이다. 자주 묻는 질문 구조화 데이터
+ * (wp:html) 앞에서 멈추므로 그것을 넘어가지 않는다.
+ */
+export function insertSection(html, 기준소제목, 새소제목, 새내용) {
+  const s = String(html || '');
+  const 글자수 = 공백빼고(새내용).length;
+  if (글자수 < 20) {
+    return { html: s, 한일: null, 이유: `새 내용이 너무 짧습니다 (${글자수}자)` };
+  }
+  const 섞인것 = 내부메모말.find((w) => String(새내용 || '').includes(w));
+  if (섞인것) {
+    return { html: s, 한일: null, 이유: `새 내용에 내부 메모가 섞여 있습니다 ('${섞인것}')` };
+  }
+  if (!String(새소제목 || '').trim()) {
+    return { html: s, 한일: null, 이유: '새 소제목이 비었습니다' };
+  }
+
+  // 두 번 돌려도 안전해야 한다 — 같은 소제목이 이미 있으면 아무것도 하지 않는다.
+  if (소제목자리(s, 새소제목)) {
+    return { html: s, 한일: null, 이유: `'${새소제목}' 소제목이 이미 있습니다` };
+  }
+
+  const h = 소제목자리(s, 기준소제목);
+  if (!h) return { html: s, 한일: null, 이유: `'${기준소제목}' 소제목이 없습니다` };
+
+  const 자리 = 섹션끝(s, h.end, h.level);
+  const 넣을것 = `<!-- wp:heading -->\n<h${h.level}>${새소제목}</h${h.level}>\n<!-- /wp:heading -->\n\n${블록으로(새내용)}`;
+  const 남은것 = `${s.slice(0, 자리)}\n\n${넣을것}\n\n${s.slice(자리)}`.replace(/\n{3,}/g, '\n\n').trim();
+
+  return { html: 남은것, 한일: '끼움', 넣은것: 넣을것, 새길이: 공백빼고(넣을것).length };
+}
+
+/**
+ * 끼운 것 말고는 본문이 그대로인지. 넣기 전 마지막 방어선이다.
+ *
+ * 끼우기는 **아무것도 지우지 않는다.** 그래서 원본 전체가 결과 안에 그대로
+ * 남아 있어야 하고, 길이 차이가 넣은 것만큼이어야 한다.
+ */
+export function 끼운것만늘었나(before, after, 넣은것) {
+  const b = 공백빼고(before);
+  const a = 공백빼고(after);
+  const n = 공백빼고(넣은것);
+  if (!n) return false;
+  if (a.length !== b.length + n.length) return false;
+  const i = a.indexOf(n);
+  if (i === -1) return false;
+  return a.slice(0, i) + a.slice(i + n.length) === b;
+}
+
+/**
  * 그 섹션 말고는 앞뒤 본문이 그대로인지. 보내기 전 마지막 방어선이다.
  *
  * 우리가 직접 이어 붙인 결과이지만 `\n{3,}` 줄이기와 trim 이 끼어든다.
@@ -144,6 +201,32 @@ export async function updateSectionInPost(postId, { apply = false, 소제목, �
   return { ...base, 한일: r.한일, changed: true, backup, 뺀길이: r.뺀길이, 새길이: r.새길이, 뺀것: r.뺀것, 미리보기: !apply };
 }
 
+/** 글 하나에 새 섹션을 끼운다. apply 가 false 면 저장하지 않는다. */
+export async function insertSectionInPost(postId, { apply = false, 기준소제목, 새소제목, 새내용 } = {}) {
+  const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
+  const title = post?.title?.raw || post?.title?.rendered || '';
+  const base = { id: postId, title, status: post?.status, changed: false, backup: null };
+
+  if (!손대도되는글인가(post?.link, wpConfig().base)) {
+    return { ...base, skip: `wiki 밖의 글입니다 (${post?.link || '주소 없음'})` };
+  }
+
+  const content = post?.content?.raw ?? post?.content?.rendered ?? '';
+  const r = insertSection(content, 기준소제목, 새소제목, 새내용);
+  if (!r.한일) return { ...base, skip: r.이유 };
+
+  if (!끼운것만늘었나(content, r.html, r.넣은것)) {
+    throw new Error('끼운 것 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
+  }
+
+  let backup = null;
+  if (apply) {
+    backup = saveContentBackup({ id: postId, status: post?.status, title: post?.title, slug: post?.slug, content: post?.content });
+    await wpFetch(`/wp/v2/posts/${postId}`, { method: 'POST', body: { content: r.html }, timeoutMs: 45000 });
+  }
+  return { ...base, 한일: r.한일, changed: true, backup, 새길이: r.새길이, 미리보기: !apply };
+}
+
 function 값(args, 이름) {
   const p = `--${이름}=`;
   const hit = args.find((a) => a.startsWith(p));
@@ -154,13 +237,20 @@ async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply') && !args.includes('--dry-run');
   const 소제목 = 값(args, 'heading');
+  const 기준소제목 = 값(args, 'after');
+  const 새소제목 = 값(args, 'new-heading');
   const 파일 = 값(args, 'file');
   const 글 = 값(args, 'text');
   const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
+  const 끼우기 = Boolean(기준소제목 || 새소제목);
 
-  if (!ids.length || !소제목 || (!파일 && !글)) {
-    console.error('사용법: node src/wordpress/update-section.mjs <글 번호> --heading="소제목" --file=<새 내용.md> [--apply]');
-    console.error('        (--file 대신 --text="..." 로 바로 적어도 됩니다)');
+  const 쓸만한가 = ids.length && (파일 || 글)
+    && (끼우기 ? (기준소제목 && 새소제목) : Boolean(소제목));
+  if (!쓸만한가) {
+    console.error('쓰임새 둘 중 하나입니다.');
+    console.error('  갈아끼우기: node src/wordpress/update-section.mjs <글 번호> --heading="소제목" --file=<새 내용.md> [--apply]');
+    console.error('  끼워넣기  : node src/wordpress/update-section.mjs <글 번호> --after="기준 소제목" --new-heading="새 소제목" --file=<새 내용.md> [--apply]');
+    console.error('  (--file 대신 --text="..." 로 바로 적어도 됩니다)');
     process.exit(1);
   }
 
@@ -172,19 +262,27 @@ async function main() {
   }
 
   console.log(`\n────────────────────────────────────────────────────────`);
-  console.log(`🔄 '${소제목}' 섹션의 내용을 갈아끼웁니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
+  console.log(끼우기
+    ? `➕ '${기준소제목}' 뒤에 '${새소제목}' 섹션을 끼웁니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`
+    : `🔄 '${소제목}' 섹션의 내용을 갈아끼웁니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
   console.log(`   대상 사이트: ${wpConfig().base.replace(/^https?:\/\//, '')}  ← 여기 글만 손댑니다`);
   console.log(`────────────────────────────────────────────────────────`);
 
   let 바꿀것 = 0; let 그대로 = 0;
   for (const id of ids) {
     try {
-      const r = await updateSectionInPost(id, { apply, 소제목, 새내용 });
+      const r = 끼우기
+        ? await insertSectionInPost(id, { apply, 기준소제목, 새소제목, 새내용 })
+        : await updateSectionInPost(id, { apply, 소제목, 새내용 });
       if (r.skip) { 그대로 += 1; console.log(`[${id}] 건너뜀 — ${r.skip}`); continue; }
       바꿀것 += 1;
       console.log(`${apply ? '✅' : '  '} [${r.id}] ${r.status} · ${r.title.slice(0, 40)}`);
-      console.log(`      ${r.뺀길이}자 → ${r.새길이}자 (공백 제외)`);
-      console.log(`      빠지는 것: ${r.뺀것.replace(/\s+/g, ' ').slice(0, 120)}…`);
+      if (끼우기) {
+        console.log(`      끼우는 분량: ${r.새길이}자(공백 제외) · 기존 본문은 그대로`);
+      } else {
+        console.log(`      ${r.뺀길이}자 → ${r.새길이}자 (공백 제외)`);
+        console.log(`      빠지는 것: ${r.뺀것.replace(/\s+/g, ' ').slice(0, 120)}…`);
+      }
       if (apply) console.log(`      원본 백업: ${r.backup}`);
     } catch (err) {
       console.log(`❌ [${id}] ${err.message}`);
@@ -192,7 +290,7 @@ async function main() {
     }
   }
 
-  console.log(`\n갈아끼울 글 ${바꿀것}편 · 그대로 둘 글 ${그대로}편`);
+  console.log(`\n${끼우기 ? '끼울' : '갈아끼울'} 글 ${바꿀것}편 · 그대로 둘 글 ${그대로}편`);
   if (!apply && 바꿀것) console.log('실제로 바꾸려면 --apply 를 붙이세요. 지금은 아무것도 바꾸지 않았습니다.');
   console.log('※ 본문만 보냅니다. 소제목·제목·주소·발행상태는 건드리지 않습니다.\n');
 }

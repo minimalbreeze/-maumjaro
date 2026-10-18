@@ -18,6 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   블록으로, updateSection, 그섹션만바뀌었나, 내부메모말,
+  insertSection, 끼운것만늘었나,
 } from '../src/wordpress/update-section.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -139,7 +140,9 @@ check('본문만 보낸다 — 제목·주소·발행상태는 보내지 않는�
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/update-section.mjs'), 'utf8');
   const 보내는곳 = /body:\s*\{([^}]*)\}/g;
   const 보내는것 = [...src.matchAll(보내는곳)].map((m) => m[1].trim());
-  assert.deepEqual(보내는것, ['content: r.html'], `본문 말고 다른 것을 보냅니다: ${보내는것.join(' / ')}`);
+  // 보내는 곳이 둘이다 — 갈아끼우기와 끼워넣기. 둘 다 본문만 보낸다.
+  assert.ok(보내는것.length >= 1, '본문을 보내는 곳이 없습니다');
+  for (const x of 보내는것) assert.equal(x, 'content: r.html', `본문 말고 다른 것을 보냅니다: ${x}`);
   assert.match(src, /손대도되는글인가/, 'wiki 밖 글을 막지 않습니다');
   assert.match(src, /saveContentBackup/, '원본을 백업하지 않습니다');
 });
@@ -148,6 +151,68 @@ check('경계 코드를 drop-section 에서 가져다 쓴다', () => {
   // 두 벌로 만들면 한쪽만 고쳐 놓고 다른 쪽이 깨진다.
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/update-section.mjs'), 'utf8');
   assert.match(src, /from '\.\/drop-section\.mjs'/, 'drop-section 의 경계 코드를 쓰지 않습니다');
+});
+
+// ── 새 소제목 끼워넣기 ────────────────────────────────────────
+// 대회가 진행되는 동안 결과가 하루에 한 번씩 나온다. 그때마다 새 글을 쓰면
+// 대회가 끝나는 순간 그 글들이 다 죽는다. 이미 색인된 글 하나에 쌓는다.
+const 결과 = `18일 남자일반부 100m 결승에서 나마디 조엘진(예천군청)이 10초35로 우승했습니다. 전국체전 2연패입니다.
+
+- 남자일반부 100m: 나마디 조엘진(예천군청) 10초35
+- 여자일반부 100m: 서지현(진천군청) 11초89`;
+
+check('기준 소제목 뒤에 새 소제목과 내용을 끼운다', () => {
+  const r = insertSection(본문, '최근 경기 결과', '🏃 10월 18일 결과', 결과);
+  assert.equal(r.한일, '끼움', r.이유);
+  assert.ok(r.html.includes('<h2>🏃 10월 18일 결과</h2>'), '새 소제목이 없습니다');
+  assert.ok(r.html.includes('나마디 조엘진'), '새 내용이 없습니다');
+  // 기존 본문은 한 글자도 안 바뀐다
+  assert.ok(r.html.includes('야마구치 아카네를 눌렀습니다'), '기존 내용이 사라졌습니다');
+  assert.ok(r.html.includes('<h2>최근 경기 결과</h2>'), '기준 소제목이 사라졌습니다');
+  assert.ok(r.html.includes('<h2>다음 경기 일정</h2>'), '뒤 소제목이 사라졌습니다');
+  // 자리: 기준 섹션이 끝난 뒤, 다음 소제목 앞
+  const 새것 = r.html.indexOf('🏃 10월 18일 결과');
+  assert.ok(새것 > r.html.indexOf('야마구치 아카네'), '기준 섹션 앞에 끼웠습니다');
+  assert.ok(새것 < r.html.indexOf('다음 경기 일정'), '너무 뒤에 끼웠습니다');
+});
+
+check('끼울 때도 자주 묻는 질문 구조화 데이터를 넘지 않는다', () => {
+  const r = insertSection(본문, '다음 경기 일정', '🏃 추가 기록', 결과);
+  assert.equal(r.한일, '끼움', r.이유);
+  assert.ok(r.html.includes('"@type": "FAQPage"'), 'FAQ 구조화 데이터가 깨졌습니다');
+  assert.ok(r.html.indexOf('🏃 추가 기록') < r.html.indexOf('application/ld+json'), 'JSON-LD 뒤에 끼웠습니다');
+});
+
+check('끼우기는 아무것도 지우지 않는다', () => {
+  // 마지막 방어선. 길이 차이가 넣은 것만큼이어야 하고 원본이 전부 남아야 한다.
+  const r = insertSection(본문, '최근 경기 결과', '🏃 10월 18일 결과', 결과);
+  assert.equal(끼운것만늘었나(본문, r.html, r.넣은것), true, '정상인데 막았습니다');
+  const 망친것 = r.html.replace('프랑스 오픈이 다음 대회입니다.', '');
+  assert.equal(끼운것만늘었나(본문, 망친것, r.넣은것), false, '본문이 지워진 것을 못 잡았습니다');
+});
+
+check('같은 소제목이 이미 있으면 두 번 끼우지 않는다', () => {
+  const 한번 = insertSection(본문, '최근 경기 결과', '🏃 10월 18일 결과', 결과);
+  const 두번 = insertSection(한번.html, '최근 경기 결과', '🏃 10월 18일 결과', 결과);
+  assert.equal(두번.한일, null, '두 번 끼웠습니다');
+  assert.match(두번.이유, /이미 있습니다/);
+});
+
+check('끼울 때도 빈 내용과 내부 메모를 거부한다', () => {
+  assert.equal(insertSection(본문, '최근 경기 결과', '🏃 결과', '짧다').한일, null);
+  assert.equal(insertSection(본문, '최근 경기 결과', '', 결과).한일, null);
+  assert.equal(insertSection(본문, '없는 소제목', '🏃 결과', 결과).한일, null);
+  for (const 말 of 내부메모말) {
+    assert.equal(insertSection(본문, '최근 경기 결과', '🏃 결과', `${말}\n\n${결과}`).한일, null, 말);
+  }
+});
+
+check('끼우기도 본문만 보낸다', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/update-section.mjs'), 'utf8');
+  assert.match(src, /insertSectionInPost/, '글에 끼우는 함수가 없습니다');
+  // body: { ... } 가 둘(갈아끼우기·끼우기) 뿐이고 둘 다 본문만 보낸다
+  const 보내는것 = [...src.matchAll(/body:\s*\{([^}]*)\}/g)].map((m) => m[1].trim());
+  assert.deepEqual(보내는것, ['content: r.html', 'content: r.html'], `본문 말고 다른 것을 보냅니다: ${보내는것.join(' / ')}`);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
