@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, WATCH_MARK, watchLabel, allWatchLabels, DEFAULT_WATCH_LABEL } from '../src/seo/watch-banner.mjs';
+import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, 낱말횟수, WATCH_MARK, watchLabel, allWatchLabels, DEFAULT_WATCH_LABEL } from '../src/seo/watch-banner.mjs';
 import { planPlacements, insertMarks } from '../src/images/embed.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -341,6 +341,33 @@ check('불꽃축제 배너는 유튜브로 가고 nofollow 가 붙는다', () =>
     assert.ok(/rel="[^"]*nofollow/.test(a), `nofollow 가 없습니다: ${a}`);
     assert.ok(!/target=/.test(a), `새 창으로 띄웁니다: ${a}`);
   }
+});
+
+// ── 어느 대회 글인지는 몇 번 나오는지가 말해 준다 (2026-10-18) ──
+check('같은 종목에 투어가 여럿이면 더 많이 나온 쪽을 쓴다', () => {
+  // 임성재 마카오 오픈 글은 아시안투어를 여덟 번, 'PGA 투어'를 두 번 쓴다.
+  // 순서로 고르면 PGA TOUR 중계가 붙는다 — 눌러도 그 경기가 없다.
+  const 마카오 = '임성재 마카오 오픈. 아시안투어 대회다. 아시안투어 상금. 아시안투어 순위. PGA 투어 선수.';
+  assert.equal(pickWatchLinks('골프', { text: 마카오 })?.primary.url, 'https://www.asiantour.com/');
+  const pga = 'PGA 투어 개막. PGA 투어 페덱스컵 순위. 아시안투어 출신 선수.';
+  assert.equal(pickWatchLinks('골프', { text: pga })?.primary.url, 'https://www.youtube.com/@PGATour');
+});
+
+check('당구는 기본값이 있고 PBA 글만 PBA LIVE 로 간다', () => {
+  // 빌리어즈TV 는 당구 전반을 다루므로 어느 당구 글에 붙어도 헛걸음이 아니다.
+  assert.equal(pickWatchLinks('당구', { text: '3쿠션 당구 대회' })?.primary.url,
+    'https://www.youtube.com/@BilliardsTV_Official');
+  assert.equal(pickWatchLinks('당구', { text: 'PBA-LPBA 챔피언십 고양' })?.primary.url,
+    'https://www.youtube.com/@TV-ou4mv');
+});
+
+check('낱말횟수가 낱말로있나와 같은 경계를 쓴다', () => {
+  // 두 함수가 어긋나면 "있다고는 하는데 0번"인 상태가 생긴다.
+  for (const [글, 말] of [['KLPGA 챔피언십', 'LPGA'], ['KPBA 볼링', 'PBA'], ['김연경2 시즌', '김연경']]) {
+    assert.equal(낱말로있나(글, 말), false, `${글} 에서 ${말} 이 걸렸습니다`);
+    assert.equal(낱말횟수(글, 말), 0, `${글} 에서 ${말} 이 세어졌습니다`);
+  }
+  assert.equal(낱말횟수('PGA 투어, PGA 투어, pga 투어', 'PGA 투어'), 3);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

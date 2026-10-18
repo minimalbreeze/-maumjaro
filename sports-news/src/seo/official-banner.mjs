@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../utils/env.mjs';
-import { 낱말로있나 } from './watch-banner.mjs';
+import { 낱말로있나, 낱말횟수 } from './watch-banner.mjs';
 import { 배너카드 } from './banner-card.mjs';
 
 export const OFFICIAL_MARK = '🏟️ 공식 홈페이지';
@@ -43,15 +43,6 @@ export function 공식주소인가(url) {
   // 검색 결과 주소도 공식 페이지가 아니다.
   if (/[?&](q|query|search|keyword)=/i.test(u)) return false;
   return true;
-}
-
-/** 그 말이 글에 낱말로 몇 번 나오나. 낱말로있나() 와 같은 경계를 쓴다. */
-export function 낱말횟수(text, word) {
-  const w = String(word || '').trim();
-  if (!w) return 0;
-  const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, 'gi');
-  return (String(text || '').match(re) || []).length;
 }
 
 /**
