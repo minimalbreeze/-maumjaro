@@ -57,9 +57,23 @@ export function planPlacements(body, { sectionImages = 1, withAd = true, withWat
   // 대표 이미지: 첫 소제목 바로 앞(= 도입부 뒤)
   plan.heroAfterLine = headings.length ? headings[0].index : 0;
 
-  // 광고: 가운데 소제목 앞. 너무 위/아래면 어색하다.
-  if (withAd && headings.length >= 3) {
-    plan.adBeforeLine = headings[Math.floor(headings.length / 2)].index;
+  // 광고: **첫 소제목 앞**(= 도입부 뒤). 대표 이미지와 같은 자리다.
+  //
+  // 2026-10-18 에 가운데 소제목 앞에서 여기로 올렸다. 그 전에는
+  // `headings[len/2]` 였는데, 9257(전국체전) 본문에서 재 보니 144문단 중
+  // **45번째**, 글의 31% 지점이었다. 일정·중계 글의 독자는 "언제 어디서
+  // 보나"만 확인하고 나가므로 거기까지 내려가지 않는다.
+  //
+  // 더 큰 문제는 **이미 올라간 글과 자리가 달랐다**는 것이다. 2026-10-15 에
+  // move-coupang.mjs 로 발행글 수백 편을 첫 문단 뒤로 내렸는데, 새 글을
+  // 만드는 이 코드는 그대로 가운데에 넣고 있었다. 같은 블로그 안에서 글마다
+  // 광고 위치가 달라 무엇이 효과가 있었는지 셀 수 없다.
+  //
+  // 맨 위로 올리지는 않는다. 10-15 에 운영자가 준 모바일 캡처에서 첫 화면에
+  // 본문이 한 줄도 없었던 것이 move-coupang 을 만든 이유다. 도입부(본문)를
+  // 먼저 보여주고 그다음에 광고를 만나게 한다.
+  if (withAd && headings.length >= 1) {
+    plan.adBeforeLine = headings[0].index;
   }
 
   // 중계 배너: 두 번째 소제목 앞. 광고와 같은 자리에 겹치지 않게 한다.

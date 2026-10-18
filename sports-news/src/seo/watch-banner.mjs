@@ -76,6 +76,15 @@ export function 낱말로있나(text, word) {
   return new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, 'i').test(String(text || ''));
 }
 
+/** 그 말이 글에 낱말로 몇 번 나오나. 낱말로있나() 와 같은 경계를 쓴다. */
+export function 낱말횟수(text, word) {
+  const w = String(word || '').trim();
+  if (!w) return 0;
+  const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(?<![A-Za-z0-9])${esc}(?![A-Za-z0-9])`, 'gi');
+  return (String(text || '').match(re) || []).length;
+}
+
 /**
  * 이 글에 붙일 중계 링크를 고른다. 없으면 null — 배너를 넣지 않는다.
  *
@@ -90,11 +99,20 @@ export function pickWatchLinks(category, { config = loadWatchLinks(), text = '' 
   const entry = config.byCategory?.[category];
   if (!entry) return null;
 
+  // **가장 많이 나온 항목을 쓴다**(2026-10-18 고침). 예전에는 설정에 적힌
+  // 순서대로 첫 번째로 걸린 항목을 썼는데, 골프에 투어를 여덟 개 넣으면서
+  // 그게 무너졌다 — 임성재 마카오 오픈 글은 아시안투어를 여덟 번 쓰고 'PGA
+  // 투어'를 두 번 쓰는데, 순서로 고르니 PGA TOUR 중계가 붙었다. 독자가
+  // 눌러도 그 경기가 없다. 그 글이 무슨 대회 글인지는 몇 번 나오는지가
+  // 말해 준다. 횟수가 같으면 설정에 적힌 순서를 따른다 — 예전과 같다.
   const 글 = String(text || '');
+  let 고른것 = null; let 최다 = 0;
   for (const m of entry.match || []) {
     if (!m?.primary?.url) continue;
-    if ((m.keywords || []).some((w) => 낱말로있나(글, w))) return m;
+    const 횟수 = (m.keywords || []).reduce((n, w) => n + 낱말횟수(글, w), 0);
+    if (횟수 > 최다) { 최다 = 횟수; 고른것 = m; }
   }
+  if (고른것) return 고른것;
 
   if (!entry.primary?.url) return null;
   return entry;

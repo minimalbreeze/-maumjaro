@@ -143,8 +143,8 @@ const wp = await startMockWordPress({
       content: { raw: 본문.replace(/KBL/g, 'WKBL').replace('부산 KCC와 창원 LG', '청주 KB와 아산 우리은행') },
     },
     7692: {
-      status: 'publish', slug: '바둑', categories: [8], meta: {},
-      title: { raw: '바둑 대회 일정' },
+      status: 'publish', slug: '승마', categories: [8], meta: {},
+      title: { raw: '승마 대회 일정' },
       content: { raw: 본문 },
     },
   },
@@ -153,7 +153,10 @@ process.env.WORDPRESS_URL = `http://127.0.0.1:${wp.port}`;
 process.env.WORDPRESS_USERNAME = 'tester';
 process.env.WORDPRESS_APP_PASSWORD = 'xxxx xxxx xxxx xxxx';
 
-const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '바둑' }];
+// 2026-10-18: 'id 8' 이 예전에는 '바둑'이었다. 운영자가 바둑TV 주소를 줘서
+// 바둑에 중계 링크가 생겼으니 '링크 없는 종목'의 예가 되지 않는다. 검사의
+// 뜻(설정에 없으면 배너를 안 건다)은 그대로 두고 종목만 바꿨다.
+const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '승마' }];
 
 await checkAsync('미리보기는 저장하지 않는다', async () => {
   const r = await addWatchBanner(7690, { apply: false, siteCategories });
