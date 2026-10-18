@@ -8,6 +8,7 @@
 // 적어둔 것이 그대로 문법 오류가 됐다.
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -153,11 +154,39 @@ check('명령의 --flag=값 줄을 변수 할당으로 보지 않는다', () => 
 // 단계에서 다시 찍는다. 이 장치가 조용히 없어지면 같은 일이 반복된다.
 check('도구 출력을 로그 파일에 함께 남긴다', () => {
   const wf = fs.readFileSync(sports, 'utf8');
-  const 호출 = [...wf.matchAll(/^ {10}node src\/.*$/gm)].map((m) => m[0]);
-  assert.ok(호출.length >= 10, `node 호출을 찾지 못했습니다 (${호출.length}개)`);
-  for (const 줄 of 호출) {
-    assert.match(줄, /\| tee -a "\$RUNNER_TEMP\/sn\.log"/,
-      `tee 가 빠진 줄이 있습니다: ${줄.trim().slice(0, 60)}`);
+  // node 호출은 `\\` 로 여러 줄에 걸칠 수 있다. 줄 단위가 아니라
+  // **명령 단위**로 이어 붙여서 본다.
+  const 줄들 = wf.split('\n');
+  const 명령 = [];
+  for (let i = 0; i < 줄들.length; i++) {
+    if (!/^ {10}node src\//.test(줄들[i])) continue;
+    let cmd = 줄들[i];
+    while (cmd.trimEnd().endsWith('\\') && i + 1 < 줄들.length) { i += 1; cmd += '\n' + 줄들[i]; }
+    명령.push(cmd);
+  }
+  assert.ok(명령.length >= 10, `node 호출을 찾지 못했습니다 (${명령.length}개)`);
+  for (const c of 명령) {
+    assert.match(c, /\| tee -a "\$RUNNER_TEMP\/sn\.log"/,
+      `tee 가 빠진 호출이 있습니다: ${c.trim().split('\n')[0].slice(0, 60)}`);
+  }
+});
+
+check('node 호출 줄에서 백슬래시가 줄 끝에만 온다', () => {
+  // **2026-10-19 에 내가 낸 사고를 잡는 검사다.** node 호출 뒤에 tee 를
+  // 붙이는 치환을 돌렸는데, add-notice 호출은 `\\` 로 줄을 잇고 있었다.
+  // 그 줄 끝에 tee 를 붙이니 `\\` 가 **줄바꿈이 아니라 공백을 이스케이프**
+  // 하게 되고, 뒷줄(`${IN_TEXT:+--text=...}`)이 떨어져 나가 그것만으로 한
+  // 명령이 됐다. 돌렸으면 "--text=...: command not found" 로 죽는다.
+  //
+  // **bash -n 은 이것을 못 잡는다** — 문법은 맞고 뜻만 틀렸기 때문이다.
+  // 실제로 확인했다. 그래서 모양을 직접 본다.
+  const wf = fs.readFileSync(sports, 'utf8');
+  for (const [i, l] of wf.split('\n').entries()) {
+    if (!/^ {10}.*node src\//.test(l)) continue;
+    const 백슬래시 = l.indexOf('\\');
+    if (백슬래시 === -1) continue;
+    assert.equal(백슬래시, l.trimEnd().length - 1,
+      `${i + 1}줄: 백슬래시가 줄 끝이 아닙니다 — ${l.trim().slice(0, 70)}`);
   }
 });
 
@@ -180,6 +209,25 @@ check('잡의 맨 마지막 단계가 도구 출력을 다시 찍는다', () => 
   assert.match(wf, /tail -60 "\$RUNNER_TEMP\/sn\.log"/, '요약이 로그를 찍지 않습니다');
   assert.match(wf, /if: always\(\)\n        run: \|\n          echo "════════ 도구 출력 요약/,
     '요약 단계가 실패했을 때도 돌지 않습니다');
+});
+
+check('run 블록이 전부 bash 문법에 맞는다', () => {
+  const wf = fs.readFileSync(sports, 'utf8');
+  // **2026-10-19 에 내가 낸 사고를 잡는 검사다.** node 호출 뒤에 tee 를
+  // 붙이는 치환을 돌렸는데, add-notice 호출은 원래 `\\` 로 줄을 잇고
+  // 있었다. 그 줄 끝에 tee 를 붙이니 `\\` 가 **줄바꿈이 아니라 공백을
+  // 이스케이프**하게 되고, 뒷줄(`${IN_TEXT:+--text=...}`)이 떨어져 나가
+  // 그것만으로 한 명령이 됐다. 돌렸으면 "--text=...: command not found"
+  // 로 죽었을 것이다.
+  //
+  // YAML 문법은 멀쩡했다. 깨진 것은 **셸 쪽**이라 yaml 검사로는 안 잡힌다.
+  const 블록 = [...wf.matchAll(/^ {8}run: \|\n((?: {10}.*\n|\n)+)/gm)].map((m) => m[1]);
+  assert.ok(블록.length >= 10, `run 블록을 찾지 못했습니다 (${블록.length}개)`);
+  for (const [i, b] of 블록.entries()) {
+    const 코드 = b.split('\n').map((l) => (l.startsWith(' '.repeat(10)) ? l.slice(10) : l)).join('\n');
+    const r = spawnSync('bash', ['-n'], { input: 코드, encoding: 'utf8' });
+    assert.equal(r.status, 0, `run 블록 ${i + 1} 문법 오류: ${String(r.stderr).trim().slice(0, 150)}`);
+  }
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
