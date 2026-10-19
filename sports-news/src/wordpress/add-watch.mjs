@@ -24,6 +24,7 @@
 //   - content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
 
 import { wpFetch } from './client.mjs';
+import { 전수, 유형읽기, 제한읽기 } from './banner-all.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { categoryIndex } from '../news/variety.mjs';
 import { pickWatchLinks, watchBannerHtml, allWatchLabels, DEFAULT_WATCH_LABEL } from '../seo/watch-banner.mjs';
@@ -256,6 +257,23 @@ async function main() {
   const show = process.argv.includes('--show');
   const html = process.argv.includes('--html');
   const apply = !process.argv.includes('--dry-run') && !show;
+
+  // --all 은 발행글 전체를 훑는다. 설정을 늘려도 이미 올린 글은 바뀌지 않아서,
+  // 357편 중계 글에 돌릴 길이 없었다(2026-10-19). 넣는 일과 안전선은 아래
+  // addWatchBanner 가 그대로 하고, banner-all 은 목록과 호스트 검사만 한다.
+  if (process.argv.includes('--all')) {
+    log.section(`📺 중계 배너 전체 훑기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
+    const { data: cats } = await wpFetch('/wp/v2/categories', { query: { per_page: 100 } });
+    await 전수(addWatchBanner, {
+      유형: 유형읽기(process.argv),
+      limit: 제한읽기(process.argv),
+      apply,
+      넣기옵션: { siteCategories: Array.isArray(cats) ? cats : [] },
+      찍기: (s) => log.raw(s),
+    });
+    return;
+  }
+
   if (!ids.length) {
     log.fail('글 번호를 적어주세요', new Error('예: npm run watch:add -- 7690 --dry-run'));
     process.exitCode = 1;

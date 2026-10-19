@@ -10,6 +10,7 @@
 // 한쪽만 고쳤을 때 갈라진다.
 
 import { wpFetch } from './client.mjs';
+import { 전수, 유형읽기, 제한읽기 } from './banner-all.mjs';
 import { applyBanner, bannerOnlyChange, findBanners } from './add-watch.mjs';
 // 백업은 이미 있는 것을 쓴다. 되돌리는 방법이 두 벌이면 한쪽만 고쳐진다.
 import { saveContentBackup } from './fix-alt.mjs';
@@ -88,8 +89,22 @@ async function main() {
   const show = args.includes('--show');
   const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
+  // --all 은 발행글 전체를 훑는다. official-links.json 이 17곳으로 늘었는데
+  // 이미 올린 글은 설정만 고쳐서는 바뀌지 않는다(2026-10-19). 넣는 일과
+  // 안전선은 addBannerToPost 가 그대로 하고, banner-all 은 목록과
+  // 호스트 검사만 한다.
+  if (args.includes('--all')) {
+    console.log(`\n🔗 앱·공식 홈페이지 배너 전체 훑기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
+    await 전수(addBannerToPost, {
+      유형: 유형읽기(args),
+      limit: 제한읽기(args),
+      apply,
+    });
+    return;
+  }
+
   if (!ids.length) {
-    console.error('글 번호를 적어주세요. 예: node src/wordpress/add-banner.mjs 7801 --apply');
+    console.error('글 번호를 적어주세요. 예: node src/wordpress/add-banner.mjs 7801 --apply (전부 훑으려면 --all)');
     process.exit(1);
   }
 
