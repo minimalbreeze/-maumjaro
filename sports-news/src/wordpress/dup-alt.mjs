@@ -143,6 +143,10 @@ export async function fixOne(postId, { apply = false } = {}) {
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
+  // 번호를 적지 않고 전체를 고치는 길. 막아 두었던 자리를 여는 대신,
+  // **글마다 하는 남길것이맞나 확인을 통과한 것만** 고친다 — 실제 안전장치는
+  // 번호를 적었는지가 아니라 그 확인이다. 통과 못 한 글은 건너뛰고 번호를 찍는다.
+  const 전부 = args.includes('--전부');
   let ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
   console.log('\n────────────────────────────────────────────────────────');
@@ -154,16 +158,16 @@ async function main() {
     const 글 = await 발행글전부();
     console.log(`\n발행된 글 ${글.length}편을 훑습니다`);
     ids = 글.map((p) => p.id);
-    if (apply) {
-      console.log('\n전체 적용은 막아 두었습니다 — 미리보기로 몇 편인지 먼저 세고, 글 번호를 적어 적용하세요.\n');
+    if (apply && !전부) {
+      console.log('\n번호 없는 전체 적용은 막아 두었습니다 — 미리보기로 먼저 세고, 글 번호를 적거나 --전부 를 붙이세요.\n');
       process.exitCode = 1;
       return;
     }
   }
 
-  let 바뀐글 = 0;
   let 바뀐이미지 = 0;
   const 어긋난글 = [];
+  const 고친글 = [];
   for (const id of ids) {
     let r;
     try {
@@ -185,7 +189,7 @@ async function main() {
       if (ids.length <= 20) console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}\n        ⏭️  ${r.skip}`);
       continue;
     }
-    바뀐글 += 1;
+    고친글.push(r.id);
     바뀐이미지 += r.고친것.length;
     console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}`);
     console.log(`        alt 가 둘인 이미지 ${r.고친것.length}장`);
@@ -201,7 +205,10 @@ async function main() {
     console.log(`\n⚠️ 남길 alt 를 기계가 가를 수 없는 글 ${어긋난글.length}편은 건너뛰었습니다 — 손으로 봅니다`);
     console.log(`   ${어긋난글.map((r) => r.id).join(' ')}`);
   }
-  console.log(`\n▶ 글 ${바뀐글}편의 이미지 ${바뀐이미지}장에서 alt 가 둘입니다${apply ? ' — 하나로 돌렸습니다' : ''}`);
+  if (apply && 고친글.length) {
+    console.log(`\n고친 글 ${고친글.length}편: ${고친글.join(' ')}`);
+  }
+  console.log(`\n▶ 글 ${고친글.length}편의 이미지 ${바뀐이미지}장에서 alt 가 둘입니다${apply ? ' — 하나로 돌렸습니다' : ''}`);
   console.log(`   전제가 깨진 글 ${어긋난글.length}편\n`);
 }
 

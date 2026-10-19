@@ -66,6 +66,7 @@ on:
           - '용접된 문단 풀기 (실제 적용 · 비용 0원)'
           - '한 이미지의 alt 둘 찾기 (전체 훑기 · 비용 0원)'
           - '한 이미지의 alt 둘 고치기 (실제 적용 · 비용 0원)'
+          - '한 이미지의 alt 둘 고치기 — 통과한 글 전부 (실제 적용 · 비용 0원)'
           - '같은 대회 짝 찾기 (안내 걸 후보 · 비용 0원)'
           - '같은 대회 짝 찾기 — 건너뛴 것까지 (비용 0원)'
           - '안내 여러 쌍에 넣기 (미리보기 · 비용 0원)'
@@ -751,6 +752,9 @@ jobs:
         run: |
           apply=''
           case "$IN_MODE" in *실제\ 적용*) apply='--apply' ;; esac
+          # 번호를 적지 않고 전부 고치는 길. 막는 것은 번호가 아니라 글마다
+          # 하는 '남길것이맞나' 확인이고, 그 확인을 통과한 글만 고친다.
+          case "$IN_MODE" in *통과한\ 글\ 전부*) apply="$apply --전부" ;; esac
           node src/wordpress/dup-alt.mjs $IN_IDS $apply 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 

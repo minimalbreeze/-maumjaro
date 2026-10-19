@@ -124,10 +124,14 @@ check('fix-alt 가 저장 전에 중복을 막는다', () => {
   assert.ok(src.indexOf('alt하나씩인가(html)') < src.indexOf("method: 'POST'"), '확인이 저장보다 뒤입니다');
 });
 
-check('미리보기가 기본이고 전체 적용은 막혀 있다', () => {
+check('미리보기가 기본이고, 번호 없는 전체 적용은 --전부 를 붙여야 한다', () => {
   const src = fs.readFileSync(new URL('../src/wordpress/dup-alt.mjs', import.meta.url), 'utf8');
   assert.match(src, /apply = false/, '기본값이 저장이면 실수로 눌렀을 때 글이 바뀝니다');
-  assert.match(src, /전체 적용은 막아 두었습니다/, '번호 없이 전체 적용이 됩니다');
+  assert.match(src, /apply && !전부/, '번호도 --전부 도 없이 전체가 고쳐집니다');
+  assert.match(src, /막아 두었습니다/, '막는 말이 없습니다');
+  // --전부 가 확인을 건너뛰게 만들면 안 된다. 확인은 글마다 fixOne 안에서 한다.
+  assert.ok(!/전부[^\n]*남길것이맞나/.test(src), '--전부 가 확인을 건너뜁니다');
+  assert.ok(!/남길것이맞나[^\n]*전부/.test(src), '--전부 가 확인에 끼어듭니다');
 });
 
 check('content 하나만 보내고, 원본을 먼저 남기고, wiki 밖은 건드리지 않는다', () => {
