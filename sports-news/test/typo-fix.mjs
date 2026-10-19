@@ -269,4 +269,20 @@ check('이글에쓰나 가 범위를 그대로 말한다', () => {
   assert.equal(이글에쓰나({ 틀린: 'a', 맞는: 'b', 글: [8559] }, null), false);
 });
 
+check('글 번호를 주면 그 글만 손댄다', () => {
+  // 2026-10-19: 표에 예전 세션에서 넣고 적용하지 않은 항목(8592 안세영
+  // 경기 결과)이 남아 있었다. 전화번호 네 글을 고치려고 돌리면 그것도
+  // 함께 들어간다. 확인하지 않은 사실을 함께 밀지 않으려면 범위가 필요하다.
+  const src = fs.readFileSync(new URL('../src/wordpress/typo-fix.mjs', import.meta.url), 'utf8');
+  assert.match(src, /const 고를글 = process\.argv/, '글 번호를 안 받습니다');
+  assert.match(src, /고를글\.length \? 전체\.filter/, '번호로 거르지 않습니다');
+  // 번호를 안 주면 예전처럼 전체를 본다 — 기존 동작이 바뀌면 안 된다.
+  assert.match(src, /고를글\.length \? [^:]+ : 전체/, '번호가 없을 때 전체를 안 봅니다');
+  // 워크플로가 번호를 넘긴다.
+  const wf = ['../../.github/workflows/sports-news.yml', '../.github/workflows/sports-news.yml']
+    .map((x) => new URL(x, import.meta.url)).find((u) => fs.existsSync(u));
+  assert.ok(wf, '워크플로를 못 찾았습니다');
+  assert.match(fs.readFileSync(wf, 'utf8'), /typo-fix\.mjs \$how \$IN_IDS/, '워크플로가 번호를 안 넘깁니다');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

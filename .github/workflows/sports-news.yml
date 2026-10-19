@@ -865,6 +865,7 @@ jobs:
         working-directory: sports-news
         env:
           IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
@@ -875,7 +876,9 @@ jobs:
             *후보\ 찾기*) how='--찾기' ;;
             *실제\ 적용*) how='--apply' ;;
           esac
-          node src/wordpress/typo-fix.mjs $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          # 글 번호를 적으면 그 글만 손댄다. 표에는 예전에 넣고 적용하지
+          # 않은 항목이 남아 있을 수 있어서, "오늘 이 글만" 이 필요하다.
+          node src/wordpress/typo-fix.mjs $how $IN_IDS 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
       - name: 쿠팡 광고를 첫 문단 뒤로

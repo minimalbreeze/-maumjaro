@@ -491,6 +491,13 @@ export function 오타후보(글 = [], { 드문것 = 1, 흔한것 = 5 } = {}) {
 async function main() {
   const 적용 = process.argv.includes('--apply');
   const 찾기만 = process.argv.includes('--찾기');
+  // 글 번호를 적으면 **그 글만** 손댄다.
+  //
+  // 2026-10-19: 표에 예전 세션에서 넣고 적용하지 않은 항목(8592 안세영
+  // 경기 결과)이 남아 있었다. 전화번호 네 글을 고치려고 돌리면 그것도
+  // 함께 들어간다. 내가 확인하지 않은 경기 사실을 함께 밀 수는 없다.
+  // 표가 계속 늘어나므로 "오늘 이 글만" 이 필요하다.
+  const 고를글 = process.argv.slice(2).filter((a) => /^\d+$/.test(a)).map(Number);
   const base = wpConfig().base;
 
   console.log('\n────────────────────────────────────────────────────────');
@@ -500,8 +507,14 @@ async function main() {
   console.log(`   대상 사이트: ${new URL(base).host}  ← 여기 글만 손댑니다`);
   console.log('────────────────────────────────────────────────────────');
 
-  const 글 = await 발행글전부();
-  console.log(`\n발행 ${글.length}편`);
+  const 전체 = await 발행글전부();
+  const 글 = 고를글.length ? 전체.filter((p) => 고를글.includes(p.id)) : 전체;
+  console.log(`\n발행 ${전체.length}편`);
+  if (고를글.length) {
+    console.log(`   글 번호를 주셨으니 ${글.length}편만 봅니다: ${고를글.join(' ')}`);
+    const 없는것 = 고를글.filter((id) => !전체.some((p) => p.id === id));
+    if (없는것.length) console.log(`   ⚠️ 발행글에 없는 번호: ${없는것.join(' ')}`);
+  }
 
   if (찾기만) {
     const 후보 = 오타후보(글);
