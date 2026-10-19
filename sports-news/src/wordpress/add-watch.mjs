@@ -161,6 +161,62 @@ export function bannerOnlyChange(before, after, sign = BANNER_SIGN) {
   return 벗기기(before) === 벗기기(after);
 }
 
+/**
+ * **근거를 잃은 중계 배너를 뺀다.** (2026-10-19 운영자 승인)
+ *
+ * 왜 필요한가
+ *   #206 으로 "같이 읽을 글"을 고르기에서 걷어내자, 배너가 붙을 근거가
+ *   그 목록뿐이었던 글이 8편 드러났다. 그 글들에는 **다른 글 제목이 고른
+ *   배너**가 들어가 있다. add-watch 는 넣기·교체만 할 줄 알아서 뺄 길이
+ *   없었다.
+ *
+ * 무엇만 빼는가
+ *   지금 설정으로 pickWatchLinks 가 **null** 을 돌려주는 글의 배너만 뺀다.
+ *   붙을 이유가 있으면 건드리지 않는다. 지우는 쪽이라 넣기보다 좁게 간다.
+ *
+ * 안전선은 넣기와 똑같다 — content 하나만, 배너 말고 안 바뀌었는지 확인,
+ * 저장 전 백업, 두 번 돌려도 같은 결과.
+ */
+export async function removeWatchBanner(postId, { apply = false, siteCategories = [] } = {}) {
+  const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
+  const content = post?.content?.raw ?? post?.content?.rendered ?? '';
+  const title = post?.title?.raw || post?.title?.rendered || '';
+  const catId = Array.isArray(post?.categories) ? post.categories[0] : null;
+  const category = categoryIndex(siteCategories).get(catId) || '';
+
+  const base = {
+    id: postId, title, status: post?.status, category, changed: false, backup: null,
+  };
+
+  // 붙을 이유가 있으면 빼지 않는다. 여기가 이 도구의 전부다.
+  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  if (entry) return { ...base, skip: '지금 설정으로도 붙을 배너가 있습니다 — 빼지 않습니다' };
+
+  const 표시들 = allWatchLabels();
+  const 있는것 = findBanners(content, 표시들);
+  if (!있는것.length) return { ...base, skip: '뺄 중계 배너가 없습니다' };
+
+  let html = content;
+  for (const b of [...있는것].reverse()) html = html.slice(0, b.start) + html.slice(b.end);
+  // 블록을 빼면 빈 줄이 셋씩 남는다. 보기 싫으므로 둘로 줄인다.
+  html = html.replace(/\n{3,}/g, '\n\n');
+
+  if (html === content) return { ...base, skip: '뺄 것이 없습니다' };
+  if (!bannerOnlyChange(content, html, 표시들)) {
+    throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
+  }
+
+  let backup = null;
+  if (apply) {
+    backup = saveContentBackup({ id: postId, status: post?.status, title: post?.title, slug: post?.slug, content: post?.content });
+    await wpFetch(`/wp/v2/posts/${postId}`, { method: 'POST', body: { content: html }, timeoutMs: 45000 });
+  }
+  return {
+    ...base, 한일: '뺌', url: 있는것[0].url, changed: true, backup,
+    진단: `뺀 배너 ${있는것.length}개 — ${있는것.map((b) => b.url).join(', ')}`,
+  };
+}
+
 /** 글 하나를 본다. 넣을 수 있으면 넣는다. content 하나만 보낸다. */
 export async function addWatchBanner(postId, { apply = true, siteCategories = [] } = {}) {
   const { data: post } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
@@ -262,10 +318,15 @@ async function main() {
   // --all 은 발행글 전체를 훑는다. 설정을 늘려도 이미 올린 글은 바뀌지 않아서,
   // 357편 중계 글에 돌릴 길이 없었다(2026-10-19). 넣는 일과 안전선은 아래
   // addWatchBanner 가 그대로 하고, banner-all 은 목록과 호스트 검사만 한다.
+  // --빼기 는 근거를 잃은 배너만 뺀다. 지우는 쪽이라 넣기와 섞지 않는다.
+  const 뺄까 = process.argv.includes('--빼기');
+
   if (process.argv.includes('--all')) {
-    log.section(`📺 중계 배너 전체 훑기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
+    log.section(뺄까
+      ? `🧹 근거 없어진 중계 배너 빼기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`
+      : `📺 중계 배너 전체 훑기 ${apply ? '' : '(미리보기 — 저장하지 않습니다)'}`);
     const { data: cats } = await wpFetch('/wp/v2/categories', { query: { per_page: 100 } });
-    await 전수(addWatchBanner, {
+    await 전수(뺄까 ? removeWatchBanner : addWatchBanner, {
       유형: 유형읽기(process.argv),
       limit: 제한읽기(process.argv),
       apply,

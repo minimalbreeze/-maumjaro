@@ -256,4 +256,43 @@ await checkAsync('글 번호를 안 적으면 안내하고 멈춘다', async () 
 
 fs.rmSync(path.join(ROOT, 'out', 'backup-content'), { recursive: true, force: true });
 wp.server.close();
+check('빼기는 붙을 이유가 있으면 건드리지 않는다', () => {
+  // 이 도구의 전부다. pickWatchLinks 가 무언가 돌려주면 그 배너는 근거가 있다.
+  const src = fs.readFileSync(new URL('../src/wordpress/add-watch.mjs', import.meta.url), 'utf8');
+  const 몸통 = src.slice(src.indexOf('export async function removeWatchBanner'));
+  assert.match(몸통, /if \(entry\) return[\s\S]{0,120}빼지 않습니다/,
+    '붙을 이유가 있을 때 빼지 않는 분기가 없습니다');
+});
+
+check('빼기도 안전선을 그대로 쓴다', () => {
+  const src = fs.readFileSync(new URL('../src/wordpress/add-watch.mjs', import.meta.url), 'utf8');
+  const 몸통 = src.slice(src.indexOf('export async function removeWatchBanner'));
+  const 끝 = 몸통.indexOf('\n}\n');
+  const 함수 = 몸통.slice(0, 끝 > 0 ? 끝 : 몸통.length);
+  assert.match(함수, /bannerOnlyChange\(/, '배너 말고 안 바뀌었는지 확인하지 않습니다');
+  assert.match(함수, /saveContentBackup\(/, '백업을 남기지 않습니다');
+  // 보내는 것은 content 하나뿐이어야 한다. 백업(saveContentBackup)은
+  // 되돌리려고 제목·주소를 **담아 두는** 것이라 전송과 다르다 — 처음엔
+  // 이 둘을 한 정규식으로 보다가 백업을 전송으로 잘못 읽었다.
+  const 보냄 = [...함수.matchAll(/method:\s*'POST'[\s\S]{0,160}?\}/g)].map((m) => m[0]);
+  assert.equal(보냄.length, 1, `POST 가 ${보냄.length}군데입니다`);
+  assert.match(보냄[0], /body: \{ content: html \}/, 'content 말고 다른 것을 보냅니다');
+  assert.ok(!/body:[\s\S]*?(slug|title|status)/.test(보냄[0]),
+    '제목·주소·발행상태를 함께 보냅니다');
+});
+
+check('빼기는 미리보기가 기본이다', () => {
+  const src = fs.readFileSync(new URL('../src/wordpress/add-watch.mjs', import.meta.url), 'utf8');
+  const 몸통 = src.slice(src.indexOf('export async function removeWatchBanner'));
+  assert.match(몸통.slice(0, 200), /apply = false/, '빼기가 기본으로 저장합니다');
+});
+
+check('워크플로에서 빼기와 넣기가 섞이지 않는다', () => {
+  const wf = fs.readFileSync(new URL('../../.github/workflows/sports-news.yml', import.meta.url), 'utf8');
+  assert.match(wf, /근거 없어진 중계 배너 빼기 \(미리보기/, '빼기 모드가 없습니다');
+  assert.match(wf, /rm='--빼기'/, '빼기 깃발을 넘기지 않습니다');
+  // 빼기 모드일 때만 --빼기 가 붙어야 한다
+  assert.match(wf, /case "\$IN_MODE" in \*배너\\ 빼기\*\) rm='--빼기' ;; esac/);
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
