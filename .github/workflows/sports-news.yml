@@ -95,6 +95,8 @@ on:
           - '글의 섹션 내용 갈아끼우기 (미리보기 · 비용 0원)'
           - '글의 섹션 내용 갈아끼우기 (실제 적용 · 비용 0원)'
           - '제목·본문 오타 고치기 (실제 적용 · 비용 0원)'
+          - '중복 글 휴지통으로 보내기 (미리보기 · 비용 0원)'
+          - '중복 글 휴지통으로 보내기 (실제 적용 · 비용 0원)'
           - '올해 글 안내 넣기 (미리보기 · 비용 0원)'
           - '올해 글 안내 넣기 (실제 적용 · 비용 0원)'
       article_text:
@@ -879,6 +881,36 @@ jobs:
           # 글 번호를 적으면 그 글만 손댄다. 표에는 예전에 넣고 적용하지
           # 않은 항목이 남아 있을 수 있어서, "오늘 이 글만" 이 필요하다.
           node src/wordpress/typo-fix.mjs $how $IN_IDS 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
+
+      - name: 중복 글 휴지통으로 보내기
+        # 같은 시설을 다룬 글이 둘이라 구글이 어느 쪽도 올리지 않을 때,
+        # **사람이 고른 한 편**을 휴지통으로 보낸다.
+        #
+        # noindex.mjs 머리말의 "왜 삭제가 아닌가" 는 그대로 유효하다 —
+        # 수명이 끝난 글 수백 편을 코드가 골라 지우는 일은 하지 않는다.
+        # 이 모드는 운영자가 번호를 직접 적을 때만 돈다.
+        #
+        # 휴지통으로만 보낸다. 영구 삭제하는 길은 도구에 아예 없다.
+        # 지우기 전에 본문 전체를 파일로 남기고, 그 글을 가리키는 다른 글을
+        # 세어 보여준다 — 지우면 그 링크들이 깨진 링크가 되고, 구글은 링크로
+        # 페이지를 찾는다.
+        if: ${{ contains(inputs.mode, '휴지통') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_IDS" ]; then
+            echo "::error::지울 글 번호를 적어주세요 (post_ids)"; exit 1
+          fi
+          how=''
+          case "$IN_MODE" in *실제\ 적용*) how='--apply' ;; esac
+          node src/wordpress/delete-post.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
       - name: 쿠팡 광고를 첫 문단 뒤로
