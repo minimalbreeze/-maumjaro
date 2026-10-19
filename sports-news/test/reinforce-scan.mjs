@@ -15,7 +15,7 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { 재어보기, 글자만, 찾는것, 상금이찾는것 } from '../src/wordpress/reinforce-scan.mjs';
+import { 재어보기, 글자만, 찾는것, 상금이찾는것, 돈눈금 } from '../src/wordpress/reinforce-scan.mjs';
 
 const 검사 = [];
 const check = (이름, fn) => 검사.push([이름, fn]);
@@ -144,6 +144,33 @@ check('기준을 한 군데서만 정한다 — 보강1순위를 다시 만들�
   const src = fs.readFileSync(new URL('../src/wordpress/reinforce-scan.mjs', import.meta.url), 'utf8');
   assert.match(src, /import \{[^}]*보강1순위[^}]*\} from '\.\/index-audit\.mjs'/);
   assert.ok(!/\['시설', '상금'\]\.includes/.test(src), '기준을 두 번 적었습니다');
+});
+
+check('한국어 수사가 끼어도 돈을 센다 — 960만 달러를 놓쳐 돈을 쓸 뻔했다', () => {
+  // 처음 눈금은 숫자 바로 뒤에 단위가 와야 했다. LPGA·ATP 상금은 거의 다
+  // 'N만 달러' 꼴이라, 상금이 이미 적힌 글을 "상금액 없음" 으로 봤다.
+  for (const s of [
+    '960만 달러', '상금 723만 달러', '900만 달러 폭증',
+    '4억 원', '1억 6천만 원', '총상금 2억원', '우승상금 138억',
+    '11억 2천만 원', '25,000원', '45,000/60,000원',
+  ]) assert.equal(돈눈금.test(s), true, `놓칩니다: ${s}`);
+});
+
+check('홀 수·연도·전화번호·회차를 돈으로 세지 않는다', () => {
+  for (const s of [
+    '9홀 코스', '주중 18홀', '36홀 파크골프장', '2026년 10월',
+    '031-400-2582', '3쿠션 당구', '제12회 국수산맥', '31개 대회', '83명 중 단 3장',
+  ]) assert.equal(돈눈금.test(s), false, `헛잡습니다: ${s} → ${(s.match(돈눈금) || [])[0]}`);
+});
+
+check('요금과 상금액이 같은 눈금을 쓴다', () => {
+  // 두 벌로 만들면 한쪽만 고쳐져 어긋난다. 실제로 그렇게 어긋나 있었다.
+  const 요금 = 찾는것.find((x) => x.이름 === '요금');
+  const 상금액 = 상금이찾는것.find((x) => x.이름 === '상금액');
+  for (const s of ['960만 달러', '25,000원', '9홀 코스']) {
+    assert.equal(요금.본다(s), 돈눈금.test(s));
+    assert.equal(상금액.본다(s), 돈눈금.test(s));
+  }
 });
 
 export default async function run() {
