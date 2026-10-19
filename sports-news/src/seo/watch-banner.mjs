@@ -169,17 +169,21 @@ export function 내부주소인가(url, base = process.env.WORDPRESS_URL || '') 
 }
 
 /** 링크에 붙일 rel. 내부면 없음(빈 글), 바깥이면 nofollow 를 남긴다. */
-export function relFor(url, base) {
+export function relFor(url, base = process.env.WORDPRESS_URL || '') {
   return 내부주소인가(url, base) ? '' : ' rel="nofollow"';
 }
 
-export function watchBannerHtml(entry) {
+export function watchBannerHtml(entry, base = process.env.WORDPRESS_URL || '') {
+  // base 를 인자로 받는다. 예전엔 relFor 안에서 process.env 만 읽었는데,
+  // 그러면 **비밀값이 없는 자리에서 조용히 바깥 링크로 취급된다.**
+  // 2026-10-19 에 자체 검사 단계가 그래서 깨졌다 — 그 단계에는
+  // WORDPRESS_URL 이 없다. 넘길 길을 열어 두면 테스트가 환경에 안 기댄다.
   if (!entry?.primary?.url) return '';
 
   const p = entry.primary;
   const extras = (entry.secondary || [])
     .filter((s) => s?.url && s?.text)
-    .map((s) => `<a href="${esc(s.url)}"${relFor(s.url)}
+    .map((s) => `<a href="${esc(s.url)}"${relFor(s.url, base)}
         style="color:#6b2d8f;font-weight:600;text-decoration:underline;">${esc(s.text)}</a>`)
     .join(' · ');
 
@@ -190,7 +194,7 @@ export function watchBannerHtml(entry) {
   const v = entry.vod?.url && entry.vod.url !== p.url ? entry.vod : null;
   const 다시보기 = v?.url && v?.text
     ? `
-  <a href="${esc(v.url)}"${relFor(v.url)}
+  <a href="${esc(v.url)}"${relFor(v.url, base)}
      style="display:inline-block;margin-left:8px;padding:13px 28px;border-radius:999px;background:rgba(255,255,255,0.22);color:#ffffff;font-size:17px;font-weight:800;text-decoration:none;border:2px solid #ffffff;">
     ▶ ${esc(v.text)}
   </a>`
@@ -199,7 +203,7 @@ export function watchBannerHtml(entry) {
   return `<!-- wp:html -->
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
   <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">${esc(watchLabel(entry))}</div>
-  <a href="${esc(p.url)}"${relFor(p.url)}
+  <a href="${esc(p.url)}"${relFor(p.url, base)}
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →
   </a>${다시보기}
