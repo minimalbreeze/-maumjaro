@@ -255,15 +255,17 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          # 파이프 뒤에서도 node 의 실패를 잃지 않는다 (아래 tee 때문).
+          set -o pipefail
           n=10
           case "$IN_COUNT" in
             ''|*[!0-9]*) ;;
             *) [ "$IN_COUNT" -gt 1 ] && n="$IN_COUNT" ;;
           esac
           if [ -n "$IN_TOPIC" ]; then
-            node src/main.mjs "--candidates=$n" "--topic=$IN_TOPIC"
+            node src/main.mjs "--candidates=$n" "--topic=$IN_TOPIC" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           else
-            node src/main.mjs "--candidates=$n"
+            node src/main.mjs "--candidates=$n" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           fi
 
       - name: 사이트 조사 (카테고리·SEO 필드 확인, 글은 만들지 않음)
@@ -330,6 +332,7 @@ jobs:
           NAVER_AD_SECRET: ${{ secrets.NAVER_AD_SECRET }}
           NAVER_AD_CUSTOMER_ID: ${{ secrets.NAVER_AD_CUSTOMER_ID }}
         run: |
+          set -o pipefail
           # '모든 글' 모드는 글 번호가 필요 없다. 발행·임시글을 전부 훑는다.
           case "$IN_MODE" in
             *모든\ 글*)
@@ -338,7 +341,7 @@ jobs:
               esac
               dry=''
               case "$IN_MODE" in *미리보기*) dry='--dry-run' ;; esac
-              node src/wordpress/fix-links.mjs --all "--limit=$IN_COUNT" $dry
+              node src/wordpress/fix-links.mjs --all "--limit=$IN_COUNT" $dry 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
               exit 0
               ;;
           esac
@@ -472,15 +475,16 @@ jobs:
         run: |
           # '고치기' 방식이면 --repair 를 붙인다.
           repair=""
+          set -o pipefail
           case "$IN_MODE" in *"잘못 채운"*) repair="--repair" ;; esac
 
           case "$IN_MODE" in
-            *미리보기*) node src/wordpress/fill-meta.mjs --dry-run $repair ;;
+            *미리보기*) node src/wordpress/fill-meta.mjs --dry-run $repair 2>&1 | tee -a "$RUNNER_TEMP/sn.log" ;;
             *)
               case "$IN_COUNT" in
                 ''|*[!0-9]*) echo "::error::개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
               esac
-              node src/wordpress/fill-meta.mjs "--limit=$IN_COUNT" $repair ;;
+              node src/wordpress/fill-meta.mjs "--limit=$IN_COUNT" $repair 2>&1 | tee -a "$RUNNER_TEMP/sn.log" ;;
           esac
 
       - name: 이미지 설명(alt) 채우기
@@ -497,13 +501,14 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          set -o pipefail
           case "$IN_MODE" in
-            *미리보기*) node src/wordpress/fix-alt.mjs --dry-run ;;
+            *미리보기*) node src/wordpress/fix-alt.mjs --dry-run 2>&1 | tee -a "$RUNNER_TEMP/sn.log" ;;
             *)
               case "$IN_COUNT" in
                 ''|*[!0-9]*) echo "::error::개수는 숫자여야 합니다: $IN_COUNT"; exit 1 ;;
               esac
-              node src/wordpress/fix-alt.mjs "--limit=$IN_COUNT" ;;
+              node src/wordpress/fix-alt.mjs "--limit=$IN_COUNT" 2>&1 | tee -a "$RUNNER_TEMP/sn.log" ;;
           esac
 
       - name: 글 제목·설명 고치기
@@ -522,6 +527,7 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          set -o pipefail
           if [ -z "$IN_IDS" ]; then
             echo "::error::고칠 글 번호를 적어주세요 (post_ids)"; exit 1
           fi
@@ -538,7 +544,7 @@ jobs:
             node src/wordpress/retitle.mjs set "$id" $dry \
               ${IN_TITLE:+--title="$IN_TITLE"} \
               ${IN_DESC:+--desc="$IN_DESC"} \
-              ${IN_KW:+--kw="$IN_KW"}
+              ${IN_KW:+--kw="$IN_KW"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           done
 
       - name: 중계 배너 넣기
@@ -750,13 +756,14 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          set -o pipefail
           how=''
           case "$IN_MODE" in *실제\ 적용*) how='--apply' ;; esac
           # 글 번호를 적으면 그 글만, 안 적으면 발행글 전체를 훑는다.
           if [ -n "$IN_IDS" ]; then
-            node src/wordpress/move-coupang.mjs $IN_IDS $how
+            node src/wordpress/move-coupang.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           else
-            node src/wordpress/move-coupang.mjs --all $how
+            node src/wordpress/move-coupang.mjs --all $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           fi
 
       - name: 글 본문 보기
