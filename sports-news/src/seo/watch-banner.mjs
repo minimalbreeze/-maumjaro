@@ -147,15 +147,39 @@ const esc = (s) => String(s)
  * 무엇의 중계인지는 CTA 글귀와 hint 가 이미 말해 준다.
  *
  * 링크는 현재 창에서 연다. 새 창으로 띄우면 독자가 원래 글로 돌아오는 길을
- * 잃는다. target이 없으니 noopener도 필요 없다. 바깥 링크이므로 nofollow는 남긴다.
+ * 잃는다. target이 없으니 noopener도 필요 없다. 바깥 링크에만 nofollow 를 남긴다 — 내 블로그 안으로 가는 링크에는 안 붙인다.
  */
+/**
+ * 내 블로그 안으로 가는 링크인가.
+ *
+ * 2026-10-19: 야구 중계는 티빙·쿠팡플레이·네이버로 쪼개져 있고 유료다.
+ * 바깥으로 보내면 독자가 거기서 또 헤맨다. 그래서 운영자가 내부 안내 글
+ * (5762 '2026 KBO 프로야구')로 보내기로 정했다.
+ *
+ * 내부 링크에는 **nofollow 를 붙이지 않는다.** 그건 "이 링크를 신뢰하지
+ * 않는다"는 뜻이라, 내 글에 붙이면 내가 내 글을 깎는다. add-notice.mjs 가
+ * 같은 이유로 안 붙인다.
+ */
+export function 내부주소인가(url, base = process.env.WORDPRESS_URL || '') {
+  try {
+    return new URL(String(url)).host === new URL(String(base)).host;
+  } catch {
+    return false;
+  }
+}
+
+/** 링크에 붙일 rel. 내부면 없음(빈 글), 바깥이면 nofollow 를 남긴다. */
+export function relFor(url, base) {
+  return 내부주소인가(url, base) ? '' : ' rel="nofollow"';
+}
+
 export function watchBannerHtml(entry) {
   if (!entry?.primary?.url) return '';
 
   const p = entry.primary;
   const extras = (entry.secondary || [])
     .filter((s) => s?.url && s?.text)
-    .map((s) => `<a href="${esc(s.url)}" rel="nofollow"
+    .map((s) => `<a href="${esc(s.url)}"${relFor(s.url)}
         style="color:#6b2d8f;font-weight:600;text-decoration:underline;">${esc(s.text)}</a>`)
     .join(' · ');
 
@@ -166,7 +190,7 @@ export function watchBannerHtml(entry) {
   const v = entry.vod?.url && entry.vod.url !== p.url ? entry.vod : null;
   const 다시보기 = v?.url && v?.text
     ? `
-  <a href="${esc(v.url)}" rel="nofollow"
+  <a href="${esc(v.url)}"${relFor(v.url)}
      style="display:inline-block;margin-left:8px;padding:13px 28px;border-radius:999px;background:rgba(255,255,255,0.22);color:#ffffff;font-size:17px;font-weight:800;text-decoration:none;border:2px solid #ffffff;">
     ▶ ${esc(v.text)}
   </a>`
@@ -175,7 +199,7 @@ export function watchBannerHtml(entry) {
   return `<!-- wp:html -->
 <div style="margin:32px 0;padding:22px 20px;border-radius:16px;background:linear-gradient(135deg,#b779ef,#ff8fb3);text-align:center;">
   <div style="color:#ffffff;font-size:15px;font-weight:700;letter-spacing:0.02em;margin-bottom:6px;">${esc(watchLabel(entry))}</div>
-  <a href="${esc(p.url)}" rel="nofollow"
+  <a href="${esc(p.url)}"${relFor(p.url)}
      style="display:inline-block;padding:13px 28px;border-radius:999px;background:#ffffff;color:#6b2d8f;font-size:17px;font-weight:800;text-decoration:none;">
     ${esc(p.text)} →
   </a>${다시보기}
