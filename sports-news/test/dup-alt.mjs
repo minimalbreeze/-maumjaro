@@ -11,7 +11,7 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { alt값들, 중복alt푼것, 한줄로, 제목에서나왔나 } from '../src/wordpress/dup-alt.mjs';
+import { alt값들, 중복alt푼것, 한줄로, 제목머리, 남길것이맞나 } from '../src/wordpress/dup-alt.mjs';
 import { fillAlts, altOnlyChange, alt하나씩인가 } from '../src/wordpress/fix-alt.mjs';
 
 const 검사 = [];
@@ -140,20 +140,36 @@ check('content 하나만 보내고, 원본을 먼저 남기고, wiki 밖은 건�
   assert.match(부름[1], /wpConfig\(\)\.base/, '우리 사이트 주소를 넘기지 않습니다');
 });
 
-check('남길 alt 가 제목에서 나온 것인지 센다 — 네 편 보고 835장을 고칠 수는 없다', () => {
-  // "마지막 alt 를 남긴다"는 규칙은 fix-alt 가 제목에서 만든 alt 를 태그
-  // 끝에 붙였다는 전제에 기댄다. 349편 835장에 손대기 전에 그 전제가
-  // 글마다 참인지 센다. 어긋난 글은 건너뛰고 사람이 본다.
-  const 제목 = '윤석민 선수: KIA 에이스 투수에서 프로골퍼 변신 스토리(#13)';
-  assert.equal(제목에서나왔나('윤석민 선수: KIA 에이스 투수에서 프로골퍼 변신 스토리 - 주요 경력', 제목), true);
-  assert.equal(제목에서나왔나('기아 윤석민 사이버투수 사이버투수 은퇴', 제목), false,
-    '키워드 나열을 제목에서 나온 것으로 봅니다');
-  // 괄호 안 군더더기는 제목줄이기가 떼므로 거기까지 같을 필요는 없다.
-  assert.equal(제목에서나왔나('윤석민 선수: KIA 에이스 투수에서 프로골퍼 변신 스토리', 제목), true);
-  for (const v of [undefined, null, '']) {
-    assert.equal(제목에서나왔나(v, 제목), false);
-    assert.equal(제목에서나왔나('아무개', v), false);
-  }
+check('제목의 첫 낱말로 가른다 — 제목을 나중에 고친 글이 많다', () => {
+  // 글 전체를 견주면 안 된다. 1650 은 지금 '서평택골프클럽 파3 골프장
+  // 이용료·예약 방법' 인데 alt 는 옛 제목에서 나온 '서평택골프클럽 파3
+  // 골프장: 이용료 및 이용방법, …' 이다. 같은 시설이고 맞는 alt 인데
+  // 글자가 안 맞는다 — 실제로 60편이 그래서 걸렸다.
+  assert.equal(제목머리('서평택골프클럽 파3 골프장 이용료·예약 방법 (포승향남로 218-10)'), '서평택골프클럽');
+  assert.equal(제목머리('윤석민 선수: KIA 에이스 투수에서 프로골퍼 변신 스토리(#13)'), '윤석민');
+  for (const v of [undefined, null, '', '가 나']) assert.equal(제목머리(v), '', `${v} 에서 머리를 뽑았습니다`);
+});
+
+check('남길 alt 가 제목 첫 낱말로 시작하고, 버릴 것은 안 그래야 한다', () => {
+  const 제목 = '서평택골프클럽 파3 골프장 이용료·예약 방법 (포승향남로 218-10)';
+  // 실제 1650: 제목은 고쳤지만 남길 alt 는 같은 시설 이름으로 시작한다.
+  assert.equal(남길것이맞나(
+    '서평택골프클럽 파3 골프장: 이용료 및 이용방법, 예약방법, 매력포인트',
+    ['용인 88CC 파3 골프장 용인 88CC 파3 88CC'], 제목), true);
+  // 남길 것이 남의 이름으로 시작하면 가른 것이 틀렸다.
+  assert.equal(남길것이맞나('용인 88CC 파3 골프장', ['서평택골프클럽 파3'], 제목), false);
+});
+
+check('둘 다 제목 머리로 시작하면 기계가 가를 수 없다 — 손으로 본다', () => {
+  // '서울 파크골프장' 처럼 머리가 흔한 글에서 엉뚱한 쪽을 남길 수 있다.
+  const 제목 = '서울 파크골프장 이용료·예약 방법';
+  assert.equal(남길것이맞나('서울 파크골프장 이용료', ['서울 파크골프장 서울 파크 서울'], 제목), false,
+    '가를 수 없는 글을 통과시킵니다');
+});
+
+check('제목 머리를 못 뽑으면 손으로 본다', () => {
+  assert.equal(남길것이맞나('아무 alt', ['버릴 것'], ''), false);
+  for (const v of [undefined, null]) assert.equal(남길것이맞나(v, [], '윤석민 선수: 변신'), false);
 });
 
 check('전제가 깨진 글은 저장하지 않고 건너뛴다', () => {
@@ -161,7 +177,7 @@ check('전제가 깨진 글은 저장하지 않고 건너뛴다', () => {
   const i = src.indexOf('어긋난것');
   const j = src.indexOf("method: 'POST'");
   assert.ok(i > 0 && i < j, '전제 확인이 저장보다 뒤입니다');
-  assert.match(src, /skip: `남길 alt 가 제목에서 나온 것이 아닙니다/, '건너뛰지 않고 저장합니다');
+  assert.match(src, /skip: `남길 alt 를 기계가 가를 수 없습니다/, '건너뛰지 않고 저장합니다');
 });
 
 export default async function run() {
