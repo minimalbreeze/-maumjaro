@@ -42,6 +42,7 @@ import { wpFetch, wpConfig } from './client.mjs';
 import { saveContentBackup, altOnlyChange, alt하나씩인가 } from './fix-alt.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 import { 발행글전부 } from './index-audit.mjs';
+import { 제목줄이기 } from './fix-alt.mjs';
 
 const IMG = /<img\b[^>]*>/gi;
 const ALT = /\s*\balt\s*=\s*(["'])([\s\S]*?)\1/gi;
@@ -74,6 +75,22 @@ export function 중복alt푼것(content) {
   return { html, 고친것 };
 }
 
+/**
+ * 남길 alt 가 **이 글 제목에서 나온 것**인지 본다.
+ *
+ * "마지막 alt 를 남긴다"는 규칙은 fix-alt 가 제목에서 만든 alt 를 태그 끝에
+ * 붙였다는 전제에 기댄다. 349편 835장에 손대기 전에 그 전제가 349편 전부에서
+ * 참인지 세야 한다 — 네 편 보고 835장을 고칠 수는 없다.
+ *
+ * fix-alt 의 altFor() 는 `제목줄이기(title)` 로 시작하는 alt 를 만든다.
+ * 그걸로 시작하지 않으면 전제가 깨진 글이다.
+ */
+export function 제목에서나왔나(alt, title) {
+  const 머리 = 제목줄이기(title);
+  if (!머리) return false;
+  return String(alt || '').trim().startsWith(머리);
+}
+
 /** 글 하나를 고친다. */
 export async function fixOne(postId, { apply = false } = {}) {
   const { data } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
@@ -87,6 +104,12 @@ export async function fixOne(postId, { apply = false } = {}) {
 
   const { html, 고친것 } = 중복alt푼것(content);
   if (!고친것.length) return { ...결과, skip: 'alt 가 둘인 이미지가 없습니다' };
+
+  // 전제가 깨진 자리를 센다. 하나라도 있으면 그 글은 손으로 본다.
+  const 어긋난것 = 고친것.filter((c) => !제목에서나왔나(c.남긴것, title));
+  if (어긋난것.length) {
+    return { ...결과, 고친것, 어긋난것, skip: `남길 alt 가 제목에서 나온 것이 아닙니다 (${어긋난것.length}장) — 손으로 봅니다` };
+  }
   if (!alt하나씩인가(html)) throw new Error('고친 뒤에도 alt 가 둘입니다 — 저장하지 않습니다');
   if (!altOnlyChange(content, html)) {
     throw new Error('alt 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
@@ -123,6 +146,7 @@ async function main() {
 
   let 바뀐글 = 0;
   let 바뀐이미지 = 0;
+  const 어긋난글 = [];
   for (const id of ids) {
     let r;
     try {
@@ -133,7 +157,14 @@ async function main() {
       continue;
     }
     if (r.skip) {
-      // 전체 훑기에서는 멀쩡한 글을 한 줄씩 찍지 않는다 — 600줄이 된다.
+      // 전제가 깨진 글은 전체 훑기에서도 반드시 보여준다.
+      if (r.어긋난것) {
+        어긋난글.push(r);
+        console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}\n        ⚠️  ${r.skip}`);
+        for (const c of r.어긋난것.slice(0, 2)) console.log(`            남길 alt: ${한줄로(c.남긴것).slice(0, 80)}`);
+        continue;
+      }
+      // 멀쩡한 글은 한 줄씩 찍지 않는다 — 600줄이 된다.
       if (ids.length <= 20) console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}\n        ⏭️  ${r.skip}`);
       continue;
     }
@@ -149,7 +180,12 @@ async function main() {
   }
 
   console.log(`\n${apply ? '적용했습니다' : '미리보기입니다 — 적용하려면 글 번호와 --apply 를 붙입니다'}.`);
-  console.log(`\n▶ 글 ${바뀐글}편의 이미지 ${바뀐이미지}장에서 alt 가 둘입니다${apply ? ' — 하나로 돌렸습니다' : ''}\n`);
+  if (어긋난글.length) {
+    console.log(`\n⚠️ 남길 alt 가 제목에서 나오지 않은 글 ${어긋난글.length}편은 건너뛰었습니다 — 손으로 봅니다`);
+    console.log(`   ${어긋난글.map((r) => r.id).join(' ')}`);
+  }
+  console.log(`\n▶ 글 ${바뀐글}편의 이미지 ${바뀐이미지}장에서 alt 가 둘입니다${apply ? ' — 하나로 돌렸습니다' : ''}`);
+  console.log(`   전제가 깨진 글 ${어긋난글.length}편\n`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
