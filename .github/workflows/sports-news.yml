@@ -51,6 +51,10 @@ on:
           - '중계 배너 넣기 (실제 적용 · 비용 0원)'
           - '앱·공식 홈페이지 배너 넣기 (미리보기 · 비용 0원)'
           - '앱·공식 홈페이지 배너 넣기 (실제 적용 · 비용 0원)'
+          - '중계 배너 전체 훑기 (미리보기 · 비용 0원)'
+          - '중계 배너 전체 훑기 (실제 적용 · 비용 0원)'
+          - '앱·공식 홈페이지 배너 전체 훑기 (미리보기 · 비용 0원)'
+          - '앱·공식 홈페이지 배너 전체 훑기 (실제 적용 · 비용 0원)'
           - '광고가 페이지에 나가는지 보기 (고치지 않음 · 비용 0원)'
           - '색인이 안 되는 이유 찾기 (글 전체 훑기 · 비용 0원)'
           - '겹치는 글 전부 보기 (각도 손보기용 · 비용 0원)'
@@ -557,13 +561,27 @@ jobs:
         env:
           IN_MODE: ${{ inputs.mode }}
           IN_IDS: ${{ inputs.post_ids }}
+          IN_COUNT: ${{ inputs.count }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          set -o pipefail
+          # '전체 훑기' 는 글 번호가 필요 없다. 발행글을 전부 본다.
+          case "$IN_MODE" in
+            *전체\ 훑기*)
+              dry='--dry-run'
+              case "$IN_MODE" in *실제\ 적용*) dry='' ;; esac
+              # count 는 읽지 않는다. 기본값이 '1' 이라 그대로 쓰면 한 편만
+              # 돌아가는 함정이 된다. 전체 훑기는 제한 없이 가고, 몇 편이
+              # 바뀌는지는 미리보기로 먼저 본다.
+              node src/wordpress/add-watch.mjs --all --유형=중계 $dry 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+              exit 0
+              ;;
+          esac
           if [ -z "$IN_IDS" ]; then
-            echo "::error::글 번호를 적어주세요 (post_ids). 예: 7690"
+            echo "::error::글 번호를 적어주세요 (post_ids). 예: 7690. 전부 훑으려면 '중계 배너 전체 훑기'를 고르세요."
             exit 1
           fi
           how=''
@@ -572,7 +590,6 @@ jobs:
             *미리보기*) how='--dry-run' ;;
           esac
           node src/wordpress/add-watch.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
-          exit "${PIPESTATUS[0]}"
 
       - name: 앱·공식 홈페이지 배너 넣기
         # 이미 올린 글에 앱 다운로드·구단 공식 홈페이지 배너를 넣는다.
@@ -590,8 +607,19 @@ jobs:
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
+          set -o pipefail
+          # '전체 훑기' 는 글 번호가 필요 없다. 발행글을 전부 본다.
+          case "$IN_MODE" in
+            *전체\ 훑기*)
+              how=''
+              case "$IN_MODE" in *실제\ 적용*) how='--apply' ;; esac
+              # count 는 읽지 않는다 (기본값 '1' 함정). 위 중계 쪽과 같다.
+              node src/wordpress/add-banner.mjs --all $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+              exit 0
+              ;;
+          esac
           if [ -z "$IN_IDS" ]; then
-            echo "::error::글 번호를 적어주세요 (post_ids). 예: 7801"
+            echo "::error::글 번호를 적어주세요 (post_ids). 예: 7801. 전부 훑으려면 '앱·공식 홈페이지 배너 전체 훑기'를 고르세요."
             exit 1
           fi
           how=''
