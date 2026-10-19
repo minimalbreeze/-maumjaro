@@ -454,4 +454,39 @@ check('배너 검사가 비밀값에 기대지 않는다', () => {
   }
 });
 
+check('라이더컵은 PGA 투어 채널로 간다', () => {
+  // 2026-10-19 운영자: '라이더컵 PGA 유튜브로 걸면 된다.'
+  // 라이더컵 글 3편(2974·2871·2680)이 'PGA 투어' 낱말이 없어 안 붙고 있었다.
+  const e = pickWatchLinks('골프', { text: '2025 라이더컵 중계 경기일정 맥길로이 유럽 VS 셰플러 미국' });
+  assert.ok(e, '라이더컵에 배너가 없습니다');
+  assert.match(e.primary.url, /@PGATour/, `라이더컵이 엉뚱한 곳으로 갑니다: ${e.primary.url}`);
+});
+
+check('경륜·경마·경정이 각자 제 채널로 간다', () => {
+  const 간다 = (t) => pickWatchLinks('생활정보', { text: t })?.primary?.url || '';
+  assert.match(간다('실시간 경륜중계 시청페이지'), /UCZZZHqYbfPpq6noP2DH6B7w/);
+  assert.match(간다('생생경마 라이브, 실시간 경마중계'), /korearace1999/);
+  assert.match(간다('경정 경기 중계'), /speed-on/);
+});
+
+check('생활정보 기본값은 여전히 없다 — 엉뚱한 글에 안 붙는다', () => {
+  // 생활정보에는 축제·방송·행사 글이 섞여 있다. 기본값을 두면 전부 붙는다.
+  assert.equal(pickWatchLinks('생활정보', { text: '미스트롯4 투표하기 시청 방법' }), null);
+  assert.equal(pickWatchLinks('생활정보', { text: '추석 조용필 공연 다시 보기' }), null);
+  assert.equal(loadWatchLinks().byCategory['생활정보'].primary, undefined,
+    '생활정보에 기본값이 생겼습니다');
+});
+
+check('라이더컵을 넣어도 다른 투어가 흔들리지 않는다', () => {
+  // 골프는 투어가 여덟 개라, 키워드 하나를 더하면 다른 투어를 먹을 수 있다.
+  const 그대로 = {
+    '2026 KLPGA 챔피언십 중계': /@KLPGAtour/,
+    '2026 LPGA 아문디 에비앙 챔피언십': /@LPGA_Korea/,
+    '2026 JLPGA 니토리 레이디스': /@LPGAJAPAN/,
+  };
+  for (const [글, 기대] of Object.entries(그대로)) {
+    assert.match(pickWatchLinks('골프', { text: 글 })?.primary?.url || '', 기대, 글);
+  }
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
