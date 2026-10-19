@@ -318,11 +318,26 @@ async function processCluster(cluster, ctx) {
   if (verification.isDuplicateOfExisting) {
     result.skipped = `AI 중복 판정: ${verification.duplicateReason}`;
     log.warn(`  ⇒ AI가 기존 글과 중복이라고 판단했습니다: ${verification.duplicateReason}`);
+    // 글은 안 쓰지만 **조사 결과를 버리지 않는다.**
+    //
+    // 2026-10-19: 5655(BNP 파리바 오픈)의 상금을 채우려고 조사를 돌렸다.
+    // 확인된 사실 8건을 얻고도 여기서 그냥 돌아가서, 158원이 개수만 남기고
+    // 사라졌다. 중복 판정은 "새 글을 만들지 말라"는 뜻이지 "조사한 것을
+    // 버리라"는 뜻이 아니다 — 기존 글을 보강할 재료가 바로 이것이다.
+    const file = 조사결과남기기(result);
+    if (file) {
+      result.savedTo = file;
+      log.ok(`  확인된 사실 ${verification.confirmed.length}건을 파일로 남겼습니다: ${path.relative(process.cwd(), file)}`);
+    }
+    사실찍기(verification);
     return result;
   }
   if (!verification.worthWriting || !hasEnoughFacts(verification)) {
     result.skipped = `사실 근거 부족: ${verification.worthWritingReason}`;
     log.warn(`  ⇒ 확인된 사실이 부족합니다: ${verification.worthWritingReason}`);
+    // 부족해서 글은 못 쓰지만, 확인된 것은 보여준다. 다음에 각도를 다시
+    // 잡을 때의 재료이고, 돈은 이미 썼다.
+    사실찍기(verification);
     return result;
   }
 
@@ -710,6 +725,62 @@ function explainNoCandidates(stats, cfg) {
   }
 }
 
+/**
+ * 확인된 사실을 로그에 찍는다.
+ *
+ * 개수만 찍고 내용을 버리면, 돈을 쓰고도 손에 남는 것이 없다.
+ * 2026-10-19 에 실제로 그랬다 — 확인된 사실 8건이 "8건" 이라는 글자만
+ * 남기고 사라졌다.
+ */
+export function 사실찍기(verification) {
+  const 사실 = verification?.confirmed || [];
+  if (!사실.length) return;
+  log.info(`    [확인된 사실 ${사실.length}건] — 기존 글을 보강할 재료입니다`);
+  for (const f of 사실) {
+    const 글 = typeof f === 'string' ? f : (f?.fact || f?.text || JSON.stringify(f));
+    const 출처 = typeof f === 'object' && (f?.source || f?.url) ? `  (${f.source || f.url})` : '';
+    log.info(`      · ${String(글).replace(/\s+/g, ' ').slice(0, 220)}${출처}`);
+  }
+}
+
+/**
+ * 글을 못 쓰게 됐을 때 조사 결과만 파일로 남긴다.
+ *
+ * writeDryRunFile 은 본문이 있어야 한다. 여기는 본문이 없는 자리라
+ * 따로 쓴다 — 기존 글에 끼워 넣을 사실만 담는다.
+ */
+export function 조사결과남기기(result) {
+  const 사실 = result?.verification?.confirmed || [];
+  if (!사실.length) return '';
+  const dir = path.join(ROOT, 'out', todayKST());
+  fs.mkdirSync(dir, { recursive: true });
+  const base = `조사결과-${slugish(result.label || result.topic || '주제')}`.slice(0, 80);
+  const 줄 = (f) => (typeof f === 'string' ? f : (f?.fact || f?.text || JSON.stringify(f)));
+  const 출처 = (f) => (typeof f === 'object' && (f?.source || f?.url) ? ` — ${f.source || f.url}` : '');
+  const md = [
+    `# 조사 결과: ${result.label || result.topic || ''}`,
+    '',
+    `글은 만들지 않았습니다 (${result.skipped || '-'}).`,
+    '아래 사실을 기존 글에 끼워 넣는 데 쓰세요 — 섹션 끼워넣기/갈아끼우기 모드가 0원입니다.',
+    '',
+    `## 확인된 사실 ${사실.length}건`,
+    '',
+    ...사실.map((f) => `- ${줄(f)}${출처(f)}`),
+    '',
+    `## 미확인 ${(result.verification?.unverified || []).length}건 — 쓰지 마세요`,
+    '',
+    ...(result.verification?.unverified || []).map((f) => `- ${줄(f)}`),
+    '',
+    `## 출처가 엇갈린 것 ${(result.verification?.conflicting || []).length}건 — 쓰지 마세요`,
+    '',
+    ...(result.verification?.conflicting || []).map((f) => `- ${줄(f)}`),
+    '',
+  ].join('\n');
+  fs.writeFileSync(path.join(dir, `${base}.md`), md);
+  fs.writeFileSync(path.join(dir, `${base}.json`), JSON.stringify(result.verification, null, 2));
+  return path.join(dir, `${base}.md`);
+}
+
 function writeDryRunFile(result) {
   const dir = path.join(ROOT, 'out', todayKST());
   fs.mkdirSync(dir, { recursive: true });
@@ -818,6 +889,16 @@ async function main() {
     log.step(`주제 분류 중: "${args.subject}"`);
     const classified = await classifySubject(args.subject, names);
     log.info(`  카테고리: ${classified.category} — ${classified.reason}`);
+    // 운영자가 종목을 적었으면 **그것을 믿는다.** 분류기보다 사람이 낫다.
+    //
+    // 2026-10-19: "2026 BNP 파리바 오픈 총상금과 우승 상금" 을 넘겼더니
+    // "BNP 파리바 오픈은 PGA 투어의 정식 골프 토너먼트" 라며 골프로 분류했다.
+    // 인디언웰스에서 열리는 테니스 대회다. 글이 나왔으면 테니스 글이 골프
+    // 카테고리에 들어갔을 것이다.
+    if (args.topic && names.includes(args.topic) && args.topic !== classified.category) {
+      log.warn(`  → 운영자가 적은 종목(${args.topic})을 씁니다 — 분류기는 "${classified.category}" 라고 했습니다`);
+      classified.category = args.topic;
+    }
     log.info(`  검색어: ${classified.queries.join(', ')}`);
     topics = [subjectAsTopic(args.subject, classified)];
     args.limit ??= 1;
