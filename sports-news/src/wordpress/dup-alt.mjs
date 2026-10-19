@@ -60,19 +60,21 @@ export function alt값들(tag) {
  *
  * @returns {{html: string, 고친것: Array<{전: string, 남긴것: string, 버린것: string[]}>}}
  */
-export function 중복alt푼것(content) {
+export function 중복alt푼것(content, title = '') {
   const 고친것 = [];
+  const 못가른것 = [];
   const html = String(content || '').replace(IMG, (tag) => {
     const 값 = alt값들(tag);
     if (값.length < 2) return tag;
-    const 남길값 = 값[값.length - 1];
-    // alt 를 모두 떼고, 마지막 값 하나를 태그 끝에 다시 붙인다.
+    const 고름 = 남길것골라(값, title);
+    if (!고름) { 못가른것.push(값); return tag; }
+    // alt 를 모두 떼고, 고른 값 하나를 태그 끝에 다시 붙인다.
     const 벗긴것 = tag.replace(ALT, '');
-    const 새태그 = 벗긴것.replace(/\s*(\/?)>$/, ` alt="${남길값}"$1>`);
-    고친것.push({ 전: tag, 남긴것: 남길값, 버린것: 값.slice(0, -1) });
+    const 새태그 = 벗긴것.replace(/\s*(\/?)>$/, ` alt="${고름.남길것}"$1>`);
+    고친것.push({ 전: tag, 후: 새태그, 남긴것: 고름.남길것, 버린것: 고름.버릴것, 근거: 고름.근거 });
     return 새태그;
   });
-  return { html, 고친것 };
+  return { html, 고친것, 못가른것 };
 }
 
 /**
@@ -100,6 +102,47 @@ export function 제목머리(title) {
  * ②가 없으면 '서울 파크골프장' 처럼 머리가 흔한 글에서 엉뚱한 쪽을 남길 수
  * 있다. 가를 수 없는 글은 손으로 본다 — 835장을 눈 감고 고치지 않는다.
  */
+/**
+ * **여러 줄인가.** 이것이 버그의 메커니즘 그대로다.
+ *
+ * fix-alt 의 HAS_ALT 가 `(.*?)` 였고 `.` 은 줄바꿈을 못 넘는다. 그래서
+ * **여러 줄로 적힌 alt 만** 없는 것으로 보고 하나 더 붙였다. 그리고
+ * altFor() 가 만드는 alt 는 제목 한 줄이라 줄바꿈이 없다.
+ *
+ * 따라서 이 사고로 깨진 태그는 언제나 "여러 줄(옛것) + 한 줄(붙인 것)" 이다.
+ * 추측이 아니라 기계적 사실이고, 그래서 제목 글자를 견주는 것보다 세다 —
+ * 제목을 나중에 고친 글에도 그대로 통한다.
+ */
+export function 여러줄인가(alt) {
+  return /[\r\n]/.test(String(alt || ''));
+}
+
+/**
+ * 남길 alt 를 고른다. 못 고르면 null 이다.
+ *
+ *   ① 여러 줄이 버릴 것, 한 줄이 남길 것 — 버그의 메커니즘 그대로다.
+ *      한 줄짜리가 **정확히 하나**일 때만 쓴다.
+ *   ② ①로 안 갈리면 제목 첫 낱말로 가른다(남길것이맞나).
+ *
+ * 둘 다 안 되면 손으로 본다.
+ */
+export function 남길것골라(값들 = [], title = '') {
+  const 값 = (Array.isArray(값들) ? 값들 : []).filter((v) => String(v || '').trim());
+  if (값.length < 2) return null;
+
+  const 한줄 = 값.filter((v) => !여러줄인가(v));
+  const 여러줄 = 값.filter(여러줄인가);
+  if (한줄.length === 1 && 여러줄.length === 값.length - 1) {
+    return { 남길것: 한줄[0], 버릴것: 여러줄, 근거: '버릴 것은 여러 줄, 남길 것은 한 줄' };
+  }
+
+  const 마지막 = 값[값.length - 1];
+  if (남길것이맞나(마지막, 값.slice(0, -1), title)) {
+    return { 남길것: 마지막, 버릴것: 값.slice(0, -1), 근거: '제목 첫 낱말로 갈랐다' };
+  }
+  return null;
+}
+
 export function 남길것이맞나(남길, 버릴 = [], title = '') {
   const 머리 = 제목머리(title);
   if (!머리) return false;
@@ -119,14 +162,16 @@ export async function fixOne(postId, { apply = false } = {}) {
     return { ...결과, skip: 'wiki 밖의 글입니다 — 건드리지 않습니다' };
   }
 
-  const { html, 고친것 } = 중복alt푼것(content);
-  if (!고친것.length) return { ...결과, skip: 'alt 가 둘인 이미지가 없습니다' };
-
-  // 전제가 깨진 자리를 센다. 하나라도 있으면 그 글은 손으로 본다.
-  const 어긋난것 = 고친것.filter((c) => !남길것이맞나(c.남긴것, c.버린것, title));
-  if (어긋난것.length) {
-    return { ...결과, 고친것, 어긋난것, skip: `남길 alt 를 기계가 가를 수 없습니다 (${어긋난것.length}장) — 손으로 봅니다` };
+  const { html, 고친것, 못가른것 } = 중복alt푼것(content, title);
+  // 한 장이라도 못 가르면 그 글은 손으로 본다. 반만 고치면 어느 장이
+  // 고쳐졌는지 나중에 알 수 없다.
+  if (못가른것.length) {
+    return {
+      ...결과, 고친것, 어긋난것: 못가른것,
+      skip: `남길 alt 를 기계가 가를 수 없습니다 (${못가른것.length}장) — 손으로 봅니다`,
+    };
   }
+  if (!고친것.length) return { ...결과, skip: 'alt 가 둘인 이미지가 없습니다' };
   if (!alt하나씩인가(html)) throw new Error('고친 뒤에도 alt 가 둘입니다 — 저장하지 않습니다');
   if (!altOnlyChange(content, html)) {
     throw new Error('alt 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
@@ -182,7 +227,7 @@ async function main() {
       if (r.어긋난것) {
         어긋난글.push(r);
         console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}\n        ⚠️  ${r.skip}`);
-        for (const c of r.어긋난것.slice(0, 2)) console.log(`            남길 alt: ${한줄로(c.남긴것).slice(0, 80)}`);
+        for (const 값 of r.어긋난것.slice(0, 2)) console.log(`            고르지 못한 alt: ${값.map((v) => 한줄로(v).slice(0, 44)).join(' | ')}`);
         continue;
       }
       // 멀쩡한 글은 한 줄씩 찍지 않는다 — 600줄이 된다.
@@ -194,7 +239,7 @@ async function main() {
     console.log(`\n   ${r.id}  ${String(r.title).slice(0, 46)}`);
     console.log(`        alt 가 둘인 이미지 ${r.고친것.length}장`);
     r.고친것.forEach((c, i) => {
-      console.log(`        [${i + 1}] ✅ 남길 alt: ${한줄로(c.남긴것).slice(0, 90)}`);
+      console.log(`        [${i + 1}] ✅ 남길 alt: ${한줄로(c.남긴것).slice(0, 90)}  (${c.근거})`);
       for (const b of c.버린것) console.log(`        [${i + 1}] ❌ 버릴 alt: ${한줄로(b).slice(0, 90)}`);
     });
     if (r.backup) console.log(`        💾 원본 보관: ${r.backup}`);

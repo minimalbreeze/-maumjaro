@@ -11,7 +11,9 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { alt값들, 중복alt푼것, 한줄로, 제목머리, 남길것이맞나 } from '../src/wordpress/dup-alt.mjs';
+import {
+  alt값들, 중복alt푼것, 한줄로, 제목머리, 남길것이맞나, 여러줄인가, 남길것골라,
+} from '../src/wordpress/dup-alt.mjs';
 import { fillAlts, altOnlyChange, alt하나씩인가 } from '../src/wordpress/fix-alt.mjs';
 
 const 검사 = [];
@@ -28,8 +30,8 @@ check('여러 줄 alt 를 읽는다 — 이걸 못 읽어서 사고가 났다', 
   assert.match(값[1], /서평택골프클럽/);
 });
 
-check('실제 사고(1650)를 고친다 — 마지막 alt 만 남긴다', () => {
-  const r = 중복alt푼것(깨진본문);
+check('실제 사고(1650)를 고친다 — 여러 줄인 옛 alt 를 버린다', () => {
+  const r = 중복alt푼것(깨진본문, '서평택골프클럽 파3 골프장 이용료·예약 방법 (포승향남로 218-10)');
   assert.equal(r.고친것.length, 1);
   assert.match(r.고친것[0].남긴것, /서평택골프클럽/, '이 글의 alt 를 남기지 않았습니다');
   assert.equal(r.고친것[0].버린것.length, 1);
@@ -39,7 +41,7 @@ check('실제 사고(1650)를 고친다 — 마지막 alt 만 남긴다', () => 
 });
 
 check('본문 글자는 하나도 바뀌지 않는다', () => {
-  const r = 중복alt푼것(깨진본문);
+  const r = 중복alt푼것(깨진본문, '서평택골프클럽 파3 골프장 이용료·예약 방법 (포승향남로 218-10)');
   assert.ok(r.html.includes('<p>서평택골프클럽 파3 골프장은 평택시 포승읍에 있습니다.</p>'));
   assert.ok(r.html.includes('<!-- wp:image -->'), '블록 주석이 사라졌습니다');
   assert.ok(r.html.includes('class="wp-image-1653"'), '다른 속성이 사라졌습니다');
@@ -62,17 +64,17 @@ check('alt 가 없는 이미지도 건드리지 않는다 — 채우는 일은 f
   assert.equal(중복alt푼것(빈것).html, 빈것);
 });
 
-check('셋 이상이어도 마지막 하나만 남긴다', () => {
-  const t = '<img src="a.png" alt="첫째" alt="둘째" alt="셋째"/>';
-  const r = 중복alt푼것(t);
+check('셋 이상이어도 한 줄짜리 하나만 남긴다', () => {
+  const t = '<img src="a.png" alt="첫째\n하나" alt="둘째\n둘" alt="셋째"/>';
+  const r = 중복alt푼것(t, '아무 제목');
   assert.equal(r.고친것[0].남긴것, '셋째');
-  assert.deepEqual(r.고친것[0].버린것, ['첫째', '둘째']);
+  assert.equal(r.고친것[0].버린것.length, 2);
   assert.equal(alt값들(r.html).length, 1);
 });
 
 check('이미지가 여럿이면 각각 본다', () => {
   const t = `<figure>${깨진태그}</figure><p>글</p><figure><img src="b.png" alt="멀쩡한 설명"/></figure><figure>${깨진태그}</figure>`;
-  const r = 중복alt푼것(t);
+  const r = 중복alt푼것(t, '서평택골프클럽 파3 골프장 이용료·예약 방법');
   assert.equal(r.고친것.length, 2, '깨진 것 둘만 고쳐야 합니다');
   assert.ok(r.html.includes('alt="멀쩡한 설명"'), '멀쩡한 이미지가 바뀌었습니다');
 });
@@ -181,7 +183,67 @@ check('전제가 깨진 글은 저장하지 않고 건너뛴다', () => {
   const i = src.indexOf('어긋난것');
   const j = src.indexOf("method: 'POST'");
   assert.ok(i > 0 && i < j, '전제 확인이 저장보다 뒤입니다');
-  assert.match(src, /skip: `남길 alt 를 기계가 가를 수 없습니다/, '건너뛰지 않고 저장합니다');
+  assert.match(src, /남길 alt 를 기계가 가를 수 없습니다/, '건너뛰지 않고 저장합니다');
+});
+
+check('버릴 것은 여러 줄, 남길 것은 한 줄 — 버그의 메커니즘 그대로다', () => {
+  // fix-alt 의 HAS_ALT 가 `(.*?)` 였고 `.` 은 줄바꿈을 못 넘는다. 그래서
+  // **여러 줄 alt 만** 없는 것으로 보고 하나 더 붙였고, altFor() 가 만드는
+  // alt 는 제목 한 줄이라 줄바꿈이 없다. 깨진 태그는 언제나
+  // "여러 줄(옛것) + 한 줄(붙인 것)" 이다 — 추측이 아니라 기계적 사실이다.
+  assert.equal(여러줄인가('가\n나'), true);
+  assert.equal(여러줄인가('가 나'), false);
+  for (const v of [undefined, null, '']) assert.equal(여러줄인가(v), false);
+
+  const r = 남길것골라(['제일CC 파3 골프장\n제일CC 파3\n제일CC', '제일CC 파3 골프장 이용료·예약 방법'], '아무 제목');
+  assert.ok(r, '못 골랐습니다');
+  assert.equal(r.남길것, '제일CC 파3 골프장 이용료·예약 방법');
+  assert.match(r.근거, /여러 줄/);
+});
+
+check('이 규칙은 제목 첫 낱말로 못 가르던 1693 을 가른다', () => {
+  // 1693 은 버릴 alt 도 '제일CC' 로 시작해서 제목 규칙으로는 못 갈랐다.
+  // 실제로 184편이 그래서 건너뛰어졌다.
+  const 제목 = '제일CC 파3 골프장 이용료·예약 방법 (태마당로 28)';
+  const 버릴 = '제일CC 파3 골프장\n제일CC 파3\n제일CC';
+  const 남길 = '제일CC 파3 골프장 이용료·예약 방법';
+  assert.equal(남길것이맞나(남길, [버릴], 제목), false, '이 검사의 전제가 깨졌습니다');
+  const r = 남길것골라([버릴, 남길], 제목);
+  assert.ok(r, '새 규칙으로도 못 가릅니다');
+  assert.equal(r.남길것, 남길);
+});
+
+check('여러 줄이 둘이면 못 가른다 — 어느 쪽이 옛것인지 모른다', () => {
+  assert.equal(남길것골라(['가\n나', '다\n라'], '아무 제목'), null);
+});
+
+check('둘 다 한 줄이면 메커니즘 규칙이 안 쓰이고, 제목으로 가른다', () => {
+  // 제목 첫 낱말로 갈리면 그 규칙이 받는다.
+  const r = 남길것골라(['용인 88CC 파3', '서평택골프클럽 파3 골프장 이용료'], '서평택골프클럽 파3 골프장 이용료·예약 방법');
+  assert.ok(r);
+  assert.match(r.근거, /제목 첫 낱말/);
+  // 양쪽이 같은 이름으로 시작하고 둘 다 한 줄이면 손으로 본다.
+  assert.equal(남길것골라(['제일CC 가', '제일CC 나'], '제일CC 파3 골프장'), null);
+});
+
+check('값이 하나거나 비면 고를 것이 없다', () => {
+  assert.equal(남길것골라(['하나만'], '제목'), null);
+  assert.equal(남길것골라([], '제목'), null);
+  assert.equal(남길것골라(undefined, '제목'), null);
+  // 빈 값은 세지 않는다 — alt="" 가 섞여 있어도 둘로 보지 않는다.
+  assert.equal(남길것골라(['', '  ', '하나만'], '제목'), null);
+});
+
+check('한 장이라도 못 가르면 그 글은 저장하지 않는다', () => {
+  // 반만 고치면 어느 장이 고쳐졌는지 나중에 알 수 없다.
+  const src = fs.readFileSync(new URL('../src/wordpress/dup-alt.mjs', import.meta.url), 'utf8');
+  const i = src.indexOf('못가른것.length');
+  const j = src.indexOf("method: 'POST'");
+  assert.ok(i > 0 && i < j, '못 가른 것 확인이 저장보다 뒤입니다');
+  const 섞인것 = '<img src="a.png" alt="가\n나" alt="다"/><img src="b.png" alt="라" alt="마"/>';
+  const r = 중복alt푼것(섞인것, '라 제목');
+  assert.equal(r.고친것.length, 1, '가를 수 있는 장은 골라야 합니다');
+  assert.equal(r.못가른것.length, 1, '못 가른 장을 세지 않습니다');
 });
 
 export default async function run() {

@@ -120,6 +120,19 @@ check('빈 값·없는 값에도 던지지 않는다', () => {
   }
 });
 
+check('할 일을 뒤에 찍는다 — 로그 요약은 tail -60 만 보여준다', () => {
+  // 2026-10-19: 거꾸로 찍어서 안 할 일(그대로 30편)만 남고 0원 29편·돈 6편
+  // 목록이 밀려 나갔다. #212 와 같은 사고다.
+  const src = fs.readFileSync(new URL('../src/wordpress/reinforce-scan.mjs', import.meta.url), 'utf8');
+  const 순서 = /const 묶음 = \[([^\]]*)\]/.exec(src);
+  assert.ok(순서, '묶음 순서를 못 찾았습니다');
+  const 목록 = 순서[1].split(',').map((t) => t.replace(/['\s]/g, ''));
+  assert.deepEqual(목록, ['그대로', '돈', '0원'], `순서가 ${목록.join('→')} 입니다`);
+  // 요약 줄에 글 번호도 함께 찍는다 — 목록이 밀려도 번호는 남는다.
+  assert.match(src, /0원: \$\{번호\('0원'\)\}/);
+  assert.match(src, /돈 : \$\{번호\('돈'\)\}/);
+});
+
 check('이 도구는 읽기만 한다 — 저장하는 길이 없다', () => {
   const src = fs.readFileSync(new URL('../src/wordpress/reinforce-scan.mjs', import.meta.url), 'utf8');
   assert.ok(!/method:\s*'POST'/.test(src), 'POST 가 들어 있습니다');

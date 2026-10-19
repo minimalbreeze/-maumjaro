@@ -112,14 +112,17 @@ async function main() {
     결과.push(재어보기({ ...p, content }, { 다른이름 }));
   }
 
-  const 묶음 = { 0: '0원', 1: '돈', 2: '그대로' };
+  // **그대로 → 돈 → 0원** 순서로 찍는다. 로그 요약은 tail -60 만 보여주므로
+  // 할 일이 뒤에 와야 살아남는다. 2026-10-19 에 거꾸로 찍어서 안 할 일(그대로
+  // 30편)만 남고 0원 29편·돈 6편 목록이 밀려 나갔다 — #212 와 같은 사고다.
+  const 묶음 = ['그대로', '돈', '0원'];
   const 설명 = {
     '0원': '0원으로 고칠 것 — 이미 도구가 있다(alt 둘 · 섞인 이름 · 잘린 문장)',
     '돈': '사실이 모자란 것 — 조사가 필요하다 (글당 190~370원)',
     '그대로': '독자가 찾는 것은 다 있고 길이만 짧다 — CLAUDE.md 가 두라고 한 쪽',
   };
 
-  for (const 키 of Object.values(묶음)) {
+  for (const 키 of 묶음) {
     const 목록 = 결과.filter((r) => r.갈곳 === 키);
     console.log(`\n\n[${키}] ${목록.length}편 — ${설명[키]}\n`);
     for (const r of 목록) {
@@ -133,8 +136,11 @@ async function main() {
   const 센다 = (k) => 결과.filter((r) => r.갈곳 === k).length;
   const 돈 = 센다('돈');
   console.log('\n\n이 도구는 세기만 합니다. 무엇에 돈을 쓸지는 사람이 정합니다.');
+  const 번호 = (k) => 결과.filter((r) => r.갈곳 === k).map((r) => r.id).join(' ');
   console.log(`\n▶ 보강 1순위 ${결과.length}편 = 0원 ${센다('0원')}편 · 돈 ${돈}편 · 그대로 ${센다('그대로')}편`);
-  console.log(`   돈 드는 ${돈}편을 다 돌리면 ${(돈 * 190).toLocaleString()}~${(돈 * 370).toLocaleString()}원입니다\n`);
+  console.log(`   돈 드는 ${돈}편을 다 돌리면 ${(돈 * 190).toLocaleString()}~${(돈 * 370).toLocaleString()}원입니다`);
+  console.log(`   0원: ${번호('0원')}`);
+  console.log(`   돈 : ${번호('돈')}\n`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
