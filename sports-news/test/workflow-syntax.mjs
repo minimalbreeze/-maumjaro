@@ -159,7 +159,10 @@ check('도구 출력을 로그 파일에 함께 남긴다', () => {
   const 줄들 = wf.split('\n');
   const 명령 = [];
   for (let i = 0; i < 줄들.length; i++) {
-    if (!/^ {10}node src\//.test(줄들[i])) continue;
+    // **들여쓰기로 거르지 않는다.** 2026-10-19 에 이 검사가 `^ {10}` 이어서
+    // if/case/for 안에 있는 호출 8개(28개 중)를 통째로 못 보고 있었다. 그래서
+    // "로그 꼬리에서 읽게 했다"고 적어 둔 뒤에도 제목 고치기 결과를 못 읽었다.
+    if (!/^\s*node src\//.test(줄들[i])) continue;
     let cmd = 줄들[i];
     while (cmd.trimEnd().endsWith('\\') && i + 1 < 줄들.length) { i += 1; cmd += '\n' + 줄들[i]; }
     명령.push(cmd);
@@ -182,7 +185,7 @@ check('node 호출 줄에서 백슬래시가 줄 끝에만 온다', () => {
   // 실제로 확인했다. 그래서 모양을 직접 본다.
   const wf = fs.readFileSync(sports, 'utf8');
   for (const [i, l] of wf.split('\n').entries()) {
-    if (!/^ {10}.*node src\//.test(l)) continue;
+    if (!/^\s*node src\//.test(l)) continue;
     const 백슬래시 = l.indexOf('\\');
     if (백슬래시 === -1) continue;
     assert.equal(백슬래시, l.trimEnd().length - 1,
@@ -194,10 +197,31 @@ check('파이프를 걸어도 종료 코드를 잃지 않는다', () => {
   const wf = fs.readFileSync(sports, 'utf8');
   // node ... | tee 로 끝내면 tee 의 종료 코드가 남아 **실패가 성공으로
   // 찍힌다.** PIPESTATUS 로 node 의 코드를 되살려야 한다.
-  const tee수 = (wf.match(/\| tee -a "\$RUNNER_TEMP\/sn\.log"/g) || []).length;
-  const 되살림수 = (wf.match(/exit "\$\{PIPESTATUS\[0\]\}"/g) || []).length;
-  assert.equal(되살림수, tee수,
-    `tee ${tee수}곳 중 종료 코드를 되살리는 곳이 ${되살림수}곳뿐입니다`);
+  // 되살리는 길은 둘이다 — 호출 바로 뒤의 `exit "${PIPESTATUS[0]}"`, 또는
+  // 블록 맨 위의 `set -o pipefail`. **if/case/for 안에서는 뒤쪽만 쓸 수 있다**:
+  // for 루프 안에 exit 를 넣으면 첫 글만 처리하고 멈춘다(2026-10-19).
+  // 그래서 `run: |` 블록 단위로, tee 를 쓰면 둘 중 하나가 있는지 본다.
+  const 블록들 = [];
+  const 줄들 = wf.split('\n');
+  for (let i = 0; i < 줄들.length; i++) {
+    if (!/^\s*run: \|/.test(줄들[i])) continue;
+    const 들여 = 줄들[i].search(/\S/);
+    const 몸통 = [];
+    for (let j = i + 1; j < 줄들.length; j++) {
+      const l = 줄들[j];
+      if (l.trim() !== '' && l.search(/\S/) <= 들여) break;
+      몸통.push(l);
+    }
+    블록들.push({ 줄: i + 1, 글: 몸통.join('\n') });
+  }
+  assert.ok(블록들.length >= 20, `run 블록을 찾지 못했습니다 (${블록들.length}개)`);
+  for (const b of 블록들) {
+    if (!b.글.includes('| tee -a "$RUNNER_TEMP/sn.log"')) continue;
+    const exit있나 = b.글.includes('exit "${PIPESTATUS[0]}"');
+    const pipefail있나 = /set -o pipefail/.test(b.글);
+    assert.ok(exit있나 || pipefail있나,
+      `${b.줄}줄 run 블록: tee 를 쓰는데 PIPESTATUS 되살림도 set -o pipefail 도 없습니다`);
+  }
 });
 
 check('잡의 맨 마지막 단계가 도구 출력을 다시 찍는다', () => {
