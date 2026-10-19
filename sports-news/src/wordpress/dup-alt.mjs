@@ -76,19 +76,36 @@ export function 중복alt푼것(content) {
 }
 
 /**
- * 남길 alt 가 **이 글 제목에서 나온 것**인지 본다.
+ * 제목의 **첫 낱말**. 시설 이름이나 선수 이름이 여기 온다.
  *
- * "마지막 alt 를 남긴다"는 규칙은 fix-alt 가 제목에서 만든 alt 를 태그 끝에
- * 붙였다는 전제에 기댄다. 349편 835장에 손대기 전에 그 전제가 349편 전부에서
- * 참인지 세야 한다 — 네 편 보고 835장을 고칠 수는 없다.
- *
- * fix-alt 의 altFor() 는 `제목줄이기(title)` 로 시작하는 alt 를 만든다.
- * 그걸로 시작하지 않으면 전제가 깨진 글이다.
+ * 글 전체를 견주면 안 된다 — 제목을 나중에 고친 글이 많다. 1650 은 지금
+ * '서평택골프클럽 파3 골프장 이용료·예약 방법' 인데 alt 는 옛 제목에서 나온
+ * '서평택골프클럽 파3 골프장: 이용료 및 이용방법, …' 이다. 같은 시설이고
+ * 맞는 alt 인데 글자가 안 맞는다. 바뀌지 않는 것은 앞의 이름이다.
  */
-export function 제목에서나왔나(alt, title) {
-  const 머리 = 제목줄이기(title);
+export function 제목머리(title) {
+  const t = 제목줄이기(title).trim();
+  const 머리 = t.split(/\s+/)[0] || '';
+  return [...머리].length >= 2 ? 머리 : '';
+}
+
+/**
+ * 남길 alt 를 고른 것이 맞나.
+ *
+ * 두 가지를 함께 본다.
+ *   ① 남길 alt 가 제목의 첫 낱말로 시작한다 — 이 글의 설명이다
+ *   ② 버릴 alt 는 그 낱말로 시작하지 **않는다** — 둘 다 그렇게 시작하면
+ *      어느 쪽이 이 글의 것인지 기계가 가를 수 없다
+ *
+ * ②가 없으면 '서울 파크골프장' 처럼 머리가 흔한 글에서 엉뚱한 쪽을 남길 수
+ * 있다. 가를 수 없는 글은 손으로 본다 — 835장을 눈 감고 고치지 않는다.
+ */
+export function 남길것이맞나(남길, 버릴 = [], title = '') {
+  const 머리 = 제목머리(title);
   if (!머리) return false;
-  return String(alt || '').trim().startsWith(머리);
+  const 시작하나 = (v) => String(v || '').trim().startsWith(머리);
+  if (!시작하나(남길)) return false;
+  return !버릴.some(시작하나);
 }
 
 /** 글 하나를 고친다. */
@@ -106,9 +123,9 @@ export async function fixOne(postId, { apply = false } = {}) {
   if (!고친것.length) return { ...결과, skip: 'alt 가 둘인 이미지가 없습니다' };
 
   // 전제가 깨진 자리를 센다. 하나라도 있으면 그 글은 손으로 본다.
-  const 어긋난것 = 고친것.filter((c) => !제목에서나왔나(c.남긴것, title));
+  const 어긋난것 = 고친것.filter((c) => !남길것이맞나(c.남긴것, c.버린것, title));
   if (어긋난것.length) {
-    return { ...결과, 고친것, 어긋난것, skip: `남길 alt 가 제목에서 나온 것이 아닙니다 (${어긋난것.length}장) — 손으로 봅니다` };
+    return { ...결과, 고친것, 어긋난것, skip: `남길 alt 를 기계가 가를 수 없습니다 (${어긋난것.length}장) — 손으로 봅니다` };
   }
   if (!alt하나씩인가(html)) throw new Error('고친 뒤에도 alt 가 둘입니다 — 저장하지 않습니다');
   if (!altOnlyChange(content, html)) {
@@ -181,7 +198,7 @@ async function main() {
 
   console.log(`\n${apply ? '적용했습니다' : '미리보기입니다 — 적용하려면 글 번호와 --apply 를 붙입니다'}.`);
   if (어긋난글.length) {
-    console.log(`\n⚠️ 남길 alt 가 제목에서 나오지 않은 글 ${어긋난글.length}편은 건너뛰었습니다 — 손으로 봅니다`);
+    console.log(`\n⚠️ 남길 alt 를 기계가 가를 수 없는 글 ${어긋난글.length}편은 건너뛰었습니다 — 손으로 봅니다`);
     console.log(`   ${어긋난글.map((r) => r.id).join(' ')}`);
   }
   console.log(`\n▶ 글 ${바뀐글}편의 이미지 ${바뀐이미지}장에서 alt 가 둘입니다${apply ? ' — 하나로 돌렸습니다' : ''}`);
