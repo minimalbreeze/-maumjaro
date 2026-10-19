@@ -98,11 +98,16 @@ async function main() {
 
   console.log(`\n[다른 대회로 보고 건너뛴 것] ${버린것.length}쌍`);
   if (전부보기) {
-    for (const { 옛글, 새글, 고유 } of 버린것) {
-      console.log('');
-      console.log(`   ${옛글.id} ↔ ${새글.id}  (한쪽에만 있는 말: ${고유.slice(0, 6).join(', ')})`);
-      console.log(`      ${옛글.title.slice(0, 54)}`);
-      console.log(`      ${새글.title.slice(0, 54)}`);
+    // **한 쌍에 한 줄.** 222쌍을 사람이 훑어야 하므로 짧아야 한다.
+    // 공통 낱말이 같은 대회인지를 가르는 핵심이라 그것부터 보여준다.
+    console.log('   형식: 옛글→새글 | 공통 | 옛글만 | 새글만\n');
+    for (const { 옛글, 새글 } of 버린것) {
+      const A = new Set(제목낱말(옛글.title));
+      const B = new Set(제목낱말(새글.title));
+      const 공통 = [...A].filter((w) => B.has(w));
+      const 옛만 = [...A].filter((w) => !B.has(w));
+      const 새만 = [...B].filter((w) => !A.has(w));
+      console.log(`   ${옛글.id}→${새글.id} | ${공통.join(' ')} | ${옛만.join(' ')} | ${새만.join(' ')}`);
     }
   } else {
     console.log('   (--버린것도 를 붙이면 무엇을 왜 건너뛰었는지 봅니다)');
