@@ -11,6 +11,7 @@
 
 import { wpFetch } from './client.mjs';
 import { 전수, 유형읽기, 제한읽기 } from './banner-all.mjs';
+import { 고르기용글 } from '../seo/topic-text.mjs';
 import { applyBanner, bannerOnlyChange, findBanners } from './add-watch.mjs';
 // 백업은 이미 있는 것을 쓴다. 되돌리는 방법이 두 벌이면 한쪽만 고쳐진다.
 import { saveContentBackup } from './fix-alt.mjs';
@@ -47,7 +48,7 @@ export async function addBannerToPost(postId, { apply = false } = {}) {
   const title = post?.title?.raw || post?.title?.rendered || '';
   const base = { id: postId, title, status: post?.status, changed: false, backup: null };
 
-  const banner = pickBanner(`${title}\n${content}`);
+  const banner = pickBanner(고르기용글(title, content));
   if (!banner) {
     return { ...base, skip: '이 글에 맞는 앱·공식 홈페이지가 설정에 없습니다 (config/app-links.json, config/official-links.json)' };
   }
@@ -80,7 +81,7 @@ export async function showBanners(postId) {
   for (const sign of [APP_MARK, OFFICIAL_MARK]) {
     for (const b of findBanners(content, sign)) 있는것.push({ sign, url: b.url });
   }
-  return { id: postId, title, status: post?.status, 있는것, 넣을것: pickBanner(`${title}\n${content}`) };
+  return { id: postId, title, status: post?.status, 있는것, 넣을것: pickBanner(고르기용글(title, content)) };
 }
 
 async function main() {
