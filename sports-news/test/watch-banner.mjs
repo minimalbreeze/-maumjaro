@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, 낱말횟수, WATCH_MARK, watchLabel, allWatchLabels, DEFAULT_WATCH_LABEL } from '../src/seo/watch-banner.mjs';
+import { pickWatchLinks, watchBannerHtml, loadWatchLinks, 낱말로있나, 낱말횟수, WATCH_MARK, watchLabel, allWatchLabels, DEFAULT_WATCH_LABEL, 내부주소인가 } from '../src/seo/watch-banner.mjs';
 import { planPlacements, insertMarks } from '../src/images/embed.mjs';
 import { markdownToBlocks } from '../src/wordpress/draft.mjs';
 
@@ -395,6 +395,41 @@ check('골프 제외어에 주소를 받지 못한 것만 적혀 있다', () => 
   for (const w of 골프.제외) {
     assert.ok(!아는투어.includes(w), `${w} 는 match 에도 있습니다 — 제외와 충돌합니다`);
   }
+});
+
+check('내 블로그 안으로 가는 링크에는 nofollow 를 붙이지 않는다', () => {
+  // nofollow 는 "이 링크를 신뢰하지 않는다"는 뜻이다. 내 글에 붙이면
+  // 내가 내 글을 깎는다. add-notice.mjs 가 같은 이유로 안 붙인다.
+  const base = 'https://wiki.minimalbreeze.com';
+  const 내부 = { primary: { url: `${base}/2026-kbo-프로야구`, text: '보기' } };
+  assert.ok(!/nofollow/.test(watchBannerHtml(내부)), '내부 링크에 nofollow 가 붙었습니다');
+});
+
+check('바깥으로 가는 링크에는 nofollow 를 그대로 남긴다', () => {
+  const 바깥 = { primary: { url: 'https://www.youtube.com/@baduk_tv', text: '보기' } };
+  assert.match(watchBannerHtml(바깥), /nofollow/, '바깥 링크에서 nofollow 가 사라졌습니다');
+});
+
+check('내부·바깥 판정이 호스트로만 갈린다', () => {
+  const base = 'https://wiki.minimalbreeze.com';
+  assert.equal(내부주소인가(`${base}/글`, base), true);
+  // 돈을 버는 다른 사이트는 내부가 아니다.
+  assert.equal(내부주소인가('https://in.minimalbreeze.com/글', base), false);
+  assert.equal(내부주소인가('https://youtube.com/x', base), false);
+  // 읽을 수 없는 주소는 바깥으로 본다 — 모르면 nofollow 를 붙이는 쪽이다.
+  assert.equal(내부주소인가('', base), false);
+  assert.equal(내부주소인가(undefined, base), false);
+});
+
+check('야구는 내 블로그 안의 안내 글로 간다', () => {
+  // 운영자 지시(2026-10-19): KBO 중계가 티빙·쿠팡플레이·네이버로 쪼개져
+  // 있고 유료라, 바깥으로 보내면 독자가 거기서 또 헤맨다.
+  const e = pickWatchLinks('야구', { text: '2026 KBO 프로야구 개막 중계' });
+  assert.ok(e, '야구에 배너가 없습니다');
+  assert.match(e.primary.url, /wiki\.minimalbreeze\.com/, '야구가 바깥으로 갑니다');
+  // 눌렀더니 또 글이면 "경기 보러가기"는 속이는 말이 된다.
+  assert.ok(!watchLabel(e).includes('경기 보러가기'),
+    `내부 글로 보내면서 머리글이 '${watchLabel(e)}' 입니다`);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
