@@ -114,6 +114,41 @@ check('두 도구 모두 --all 을 받는다', () => {
   }
 });
 
+check('건너뛴 글은 번호와 제목까지 찍는다', async () => {
+  // 이유만 세면 "야구 21편" 까지는 알아도 어느 글인지 모른다. 그러면
+  // 중계 주소를 어디에 쓸지 정할 수가 없다 (2026-10-19 에 두 번 막혔다).
+  const 줄 = [];
+  await 전수(async () => ({ skip: "'야구' 카테고리는 중계 링크가 없습니다" }), {
+    글목록: [글하나(7690, 'KBO 퓨처스리그 개막'), 글하나(6828, '전국고교야구대회')],
+    base: BASE, 찍기: (s) => 줄.push(s),
+  });
+  const 글 = 줄.join('\n');
+  assert.match(글, /7690/, '글 번호가 안 찍힙니다');
+  assert.match(글, /KBO 퓨처스리그 개막/, '제목이 안 찍힙니다');
+  assert.match(글, /6828/);
+});
+
+check('이미 잘 들어간 글은 번호를 늘어놓지 않는다', async () => {
+  // 233편이 그렇다. 전부 찍으면 정작 봐야 할 줄이 밀려난다.
+  const 줄 = [];
+  await 전수(async () => ({ skip: '배너가 이미 지금 모양으로 들어 있습니다' }), {
+    글목록: [글하나(111, '잘 된 글')], base: BASE, 찍기: (s) => 줄.push(s),
+  });
+  const 글 = 줄.join('\n');
+  assert.match(글, /1편/, '편수는 찍어야 합니다');
+  assert.ok(!글.includes('111'), '잘 된 글 번호까지 늘어놓습니다');
+});
+
+check('너무 많으면 잘라 찍고 남은 수를 알린다', async () => {
+  const 줄 = [];
+  await 전수(async () => ({ skip: '설정에 없습니다' }), {
+    글목록: Array.from({ length: 30 }, (_, i) => 글하나(i + 1, `글${i + 1}`)),
+    base: BASE, 보여줄글: 5, 찍기: (s) => 줄.push(s),
+  });
+  const 글 = 줄.join('\n');
+  assert.match(글, /그 밖에 25편/);
+});
+
 export default async function run() {
   console.log('\n[배너 전체 훑기]');
   let 실패 = 0;

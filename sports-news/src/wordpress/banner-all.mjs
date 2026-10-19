@@ -66,6 +66,7 @@ export async function 전수(넣기, {
   base = process.env.WORDPRESS_URL || '',
   넣기옵션 = {},
   글목록 = null,
+  보여줄글 = 25,
   찍기 = console.log,
 } = {}) {
   const 글 = 글목록 || await 발행글전부();
@@ -79,13 +80,18 @@ export async function 전수(넣기, {
   찍기(`   손댈 글 ${할것.length}편${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}\n`);
 
   const 센것 = { 넣음: 0, 건너뜀: 0, 실패: 0 };
+  // 이유만 세면 "야구 21편" 까지는 알아도 **어느 글인지는 모른다.**
+  // 2026-10-19 에 그 구멍 때문에 두 번 막혔다 — 중계 주소를 어디에 쓸지
+  // 정하려면 그 21편 제목을 봐야 했고, 고침 뒤 배너가 근거를 잃은 8편이
+  // 어느 글인지도 알 수 없었다. 그래서 번호와 제목을 같이 모은다.
   const 건너뛴이유 = new Map();
   for (const p of 할것) {
     try {
       const r = await 넣기(p.id, { ...넣기옵션, apply });
       if (r?.skip) {
         센것.건너뜀 += 1;
-        건너뛴이유.set(r.skip, (건너뛴이유.get(r.skip) || 0) + 1);
+        if (!건너뛴이유.has(r.skip)) 건너뛴이유.set(r.skip, []);
+        건너뛴이유.get(r.skip).push(p);
         continue;
       }
       센것.넣음 += 1;
@@ -99,8 +105,15 @@ export async function 전수(넣기, {
   찍기(`\n${apply ? '넣은' : '넣을'} 글 ${센것.넣음}편 · 건너뛴 글 ${센것.건너뜀}편 · 실패 ${센것.실패}편`);
   if (건너뛴이유.size) {
     찍기('   건너뛴 이유:');
-    for (const [이유, n] of [...건너뛴이유].sort((a, b) => b[1] - a[1])) {
-      찍기(`     ${String(n).padStart(4)}편  ${이유}`);
+    for (const [이유, 글들] of [...건너뛴이유].sort((a, b) => b[1].length - a[1].length)) {
+      찍기(`     ${String(글들.length).padStart(4)}편  ${이유}`);
+      // "이미 들어 있습니다" 는 잘 된 글이라 번호를 볼 일이 없다. 나머지는
+      // 무엇을 더 설정해야 하는지 정하는 자리라 글을 봐야 한다.
+      if (이유.includes('이미 지금 모양')) continue;
+      for (const q of 글들.slice(0, 보여줄글)) {
+        찍기(`            ${q.id}  ${String(q.title || '').slice(0, 58)}`);
+      }
+      if (글들.length > 보여줄글) 찍기(`            … 그 밖에 ${글들.length - 보여줄글}편`);
     }
   }
   if (!apply) 찍기('   실제로 넣으려면 --apply 를 붙이세요. 지금은 아무것도 바꾸지 않았습니다.');
