@@ -13,7 +13,9 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { 시설이름, 시설주소, 붙어있나, 섞인것 } from '../src/wordpress/facility-mix.mjs';
+import {
+  시설이름, 시설주소, 붙어있나, 잘린자리, 섞인것, 지명뿐인가, 묶음글인가,
+} from '../src/wordpress/facility-mix.mjs';
 
 const 검사 = [];
 const check = (이름, fn) => 검사.push([이름, fn]);
@@ -130,6 +132,50 @@ check('이 도구는 읽기만 한다 — 저장하는 길이 없다', () => {
   const src = fs.readFileSync(new URL('../src/wordpress/facility-mix.mjs', import.meta.url), 'utf8');
   assert.ok(!/method:\s*'POST'/.test(src), 'POST 가 들어 있습니다');
   assert.ok(!/body:\s*\{/.test(src), '본문을 보내는 곳이 있습니다');
+});
+
+check('지명 한 덩어리는 세지 않는다 — 첫 실행에서 소음 29편을 만든 원인이다', () => {
+  // '서울 파크골프장'(1500) 글이 있어 이름표에 `서울` 이 들어갔고, 수도권
+  // 글은 전부 "서울에서 40분" 같은 문장을 갖고 있어 36편 중 29편이 걸렸다.
+  for (const n of ['서울', '여주', '구미', '양평', '가평', '성주']) {
+    assert.equal(지명뿐인가(n), true, `${n} 이 시설 이름으로 잡힙니다`);
+  }
+  // 가르는 부분이 있는 이름은 그대로 센다.
+  for (const n of ['리베라CC', '용인 88CC', '천안 유관순', '여주 영재', '잠실유수지']) {
+    assert.equal(지명뿐인가(n), false, `${n} 이 지명으로 버려집니다`);
+  }
+});
+
+check('지명은 섞인 것으로 세지 않는다', () => {
+  const 글 = {
+    title: '제일CC 파3 골프장 이용료 (태마당로 28)',
+    content: '<p>서울에서 40분 거리입니다. 서울 강남에서 오시면 됩니다.</p>',
+  };
+  const r = 섞인것(글, [{ 이름: '서울', 주소: '' }, { 이름: '리베라CC', 주소: 'a' }]);
+  assert.deepEqual(r.섞인이름, [], '지명이 사고로 잡혔습니다');
+});
+
+check('여러 곳을 소개하는 묶음 글을 가린다', () => {
+  assert.equal(묶음글인가('서울 근교 파3 골프장 추천: 이용방법, 골프장별 특징'), true);
+  assert.equal(묶음글인가('경기도 파크골프장 비교'), true);
+  assert.equal(묶음글인가('제일CC 파3 골프장 이용료·예약 방법'), false);
+});
+
+check('잘린 자리를 주변 글자와 함께 보여준다', () => {
+  // 참·거짓만 주면 사람이 글을 열어 봐야 한다. 두 글자 지명은 우연히 걸릴
+  // 수도 있어서 눈으로 1초에 가릴 수 있게 앞뒤를 같이 찍는다.
+  const 조각 = 잘린자리('티켓을 받으제일CC 파3 골프장의 이용방법은 전화로', '제일CC');
+  assert.equal(조각.length, 1);
+  assert.match(조각[0], /받으제일CC/);
+  assert.ok(조각[0].length > '제일CC'.length + 2, '앞뒤가 안 붙었습니다');
+  assert.deepEqual(잘린자리('오늘은 제일CC 에 갔다', '제일CC'), []);
+  assert.deepEqual(잘린자리('아무개', ''), []);
+});
+
+check('잘린 자리를 섞인것 결과에도 담는다', () => {
+  const r = 섞인것({ title: '제일CC 파3 골프장 이용료', content: '<p>티켓을 받으제일CC 파3</p>' }, []);
+  assert.equal(r.잘렸나, true);
+  assert.equal(r.잘린자리.length, 1);
 });
 
 export default async function run() {
