@@ -370,4 +370,31 @@ check('낱말횟수가 낱말로있나와 같은 경계를 쓴다', () => {
   assert.equal(낱말횟수('PGA 투어, PGA 투어, pga 투어', 'PGA 투어'), 3);
 });
 
+check('제외어가 더 많으면 중계 배너를 붙이지 않는다', () => {
+  // 2026-10-19: 359편에 한꺼번에 돌리면서 626(GTOUR·WGTOUR 스크린골프) 글에
+  // KLPGA 유튜브가 붙는 것을 미리보기에서 잡았다. KLPGA 채널에 스크린골프
+  // 경기는 없다 — 눌러도 그 경기가 없다. 스크린골프 중계 주소는 운영자가
+  // 아직 주지 않았고, 없는 주소를 코드가 만들지 않는다.
+  const 글 = '2025 GTOUR 와 WGTOUR 스크린골프 시청 다시보기. GTOUR 7차 결선과 WGTOUR 경기를 스크린골프로 본다. KLPGA 선수도 나온다.';
+  assert.equal(pickWatchLinks('골프', { text: 글 }), null);
+});
+
+check('제외어가 스쳐도 본류가 더 많으면 배너를 지킨다', () => {
+  // 투어 가이드 글이 스크린골프를 한 줄 언급했다고 중계를 잃으면 더 손해다.
+  const 글 = 'KLPGA 투어 중계 시청 방법. KLPGA 경기는 KLPGA 채널에서 본다. KLPGA 일정과 KLPGA 중계, KLPGA 다시보기를 정리했다. 스크린골프는 다른 글에서 다룬다.';
+  const r = pickWatchLinks('골프', { text: 글 });
+  assert.ok(r, '본류가 더 많은데 배너가 사라졌습니다');
+  assert.match(r.primary.url, /KLPGA/i);
+});
+
+check('골프 제외어에 주소를 받지 못한 것만 적혀 있다', () => {
+  // 제외는 "주소가 없어서 못 붙인다"는 뜻이다. 주소를 받으면 match 로 옮긴다.
+  const 골프 = loadWatchLinks().byCategory['골프'];
+  assert.ok(Array.isArray(골프.제외) && 골프.제외.length, '골프 제외 목록이 없습니다');
+  const 아는투어 = (골프.match || []).flatMap((m) => m.keywords || []);
+  for (const w of 골프.제외) {
+    assert.ok(!아는투어.includes(w), `${w} 는 match 에도 있습니다 — 제외와 충돌합니다`);
+  }
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
