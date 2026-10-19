@@ -6,7 +6,7 @@
 
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { 주제만, 고르기용글, 걷어낼표식 } from '../src/seo/topic-text.mjs';
+import { 주제만, 고르기용글, 걷어낼표식, 꼬리말들 } from '../src/seo/topic-text.mjs';
 import { pickOfficial } from '../src/seo/official-banner.mjs';
 import { pickWatchLinks } from '../src/seo/watch-banner.mjs';
 
@@ -107,6 +107,31 @@ check('주제만 결과를 저장에 쓰지 않는다', () => {
     assert.ok(!/body:\s*\{\s*content:\s*(주제만|고르기용글)/.test(src),
       `${f} 가 고르기용 글을 저장합니다`);
   }
+});
+
+check('본문에 직접 적힌 꼬리말에서도 자른다', () => {
+  // 2026-10-19: 파3 골프장 글들은 '함께 읽으면 좋은 글' 아래에 다른 골프장
+  // 이름을 줄줄이 적어 둔다. 코드가 넣은 머리글이 아니라 글 쓸 때 적힌 것이라
+  // 걷어내는 목록에 없었다 — 그 이름들이 배너 고르기에 투표하고 있었다.
+  for (const 말 of ['함께 읽으면 좋은 글', '함께 보면 좋은 글', '같이 보면 좋은 글', '참고 자료']) {
+    const r = 주제만(`<p>제일CC 요금</p><h2>${말}</h2><p>리베라CC 파3 골프장</p>`);
+    assert.ok(r.includes('제일CC'), `${말}: 본문이 사라졌습니다`);
+    assert.ok(!r.includes('리베라CC'), `${말}: 아래 제목이 남았습니다`);
+  }
+});
+
+check('꼬리말이 여러 개면 가장 먼저 나오는 것에서 자른다', () => {
+  const 글 = '<p>본문</p><h2>참고 자료</h2><p>리베라CC</p><h2>🔗 같이 읽을 글</h2><p>비전힐스</p>';
+  const r = 주제만(글);
+  assert.ok(r.includes('본문'));
+  assert.ok(!r.includes('리베라CC'), '위에 있는 꼬리를 못 잘랐습니다');
+  assert.ok(!r.includes('비전힐스'));
+});
+
+check('꼬리말 목록에 코드가 넣는 것과 사람이 쓰는 것이 함께 있다', () => {
+  assert.ok(꼬리말들.includes('🔗 같이 읽을 글'), '코드가 넣는 머리글이 빠졌습니다');
+  assert.ok(꼬리말들.includes('함께 읽으면 좋은 글'), '글에 적히는 꼬리말이 빠졌습니다');
+  assert.ok(꼬리말들.every((x) => typeof x === 'string' && x), '빈 값이 있으면 전부 잘립니다');
 });
 
 export default async function run() {

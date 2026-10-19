@@ -23,6 +23,22 @@ import { LINK_SIGN } from '../wordpress/internal-links.mjs';
 import { COUPANG_MARK } from '../wordpress/move-coupang.mjs';
 import { NOTICE_MARK } from '../wordpress/add-notice.mjs';
 
+/**
+ * 본문 끝에서 "다른 글 제목이 모여 있는 꼬리"를 여는 말들.
+ *
+ * LINK_SIGN 은 internal-links.mjs 가 넣는다. 나머지는 **글을 쓸 때 본문에
+ * 직접 적힌 것**이라 코드가 모르고 있었다(2026-10-19 발견). 파3 골프장
+ * 글들이 '함께 읽으면 좋은 글' 아래에 다른 골프장 이름을 줄줄이 적어 두는데,
+ * 그게 배너 고르기에 투표하고 있었다 — #206 과 같은 사고의 연장이다.
+ */
+export const 꼬리말들 = [
+  LINK_SIGN,
+  '함께 읽으면 좋은 글',
+  '함께 보면 좋은 글',
+  '같이 보면 좋은 글',
+  '참고 자료',
+];
+
 /** 블록 안에 이 말이 있으면 그 블록은 주제가 아니다. */
 export function 걷어낼표식() {
   const 모음 = new Set([
@@ -45,10 +61,14 @@ export function 주제만(html) {
   let s = String(html ?? '');
   if (!s) return '';
 
-  // ① 다른 글 제목이 모여 있는 꼬리를 자른다. internal-links 가 본문 맨 끝에
-  //    붙이므로 여기서부터 끝까지는 이 글의 내용이 아니다.
-  const i = s.indexOf(LINK_SIGN);
-  if (i >= 0) s = s.slice(0, i);
+  // ① 다른 글 제목이 모여 있는 꼬리를 자른다. **가장 먼저 나오는 꼬리말**
+  //    에서 자른다 — '참고 자료' 가 '같이 읽을 글' 보다 위에 오는 글이 있다.
+  let 자를곳 = -1;
+  for (const 말 of 꼬리말들) {
+    const i = s.indexOf(말);
+    if (i >= 0 && (자를곳 < 0 || i < 자를곳)) 자를곳 = i;
+  }
+  if (자를곳 >= 0) s = s.slice(0, 자를곳);
 
   // ② 배너·광고 블록을 지운다. wp:html 로 감싸진 것만 본다 — 본문 문단을
   //    실수로 지우지 않기 위해서다.
