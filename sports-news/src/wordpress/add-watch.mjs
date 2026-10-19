@@ -25,6 +25,7 @@
 
 import { wpFetch } from './client.mjs';
 import { 전수, 유형읽기, 제한읽기 } from './banner-all.mjs';
+import { 고르기용글 } from '../seo/topic-text.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { categoryIndex } from '../news/variety.mjs';
 import { pickWatchLinks, watchBannerHtml, allWatchLabels, DEFAULT_WATCH_LABEL } from '../seo/watch-banner.mjs';
@@ -172,7 +173,7 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     id: postId, title, status: post?.status, category, changed: false, backup: null,
   };
 
-  const entry = pickWatchLinks(category, { text: `${title}\n${content}` });
+  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
   if (!entry) {
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
   }
