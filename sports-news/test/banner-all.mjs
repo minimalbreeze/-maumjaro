@@ -149,6 +149,20 @@ check('너무 많으면 잘라 찍고 남은 수를 알린다', async () => {
   assert.match(글, /그 밖에 25편/);
 });
 
+check('몇 편이 바뀌었는지를 맨 끝에 한 번 더 찍는다', async () => {
+  // 깃허브 로그 요약은 꼬리 60줄만 보여 준다. #207 로 건너뛴 글 번호를
+  // 찍게 하면서 요약이 길어져 "넣은 글 N편" 이 꼬리 밖으로 밀려났다.
+  // 그 줄을 못 읽으면 run 을 돌린 보람이 없다.
+  const 줄 = [];
+  await 전수(async () => ({ skip: '설정에 없습니다' }), {
+    글목록: Array.from({ length: 40 }, (_, i) => 글하나(i + 1, `긴 제목 ${i + 1}`)),
+    base: BASE, 찍기: (s) => 줄.push(s),
+  });
+  const 끝 = 줄.join('\n').trimEnd().split('\n').slice(-2).join('\n');
+  assert.match(끝, /넣을 글 \d+편 · 건너뛴 글 \d+편 · 실패 \d+편/,
+    `맨 끝에 요약이 없습니다: ${끝}`);
+});
+
 export default async function run() {
   console.log('\n[배너 전체 훑기]');
   let 실패 = 0;
