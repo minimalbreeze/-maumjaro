@@ -12,6 +12,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { 문단에서, 용접푼것, 앞토막만버렸나, 글자만, 최소버릴길이 } from '../src/wordpress/fix-glued.mjs';
+import { 손대도되는글인가 } from '../src/wordpress/noindex.mjs';
 
 const 검사 = [];
 const check = (이름, fn) => 검사.push([이름, fn]);
@@ -105,9 +106,18 @@ check('content 하나만 보낸다 — 제목·슬러그·발행상태는 보내
   assert.ok(!/body:\s*\{[^}]*status:/.test(src), '발행상태를 보냅니다');
 });
 
-check('wiki 밖의 글은 건드리지 않는다', () => {
+check('wiki 밖의 글은 건드리지 않는다 — 우리 사이트 주소를 함께 넘긴다', () => {
+  // 2026-10-19: 두 번째 인자를 빼고 불러서 **모든 글이 남의 글**이 됐다.
+  // 미리보기가 5편 전부 건너뛰고 0편으로 끝났는데, 호스트 확인이 있다는
+  // 것만 보던 검사는 그걸 잡지 못했다. 그래서 행동으로 본다.
+  assert.equal(손대도되는글인가('https://wiki.minimalbreeze.com/a', 'https://wiki.minimalbreeze.com/'), true);
+  assert.equal(손대도되는글인가('https://wiki.minimalbreeze.com/a', undefined), false,
+    '주소를 안 주면 모든 글이 남의 글이 됩니다');
   const src = fs.readFileSync(new URL('../src/wordpress/fix-glued.mjs', import.meta.url), 'utf8');
-  assert.match(src, /손대도되는글인가/, '호스트 확인이 없습니다');
+  const 부름 = /손대도되는글인가\((.*)\)/.exec(src);   // wpConfig() 의 괄호까지 넘어가야 한다
+  assert.ok(부름, '호스트 확인이 없습니다');
+  assert.equal(부름[1].split(',').length, 2, `인자가 ${부름[1].split(',').length}개입니다: ${부름[1]}`);
+  assert.match(부름[1], /wpConfig\(\)\.base/, '우리 사이트 주소를 넘기지 않습니다');
 });
 
 check('고치기 전 원본을 남긴다', () => {

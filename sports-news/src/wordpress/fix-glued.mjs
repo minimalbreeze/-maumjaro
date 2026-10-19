@@ -41,7 +41,7 @@
 //   - 버릴 토막이 10글자 미만이면 건너뛴다 — 이름이 우연히 붙은 자리일 수 있다.
 //   - wiki 밖의 글은 건드리지 않는다.
 
-import { wpFetch } from './client.mjs';
+import { wpFetch, wpConfig } from './client.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 import { 시설이름, 지명뿐인가 } from './facility-mix.mjs';
@@ -129,15 +129,19 @@ export async function fixOne(postId, { apply = false, 이름: 준이름 = '', �
   const { data } = await wpFetch(`/wp/v2/posts/${postId}`, { query: { context: 'edit' } });
   const title = data?.title?.raw ?? data?.title?.rendered ?? '';
   const content = data?.content?.raw ?? data?.content?.rendered ?? '';
-  const base = { id: postId, title };
+  const 결과 = { id: postId, title };
 
-  if (!손대도되는글인가(data?.link)) return { ...base, skip: 'wiki 밖의 글입니다 — 건드리지 않습니다' };
+  // 두 번째 인자(우리 사이트 주소)를 빼면 **모든 글이 남의 글**이 된다.
+  // 2026-10-19 에 그래서 미리보기가 5편 전부 건너뛰고 0편으로 끝났다.
+  if (!손대도되는글인가(data?.link, wpConfig().base)) {
+    return { ...결과, skip: 'wiki 밖의 글입니다 — 건드리지 않습니다' };
+  }
 
   const 이름 = 준이름 || 시설이름(title);
-  if (!이름) return { ...base, skip: '제목에서 시설 이름을 못 뽑았습니다' };
+  if (!이름) return { ...결과, skip: '제목에서 시설 이름을 못 뽑았습니다' };
 
   const { html, 고친것 } = 용접푼것(content, 이름, 다른이름);
-  if (!고친것.length) return { ...base, 이름, skip: '용접된 문단이 없습니다' };
+  if (!고친것.length) return { ...결과, 이름, skip: '용접된 문단이 없습니다' };
   if (!앞토막만버렸나(content, html, 고친것)) {
     throw new Error('앞 토막 버리기 말고 다른 것이 바뀌었습니다 — 저장하지 않습니다');
   }
@@ -147,7 +151,7 @@ export async function fixOne(postId, { apply = false, 이름: 준이름 = '', �
     backup = saveContentBackup({ id: postId, status: data?.status, title, slug: data?.slug, content });
     await wpFetch(`/wp/v2/posts/${postId}`, { method: 'POST', body: { content: html } });
   }
-  return { ...base, 이름, 고친것, backup, applied: apply };
+  return { ...결과, 이름, 고친것, backup, applied: apply };
 }
 
 async function main() {
