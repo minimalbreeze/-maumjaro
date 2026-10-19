@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  바로잡기, 한항목고치기, 고치기, 오타만바뀌었나, 글자거리, 한글낱말, 오타후보, 붙은꼴인가, 이글에쓰나
+  바로잡기, 한항목고치기, 고치기, 오타만바뀌었나, 글자거리, 한글낱말, 오타후보, 붙은꼴인가, 이글에쓰나, 덧붙이는항목인가, 이미넣었나,
 } from '../src/wordpress/typo-fix.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -283,6 +283,46 @@ check('글 번호를 주면 그 글만 손댄다', () => {
     .map((x) => new URL(x, import.meta.url)).find((u) => fs.existsSync(u));
   assert.ok(wf, '워크플로를 못 찾았습니다');
   assert.match(fs.readFileSync(wf, 'utf8'), /typo-fix\.mjs \$how \$IN_IDS/, '워크플로가 번호를 안 넘깁니다');
+});
+
+check('덧붙이는 항목은 두 번 넣지 않는다 — 돌릴 때마다 쌓일 뻔했다', () => {
+  // 2026-10-19: 전화번호를 넣은 항목 셋이 "맞는 안에 틀린이 통째로 들어
+  // 있는" 꼴이었다. 고친 뒤에도 틀린 문자열이 남아 다시 걸린다.
+  //   "별도 문의 필요" → "별도 문의 필요 (전화 032-899-4891)"
+  //   다시 돌리면      → "… (전화 032-899-4891) (전화 032-899-4891)"
+  // 8592 에서는 8강 섹션 전체가 두 번 붙을 뻔했다.
+  const 항목 = { 틀린: '별도 문의 필요', 맞는: '별도 문의 필요 (전화 032-899-4891)', 이유: '검사', 글: [1] };
+  assert.equal(덧붙이는항목인가(항목), true);
+  const 한번 = 고치기('단체 예약: 별도 문의 필요', [항목], 1);
+  assert.equal(한번.after, '단체 예약: 별도 문의 필요 (전화 032-899-4891)');
+  const 두번 = 고치기(한번.after, [항목], 1);
+  assert.equal(두번.after, 한번.after, '두 번째에 또 붙었습니다');
+  assert.equal(두번.바뀐것.length, 0, '안 바뀌었는데 바뀌었다고 셉니다');
+});
+
+check('덧붙이는 항목이 아니면 평소대로 고친다', () => {
+  const 오타 = { 틀린: '다십보기', 맞는: '다시보기', 이유: '검사' };
+  assert.equal(덧붙이는항목인가(오타), false);
+  // 고친 말이 글에 이미 있어도 오타는 고친다 — 막으면 안 되는 자리다.
+  assert.equal(고치기('다십보기 와 다시보기', [오타], 1).after, '다시보기 와 다시보기');
+  assert.equal(이미넣었나('다시보기', 오타), false);
+});
+
+check('빈 값에 흔들리지 않는다', () => {
+  for (const v of [undefined, null, {}, { 틀린: '', 맞는: '' }]) {
+    assert.equal(덧붙이는항목인가(v), false);
+    assert.equal(이미넣었나('아무 글', v), false);
+  }
+});
+
+check('표에 남은 덧붙이는 항목이 모두 안전하다', () => {
+  // 덧붙이는 항목 자체는 괜찮다 — 이미넣었나 가 막는다. 다만 막는 장치가
+  // 고치기() 안에 실제로 걸려 있어야 한다.
+  const src = fs.readFileSync(new URL('../src/wordpress/typo-fix.mjs', import.meta.url), 'utf8');
+  assert.match(src, /if \(이미넣었나\(결과, 항목\)\) continue;/, '고치기 안에 가드가 없습니다');
+  // 8592 의 8강 섹션을 다시 붙이는 항목은 표에서 빠져야 한다 — 이미 적용됐다.
+  assert.ok(!바로잡기.some((x) => String(x.맞는).includes('8강 결과와 4강 상대')),
+    '이미 적용된 8강 섹션 항목이 표에 남아 있습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
