@@ -24,7 +24,11 @@ import { log } from '../utils/logger.mjs';
 
 /** alt 속성이 아예 없거나 빈 <img> 태그. */
 const IMG = /<img\b[^>]*>/gi;
-const HAS_ALT = /\balt\s*=\s*(["'])(.*?)\1/i;
+// `.` 은 줄바꿈을 못 넘는다. 여러 줄로 적힌 alt 를 **없는 것으로 보고**
+// 태그 끝에 두 번째 alt 를 붙였다(2026-10-19 발견, 1650·1576).
+// 중복 속성은 앞의 것이 이기므로, 맞는 alt 를 넣어도 버려진다.
+// 아래 altOnlyChange 는 처음부터 [\s\S] 를 쓰고 있었다 — 둘이 어긋나 있었다.
+const HAS_ALT = /\balt\s*=\s*(["'])([\s\S]*?)\1/i;
 
 /** 소제목. alt를 만들 때 "이 이미지가 어느 대목의 그림인지"를 여기서 가져온다. */
 const HEADING = /<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
@@ -111,6 +115,20 @@ export function fillAlts(html, title) {
  * 본문을 고치는 도구라 이 검사가 핵심이다. 양쪽에서 alt 속성을 전부 지운 뒤
  * 비교해서, 그 밖의 글자가 하나라도 달라지면 저장하지 않는다.
  */
+/**
+ * 모든 <img> 에 alt 가 **하나씩만** 있는가.
+ *
+ * altOnlyChange 는 양쪽에서 alt 를 전부 지우고 비교하므로, alt 를 하나 더
+ * **붙인** 변경을 "alt 만 바뀜"으로 보고 통과시켰다. 그래서 따로 본다.
+ */
+export function alt하나씩인가(html) {
+  for (const m of String(html || '').matchAll(IMG)) {
+    const 수 = (m[0].match(/\balt\s*=/gi) || []).length;
+    if (수 > 1) return false;
+  }
+  return true;
+}
+
 export function altOnlyChange(before, after) {
   // alt 속성을 통째로 **지운** 뒤 비교한다. 빈 값으로 바꾸기만 하면 안 된다 —
   // 원래 alt가 아예 없던 태그와 alt=""가 생긴 태그가 서로 달라 보여서,
@@ -174,6 +192,9 @@ export async function fixOne(post, { apply = true } = {}) {
   if (!채움) return { id: post.id, title: post.title, 채움: 0, changed: false };
 
   // 저장 전 마지막 방어선. alt 말고 다른 게 바뀌었으면 보내지 않는다.
+  if (!alt하나씩인가(html)) {
+    throw new Error('한 이미지에 alt 가 둘이 됩니다 — 저장하지 않습니다');
+  }
   if (!altOnlyChange(post.content, html)) {
     throw new Error('alt 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
   }
