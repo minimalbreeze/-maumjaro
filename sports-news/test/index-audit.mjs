@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { 본문글자수, 제목낱말, 조사떼기, 닮은정도, 비슷한글묶기, 색인위험, 글유형 } from '../src/wordpress/index-audit.mjs';
+import { 본문글자수, 제목낱말, 조사떼기, 닮은정도, 비슷한글묶기, 색인위험, 글유형, 보강1순위 } from '../src/wordpress/index-audit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -179,6 +179,33 @@ check('글을 고치거나 지우는 코드가 들어 있지 않다', () => {
   assert.ok(!/method:\s*['"]POST['"]/.test(src), 'POST 로 무언가를 저장합니다');
   assert.ok(!/method:\s*['"](PUT|PATCH|DELETE)['"]/.test(src), '쓰기 요청이 들어 있습니다');
   assert.match(src, /읽기만 한다/, '읽기 전용이라는 설명이 없습니다');
+});
+
+check('보강 1순위는 시설·상금 중 얇은 글만, 두꺼운 것부터', () => {
+  // 2026-10-19: 운영자가 "보강 1순위로 바로 간다" 고 해서 --보강만 을 만들었다.
+  // 기준이 ⑤ 절과 --보강만 두 군데면 한쪽만 고쳐져 어긋난다. 한 함수로 둔다.
+  const 글 = [
+    { id: 1, title: '군위 파크골프장 이용료·예약 방법', 글자수: 1200 },
+    { id: 2, title: '어스몬다민컵 우승 상금은 얼마', 글자수: 2900 },
+    { id: 3, title: '2025 KBO 중계 경기일정 시간', 글자수: 1000 },
+    { id: 4, title: '남서울CC 파3 이용료', 글자수: 5000 },
+  ];
+  const r = 보강1순위(글);
+  assert.deepEqual(r.map((p) => p.id), [2, 1], '두꺼운 것부터가 아닙니다');
+  assert.ok(!r.some((p) => p.id === 3), '중계 글이 섞였습니다 — 돈이 안 되는 유형이다');
+  assert.ok(!r.some((p) => p.id === 4), '기준(3,000자)을 넘는 글이 섞였습니다');
+});
+
+check('보강 1순위가 빈 값·이상한 값에 던지지 않는다', () => {
+  assert.deepEqual(보강1순위(null), []);
+  assert.deepEqual(보강1순위([{ }, { title: null, 글자수: 10 }]), []);
+});
+
+check('--보강만 과 ⑤ 절이 같은 함수를 쓴다', () => {
+  // 기준을 두 번 적으면 한쪽만 고쳐진다.
+  const src = fs.readFileSync(new URL('../src/wordpress/index-audit.mjs', import.meta.url), 'utf8');
+  const 센다 = (src.match(/\['시설', '상금'\]\.includes/g) || []).length;
+  assert.equal(센다, 1, `보강 기준이 ${센다}군데에 적혀 있습니다 — 한 군데여야 합니다`);
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
