@@ -199,8 +199,11 @@ async function main() {
   }
 }
 
-const 직접실행 = process.argv[1] && process.argv[1].endsWith('delete-post.mjs');
-if (직접실행) {
+// ⚠️ endsWith('delete-post.mjs') 로 보면 안 된다 — 검사 파일 이름이
+//    test/delete-post.mjs 로 **같아서**, 검사를 돌릴 때 이 main() 이 함께
+//    돌고 "글 번호를 적어주세요" 로 exit 1 을 만든다(2026-10-19 에 그래서
+//    워크플로가 통째로 실패했다). 경로 전체를 비교한다.
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((err) => {
     console.error(err?.message || err);
     process.exitCode = 1;

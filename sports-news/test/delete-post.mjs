@@ -107,6 +107,16 @@ check('지운 뒤 상태가 trash 인지 확인한다', () => {
   assert.match(src, /된상태 !== 'trash'/, '지워졌는지 확인하지 않습니다');
 });
 
+check('검사가 이 도구를 불러도 main 이 돌지 않는다 — 파일 이름이 같다', () => {
+  // test/delete-post.mjs 와 src/wordpress/delete-post.mjs 는 이름이 같다.
+  // endsWith 로 가드를 걸면 검사를 돌릴 때 main() 이 함께 돌아 exit 1 이 된다.
+  // 2026-10-19 에 실제로 그래서 워크플로가 통째로 실패했다.
+  assert.ok(!/argv\[1\]\.endsWith/.test(src), 'endsWith 가드는 이름이 같은 검사 파일에 걸립니다');
+  assert.match(src, /import\.meta\.url === `file:\/\/\$\{process\.argv\[1\]\}`/, '경로 전체를 비교하지 않습니다');
+  // 그리고 실제로: 여기까지 왔다는 것은 import 가 exitCode 를 건드리지 않았다는 뜻이다.
+  assert.notEqual(process.exitCode, 1, 'import 만으로 exitCode 가 1 이 됐습니다');
+});
+
 export default async function run() {
   console.log('\n[글 휴지통으로 보내기]');
   let 실패 = 0;
