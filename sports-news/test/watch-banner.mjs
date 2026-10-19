@@ -402,12 +402,17 @@ check('내 블로그 안으로 가는 링크에는 nofollow 를 붙이지 않는
   // 내가 내 글을 깎는다. add-notice.mjs 가 같은 이유로 안 붙인다.
   const base = 'https://wiki.minimalbreeze.com';
   const 내부 = { primary: { url: `${base}/2026-kbo-프로야구`, text: '보기' } };
-  assert.ok(!/nofollow/.test(watchBannerHtml(내부)), '내부 링크에 nofollow 가 붙었습니다');
+  // base 를 직접 넘긴다. process.env.WORDPRESS_URL 에 기대면 비밀값이 없는
+  // 자체 검사 단계에서 깨진다 — 2026-10-19 에 실제로 그렇게 깨뜨렸다.
+  assert.ok(!/nofollow/.test(watchBannerHtml(내부, base)), '내부 링크에 nofollow 가 붙었습니다');
 });
 
 check('바깥으로 가는 링크에는 nofollow 를 그대로 남긴다', () => {
   const 바깥 = { primary: { url: 'https://www.youtube.com/@baduk_tv', text: '보기' } };
-  assert.match(watchBannerHtml(바깥), /nofollow/, '바깥 링크에서 nofollow 가 사라졌습니다');
+  assert.match(watchBannerHtml(바깥, 'https://wiki.minimalbreeze.com'), /nofollow/,
+    '바깥 링크에서 nofollow 가 사라졌습니다');
+  // base 를 모를 때도 바깥으로 본다 — 모르면 nofollow 를 붙이는 쪽이다.
+  assert.match(watchBannerHtml(바깥, ''), /nofollow/);
 });
 
 check('내부·바깥 판정이 호스트로만 갈린다', () => {
@@ -430,6 +435,23 @@ check('야구는 내 블로그 안의 안내 글로 간다', () => {
   // 눌렀더니 또 글이면 "경기 보러가기"는 속이는 말이 된다.
   assert.ok(!watchLabel(e).includes('경기 보러가기'),
     `내부 글로 보내면서 머리글이 '${watchLabel(e)}' 입니다`);
+});
+
+check('배너 검사가 비밀값에 기대지 않는다', () => {
+  // 2026-10-19: WORDPRESS_URL 을 준 채로 돌려 통과시키고 올렸다가, 비밀값이
+  // 없는 자체 검사 단계에서 두 run 이 깨졌다. 로컬 통과가 CI 통과를
+  // 뜻하지 않는다는 걸 이 검사로 못 박는다.
+  // **nofollow 를 보는 호출만** 본다. watchBannerHtml(null) 처럼 빈 글만
+  // 확인하는 호출은 base 가 필요 없다 — 처음엔 그것까지 잡아서 가드가
+  // 너무 넓었다.
+  const src = fs.readFileSync(new URL('./watch-banner.mjs', import.meta.url), 'utf8');
+  for (const [i, l] of src.split('\n').entries()) {
+    const 코드 = l.trim();
+    if (코드.startsWith('//') || 코드.startsWith('*') || 코드.startsWith('/*')) continue;
+    if (!/watchBannerHtml\(/.test(l) || !/nofollow/.test(l)) continue;
+    assert.match(l, /watchBannerHtml\([^)]*,/,
+      `${i + 1}줄: nofollow 를 보면서 base 를 안 넘겨 환경에 기댑니다 — ${l.trim().slice(0, 60)}`);
+  }
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
