@@ -329,4 +329,18 @@ check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
   assert.deepEqual(빠진것, [], `npm test 에서 빠진 검사: ${빠진것.join(', ')}`);
 });
 
+
+  // ── env: 를 두 번 쓰면 비밀값이 통째로 사라진다 (2026-10-20) ──
+  //
+  // '사이트맵 점검' 단계에 env 블록을 하나 더 붙였더니, WORDPRESS_URL 과
+  // 비밀번호가 들어 있던 앞 블록이 통째로 날아갔다. YAML 은 같은 키가 둘이면
+  // 뒤엣것만 남긴다. 돌려보기 전에는 모르는 종류라 여기서 막는다.
+  check('sports-news: 한 단계에 env: 를 두 번 쓰지 않는다', () => {
+    const 단계들 = text.split(/\n      - name: /).slice(1);
+    const 겹친것 = 단계들
+      .filter((b) => (b.match(/^        env:$/gm) || []).length > 1)
+      .map((b) => b.split('\n')[0].trim());
+    assert.deepEqual(겹친것, [], `env: 가 두 번 나오는 단계: ${겹친것.join(' / ')}`);
+  });
+
 }

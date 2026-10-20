@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loc뽑기, 사이트맵종류, robots사이트맵 } from '../src/wordpress/sitemap-check.mjs';
+import { loc뽑기, 사이트맵종류, robots사이트맵, 볼사이트 } from '../src/wordpress/sitemap-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -73,6 +73,21 @@ check('빈 값에 터지지 않는다', () => {
     assert.equal(사이트맵종류(v), '모름');
     assert.deepEqual(robots사이트맵(v), []);
   }
+});
+
+check('--base 로 다른 사이트도 볼 수 있다 — 읽기만 하는 길이다', () => {
+  // 2026-10-20: 서치콘솔 URL 검사가 "속성에 URL이 없음" 이라고 했다.
+  // 보던 숫자가 wiki 것이 아닐 수 있어서, 다른 주소도 받아 볼 수 있어야 한다.
+  assert.equal(볼사이트(['--base=https://minimalbreeze.com/'], 'https://wiki.minimalbreeze.com'),
+    'https://minimalbreeze.com');
+  // 안 주면 기본(WORDPRESS_URL)을 본다.
+  assert.equal(볼사이트([], 'https://wiki.minimalbreeze.com/'), 'https://wiki.minimalbreeze.com');
+  // 경로·쿼리는 떼고 origin 만 쓴다.
+  assert.equal(볼사이트(['--base=https://a.example.com/path?x=1'], 'https://b.example.com'),
+    'https://a.example.com');
+  // 주소가 아니면 조용히 넘어가지 않는다.
+  assert.throws(() => 볼사이트(['--base=아무말'], 'https://wiki.minimalbreeze.com'));
+  assert.throws(() => 볼사이트([], ''));
 });
 
 check('고치는 길이 이 파일에 없다 — 읽기만 한다', () => {

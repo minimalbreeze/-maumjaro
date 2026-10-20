@@ -673,8 +673,15 @@ jobs:
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+          IN_FIND_QUERY: ${{ inputs.find_query }}
         run: |
-          node src/wordpress/sitemap-check.mjs 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          # 찾을 말 칸에 주소를 적으면 그 사이트를 본다. 비우면 wiki 를 본다.
+          # (2026-10-20: 서치콘솔에서 보던 숫자가 wiki 것이 아닐 수 있어서)
+          extra=''
+          case "$IN_FIND_QUERY" in
+            http://*|https://*) extra="--base=$IN_FIND_QUERY" ;;
+          esac
+          node src/wordpress/sitemap-check.mjs $extra 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
       - name: 색인이 안 되는 이유 찾기
