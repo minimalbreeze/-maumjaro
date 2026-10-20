@@ -125,6 +125,18 @@ check('설정 파일을 읽을 수 있다', () => {
   }
 });
 
+check('이름 칸이 없는 앱 주소도 받는다 — 애플이 주는 두 가지 모양', () => {
+  // 공유 버튼으로 복사: /app/<이름>/id123
+  assert.equal(앱스토어주소인가('https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687'), true);
+  // 앱 페이지에서 그냥 복사: /app/id123 (2026-10-20 줄넘기 등급 챌린지가 이 모양)
+  assert.equal(앱스토어주소인가('https://apps.apple.com/kr/app/id6821987315?ct=wiki'), true);
+  // 넓혔다고 아무 주소나 받으면 안 된다.
+  assert.equal(앱스토어주소인가('https://apps.apple.com/kr/search?term=줄넘기'), false);
+  assert.equal(앱스토어주소인가('https://apps.apple.com/kr/developer/id123'), false);
+  assert.equal(앱스토어주소인가('https://apps.apple.com/kr/app/id'), false);
+  assert.equal(앱스토어주소인가('http://apps.apple.com/kr/app/id6821987315'), false);
+});
+
 check('주소 없는 앱을 알려준다', () => {
   // 조용히 배너를 빼면 운영자가 왜 안 나오는지 모른다.
   assert.deepEqual(주소없는앱({ apps: [{ ...페이드캠, url: '' }] }), ['페이드캠']);

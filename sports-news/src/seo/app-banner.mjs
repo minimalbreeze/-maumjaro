@@ -61,7 +61,13 @@ export function 앱스토어주소인가(url) {
   const u = String(url || '').trim();
   if (!u) return false;
   // id 뒤에 숫자가 오는 앱 상세 페이지만 받는다. /search, /developer 는 앱이 아니다.
-  return /^https:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[^/]+\/id\d+/.test(u);
+  //
+  // 이름 칸은 있어도 되고 없어도 된다. 애플이 주는 주소가 두 가지다 —
+  // 공유 버튼으로 복사하면 `/app/<이름>/id123`, 앱 페이지에서 그냥 복사하면
+  // `/app/id123` 이 나온다. 둘 다 같은 상세 페이지로 열린다.
+  // (2026-10-20 줄넘기 등급 챌린지 주소가 뒤쪽 모양이라 검사가 막았다.
+  //  이름이 없다고 가짜 주소인 것이 아니므로 모양 쪽을 넓혔다.)
+  return /^https:\/\/apps\.apple\.com\/[a-z]{2}\/app\/(?:[^/]+\/)?id\d+/.test(u);
 }
 
 /**
