@@ -2257,3 +2257,64 @@ wiki 속성 숫자를 보고 다시 판단한다.
 
 숫자는 도메인 속성(서브도메인 전부) 기준이다. **wiki 몫이 얼마인지는 아직
 모른다** — `https://wiki.minimalbreeze.com/` 속성을 따로 봐야 한다.
+
+### 제출된 사이트맵 7개 — wiki 만 0이다
+
+도메인 속성의 Sitemaps 목록이다. **wiki 것이 맞았다** (정정 ① 을 다시 바로잡는다).
+
+| Sitemap | 유형 | 마지막 읽은 날 | 상태 | 발견된 페이지 |
+|---|---|---|---|---|
+| **wiki.minimalbreeze.com/sitemap.xml** | **Sitemap 색인** | 2026-10-10 | 성공 | **0** |
+| maumjaro.minimalbreeze.com/sitemap.xml | Sitemap | 2026-10-19 | 성공 | 98 |
+| i.minimalbreeze.com/sitemap.xml | Sitemap | 2025-08-04 | 성공 | 224 |
+| minimalbreeze.com/sitemap.xml | Sitemap | 2025-04-14 | 성공 | 495 |
+| h.minimalbreeze.com/sitemap.xml | Sitemap | 2025-02-02 | 성공 | 4 |
+| i.minimalbreeze.com/sitemap.xml (http) | Sitemap | 2025-02-03 | 성공 | 5 |
+| www.minimalbreeze.com/rss | RSS | 2025-01-13 | 성공 | 8 |
+
+**일곱 중 여섯은 숫자가 잡힌다. wiki 하나만 0이다.**
+서치콘솔이 사이트맵을 못 읽는 일반적인 문제가 아니라는 뜻이다.
+
+그리고 **wiki 만 유형이 `Sitemap 색인`** 이다. 나머지는 전부 단일 `Sitemap` 이다.
+사이트맵 색인은 하위 사이트맵 목록이고, 구글이 그 하위를 따라가야 페이지가
+잡힌다. **그 하위를 못 따라가고 있다.**
+
+우리가 직접 받으면 이렇다(2026-10-20 실측).
+
+```
+/sitemap.xml  색인 · 하위 5개 · 주소 655개
+   · /post-sitemap1.xml 201개
+   · /post-sitemap2.xml 200개
+   · /post-sitemap3.xml 200개
+   · /post-sitemap4.xml  52개
+   · /page-sitemap.xml    2개
+```
+
+하위 주소는 전부 같은 호스트(`https://wiki.minimalbreeze.com`)다 — 교차 제출
+문제는 아니다.
+
+### 지금 당장 할 수 있는 것
+
+**하위 사이트맵 5개를 개별로 제출한다.** 색인 파일을 구글이 못 펴고 있으니
+안쪽을 직접 준다.
+
+```
+https://wiki.minimalbreeze.com/post-sitemap1.xml
+https://wiki.minimalbreeze.com/post-sitemap2.xml
+https://wiki.minimalbreeze.com/post-sitemap3.xml
+https://wiki.minimalbreeze.com/post-sitemap4.xml
+https://wiki.minimalbreeze.com/page-sitemap.xml
+```
+
+며칠 뒤 "발견된 페이지" 에 숫자가 뜨면 색인 파일만의 문제였던 것이고,
+그래도 0이면 구글봇이 wiki 의 파일 자체를 못 받는 것이다(봇 차단 쪽으로 다시
+간다). **어느 쪽이든 이 한 수로 갈린다.**
+
+### 정정 ② 도 보류한다
+
+"크롤링됨 1,598" 은 **도메인 속성(서브도메인 전부)** 숫자다. 루트
+`minimalbreeze.com` 한 곳만 해도 사이트맵에 495쪽이 잡혀 있고 글이 1,075편이다.
+**1,598 중 wiki 몫이 얼마인지 모른다.** wiki 가 거의 안 섞여 있을 수도 있다.
+
+`https://wiki.minimalbreeze.com/` 속성의 색인 숫자를 봐야 결론이 난다.
+그 전까지 "구글이 wiki 를 읽고 나서 버린다" 고 단정하지 않는다.
