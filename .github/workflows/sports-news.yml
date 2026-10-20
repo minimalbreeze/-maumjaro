@@ -910,7 +910,9 @@ jobs:
         # 지우기 전에 본문 전체를 파일로 남기고, 그 글을 가리키는 다른 글을
         # 세어 보여준다 — 지우면 그 링크들이 깨진 링크가 되고, 구글은 링크로
         # 페이지를 찾는다.
-        if: ${{ contains(inputs.mode, '휴지통') }}
+        # '깨진 링크 세기' 모드 이름에도 '휴지통' 이 들어간다. 그 모드로 돌렸을
+        # 때 이 단계까지 함께 돌아 "글 번호를 적어주세요" 로 죽었다(2026-10-20).
+        if: ${{ contains(inputs.mode, '휴지통') && !contains(inputs.mode, '깨진 링크') }}
         working-directory: sports-news
         env:
           IN_MODE: ${{ inputs.mode }}

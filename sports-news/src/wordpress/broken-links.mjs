@@ -24,17 +24,44 @@ import { wpFetch, wpConfig } from './client.mjs';
 import { 가리키나 } from './delete-post.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 
+/**
+ * 휴지통 글의 슬러그에서 워드프레스가 붙인 꼬리를 뗀다.
+ *
+ * ⚠️ 2026-10-20 에 이것 때문에 **0편이라고 거짓 보고했다.** 워드프레스는 글을
+ *    휴지통에 넣을 때 슬러그 뒤에 `__trashed` 를 붙인다. API 가 돌려주는 것은
+ *    그 바뀐 슬러그다:
+ *
+ *      379  서평택-골프클럽-파3__trashed
+ *
+ *    그런데 다른 글 본문에 적혀 있는 링크는 **바뀌기 전 주소**다. 꼬리를 달고
+ *    찾으면 당연히 한 편도 안 나오고, 도구는 "깨진 링크 0편" 이라고 말한다.
+ *    치울 것이 남았는지 보려고 만든 도구가 정반대로 안심시키는 셈이다.
+ *
+ * 꼬리를 뗀 것과 그대로인 것을 둘 다 본다 — 본문에 어느 쪽이 적혀 있을지는
+ * 글에 따라 다르고, 둘 다 보는 쪽이 놓치지 않는다.
+ */
+export function 꼬리뗀슬러그(slug) {
+  const s = String(slug || '').trim();
+  const 뗀것 = s.replace(/__trashed(?:-\d+)?$/, '');
+  return [...new Set([뗀것, s])].filter(Boolean);
+}
+
 /** 휴지통에 있는 글의 번호·슬러그·제목. */
 export async function 휴지통글() {
   const { data } = await wpFetch('/wp/v2/posts', {
     query: { per_page: 100, status: 'trash', context: 'edit' },
     timeoutMs: 40000,
   });
-  return (Array.isArray(data) ? data : []).map((p) => ({
-    id: p.id,
-    slug: decodeURIComponent(p.slug || ''),
-    title: p.title?.raw || p.title?.rendered || '',
-  }));
+  return (Array.isArray(data) ? data : []).map((p) => {
+    const 날것 = decodeURIComponent(p.slug || '');
+    return {
+      id: p.id,
+      slug: 날것,
+      // 본문에서 찾을 때 쓰는 주소들 (휴지통 꼬리를 뗀 것 포함)
+      슬러그들: 꼬리뗀슬러그(날것),
+      title: p.title?.raw || p.title?.rendered || '',
+    };
+  });
 }
 
 /**
@@ -78,7 +105,11 @@ export function 깨진것찾기(발행글, 휴지통) {
   const 결과 = [];
   for (const p of Array.isArray(발행글) ? 발행글 : []) {
     const 가리킨것 = (Array.isArray(휴지통) ? 휴지통 : [])
-      .filter((t) => t.slug && 가리키나(p.content, t.slug));
+      .filter((t) => {
+        // 슬러그들 이 없으면 slug 에서 직접 만든다 — 손으로 만든 값도 받는다.
+        const 후보 = Array.isArray(t.슬러그들) && t.슬러그들.length ? t.슬러그들 : 꼬리뗀슬러그(t.slug);
+        return 후보.some((s) => s && 가리키나(p.content, s));
+      });
     if (가리킨것.length) 결과.push({ post: p, 가리킨것 });
   }
   return 결과;
@@ -97,7 +128,7 @@ async function main() {
     return;
   }
   console.log(`\n휴지통 ${휴지통.length}편:`);
-  for (const t of 휴지통) console.log(`   [${t.id}] ${t.slug}  ${t.title}`);
+  for (const t of 휴지통) console.log(`   [${t.id}] ${t.슬러그들.join(' / ')}  ${t.title}`);
 
   const 발행글 = (await 본문과함께()).filter((p) => 손대도되는글인가(p.link, base));
   console.log(`\n발행글 ${발행글.length}편의 본문을 봤습니다.`);
