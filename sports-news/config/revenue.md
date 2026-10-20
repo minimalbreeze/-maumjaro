@@ -2176,3 +2176,43 @@ IPs used for automation should be whitelisted
 사이트맵 주소를 바꿀 필요는 없다 — `/sitemap.xml` 이 이미 655개를 담고 있다.
 **봇 차단을 먼저 풀어야 한다.** 그것이 걸려 있는 한 링크를 더 걸어도, 글을 더
 써도 구글은 못 들어온다. 오늘 한 링크 작업(58+16편)도 차단이 풀린 뒤에야 산다.
+
+### ⚠️ 정정 — 위의 색인 진단은 wiki 속성이 아니었다
+
+운영자가 서치콘솔 **속성 목록**을 보냈다. 속성이 일곱 개다.
+
+```
+minimalbreeze.com              ← 도메인 속성 (서브도메인 전부 포함)
+http://h.minimalbreeze.com/
+http://i.minimalbreeze.com/
+https://i.minimalbreeze.com/
+https://maumjaro.minimalbreeze.com/
+https://minimalbreeze.com/
+https://wiki.minimalbreeze.com/   ← wiki 는 여기
+```
+
+앞에서 본 **"미색인 154 · 색인 7 · 사이트맵 발견 0"** 은 **wiki 속성이 아니었다.**
+`/sitemap.xml` 이 비어 보인 것도 그 속성의 사이트맵이었다. **내가 남의 집
+숫자를 보고 wiki 를 진단했다.**
+
+도메인 속성(`minimalbreeze.com`)을 열었을 때의 숫자는 이렇다.
+
+- 색인 생성됨 **51**
+- 색인되지 않음 **2.17천**, **이유 7개**
+
+이쪽이 서브도메인 전체를 합친 그림이다. 여기서도 색인된 것이 51개뿐이다.
+
+### 그래서 다시 봐야 하는 것
+
+1. **`https://wiki.minimalbreeze.com/` 속성**의 색인 숫자와 사이트맵 상태.
+   우리가 직접 받은 wiki 사이트맵은 **655개**를 담고 있다(그건 확인된 사실이다).
+   그 속성에서도 0으로 보이는지가 갈림길이다.
+2. 도메인 속성의 **미색인 이유 7개** 목록.
+
+### 그대로 남는 사실
+
+- wiki `/sitemap.xml` · `/sitemap_index.xml` 이 **655개**를 담고 있다 (직접 받아 확인)
+- 우리 러너가 **Imunify360 봇 차단으로 403** 을 받았다 (로그에 그대로 찍혔다)
+
+봇 차단은 여전히 유력한 용의자지만, **색인 숫자 쪽 근거는 속성이 틀려 무효다.**
+wiki 속성 숫자를 보고 다시 판단한다.
