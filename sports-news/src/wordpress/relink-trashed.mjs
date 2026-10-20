@@ -102,7 +102,28 @@ async function main() {
         console.log(`   ⏭  ${p.죽은슬러그} → ${p.살릴글} 은 발행 상태가 아닙니다(${data?.status}). 건너뜁니다.`);
         continue;
       }
-      준비.push({ ...p, 슬러그들: 꼬리뗀슬러그(p.죽은슬러그), 새주소: data.link, 살릴제목: data?.title?.raw || '' });
+      // 죽은 슬러그는 **휴지통 글에서 직접 받는다.** 손으로 적으면 틀린다 —
+      // 2026-10-21 에 `여주-영재파3-골프랜드` 라고 적었는데 실제 슬러그는
+      // `영재파-파3-골프장` 이었다. 0편을 고치고도 성공처럼 끝났다.
+      // 적어 둔 값은 **맞는지 보는 용도**로만 쓴다.
+      let 슬러그들 = 꼬리뗀슬러그(p.죽은슬러그);
+      if (Number.isInteger(p.휴지통)) {
+        try {
+          const { data: 휴 } = await wpFetch(`/wp/v2/posts/${p.휴지통}`, { query: { context: 'edit' } });
+          const 진짜 = decodeURIComponent(휴?.slug || '');
+          if (진짜) {
+            const 받은것 = 꼬리뗀슬러그(진짜);
+            const 적은것 = String(p.죽은슬러그 || '');
+            if (적은것 && !받은것.includes(적은것)) {
+              console.log(`   ⚠️  ${p.휴지통}: 적어 둔 슬러그 '${적은것}' 과 실제 '${받은것[0]}' 가 다릅니다. 실제 쪽을 씁니다.`);
+            }
+            슬러그들 = 받은것;
+          }
+        } catch {
+          // 휴지통 글을 못 받으면 적어 둔 값으로 간다.
+        }
+      }
+      준비.push({ ...p, 슬러그들, 새주소: data.link, 살릴제목: data?.title?.raw || '' });
     } catch (err) {
       console.log(`   ⏭  ${p.죽은슬러그} → ${p.살릴글} 을 받지 못했습니다: ${err.message}`);
     }
