@@ -85,7 +85,7 @@ check('한 글에서 둘을 고치면 둘 다 센다', () => {
 // ── 짝 파일 ────────────────────────────────────────────────
 check('짝 파일에 휴지통 5편이 모두 있고, 살릴 글이 적혀 있다', () => {
   const 짝 = 짝읽기(path.join(ROOT, 'config/relink.json'));
-  assert.equal(짝.length, 5);
+  assert.equal(짝.length, 6);
   for (const p of 짝) {
     assert.ok(p.죽은슬러그, '죽은 슬러그가 없습니다');
     assert.ok(Number.isInteger(p.살릴글), `살릴 글 번호가 없습니다: ${p.죽은슬러그}`);
