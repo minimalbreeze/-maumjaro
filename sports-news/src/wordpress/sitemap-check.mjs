@@ -63,8 +63,26 @@ async function 받기(url) {
   }
 }
 
+/**
+ * 어느 사이트를 볼지. 기본은 WORDPRESS_URL(wiki) 이다.
+ *
+ * --base=https://... 를 주면 그 주소를 본다. 2026-10-20 에 필요해졌다 —
+ * 서치콘솔에서 보던 숫자가 wiki 것이 아니라 **다른 속성** 것일 수 있다는
+ * 의심이 생겼다(URL 검사에서 "속성에 URL이 없음"). 어느 사이트의 사이트맵이
+ * 비어 있는지 가리려면 wiki 말고 다른 주소도 받아 볼 수 있어야 한다.
+ *
+ * **읽기만 한다.** 남의 사이트를 고치는 길은 이 파일에 없다.
+ */
+export function 볼사이트(argv = [], 기본 = '') {
+  const 준것 = (argv.find((a) => a.startsWith('--base=')) || '').slice('--base='.length).trim();
+  const 고른것 = 준것 || 기본;
+  const u = new URL(고른것);          // 주소가 아니면 여기서 터진다
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error(`주소가 아닙니다: ${고른것}`);
+  return u.origin;
+}
+
 async function main() {
-  const base = wpConfig().base.replace(/\/+$/, '');
+  const base = 볼사이트(process.argv.slice(2), wpConfig().base);
   console.log('\n────────────────────────────────────────────────────────');
   console.log('🗺  사이트맵 점검 (고치지 않음 · 비용 0원)');
   console.log(`   대상: ${new URL(base).host}`);
