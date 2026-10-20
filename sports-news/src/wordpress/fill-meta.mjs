@@ -253,6 +253,22 @@ export async function fillOne(post, { apply = true } = {}) {
   const description = describeFrom(post.content, { title: post.title, focusKeyword: post.focusKeyword });
   if (!description) return { id: post.id, title: post.title, description: '', changed: false };
 
+  // **고친 결과가 여전히 망친 설명이면 그 글은 건너뛴다.**
+  //
+  // 2026-10-20: 미리보기에서 두 편이 걸렸다.
+  //   금시세 글 — 본문이 "안녕하세요, … 여러분!" 으로 시작해 새 설명도 인사말이다
+  //   985      — 쿠팡 고지문이 통째로 들어갔다
+  // 그런데 이 검사는 **로그에서만** 하고 있었다. --apply 로 돌리면 둘 다
+  // 저장된다. 고쳐서 더 나빠지는 글은 손대지 않는 것이 맞다.
+  //
+  // 건너뛰는 것이지 전체를 막지 않는다 — 멀쩡한 25편은 고쳐야 한다.
+  if (망친설명인가(description)) {
+    return {
+      id: post.id, title: post.title, description,
+      changed: false, 건너뜀: '고쳐도 앞머리가 남는다',
+    };
+  }
+
   let backup = null;
   if (apply) {
     backup = saveBackup({
@@ -314,9 +330,16 @@ async function main() {
 
   let 채움 = 0;
   let 남은문제 = 0;
+  let 건너뜀 = 0;
   for (const post of 대상) {
     try {
       const r = await fillOne(post, { apply });
+      if (r.건너뜀) {
+        건너뜀++;
+        log.warn(`[${r.id}] 건너뜁니다 (${r.건너뜀}) — ${r.title.slice(0, 40)}`);
+        log.warn(`      → ${r.description.slice(0, 90)}`);
+        continue;
+      }
       if (!r.changed) { log.warn(`[${post.id}] 본문에서 뽑을 내용이 없습니다 — ${post.title.slice(0, 40)}`); continue; }
       채움++;
       log.info(`[${r.id}] ${r.title.slice(0, 44)}`);
@@ -335,6 +358,9 @@ async function main() {
   }
 
   log.raw('');
+  if (건너뜀) {
+    log.info(`건너뛴 글 ${건너뜀}개 — 고쳐도 앞머리가 남아 손대지 않았습니다. 나머지는 그대로 갑니다.`);
+  }
   if (남은문제) {
     log.warn(`${남은문제}개는 앞머리가 아직 남아 있습니다. 적용하기 전에 걸러내는 규칙을 고쳐야 합니다.`);
   }
@@ -343,7 +369,8 @@ async function main() {
     if (전체.length > 채움) log.info('  다시 돌리면 이어서 합니다.');
   } else {
     log.info(`미리보기입니다. 실제로는 ${전체.length}개가 대상입니다.`);
-    if (남은문제) log.fail('미리보기에 문제가 보입니다 — 이대로 적용하지 마세요.');
+    // log.fail 은 두 번째 인자를 받아 찍는다. 안 넘기면 ": undefined" 가 붙는다.
+    if (남은문제) log.warn('⚠️  위 글들은 적용 때 건너뜁니다 — 저장되지 않습니다.');
   }
 }
 
