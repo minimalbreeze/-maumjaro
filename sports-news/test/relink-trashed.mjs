@@ -98,6 +98,16 @@ check('짝 파일에 휴지통 5편이 모두 있고, 살릴 글이 적혀 있�
 });
 
 // ── 안전 ───────────────────────────────────────────────────
+check('죽은 슬러그를 휴지통 글에서 직접 받는다 — 손으로 적으면 틀린다', () => {
+  // 2026-10-21: relink.json 에 '여주-영재파3-골프랜드' 라고 적었는데 실제
+  // 슬러그는 '영재파-파3-골프장' 이었다. 0편을 고치고도 성공처럼 끝났다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/relink-trashed.mjs'), 'utf8');
+  assert.match(src, /wpFetch\(`\/wp\/v2\/posts\/\$\{p\.휴지통\}`/, '휴지통 글에서 슬러그를 받지 않습니다');
+  assert.match(src, /적어 둔 슬러그 .* 과 실제 .* 가 다릅니다/, '어긋났을 때 알리지 않습니다');
+  // 못 받으면 적어 둔 값으로 간다 — 조용히 아무것도 안 하면 안 된다.
+  assert.match(src, /적어 둔 값으로 간다/, '못 받았을 때의 길이 없습니다');
+});
+
 check('미리보기가 기본이고, 고치기 전에 본문을 남긴다', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/relink-trashed.mjs'), 'utf8');
   assert.match(src, /includes\('--apply'\)/);
