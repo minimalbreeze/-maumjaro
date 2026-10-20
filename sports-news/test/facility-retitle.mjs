@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { 제목분해, 새제목, 대표키워드, 다듬을거리, 주소처럼생겼나, 가는길있나 } from '../src/wordpress/facility-retitle.mjs';
+import { 제목분해, 새제목, 대표키워드, 다듬을거리, 주소처럼생겼나, 가는길있나, 실험중인가 } from '../src/wordpress/facility-retitle.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -118,6 +118,19 @@ check('본문·슬러그·발행상태를 보내지 않는다', () => {
   // 본문을 받는 wpFetch 는 읽기여야 한다 — method 를 주지 않는다(GET).
   const 본문읽기 = /wpFetch\(`\/wp\/v2\/posts\/\$\{p\.id\}`, \{ query: \{ context: 'edit' \} \}\)/.test(코드만);
   assert.ok(본문읽기, '본문을 읽는 자리가 GET 이 아닙니다');
+});
+
+check('10-30 메타 실험 중인 글을 건너뛴다', () => {
+  // config/revenue.md "10-30 확인 때 볼 글이 넷으로 늘었다" — 1619·1730·1662 는
+  // 메타 설명만 바꿔 CTR 을 보는 중이다. 제목까지 바꾸면 원인을 가릴 수 없고,
+  // 1619 남서울은 이 실험의 대조군이다.
+  for (const id of [1619, 1730, 1662]) assert.equal(실험중인가(id), true, `${id} 가 빠져 있습니다`);
+  assert.equal(실험중인가(1667), false);
+  assert.equal(실험중인가('1619'), true, '문자열 번호를 못 읽습니다');
+  assert.equal(실험중인가(undefined), false);
+
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/facility-retitle.mjs'), 'utf8');
+  assert.match(src, /filter\(\(x\) => !실험중인가\(x\.post\.id\)\)/, '실제로 걸러내지 않습니다');
 });
 
 check('미리보기가 기본이고 wiki 밖은 건너뛴다', () => {
