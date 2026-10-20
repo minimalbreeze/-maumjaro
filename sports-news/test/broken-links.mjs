@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { 깨진것찾기 } from '../src/wordpress/broken-links.mjs';
+import { 깨진것찾기, 꼬리뗀슬러그 } from '../src/wordpress/broken-links.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -69,6 +69,38 @@ check('슬러그가 비어 있는 휴지통 글은 모든 글을 가리킨 것�
   // 빈 슬러그를 그대로 넣으면 '/' 를 찾아 거의 모든 글이 걸린다.
   const r = 깨진것찾기([{ id: 904, content: '<a href="/무엇/">가</a>' }], [{ id: 7, slug: '', title: '' }]);
   assert.deepEqual(r, []);
+});
+
+// ── 휴지통 꼬리 (2026-10-20 에 실제로 거짓 보고한 자리) ──────
+//
+// 워드프레스는 휴지통에 넣을 때 슬러그에 __trashed 를 붙인다. API 는 그
+// 바뀐 슬러그를 주는데, 본문에 적힌 링크는 바뀌기 전 주소다. 꼬리를 달고
+// 찾으면 한 편도 안 나오고 "깨진 링크 0편" 이라고 말한다 — 치울 것이
+// 남았는지 보려고 만든 도구가 정반대로 안심시킨다.
+
+check('휴지통 꼬리를 뗀 주소로 찾는다 — 0편이라고 거짓 보고하던 자리', () => {
+  const 휴지통꼬리 = [{ id: 379, slug: '서평택-골프클럽-파3__trashed', title: '서평택' }];
+  const 발행글 = [{ id: 905, title: '가리키는 글', content: '<a href="/서평택-골프클럽-파3/">보기</a>' }];
+  const r = 깨진것찾기(발행글, 휴지통꼬리);
+  assert.equal(r.length, 1, '꼬리를 떼지 않아 못 찾았습니다 — 0편이라고 거짓 보고합니다');
+  assert.equal(r[0].가리킨것[0].id, 379);
+});
+
+check('꼬리가 붙은 주소가 본문에 적혀 있어도 찾는다', () => {
+  const 휴지통꼬리 = [{ id: 379, slug: '서평택-골프클럽-파3__trashed', title: '서평택' }];
+  const 발행글 = [{ id: 906, content: '<a href="/서평택-골프클럽-파3__trashed/">보기</a>' }];
+  assert.equal(깨진것찾기(발행글, 휴지통꼬리).length, 1);
+});
+
+check('꼬리뗀슬러그 가 둘을 돌려주고, 꼬리가 없으면 하나만 준다', () => {
+  assert.deepEqual(꼬리뗀슬러그('가-나__trashed'), ['가-나', '가-나__trashed']);
+  assert.deepEqual(꼬리뗀슬러그('가-나__trashed-2'), ['가-나', '가-나__trashed-2']);
+  assert.deepEqual(꼬리뗀슬러그('가-나'), ['가-나']);
+  // 슬러그가 꼬리뿐이면(실제로 9233 이 그랬다) 빈 값을 내놓지 않는다 —
+  // 빈 값으로 찾으면 '/' 가 걸려 거의 모든 글이 깨진 것으로 잡힌다.
+  assert.deepEqual(꼬리뗀슬러그('__trashed'), ['__trashed']);
+  assert.deepEqual(꼬리뗀슬러그(''), []);
+  assert.deepEqual(꼬리뗀슬러그(undefined), []);
 });
 
 check('고치는 길이 이 파일에 없다 — 읽기만 한다', () => {
