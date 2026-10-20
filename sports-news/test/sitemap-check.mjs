@@ -90,6 +90,17 @@ check('--base 로 다른 사이트도 볼 수 있다 — 읽기만 하는 길이
   assert.throws(() => 볼사이트([], ''));
 });
 
+check('새 하위 사이트맵이 곧 생기는 것을 미리 알린다', () => {
+  // 2026-10-21: 색인 파일(/sitemap.xml)은 구글이 두 번 읽고도 0 이었다.
+  // 하위를 개별 제출한 것만 작동하므로, 새 하위 파일이 생기면 아무도
+  // 제출하지 않은 상태가 된다. 미리 알리지 않으면 같은 일이 반복된다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/sitemap-check.mjs'), 'utf8');
+  assert.match(src, /한파일최대 = 200/, '한 파일에 몇 개가 차는지 적지 않았습니다');
+  assert.match(src, /사람이 서치콘솔에 추가 제출/, '사람이 할 일을 적지 않았습니다');
+  // 기준이 "거의 찼을 때" 여야 한다 — 다 찬 뒤에 알리면 이미 늦다.
+  assert.match(src, /한파일최대 \* 0\.9/, '다 찬 뒤에 알리면 늦습니다');
+});
+
 check('고치는 길이 이 파일에 없다 — 읽기만 한다', () => {
   const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/sitemap-check.mjs'), 'utf8');
   const 코드만 = src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/\/\/.*$/, '')).join('\n');
