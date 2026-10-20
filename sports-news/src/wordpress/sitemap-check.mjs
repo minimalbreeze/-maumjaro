@@ -114,19 +114,43 @@ async function main() {
     // 색인이면 하위를 한 단계 따라가 URL 을 합친다.
     let 합 = 0;
     const 하위들 = [];
+    const 하위원본 = [];
     for (const 하위 of locs) {
       const h = await 받기(하위);
       const n = h.ok ? loc뽑기(h.text).length : 0;
       하위들.push(`${하위.replace(base, '')} ${h.ok ? `${n}개` : `못 받음(${h.오류 || h.status})`}`);
+      하위원본.push({ 주소: 하위, 수: n, ok: h.ok });
       합 += n;
     }
-    결과.push({ url, 상태: `색인 · 하위 ${locs.length}개`, 수: 합, 하위: 하위들 });
+    결과.push({ url, 상태: `색인 · 하위 ${locs.length}개`, 수: 합, 하위: 하위들, 하위원본 });
   }
 
   for (const r of 결과) {
     console.log(`\n   ${r.수 ? '✅' : '❌'} ${r.url.replace(base, '') || '/'}`);
     console.log(`      ${r.상태} · 주소 ${r.수}개`);
     for (const h of r.하위 || []) console.log(`        · ${h}`);
+  }
+
+  // ── 새 하위 사이트맵이 곧 생기는지 미리 알린다 (2026-10-21) ──
+  //
+  // 색인 파일(/sitemap.xml)은 구글이 두 번 읽고도 0개를 봤다. 재제출로도
+  // 안 고쳐진다 — 그래서 **하위를 개별 제출한 것만 작동한다.** 그 말은,
+  // 글이 늘어 새 하위 파일이 생기면 **아무도 제출하지 않은 상태**가 된다는
+  // 뜻이다. 그때 새 글이 통째로 구글에 전달되지 않는다.
+  //
+  // Rank Math 는 한 파일에 200개를 채운다. 마지막 파일이 차 가면 미리 알린다.
+  const 한파일최대 = 200;
+  const 곧생김 = [];
+  for (const r of 결과) {
+    for (const h of r.하위원본 || []) {
+      if (h.수 >= 한파일최대 * 0.9 && h.수 < 한파일최대) {
+        곧생김.push(`${h.주소.replace(base, '')} 가 ${h.수}/${한파일최대} 입니다`);
+      }
+    }
+  }
+  if (곧생김.length) {
+    console.log('\n⚠️  곧 새 하위 사이트맵이 생깁니다. 생기면 **사람이 서치콘솔에 추가 제출**해야 합니다.');
+    for (const m of 곧생김) console.log(`   ${m}`);
   }
 
   // 숫자를 맨 끝에 다시 찍는다 — GitHub 로그 요약은 tail -60 만 보여준다.
