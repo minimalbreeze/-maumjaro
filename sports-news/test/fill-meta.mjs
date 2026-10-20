@@ -305,4 +305,44 @@ check('빈 값에도 던지지 않는다', () => {
   assert.equal(망친설명인가(null), false);
 });
 
+// ── 고쳐서 더 나빠지는 글은 저장하지 않는다 (2026-10-20) ────────
+//
+// 미리보기에서 두 편이 걸렸다. 그런데 그 검사는 **로그에서만** 하고 있어서,
+// --apply 로 돌리면 둘 다 저장될 상태였다.
+//
+//   금시세 글 — 본문이 "안녕하세요, … 여러분!" 으로 시작해 새 설명도 인사말
+//   985      — 쿠팡 고지문이 통째로 들어갔다
+check('고친 결과가 여전히 망친 설명이면 저장하지 않는다', async () => {
+  // 본문 전체가 인사말이라 어떻게 뽑아도 인사말이 된다.
+  const 인사말글 = {
+    id: 9001, title: '금시세 오늘 금값 시세',
+    content: '<p>안녕하세요, 황금 투자(금시세)를 고민하시는 여러분! 최근 글로벌 경제 불안정과 인플레이션 압박으로 인해 안전자산으로서 금의 가치가 더욱 부각되고 있습니다.</p>',
+    focusKeyword: '금시세', description: '',
+  };
+  // apply: true 인데도 저장하러 가지 않아야 한다 — wpFetch 를 부르면 네트워크가 없어 던진다.
+  const r = await fillOne(인사말글, { apply: true });
+  assert.equal(r.changed, false, '망친 설명을 저장하러 갔습니다');
+  assert.match(r.건너뜀 || '', /앞머리/);
+});
+
+check('멀쩡하게 고쳐지는 글은 건너뛰지 않는다', async () => {
+  const 멀쩡 = {
+    id: 9002, title: '일산 중산힐스 파3 골프장 이용료·예약 방법 (고봉로 467-68)',
+    content: '<p>일산 중산힐스 파3 골프장은 경기도 고양시 일산동구에 위치한 서울 근교의 대표적인 파3 골프장으로, 초보자부터 숙련된 골퍼까지 누구나 즐길 수 있는 곳입니다.</p>',
+    focusKeyword: '일산 중산힐스 파3 골프장', description: '',
+  };
+  const r = await fillOne(멀쩡, { apply: false });
+  assert.ok(!r.건너뜀, `건너뛰면 안 됩니다: ${r.건너뜀}`);
+  assert.equal(r.changed, true);
+  assert.ok(!/정보입니다\.\s*(?:은|는)\s/.test(r.description), `조사가 남았습니다: ${r.description}`);
+});
+
+check('저장 전에 막는다 — 로그가 아니라 fillOne 에서', () => {
+  const src = fs.readFileSync(new URL('../src/wordpress/fill-meta.mjs', import.meta.url), 'utf8');
+  const 막는자리 = src.indexOf('if (망친설명인가(description))');
+  const 저장자리 = src.indexOf("method: 'POST'");
+  assert.ok(막는자리 > -1, 'fillOne 에서 막지 않습니다');
+  assert.ok(막는자리 < 저장자리, '막는 자리가 저장보다 뒤입니다');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
