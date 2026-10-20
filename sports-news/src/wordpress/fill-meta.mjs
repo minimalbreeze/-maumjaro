@@ -81,6 +81,25 @@ function 비교형(v) {
  * 추측으로 자르지 않는다. 지우려는 앞머리가 제목과 실제로 맞을 때만 지운다 —
  * 괄호 안의 말이 제목에 들어 있거나, 앞머리가 제목 자체일 때만.
  */
+/**
+ * 제목을 걷어낸 자리에 남는 **조사**. 이것을 안 지우면 설명이 이렇게 된다.
+ *
+ *   본문  "파주 파인빌 파3 골프장은 서울과 가까운 …"
+ *   제목  "파주 파인빌 파3 골프장 이용료·예약 방법 (새오리로 250)"
+ *   결과  "파인빌 파3 정보입니다. 은 서울과 가까운 …"   ← 1667 의 실제 설명
+ *
+ * 메타 설명은 **검색 결과에 그대로 보이는 글**이다. "은" 으로 시작하는 문장을
+ * 보고 누를 사람이 없다. 2026-10-20 에 1667·1678 에서 이 꼴을 발견했다.
+ */
+const 선행조사 = /^(?:은|는|이|가|을|를|의|도|만|와|과|에서|에게|으로|로|에)\s+/;
+
+/** 제목을 걷어낸 뒤 남은 조사를 떼어낸다. 떼고도 쓸 만큼 남을 때만. */
+export function 조사떼고(text) {
+  const t = String(text || '').trim();
+  const 떼어낸 = t.replace(선행조사, '').trim();
+  return 떼어낸.length >= 20 ? 떼어낸 : t;
+}
+
 export function 제목중복빼기(text, title) {
   const t = String(text || '').trim();
   const 제목 = 비교형(title);
@@ -92,7 +111,7 @@ export function 제목중복빼기(text, title) {
     const 안 = 비교형(괄호[1]);
     if (안.length >= 2 && 제목.includes(안)) {
       const 지운뒤 = t.slice(괄호[0].length).trim();
-      if (지운뒤.length >= 20) return 지운뒤;
+      if (지운뒤.length >= 20) return 조사떼고(지운뒤);
     }
   }
 
@@ -101,7 +120,7 @@ export function 제목중복빼기(text, title) {
     const 앞 = 비교형(t.slice(0, n));
     if (앞.length >= 8 && (앞 === 제목 || 제목.endsWith(앞) || 제목.startsWith(앞))) {
       const 지운뒤 = t.slice(n).trim();
-      if (지운뒤.length >= 20) return 지운뒤;
+      if (지운뒤.length >= 20) return 조사떼고(지운뒤);
       break;
     }
   }
@@ -143,6 +162,9 @@ export function 망친설명인가(description) {
   if (/이\s?포스팅은\s?쿠팡\s?파트너스/.test(d)) return true;
   if (/안녕하세요/.test(d) && /여러분|팬/.test(d)) return true;
   if (/정보입니다\.\s*["'“”]/.test(d)) return true;
+  // "… 정보입니다. 은 서울과 가까운 …" — 제목을 걷어낸 자리에 조사가 남았다.
+  // 따옴표가 올 때만 보던 위 줄로는 못 잡는다(1667·1678 이 그래서 살아남았다).
+  if (/정보입니다\.\s*(?:은|는|이|가|을|를|의|도|만|와|과|에서|에게|으로|로)\s/.test(d)) return true;
   return false;
 }
 
