@@ -291,4 +291,17 @@ check('할 일(②)이 맨 뒤에 온다 — tail -60 에서 밀려나지 않게
   assert.ok(!/자르기\(같은시설/.test(src), '②를 자르고 있습니다');
 });
 
+check('top-level await 로 main 을 돌리지 않는다 — 순환 import 가 멈춰 선다', () => {
+  // main() 안에서 facility-mix.mjs 를 동적으로 부르는데, 그 파일이 다시
+  // 이 파일을 import 한다. top-level await 로 main 을 기다리면 둘이 서로를
+  // 기다려 죽는다(2026-10-20, exit 13 · unsettled top-level await).
+  const src = fs.readFileSync(new URL('../src/wordpress/index-audit.mjs', import.meta.url), 'utf8');
+  assert.ok(!/^if \(import\.meta\.url === .+\) await main\(\);/m.test(src),
+    'top-level await 로 main 을 돌립니다 — 순환 import 로 멈춰 섭니다');
+  assert.match(src, /main\(\)\.catch\(/, 'main 의 실패를 받지 않습니다');
+  // 순환의 반대쪽도 그대로여야 이 검사가 뜻을 가진다.
+  const mix = fs.readFileSync(new URL('../src/wordpress/facility-mix.mjs', import.meta.url), 'utf8');
+  assert.match(mix, /from '\.\/index-audit\.mjs'/, '순환이 사라졌다면 이 검사를 다시 보세요');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

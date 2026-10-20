@@ -382,4 +382,18 @@ async function main() {
   console.log('\n이 도구는 숫자만 셉니다. 무엇을 지우고 무엇을 살릴지는 사람이 정합니다.\n');
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) await main();
+// ⚠️ top-level await 를 쓰지 않는다. 이 파일은 main() 안에서
+//    facility-mix.mjs 를 동적으로 부르는데, 그 파일이 다시 이 파일을
+//    import 한다(순환). top-level await 로 main() 을 기다리면
+//    index-audit 은 main 이 끝나기를, facility-mix 는 index-audit 의
+//    평가가 끝나기를 서로 기다려 **멈춰 선다.**
+//
+//    2026-10-20 에 실제로 그랬다. 출력은 ① 겹침 목록까지만 찍히고
+//    ②~⑥ 이 사라진 채 `Detected unsettled top-level await` 로 죽었다
+//    (exit 13). 0원 모드가 빨간불로 끝나 결과를 못 믿게 된다.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}
