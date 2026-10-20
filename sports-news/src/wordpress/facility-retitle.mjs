@@ -28,7 +28,7 @@
 
 import { 발행글전부, 글유형 } from './index-audit.mjs';
 import { retitlePost } from './retitle.mjs';
-import { wpConfig } from './client.mjs';
+import { wpConfig, wpFetch } from './client.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 
 // 제목 꼬리에 붙은, 아무도 검색하지 않는 말들.
@@ -55,6 +55,28 @@ const 모음글 = /추천|모음|비교|베스트|총정리|순위|리스트/;
 
 // 이 도구가 붙이는 꼬리. 다시 돌릴 때 떼어내려고 한 곳에 둔다.
 const 꼬리표 = '이용료·예약 방법';
+
+/**
+ * 본문에 **가는 길**이 적혀 있나.
+ *
+ * 2026-10-20 네이버 실측이 이것을 가리켰다.
+ *
+ *   남서울 파3 **이용방법**   122노출 CTR 14.8%  ← 제목에 '이용' 이 있다
+ *   서평택 파3 **예약방법**    30노출 CTR 23.3%  ← 제목에 '예약' 이 있다
+ *   파주파인빌파3**가는법**   111노출 CTR  2.7%  ← 제목에 없다
+ *
+ * 제목에 그 낱말이 있으면 15~30%, 없으면 1~3% 다. 그래서 꼬리표에 '가는 길' 을
+ * 더하는데, **본문에 실제로 적혀 있는 글만** 더한다. 없는 것을 제목에 쓰면
+ * 낚시고, sports-news/CLAUDE.md ④ 가 금지한다.
+ *
+ * '주차장' 은 넣지 않았다 — 시설 안내에 거의 다 나오는 말이라 가는 길 신호가
+ * 못 된다. 실제로 길을 설명하는 말만 본다.
+ */
+export const 가는길눈금 = /\d+\s*분\s*(?:거리|걸리|정도)|내비게이션|내비에|오시는\s?길|찾아오는\s?길|나들목|IC\s*(?:에서|부터)|고속도로|자유로|외곽순환|지하철\s*\d*\s*호선|버스\s*(?:정류장|를?\s*타)/;
+
+export function 가는길있나(content) {
+  return 가는길눈금.test(String(content || '').replace(/<[^>]+>/g, ' '));
+}
 const 꼬리 = /\s*이용료·예약 방법\s*$/;
 
 /**
@@ -97,7 +119,7 @@ export function 대표키워드(시설명) {
  * "<시설명> 이용료·예약 방법 (<주소>)" — 검색어를 맨 앞에 두고, 검색되지
  * 않는 말을 덜어낸다. 주소는 그 시설을 다른 시설과 구분해 주므로 남긴다.
  */
-export function 새제목(title) {
+export function 새제목(title, { 가는길 = false } = {}) {
   // 시설 안내 틀인 글만 손댄다. 같은 시설을 다룬 뉴스 글에 "이용료·예약 방법"을
   // 붙이면 제목이 거짓말이 된다. 실제로 이렇게 나왔다:
   //   "충주 단월파크골프장, 1억 4천만 원 공사 마치고 재개장 (언제부터 칠 수 있나?)"
@@ -110,7 +132,7 @@ export function 새제목(title) {
   if (!시설명) return '';
   // 여러 시설을 묶은 글은 틀이 달라서 손대지 않는다.
   if (모음글.test(title)) return '';
-  const 본체 = `${시설명} ${꼬리표}`;
+  const 본체 = `${시설명} ${꼬리표}${가는길 ? '·가는 길' : ''}`;
   // 주소든 아니든, 괄호 안에 있던 말은 그대로 데려간다.
   const 덧붙임 = 주소 || 괄호속;
   return 덧붙임 ? `${본체} (${덧붙임})` : 본체;
@@ -119,7 +141,8 @@ export function 새제목(title) {
 /** 바꿀 값이 있는 글인가. 이미 정리돼 있으면 건드리지 않는다. */
 export function 다듬을거리(post) {
   // 새제목() 이 시설 안내 틀·모음글 여부를 이미 가린다. 빈 값이면 손대지 않는다.
-  const 제목 = 새제목(post.title);
+  // 본문이 없으면 가는 길을 넣지 않는다 — 확인 못 한 것을 제목에 쓰지 않는다.
+  const 제목 = 새제목(post.title, { 가는길: 가는길있나(post.content) });
   if (!제목 || 제목 === post.title) return null;
   const { 시설명 } = 제목분해(post.title);
   return { title: 제목, focusKeyword: 대표키워드(시설명) };
@@ -136,9 +159,26 @@ async function main() {
 
   const 글 = await 발행글전부();
   const 시설 = 글.filter((p) => 글유형(p.title) === '시설');
-  const 대상 = 시설.map((p) => ({ post: p, 바꿀값: 다듬을거리(p) })).filter((x) => x.바꿀값);
+
+  // 본문을 받아야 '가는 길' 이 실제로 적혀 있는지 알 수 있다. 발행글전부() 는
+  // 본문을 담지 않으므로 시설 글만 따로 받는다(reinforce-scan 과 같은 방식).
+  console.log(`\n시설 글 ${시설.length}편의 본문을 읽는 중… (가는 길이 적혀 있는지 봅니다)`);
+  const 본문붙임 = [];
+  for (const p of 시설) {
+    try {
+      const { data } = await wpFetch(`/wp/v2/posts/${p.id}`, { query: { context: 'edit' } });
+      본문붙임.push({ ...p, content: data?.content?.raw ?? data?.content?.rendered ?? '' });
+    } catch {
+      // 본문을 못 받으면 가는 길 없이 간다 — 모르면 넣지 않는다.
+      본문붙임.push({ ...p, content: '' });
+    }
+  }
+
+  const 대상 = 본문붙임.map((p) => ({ post: p, 바꿀값: 다듬을거리(p) })).filter((x) => x.바꿀값);
+  const 가는길편 = 대상.filter((x) => x.바꿀값.title.includes('가는 길')).length;
 
   console.log(`\n발행 ${글.length}편 · 시설 글 ${시설.length}편 · 다듬을 것 ${대상.length}편`);
+  console.log(`   그중 '가는 길' 을 넣는 글 ${가는길편}편 (본문에 실제로 적혀 있는 것만)`);
   if (!대상.length) { console.log('\n   손볼 제목이 없습니다.\n'); return; }
 
   for (const { post, 바꿀값 } of 대상.slice(0, 40)) {
