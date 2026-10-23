@@ -21,7 +21,7 @@
 // 긴장은 '보여주지 않음'으로 만든다 — 빈 복도, 열린 문, 꺼진 조명,
 // 멈춘 시계. 그게 시체를 보여주는 것보다 무섭고, 아무도 불쾌하지 않다.
 
-import { callForJson, MODELS } from '../ai/client.mjs';
+import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
 
@@ -664,6 +664,14 @@ export async function designAllScenes(scenes, { item = null, model = MODELS.scri
     } catch (err) {
       out.push(scene);
       problems.push(`장면 ${scene.scene_number} 화면 설계 실패: ${err?.message || err}`);
+      // 계정 한도나 인증 문제는 다음 장면에서도 똑같이 난다. 남은 장면을
+      // 마저 때려 봐야 같은 400 을 스물세 번 더 받을 뿐이고, 그 뒤 그림
+      // 단계가 쓸 수 없는 편에 돈을 쓴다. 여기서 멈춘다.
+      if (isFatalApiError(err)) {
+        err.designedScenes = out.length;
+        err.problems = problems;
+        throw err;
+      }
     }
   }
 
