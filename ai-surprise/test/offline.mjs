@@ -39,7 +39,16 @@ let failed = 0;
 
 function test(name, fn) {
   try {
-    fn();
+    const out = fn();
+    // async 함수를 test() 에 넘기면 **실패해도 ✅ 가 찍힌다.**
+    //
+    // try/catch 는 비동기 거부를 잡지 못한다. 그래서 통과로 세어 놓고,
+    // 요약까지 다 찍은 뒤에 node 가 처리되지 않은 거부로 죽는다.
+    // 실행 #28 이 그렇게 났다 — 로컬에서 "301건 통과" 로 보였는데
+    // 종료 코드는 1이었다.
+    if (out && typeof out.then === 'function') {
+      throw new Error('async 함수는 test() 가 아니라 asyncTest() 로 넘기세요.');
+    }
     passed++;
     console.log(`  ✅ ${name}`);
   } catch (err) {
@@ -2743,7 +2752,7 @@ test('워크플로에 시간 제한이 걸려 있다', () => {
 //
 // 여기서는 식만 본다. 진짜 매끄러운지는 렌더해서 재야 하고, 그건
 // tools/움직임-재보기.mjs 가 한다 (클립당 25초라 여기 넣지 않았다).
-test('모든 카메라 움직임이 클립 길이에 맞춰 퍼진다', async () => {
+await asyncTest('모든 카메라 움직임이 클립 길이에 맞춰 퍼진다', async () => {
   const frames = 300;
   for (const camera of IMAGE_CAMERA_MOVES) {
     const f = cameraFilter(camera, { width: 1920, height: 1080, fps: 30, duration: 10 });
@@ -3326,7 +3335,7 @@ test('채널 이름이 종류마다 다르다', () => {
   );
 });
 
-test('동화 쇼츠에 뒤집힘·여운이 들어가지 않는다', async () => {
+await asyncTest('동화 쇼츠에 뒤집힘·여운이 들어가지 않는다', async () => {
   // 1화에서 실제로 난 일이다. 쇼츠 2번이 94~169초로 잘려 뒤집힘과
   // 여운이 통째로 들어갔다. 그걸 보면 본편을 볼 이유가 사라진다.
   const { splitIntoScenes: split } = await import('../src/scenes/split.mjs');
@@ -3357,7 +3366,7 @@ test('동화 쇼츠에 뒤집힘·여운이 들어가지 않는다', async () =>
   );
 });
 
-test('동화 쇼츠가 본편에서 끊긴 구간을 이어 붙이지 않는다', async () => {
+await asyncTest('동화 쇼츠가 본편에서 끊긴 구간을 이어 붙이지 않는다', async () => {
   // 결말 문단을 빼고 나면 남은 문단들이 본편에서는 떨어져 있을 수 있다.
   // 그걸 그냥 이어 붙이면 영상이 건너뛴 것처럼 보인다.
   const { splitIntoScenes: split } = await import('../src/scenes/split.mjs');
@@ -3769,7 +3778,7 @@ await asyncTest('영상 계획 단계가 실제로 끝까지 돈다', async () =
 // 스포츠 분석 — 글자 카드
 // ─────────────────────────────────────────────────────────────
 
-test('칸이 있으면 표, 없으면 한 문장으로 읽는다', async () => {
+await asyncTest('칸이 있으면 표, 없으면 한 문장으로 읽는다', async () => {
   const C = await import('../src/video/card.mjs');
   const table = C.parseCardText('FA 보상 규정\nA등급|연봉 200%\nB등급|연봉 100%');
   assert.equal(table.type, 'table');
@@ -3784,7 +3793,7 @@ test('칸이 있으면 표, 없으면 한 문장으로 읽는다', async () => {
   assert.equal(say.rows.length, 0);
 });
 
-test('카드 글자가 자막 자리를 침범하지 않는다', async () => {
+await asyncTest('카드 글자가 자막 자리를 침범하지 않는다', async () => {
   const C = await import('../src/video/card.mjs');
   // 줄을 많이 넣어도 아래 240px(자막 자리)로 내려가면 안 된다.
   const many = C.parseCardText(
@@ -3796,7 +3805,7 @@ test('카드 글자가 자막 자리를 침범하지 않는다', async () => {
   assert.ok(L.rowYs.at(-1) < limit, `마지막 줄 ${L.rowYs.at(-1)} 이 자막 자리 ${limit} 를 넘었습니다`);
 });
 
-test('퍼센트가 들어간 카드가 깨지지 않는다', async () => {
+await asyncTest('퍼센트가 들어간 카드가 깨지지 않는다', async () => {
   const C = await import('../src/video/card.mjs');
   // drawtext 는 % 를 서식 문자로 읽는다. expansion=none 이 빠지면
   // "Stray %" 가 나면서 **그 줄이 통째로 안 그려진다.** 보상등급 표가
@@ -3815,7 +3824,7 @@ test('퍼센트가 들어간 카드가 깨지지 않는다', async () => {
   }
 });
 
-test('카드 글자는 명령줄이 아니라 파일로 넘긴다', async () => {
+await asyncTest('카드 글자는 명령줄이 아니라 파일로 넘긴다', async () => {
   const C = await import('../src/video/card.mjs');
   // 한글과 따옴표·콜론을 명령줄에 직접 넣으면 ffmpeg 필터 문법과 충돌한다.
   const card = C.parseCardText('값은 "이름"입니다\n조건|오전 9:00');
@@ -3885,7 +3894,7 @@ if (!hasFfmpeg()) {
 // 스포츠 분석 — 사실과 전망을 가르는 장치
 // ─────────────────────────────────────────────────────────────
 
-test('스포츠 편은 현역 선수를 다뤄도 막히지 않는다', async () => {
+await asyncTest('스포츠 편은 현역 선수를 다뤄도 막히지 않는다', async () => {
   const { makeSports, GATE } = await import('../src/model.mjs');
   // 현역 선수 이름을 못 부르면 이 소재는 성립하지 않는다. 막는 대신
   // 사람이 반드시 읽게 한다.
@@ -3897,7 +3906,7 @@ test('스포츠 편은 현역 선수를 다뤄도 막히지 않는다', async ()
   );
 });
 
-test('스포츠 대본에 재구성 태그를 쓰면 막는다', async () => {
+await asyncTest('스포츠 대본에 재구성 태그를 쓰면 막는다', async () => {
   const W = await import('../src/script/write.mjs');
   // 아직 일어나지 않은 일을 "재구성"할 수는 없다. 남겨 두면 전망을
   // 재구성처럼 적게 된다.
@@ -3929,7 +3938,7 @@ test('스포츠 편 설명문에는 출처를 적는다', () => {
   assert.ok(d.includes('KBO 공시'), '출처 이름이 빠졌습니다');
 });
 
-test('카드로 그릴 샷은 이미지 프롬프트를 비운다', async () => {
+await asyncTest('카드로 그릴 샷은 이미지 프롬프트를 비운다', async () => {
   const V = await import('../src/scenes/visuals.mjs');
   // 둘 다 채워 두면 나중에 누가 그 프롬프트로 그림을 사고, 화면에는
   // 카드가 올라가 산 그림이 버려진다. 돈만 나간다.
@@ -3949,7 +3958,7 @@ test('카드로 그릴 샷은 이미지 프롬프트를 비운다', async () => 
   assert.ok(card.card_text.includes('A등급'), '카드 글이 전달되지 않았습니다');
 });
 
-test('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', async () => {
+await asyncTest('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', async () => {
   const V = await import('../src/scenes/visuals.mjs');
   const sys = V.visualsSystemFor('SPORTS');
   // 이미지 모델은 KBO 선수 얼굴을 모른다. 이름을 넣으면 닮지도 않으면서
@@ -3960,7 +3969,7 @@ test('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', asyn
   assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
-test('스포츠는 쇼츠를 다섯 개 뽑는다 (월 본편 + 화~금 쇼츠)', async () => {
+await asyncTest('스포츠는 쇼츠를 다섯 개 뽑는다 (월 본편 + 화~금 쇼츠)', async () => {
   const S = await import('../src/video/shorts.mjs');
   // 올리는 리듬에서 나온 숫자다. 월요일 본편, 화~금 쇼츠 넷, 주말 휴식.
   // 다섯을 뽑아 넷을 쓰고 하나는 버릴 여유로 둔다.
@@ -3969,7 +3978,7 @@ test('스포츠는 쇼츠를 다섯 개 뽑는다 (월 본편 + 화~금 쇼츠)'
   assert.equal(S.shortsCountFor('EVENT'), 3);
 });
 
-test('스포츠 섹션에 점수가 매겨져 있다', async () => {
+await asyncTest('스포츠 섹션에 점수가 매겨져 있다', async () => {
   const S = await import('../src/video/shorts.mjs');
   // 점수가 없으면 전부 0점이 되어 **순위가 길이로만** 정해진다. 실제로
   // 그래서 1화에서 가장 궁금한 대목(ACE — 삼성이 둘 다 지킬 수 있나)이
@@ -3992,7 +4001,7 @@ test('스포츠 섹션에 점수가 매겨져 있다', async () => {
   );
 });
 
-test('쇼츠끼리 거의 겹치지 않는다', async () => {
+await asyncTest('쇼츠끼리 거의 겹치지 않는다', async () => {
   const S = await import('../src/video/shorts.mjs');
   // 전에는 "절반 넘게"만 막았다. 다섯을 뽑자마자 같은 대목에서 조금씩
   // 밀린 쇼츠가 셋 나왔다 — 49% 겹쳐도 규칙은 통과하기 때문이다.
@@ -4025,12 +4034,22 @@ test('쇼츠끼리 거의 겹치지 않는다', async () => {
 // 실행 #27 에서 드러난 것들
 // ─────────────────────────────────────────────────────────────
 
-test('카드 글이 프롬프트 목록까지 전달된다', async () => {
+await asyncTest('카드 글이 프롬프트 목록까지 전달된다', async () => {
   // 실행 #27 에서 **카드 24장이 통째로 사라졌다.** 장면 설계는 card_text 를
   // 제대로 채웠는데 prompts.json 에 그 칸이 없었다. 그래서 그림 단계는
   // "프롬프트가 비었다"며 건너뛰고, 카드 단계는 그릴 것이 없다고 봤다.
   // 79샷 중 55장만 남고 24샷이 빈 채로 영상까지 갔다.
   const id = '952';
+  // saveScenes 는 마지막에 상태를 올리는데, 그러려면 research.json 이
+  // 있어야 한다. 없이 불렀다가 실행 #28 이 죽었다.
+  const dir = store.contentPath(id);
+  fs.mkdirSync(dir, { recursive: true });
+  const { makeSports } = await import('../src/model.mjs');
+  fs.writeFileSync(
+    path.join(dir, 'research.json'),
+    JSON.stringify(makeSports({ title: '카드 전달 검사', premise: '한 줄' }), null, 2),
+    'utf8'
+  );
   store.saveScenes(id, {
     scenes: [
       {
@@ -4053,12 +4072,12 @@ test('카드 글이 프롬프트 목록까지 전달된다', async () => {
 
   // 그리고 실제로 두 길로 갈라져야 한다 — 한쪽은 AI, 한쪽은 카드.
   const { shotsToGenerate, cardShots } = await import('../src/assets/images.mjs');
-  const dir = store.contentPath(id, 'assets');
-  assert.deepEqual(shotsToGenerate(saved.prompts, { assetDir: dir }).todo.map((x) => x.shot_id), ['S1-1']);
-  assert.deepEqual(cardShots(saved.prompts, { assetDir: dir }).todo.map((x) => x.shot_id), ['S1-2']);
+  const assetDir = store.contentPath(id, 'assets');
+  assert.deepEqual(shotsToGenerate(saved.prompts, { assetDir }).todo.map((x) => x.shot_id), ['S1-1']);
+  assert.deepEqual(cardShots(saved.prompts, { assetDir }).todo.map((x) => x.shot_id), ['S1-2']);
 });
 
-test('반올림이 쌓인 어긋남은 마지막 클립이 흡수한다', async () => {
+await asyncTest('반올림이 쌓인 어긋남은 마지막 클립이 흡수한다', async () => {
   const { buildTimeline, DRIFT_ABSORB_MAX } = await import('../src/video/plan.mjs');
   // 실행 #27 이 여기서 멈췄다 — 8.9분짜리에서 1.5초. 클립 79개를 반올림하며
   // 쌓인 값이고 어느 샷도 틀리지 않았는데 합계만 안 맞았다.
@@ -4086,7 +4105,7 @@ test('반올림이 쌓인 어긋남은 마지막 클립이 흡수한다', async 
   assert.equal(fixed.clips[0].duration, base.clips[0].duration, '첫 클립이 바뀌었습니다');
 });
 
-test('큰 어긋남은 흡수하지 않고 그대로 알린다', async () => {
+await asyncTest('큰 어긋남은 흡수하지 않고 그대로 알린다', async () => {
   const { buildTimeline, DRIFT_ABSORB_MAX } = await import('../src/video/plan.mjs');
   // 조용히 늘려서 덮어 버리면 영상과 소리가 어긋난 채로 나간다.
   const scenes = [
