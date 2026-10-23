@@ -4021,6 +4021,93 @@ test('쇼츠끼리 거의 겹치지 않는다', async () => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────
+// 실행 #27 에서 드러난 것들
+// ─────────────────────────────────────────────────────────────
+
+test('카드 글이 프롬프트 목록까지 전달된다', async () => {
+  // 실행 #27 에서 **카드 24장이 통째로 사라졌다.** 장면 설계는 card_text 를
+  // 제대로 채웠는데 prompts.json 에 그 칸이 없었다. 그래서 그림 단계는
+  // "프롬프트가 비었다"며 건너뛰고, 카드 단계는 그릴 것이 없다고 봤다.
+  // 79샷 중 55장만 남고 24샷이 빈 채로 영상까지 갔다.
+  const id = '952';
+  store.saveScenes(id, {
+    scenes: [
+      {
+        scene_number: 1,
+        section: 'RULES',
+        mood: 'record',
+        shots: [
+          { shot_id: 'S1-1', asset_type: 'IMAGE', duration: 5, camera: 'zoom in', image_prompt: 'a desk', video_prompt: '', card_text: '' },
+          { shot_id: 'S1-2', asset_type: 'IMAGE', duration: 5, camera: 'zoom in', image_prompt: '', video_prompt: '', card_text: 'FA 보상 규정\nA등급|연봉 200%' },
+        ],
+      },
+    ],
+    stats: {},
+    problems: [],
+  });
+  const saved = JSON.parse(fs.readFileSync(store.contentPath(id, 'prompts.json'), 'utf8'));
+  const card = saved.prompts.find((p) => p.shot_id === 'S1-2');
+  assert.ok(card, 'S1-2 가 목록에 없습니다');
+  assert.ok(card.card_text.includes('A등급'), 'card_text 가 prompts.json 에 담기지 않았습니다');
+
+  // 그리고 실제로 두 길로 갈라져야 한다 — 한쪽은 AI, 한쪽은 카드.
+  const { shotsToGenerate, cardShots } = await import('../src/assets/images.mjs');
+  const dir = store.contentPath(id, 'assets');
+  assert.deepEqual(shotsToGenerate(saved.prompts, { assetDir: dir }).todo.map((x) => x.shot_id), ['S1-1']);
+  assert.deepEqual(cardShots(saved.prompts, { assetDir: dir }).todo.map((x) => x.shot_id), ['S1-2']);
+});
+
+test('반올림이 쌓인 어긋남은 마지막 클립이 흡수한다', async () => {
+  const { buildTimeline, DRIFT_ABSORB_MAX } = await import('../src/video/plan.mjs');
+  // 실행 #27 이 여기서 멈췄다 — 8.9분짜리에서 1.5초. 클립 79개를 반올림하며
+  // 쌓인 값이고 어느 샷도 틀리지 않았는데 합계만 안 맞았다.
+  const scenes = [
+    {
+      scene_number: 1,
+      section: 'HOOK',
+      mood: 'record',
+      shots: Array.from({ length: 10 }, (_, i) => ({
+        shot_id: `S1-${i + 1}`,
+        asset_type: 'IMAGE',
+        duration: 5.333,
+        camera: 'zoom in',
+      })),
+    },
+  ];
+  const base = buildTimeline(scenes, {});
+  const total = base.duration;
+
+  const fixed = buildTimeline(scenes, { narrationSeconds: Number((total + 1.46).toFixed(2)) });
+  assert.deepEqual(fixed.problems, [], '반올림 차이로 멈췄습니다');
+  assert.equal(fixed.duration, fixed.narration_seconds, '흡수하고도 합계가 안 맞습니다');
+  // 마지막 클립만 늘어나야 한다. 중간을 건드리면 뒤 자막이 전부 밀린다.
+  assert.equal(fixed.clips.at(-1).duration, Number((base.clips.at(-1).duration + 1.46).toFixed(2)));
+  assert.equal(fixed.clips[0].duration, base.clips[0].duration, '첫 클립이 바뀌었습니다');
+});
+
+test('큰 어긋남은 흡수하지 않고 그대로 알린다', async () => {
+  const { buildTimeline, DRIFT_ABSORB_MAX } = await import('../src/video/plan.mjs');
+  // 조용히 늘려서 덮어 버리면 영상과 소리가 어긋난 채로 나간다.
+  const scenes = [
+    {
+      scene_number: 1,
+      section: 'HOOK',
+      mood: 'record',
+      shots: Array.from({ length: 10 }, (_, i) => ({
+        shot_id: `S1-${i + 1}`,
+        asset_type: 'IMAGE',
+        duration: 5,
+        camera: 'zoom in',
+      })),
+    },
+  ];
+  const base = buildTimeline(scenes, {});
+  const big = buildTimeline(scenes, { narrationSeconds: base.duration + DRIFT_ABSORB_MAX + 5 });
+  assert.ok(big.problems.length, '크게 어긋났는데 조용히 넘어갔습니다');
+  assert.equal(big.clips.at(-1).duration, base.clips.at(-1).duration, '덮으면 안 되는데 덮었습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

@@ -22,6 +22,18 @@ export const TRANSITION_SECONDS = 0.4;
  * @param format   FORMATS.wide 또는 FORMATS.shorts
  * @param assetDir 에셋이 들어 있는 폴더 이름 (타임라인에는 상대 경로만 적는다)
  */
+/**
+ * 마지막 클립이 흡수할 수 있는 어긋남의 한계 (초).
+ *
+ * 반올림이 쌓여 생기는 차이는 길어야 몇 초다. 이보다 크면 반올림이 아니라
+ * 무언가 틀린 것이므로 흡수하지 않고 문제로 남긴다 — 조용히 늘려서
+ * 덮어 버리면 영상과 소리가 어긋난 채로 나간다.
+ */
+export const DRIFT_ABSORB_MAX = 3;
+
+/** 흡수한 뒤에도 마지막 클립이 이보다는 길어야 한다. */
+export const MIN_CLIP_SECONDS = 0.5;
+
 export function buildTimeline(
   scenes,
   { format = FORMATS.wide, fps = DEFAULT_FPS, assetDir = 'assets', narrationSeconds = null } = {}
@@ -64,7 +76,10 @@ export function buildTimeline(
     }
   }
 
-  const duration = round2(cursor);
+  // 보고하는 길이는 **클립 길이의 합**으로 센다. cursor 는 반올림 전
+  // 값을 더한 것이라 클립 합계와 미세하게 다르고, 렌더가 쓰는 것은
+  // 클립 쪽이다.
+  let total = round2(clips.reduce((sum, c) => sum + c.duration, 0));
 
   // 샷 길이 합계와 나레이션 길이가 맞는지 본다. 어긋나면 Phase 5에서
   // 영상과 음성이 안 맞는데 원인을 찾기 어려워진다.
@@ -75,6 +90,29 @@ export function buildTimeline(
   // 실제로 그렇게 걸려서 완성본 한 번을 날렸다.
   const narration =
     Number(narrationSeconds) > 0 ? round2(Number(narrationSeconds)) : round2(totalSeconds(scenes));
+
+  // 반올림이 쌓인 만큼을 **마지막 클립이 흡수한다.**
+  //
+  // 실행 #27 이 여기서 멈췄다 — 8.9분짜리에서 1.5초가 어긋났다. 클립
+  // 79개를 소수 둘째 자리로 반올림하면서 쌓인 값이고, 어느 샷도 틀리지
+  // 않았는데 합계만 안 맞는다.
+  //
+  // 허용 오차를 늘리는 쪽은 택하지 않았다. 그러면 검사만 통과하고 **영상
+  // 끝에 1.5초가 실제로 남는다.** 마지막 클립은 보통 마무리 정지 화면이라
+  // 거기서 1~2초를 늘리거나 줄여도 보이지 않는다. 중간 클립을 건드리면
+  // 그 뒤 자막이 전부 밀린다.
+  if (Number(narrationSeconds) > 0 && clips.length) {
+    const drift = round2(narration - total);
+    const last = clips[clips.length - 1];
+    const adjusted = round2(last.duration + drift);
+    // 큰 차이는 반올림이 아니라 진짜 문제다. 그건 아래 검사가 잡게 둔다.
+    if (drift !== 0 && Math.abs(drift) <= DRIFT_ABSORB_MAX && adjusted >= MIN_CLIP_SECONDS) {
+      last.duration = adjusted;
+      total = round2(clips.reduce((sum, c) => sum + c.duration, 0));
+    }
+  }
+
+  const duration = total;
   if (Math.abs(duration - narration) > 1) {
     problems.push(
       `샷 길이 합계(${duration}초)와 나레이션 길이(${narration}초)가 ${Math.abs(duration - narration).toFixed(1)}초 어긋납니다.`
