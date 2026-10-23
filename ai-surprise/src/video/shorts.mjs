@@ -48,6 +48,23 @@ const SECTION_VALUE = {
   NOTICE: 85,
   FOLLOW: 70,
   SETUP: 50,
+  // ── 스포츠 분석(KIND.SPORTS)의 섹션
+  //
+  // 점수를 안 넣었더니 스포츠 섹션이 전부 0점이 되어 **순위가 길이로만**
+  // 정해졌다. 그 결과 1화에서 가장 궁금한 대목인 ACE(삼성이 원태인과
+  // 구자욱을 둘 다 지킬 수 있나)가 쇼츠에서 통째로 빠졌다.
+  //
+  // 기준은 "혼자 떼어 놓아도 한 편으로 끝맺는가"다.
+  // ACE 는 선수 이름과 금액이 들어 있어 그 자체로 완결된다. RULES 는
+  // 중요하지만 설명이라 단독으로는 약하고, CLOSE 는 댓글 유도라 본편을
+  // 본 사람에게만 뜻이 있다.
+  ACE: 95,
+  CATCHER: 80,
+  OUTFIELD: 75,
+  SCENARIO: 70,
+  DEBATE: 60,
+  RULES: 40,
+  CLOSE: 20,
   // 전설 추적 편의 ORIGIN("이 이야기는 어디서 왔나")은 그 편의 반전이다.
   // 쇼츠로 잘라도 그 자체로 완결된다 — "다들 믿던 그 이야기, 출처가 여기다".
   ORIGIN: 95,
@@ -82,6 +99,27 @@ export const SPOILER_SECTIONS = {
   [KIND.TALE]: ['TURN', 'CLOSE'],
 };
 
+/**
+ * 한 편에서 뽑을 쇼츠 개수.
+ *
+ * 올리는 리듬에서 거꾸로 계산한 숫자다 — **월요일에 본편, 화~금에 쇼츠,
+ * 주말은 쉰다**(운영자 결정, 2026-10-23). 그러면 편당 쇼츠가 네 개 필요하다.
+ *
+ * 다섯을 뽑는 이유는 하나를 버릴 수 있어서다. 구간을 코드가 고르다 보니
+ * 말이 어중간하게 끊기거나 앞뒤 맥락이 없어 혼자서는 약한 것이 꼭 하나씩
+ * 나온다. 네 개만 뽑으면 그 하나를 그냥 올려야 한다.
+ *
+ * 실화·동화는 그대로 셋이다. 동화는 3~4분이라 다섯을 뽑으면 서로 겹치고,
+ * 결말을 빼고 나면 남는 구간이 애초에 적다.
+ */
+export const SHORTS_COUNT = {
+  [KIND.SPORTS]: 5,
+};
+
+export function shortsCountFor(kind) {
+  return SHORTS_COUNT[kind] || 3;
+}
+
 export function spoilerSectionsFor(kind) {
   return SPOILER_SECTIONS[kind] || [];
 }
@@ -97,7 +135,12 @@ export function spoilerSectionsFor(kind) {
  *  2) 구간마다 점수를 낸다 (섹션 가치 + 길이 적합도)
  *  3) 점수 높은 순으로 고르되, 이미 고른 구간과 많이 겹치면 건너뛴다
  */
-export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null } = {}) {
+export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null } = {}) {
+  // 개수를 안 주면 종류가 정한다. 호출하는 쪽마다 숫자를 적어 두면
+  // 한 곳만 고치고 다른 곳이 그대로 남는다.
+  const want = Number.isFinite(Number(count)) && Number(count) > 0
+    ? Number(count)
+    : shortsCountFor(kind);
   const spoilers = spoilerSectionsFor(kind);
   const isSpoiler = (section) => spoilers.includes(section);
   // 문단을 평평하게 펴고 각자의 시작·끝 시각을 계산한다.
@@ -173,14 +216,29 @@ export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS,
   candidates.sort((a, b) => b.score - a.score || a.start - b.start);
 
   const picked = [];
-  for (const c of candidates) {
-    if (picked.length >= count) break;
-    // 이미 고른 구간과 절반 넘게 겹치면 건너뛴다. 비슷한 쇼츠 3개는 쓸모없다.
-    const overlapsTooMuch = picked.some((p) => {
-      const overlap = Math.min(p.end, c.end) - Math.max(p.start, c.start);
-      return overlap > Math.min(p.duration, c.duration) * 0.5;
-    });
-    if (overlapsTooMuch) continue;
+
+  // 겹침을 **두 번에 걸쳐** 본다.
+  //
+  // 전에는 한 번에 "절반 넘게 겹치면 제외"만 했다. 셋을 뽑을 때는 그걸로
+  // 충분했는데, 스포츠에서 다섯을 뽑자마자 같은 대목에서 조금씩 밀린
+  // 쇼츠가 셋 나왔다. 49% 겹쳐도 규칙은 통과하기 때문이다.
+  //
+  // 그래서 먼저 거의 안 겹치는 것만 고르고(10%), 그래도 수가 모자랄 때만
+  // 예전 기준(50%)으로 한 번 더 채운다. 재료가 넉넉하면 서로 다른 구간이
+  // 뽑히고, 짧은 편에서는 예전처럼 동작한다.
+  const fill = (limit) => {
+    for (const c of candidates) {
+      if (picked.length >= want) return;
+      const clash = picked.some((p) => {
+        const overlap = Math.min(p.end, c.end) - Math.max(p.start, c.start);
+        return overlap > Math.min(p.duration, c.duration) * limit;
+      });
+      if (clash) continue;
+      take(c);
+    }
+  };
+
+  const take = (c) => {
 
     const sections = [...new Set(c.paragraphs.map((p) => p.section))];
     picked.push({
@@ -192,7 +250,10 @@ export function pickShorts(scenes, { count = 3, minSeconds = SHORTS_MIN_SECONDS,
       reason: explain(sections, c.duration),
       paragraphs: c.paragraphs,
     });
-  }
+  };
+
+  fill(0.1);
+  if (picked.length < want) fill(0.5);
 
   return picked;
 }

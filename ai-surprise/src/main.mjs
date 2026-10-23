@@ -1314,7 +1314,9 @@ async function cmdVideo(flags) {
   // 동화는 뒤집힘·여운이 쇼츠에 들어가면 안 된다. kind 를 안 넘기면
   // 결말이 통째로 든 쇼츠가 나온다 — 1화에서 실제로 그랬다.
   const shorts = pickShorts(scenes, {
-    count: Number(flags.shorts ?? 3),
+    // 개수를 비워 두면 종류가 정한다 (스포츠 5, 그 밖에 3).
+    // 여기에 숫자를 적어 두면 shorts.mjs 의 기본값이 영영 안 쓰인다.
+    count: flags.shorts !== undefined ? Number(flags.shorts) : null,
     kind: research.kind,
   });
   for (const s of shorts) {
