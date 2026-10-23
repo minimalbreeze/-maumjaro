@@ -35,6 +35,7 @@ on:
           - '이상한 동화 — 완성본 (그림 + 목소리 + 영상 · 약 $0.7)'
           - '스포츠 분석 — 대본 검사만 (대본 파일 필요 · 비용 0원)'
           - '스포츠 분석 — 완성본 (그림 + 목소리 + 영상 · 약 $0.6)'
+          - '화풍 미리보기 (그림 6장만 · 약 $0.1)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
@@ -213,7 +214,7 @@ jobs:
           echo "GOOGLE_TTS_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
       - name: 이미지 토큰이 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') }}
+        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '미리보기') }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
@@ -355,6 +356,11 @@ jobs:
               echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
               echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
               node src/main.mjs upload --id="$RESUME_ID"
+              ;;
+            *'화풍 미리보기'*)
+              # 화풍만 몇 장 뽑는다. 완성본을 돌리지 않으므로 싸고 빠르다.
+              # 얼굴이 제대로 나오는지 보려고 만든 길이다.
+              node src/main.mjs preview --kind=SPORTS --models=schnell,dev
               ;;
             *'스포츠'*)
               # 동화 분기와 같은 이유로 '완성본'·'그림' 분기보다 앞에 둔다.
@@ -584,6 +590,7 @@ jobs:
             ai-surprise/inbox/
             ai-surprise/content/
             ai-surprise/logs/
+            ai-surprise/preview/
             !ai-surprise/content/*/video/clips/
             !ai-surprise/content/*/video/silent.mp4
           if-no-files-found: ignore
