@@ -675,6 +675,7 @@ async function cmdSports(flags) {
     angle: flags.angle || plan.angle || '',
     beats: plan.beats || [],
     sources: plan.sources || [],
+    people: plan.people || [],
   });
 
   const targetMinutes = Number(flags.minutes) > 0 ? Number(flags.minutes) : SPORTS_MINUTES;
@@ -683,6 +684,13 @@ async function cmdSports(flags) {
   log.info(`제목: ${item.title}`);
   if (item.summary) log.info(`한 줄: ${item.summary}`);
   log.info(`출처 ${item.source_count}개`);
+  // 생김새가 비면 샷마다 다른 사람이 나온다. 돈을 쓰기 전에 알려 준다.
+  if (item.people?.length) {
+    log.info(`생김새를 적어 둔 사람 ${item.people.length}명: ${item.people.map((p) => p.name).join(', ')}`);
+  } else {
+    log.warn('생김새를 적어 둔 사람이 없습니다 — 그림의 인물이 샷마다 다른 얼굴로 나옵니다.');
+    log.info('기획 파일에 people 을 넣어 주세요 (스포츠영상/선수-생김새.md 참고).');
+  }
   if (!item.source_count) {
     log.warn('출처가 없습니다. 설명문에 적을 근거가 없다는 뜻입니다 — 기획 파일에 sources 를 넣어 주세요.');
   }

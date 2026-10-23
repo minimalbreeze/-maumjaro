@@ -4304,6 +4304,78 @@ test('화풍 미리보기에는 ffmpeg를 깔지 않는다', () => {
 });
 
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-l. 사람 생김새가 화면 지시까지 간다');
+
+const { peopleRules, visualsSystemFor: visSysFor } = await import('../src/scenes/visuals.mjs');
+const { makeSports: mkSports } = await import('../src/model.mjs');
+
+const FIVE = [
+  { name: '원태인', role: '삼성 투수', look: 'a Korean man in his mid-20s with a round face' },
+  { name: '최지훈', role: 'SSG 중견수', look: 'a narrow tapered face', tell: 'a red headband' },
+];
+
+test('생김새를 적으면 화면 지시에 그대로 실린다', () => {
+  const rules = peopleRules(FIVE);
+  assert.ok(rules.includes('a Korean man in his mid-20s with a round face'), '생김새 문장이 안 실립니다');
+  assert.ok(rules.includes('a red headband'), '표식이 안 실립니다');
+  assert.ok(rules.includes('원태인'), '누구 생김새인지 안 적힙니다');
+  assert.ok(/그대로 베껴/.test(rules), '그대로 쓰라는 말이 없으면 모델이 줄여 씁니다');
+});
+
+test('생김새가 없으면 빈 제목만 붙이지 않는다', () => {
+  // 빈 제목만 남으면 모델이 그 칸을 채우려고 엉뚱한 말을 지어낸다.
+  assert.equal(peopleRules([]), '');
+  assert.equal(peopleRules(null), '');
+  assert.equal(peopleRules([{ name: '이름만' }]), '', 'look 없는 사람이 실렸습니다');
+});
+
+test('스포츠 화면 지시에만 사람이 붙는다', () => {
+  const sports = visSysFor('SPORTS', { people: FIVE });
+  const tale = visSysFor('TALE', { people: FIVE });
+  assert.ok(sports.includes('a red headband'), '스포츠에 사람이 안 붙습니다');
+  assert.ok(!tale.includes('a red headband'), '동화에 선수 생김새가 붙었습니다');
+  // 사람을 안 넘겨도 스포츠 규칙 자체는 그대로 있어야 한다.
+  assert.ok(visSysFor('SPORTS').includes('선수 이름을 프롬프트에 쓰지 않는다'));
+});
+
+test('기획 파일의 사람이 소재 레코드에 실린다', () => {
+  const item = mkSports({
+    title: '제목',
+    sources: [{ name: 'ㄱ', url: 'https://example.com/a' }],
+    people: [
+      { name: '원태인', role: '투수', look: 'round face', tell: '' },
+      { name: '버리는사람', look: '' },
+      { look: '이름이 없다' },
+    ],
+  });
+  assert.equal(item.people.length, 1, 'look 이나 이름이 빈 사람을 걸러내지 않습니다');
+  assert.equal(item.people[0].look, 'round face');
+});
+
+test('1화 기획에 다섯 명이 다 적혀 있다', () => {
+  // 한 명이라도 빠지면 그 선수만 샷마다 다른 얼굴로 나온다 — 영상을
+  // 다 만들고 나서야 안다.
+  const plan = JSON.parse(
+    // 경로에 한글이 있다. URL.pathname 은 퍼센트 인코딩된 문자열을 주므로
+    // 그대로 열면 파일을 못 찾는다.
+    fs.readFileSync(decodeURIComponent(new URL('../../스포츠영상/1화.json', import.meta.url).pathname), 'utf8')
+  );
+  const names = (plan.people || []).map((p) => p.name);
+  for (const who of ['원태인', '구자욱', '홍창기', '최지훈', '박동원']) {
+    assert.ok(names.includes(who), `${who} 생김새가 없습니다`);
+  }
+  for (const p of plan.people) {
+    assert.ok(p.look && p.look.length > 40, `${p.name} 생김새가 너무 짧습니다`);
+    assert.ok(!/[가-힣]/.test(p.look), `${p.name} 생김새에 한글이 있습니다 — 프롬프트는 영어입니다`);
+  }
+  // 겹치는 둘은 표식으로 갈라야 한다.
+  const byName = Object.fromEntries(plan.people.map((p) => [p.name, p]));
+  assert.ok(byName['최지훈'].tell, '최지훈은 구자욱과 겹칩니다 — 표식이 필요합니다');
+  assert.ok(byName['박동원'].tell, '박동원은 포수 장비로 갈라야 합니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

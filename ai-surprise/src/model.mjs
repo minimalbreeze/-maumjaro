@@ -387,7 +387,7 @@ export function makeTale({ title, premise = '', strange = '', beats = [], lastLi
  * 실제 선수와 실제 규정을 다루므로, 어디서 확인했는지가 남아 있어야 한다.
  * 설명문에도 그대로 들어간다.
  */
-export function makeSports({ title, premise = '', angle = '', beats = [], sources = [] } = {}) {
+export function makeSports({ title, premise = '', angle = '', beats = [], sources = [], people = [] } = {}) {
   const list = (Array.isArray(sources) ? sources : []).filter((x) => x?.url);
 
   const item = {
@@ -409,6 +409,24 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
     fact_notes: '확정된 사실과 전망이 함께 들어 있습니다. 문단 태그로 구분합니다.',
 
     what_is_strange: String(angle || '').trim(),
+    // 이 편에 나오는 사람들의 생김새.
+    //
+    // 왜 여기에 두는가 — 이미지 모델은 이 선수들의 얼굴을 모른다. 이름을
+    // 넣어 봐야 닮지 않는다. 그런데 **아무 말도 안 하면** 샷마다 다른
+    // 사람을 그린다. 10분짜리에서 한 선수가 다섯 번 나오는데 매번 생판
+    // 남이면, 얼굴이 뭉개진 것보다 더 티가 난다.
+    //
+    // 그래서 노리는 것은 닮음이 아니라 **일관성과 구분**이다. look 문장을
+    // 그대로 프롬프트에 넣어 같은 사람이 같은 얼굴로 나오게 하고, tell 로
+    // 서로 섞이지 않게 한다.
+    people: (Array.isArray(people) ? people : [])
+      .filter((p) => p?.name && p?.look)
+      .map((p) => ({
+        name: String(p.name).trim(),
+        role: String(p.role || '').trim(),
+        look: String(p.look).trim(),
+        tell: String(p.tell || '').trim(),
+      })),
     beats: (Array.isArray(beats) ? beats : [])
       .filter((b) => b?.key && b?.what)
       .map((b) => ({ key: String(b.key), what: String(b.what).trim() })),
