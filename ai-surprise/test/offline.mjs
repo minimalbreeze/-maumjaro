@@ -3960,6 +3960,67 @@ test('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', asyn
   assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
+test('스포츠는 쇼츠를 다섯 개 뽑는다 (월 본편 + 화~금 쇼츠)', async () => {
+  const S = await import('../src/video/shorts.mjs');
+  // 올리는 리듬에서 나온 숫자다. 월요일 본편, 화~금 쇼츠 넷, 주말 휴식.
+  // 다섯을 뽑아 넷을 쓰고 하나는 버릴 여유로 둔다.
+  assert.equal(S.shortsCountFor('SPORTS'), 5);
+  assert.equal(S.shortsCountFor('TALE'), 3, '동화까지 늘어나면 서로 겹칩니다');
+  assert.equal(S.shortsCountFor('EVENT'), 3);
+});
+
+test('스포츠 섹션에 점수가 매겨져 있다', async () => {
+  const S = await import('../src/video/shorts.mjs');
+  // 점수가 없으면 전부 0점이 되어 **순위가 길이로만** 정해진다. 실제로
+  // 그래서 1화에서 가장 궁금한 대목(ACE — 삼성이 둘 다 지킬 수 있나)이
+  // 쇼츠에서 통째로 빠졌다.
+  const scenes = ['HOOK', 'RULES', 'ACE', 'OUTFIELD', 'CATCHER', 'DEBATE', 'SCENARIO', 'CLOSE'].map(
+    (section, i) => ({
+      scene_number: i + 1,
+      section,
+      paragraphs: Array.from({ length: 8 }, (_, k) => ({
+        tag: 'THEORY',
+        text: `${section} 문단 ${k} ${'가'.repeat(40)}`,
+      })),
+    })
+  );
+  const picked = S.pickShorts(scenes, { kind: 'SPORTS' });
+  assert.equal(picked.length, 5, `다섯 개가 안 나왔습니다 (${picked.length}개)`);
+  assert.ok(
+    picked.some((p) => p.sections.includes('ACE')),
+    '가장 중요한 ACE 구간이 쇼츠에 없습니다'
+  );
+});
+
+test('쇼츠끼리 거의 겹치지 않는다', async () => {
+  const S = await import('../src/video/shorts.mjs');
+  // 전에는 "절반 넘게"만 막았다. 다섯을 뽑자마자 같은 대목에서 조금씩
+  // 밀린 쇼츠가 셋 나왔다 — 49% 겹쳐도 규칙은 통과하기 때문이다.
+  const scenes = ['HOOK', 'RULES', 'ACE', 'OUTFIELD', 'CATCHER', 'DEBATE', 'SCENARIO', 'CLOSE'].map(
+    (section, i) => ({
+      scene_number: i + 1,
+      section,
+      paragraphs: Array.from({ length: 8 }, (_, k) => ({
+        tag: 'THEORY',
+        text: `${section} 문단 ${k} ${'가'.repeat(40)}`,
+      })),
+    })
+  );
+  const picked = S.pickShorts(scenes, { kind: 'SPORTS' });
+  for (let i = 0; i < picked.length; i += 1) {
+    for (let j = i + 1; j < picked.length; j += 1) {
+      const a = picked[i];
+      const b = picked[j];
+      const overlap = Math.min(a.end, b.end) - Math.max(a.start, b.start);
+      const limit = Math.min(a.duration, b.duration) * 0.11;
+      assert.ok(
+        overlap <= limit,
+        `${a.rank}순위와 ${b.rank}순위가 ${Math.round(overlap)}초 겹칩니다 (재료가 넉넉한데도)`
+      );
+    }
+  }
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
