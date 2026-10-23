@@ -33,6 +33,8 @@ on:
           - '올릴 거리만 만들기 (제목·썸네일·설명문 · 이어하기 번호 필요 · 약 $0.1)'
           - '이상한 동화 — 대본만 (기획 파일 필요 · 약 $0.5)'
           - '이상한 동화 — 완성본 (그림 + 목소리 + 영상 · 약 $0.7)'
+          - '스포츠 분석 — 대본 검사만 (대본 파일 필요 · 비용 0원)'
+          - '스포츠 분석 — 완성본 (그림 + 목소리 + 영상 · 약 $0.6)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
@@ -45,6 +47,14 @@ on:
         description: '이미 써 둔 동화 대본 파일. 넣으면 AI가 다시 쓰지 않습니다 (비용 0원). 비우면 AI가 씁니다'
         required: false
         default: '이상한동화/1화-대본.md'
+      sports_plan:
+        description: '스포츠 기획 파일 (예: 스포츠영상/1화.json). 스포츠 방식에서만 씁니다'
+        required: false
+        default: '스포츠영상/1화.json'
+      sports_script:
+        description: '스포츠 대본 파일. 스포츠는 **반드시** 사람이 쓴 대본이 있어야 합니다 (사실을 AI가 지어내면 안 되므로)'
+        required: false
+        default: '스포츠영상/1화-대본.md'
       topic:
         description: '소재를 직접 지정 (예: 플래넌 제도 등대지기 실종). 비우면 AI가 찾습니다'
         required: false
@@ -250,6 +260,8 @@ jobs:
           IN_TOPIC: ${{ inputs.topic }}
           IN_TALE_PLAN: ${{ inputs.tale_plan }}
           IN_TALE_SCRIPT: ${{ inputs.tale_script }}
+          IN_SPORTS_PLAN: ${{ inputs.sports_plan }}
+          IN_SPORTS_SCRIPT: ${{ inputs.sports_script }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
@@ -313,6 +325,48 @@ jobs:
               echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
               echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
               node src/main.mjs upload --id="$RESUME_ID"
+              ;;
+            *'스포츠'*)
+              # 동화 분기와 같은 이유로 '완성본'·'그림' 분기보다 앞에 둔다.
+              # 모드 이름에 '완성본' 이 들어 있어서 뒤에 두면 실화로 샌다.
+              case "$IN_SPORTS_PLAN" in
+                ''|*..*) echo "::error::기획 파일 경로가 이상합니다: $IN_SPORTS_PLAN"; exit 1 ;;
+              esac
+              if [ ! -f "../$IN_SPORTS_PLAN" ]; then
+                echo "::error::기획 파일이 없습니다: $IN_SPORTS_PLAN"
+                exit 1
+              fi
+              # 스포츠는 대본이 **없으면 돌리지 않는다.** 날짜·금액·규정은
+              # AI 가 그럴듯하게 지어내는데, 한 번 틀리면 보고 들어온 사람이
+              # 바로 알아채고 채널 신뢰가 끝난다.
+              case "$IN_SPORTS_SCRIPT" in
+                ''|*..*) echo "::error::스포츠 편은 사람이 쓴 대본이 반드시 있어야 합니다: $IN_SPORTS_SCRIPT"; exit 1 ;;
+              esac
+              if [ ! -f "../$IN_SPORTS_SCRIPT" ]; then
+                echo "::error::대본 파일이 없습니다: $IN_SPORTS_SCRIPT"
+                exit 1
+              fi
+              echo "스포츠 분석을 만듭니다. 기획: $IN_SPORTS_PLAN / 대본: $IN_SPORTS_SCRIPT"
+              echo "대본은 사람이 쓴 것을 그대로 씁니다 — AI 를 부르지 않으므로 대본 비용 0원."
+
+              node src/main.mjs sports --plan="$IN_SPORTS_PLAN" --script="$IN_SPORTS_SCRIPT"
+              sports_id="$(pick_id)"
+              if [ "${IN_MODE%%완성본*}" != "$IN_MODE" ]; then
+                if [ -z "$sports_id" ]; then
+                  echo "::error::대본은 올렸는데 편 번호를 못 찾았습니다."
+                  exit 1
+                fi
+                echo "content/$sports_id — 장면·그림·목소리·영상까지 이어서 만듭니다."
+                # 배경음악을 끈다. bgm/ 의 여섯 곡은 전부 미스터리·스릴러용이라
+                # 야구 분석에 깔면 어긋난다. 동화와 같은 이유다.
+                node src/main.mjs auto --resume="$sports_id" \
+                  --scenes --images --narrate --video --no-bgm \
+                  --image-model="$IN_IMAGE_MODEL" --max-usd="$IN_MAX_USD"
+                node src/main.mjs upload --id="$sports_id" \
+                  || echo "::warning::올릴 거리 만들기에 실패했습니다. 영상은 그대로 있습니다."
+              else
+                echo "대본 검사만 했습니다. 통과했으면 완성본으로 돌려 주세요."
+              fi
               ;;
             *'동화'*)
               # 이 분기가 '완성본'·'그림' 분기보다 **반드시 앞에** 있어야 한다.

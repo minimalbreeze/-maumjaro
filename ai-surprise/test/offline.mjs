@@ -3233,6 +3233,8 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     // '이상한 동화 — 완성본' 에도 '완성본' 이 들어 있다. 표에서도 분기에서도
     // 동화가 **먼저** 와야 한다. 순서가 뒤바뀌면 동화가 실화로 샌다.
     '동화': '동화',
+    // '스포츠 분석 — 완성본' 도 마찬가지다. '완성본' 보다 **먼저** 와야 한다.
+    '스포츠': '스포츠',
     '완성본': '완성본',
     '그림': '그림',
     '영상': '영상',
@@ -3755,6 +3757,134 @@ test('카드 글자는 명령줄이 아니라 파일로 넘긴다', async () => 
   assert.ok(!vf.includes('이름'), '글자가 필터 문자열에 직접 들어갔습니다');
   assert.ok(!vf.includes('9:00'), '콜론이 든 글자가 필터에 직접 들어갔습니다');
   assert.ok(vf.includes('textfile='), 'textfile 로 넘기지 않았습니다');
+});
+
+// 카드를 CLI 로 실제로 한 번 그려 본다.
+//
+// 단위 검사는 "인자를 맞게 조립하는가"까지만 본다. 그 인자로 ffmpeg 가
+// 정말 도는지는 돌려 봐야 안다 — 퍼센트 버그가 딱 그렇게 나왔다.
+// 카드는 AI 도 토큰도 필요 없으므로 **이 검사는 공짜다.**
+await asyncTest('카드가 CLI 로 실제 그려진다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const { makeSports } = await import('../src/model.mjs');
+  const id = '951';
+  const dir = store.contentPath(id);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const item = makeSports({ title: '카드 검사', premise: '한 줄', angle: '각도' });
+  fs.writeFileSync(path.join(dir, 'research.json'), JSON.stringify(item, null, 2), 'utf8');
+
+  // 카드 두 장과 보통 그림 한 장. 둘이 섞여 있어야 가르는 쪽도 함께 본다.
+  const prompts = [
+    { shot_id: 'S1-1', image_prompt: '', card_text: 'FA 보상 규정\nA등급|연봉 200%\nB등급|연봉 100%' },
+    { shot_id: 'S1-2', image_prompt: '', card_text: '백억짜리 선수의 실제 영입 비용은\n백억이 아닙니다' },
+    { shot_id: 'S1-3', image_prompt: 'a desk at night', card_text: '' },
+  ];
+  fs.writeFileSync(path.join(dir, 'prompts.json'), JSON.stringify({ prompts }, null, 2), 'utf8');
+
+  let out = '';
+  try {
+    out = execFileSync('node', ['src/main.mjs', 'images', `--id=${id}`], {
+      env: { ...process.env, AI_SURPRISE_DATA_DIR: TMP, REPLICATE_API_TOKEN: '' },
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    // 토큰이 없어 AI 그림 단계에서 멈추는 것은 정상이다. 그 전에 카드가
+    // 그려졌는지를 본다.
+    out = `${err.stdout || ''}${err.stderr || ''}`;
+  }
+
+  assert.ok(!/is not defined/.test(out), out.slice(-500));
+
+  const a = path.join(dir, 'assets', 'S1-1.png');
+  const b = path.join(dir, 'assets', 'S1-2.png');
+  assert.ok(fs.existsSync(a), `표 카드가 안 그려졌습니다:\n${out.slice(-500)}`);
+  assert.ok(fs.existsSync(b), `문장 카드가 안 그려졌습니다:\n${out.slice(-500)}`);
+  // 빈 파일이 아니라 진짜 그림인지 본다.
+  assert.ok(fs.statSync(a).size > 3000, '표 카드가 너무 작습니다 — 글자가 안 그려졌을 수 있습니다');
+  assert.ok(fs.statSync(b).size > 3000, '문장 카드가 너무 작습니다');
+  // 카드가 아닌 샷은 AI 쪽으로 가야 한다 (토큰이 없어 안 만들어진다).
+  assert.ok(!fs.existsSync(path.join(dir, 'assets', 'S1-3.png')), '카드가 아닌 샷까지 그려졌습니다');
+});
+
+// ─────────────────────────────────────────────────────────────
+// 스포츠 분석 — 사실과 전망을 가르는 장치
+// ─────────────────────────────────────────────────────────────
+
+test('스포츠 편은 현역 선수를 다뤄도 막히지 않는다', async () => {
+  const { makeSports, GATE } = await import('../src/model.mjs');
+  // 현역 선수 이름을 못 부르면 이 소재는 성립하지 않는다. 막는 대신
+  // 사람이 반드시 읽게 한다.
+  const item = makeSports({ title: 'FA 프리뷰', premise: '한 줄', sources: [{ url: 'https://a/b' }] });
+  assert.equal(item.gate, GATE.REVIEW_NEEDED, '스포츠 편이 막혔거나 그냥 통과했습니다');
+  assert.ok(
+    item.gate_reasons.some((r) => r.includes('단정')),
+    `단정하지 말라는 안내가 없습니다: ${item.gate_reasons.join(' / ')}`
+  );
+});
+
+test('스포츠 대본에 재구성 태그를 쓰면 막는다', async () => {
+  const W = await import('../src/script/write.mjs');
+  // 아직 일어나지 않은 일을 "재구성"할 수는 없다. 남겨 두면 전망을
+  // 재구성처럼 적게 된다.
+  assert.deepEqual(W.tagsFor('SPORTS'), ['FACT', 'THEORY', 'UNKNOWN']);
+  const md = W.SPORTS_SECTIONS.map((sec, i) => {
+    const tag = i === 0 ? 'RECONSTRUCTION' : 'THEORY';
+    return `## [${sec.key}] ${sec.label}\n\n[${tag}] ${'가'.repeat(60)}\n`;
+  }).join('\n');
+  const v = W.validateScript(md, { kind: 'SPORTS', targetMinutes: 10 });
+  assert.equal(v.ok, false, '쓸 수 없는 태그가 통과했습니다');
+});
+
+test('스포츠 고지문은 전망이 섞여 있다고 밝힌다', () => {
+  const sports = finishDescription('본문', { kind: 'SPORTS' });
+  assert.ok(sports.includes('전망'), `전망이 섞였다는 안내가 없습니다:\n${sports}`);
+  // 창작물이 아니므로 "지어낸" 이라고 하면 안 된다.
+  assert.ok(!sports.includes('지어낸'), '스포츠 편을 창작물이라고 말합니다');
+  // 실화 쪽 고지문과도 달라야 한다 — 실화는 이미 끝난 일을 다룬다.
+  assert.notEqual(sports, finishDescription('본문', { kind: 'EVENT' }));
+});
+
+test('스포츠 편 설명문에는 출처를 적는다', () => {
+  // 창작 동화와 정반대다. 실제 규정과 실제 계약을 말하므로 근거가 남아야 한다.
+  const d = finishDescription('본문', {
+    kind: 'SPORTS',
+    sources: [{ name: 'KBO 공시', url: 'https://www.koreabaseball.com/x' }],
+  });
+  assert.ok(d.includes('참고한 자료'), `출처가 안 적혔습니다:\n${d}`);
+  assert.ok(d.includes('KBO 공시'), '출처 이름이 빠졌습니다');
+});
+
+test('카드로 그릴 샷은 이미지 프롬프트를 비운다', async () => {
+  const V = await import('../src/scenes/visuals.mjs');
+  // 둘 다 채워 두면 나중에 누가 그 프롬프트로 그림을 사고, 화면에는
+  // 카드가 올라가 산 그림이 버려진다. 돈만 나간다.
+  const scene = { scene_number: 1, section: 'RULES', shots: [{ shot_id: 'S1-1' }, { shot_id: 'S1-2' }] };
+  const design = {
+    mood: 'record',
+    visual_description: '설명',
+    shots: [
+      { shot_id: 'S1-1', image_prompt: 'a desk', video_prompt: '', era: 'present', camera: 'zoom in', motion_need: 2, depicts_real_person: false, card_text: '' },
+      { shot_id: 'S1-2', image_prompt: 'should be dropped', video_prompt: '', era: 'present', camera: 'zoom in', motion_need: 0, depicts_real_person: false, card_text: 'FA 보상 규정\nA등급|연봉 200%' },
+    ],
+  };
+  const { scene: merged } = V.mergeVisuals(scene, design, { kind: 'SPORTS' });
+  const [plain, card] = merged.shots;
+  assert.ok(plain.image_prompt.includes('a desk'), '보통 샷의 프롬프트가 사라졌습니다');
+  assert.equal(card.image_prompt, '', '카드 샷에 이미지 프롬프트가 남아 있습니다');
+  assert.ok(card.card_text.includes('A등급'), '카드 글이 전달되지 않았습니다');
+});
+
+test('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', async () => {
+  const V = await import('../src/scenes/visuals.mjs');
+  const sys = V.visualsSystemFor('SPORTS');
+  // 이미지 모델은 KBO 선수 얼굴을 모른다. 이름을 넣으면 닮지도 않으면서
+  // 닮게 하려 한 흔적만 남는다.
+  assert.ok(sys.includes('선수 이름을 프롬프트에 쓰지 않는다'), '이름 금지 지시가 없습니다');
+  assert.ok(sys.includes('로고'), '구단 로고 금지 지시가 없습니다');
+  // 다른 종류는 이 지시를 받지 않는다.
+  assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
 console.log(`\n${'═'.repeat(60)}`);

@@ -244,3 +244,52 @@ function ffmpegArgs(filters, { width, height, outputPath }) {
     outputPath,
   ];
 }
+
+/**
+ * 카드 한 장을 실제 이미지 파일로 그린다.
+ *
+ * 이미지 모델을 부르지 않는다. **장당 0원이고, 한글이 또렷하다.**
+ *
+ * @param cardText   카드 글 (첫 줄 제목, 다음 줄부터 `항목|값`)
+ * @param outputPath 만들 PNG 경로
+ * @param workDir    글자 파일을 둘 임시 폴더
+ * @returns { ok, overflow, type, lines } — overflow 면 글이 너무 많다는 뜻이다.
+ */
+export async function renderCardImage(cardText, { outputPath, workDir, fontFile = FONT_FILE }) {
+  const { runFfmpeg } = await import('./render.mjs');
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  const card = parseCardText(cardText);
+  if (!card) throw new Error('카드 글이 비어 있습니다.');
+
+  fs.mkdirSync(workDir, { recursive: true });
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+  const put = (name, value) => {
+    const p = path.join(workDir, name);
+    fs.writeFileSync(p, value, 'utf8');
+    return p;
+  };
+
+  const files = { title: null, rows: [], statement: [] };
+  if (card.type === 'statement') {
+    files.statement = card.statement.map((line, i) => put(`s${i}.txt`, line));
+  } else {
+    files.title = put('title.txt', card.title);
+    files.rows = card.rows.map((r, i) => ({
+      left: r.left ? put(`l${i}.txt`, r.left) : null,
+      right: r.right ? put(`r${i}.txt`, r.right) : null,
+    }));
+  }
+
+  const layout = cardLayout(card);
+  await runFfmpeg(cardArgs({ card, files, outputPath, fontFile }));
+
+  return {
+    ok: true,
+    overflow: Boolean(layout.overflow),
+    type: card.type,
+    lines: card.type === 'statement' ? card.statement.length : card.rows.length,
+  };
+}

@@ -76,12 +76,44 @@ export function hasUsableFile(filePath) {
  *  - 영상 생성이 실패하면 이미지로 대체한다 (기획서 9번, plan.mjs의 fallback)
  *  - AI 영상은 아직 안 붙였다. 지금은 전부 이미지로 돌아간다.
  */
+/**
+ * 글자 카드로 그릴 샷을 골라낸다.
+ *
+ * 이 샷들은 **이미지 모델을 부르지 않는다.** 표와 숫자는 ffmpeg 로 직접
+ * 그리는 쪽이 한글이 또렷하고 장당 0원이다.
+ *
+ * 그림 목록과 완전히 갈라 둔다. 한쪽에만 들어가야 돈 계산이 맞는다.
+ */
+export function cardShots(prompts, { assetDir, force = false }) {
+  const todo = [];
+  const skipped = [];
+
+  for (const p of prompts || []) {
+    if (!p?.shot_id) continue;
+    const text = String(p.card_text || '').trim();
+    if (!text) continue;
+    const file = path.join(assetDir, `${p.shot_id}.png`);
+    if (!force && hasUsableFile(file)) {
+      skipped.push({ shot_id: p.shot_id, reason: '이미 있습니다', file });
+      continue;
+    }
+    todo.push({ shot_id: p.shot_id, card_text: text, file });
+  }
+
+  return { todo, skipped };
+}
+
 export function shotsToGenerate(prompts, { assetDir, force = false }) {
   const todo = [];
   const skipped = [];
 
   for (const p of prompts || []) {
     if (!p?.shot_id) continue;
+    // 카드로 그릴 샷은 여기서 빠진다. cardShots 가 맡는다.
+    if (String(p.card_text || '').trim()) {
+      skipped.push({ shot_id: p.shot_id, reason: '글자 카드로 그립니다 (0원)' });
+      continue;
+    }
     if (!p.image_prompt || !String(p.image_prompt).trim()) {
       skipped.push({ shot_id: p.shot_id, reason: '화면 프롬프트가 비어 있습니다' });
       continue;

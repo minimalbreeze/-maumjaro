@@ -26,6 +26,7 @@ export const CHANNEL_NAMES = {
   [KIND.EVENT]: 'AI 서프라이즈',
   [KIND.LEGEND]: 'AI 서프라이즈',
   [KIND.TALE]: '마지막 장',
+  [KIND.SPORTS]: '스토브리그 노트',
 };
 
 export function channelNameFor(kind) {
@@ -50,6 +51,22 @@ export function uploadSystemFor(kind) {
     "출처: 없음" 같은 말도 쓰지 않는다 — 안 쓰면 그만이다.
 
 13. 태그에 다른 채널 이름을 쓰지 않는다. 이 채널 이름은 "${channel}" 이다.`
+      : kind === KIND.SPORTS
+      ? `
+
+━━━ 이 채널은 스포츠 분석 채널이다 ━━━
+
+11. **확정되지 않은 것을 제목에서 단정하지 않는다.**
+    "○○ 이적 확정", "○○ 100억 계약" 처럼 쓰면 안 된다. 계약이 발표되지
+    않았기 때문이다. 물음표를 쓰거나 "가능할까", "변수" 처럼 연다.
+
+12. 선수 이름은 대본에 나온 사람만 쓴다. 대본에 없는 선수를 제목이나
+    태그에 넣지 않는다 — 그 선수를 찾아온 사람이 영상에서 못 찾는다.
+
+13. 금액은 **대본에 [FACT] 로 적힌 것만** 그대로 쓴다. 전망 금액을
+    제목에 넣을 때는 반드시 물음표를 붙인다.
+
+14. 태그에 다른 채널 이름을 쓰지 않는다. 이 채널 이름은 "${channel}" 이다.`
       : '';
   return UPLOAD_SYSTEM_BASE.replace('{{CHANNEL}}', channel) + extra;
 }
@@ -170,12 +187,18 @@ export function filterCandidates({ titles = [], thumbnails = [] } = {}) {
  */
 export function finishDescription(body, { track = null, sources = [], kind = null } = {}) {
   const isTale = kind === KIND.TALE;
+  const isSports = kind === KIND.SPORTS;
   const out = [String(body || '').trim()];
 
   out.push('', '━━━━━━━━━━━━━━━━');
-  // 창작 편에 실화용 고지문을 붙이면 "조사하고 썼습니다"가 나간다.
-  // 고지문은 속이지 않으려고 붙이는 글이다. 그 글이 거짓이면 의미가 없다.
-  out.push(isTale ? SYNTHETIC_DISCLOSURE.taleText : SYNTHETIC_DISCLOSURE.text);
+  // 종류마다 고지문이 다르다. 창작 편에 실화용을 붙이면 "조사하고
+  // 썼습니다"가 나가고, 스포츠 편에 실화용을 붙이면 전망까지 조사한
+  // 사실인 것처럼 읽힌다. 고지문은 속이지 않으려고 붙이는 글이다.
+  out.push(
+    isTale ? SYNTHETIC_DISCLOSURE.taleText
+      : isSports ? SYNTHETIC_DISCLOSURE.sportsText
+      : SYNTHETIC_DISCLOSURE.text
+  );
 
   // 창작물에는 출처가 없다. 빈 '참고한 자료' 제목만 남기지 않는다.
   if (!isTale && sources.length) {
@@ -204,6 +227,7 @@ const KIND_LABELS = {
   [KIND.EVENT]: '사건 편',
   [KIND.LEGEND]: '전설·괴담 추적 편',
   [KIND.TALE]: '창작 동화 편',
+  [KIND.SPORTS]: '스토브리그 분석 편',
 };
 
 export function buildUploadPrompt(item, { scriptMarkdown = '', minutes = 0 } = {}) {
