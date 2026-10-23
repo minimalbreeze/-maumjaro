@@ -183,6 +183,11 @@ export function saveScenes(id, { scenes, stats, problems = [], cost = null }) {
         camera: shot.camera,
         image_prompt: shot.image_prompt,
         video_prompt: shot.video_prompt,
+        // 글자 카드로 그릴 샷. 이 칸을 빠뜨렸다가 **카드 24장이 통째로
+        // 사라졌다**(실행 #27). 장면 설계는 card_text 를 제대로 채웠는데
+        // 이 목록에 안 담기니, 그림 단계가 "프롬프트가 비었다"며 건너뛰고
+        // 카드 단계는 그릴 것이 없다고 봤다. 79샷 중 55장만 남았다.
+        card_text: shot.card_text || '',
         depicts_real_person: shot.depicts_real_person,
         mood: scene.mood,
       });
