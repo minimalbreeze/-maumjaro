@@ -47,6 +47,38 @@ export const DEFAULT_VOICE = 'ko-KR-Chirp3-HD-Iapetus';
 export const DEFAULT_LANGUAGE = 'ko-KR';
 
 /**
+ * 스포츠 분석의 목소리.
+ *
+ * Iapetus 는 미스터리·동화에 맞춰 **들어보고** 고른 목소리다. 차분하고
+ * 또렷해서 그쪽에는 맞는데, 야구 분석에 쓰니 "늘어진다"는 말이 나왔다
+ * (2026-10-23). 요청은 **중계 캐스터 톤**이다.
+ *
+ * 늘어짐에는 두 가지가 섞여 있다 — **느린 것**과 **밋밋한 것**.
+ * 느린 쪽은 속도를 1.08 로 올려 고쳤다(SPORTS_SPEAKING_RATE). 남은 것은
+ * 밋밋함이고, 그건 속도로는 고쳐지지 않는다. 목소리를 바꿔야 한다.
+ *
+ * 쓸 수 있는 한국어 남자 Chirp3 목소리 16개 중에서 Puck(upbeat)으로 간다.
+ *  - Orus·Alnilam(firm) 은 느린 것은 고치지만 밋밋한 것은 그대로다.
+ *    해설위원 톤이지 캐스터 톤이 아니다.
+ *  - Fenrir(excitable)·Sadachbia(lively) 는 10분을 내리 들으면 지친다.
+ *  - Puck 은 그 사이다. upbeat 는 **음높이 기복**이 크다는 뜻이지 빨라진다는
+ *    뜻이 아니라서, 이 채널이 읽어야 하는 금액과 퍼센트는 그대로 들린다.
+ *
+ * ⚠️ 이 이름은 **실제로 있는지 확인하고 적었다**(`voice --voices`, 비용 0원).
+ *    없는 이름을 적으면 합성이 400 으로 죽는데, 그걸 완성본 25분을 돌린
+ *    끝에 알게 된다. 목소리를 바꿀 때는 먼저 목록을 받아 확인한다.
+ *
+ * 들어보고 고른 것이 아니라 Google 이 공개한 성격 설명으로 고른 것이다.
+ * 실제로 듣고 아니다 싶으면 이 한 줄만 바꾸면 된다.
+ */
+export const SPORTS_VOICE = 'ko-KR-Chirp3-HD-Puck';
+
+/** 이 종류의 목소리. */
+export function voiceFor(kind) {
+  return kind === 'SPORTS' ? SPORTS_VOICE : DEFAULT_VOICE;
+}
+
+/**
  * 말하기 속도.
  *
  * 1.0이 기본인데 이 채널에는 빠르다. 기획서 6번이 "뉴스 아나운서보다 낮고

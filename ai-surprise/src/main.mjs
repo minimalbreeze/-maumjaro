@@ -42,6 +42,7 @@ import {
   createClient as createTtsClient,
   estimateUsd as estimateTtsUsd,
   DEFAULT_VOICE,
+  voiceFor,
   speakingRateFor,
 } from './audio/tts.mjs';
 import { loadTracks, pickTrack, mixArgs, attributionText } from './audio/bgm.mjs';
@@ -1183,13 +1184,17 @@ async function cmdVoice(flags) {
   // 단, **같은 목소리일 때만** 그렇다. 목소리를 바꿨는데 옛 음성을 그대로
   // 쓰면 바꾼 줄 알고 있다가 완성본에서야 안 바뀐 걸 알게 된다. 그때는
   // 이미 영상까지 다 만든 뒤다.
+  //
+  // 목소리와 속도는 **종류가 정한다.** 동화는 차분하고 느리게, 스포츠는
+  // 중계 톤으로. 다만 --voice / TTS_VOICE 로 지정하면 그쪽이 이긴다 —
+  // 사람이 들어보고 고른 것이 코드의 기본값보다 낫다.
+  const kind = loadContent(id)?.research?.kind;
   const wantVoice = typeof flags.voice === 'string' && flags.voice
     ? flags.voice
-    : env('TTS_VOICE', DEFAULT_VOICE);
-  // 말하기 속도는 종류가 정한다. 동화는 느리게, 스포츠는 중계 톤으로.
+    : env('TTS_VOICE', voiceFor(kind));
   const wantRate = flags.rate !== undefined
     ? Number(flags.rate)
-    : speakingRateFor(loadContent(id)?.research?.kind);
+    : speakingRateFor(kind);
   if (
     !flags.force &&
     fs.existsSync(contentPath(id, 'audio', 'voice.mp3')) &&
