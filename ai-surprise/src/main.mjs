@@ -41,6 +41,7 @@ import {
   createClient as createTtsClient,
   estimateUsd as estimateTtsUsd,
   DEFAULT_VOICE,
+  speakingRateFor,
 } from './audio/tts.mjs';
 import { loadTracks, pickTrack, mixArgs, attributionText } from './audio/bgm.mjs';
 import { modelFor, DEFAULT_IMAGE_MODEL } from './assets/replicate.mjs';
@@ -1093,15 +1094,24 @@ async function cmdVoice(flags) {
   const wantVoice = typeof flags.voice === 'string' && flags.voice
     ? flags.voice
     : env('TTS_VOICE', DEFAULT_VOICE);
+  // 말하기 속도는 종류가 정한다. 동화는 느리게, 스포츠는 중계 톤으로.
+  const wantRate = flags.rate !== undefined
+    ? Number(flags.rate)
+    : speakingRateFor(loadContent(id)?.research?.kind);
   if (
     !flags.force &&
     fs.existsSync(contentPath(id, 'audio', 'voice.mp3')) &&
     fs.existsSync(contentPath(id, 'audio', 'timings.json'))
   ) {
-    const made = loadNarration(id)?.voice || '';
+    const prev = loadNarration(id) || {};
+    const made = prev.voice || '';
+    const madeRate = prev.speaking_rate;
     if (made && made !== wantVoice) {
       log.warn(`만들어 둔 음성은 ${made} 로 읽은 것입니다. 지금 쓰려는 것은 ${wantVoice} 입니다.`);
       log.info('목소리가 다르므로 다시 만듭니다.');
+    } else if (madeRate != null && Number(madeRate) !== wantRate) {
+      log.warn(`만들어 둔 음성은 속도 ${madeRate} 입니다. 지금 쓰려는 것은 ${wantRate} 입니다.`);
+      log.info('속도가 다르므로 다시 만듭니다.');
     } else {
       log.ok(`content/${id}/audio/voice.mp3 이 이미 있습니다. 다시 만들지 않습니다 (돈을 아낍니다).`);
       log.info('새로 만들려면 --force 를 붙이세요.');
@@ -1120,7 +1130,7 @@ async function cmdVoice(flags) {
   const voice = wantVoice;  // 위에서 한 번만 정한다 — 두 곳에서 따로 정하면 어긋난다
   const maxUsd = flags['max-usd'] !== undefined ? Number(flags['max-usd']) : DEFAULT_TTS_MAX_USD;
 
-  log.section(`🎙  나레이션  |  content/${id}  |  ${voice}`);
+  log.section(`🎙  나레이션  |  content/${id}  |  ${voice}  |  속도 ${wantRate}`);
   log.info(`문단 ${units.length}개, ${chars.toLocaleString()}자`);
   log.info(`예상 비용 약 $${estimateTtsUsd(chars)} (추정치), 상한 $${maxUsd}`);
 
@@ -1140,6 +1150,7 @@ async function cmdVoice(flags) {
     workDir,
     apiKey,
     voice,
+    speakingRate: wantRate,
     maxUsd,
     force: Boolean(flags.force),
     onProgress: (m) => log.step(m),
@@ -1206,7 +1217,7 @@ async function cmdVoice(flags) {
     }
   }
 
-  saveNarration(id, { timings: result.timings, totalSeconds: result.totalSeconds, voice, track });
+  saveNarration(id, { timings: result.timings, totalSeconds: result.totalSeconds, voice, speakingRate: wantRate, track });
 
   log.raw('');
   log.info(`다음: node src/main.mjs video --id=${id}`);

@@ -398,7 +398,7 @@ function renderChecklist(checklist) {
  * 추정치 대신 **실제로 잰 길이**를 쓰게 하는 다리다. 음성 파일만 있으면
  * 영상 코드가 그걸 다시 분석해야 하는데, 이미 만들 때 쟀으므로 적어둔다.
  */
-export function saveNarration(id, { timings = [], totalSeconds = 0, voice = '', track = null }) {
+export function saveNarration(id, { timings = [], totalSeconds = 0, voice = '', speakingRate = null, track = null }) {
   const dir = contentPath(id, 'audio');
   ensureDir(dir);
   fs.writeFileSync(
@@ -406,6 +406,9 @@ export function saveNarration(id, { timings = [], totalSeconds = 0, voice = '', 
     JSON.stringify(
       {
         voice,
+        // 속도도 남긴다. 목소리가 같아도 속도가 다르면 다른 음성이다 —
+        // 안 적어 두면 속도를 바꿔도 옛 파일을 그대로 쓴다.
+        speaking_rate: speakingRate,
         total_seconds: totalSeconds,
         // 쓴 곡. 출처 표기가 필요하면 업로드할 때 설명란에 넣는다.
         bgm: track ? { file: track.file, title: track.title || '', attribution: track.attribution || '' } : null,

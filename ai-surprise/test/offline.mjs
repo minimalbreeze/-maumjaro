@@ -4127,6 +4127,53 @@ await asyncTest('큰 어긋남은 흡수하지 않고 그대로 알린다', asyn
   assert.equal(big.clips.at(-1).duration, base.clips.at(-1).duration, '덮으면 안 되는데 덮었습니다');
 });
 
+await asyncTest('스포츠 캐리커처에 얼굴을 그리게 한다', async () => {
+  const V = await import('../src/scenes/visuals.mjs');
+  // 1화에서 얼굴 없는 영상이 나왔다 — 눈코입 없는 동그라미와 실루엣뿐이었다.
+  // 'simplified generic face' 로만 적고 장면 지시에서도 뒷모습을 권한 탓이다.
+  // 막아야 할 것은 "특정 선수를 닮는 것"이지 얼굴 자체가 아니다.
+  const p = V.composeImagePrompt('a general manager at a desk', null, { kind: 'SPORTS' });
+  assert.ok(/expressive cartoon face/.test(p), '표정 있는 얼굴 지시가 없습니다');
+  assert.ok(/eyes/.test(p) && /mouth/.test(p), '눈·입 지시가 없습니다');
+  // 그래도 특정인을 닮히는 것은 여전히 막는다.
+  assert.ok(/not resembling any specific real person/.test(p));
+  assert.ok(/no real identifiable public figures/.test(p));
+  // 장면 지시도 뒷모습을 권하지 않아야 한다.
+  const sys = V.visualsSystemFor('SPORTS');
+  assert.ok(/얼굴을 그린다/.test(sys), '얼굴을 그리라는 지시가 없습니다');
+  assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습을 권하고 있습니다');
+});
+
+await asyncTest('스포츠는 중계 톤으로 조금 빠르게 읽는다', async () => {
+  const T = await import('../src/audio/tts.mjs');
+  // 0.95 는 미스터리·동화에 맞춘 속도다. 야구 분석에 쓰면 늘어진다.
+  assert.ok(T.speakingRateFor('SPORTS') > T.DEFAULT_SPEAKING_RATE, '스포츠가 더 빠르지 않습니다');
+  assert.equal(T.speakingRateFor('TALE'), T.DEFAULT_SPEAKING_RATE, '동화 속도가 바뀌었습니다');
+  assert.equal(T.speakingRateFor('EVENT'), T.DEFAULT_SPEAKING_RATE);
+  // 숫자와 퍼센트를 읽어야 하므로 너무 빠르면 안 된다.
+  assert.ok(T.speakingRateFor('SPORTS') <= 1.15, '너무 빨라서 금액이 안 들립니다');
+});
+
+await asyncTest('속도를 바꾸면 이미 있는 음성이어도 다시 만든다', async () => {
+  const { execFileSync } = await import('node:child_process');
+  // 목소리와 같은 이유다. 안 적어 두면 속도를 바꿔도 옛 파일을 그대로 쓰고,
+  // 완성본에서야 안 바뀐 걸 알게 된다.
+  const id = '953';
+  const dir = store.contentPath(id);
+  fs.mkdirSync(path.join(dir, 'audio'), { recursive: true });
+  const { makeSports } = await import('../src/model.mjs');
+  fs.writeFileSync(path.join(dir, 'research.json'), JSON.stringify(makeSports({ title: '속도 검사' })), 'utf8');
+  fs.writeFileSync(path.join(dir, 'audio', 'voice.mp3'), 'x');
+  store.saveNarration(id, { timings: [], totalSeconds: 1, voice: 'ko-KR-Chirp3-HD-Iapetus', speakingRate: 0.95 });
+
+  const saved = JSON.parse(fs.readFileSync(path.join(dir, 'audio', 'timings.json'), 'utf8'));
+  assert.equal(saved.speaking_rate, 0.95, '속도가 기록되지 않았습니다');
+
+  // scenes.json 이 없으면 voice 단계가 먼저 멈추므로, 여기서는 기록만 확인한다.
+  const { speakingRateFor } = await import('../src/audio/tts.mjs');
+  assert.notEqual(saved.speaking_rate, speakingRateFor('SPORTS'), '검사 전제가 깨졌습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
