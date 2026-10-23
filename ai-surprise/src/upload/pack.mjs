@@ -26,9 +26,12 @@ export const CHANNEL_NAMES = {
   [KIND.EVENT]: 'AI 서프라이즈',
   [KIND.LEGEND]: 'AI 서프라이즈',
   [KIND.TALE]: '마지막 장',
-  // 블로그·사이트와 같은 이름으로 묶는다(운영자 결정, 2026-10-23).
-  // 서로 보내기 쉽고, 야구 말고 다른 종목으로 넓힐 때도 갇히지 않는다.
-  [KIND.SPORTS]: 'minimalbreeze',
+  // 야구 + 스포츠 (운영자 작명, 2026-10-23).
+  //
+  // '야' 가 앞에 와서 합성이 설명 없이 읽힌다 — 야구 중심이라는 것과
+  // 스포츠 전반으로 넓힐 수 있다는 것이 이름 하나에 들어 있다.
+  // (먼저 나온 「스포츠야!」 는 '야' 가 야구로 안 읽혀서 접었다.)
+  [KIND.SPORTS]: '야포츠',
 };
 
 export function channelNameFor(kind) {
