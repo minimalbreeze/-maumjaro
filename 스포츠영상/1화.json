@@ -3,20 +3,91 @@
   "premise": "원태인·구자욱·홍창기·최지훈·박동원이 한꺼번에 FA 자격을 얻는다. 한 명이 움직이면 시장 전체가 흔들린다.",
   "angle": "이름값이 아니라 보상 규정과 샐러리캡이 계약을 정한다 — 백억짜리 선수의 실제 영입 비용은 백억이 아니다",
   "beats": [
-    { "key": "HOOK", "what": "노시환 307억을 기준선으로 놓고, 이번 겨울 나올 다섯 명을 부른다" },
-    { "key": "RULES", "what": "일정, 우선협상기간 폐지, 보상등급 A/B/C, 외부 FA 3명 제한" },
-    { "key": "ACE", "what": "삼성 — 원태인과 구자욱을 동시에 잡을 수 있는가. 샐러리캡" },
-    { "key": "OUTFIELD", "what": "홍창기의 출루 가치와 최지훈의 중견수 희소성" },
-    { "key": "CATCHER", "what": "포수는 대체가 가장 어렵다. 한 명이 움직이면 연쇄가 시작된다" },
-    { "key": "DEBATE", "what": "같은 선수를 두고 평가가 갈리는 이유 — 기준이 다를 뿐이다" },
-    { "key": "SCENARIO", "what": "가능한 전개 세 갈래. 진행 중인 협상이 아니다" },
-    { "key": "CLOSE", "what": "세 자리로 정리하고 댓글 질문으로 닫는다" }
+    {
+      "key": "HOOK",
+      "what": "노시환 307억을 기준선으로 놓고, 이번 겨울 나올 다섯 명을 부른다"
+    },
+    {
+      "key": "RULES",
+      "what": "일정, 우선협상기간 폐지, 보상등급 A/B/C, 외부 FA 3명 제한"
+    },
+    {
+      "key": "ACE",
+      "what": "삼성 — 원태인과 구자욱을 동시에 잡을 수 있는가. 샐러리캡"
+    },
+    {
+      "key": "OUTFIELD",
+      "what": "홍창기의 출루 가치와 최지훈의 중견수 희소성"
+    },
+    {
+      "key": "CATCHER",
+      "what": "포수는 대체가 가장 어렵다. 한 명이 움직이면 연쇄가 시작된다"
+    },
+    {
+      "key": "DEBATE",
+      "what": "같은 선수를 두고 평가가 갈리는 이유 — 기준이 다를 뿐이다"
+    },
+    {
+      "key": "SCENARIO",
+      "what": "가능한 전개 세 갈래. 진행 중인 협상이 아니다"
+    },
+    {
+      "key": "CLOSE",
+      "what": "세 자리로 정리하고 댓글 질문으로 닫는다"
+    }
   ],
   "sources": [
-    { "name": "KBO 2026년 FA 승인 선수 명단 공시", "url": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11762" },
-    { "name": "KBO, FA 자격 선수 명단 공시 (2025-11-05)", "url": "https://www.mksports.co.kr/news/sports/11460195" },
-    { "name": "삼성, 원태인·구자욱 비FA 다년계약 추진", "url": "https://www.xportsnews.com/article/2096392" },
-    { "name": "원태인 2026시즌 연봉 10억 계약", "url": "https://m.news.nate.com/view/20260125n08439" },
-    { "name": "2026 KBO League season (일정)", "url": "https://en.wikipedia.org/wiki/2026_KBO_League_season" }
+    {
+      "name": "KBO 2026년 FA 승인 선수 명단 공시",
+      "url": "https://www.koreabaseball.com/MediaNews/Notice/View.aspx?bdSe=11762"
+    },
+    {
+      "name": "KBO, FA 자격 선수 명단 공시 (2025-11-05)",
+      "url": "https://www.mksports.co.kr/news/sports/11460195"
+    },
+    {
+      "name": "삼성, 원태인·구자욱 비FA 다년계약 추진",
+      "url": "https://www.xportsnews.com/article/2096392"
+    },
+    {
+      "name": "원태인 2026시즌 연봉 10억 계약",
+      "url": "https://m.news.nate.com/view/20260125n08439"
+    },
+    {
+      "name": "2026 KBO League season (일정)",
+      "url": "https://en.wikipedia.org/wiki/2026_KBO_League_season"
+    }
+  ],
+  "people": [
+    {
+      "name": "원태인",
+      "role": "삼성 투수",
+      "look": "a Korean man in his mid-20s with a round face and full cheeks, thick dark eyebrows, large gentle eyes with faint double eyelids, short slightly tousled black hair, sturdy broad shoulders",
+      "tell": ""
+    },
+    {
+      "name": "구자욱",
+      "role": "삼성 외야수",
+      "look": "a Korean man in his early 30s with a long face, high cheekbones and a clean straight jawline, narrow elongated eyes, thin straight eyebrows, short black hair, tall and lean with long limbs and narrow shoulders",
+      "tell": ""
+    },
+    {
+      "name": "홍창기",
+      "role": "LG 외야수",
+      "look": "a Korean man in his early 30s with a broad square jaw, large eyes with distinct double eyelids, thick dark eyebrows, a high straight nose and full lips, short black hair with slight volume on top, big build with wide shoulders and a thick neck, flat serious expression",
+      "tell": ""
+    },
+    {
+      "name": "최지훈",
+      "role": "SSG 중견수",
+      "look": "a Korean man in his late 20s with a narrow tapered face and a pointed chin, hollow cheeks and prominent cheekbones, small narrow sharp eyes with almost no double eyelids, dark angular eyebrows, thin lips, slim light build with a thin neck",
+      "tell": "a red headband worn across the forehead"
+    },
+    {
+      "name": "박동원",
+      "role": "LG 포수",
+      "look": "a Korean man in his mid-30s with a broad heavy face, wide cheekbones and a thick jaw with visible stubble, small narrow eyes, dark eyebrows, a wide nose and a large mouth, short black hair, heavy powerful build with a thick neck and broad shoulders",
+      "tell": "full catcher's gear - chest protector and leg guards - and a black headband"
+    }
   ]
 }

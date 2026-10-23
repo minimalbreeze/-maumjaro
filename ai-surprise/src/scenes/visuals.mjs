@@ -251,11 +251,16 @@ export const SPORTS_VISUALS_RULES = `
 
 ━━━ 스포츠 분석 편에서 더 지킬 것 ━━━
 
-A. 선수 이름을 프롬프트에 쓰지 않는다.
+A. 선수 이름을 프롬프트에 쓰지 않는다. **생김새를 쓴다.**
    이미지 모델은 이 선수들의 얼굴을 모른다. 이름을 넣어도 닮지 않고,
-   닮게 하려 한 흔적만 남는다. 대신 **팀 색·등번호·상황**으로 쓴다.
+   닮게 하려 한 흔적만 남는다.
      나쁨: "Won Tae-in pitching for Samsung Lions"
-     좋음: "a pitcher in a plain navy uniform, number 18, mid-windup, seen from behind"
+
+   아래 「이 편에 나오는 사람」에 생김새가 적혀 있으면, 그 사람이 나오는
+   샷에는 **그 문장을 그대로 베껴 넣는다.** 고쳐 쓰지 말고 그대로다 —
+   말을 바꾸면 샷마다 다른 얼굴이 나온다.
+     좋음: "<생김새 문장 그대로>, in a plain navy uniform, mid-windup,
+            facing the camera"
 
 B. 구단 로고·팀 이름·스폰서 글자를 넣지 않는다.
    유니폼은 색으로만 말한다. 상표를 그리면 쓸 수 없는 그림이 된다.
@@ -291,8 +296,43 @@ D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_
    **한 편에 6~10장**이 적당하다. 너무 많으면 글자만 보는 영상이 된다.`;
 
 /** 이 종류의 화면 설계 지시. */
-export function visualsSystemFor(kind) {
-  return kind === KIND.SPORTS ? VISUALS_SYSTEM + SPORTS_VISUALS_RULES : VISUALS_SYSTEM;
+/**
+ * 이 편에 나오는 사람들의 생김새를 화면 지시에 붙인다.
+ *
+ * 이게 없으면 모델이 샷마다 다른 사람을 그린다. 노리는 것은 **닮음이 아니라
+ * 일관성**이다 — 같은 선수가 같은 얼굴로 나오고, 둘이 한 화면에 있을 때
+ * 누가 누군지 보이면 된다.
+ *
+ * 생김새가 없으면 아무것도 붙이지 않는다. 빈 제목만 남으면 모델이 빈 칸을
+ * 채우려고 엉뚱한 말을 지어낸다.
+ */
+export function peopleRules(people) {
+  const list = (Array.isArray(people) ? people : []).filter((p) => p?.name && p?.look);
+  if (!list.length) return '';
+
+  const lines = list.map((p) => {
+    const head = p.role ? `${p.name} (${p.role})` : p.name;
+    const tell = p.tell ? `\n    알아보는 표식: ${p.tell}` : '';
+    return `  · ${head}\n    ${p.look}${tell}`;
+  });
+
+  return [
+    '',
+    '━━━ 이 편에 나오는 사람 ━━━',
+    '',
+    '이 사람이 나오는 샷에는 생김새 문장을 **영어 그대로 베껴** 넣는다.',
+    '줄여 쓰거나 말을 바꾸면 샷마다 다른 얼굴이 된다. 이름은 넣지 않는다.',
+    '표식이 적힌 사람은 그 표식도 같이 넣는다 — 얼굴만으로는 섞인다.',
+    '',
+    ...lines,
+    '',
+    '여기 없는 사람(단장, 기자, 관중 등)은 지어내도 된다.',
+  ].join('\n');
+}
+
+export function visualsSystemFor(kind, { people = [] } = {}) {
+  if (kind !== KIND.SPORTS) return VISUALS_SYSTEM;
+  return VISUALS_SYSTEM + SPORTS_VISUALS_RULES + peopleRules(people);
 }
 
 export const VISUALS_SCHEMA = {
@@ -561,7 +601,7 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
   const basePrompt = buildVisualsPrompt(scene, { item, totalScenes });
   // 종류는 소재 레코드가 들고 있다. 화면 지시와 스키마가 여기서 갈린다.
   const kind = item?.kind || null;
-  const system = visualsSystemFor(kind);
+  const system = visualsSystemFor(kind, { people: item?.people || [] });
   const schema = visualsSchemaFor(kind);
 
   let design = await callForJson({
