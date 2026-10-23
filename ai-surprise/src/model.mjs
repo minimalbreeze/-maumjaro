@@ -63,7 +63,7 @@ export const CATEGORIES = [
  * 만드는 게 아니라, **다른 관문을 쓰는 것**이다 — 실화 쪽 기준은 그대로
  * 둔 채 TALE 에만 예외를 둔다. 실화의 엄격함을 창작 때문에 깎지 않는다.
  */
-export const KIND = { EVENT: 'EVENT', LEGEND: 'LEGEND', TALE: 'TALE' };
+export const KIND = { EVENT: 'EVENT', LEGEND: 'LEGEND', TALE: 'TALE', SPORTS: 'SPORTS' };
 
 /** 지어낸 이야기인가. 출처·1차 기록 관문을 건너뛰는 유일한 조건이다. */
 export function isFiction(item) {
@@ -197,6 +197,7 @@ export function evaluateGate(item) {
   const blocking = [];
   const isLegendKind = item?.kind === KIND.LEGEND;
   const isTale = item?.kind === KIND.TALE;
+  const isSports = item?.kind === KIND.SPORTS;
   // FABRICATED(지어낸 이야기)는 EVENT에서만 막는다. LEGEND는 지어낸
   // 이야기를 추적하는 게 목적이므로 막으면 소재 자체가 성립하지 않는다.
   // TALE 도 막지 않는다. 지어낸 이야기라는 것이 그 편의 전제다.
@@ -225,7 +226,12 @@ export function evaluateGate(item) {
   //
   // TALE(창작 동화)에서는 **차단을 유지한다.** 지어낸 이야기에 실존 인물이
   // 나올 이유가 없고, 나온다면 그건 창작이 아니라 그 사람에 대한 주장이다.
-  if (flags.includes('LIVING_PERSON_CLAIM') && !isLegendKind) {
+  //
+  // SPORTS(스포츠 분석)도 차단하지 않는다. 현역 선수 이름을 부르지 못하면
+  // 소재가 성립하지 않는다. 대신 **주장을 막는 가드가 대본에 있다** —
+  // 문단마다 FACT / THEORY / UNKNOWN 중 하나를 달게 하고, 확인되지 않은
+  // 것을 FACT 로 적으면 검사가 잡는다. 위험한 것은 이름이 아니라 단정이다.
+  if (flags.includes('LIVING_PERSON_CLAIM') && !isLegendKind && !isSports) {
     blocking.push(RISK_FLAGS.LIVING_PERSON_CLAIM);
   }
   if (flags.includes('CRIMINAL_GLORIFICATION')) blocking.push(RISK_FLAGS.CRIMINAL_GLORIFICATION);
@@ -239,7 +245,7 @@ export function evaluateGate(item) {
   // 지어낸 이야기라는 게 바로 그 편의 내용이다.
   //
   // TALE 도 예외다. 창작물에 "1차 기록"이라는 개념이 없다.
-  if (!isLegendKind && !isTale && item?.fact_status === FACT_STATUS.UNVERIFIED) {
+  if (!isLegendKind && !isTale && !isSports && item?.fact_status === FACT_STATUS.UNVERIFIED) {
     blocking.push('1차 기록으로 확인되지 않는 이야기');
   }
 
@@ -263,6 +269,14 @@ export function evaluateGate(item) {
         '대본이 나오면 한 번 읽어봐 주세요. 실존 인물·실제 사건을 연상시키지 않는지 봅니다',
       ],
     };
+  }
+
+  // 스포츠 분석은 **현역 선수를 다룬다.** 그래서 창작 동화와 정반대 이유로
+  // 사람이 반드시 읽어야 한다 — 창작은 실존 인물이 섞일까 봐 보고, 스포츠는
+  // 확인되지 않은 것을 단정했을까 봐 본다. 출처 수 검사는 그대로 받는다.
+  if (isSports) {
+    reasons.push('현역 선수를 다룹니다 — 대본에서 확인되지 않은 것을 단정하지 않았는지 꼭 읽어봐 주세요');
+    reasons.push('올리는 날 아침에 선수들의 계약 상태가 바뀌지 않았는지 다시 확인해 주세요');
   }
 
   const sourceCount = Number(item?.source_count);
@@ -347,6 +361,58 @@ export function makeTale({ title, premise = '', strange = '', beats = [], lastLi
       .filter((b) => b?.key && b?.what)
       .map((b) => ({ key: String(b.key), what: String(b.what).trim() })),
     last_line: String(lastLine || '').trim(),
+
+    risk_flags: [],
+    risk_score: 0,
+    risk_notes: '',
+
+    status: 'IDEA',
+  };
+
+  const { gate, reasons } = evaluateGate(item);
+  item.gate = gate;
+  item.gate_reasons = reasons;
+  item.recommended = false;
+
+  return item;
+}
+
+/**
+ * 스포츠 분석 한 편의 소재 레코드를 만든다.
+ *
+ * 창작 동화와 마찬가지로 **AI를 부르지 않는다.** 소재와 각도를 정하는 것은
+ * 사람이다 — 이 채널에서 사람이 AI보다 확실히 나은 유일한 지점이다.
+ *
+ * 동화와 다른 점이 하나 있다: **출처를 받는다.** 지어낸 이야기가 아니라
+ * 실제 선수와 실제 규정을 다루므로, 어디서 확인했는지가 남아 있어야 한다.
+ * 설명문에도 그대로 들어간다.
+ */
+export function makeSports({ title, premise = '', angle = '', beats = [], sources = [] } = {}) {
+  const list = (Array.isArray(sources) ? sources : []).filter((x) => x?.url);
+
+  const item = {
+    title: String(title || '').trim(),
+    summary: String(premise || '').trim(),
+    category: '스포츠 분석',
+    date_found: new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10),
+
+    sources: list,
+    source_url: list[0]?.url || '',
+    source_name: list[0]?.name || '',
+    source_count: list.length,
+
+    kind: KIND.SPORTS,
+    // 공식 발표·규정을 근거로 쓰지만, 앞으로 벌어질 일을 다루므로 "확인됨"이
+    // 아니다. 사실과 전망이 한 편에 섞여 있다는 뜻이고, 그래서 문단마다
+    // FACT / THEORY / UNKNOWN 을 달게 한다.
+    fact_status: FACT_STATUS.UNVERIFIED,
+    fact_notes: '확정된 사실과 전망이 함께 들어 있습니다. 문단 태그로 구분합니다.',
+
+    what_is_strange: String(angle || '').trim(),
+    beats: (Array.isArray(beats) ? beats : [])
+      .filter((b) => b?.key && b?.what)
+      .map((b) => ({ key: String(b.key), what: String(b.what).trim() })),
+    last_line: '',
 
     risk_flags: [],
     risk_score: 0,

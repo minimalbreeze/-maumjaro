@@ -3692,6 +3692,71 @@ await asyncTest('영상 계획 단계가 실제로 끝까지 돈다', async () =
   assert.ok(!/is not defined/.test(out), out.slice(-400));
 });
 
+// ─────────────────────────────────────────────────────────────
+// 스포츠 분석 — 글자 카드
+// ─────────────────────────────────────────────────────────────
+
+test('칸이 있으면 표, 없으면 한 문장으로 읽는다', async () => {
+  const C = await import('../src/video/card.mjs');
+  const table = C.parseCardText('FA 보상 규정\nA등급|연봉 200%\nB등급|연봉 100%');
+  assert.equal(table.type, 'table');
+  assert.equal(table.rows.length, 2);
+  assert.equal(table.rows[0].right, '연봉 200%');
+
+  const say = C.parseCardText('백억짜리 선수의 실제 영입 비용은\n백억이 아닙니다');
+  assert.equal(say.type, 'statement');
+  assert.equal(say.statement.length, 2);
+  // 한 문장 카드는 줄을 제목/본문으로 가르지 않는다. 갈랐더니 두 문장이
+  // 끊겨 보였다.
+  assert.equal(say.rows.length, 0);
+});
+
+test('카드 글자가 자막 자리를 침범하지 않는다', async () => {
+  const C = await import('../src/video/card.mjs');
+  // 줄을 많이 넣어도 아래 240px(자막 자리)로 내려가면 안 된다.
+  const many = C.parseCardText(
+    ['많은 줄', ...Array.from({ length: 12 }, (_, i) => `항목 ${i}|값 ${i}`)].join('\n')
+  );
+  const L = C.cardLayout(many);
+  assert.equal(L.overflow, false, '카드가 안전 영역을 넘었습니다');
+  const limit = C.CARD_HEIGHT - C.SUBTITLE_RESERVED;
+  assert.ok(L.rowYs.at(-1) < limit, `마지막 줄 ${L.rowYs.at(-1)} 이 자막 자리 ${limit} 를 넘었습니다`);
+});
+
+test('퍼센트가 들어간 카드가 깨지지 않는다', async () => {
+  const C = await import('../src/video/card.mjs');
+  // drawtext 는 % 를 서식 문자로 읽는다. expansion=none 이 빠지면
+  // "Stray %" 가 나면서 **그 줄이 통째로 안 그려진다.** 보상등급 표가
+  // 전부 퍼센트라 실제로 이 카드가 빈 화면이 될 뻔했다.
+  const card = C.parseCardText('FA 보상 규정\nA등급|연봉 200%');
+  const args = C.cardArgs({
+    card,
+    files: { title: '/t/title.txt', rows: [{ left: '/t/l0.txt', right: '/t/r0.txt' }] },
+    outputPath: '/t/out.png',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  const draws = vf.split(',').filter((f) => f.startsWith('drawtext'));
+  assert.ok(draws.length >= 3, '그릴 글자가 모자랍니다');
+  for (const d of draws) {
+    assert.ok(d.includes('expansion=none'), `expansion=none 이 빠졌습니다: ${d.slice(0, 60)}`);
+  }
+});
+
+test('카드 글자는 명령줄이 아니라 파일로 넘긴다', async () => {
+  const C = await import('../src/video/card.mjs');
+  // 한글과 따옴표·콜론을 명령줄에 직접 넣으면 ffmpeg 필터 문법과 충돌한다.
+  const card = C.parseCardText('값은 "이름"입니다\n조건|오전 9:00');
+  const args = C.cardArgs({
+    card,
+    files: { title: '/t/title.txt', rows: [{ left: '/t/l0.txt', right: '/t/r0.txt' }] },
+    outputPath: '/t/out.png',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.ok(!vf.includes('이름'), '글자가 필터 문자열에 직접 들어갔습니다');
+  assert.ok(!vf.includes('9:00'), '콜론이 든 글자가 필터에 직접 들어갔습니다');
+  assert.ok(vf.includes('textfile='), 'textfile 로 넘기지 않았습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건`);
 console.log(`임시 폴더: ${TMP}`);

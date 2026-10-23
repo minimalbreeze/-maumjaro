@@ -101,6 +101,55 @@ export const TALE_STYLE_SUFFIX =
   'simple stylized faces, storybook composition, ' +
   'no text, no watermark, no captions, no subtitles, no logo';
 
+/**
+ * 스포츠 분석(KIND.SPORTS)의 고정 화면 스타일.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 캐리커처인가 — 멋이 아니라 유일하게 가능한 선택이다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 이 종류는 **실존 선수**를 다룬다. 그래서 쓸 수 있는 그림이 거의 없다.
+ * 실제 경기 사진·중계 화면은 구단과 중계사의 것이고, 사실적인 그림은
+ * 특정 선수를 닮는 순간 초상권 문제가 된다.
+ *
+ * 남는 길은 하나다. **누군지는 상황으로 알리고, 얼굴은 특정하지 않는다.**
+ * 팀 색과 등번호와 장면으로 전하고, 이름은 자막과 나레이션이 말한다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 이름을 넣어도 그 사람이 나오지 않는다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 이미지 모델은 KBO 선수 얼굴을 모른다. 이름을 넣어 봐야 "빨간 헬멧 쓴
+ * 야구선수"가 나올 뿐이다. 그러니 **애초에 이름을 넣지 않는다** — 넣으면
+ * 닮지도 않으면서 닮게 하려 한 흔적만 남는다.
+ *
+ * 그래서 프롬프트에는 선수 이름 대신 팀 색·등번호·상황만 적는다.
+ * 안전한 쪽과 잘 되는 쪽이 같은 방향인, 드문 경우다.
+ */
+export const SPORTS_STYLE_SUFFIX =
+  // 큰 머리 작은 몸. 캐리커처라는 걸 한눈에 알게 해서 "사진인 줄 알았다"는
+  // 오해를 처음부터 막는다.
+  'stylized 3D caricature render, oversized head on small body, ' +
+  'glossy toy-figure look, soft studio lighting, clean rim light, ' +
+  // 얼굴을 단순하게. 디테일이 올라갈수록 누군가를 닮기 시작한다.
+  'simplified generic face, no particular likeness, ' +
+  // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
+  'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
+  'shallow depth of field, dark office or stadium background, ' +
+  'no text, no watermark, no captions, no subtitles, no logo';
+
+/**
+ * 스포츠 편에만 더 붙이는 금지 목록.
+ *
+ * 공통 금지 목록에 이미 "no real identifiable public figures" 가 있다.
+ * 그 줄이 이 종류에서는 가장 중요한 줄이라 **빼지 않는다.** 아래는 상표와
+ * 실사 쪽을 한 겹 더 막는 것이다.
+ */
+export const SPORTS_NEGATIVE_EXTRA =
+  'no team logos, no team names, no brand marks, no sponsor text on uniforms, ' +
+  'no readable jersey text, no photorealistic faces, no photograph, ' +
+  'no real stadium signage, no league emblem';
+
 export const NEGATIVE_SUFFIX =
   'no blood, no gore, no corpses, no wounds, no injury, no violence, ' +
   'no weapons pointed at people, no distressed or crying faces, ' +
@@ -319,11 +368,16 @@ export function composeImagePrompt(content, era = null, { kind = null } = {}) {
   //
   // 동화는 **시대 색감을 쓰지 않는다.** 팔레트가 고정이라 era 색을 더하면
   // 그 고정이 깨지고, 편마다 색이 달라 보인다.
+  //
+  // 스포츠도 시대 색감을 쓰지 않는다. 전부 현재 이야기라 구분할 시대가 없다.
   const isTale = kind === KIND.TALE;
-  const style = isTale ? TALE_STYLE_SUFFIX : STYLE_SUFFIX;
-  const tone = !isTale && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
-  if (!body) return `${tone}${style}. ${NEGATIVE_SUFFIX}`;
-  return `${body}. ${tone}${style}. ${NEGATIVE_SUFFIX}`;
+  const isSports = kind === KIND.SPORTS;
+  const fixed = isTale || isSports;
+  const style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
+  const negative = isSports ? `${NEGATIVE_SUFFIX}, ${SPORTS_NEGATIVE_EXTRA}` : NEGATIVE_SUFFIX;
+  const tone = !fixed && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
+  if (!body) return `${tone}${style}. ${negative}`;
+  return `${body}. ${tone}${style}. ${negative}`;
 }
 
 /**
