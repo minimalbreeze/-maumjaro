@@ -24,6 +24,7 @@ import { GATE, MIN_SOURCE_COUNT, KIND, makeTale, makeSports } from './model.mjs'
 import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
+import { isFatalApiError } from './ai/client.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
 import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
@@ -1579,6 +1580,15 @@ async function runStages(id, flags) {
       await cmdScenes({ id });
     } catch (err) {
       log.fail(`content/${id} 장면 만들기 실패`, err);
+      // 계정 한도·인증 문제라면 뒤 단계도 전부 같은 벽에 부딪힌다. 그런데
+      // 그림과 목소리는 **다른 회사**라 돈은 그대로 나간다 — 쓸 수 없는
+      // 편에 쓰는 돈이다. 실제로 한 번 그렇게 썼다(2026-10-23).
+      if (isFatalApiError(err)) {
+        log.error('계정 한도나 인증 문제입니다. 다시 걸어도 같은 답이 옵니다.');
+        log.info('https://console.anthropic.com/settings/limits 에서 사용 한도를 확인해 주세요.');
+        log.info('뒤 단계(그림·목소리)는 돈이 나가므로 여기서 멈춥니다.');
+        process.exit(2);
+      }
     }
   }
 

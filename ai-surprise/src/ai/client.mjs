@@ -327,6 +327,27 @@ export function searchSummary(response) {
   return results;
 }
 
+/**
+ * 더 걸어 봐야 소용없는 오류인가.
+ *
+ * 2026-10-23 에 완성본 한 편이 여기서 어그러졌다. 계정 사용 한도에 걸려
+ * 400 이 왔는데, 장면 설계 반복문이 그걸 **장면 하나의 실패**로 삼키고
+ * 남은 23개를 마저 때렸다. 다 똑같이 400 이었다. 그러고도 멈추지 않고
+ * 그림 단계로 넘어가 Replicate 에 돈을 썼다 — 쓸 수 없는 편에 쓴 돈이다.
+ *
+ * 이런 오류는 기다린다고 풀리지 않는다("11월 1일에 복구된다"고 적혀 온다).
+ * 한 번 보면 **그 자리에서 전부 멈추는** 것이 맞다.
+ */
+export function isFatalApiError(err) {
+  const msg = String(err?.message || err || '');
+  return (
+    /usage limits?/i.test(msg) ||
+    /credit balance is too low/i.test(msg) ||
+    /authentication_error/i.test(msg) ||
+    /invalid x-api-key/i.test(msg)
+  );
+}
+
 function guardRefusal(response) {
   if (response.stop_reason === 'refusal') {
     const err = new Error(

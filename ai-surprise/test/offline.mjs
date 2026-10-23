@@ -4376,6 +4376,94 @@ test('1화 기획에 다섯 명이 다 적혀 있다', () => {
   assert.ok(byName['박동원'].tell, '박동원은 포수 장비로 갈라야 합니다');
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-m. 한도에 걸리면 그 자리에서 멈춘다');
+
+const { isFatalApiError } = await import('../src/ai/client.mjs');
+const { designAllScenes: designAll } = await import('../src/scenes/visuals.mjs');
+
+test('더 걸어도 소용없는 오류를 알아본다', () => {
+  // 실제로 받은 문구다 (실행 #33).
+  const real = '400 {"type":"error","error":{"type":"invalid_request_error",' +
+    '"message":"You have reached your specified API usage limits. ' +
+    'You will regain access on 2026-11-01 at 00:00 UTC."}}';
+  assert.equal(isFatalApiError(new Error(real)), true);
+  assert.equal(isFatalApiError(new Error('Your credit balance is too low')), true);
+  assert.equal(isFatalApiError(new Error('authentication_error')), true);
+  // 한 번 더 걸면 되는 것들은 건드리지 않는다.
+  assert.equal(isFatalApiError(new Error('529 overloaded_error')), false);
+  assert.equal(isFatalApiError(new Error('rate_limit_error')), false);
+  assert.equal(isFatalApiError(new Error('타임아웃')), false);
+  assert.equal(isFatalApiError(null), false);
+});
+
+await asyncTest('한도 오류면 남은 장면을 때리지 않는다', async () => {
+  // 실행 #33 에서 29개 중 7번째가 한도에 걸렸는데 남은 23개를 마저 때렸다.
+  // 전부 같은 400 이었고, 그러고도 그림 단계로 넘어가 돈을 썼다.
+  const scenes = Array.from({ length: 10 }, (_, i) => ({
+    scene_number: i + 1,
+    section: 'ACE',
+    shots: [{ shot_id: `S${i + 1}-1`, narration: '글' }],
+  }));
+
+  let called = 0;
+  const made = {
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 1, output_tokens: 1 },
+    content: [{
+      type: 'tool_use',
+      name: 'submit_shots',
+      input: { mood: 'calm', visual_description: '설명', shots: [] },
+    }],
+  };
+  const aiClient = await import('../src/ai/client.mjs');
+  aiClient.__setClientForTest({
+    messages: {
+      stream: () => {
+        called += 1;
+        const n = called;
+        return {
+          finalMessage: async () => {
+            if (n >= 3) {
+              // 실제 SDK 오류에는 status 가 붙어 온다. 그래야 withRetry 가
+              // 4xx 로 보고 곧장 포기한다 — 붙이지 않으면 검사만 현실과
+              // 달라진다.
+              const err = new Error('400 You have reached your specified API usage limits.');
+              err.status = 400;
+              throw err;
+            }
+            return made;
+          },
+        };
+      },
+    },
+  });
+  try {
+    await assert.rejects(
+      () => designAll(scenes, { item: { kind: 'SPORTS' } }),
+      /usage limits/,
+      '한도 오류를 삼키고 끝까지 돌았습니다'
+    );
+  } finally {
+    aiClient.__setClientForTest(null);
+    aiClient.resetUsage();
+  }
+  // 3번째에서 터졌으니 그 뒤로는 부르지 않아야 한다.
+  assert.equal(called, 3, `한도에 걸린 뒤에도 ${called - 3}번 더 불렀습니다`);
+});
+
+test('한도 오류면 그림·목소리로 넘어가지 않는다', () => {
+  // 그림과 목소리는 다른 회사라, 대본 쪽이 막혀도 돈은 그대로 나간다.
+  const src = fs.readFileSync(fileURLToPath(new URL('../src/main.mjs', import.meta.url)), 'utf8');
+  const at = src.indexOf('async function runStages');
+  const stages = src.slice(at, src.indexOf('async function cmdAuto', at));
+  assert.ok(/isFatalApiError\(err\)/.test(stages), '장면 실패를 그냥 넘깁니다');
+  const guard = stages.indexOf('isFatalApiError(err)');
+  const images = stages.indexOf('flags.images');
+  assert.ok(guard > 0 && guard < images, '멈추는 자리가 그림 단계보다 뒤에 있습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
