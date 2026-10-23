@@ -26,7 +26,9 @@ export const CHANNEL_NAMES = {
   [KIND.EVENT]: 'AI 서프라이즈',
   [KIND.LEGEND]: 'AI 서프라이즈',
   [KIND.TALE]: '마지막 장',
-  [KIND.SPORTS]: '스토브리그 노트',
+  // 블로그·사이트와 같은 이름으로 묶는다(운영자 결정, 2026-10-23).
+  // 서로 보내기 쉽고, 야구 말고 다른 종목으로 넓힐 때도 갇히지 않는다.
+  [KIND.SPORTS]: 'minimalbreeze',
 };
 
 export function channelNameFor(kind) {
