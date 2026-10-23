@@ -14,6 +14,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 // store.mjs 를 불러오기 전에 저장 위치를 임시 폴더로 바꾼다.
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-surprise-test-'));
@@ -62,6 +65,34 @@ async function asyncTest(name, fn) {
     failed++;
     console.log(`  ❌ ${name}`);
     console.log(`     ${err.message.split('\n').slice(0, 6).join('\n     ')}`);
+  }
+}
+
+let skipped = 0;
+
+/**
+ * 돌릴 수 없는 검사를 건너뛴다.
+ *
+ * 이 모음의 약속은 **키 없이, 설치 없이 돈다**는 것이다. ffmpeg 가 있어야
+ * 하는 검사를 그냥 넣었다가 워크플로의 자체 검사 단계를 통째로 실패시켰다
+ * (실행 #24). 거기서는 ffmpeg 를 그 뒤 단계에서 깔기 때문이다.
+ *
+ * 조용히 통과시키지 않고 **건너뛰었다고 찍는다.** 초록불인데 실제로는
+ * 아무것도 안 본 상태가 제일 나쁘다.
+ */
+function skip(name, why) {
+  skipped++;
+  console.log(`  ⏭  ${name} — 건너뜀 (${why})`);
+}
+
+/** ffmpeg 가 이 기계에 있는가. */
+function hasFfmpeg() {
+  try {
+    const { execFileSync } = require('node:child_process');
+    execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -3445,6 +3476,46 @@ test('동화 완성본이 비밀값 확인을 모두 거친다', () => {
   assert.ok(hits(condOf('ffmpeg와 한글 글꼴 설치')), '동화 완성본에 ffmpeg·글꼴이 안 깔립니다');
 });
 
+test('스포츠 완성본도 비밀값 확인을 모두 거친다', () => {
+  // 동화 때와 같은 검사를 종류마다 되풀이한다. 방식을 하나 늘릴 때마다
+  // "확인 단계의 if 조건에 안 걸려서 실행 중에 죽는" 실패가 되살아난다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const optBlock = yml.slice(yml.indexOf('        options:'), yml.indexOf('      tale_plan:'));
+  const modes = [...optBlock.matchAll(/^\s+- '(.+)'$/gm)].map((m) => m[1]);
+  const full = modes.find((m) => m.includes('스포츠') && m.includes('완성본'));
+  assert.ok(full, '스포츠 완성본 방식이 없습니다');
+
+  const condOf = (name) => {
+    const at = yml.indexOf(`- name: ${name}`);
+    assert.ok(at > 0, `${name} 단계를 찾지 못했습니다`);
+    return yml.slice(at, yml.indexOf('\n        env:', at));
+  };
+  const hits = (cond) =>
+    [...cond.matchAll(/contains\(inputs\.mode, '([^']+)'\)/g)].some((m) => full.includes(m[1]));
+
+  assert.ok(hits(condOf('목소리 키가 등록되어 있는지 확인')), '스포츠 완성본에 TTS 키 확인이 안 걸립니다');
+  assert.ok(hits(condOf('이미지 토큰이 등록되어 있는지 확인')), '스포츠 완성본에 이미지 토큰 확인이 안 걸립니다');
+  // 카드를 ffmpeg 로 그린다. 안 깔리면 표가 전부 빠진 영상이 나온다.
+  assert.ok(hits(condOf('ffmpeg와 한글 글꼴 설치')), '스포츠 완성본에 ffmpeg·글꼴이 안 깔립니다');
+});
+
+test('자체 검사는 ffmpeg 없이도 끝까지 돈다', () => {
+  // 실행 #24 가 여기서 죽었다. ffmpeg 가 있어야 하는 검사를 그냥 넣었는데,
+  // 워크플로는 자체 검사를 **ffmpeg 설치보다 먼저** 돌린다. 내 기계에는
+  // ffmpeg 가 있어서 통과했고 러너에서만 터졌다.
+  //
+  // 그래서 ffmpeg 를 쓰는 검사는 반드시 hasFfmpeg() 뒤에 둔다.
+  const src = fs.readFileSync(new URL('./offline.mjs', import.meta.url), 'utf8');
+  const usesFfmpeg = /execFileSync\('ffmpeg'|renderCardImage|'images', `--id=/.test(src);
+  if (usesFfmpeg) {
+    assert.ok(/function hasFfmpeg\(\)/.test(src), 'ffmpeg 유무를 확인하는 함수가 없습니다');
+    assert.ok(/if \(!hasFfmpeg\(\)\)/.test(src), 'ffmpeg 검사를 건너뛰는 분기가 없습니다');
+  }
+});
+
 test('올릴 거리 모드가 ffmpeg와 한글 글꼴을 깐다', () => {
   // 썸네일도 ffmpeg 로 만들고 글자도 얹는다. 글꼴이 없으면 ffmpeg 는
   // 오류 없이 네모를 그린다 — 받아서 열어 보기 전까지 모른다.
@@ -3764,7 +3835,9 @@ test('카드 글자는 명령줄이 아니라 파일로 넘긴다', async () => 
 // 단위 검사는 "인자를 맞게 조립하는가"까지만 본다. 그 인자로 ffmpeg 가
 // 정말 도는지는 돌려 봐야 안다 — 퍼센트 버그가 딱 그렇게 나왔다.
 // 카드는 AI 도 토큰도 필요 없으므로 **이 검사는 공짜다.**
-await asyncTest('카드가 CLI 로 실제 그려진다', async () => {
+if (!hasFfmpeg()) {
+  skip('카드가 CLI 로 실제 그려진다', 'ffmpeg 가 없습니다');
+} else await asyncTest('카드가 CLI 로 실제 그려진다', async () => {
   const { execFileSync } = await import('node:child_process');
   const { makeSports } = await import('../src/model.mjs');
   const id = '951';
@@ -3888,7 +3961,7 @@ test('스포츠 화면 지시가 선수 이름을 쓰지 말라고 한다', asyn
 });
 
 console.log(`\n${'═'.repeat(60)}`);
-console.log(`통과 ${passed}건  실패 ${failed}건`);
+console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
 console.log('═'.repeat(60));
 
