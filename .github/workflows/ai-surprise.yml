@@ -233,12 +233,42 @@ jobs:
         # 동화 완성본도 이름에 '완성본' 이 들어 있어 여기 걸린다. 동화 대본만
         # 만드는 방식에는 ffmpeg 가 필요 없으므로 따로 넣지 않는다.
         if: ${{ contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리') }}
-        # 실측 24초인 단계다. 한 번은 패키지 서버가 응답하지 않아 25분을
-        # 멈춰 있었고, 그대로 두면 6시간을 돈다. 빨리 죽고 다시 도는 쪽이 낫다.
-        timeout-minutes: 10
+        # 실측 24초인 단계다. 그런데 패키지 서버가 응답하지 않는 일이
+        # 반복됐다 — 실행 #25 와 #26 이 **연달아** 여기서 10분을 꽉 채우고
+        # 죽었다. 그대로 두면 6시간을 도므로 시간제한은 유지하되 6분으로
+        # 줄인다. 빨리 죽고 다시 도는 쪽이 낫다.
+        timeout-minutes: 6
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk
+          set -u
+          # 1) 이미 있는 것은 깔지 않는다.
+          #
+          # GitHub 러너 이미지에는 ffmpeg 가 들어 있을 때가 많다. 그런데도
+          # 매번 apt 를 부르느라 패키지 서버에 매달렸다. 필요한 것만 추린다.
+          need=""
+          command -v ffmpeg >/dev/null 2>&1 || need="$need ffmpeg"
+          fc-list 2>/dev/null | grep -qi "noto sans cjk" || need="$need fonts-noto-cjk"
+
+          if [ -z "$need" ]; then
+            echo "ffmpeg 와 한글 글꼴이 이미 있습니다. 설치를 건너뜁니다."
+          else
+            echo "깔아야 할 것:$need"
+            # 2) update 없이 먼저 해 본다.
+            #
+            # 멈추는 쪽은 대개 apt-get update 다(미러 목록을 전부 긁는다).
+            # 러너 이미지의 apt 캐시가 최신이면 update 없이도 깔린다.
+            # 재시도 횟수를 주어 한 미러가 느려도 넘어가게 한다.
+            APT="sudo apt-get -o Acquire::Retries=3 -o Dpkg::Use-Pty=0"
+            if ! $APT install -y -qq --no-install-recommends $need; then
+              echo "캐시로 안 되어 목록을 새로 받습니다."
+              $APT update -qq
+              $APT install -y -qq --no-install-recommends $need
+            fi
+          fi
+
+          # 3) 어떤 길로 왔든 실제로 쓸 수 있는지 확인한다.
+          #
+          # 글꼴이 없으면 ffmpeg 는 오류를 내지 않고 **네모를 그린다.**
+          # 영상을 눈으로 보기 전까지 모르므로 여기서 막는다.
           ffmpeg -hide_banner -version | head -1
           fc-list | grep -ci "noto sans cjk" || {
             echo "::error::한글 글꼴이 설치되지 않았습니다. 자막이 네모로 나옵니다."
