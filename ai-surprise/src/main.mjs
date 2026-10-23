@@ -19,14 +19,15 @@ import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
 import { scoreAll } from './research/score.mjs';
-import { writeScript, validateScript, DEFAULT_MINUTES, TALE_MINUTES } from './script/write.mjs';
-import { GATE, MIN_SOURCE_COUNT, KIND, makeTale } from './model.mjs';
+import { writeScript, validateScript, DEFAULT_MINUTES, TALE_MINUTES, SPORTS_MINUTES } from './script/write.mjs';
+import { GATE, MIN_SOURCE_COUNT, KIND, makeTale, makeSports } from './model.mjs';
 import { uploadChecklist, checkTitle } from './policy.mjs';
 import { splitIntoScenes } from './scenes/split.mjs';
 import { designAllScenes } from './scenes/visuals.mjs';
 import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET_TYPE } from './scenes/assets.mjs';
 import { spawn } from 'node:child_process';
-import { generateImages, shotsToGenerate, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
+import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
+import { renderCardImage } from './video/card.mjs';
 import {
   narrate,
   narrationUnits,
@@ -285,7 +286,7 @@ async function cmdScript(positional, flags) {
 
   const targetMinutes = Number(flags.minutes) > 0
     ? Number(flags.minutes)
-    : (item?.kind === KIND.TALE ? TALE_MINUTES : DEFAULT_MINUTES);
+    : minutesFor(item?.kind);
 
   log.section(`✍️  대본 작성  |  content/${id}  |  약 ${targetMinutes}분  |  모델 ${MODELS.script}`);
   log.info(`소재: ${item.title}`);
@@ -501,6 +502,13 @@ function findPlanFile(given) {
   return null;
 }
 
+/** 이 종류의 기본 길이. 한 곳에만 둔다 — 두 곳에 적으면 한쪽만 고친다. */
+function minutesFor(kind) {
+  if (kind === KIND.TALE) return TALE_MINUTES;
+  if (kind === KIND.SPORTS) return SPORTS_MINUTES;
+  return DEFAULT_MINUTES;
+}
+
 async function cmdTale(flags) {
   // 사람이 쓴 대본을 그대로 쓰는 길.
   //
@@ -598,6 +606,111 @@ async function cmdTale(flags) {
   log.info(`나레이션 ${check.stats.narrationChars}자 (약 ${check.stats.estimatedMinutes}분)`);
   log.info(`HOOK ${check.stats.hookChars}자`);
   log.info(`섹션 ${check.stats.sectionsFound}/${check.stats.sectionsExpected}개`);
+  for (const w of check.warnings) log.warn(w);
+
+  if (check.ok) {
+    log.ok(`대본 완성: ${contentPath(id, 'script.md')}`);
+    log.raw('');
+    log.info(`다음: node src/main.mjs auto --resume=${id} --scenes --images --narrate --video`);
+  } else {
+    log.error('대본이 양식을 통과하지 못했습니다:');
+    for (const e of check.errors) log.info(`· ${e}`);
+    log.info(`대본은 저장했습니다: ${contentPath(id, 'script.md')}`);
+    process.exitCode = 2;
+  }
+}
+
+async function cmdSports(flags) {
+  // 스포츠 분석 한 편을 올린다.
+  //
+  // ─────────────────────────────────────────────────────────────
+  // 대본을 AI 에게 맡기지 않는다
+  // ─────────────────────────────────────────────────────────────
+  //
+  // 동화는 --script 가 선택이었다. 지어낸 이야기라서 AI 가 혼자 써도
+  // 틀릴 것이 없었기 때문이다.
+  //
+  // 스포츠는 다르다. 날짜·금액·규정·계약 상태가 전부 **틀릴 수 있는
+  // 사실**이고, AI 는 모르는 것을 그럴듯하게 채운다. 한 번 틀린 숫자를
+  // 내보내면 그걸 보고 들어온 사람이 바로 알아채고, 채널 신뢰가 끝난다.
+  //
+  // 그래서 이 입구는 **사람이 쓴 대본만 받는다.** 사실은 사람이 확인한다.
+  const scriptFile = flags.script ? String(flags.script) : null;
+  if (!scriptFile) {
+    log.error('스포츠 편은 사람이 쓴 대본이 있어야 합니다.');
+    log.info('날짜·금액·규정은 AI 가 지어낼 수 있어서, 사실은 사람이 확인한 것만 씁니다.');
+    log.info('  node src/main.mjs sports --plan=스포츠영상/1화.json --script=스포츠영상/1화-대본.md');
+    process.exit(1);
+  }
+
+  let plan = {};
+  if (flags.plan) {
+    const file = findPlanFile(flags.plan);
+    if (!file) {
+      log.error(`기획 파일을 찾을 수 없습니다: ${flags.plan}`);
+      log.info(`${ROOT} 와 그 윗 폴더에서 찾아봤습니다.`);
+      process.exit(1);
+    }
+    try {
+      plan = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (err) {
+      log.fail(`기획 파일을 읽을 수 없습니다: ${file}`, err);
+      process.exit(1);
+    }
+  }
+
+  const title = String(flags.title || plan.title || '').trim();
+  if (!title) {
+    log.error('제목을 알려주세요.');
+    log.info('  node src/main.mjs sports --plan=스포츠영상/1화.json --script=스포츠영상/1화-대본.md');
+    process.exit(1);
+  }
+
+  const item = makeSports({
+    title,
+    premise: flags.premise || plan.premise || '',
+    angle: flags.angle || plan.angle || '',
+    beats: plan.beats || [],
+    sources: plan.sources || [],
+  });
+
+  const targetMinutes = Number(flags.minutes) > 0 ? Number(flags.minutes) : SPORTS_MINUTES;
+
+  log.section(`⚾ 스포츠 분석  |  약 ${targetMinutes}분  |  사람이 쓴 대본 (대본 비용 0원)`);
+  log.info(`제목: ${item.title}`);
+  if (item.summary) log.info(`한 줄: ${item.summary}`);
+  log.info(`출처 ${item.source_count}개`);
+  if (!item.source_count) {
+    log.warn('출처가 없습니다. 설명문에 적을 근거가 없다는 뜻입니다 — 기획 파일에 sources 를 넣어 주세요.');
+  }
+  for (const r of item.gate_reasons || []) log.info(`· ${r}`);
+
+  const { id } = promoteToContent(item);
+  log.ok(`content/${id} 으로 올렸습니다.`);
+
+  const file = findPlanFile(scriptFile);
+  if (!file) {
+    log.error(`대본 파일을 찾을 수 없습니다: ${scriptFile}`);
+    log.info(`${ROOT} 와 그 윗 폴더에서 찾아봤습니다.`);
+    process.exit(1);
+  }
+  const markdown = fs.readFileSync(file, 'utf8');
+  log.ok(`대본을 읽었습니다: ${scriptFile}`);
+
+  // 사람이 썼다고 검사를 건너뛰지 않는다. 오히려 이쪽이 더 중요하다 —
+  // 확인되지 않은 것을 [FACT] 로 적었는지를 태그 검사가 본다.
+  const check = validateScript(markdown, { targetMinutes, kind: item.kind });
+  saveScript(id, markdown, check);
+
+  log.raw('');
+  log.info(`나레이션 ${check.stats.narrationChars}자 (약 ${check.stats.estimatedMinutes}분)`);
+  log.info(`HOOK ${check.stats.hookChars}자`);
+  log.info(`섹션 ${check.stats.sectionsFound}/${check.stats.sectionsExpected}개`);
+  const tags = check.stats.tagCounts || {};
+  log.info(`태그 — 확인된 사실 ${tags.FACT || 0} · 전망 ${tags.THEORY || 0} · 미확인 ${tags.UNKNOWN || 0}`);
+  if (!tags.FACT) {
+    log.warn('[FACT] 가 하나도 없습니다. 근거 없이 전망만 늘어놓은 영상이 됩니다.');
+  }
   for (const w of check.warnings) log.warn(w);
 
   if (check.ok) {
@@ -778,10 +891,16 @@ async function cmdImages(flags) {
   const assetDir = contentPath(id, 'assets');
   const model = modelFor(modelKey);
   const { todo, skipped } = shotsToGenerate(prompts, { assetDir, force: Boolean(flags.force) });
+  // 표·숫자 카드는 ffmpeg 로 직접 그린다. 이미지 모델을 부르지 않으므로
+  // 돈이 들지 않고, 한글이 또렷하다.
+  const cards = cardShots(prompts, { assetDir, force: Boolean(flags.force) });
 
   log.section(`🖼  이미지 생성  |  content/${id}  |  ${model.model}`);
   log.info(model.note);
   log.info(`샷 ${prompts.length}개 중 ${todo.length}개를 만듭니다.`);
+  if (cards.todo.length) {
+    log.info(`그중 글자 카드 ${cards.todo.length}장은 직접 그립니다 — 이미지 모델을 부르지 않습니다 (0원).`);
+  }
   if (skipped.length) {
     const already = skipped.filter((s) => s.reason === '이미 있습니다').length;
     if (already) log.info(`${already}개는 이미 있어 건너뜁니다 (--force 로 다시 만듭니다).`);
@@ -803,11 +922,37 @@ async function cmdImages(flags) {
       log.raw(`  ${s.shot_id}  ${String(s.image_prompt).slice(0, 90)}…`);
     }
     if (todo.length > 5) log.raw(`  … 그리고 ${todo.length - 5}개 더`);
+    for (const c of cards.todo.slice(0, 3)) {
+      log.raw(`  ${c.shot_id}  [카드] ${String(c.card_text).split('\n')[0]}`);
+    }
+    if (cards.todo.length > 3) log.raw(`  … 그리고 카드 ${cards.todo.length - 3}장 더`);
     return;
   }
 
+  // 카드부터 그린다. 토큰이 없어도 되고 돈도 안 드니, AI 그림이 실패해도
+  // 카드는 남는다.
+  if (cards.todo.length) {
+    const cardWork = contentPath(id, 'assets', '_card-text');
+    let drawn = 0;
+    for (const c of cards.todo) {
+      try {
+        const r = await renderCardImage(c.card_text, {
+          outputPath: c.file,
+          workDir: path.join(cardWork, c.shot_id),
+        });
+        drawn += 1;
+        if (r.overflow) {
+          log.warn(`${c.shot_id}: 카드 글이 많아 글자가 작아졌습니다. 줄을 줄이면 좋습니다.`);
+        }
+      } catch (e) {
+        log.error(`${c.shot_id}: 카드를 그리지 못했습니다 — ${e.message}`);
+      }
+    }
+    log.ok(`글자 카드 ${drawn}장 완성 (0원).`);
+  }
+
   if (!todo.length) {
-    log.ok('만들 이미지가 없습니다. 전부 이미 있습니다.');
+    log.ok('AI 로 만들 이미지가 없습니다.');
     log.info(`다음: node src/main.mjs video --id=${id}`);
     return;
   }
@@ -1589,6 +1734,9 @@ async function main() {
       return cmdVoice(flags);
     case 'tale':
       await cmdTale(flags);
+      break;
+    case 'sports':
+      await cmdSports(flags);
       break;
     case 'upload':
       await cmdUpload(flags);

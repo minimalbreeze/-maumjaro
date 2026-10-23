@@ -30,12 +30,32 @@ export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
  */
 export const TALE_TAGS = ['STORY'];
 
+/**
+ * 스포츠 분석의 태그.
+ *
+ * 새로 만들지 않고 실화 쪽 태그에서 **셋만 골라 쓴다.**
+ *
+ *   FACT    — 공시·공식 발표·이미 체결된 계약처럼 확인된 것
+ *   THEORY  — 근거를 들어 따져 본 전망
+ *   UNKNOWN — 아직 발표되지 않았거나 확인되지 않은 것
+ *
+ * RECONSTRUCTION(현장 재구성)은 뺀다. 아직 일어나지 않은 일을 재구성할
+ * 수는 없고, 남겨 두면 전망을 재구성처럼 적게 된다.
+ *
+ * 이 세 개가 이 채널의 수명을 지키는 장치다. 확정되지 않은 이적설을
+ * FACT 로 적는 순간 신뢰가 끝나는데, 그걸 사람의 주의력이 아니라
+ * **검사기가 막는다.**
+ */
+export const SPORTS_TAGS = ['FACT', 'THEORY', 'UNKNOWN'];
+
 /** 파서가 읽을 수 있는 모든 태그. 어느 태그가 **허용되는지**는 kind 가 정한다. */
 export const ALL_TAGS = [...TAGS, ...TALE_TAGS];
 
 /** 이 종류의 편에 쓸 수 있는 태그. */
 export function tagsFor(kind) {
-  return kind === KIND.TALE ? TALE_TAGS : TAGS;
+  if (kind === KIND.TALE) return TALE_TAGS;
+  if (kind === KIND.SPORTS) return SPORTS_TAGS;
+  return TAGS;
 }
 
 /**
@@ -63,6 +83,24 @@ export const DEFAULT_MINUTES = 8;
 export const HOOK_CHARS_TARGET = 55;
 /** 이보다 길면 알려준다. 약 14초. */
 export const HOOK_CHARS_MAX = 75;
+
+/**
+ * 스포츠 분석의 훅 한도. 약 30초.
+ *
+ * 왜 실화·동화보다 네 배를 주는가. 동화의 훅은 이상한 문장 하나를 던지고
+ * 끝내는 것이라 짧을수록 세다. 분석 영상의 훅은 다르다 — **다룰 선수
+ * 이름을 다 부르고 판돈을 보여 줘야** 시청자가 "내 팀 이야기구나" 하고
+ * 남는다. 이름 다섯을 10초에 욱여넣으면 아무것도 안 들린다.
+ *
+ * 그래도 한도는 둔다. 30초를 넘기면 그건 훅이 아니라 요약이고, 요약을
+ * 먼저 들은 사람은 본편을 안 본다.
+ */
+export const SPORTS_HOOK_CHARS_MAX = 170;
+
+/** 이 종류의 훅이 넘으면 안 되는 길이. */
+export function hookMaxFor(kind) {
+  return kind === KIND.SPORTS ? SPORTS_HOOK_CHARS_MAX : HOOK_CHARS_MAX;
+}
 
 /**
  * 대본 흐름 (기획서 5번) + 고유 해석 섹션.
@@ -147,6 +185,34 @@ export const TALE_SECTIONS = [
 export const TALE_MINUTES = 4;
 
 /**
+ * 스포츠 분석의 구간 (8개).
+ *
+ * 앞의 두 구간이 이 포맷의 핵심이다. 선수 이야기로 바로 들어가지 않고
+ * **규칙부터 설명한다.** 보상 규정과 샐러리캡을 모르면 "왜 저 팀이 저
+ * 선수를 못 데려가는가"가 이해되지 않고, 그러면 남는 건 이적설 나열뿐이다.
+ * 규칙을 먼저 깔아야 뒤의 시나리오가 추측이 아니라 분석이 된다.
+ */
+export const SPORTS_SECTIONS = [
+  { key: 'HOOK', label: '첫 줄', note: '숫자 하나로 연다. 인사말 없이. 약 40초.' },
+  { key: 'RULES', label: '규칙', note: '일정·보상·제한. 뒤의 분석이 서는 바닥이다. 약 60초.' },
+  { key: 'ACE', label: '첫 번째 자리', note: '가장 큰 건. 약 90초.' },
+  { key: 'OUTFIELD', label: '두 번째 자리', note: '약 100초.' },
+  { key: 'CATCHER', label: '세 번째 자리', note: '약 100초.' },
+  { key: 'DEBATE', label: '갈리는 지점', note: '평가가 왜 엇갈리는지. 한쪽 편을 들지 않는다. 약 90초.' },
+  { key: 'SCENARIO', label: '연쇄', note: '가능한 전개. 진행 중인 협상이 아님을 분명히 한다. 약 90초.' },
+  { key: 'CLOSE', label: '마무리', note: '댓글 질문으로 끝낸다. 약 30초.' },
+];
+
+/**
+ * 스포츠 분석의 기본 길이.
+ *
+ * 10분으로 잡은 데는 이유가 있다. 유튜브는 8분을 넘겨야 중간 광고를 넣을
+ * 수 있고, 이 포맷의 경쟁 채널들이 전부 10~11분에 맞춰져 있다. 짧게 끊으면
+ * 규칙 설명을 빼야 하는데, 그러면 이 채널이 남과 달라지는 부분이 사라진다.
+ */
+export const SPORTS_MINUTES = 10;
+
+/**
  * 훅 예시. 실제로 센 값이 25자다(countNarrationChars 기준, 약 4.5초).
  * 프롬프트에 숫자를 적을 때는 **반드시 재서 적는다** — 이 저장소에서
  * 어림짐작으로 적었다가 두 번 틀렸다.
@@ -155,6 +221,7 @@ export const TALE_HOOK_EXAMPLE = '그 동네 아이들은 해가 지면 그림�
 
 export function sectionsFor(kind) {
   if (kind === KIND.TALE) return TALE_SECTIONS;
+  if (kind === KIND.SPORTS) return SPORTS_SECTIONS;
   if (kind !== KIND.LEGEND) return SECTIONS;
   const out = [];
   for (const s of SECTIONS) {
@@ -753,10 +820,12 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   if (hookChars === 0) {
     // 경고가 아니라 오류다. 훅 없는 영상은 아무도 안 본다.
     errors.push('HOOK 섹션에 나레이션이 없습니다. 첫 10초가 이 채널에서 가장 중요합니다.');
-  } else if (hookChars > HOOK_CHARS_MAX) {
+  } else if (hookChars > hookMaxFor(kind)) {
+    const maxChars = hookMaxFor(kind);
+    const maxSeconds = (minutesForChars(maxChars) * 60).toFixed(0);
     warnings.push(
       `HOOK이 ${hookChars}자입니다 (약 ${(minutesForChars(hookChars) * 60).toFixed(0)}초). ` +
-        `첫 10초에 들어가려면 ${HOOK_CHARS_TARGET}자 안팎이어야 합니다. 뒷이야기는 다음 섹션으로 넘기세요.`
+        `이 종류는 ${maxChars}자(약 ${maxSeconds}초)를 넘기지 않습니다. 뒷이야기는 다음 섹션으로 넘기세요.`
     );
   }
 

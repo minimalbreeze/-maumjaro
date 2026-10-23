@@ -101,6 +101,55 @@ export const TALE_STYLE_SUFFIX =
   'simple stylized faces, storybook composition, ' +
   'no text, no watermark, no captions, no subtitles, no logo';
 
+/**
+ * 스포츠 분석(KIND.SPORTS)의 고정 화면 스타일.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 캐리커처인가 — 멋이 아니라 유일하게 가능한 선택이다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 이 종류는 **실존 선수**를 다룬다. 그래서 쓸 수 있는 그림이 거의 없다.
+ * 실제 경기 사진·중계 화면은 구단과 중계사의 것이고, 사실적인 그림은
+ * 특정 선수를 닮는 순간 초상권 문제가 된다.
+ *
+ * 남는 길은 하나다. **누군지는 상황으로 알리고, 얼굴은 특정하지 않는다.**
+ * 팀 색과 등번호와 장면으로 전하고, 이름은 자막과 나레이션이 말한다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 이름을 넣어도 그 사람이 나오지 않는다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 이미지 모델은 KBO 선수 얼굴을 모른다. 이름을 넣어 봐야 "빨간 헬멧 쓴
+ * 야구선수"가 나올 뿐이다. 그러니 **애초에 이름을 넣지 않는다** — 넣으면
+ * 닮지도 않으면서 닮게 하려 한 흔적만 남는다.
+ *
+ * 그래서 프롬프트에는 선수 이름 대신 팀 색·등번호·상황만 적는다.
+ * 안전한 쪽과 잘 되는 쪽이 같은 방향인, 드문 경우다.
+ */
+export const SPORTS_STYLE_SUFFIX =
+  // 큰 머리 작은 몸. 캐리커처라는 걸 한눈에 알게 해서 "사진인 줄 알았다"는
+  // 오해를 처음부터 막는다.
+  'stylized 3D caricature render, oversized head on small body, ' +
+  'glossy toy-figure look, soft studio lighting, clean rim light, ' +
+  // 얼굴을 단순하게. 디테일이 올라갈수록 누군가를 닮기 시작한다.
+  'simplified generic face, no particular likeness, ' +
+  // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
+  'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
+  'shallow depth of field, dark office or stadium background, ' +
+  'no text, no watermark, no captions, no subtitles, no logo';
+
+/**
+ * 스포츠 편에만 더 붙이는 금지 목록.
+ *
+ * 공통 금지 목록에 이미 "no real identifiable public figures" 가 있다.
+ * 그 줄이 이 종류에서는 가장 중요한 줄이라 **빼지 않는다.** 아래는 상표와
+ * 실사 쪽을 한 겹 더 막는 것이다.
+ */
+export const SPORTS_NEGATIVE_EXTRA =
+  'no team logos, no team names, no brand marks, no sponsor text on uniforms, ' +
+  'no readable jersey text, no photorealistic faces, no photograph, ' +
+  'no real stadium signage, no league emblem';
+
 export const NEGATIVE_SUFFIX =
   'no blood, no gore, no corpses, no wounds, no injury, no violence, ' +
   'no weapons pointed at people, no distressed or crying faces, ' +
@@ -185,6 +234,53 @@ export const VISUALS_SYSTEM = `당신은 다큐멘터리 재연 영상의 미술
 7. 프롬프트는 영어로 쓴다. 이미지 모델이 영어에서 훨씬 안정적이다.
    스타일 문구와 색감은 시스템이 자동으로 붙이므로 쓰지 않는다.
    장면의 내용만 쓴다.`;
+
+/**
+ * 스포츠 분석 편에만 더 붙이는 화면 지시.
+ *
+ * 공통 지시는 "실존 인물을 사실적으로 그리지 않는다"까지만 말한다.
+ * 이 종류는 거기서 두 걸음 더 가야 한다.
+ */
+export const SPORTS_VISUALS_RULES = `
+
+━━━ 스포츠 분석 편에서 더 지킬 것 ━━━
+
+A. 선수 이름을 프롬프트에 쓰지 않는다.
+   이미지 모델은 이 선수들의 얼굴을 모른다. 이름을 넣어도 닮지 않고,
+   닮게 하려 한 흔적만 남는다. 대신 **팀 색·등번호·상황**으로 쓴다.
+     나쁨: "Won Tae-in pitching for Samsung Lions"
+     좋음: "a pitcher in a plain navy uniform, number 18, mid-windup, seen from behind"
+
+B. 구단 로고·팀 이름·스폰서 글자를 넣지 않는다.
+   유니폼은 색으로만 말한다. 상표를 그리면 쓸 수 없는 그림이 된다.
+
+C. 얼굴이 필요하면 단순한 캐리커처로 둔다.
+   정면 클로즈업보다 뒷모습·옆모습·손·책상 위가 낫다. 디테일이 올라갈수록
+   누군가를 닮기 시작하고, 닮는 순간 못 쓰는 그림이 된다.
+
+D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_text).
+   일정표, 등급표, 금액, 규정, 한 문장 강조 — 이런 화면은 이미지 모델이
+   한글을 또렷하게 못 그린다. card_text 를 채우면 시스템이 글자를 직접
+   그려 준다. 그 샷은 이미지 모델을 부르지 않으므로 **돈도 들지 않는다.**
+
+   card_text 를 채운 샷은 image_prompt 를 빈 문자열로 둔다.
+
+   표로 쓸 때 — 첫 줄이 제목, 다음 줄부터 \`항목|값\`:
+     FA 보상 규정
+     A등급|보호 20명 밖 1명 + 연봉 200%
+     B등급|보호 25명 밖 1명 + 연봉 100%
+
+   한 문장을 강조할 때 — 칸(|) 없이 1~2줄만:
+     백억짜리 선수의 실제 영입 비용은
+     백억이 아닙니다
+
+   한 줄은 24자 안쪽, 줄은 6줄 안쪽으로 한다. 넘으면 글자가 작아져 안 읽힌다.
+   **한 편에 6~10장**이 적당하다. 너무 많으면 글자만 보는 영상이 된다.`;
+
+/** 이 종류의 화면 설계 지시. */
+export function visualsSystemFor(kind) {
+  return kind === KIND.SPORTS ? VISUALS_SYSTEM + SPORTS_VISUALS_RULES : VISUALS_SYSTEM;
+}
 
 export const VISUALS_SCHEMA = {
   type: 'object',
@@ -319,11 +415,16 @@ export function composeImagePrompt(content, era = null, { kind = null } = {}) {
   //
   // 동화는 **시대 색감을 쓰지 않는다.** 팔레트가 고정이라 era 색을 더하면
   // 그 고정이 깨지고, 편마다 색이 달라 보인다.
+  //
+  // 스포츠도 시대 색감을 쓰지 않는다. 전부 현재 이야기라 구분할 시대가 없다.
   const isTale = kind === KIND.TALE;
-  const style = isTale ? TALE_STYLE_SUFFIX : STYLE_SUFFIX;
-  const tone = !isTale && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
-  if (!body) return `${tone}${style}. ${NEGATIVE_SUFFIX}`;
-  return `${body}. ${tone}${style}. ${NEGATIVE_SUFFIX}`;
+  const isSports = kind === KIND.SPORTS;
+  const fixed = isTale || isSports;
+  const style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
+  const negative = isSports ? `${NEGATIVE_SUFFIX}, ${SPORTS_NEGATIVE_EXTRA}` : NEGATIVE_SUFFIX;
+  const tone = !fixed && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
+  if (!body) return `${tone}${style}. ${negative}`;
+  return `${body}. ${tone}${style}. ${negative}`;
 }
 
 /**
@@ -375,11 +476,18 @@ export function mergeVisuals(scene, design, { kind = null } = {}) {
       return shot;
     }
     byId.delete(shot.shot_id);
+    // 카드 샷은 이미지 모델을 부르지 않는다. 그래서 image_prompt 를
+    // **비워 둔다** — 채워 두면 나중에 누가 그걸로 그림을 만들어서 돈이
+    // 나가고, 화면에는 카드가 올라가 그림은 버려진다.
+    const cardText = String(d.card_text || '').trim();
     return {
       ...shot,
       era: ERA_TONES[d.era] ? d.era : 'present',
-      image_prompt: composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', { kind }),
-      image_prompt_content: d.image_prompt,
+      card_text: cardText,
+      image_prompt: cardText
+        ? ''
+        : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', { kind }),
+      image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
       camera: IMAGE_CAMERA_MOVES.includes(d.camera) ? d.camera : 'zoom in',
       motion_need: clampInt(d.motion_need, 0, 10),
@@ -403,6 +511,34 @@ export function mergeVisuals(scene, design, { kind = null } = {}) {
 }
 
 /**
+ * 스포츠 분석 편의 화면 설계 스키마.
+ *
+ * 공통 스키마에 `card_text` 한 칸을 더한다. 다른 종류에는 더하지 않는다 —
+ * 쓸 일이 없는 칸을 보여 주면 거기에도 뭔가를 채워 넣기 때문이다.
+ *
+ * strict 모드라서 **선택 필드를 둘 수 없다.** 그래서 "항상 있는 문자열"로
+ * 두고, 비어 있으면 보통 그림이라는 뜻으로 쓴다.
+ */
+export const SPORTS_VISUALS_SCHEMA = (() => {
+  const base = JSON.parse(JSON.stringify(VISUALS_SCHEMA));
+  const shot = base.properties.shots.items;
+  shot.required = [...shot.required, 'card_text'];
+  shot.properties.card_text = {
+    type: 'string',
+    description:
+      '이 샷을 글자 카드로 보여줄 때의 내용. 보통 그림이면 빈 문자열. ' +
+      '첫 줄이 제목이고 다음 줄부터 "항목|값". 칸(|) 없이 1~2줄만 쓰면 강조 문장이 된다. ' +
+      '채우면 image_prompt 는 빈 문자열로 둔다.',
+  };
+  return base;
+})();
+
+/** 이 종류의 화면 설계 스키마. */
+export function visualsSchemaFor(kind) {
+  return kind === KIND.SPORTS ? SPORTS_VISUALS_SCHEMA : VISUALS_SCHEMA;
+}
+
+/**
  * 장면 하나의 화면을 설계한다.
  *
  * 금지 목록에 걸리면 걸린 말을 알려주고 한 번 다시 시킨다.
@@ -410,13 +546,17 @@ export function mergeVisuals(scene, design, { kind = null } = {}) {
  */
 export async function designScene(scene, { item = null, totalScenes = 0, model = MODELS.script } = {}) {
   const basePrompt = buildVisualsPrompt(scene, { item, totalScenes });
+  // 종류는 소재 레코드가 들고 있다. 화면 지시와 스키마가 여기서 갈린다.
+  const kind = item?.kind || null;
+  const system = visualsSystemFor(kind);
+  const schema = visualsSchemaFor(kind);
 
   let design = await callForJson({
-    system: VISUALS_SYSTEM,
+    system,
     prompt: basePrompt,
     toolName: 'submit_shots',
     description: '장면의 화면 설계를 제출한다',
-    schema: VISUALS_SCHEMA,
+    schema,
     model,
     maxTokens: 8000,
   });
@@ -434,11 +574,11 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
     ].join('\n');
 
     design = await callForJson({
-      system: VISUALS_SYSTEM,
+      system,
       prompt: retryPrompt,
       toolName: 'submit_shots',
       description: '장면의 화면 설계를 제출한다',
-      schema: VISUALS_SCHEMA,
+      schema,
       model,
       maxTokens: 8000,
     });
