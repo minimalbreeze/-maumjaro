@@ -3275,6 +3275,9 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     '동화': '동화',
     // '스포츠 분석 — 완성본' 도 마찬가지다. '완성본' 보다 **먼저** 와야 한다.
     '스포츠': '스포츠',
+    // '화풍 미리보기 (그림 6장만 …)' 에는 '그림' 이 들어 있다.
+    // 여기서도 **먼저** 와야 그림 분기로 새지 않는다.
+    '화풍 미리보기': '화풍 미리보기',
     '완성본': '완성본',
     '그림': '그림',
     '영상': '영상',
@@ -4172,6 +4175,53 @@ await asyncTest('속도를 바꾸면 이미 있는 음성이어도 다시 만든
   // scenes.json 이 없으면 voice 단계가 먼저 멈추므로, 여기서는 기록만 확인한다.
   const { speakingRateFor } = await import('../src/audio/tts.mjs');
   assert.notEqual(saved.speaking_rate, speakingRateFor('SPORTS'), '검사 전제가 깨졌습니다');
+});
+
+await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () => {
+  const P = await import('../src/assets/preview.mjs');
+  // 미리보기는 예쁜 장면이 아니라 **못 하던 장면**을 넣어야 뜻이 있다.
+  // 1화에서 사라진 것이 얼굴이므로 셋 다 얼굴이다.
+  const scenes = P.previewScenesFor('SPORTS');
+  assert.ok(scenes.length >= 3, '볼 장면이 모자랍니다');
+  for (const sc of scenes) {
+    assert.ok(sc.why, `${sc.key}: 왜 보는지가 안 적혀 있습니다`);
+    // 얼굴 단서는 'face' 라고만 적히지 않는다 — 표정을 쓰는 말이면 된다.
+    assert.ok(
+      /face|faces|expression|frowning|serious|smiling|looking/i.test(sc.content),
+      `${sc.key}: 얼굴이나 표정이 안 들어간 장면입니다`
+    );
+  }
+  // 모델을 나란히 놓고 봐야 모델 차이인지 프롬프트 차이인지 가른다.
+  const jobs = P.previewJobs('SPORTS', { models: ['schnell', 'dev'] });
+  assert.equal(jobs.length, scenes.length * 2);
+  const bySceneKey = jobs.filter((j) => j.key === scenes[0].key);
+  assert.equal(bySceneKey.length, 2, '같은 장면이 모델마다 하나씩 있어야 합니다');
+  assert.equal(bySceneKey[0].prompt, bySceneKey[1].prompt, '같은 장면인데 프롬프트가 다릅니다');
+  // 화풍과 금지 목록은 그대로 붙어야 한다.
+  assert.ok(/expressive cartoon face/.test(jobs[0].prompt));
+  assert.ok(/no team logos/.test(jobs[0].prompt));
+});
+
+test('미리보기 모드가 이미지 토큰 확인을 거친다', () => {
+  // 토큰 없이 돌리면 그림 단계에서야 죽는다. 앞에서 막는다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const optBlock = yml.slice(yml.indexOf('        options:'), yml.indexOf('      tale_plan:'));
+  const modes = [...optBlock.matchAll(/^\s+- '(.+)'$/gm)].map((m) => m[1]);
+  const preview = modes.find((m) => m.includes('화풍 미리보기'));
+  assert.ok(preview, '화풍 미리보기 방식이 없습니다');
+
+  const at = yml.indexOf('- name: 이미지 토큰이 등록되어 있는지 확인');
+  const cond = yml.slice(at, yml.indexOf('\n        env:', at));
+  const hits = [...cond.matchAll(/contains\(inputs\.mode, '([^']+)'\)/g)].some((m) =>
+    preview.includes(m[1])
+  );
+  assert.ok(hits, '미리보기 모드에 이미지 토큰 확인이 안 걸립니다');
+
+  // 결과물이 아티팩트로 나와야 받아 볼 수 있다.
+  assert.ok(yml.includes('ai-surprise/preview/'), '미리보기 폴더가 결과물에 안 담깁니다');
 });
 
 console.log(`\n${'═'.repeat(60)}`);

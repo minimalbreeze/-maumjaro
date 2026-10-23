@@ -28,6 +28,7 @@ import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET
 import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
 import { renderCardImage } from './video/card.mjs';
+import { previewJobs, previewScenesFor } from './assets/preview.mjs';
 import {
   narrate,
   narrationUnits,
@@ -44,7 +45,7 @@ import {
   speakingRateFor,
 } from './audio/tts.mjs';
 import { loadTracks, pickTrack, mixArgs, attributionText } from './audio/bgm.mjs';
-import { modelFor, DEFAULT_IMAGE_MODEL } from './assets/replicate.mjs';
+import { modelFor, DEFAULT_IMAGE_MODEL, createClient as createReplicate } from './assets/replicate.mjs';
 import { FORMATS, buildAss, buildCues, renderSrt } from './video/subtitle.mjs';
 import { buildTimeline } from './video/plan.mjs';
 import { pickShorts } from './video/shorts.mjs';
@@ -724,6 +725,97 @@ async function cmdSports(flags) {
     log.info(`대본은 저장했습니다: ${contentPath(id, 'script.md')}`);
     process.exitCode = 2;
   }
+}
+
+async function cmdPreview(flags) {
+  // 화풍만 몇 장 뽑아 본다.
+  //
+  // 화풍을 고칠 때마다 완성본을 돌리면 한 번에 $0.23 에 25분이다.
+  // 얼굴 하나 다듬자고 그걸 되풀이할 수 없어서 따로 뒀다.
+  const kind = String(flags.kind || KIND.SPORTS).toUpperCase();
+  const scenes = previewScenesFor(kind);
+  if (!scenes.length) {
+    log.error(`${kind} 는 미리 볼 장면이 정해져 있지 않습니다.`);
+    log.info('지금 되는 것: SPORTS');
+    process.exit(1);
+  }
+
+  const models = String(flags.models || 'schnell,dev')
+    .split(',')
+    .map((m) => m.trim())
+    .filter(Boolean);
+  for (const m of models) modelFor(m); // 모르는 이름이면 여기서 분명히 막힌다
+
+  const jobs = previewJobs(kind, { models });
+  const cost = jobs.reduce((sum, j) => sum + modelFor(j.model).usdPerImage, 0);
+
+  log.section(`🎨 화풍 미리보기  |  ${kind}  |  ${models.join(' vs ')}`);
+  log.info(`장면 ${scenes.length}개 × 모델 ${models.length}개 = ${jobs.length}장`);
+  for (const sc of scenes) log.raw(`  · ${sc.key} — ${sc.why}`);
+  log.info(`예상 비용 약 $${Math.round(cost * 10000) / 10000}`);
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    log.raw(`  ${jobs[0].prompt.slice(0, 160)}…`);
+    return;
+  }
+
+  const token = env('REPLICATE_API_TOKEN');
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    process.exit(1);
+  }
+
+  const outDir = path.join(ROOT, 'preview', kind.toLowerCase());
+  fs.mkdirSync(outDir, { recursive: true });
+  const api = createReplicate({ token });
+
+  let spent = 0;
+  const made = [];
+  for (const [i, job] of jobs.entries()) {
+    log.step(`${i + 1}/${jobs.length} — ${job.file}`);
+    try {
+      const r = await api.generate(job.prompt, { modelKey: job.model, aspectRatio: '16:9' });
+      spent += r.usdEstimate ?? modelFor(job.model).usdPerImage;
+      const bytes = await api.download(r.url);
+      fs.writeFileSync(path.join(outDir, job.file), bytes);
+      made.push(job.file);
+    } catch (e) {
+      log.error(`${job.file}: ${e.message}`);
+    }
+  }
+
+  // 무엇을 보려고 뽑았는지 함께 적어 둔다. 나중에 폴더만 열면 알 수 없다.
+  const notes = [
+    `# 화풍 미리보기 — ${kind}`,
+    '',
+    `모델: ${models.join(', ')}`,
+    `쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`,
+    '',
+    '## 무엇을 보나',
+    ...scenes.map((sc) => `- **${sc.key}** — ${sc.why}`),
+    '',
+    '## 고를 때',
+    '',
+    '같은 장면을 모델별로 나란히 놓고 본다. 얼굴이 또렷한 쪽을 고른다.',
+    '',
+    '- 눈·눈썹·입이 보이는가 (1화에서는 동그라미만 나왔다)',
+    '- 유니폼에 글자나 로고가 섞여 들어가지 않았는가',
+    '- 특정 선수를 닮지 않았는가 — 닮았으면 그 쪽이 오히려 문제다',
+    '',
+    '## 프롬프트',
+    '',
+    '```',
+    jobs[0].prompt,
+    '```',
+  ].join('\n');
+  fs.writeFileSync(path.join(outDir, '보는-법.md'), notes + '\n', 'utf8');
+
+  log.raw('');
+  log.ok(`${made.length}장 완성 — ${outDir}`);
+  log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
+  log.info('같은 장면을 모델별로 나란히 놓고, 얼굴이 또렷한 쪽을 고르세요.');
 }
 
 async function cmdUpload(flags) {
@@ -1750,6 +1842,9 @@ async function main() {
       break;
     case 'sports':
       await cmdSports(flags);
+      break;
+    case 'preview':
+      await cmdPreview(flags);
       break;
     case 'upload':
       await cmdUpload(flags);
