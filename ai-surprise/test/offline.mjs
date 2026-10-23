@@ -4224,6 +4224,86 @@ test('미리보기 모드가 이미지 토큰 확인을 거친다', () => {
   assert.ok(yml.includes('ai-surprise/preview/'), '미리보기 폴더가 결과물에 안 담깁니다');
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-k. 목소리를 종류가 고른다');
+
+const {
+  DEFAULT_VOICE: TTS_DEFAULT_VOICE,
+  SPORTS_VOICE,
+  voiceFor,
+} = await import('../src/audio/tts.mjs');
+
+test('스포츠는 중계 톤 목소리, 나머지는 기본 목소리', () => {
+  assert.equal(voiceFor('SPORTS'), SPORTS_VOICE);
+  assert.equal(voiceFor('TALE'), TTS_DEFAULT_VOICE);
+  assert.equal(voiceFor('EVENT'), TTS_DEFAULT_VOICE);
+  assert.equal(voiceFor(undefined), TTS_DEFAULT_VOICE);
+  assert.notEqual(SPORTS_VOICE, TTS_DEFAULT_VOICE, '바꾼 보람이 없습니다');
+});
+
+test('목소리 이름이 한국어 Chirp3 꼴이다', () => {
+  // 이름을 잘못 적으면 합성이 400 으로 죽는데, **완성본을 25분 돌린 끝에**
+  // 알게 된다. 실제로 있는 이름인지는 `voice --voices` 로만 알 수 있으므로
+  // (키가 필요하다) 여기서는 꼴만 본다 — 오타와 계열 착각은 이걸로 걸린다.
+  for (const name of [TTS_DEFAULT_VOICE, SPORTS_VOICE]) {
+    assert.match(name, /^ko-KR-Chirp3-HD-[A-Z][A-Za-z]+$/, `목소리 이름이 이상합니다: ${name}`);
+  }
+});
+
+test('목소리를 바꾸면 쓰던 음성을 다시 만든다', () => {
+  // 목소리만 바꾸고 돌리면 옛 voice.mp3 를 그대로 쓰던 때가 있었다.
+  // 바뀐 줄 알고 있다가 완성본에서야 안 바뀐 것을 알게 된다.
+  const src = fs.readFileSync(new URL('../src/main.mjs', import.meta.url), 'utf8');
+  assert.ok(/made !== wantVoice/.test(src), '만들어 둔 목소리와 쓰려는 목소리를 견주지 않습니다');
+  assert.ok(/voiceFor\(kind\)/.test(src), '종류가 목소리를 고르게 되어 있지 않습니다');
+  // 사람이 들어보고 고른 것이 코드의 기본값보다 낫다. 지정하면 그쪽이 이긴다.
+  assert.ok(/env\('TTS_VOICE', voiceFor\(kind\)\)/.test(src), 'TTS_VOICE 지정이 기본값을 못 이깁니다');
+});
+
+test('화풍 미리보기에는 ffmpeg를 깔지 않는다', () => {
+  // 실행 #30 이 여기서 죽었다. 모드 이름에 '그림' 이 들어 있어 설치 단계에
+  // 걸렸는데, 그 방식은 그림 6장을 받아 저장할 뿐이라 ffmpeg 를 한 번도
+  // 부르지 않는다. 필요하지도 않은 설치에 6분을 쓰고 끝났다.
+  //
+  // 조건을 눈으로 읽는 대신 **실제로 따져 본다.** contains() 만 세던
+  // 기존 검사는 `!` 를 못 본다 — 그래서 이 버그를 못 잡았다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const start = yml.indexOf('- name: ffmpeg와 한글 글꼴 설치');
+  const line = yml.slice(yml.indexOf('if: ${{', start), yml.indexOf('\n        timeout-minutes', start));
+  const expr = line.slice(line.indexOf('${{') + 3, line.lastIndexOf('}}'));
+
+  const evalFor = (mode) => {
+    const js = expr.replace(
+      /contains\(inputs\.mode, '([^']+)'\)/g,
+      (_, needle) => (mode.includes(needle) ? 'true' : 'false')
+    );
+    // 치환하고 남은 글자가 논리식뿐인지 본다. 아니면 식이 바뀐 것이므로
+    // 조용히 통과시키지 않고 여기서 멈춘다.
+    assert.match(js, /^[\s!&|()truefals]+$/, `조건이 아는 꼴이 아닙니다: ${js}`);
+    return Function(`return (${js});`)();
+  };
+
+  const optBlock = yml.slice(yml.indexOf('        options:'), yml.indexOf('      tale_plan:'));
+  const modes = [...optBlock.matchAll(/^\s+- '(.+)'$/gm)].map((m) => m[1]);
+  const find = (...needles) => {
+    const m = modes.find((x) => needles.every((n) => x.includes(n)));
+    assert.ok(m, `방식을 찾지 못했습니다: ${needles.join(' ')}`);
+    return m;
+  };
+
+  assert.equal(evalFor(find('미리보기')), false, '미리보기에 ffmpeg 를 깝니다 — 쓰지도 않는데 6분을 씁니다');
+  assert.equal(evalFor(find('스포츠', '완성본')), true, '스포츠 완성본에 ffmpeg 가 안 깔립니다');
+  assert.equal(evalFor(find('동화', '완성본')), true, '동화 완성본에 ffmpeg 가 안 깔립니다');
+  assert.equal(evalFor(find('올릴 거리')), true, '올릴 거리에 ffmpeg 가 안 깔립니다');
+  assert.equal(evalFor(find('테스트만')), false, '테스트만 하는데 ffmpeg 를 깝니다');
+  assert.equal(evalFor(find('소리 점검')), false, '소리 점검인데 ffmpeg 를 깝니다');
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
