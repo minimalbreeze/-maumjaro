@@ -22,7 +22,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { createClient, estimateUsd, DEFAULT_VOICE, MAX_CHARS_PER_REQUEST } from './tts.mjs';
+import {
+  createClient,
+  estimateUsd,
+  DEFAULT_VOICE,
+  DEFAULT_SPEAKING_RATE,
+  MAX_CHARS_PER_REQUEST,
+} from './tts.mjs';
 
 /** 문단 사이 쉼(초). 다큐 나레이션은 사이가 있어야 긴장이 생긴다. */
 export const PAUSE_SECONDS = 0.45;
@@ -161,6 +167,8 @@ export async function narrate(scenes, {
   workDir,
   apiKey,
   voice = DEFAULT_VOICE,
+  // 말하기 속도. 종류마다 다르다 — 동화는 느리게, 스포츠는 중계 톤으로.
+  speakingRate = DEFAULT_SPEAKING_RATE,
   maxUsd = DEFAULT_MAX_USD,
   force = false,
   client = null,
@@ -216,7 +224,7 @@ export async function narrate(scenes, {
     let lastError = null;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
       try {
-        const bytes = await api.synthesize(unit.text, { voice });
+        const bytes = await api.synthesize(unit.text, { voice, speakingRate });
         spentUsd += cost;
         if (!looksLikeMp3(bytes)) {
           throw new Error(`받은 것이 mp3가 아닙니다 (${bytes?.length ?? 0}바이트)`);

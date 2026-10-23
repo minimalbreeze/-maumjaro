@@ -131,8 +131,14 @@ export const SPORTS_STYLE_SUFFIX =
   // 오해를 처음부터 막는다.
   'stylized 3D caricature render, oversized head on small body, ' +
   'glossy toy-figure look, soft studio lighting, clean rim light, ' +
-  // 얼굴을 단순하게. 디테일이 올라갈수록 누군가를 닮기 시작한다.
-  'simplified generic face, no particular likeness, ' +
+  // 얼굴을 **그린다.** 다만 지어낸 만화 캐릭터 얼굴이다.
+  //
+  // 처음엔 'simplified generic face' 로만 적고 장면 지시에서도 뒷모습을
+  // 권했더니, 얼굴이 아예 없는 영상이 나왔다 — 눈코입 없는 동그라미와
+  // 실루엣뿐이었다. 막아야 할 것은 "특정 선수를 닮는 것"이지 얼굴 자체가
+  // 아니다. 만화 캐릭터 얼굴은 누구의 초상도 아니다.
+  'expressive cartoon face with clear large eyes, visible eyebrows and mouth, ' +
+  'an invented character, not resembling any specific real person, ' +
   // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
   'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
   'shallow depth of field, dark office or stadium background, ' +
@@ -254,9 +260,16 @@ A. 선수 이름을 프롬프트에 쓰지 않는다.
 B. 구단 로고·팀 이름·스폰서 글자를 넣지 않는다.
    유니폼은 색으로만 말한다. 상표를 그리면 쓸 수 없는 그림이 된다.
 
-C. 얼굴이 필요하면 단순한 캐리커처로 둔다.
-   정면 클로즈업보다 뒷모습·옆모습·손·책상 위가 낫다. 디테일이 올라갈수록
-   누군가를 닮기 시작하고, 닮는 순간 못 쓰는 그림이 된다.
+C. **얼굴을 그린다.** 눈·눈썹·입이 보이는 캐리커처 얼굴이다.
+   지난 편에서 뒷모습과 실루엣만 쓰다가 얼굴 없는 영상이 나왔다.
+   사람이 안 보이는 화면만 9분을 이어가면 볼 것이 없다.
+
+   막아야 할 것은 "특정 선수를 닮는 것"이지 얼굴 자체가 아니다. 지어낸
+   만화 캐릭터는 누구의 초상도 아니다. 그러니 정면도 쓰고 표정도 준다 —
+   계산기를 두드리며 찡그리는 단장, 생각에 잠긴 투수처럼.
+
+   뒷모습·실루엣·빈 공간은 **분위기를 만들 때만** 쓴다. 한 장면에 하나면
+   충분하고, 연달아 쓰지 않는다.
 
 D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_text).
    일정표, 등급표, 금액, 규정, 한 문장 강조 — 이런 화면은 이미지 모델이

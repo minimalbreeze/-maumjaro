@@ -55,6 +55,24 @@ export const DEFAULT_LANGUAGE = 'ko-KR';
 export const DEFAULT_SPEAKING_RATE = 0.95;
 
 /**
+ * 스포츠 분석의 말하기 속도.
+ *
+ * 0.95 는 미스터리·동화에 맞춰 고른 값이다. 사이를 두어 긴장을 만드는
+ * 속도고, 야구 분석에 쓰면 늘어진다 — **중계 캐스터 톤으로 해 달라**는
+ * 요청(2026-10-23)이 그 뜻이다.
+ *
+ * 1.08 로 올린다. 1.0 을 넘기면 또박또박하던 말이 앞으로 밀리면서
+ * 중계하는 말투에 가까워진다. 그 이상은 빨라서 숫자가 안 들린다 —
+ * 이 채널은 금액과 퍼센트를 읽어야 하므로 들리는 쪽이 먼저다.
+ */
+export const SPORTS_SPEAKING_RATE = 1.08;
+
+/** 이 종류의 말하기 속도. */
+export function speakingRateFor(kind) {
+  return kind === 'SPORTS' ? SPORTS_SPEAKING_RATE : DEFAULT_SPEAKING_RATE;
+}
+
+/**
  * 음높이. **Chirp 계열에는 보내지 않는다**(supportsPitch 참고) — 기본
  * 목소리가 Chirp 이므로 지금은 쓰이지 않지만, 다른 계열로 바꿨을 때를
  * 위해 남겨 둔다.
