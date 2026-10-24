@@ -1614,12 +1614,20 @@ function fmtTime(seconds) {
  * (실패한 샷만 자리표시로 나온다). 목소리도 마찬가지다 — 무음으로라도 나온다.
  */
 async function runStages(id, flags) {
+  // 어느 단계가 엎어졌는지 모아 둔다.
+  //
+  // 단계마다 try 를 따로 두는 것은 **뒤 단계를 살리려고** 그런 것이지
+  // 실패를 없던 일로 하려는 게 아니다. 그런데 모아 두지 않으면 그렇게
+  // 된다 — 2화에서 쇼츠 다섯 편이 전부 죽었는데 워크플로는 초록불이었고,
+  // 로그를 열어 보기 전까지 아무도 몰랐다.
+  const failed = [];
   // 장면 (Phase 2). 이미 있으면 cmdScenes 가 건너뛴다.
   if (flags.scenes) {
     try {
       await cmdScenes({ id });
     } catch (err) {
       log.fail(`content/${id} 장면 만들기 실패`, err);
+      failed.push('장면');
       // 계정 한도·인증 문제라면 뒤 단계도 전부 같은 벽에 부딪힌다. 그런데
       // 그림과 목소리는 **다른 회사**라 돈은 그대로 나간다 — 쓸 수 없는
       // 편에 쓰는 돈이다. 실제로 한 번 그렇게 썼다(2026-10-23).
@@ -1638,6 +1646,7 @@ async function runStages(id, flags) {
       await cmdImages({ id, model: flags['image-model'], 'max-usd': flags['max-usd'] });
     } catch (err) {
       log.fail(`content/${id} 이미지 만들기 실패`, err);
+      failed.push('그림');
     }
   }
 
@@ -1655,6 +1664,7 @@ async function runStages(id, flags) {
       });
     } catch (err) {
       log.fail(`content/${id} 목소리 만들기 실패`, err);
+      failed.push('목소리');
     }
   }
 
@@ -1664,8 +1674,29 @@ async function runStages(id, flags) {
       await cmdVideo({ id });
     } catch (err) {
       log.fail(`content/${id} 영상 만들기 실패`, err);
+      failed.push('영상');
     }
   }
+
+  return failed;
+}
+
+/**
+ * 엎어진 단계가 있으면 **초록불로 끝내지 않는다.**
+ *
+ * 2화에서 쇼츠 다섯 편이 전부 ffmpeg 오류로 죽었는데 실행은 성공으로
+ * 끝났다. 결과물이 반쪽인데 초록불이면, 받아서 열어 보기 전까지 모른다.
+ * 그 사이에 올려 버릴 수도 있다.
+ *
+ * 만들어진 것은 그대로 둔다 — 아티팩트는 이미 올라갔고, 본편까지
+ * 버릴 이유가 없다. 다만 **색깔은 빨강이어야 한다.**
+ */
+function endWithFailures(failed) {
+  if (!failed?.length) return;
+  log.raw('');
+  log.error(`끝나지 못한 단계가 있습니다: ${failed.join(', ')}`);
+  log.info('만들어진 것은 결과물에 그대로 들어 있습니다. 위 오류를 보고 다시 돌려 주세요.');
+  process.exitCode = 1;
 }
 
 async function cmdAuto(flags) {
@@ -1689,7 +1720,8 @@ async function cmdAuto(flags) {
     }
     log.section(`↩️  이어하기  |  content/${resumeId}`);
     log.info('조사와 대본은 건너뜁니다. 이미 만들어 둔 것은 그대로 씁니다.');
-    await runStages(resumeId, flags);
+    const failed = await runStages(resumeId, flags);
+    endWithFailures(failed);
     printUsage();
     return;
   }
@@ -1853,7 +1885,8 @@ async function cmdAuto(flags) {
     if (flags.scenes) log.warn('양식을 통과한 대본이 없어 장면을 만들지 않았습니다.');
   }
   for (const id of scripted) {
-    await runStages(id, flags);
+    const failed = await runStages(id, flags);
+    endWithFailures(failed);
   }
 
   log.raw('');

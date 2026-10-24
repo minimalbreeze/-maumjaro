@@ -254,6 +254,11 @@ export function fileSlug(title, { max = 18 } = {}) {
   const cleaned = String(title || '')
     // 파일 이름에 쓸 수 없는 글자와 공백을 없앤다.
     .replace(/[\\/:*?"<>|]/g, '')
+    // ffmpeg 필터가 뜻을 갖는 글자도 뺀다. 쉼표·세미콜론은 필터를 가르고
+    // 대괄호는 입출력 이름을 싼다. 탈출 문자를 붙이는 쪽
+    // (escapeFilterPath)도 고쳤지만, **이름에 아예 안 넣는 쪽이 낫다** —
+    // 파일 이름은 ffmpeg 말고도 여러 곳을 지나간다.
+    .replace(/[,;[\]]/g, '')
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f]/g, '')
     .replace(/\s+/g, '')
