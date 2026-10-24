@@ -283,5 +283,23 @@ export function shortsArgs({
  * 윈도우 경로(C:\...)에서는 반드시 걸린다.
  */
 export function escapeFilterPath(p) {
-  return String(p).replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+  return (
+    String(p)
+      // 역슬래시가 먼저다. 나중에 하면 아래에서 넣은 탈출 문자까지 다시 탈출시킨다.
+      .replace(/\\/g, '\\\\')
+      .replace(/:/g, '\\:')
+      .replace(/'/g, "\\'")
+      // 쉼표는 ffmpeg 가 **필터를 가르는 기호**로 읽는다. 2화에서 제목이
+      // "방출 86명, 성적순이 아니다" 였는데, 파일 이름에 쉼표가 그대로
+      // 남아 ass=방출86명,성적순이아니다-쇼츠-1.ass 가 됐고 ffmpeg 가
+      // 쉼표 뒤를 필터 이름으로 읽었다 —
+      //   No such filter: '성적순이아니다-쇼츠-1.ass'
+      // 쇼츠 다섯 편이 전부 여기서 죽었다. 본편은 subtitle.ass 라는
+      // 고정 이름이라 멀쩡했고, 그래서 초록불인 채로 쇼츠만 빠졌다.
+      .replace(/,/g, '\\,')
+      // 세미콜론은 필터 묶음을 가르고, 대괄호는 입출력 이름을 싼다.
+      .replace(/;/g, '\\;')
+      .replace(/\[/g, '\\[')
+      .replace(/\]/g, '\\]')
+  );
 }

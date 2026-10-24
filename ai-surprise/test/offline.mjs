@@ -4616,6 +4616,98 @@ test('모르는 단락이라도 쇼츠 점수가 다 같지는 않다', () => {
   assert.ok(/sectionValues: sectionValuesOf/.test(src), '쇼츠에 가치를 안 넘깁니다');
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-p. 제목에 쉼표가 있어도 쇼츠가 나온다');
+
+const { escapeFilterPath: escFilter } = await import('../src/video/ffmpeg.mjs');
+const { fileSlug: slugOf } = await import('../src/store.mjs');
+
+test('파일 이름에서 ffmpeg가 뜻을 갖는 글자를 뺀다', () => {
+  // 2화 제목이 "방출 86명, 성적순이 아니다" 였다. 쉼표가 그대로 남아
+  // 쇼츠 다섯 편이 전부 죽었다.
+  assert.equal(slugOf('방출 86명, 성적순이 아니다'), '방출86명성적순이아니다');
+  assert.ok(!slugOf('가,나;다[라]').includes(','), '쉼표가 남았습니다');
+  assert.ok(!slugOf('가,나;다[라]').includes(';'), '세미콜론이 남았습니다');
+  assert.ok(!/[[\]]/.test(slugOf('가,나;다[라]')), '대괄호가 남았습니다');
+  // 멀쩡한 제목은 건드리지 않는다.
+  assert.equal(slugOf('2027 KBO FA 시장 프리뷰'), '2027KBOFA시장프리뷰');
+});
+
+test('필터 경로의 쉼표에 탈출 문자를 붙인다', () => {
+  // 파일 이름 쪽을 고쳤어도 여기는 따로 막는다. 경로는 ffmpeg 말고도
+  // 여러 곳을 지나가고, 우리가 안 만든 이름이 들어올 수도 있다.
+  assert.equal(escFilter('가,나.ass'), '가\\,나.ass');
+  assert.equal(escFilter('가;나.ass'), '가\\;나.ass');
+  assert.equal(escFilter('[가].ass'), '\\[가\\].ass');
+  // 원래 막던 것도 그대로여야 한다.
+  assert.equal(escFilter('C:/가.ass'), 'C\\:/가.ass');
+  assert.equal(escFilter("가'나.ass"), "가\\'나.ass");
+  // 역슬래시가 먼저 처리되어야 한다. 나중에 하면 탈출 문자를 또 탈출시킨다.
+  assert.equal(escFilter('가\\나.ass'), '가\\\\나.ass');
+});
+
+test('단계가 엎어지면 초록불로 끝내지 않는다', () => {
+  // 2화에서 쇼츠 다섯 편이 전부 죽었는데 실행은 성공으로 끝났다.
+  // 결과물이 반쪽인데 초록불이면 받아서 열어 보기 전까지 모르고,
+  // 그 사이에 올려 버릴 수도 있다.
+  const src = fs.readFileSync(fileURLToPath(new URL('../src/main.mjs', import.meta.url)), 'utf8');
+  const at = src.indexOf('async function runStages');
+  const stages = src.slice(at, src.indexOf('function endWithFailures', at));
+
+  // 네 단계가 전부 실패를 적어 두어야 한다. 하나라도 빠지면 그 단계만
+  // 조용히 넘어간다 — 지금까지 영상이 그랬다.
+  const marks = stages.match(/failed\.push\(/g) || [];
+  assert.equal(marks.length, 4, `실패를 적는 단계가 ${marks.length}개뿐입니다 (장면·그림·목소리·영상)`);
+
+  assert.ok(/return failed;/.test(stages), 'runStages 가 실패를 돌려주지 않습니다');
+  assert.ok(/process\.exitCode = 1/.test(src), '종료 코드를 올리지 않습니다');
+  // 만들어진 것까지 버리지는 않는다. 본편은 멀쩡한데 쇼츠만 죽는 일이 있다.
+  assert.ok(!/endWithFailures[\s\S]{0,400}process\.exit\(/.test(src), '만들어진 것을 버리고 죽습니다');
+});
+
+await asyncTest('쉼표가 든 자막 경로로 ffmpeg가 실제로 돈다', async () => {
+  // 코드만 보고 넘기면 또 당한다. 2화에서 실제로 당했다 — 본편은
+  // subtitle.ass 라는 고정 이름이라 멀쩡했고, 쇼츠만 죽었는데 워크플로는
+  // 초록불이었다.
+  if (!hasFfmpeg()) return skip('ffmpeg 가 없습니다');
+
+  // 이 파일은 ESM 이라 require 가 없다. hasFfmpeg() 안에서 쓰던 방식을
+  // 그대로 가져온다.
+  const { execFileSync } = await import('node:child_process');
+  const dir = fs.mkdtempSync(path.join(TMP, 'comma-'));
+  const assName = '쉼표,있는-쇼츠-1.ass';
+  fs.writeFileSync(
+    path.join(dir, assName),
+    [
+      '[Script Info]',
+      'ScriptType: v4.00+',
+      'PlayResX: 1080',
+      'PlayResY: 1920',
+      '',
+      '[V4+ Styles]',
+      'Format: Name, Fontname, Fontsize, PrimaryColour, Alignment, MarginV',
+      'Style: D,Sans,48,&H00FFFFFF,2,60',
+      '',
+      '[Events]',
+      'Format: Layer, Start, End, Style, Text',
+      'Dialogue: 0,0:00:00.00,0:00:01.00,D,검사',
+      '',
+    ].join('\n'),
+    'utf8'
+  );
+
+  const src = path.join(dir, 'src.mp4');
+  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=black:s=320x180:d=1', '-frames:v', '1', src, '-y']);
+
+  const out = path.join(dir, 'out.mp4');
+  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', src,
+    '-vf', `ass=${escFilter(assName)}`, '-frames:v', '1', out, '-y'], { cwd: dir });
+
+  assert.ok(fs.existsSync(out) && fs.statSync(out).size > 0, '쇼츠가 안 만들어졌습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
