@@ -377,6 +377,9 @@ async function cmdScenes(flags) {
   // ── 1단계: 코드가 쪼갠다 (AI 안 씀, 비용 0원)
   log.section(`✂️  장면 분할  |  content/${id}  |  코드가 처리 (비용 0원)`);
   const split = splitIntoScenes(loaded.script, {
+    // 기획 파일이 자기 단락 차례를 들고 왔으면 그걸 쓴다. 안 그러면
+    // FA 전용 이름(ACE·OUTFIELD·CATCHER)에 억지로 끼워 맞추게 된다.
+    sections: loaded.research?.sections || null,
     targetScenes: flags.scenes ? Number(flags.scenes) : null,
     // 창작 동화는 섹션도 태그도 다르다. 안 넘기면 실화 기준으로 읽고
     // "섹션이 없습니다"로 전부 막힌다.
@@ -597,7 +600,7 @@ async function cmdTale(flags) {
     log.ok(`대본을 읽었습니다: ${scriptFile}`);
     // 사람이 썼다고 검사를 건너뛰지 않는다. 섹션이 빠지거나 태그가 틀리면
     // 다음 단계가 조용히 이상하게 돌아간다.
-    check = validateScript(markdown, { targetMinutes, kind: item.kind });
+    check = validateScript(markdown, { targetMinutes, kind: item.kind, sections: item.sections });
   } else {
     ({ markdown, check } = await writeScript(item, {
       targetMinutes,
@@ -677,6 +680,9 @@ async function cmdSports(flags) {
     beats: plan.beats || [],
     sources: plan.sources || [],
     people: plan.people || [],
+    // 편마다 단락 차례가 다르다. 1화의 ACE·OUTFIELD·CATCHER 는 2화에
+    // 아무 뜻이 없다. 안 주면 FA 전용 기본값으로 돌아간다.
+    sections: plan.sections || null,
   });
 
   const targetMinutes = Number(flags.minutes) > 0 ? Number(flags.minutes) : SPORTS_MINUTES;
@@ -686,6 +692,9 @@ async function cmdSports(flags) {
   if (item.summary) log.info(`한 줄: ${item.summary}`);
   log.info(`출처 ${item.source_count}개`);
   // 생김새가 비면 샷마다 다른 사람이 나온다. 돈을 쓰기 전에 알려 준다.
+  if (item.sections?.length) {
+    log.info(`이 편의 단락 ${item.sections.length}개: ${item.sections.map((x) => x.key).join(' → ')}`);
+  }
   if (item.people?.length) {
     log.info(`생김새를 적어 둔 사람 ${item.people.length}명: ${item.people.map((p) => p.name).join(', ')}`);
   } else {
@@ -711,7 +720,7 @@ async function cmdSports(flags) {
 
   // 사람이 썼다고 검사를 건너뛰지 않는다. 오히려 이쪽이 더 중요하다 —
   // 확인되지 않은 것을 [FACT] 로 적었는지를 태그 검사가 본다.
-  const check = validateScript(markdown, { targetMinutes, kind: item.kind });
+  const check = validateScript(markdown, { targetMinutes, kind: item.kind, sections: item.sections });
   saveScript(id, markdown, check);
 
   log.raw('');
@@ -1356,6 +1365,34 @@ function runFfmpegArgs(args) {
  * 이미지로 채운다. 그래야 "그림이 없어서" 못 고치는 것과 "편집이 틀려서"
  * 못 고치는 것을 구분할 수 있다.
  */
+/**
+ * 기획 파일의 단락에서 쇼츠 가치표를 뽑는다.
+ *
+ * 적어 두지 않았으면 **차례대로 가치를 매긴다.** 앞쪽이 높다 —
+ * 대개 앞 단락이 본론이고 뒤로 갈수록 마무리다. HOOK 은 늘 100 이고,
+ * 마지막 단락은 낮다(마무리를 쇼츠로 떼면 혼자서는 뜻이 안 통한다).
+ *
+ * 완벽한 점수는 아니다. 다만 **전부 같은 점수인 것보다는 낫다** —
+ * 그러면 순위가 길이로만 정해지고, 1화에서 실제로 그 때문에 가장
+ * 중요한 구간이 쇼츠에서 통째로 빠졌다.
+ */
+function sectionValuesOf(sections) {
+  if (!Array.isArray(sections) || !sections.length) return null;
+  const out = {};
+  const n = sections.length;
+  sections.forEach((s, i) => {
+    if (!s?.key) return;
+    if (Number.isFinite(Number(s.value))) {
+      out[s.key] = Number(s.value);
+      return;
+    }
+    if (s.key === 'HOOK') out[s.key] = 100;
+    else if (i === n - 1) out[s.key] = 20;
+    else out[s.key] = Math.round(90 - ((i - 1) / Math.max(1, n - 2)) * 45);
+  });
+  return out;
+}
+
 async function cmdVideo(flags) {
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
@@ -1435,6 +1472,9 @@ async function cmdVideo(flags) {
     // 여기에 숫자를 적어 두면 shorts.mjs 의 기본값이 영영 안 쓰인다.
     count: flags.shorts !== undefined ? Number(flags.shorts) : null,
     kind: research.kind,
+    // 편이 자기 단락 이름을 들고 왔으면 가치도 같이 넘긴다. 없으면
+    // 모르는 이름이 전부 같은 점수가 되어 순위가 길이로만 정해진다.
+    sectionValues: sectionValuesOf(research.sections),
   });
   for (const s of shorts) {
     log.raw(`  ${s.rank}순위  ${fmtTime(s.start)}~${fmtTime(s.end)}  ${s.duration}초  ${s.reason}`);

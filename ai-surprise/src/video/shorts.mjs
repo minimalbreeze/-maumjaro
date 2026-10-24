@@ -135,13 +135,17 @@ export function spoilerSectionsFor(kind) {
  *  2) 구간마다 점수를 낸다 (섹션 가치 + 길이 적합도)
  *  3) 점수 높은 순으로 고르되, 이미 고른 구간과 많이 겹치면 건너뛴다
  */
-export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null } = {}) {
+export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null, sectionValues = null } = {}) {
   // 개수를 안 주면 종류가 정한다. 호출하는 쪽마다 숫자를 적어 두면
   // 한 곳만 고치고 다른 곳이 그대로 남는다.
   const want = Number.isFinite(Number(count)) && Number(count) > 0
     ? Number(count)
     : shortsCountFor(kind);
   const spoilers = spoilerSectionsFor(kind);
+  // 편이 자기 단락 이름을 들고 왔으면 그 가치도 같이 받는다. 안 받으면
+  // 모르는 이름이 전부 같은 점수가 되어 순위가 길이로만 정해진다 —
+  // 1화에서 실제로 그렇게 되어 ACE 구간이 쇼츠에서 통째로 빠졌다.
+  const values = sectionValues ? { ...SECTION_VALUE, ...sectionValues } : SECTION_VALUE;
   const isSpoiler = (section) => spoilers.includes(section);
   // 문단을 평평하게 펴고 각자의 시작·끝 시각을 계산한다.
   const paragraphs = [];
@@ -188,7 +192,7 @@ export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECON
         end: round2(usable[j].end),
         duration: round2(seconds),
         paragraphs: slice,
-        score: scoreSlice(slice, seconds, { minSeconds, maxSeconds }),
+        score: scoreSlice(slice, seconds, { minSeconds, maxSeconds, values }),
       });
     }
   }
@@ -259,12 +263,12 @@ export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECON
 }
 
 /** 구간 점수. 섹션 가치가 주고, 길이는 보조다. */
-function scoreSlice(slice, seconds, { minSeconds, maxSeconds }) {
+function scoreSlice(slice, seconds, { minSeconds, maxSeconds, values = SECTION_VALUE }) {
   // 섹션 가치는 길이로 가중 평균한다. 짧게 스친 섹션이 점수를 끌어올리면 안 된다.
   let weighted = 0;
   let total = 0;
   for (const p of slice) {
-    weighted += (SECTION_VALUE[p.section] ?? 35) * p.seconds;
+    weighted += (values[p.section] ?? 35) * p.seconds;
     total += p.seconds;
   }
   const sectionScore = total ? weighted / total : 0;

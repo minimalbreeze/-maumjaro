@@ -4528,6 +4528,94 @@ test('대본 검사가 이 경고를 함께 낸다', () => {
   );
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-o. 편마다 자기 단락 차례를 쓴다');
+
+const { usableSections } = await import('../src/script/sections.mjs');
+const { sectionsFor: secFor, SPORTS_SECTIONS: SPORTS_SEC } = await import('../src/script/write.mjs');
+const { makeSports: mkSports2 } = await import('../src/model.mjs');
+
+test('쓸 만한 차례는 받고 아니면 통째로 버린다', () => {
+  const good = [{ key: 'HOOK', label: '첫 줄' }, { key: 'WORDS', label: '말부터' }];
+  assert.deepEqual(usableSections(good).map((x) => x.key), ['HOOK', 'WORDS']);
+  // 반쯤 맞는 차례로 대본을 쓰면 어디가 틀어졌는지 나중에 못 찾는다.
+  assert.equal(usableSections([{ key: 'MID', label: 'a' }, { key: 'CLOSE', label: 'b' }]), null, 'HOOK 없이 통과했습니다');
+  assert.equal(usableSections([{ key: 'HOOK', label: 'a' }, { key: '중간', label: 'b' }]), null, '한글 키가 통과했습니다');
+  assert.equal(usableSections([{ key: 'HOOK', label: 'a' }, { key: 'HOOK', label: 'b' }]), null, '같은 키가 두 번 통과했습니다');
+  assert.equal(usableSections([{ key: 'HOOK', label: '' }]), null, '라벨 없이 통과했습니다');
+  assert.equal(usableSections([{ key: 'HOOK', label: 'a' }]), null, '한 개짜리가 통과했습니다');
+  assert.equal(usableSections(null), null);
+});
+
+test('안 주면 지금 쓰던 차례 그대로다', () => {
+  // 1화는 이 길로 계속 가야 한다. 고치다가 기존 편을 깨면 안 된다.
+  assert.deepEqual(secFor('SPORTS'), SPORTS_SEC);
+  assert.deepEqual(secFor('SPORTS', { sections: null }), SPORTS_SEC);
+  assert.deepEqual(secFor('SPORTS', { sections: [{ key: '틀림', label: 'x' }] }), SPORTS_SEC);
+});
+
+test('주면 그쪽이 이긴다', () => {
+  const mine = [{ key: 'HOOK', label: '첫 줄' }, { key: 'WORDS', label: '말부터' }, { key: 'CLOSE', label: '마무리' }];
+  assert.deepEqual(secFor('SPORTS', { sections: mine }).map((x) => x.key), ['HOOK', 'WORDS', 'CLOSE']);
+});
+
+await asyncTest('내 단락으로 쓴 대본이 검사를 통과한다', async () => {
+  // 2화는 ACE·OUTFIELD·CATCHER 가 아무 뜻이 없다. 그 칸에 억지로
+  // 끼워 넣지 않고도 대본이 서는지 끝까지 확인한다.
+  const sections = [
+    { key: 'HOOK', label: '첫 줄' },
+    { key: 'WORDS', label: '말부터' },
+    { key: 'CLOSE', label: '마무리' },
+  ];
+  const md = [
+    '## [HOOK] 첫 줄',
+    '',
+    '[FACT] 여든여섯 명입니다. 일 위 팀이 열 명을 내보냈죠.',
+    '',
+    '## [WORDS] 말부터',
+    '',
+    '[FACT] 재계약 불가와 보류선수 명단은 다릅니다.',
+    '[THEORY] 그래서 이 숫자는 더 늘어납니다.',
+    '',
+    '## [CLOSE] 마무리',
+    '',
+    '[THEORY] 누가 손을 내밀까요?',
+  ].join('\n');
+
+  const r = validateScript(md, { kind: 'SPORTS', targetMinutes: 10, sections });
+  assert.deepEqual(r.errors, [], `내 단락인데 오류가 났습니다: ${r.errors.join(' / ')}`);
+
+  // 같은 대본을 기본 차례로 재면 막혀야 한다. 안 막히면 검사가 헐겁다는 뜻이다.
+  const withDefault = validateScript(md, { kind: 'SPORTS', targetMinutes: 10 });
+  assert.ok(withDefault.errors.length, '기본 차례로도 통과했습니다 — 섹션 검사가 헐겁습니다');
+
+  // 장면 분할까지 내려가는지 본다. 여기서 끊기면 그림을 못 만든다.
+  const { splitIntoScenes: split2 } = await import('../src/scenes/split.mjs');
+  const sp = split2(md, { kind: 'SPORTS', sections });
+  assert.deepEqual(sp.problems, [], `장면 분할이 막혔습니다: ${sp.problems.join(' / ')}`);
+  assert.ok(sp.scenes.length >= 3, `장면이 ${sp.scenes.length}개뿐입니다`);
+});
+
+test('소재 레코드가 단락 차례를 들고 간다', () => {
+  const item = mkSports2({
+    title: '방출 86명',
+    sources: [{ name: 'ㄱ', url: 'https://example.com/a' }],
+    sections: [{ key: 'HOOK', label: '첫 줄' }, { key: 'WORDS', label: '말부터' }],
+  });
+  assert.deepEqual(item.sections.map((x) => x.key), ['HOOK', 'WORDS']);
+  // 안 주면 null 이고, 그러면 기본 차례로 간다.
+  assert.equal(mkSports2({ title: 'x', sources: [] }).sections, null);
+});
+
+test('모르는 단락이라도 쇼츠 점수가 다 같지는 않다', () => {
+  // 1화에서 스포츠 섹션에 점수를 안 넣었더니 전부 0 이 되어 순위가
+  // 길이로만 정해졌고, 가장 중요한 구간이 쇼츠에서 통째로 빠졌다.
+  const src = fs.readFileSync(fileURLToPath(new URL('../src/main.mjs', import.meta.url)), 'utf8');
+  assert.ok(/function sectionValuesOf/.test(src), '단락 가치를 뽑는 자리가 없습니다');
+  assert.ok(/sectionValues: sectionValuesOf/.test(src), '쇼츠에 가치를 안 넘깁니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

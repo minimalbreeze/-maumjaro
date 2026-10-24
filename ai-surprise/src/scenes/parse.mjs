@@ -33,8 +33,9 @@ const TAG_RE = new RegExp(`^\\[(${ALL_TAGS.join('|')})\\]\\s*(.*)$`);
  * problems 가 비어 있지 않으면 장면 분할로 넘기지 않는다. 깨진 대본으로
  * 장면을 만들면 Phase 3에서 돈을 쓴 뒤에야 문제를 발견한다.
  */
-export function parseScript(markdown, { kind = KIND.EVENT } = {}) {
-  const expectedSections = sectionsFor(kind);
+export function parseScript(markdown, { kind = KIND.EVENT, sections: givenSections = null } = {}) {
+  // 이 편의 단락 차례. 기획 파일이 들고 온 것이 있으면 그쪽이 이긴다.
+  const expectedSections = sectionsFor(kind, { sections: givenSections });
   // 섹션 키 → 라벨. 대본에 라벨이 빠져 있어도 채워 넣는다.
   const SECTION_LABEL = new Map(expectedSections.map((x) => [x.key, x.label]));
   const problems = [];
