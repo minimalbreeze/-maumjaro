@@ -4464,6 +4464,70 @@ test('한도 오류면 그림·목소리로 넘어가지 않는다', () => {
   assert.ok(guard > 0 && guard < images, '멈추는 자리가 그림 단계보다 뒤에 있습니다');
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-n. 읽어 주는 말투를 잰다');
+
+const { checkSpoken, spokenSentences } = await import('../src/script/spoken.mjs');
+
+test('읽지 않는 줄은 세지 않는다', () => {
+  // 제목과 태그는 소리가 되지 않는다. 그것까지 세면 비율이 엉뚱해진다.
+  const md = ['## [HOOK] 첫 줄', '', '[FACT] 하나입니다. 둘입니다.', '[THEORY] 셋인가요?'].join('\n');
+  assert.deepEqual(spokenSentences(md), ['하나입니다.', '둘입니다.', '셋인가요?']);
+});
+
+test('말끝이 한 가지로 쏠리면 알려준다', () => {
+  const flat = Array.from({ length: 20 }, (_, i) => `[FACT] 이것은 ${i}번 문장입니다.`).join('\n');
+  const r = checkSpoken(flat);
+  assert.ok(r.formalRatio > 0.9, `격식 비율이 ${r.formalRatio} 입니다`);
+  assert.ok(r.notes.some((n) => n.includes('-습니다')), '말끝 쏠림을 짚지 않습니다');
+  assert.ok(r.notes.some((n) => n.includes('잇따릅니다')), '같은 어미 연속을 짚지 않습니다');
+});
+
+test('섞여 있으면 트집 잡지 않는다', () => {
+  // 고치라고만 하는 검사는 꺼지게 되어 있다. 멀쩡한 글은 통과해야 한다.
+  const good = [
+    '[FACT] 노시환, 삼백칠억.',
+    '[FACT] 지난겨울 시장이 남긴 숫자죠.',
+    '[THEORY] 그런데 이 숫자가 왜 기준이 될까요?',
+    '[THEORY] 다음 계약들이 전부 여기에 맞춰지거든요.',
+    '[FACT] 다섯 명이 한꺼번에 나옵니다.',
+    '[THEORY] 한 명만 움직여도 나머지가 흔들려요.',
+  ].join('\n');
+  const r = checkSpoken(good);
+  assert.equal(r.notes.length, 0, `멀쩡한 글에 트집을 잡았습니다: ${r.notes.join(' / ')}`);
+});
+
+test('귀로 따라가기 힘든 긴 문장을 짚는다', () => {
+  const long = '[FACT] ' + '가'.repeat(80) + '입니다.';
+  const r = checkSpoken(long);
+  assert.ok(r.notes.some((n) => n.includes('귀로는 깁니다')), '긴 문장을 안 짚습니다');
+});
+
+test('빈 대본에도 죽지 않는다', () => {
+  for (const x of ['', null, '## [HOOK] 제목만']) {
+    const r = checkSpoken(x);
+    assert.equal(r.notes.length, 0);
+    assert.equal(r.sentences.length, 0);
+  }
+});
+
+test('대본 검사가 이 경고를 함께 낸다', () => {
+  // 야포츠 1화가 기존 검사(글투냐 말투냐)를 통과하고도 "읽어 주는 워딩이
+  // 어색하다"는 말을 들었다. 「-습니다」는 말투로 쳐서 초록불이었는데,
+  // 그게 123문장 중 69개였다. 보는 축이 달라서 둘 다 필요하다.
+  const md = fs.readFileSync(
+    decodeURIComponent(new URL('../../스포츠영상/1화-대본.md', import.meta.url).pathname),
+    'utf8'
+  );
+  const r = validateScript(md, { kind: 'SPORTS', targetMinutes: 10 });
+  assert.equal(r.errors.length, 0, `1화 대본에 오류가 생겼습니다: ${r.errors.join(' / ')}`);
+  assert.ok(
+    r.warnings.some((w) => w.includes('같은 가락')),
+    '대본 검사가 말끝 쏠림을 알려주지 않습니다'
+  );
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

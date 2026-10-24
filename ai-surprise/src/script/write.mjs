@@ -15,6 +15,7 @@ import { KIND } from '../model.mjs';
 import { findAdUnsafe } from '../policy.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
+import { checkSpoken } from './spoken.mjs';
 
 /** 사실 구분 태그 (기획서 6번). 실화 편의 모든 문단에 하나씩 붙는다. */
 export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
@@ -786,6 +787,17 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
           `"~했다" 같은 글투 ${tone.written}문장). "~거든요" "~잖아요" 쪽으로 바꿔 주세요.`
       );
     }
+  }
+
+  // 5-b) 같은 말투가 되풀이되는가.
+  //
+  // 위의 toneStats 와 보는 축이 다르다. 저쪽은 **글투냐 말투냐**(했다 / 합니다)를
+  // 보고, 이쪽은 **그 말투가 지겹게 되풀이되는가**를 본다. 야포츠 1화가
+  // 저 검사를 통과하고도 "읽어 주는 워딩이 어색하다"는 말을 들은 이유가
+  // 이것이다 — 「-습니다」는 말투로 쳐서 초록불이었는데, 그게 123문장 중
+  // 69개였다. 글로는 멀쩡하고 소리로는 같은 종을 백 번 치는 꼴이다.
+  for (const note of checkSpoken(text).notes) {
+    warnings.push(note);
   }
 
   const floor = targetMinutes * 0.6;
