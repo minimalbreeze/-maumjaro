@@ -1,0 +1,142 @@
+{
+  "title": "방출 86명, 성적순이 아니다",
+  "premise": "2027시즌 재계약 불가 86명. 1위 팀이 10명을 내보내고 꼴찌 팀이 8명을 내보냈다.",
+  "angle": "방출 인원은 성적표가 아니라 구단이 선수단을 굴리는 방식이다 — 그리고 86명은 최종 숫자도 아니다",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "숫자 두 개를 나란히 놓는다. 1위 10명, 꼴찌 8명."
+    },
+    {
+      "key": "WORDS",
+      "label": "말부터 맞추고 갑니다",
+      "note": "재계약 불가 / 보류선수 명단 / 육성선수 말소. 이 편의 뼈대다.",
+      "value": 80
+    },
+    {
+      "key": "COUNT",
+      "label": "숫자로 봅니다",
+      "note": "구단별 인원과 발표 날짜. 표 카드.",
+      "value": 55
+    },
+    {
+      "key": "MOST",
+      "label": "롯데 열여섯 명",
+      "note": "성적과 인원이 같이 가는 유일하게 깔끔한 사례.",
+      "value": 70
+    },
+    {
+      "key": "TOP",
+      "label": "그런데 1위 팀이 왜",
+      "note": "KT 10명 · 키움 8명. 훅에서 던진 것을 여기서 푼다.",
+      "value": 95
+    },
+    {
+      "key": "NAMES",
+      "label": "이름값 셋",
+      "note": "손아섭 · 홍건희 · 장시환. 얼굴이 나오는 유일한 단락.",
+      "value": 90
+    },
+    {
+      "key": "DEBATE",
+      "label": "갈리는 지점",
+      "note": "많이 자르는 게 나쁜가. 한쪽 편을 들지 않는다.",
+      "value": 60
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "세 자리로 정리하고 댓글 질문.",
+      "value": 20
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "숫자 두 개를 나란히 놓는다. 1위 10명, 꼴찌 8명."
+    },
+    {
+      "key": "WORDS",
+      "what": "재계약 불가 / 보류선수 명단 / 육성선수 말소. 이 편의 뼈대다."
+    },
+    {
+      "key": "COUNT",
+      "what": "구단별 인원과 발표 날짜. 표 카드."
+    },
+    {
+      "key": "MOST",
+      "what": "성적과 인원이 같이 가는 유일하게 깔끔한 사례."
+    },
+    {
+      "key": "TOP",
+      "what": "KT 10명 · 키움 8명. 훅에서 던진 것을 여기서 푼다."
+    },
+    {
+      "key": "NAMES",
+      "what": "손아섭 · 홍건희 · 장시환. 얼굴이 나오는 유일한 단락."
+    },
+    {
+      "key": "DEBATE",
+      "what": "많이 자르는 게 나쁜가. 한쪽 편을 들지 않는다."
+    },
+    {
+      "key": "CLOSE",
+      "what": "세 자리로 정리하고 댓글 질문."
+    }
+  ],
+  "sources": [
+    {
+      "name": "두산, 손아섭 등 11명 재계약 불가 (2026-10-19)",
+      "url": "https://www.munhwa.com/article/11624585"
+    },
+    {
+      "name": "롯데, 최충연·정성종 등 16명 방출 (2026-10-07)",
+      "url": "https://sports.khan.co.kr/article/202610071821003/"
+    },
+    {
+      "name": "삼성, 양현·허윤동 등 10명 재계약 불가 (2026-10-19)",
+      "url": "https://www.news1.kr/sports/baseball/6324340"
+    },
+    {
+      "name": "KT, 10명 재계약 불가 / 문상철 은퇴 (2026-10-22)",
+      "url": "https://sports.khan.co.kr/article/202610221428003/"
+    },
+    {
+      "name": "LG, 장시환·송대현 은퇴 포함 11명 (2026-10-22)",
+      "url": "https://www.etoday.co.kr/news/view/2638968"
+    },
+    {
+      "name": "KIA, 홍건희 등 6명 방출·육성선수 10명 말소 (2026-10-23)",
+      "url": "https://www.etoday.co.kr/news/view/2639420"
+    },
+    {
+      "name": "홍건희 FA 총액 7억, 1군 4경기 (2026-10-23)",
+      "url": "https://www.seoul.co.kr/news/sport/baseball/2026/10/23/20261023500152"
+    },
+    {
+      "name": "KBO 한국야구위원회",
+      "url": "https://www.koreabaseball.com/"
+    }
+  ],
+  "people": [
+    {
+      "name": "손아섭",
+      "role": "외야수",
+      "look": "a Korean man in his late 30s with a broad round face and full cheeks, a short rounded chin, small narrow eyes with faint double eyelids, thick dark eyebrows, a wide nose and full lips, short black hair, compact and solidly built with a thick neck and heavy shoulders",
+      "tell": "long black eye-black stripes under both eyes, and a batting helmet"
+    },
+    {
+      "name": "홍건희",
+      "role": "투수",
+      "look": "a Korean man in his mid-30s with a long narrow face, a defined angular jawline and high cheekbones, narrow sharp eyes, thick straight dark eyebrows, a long high-bridged nose, a firm closed mouth, short black hair, lean and tall with narrow shoulders and long arms",
+      "tell": "a plain red baseball cap"
+    },
+    {
+      "name": "장시환",
+      "role": "투수 (은퇴)",
+      "look": "a Korean man in his late 30s with a narrow hollow-cheeked face and very prominent cheekbones, a slender pointed chin, small narrow eyes with a hard stare and faint lines around them, short thick dark eyebrows, a straight nose and thin lips, short black hair, lean build",
+      "tell": "a black baseball cap with a red brim"
+    }
+  ]
+}

@@ -16,6 +16,8 @@ import { findAdUnsafe } from '../policy.mjs';
 import { callForText, MODELS } from '../ai/client.mjs';
 import { charsForMinutes, countNarrationChars, minutesForChars } from '../narration.mjs';
 import { checkSpoken } from './spoken.mjs';
+import { usableSections } from './sections.mjs';
+export { usableSections };
 
 /** 사실 구분 태그 (기획서 6번). 실화 편의 모든 문단에 하나씩 붙는다. */
 export const TAGS = ['FACT', 'RECONSTRUCTION', 'THEORY', 'UNKNOWN'];
@@ -220,7 +222,24 @@ export const SPORTS_MINUTES = 10;
  */
 export const TALE_HOOK_EXAMPLE = '그 동네 아이들은 해가 지면 그림자를 먼저 집에 보냈습니다.';
 
-export function sectionsFor(kind) {
+/**
+ * 이 편의 단락 차례.
+ *
+ * 기획 파일이 sections 를 들고 오면 그쪽이 이긴다.
+ *
+ * 왜 이렇게 했나 — 스포츠 단락 이름을 FA 전용으로 박아 뒀다
+ * (ACE / OUTFIELD / CATCHER). 1화(FA 프리뷰)에는 딱 맞았는데 2화(방출
+ * 명단)에 오니 "에이스 / 외야 / 포수" 칸이 아무 뜻도 없었다. 억지로
+ * 끼워 넣으면 대본이 이상해지고, 쇼츠 점수도 엉뚱하게 매겨진다.
+ *
+ * 종류(KIND)를 새로 만들지 않은 이유는, 달라지는 것이 **단락 이름뿐**
+ * 이기 때문이다. 관문도 태그도 화풍도 말하기 속도도 다 그대로다.
+ * 종류를 늘리면 그것들을 전부 다시 적어야 하고, 편마다 종류가 하나씩
+ * 생긴다.
+ */
+export function sectionsFor(kind, { sections = null } = {}) {
+  const given = usableSections(sections);
+  if (given) return given;
   if (kind === KIND.TALE) return TALE_SECTIONS;
   if (kind === KIND.SPORTS) return SPORTS_SECTIONS;
   if (kind !== KIND.LEGEND) return SECTIONS;
@@ -665,11 +684,11 @@ const GREETING_PATTERNS = [
  *  - errors 가 있으면 사람이 봐야 한다. 다음 단계로 그냥 넘기지 않는다.
  *  - warnings 는 알려만 준다.
  */
-export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind = KIND.EVENT } = {}) {
+export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind = KIND.EVENT, sections: givenSections = null } = {}) {
   const errors = [];
   const warnings = [];
   const text = String(markdown || '');
-  const sections = sectionsFor(kind);
+  const sections = sectionsFor(kind, { sections: givenSections });
 
   // 1) 섹션이 다 있는가, 순서가 맞는가
   //    LEGEND면 ORIGIN(이 이야기는 어디서 왔나)이 여기 포함된다. 빠지면

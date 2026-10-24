@@ -1,3 +1,4 @@
+import { usableSections } from './script/sections.mjs';
 // 소재 한 건의 데이터 모양과, 자동 제작 여부를 가르는 판정 규칙.
 //
 // 이 파일에 AI 호출이 없는 것은 의도적이다. 전부 순수 함수라서
@@ -387,7 +388,7 @@ export function makeTale({ title, premise = '', strange = '', beats = [], lastLi
  * 실제 선수와 실제 규정을 다루므로, 어디서 확인했는지가 남아 있어야 한다.
  * 설명문에도 그대로 들어간다.
  */
-export function makeSports({ title, premise = '', angle = '', beats = [], sources = [], people = [] } = {}) {
+export function makeSports({ title, premise = '', angle = '', beats = [], sources = [], people = [], sections = null } = {}) {
   const list = (Array.isArray(sources) ? sources : []).filter((x) => x?.url);
 
   const item = {
@@ -409,6 +410,13 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
     fact_notes: '확정된 사실과 전망이 함께 들어 있습니다. 문단 태그로 구분합니다.',
 
     what_is_strange: String(angle || '').trim(),
+    // 이 편의 단락 차례. 안 주면 FA 전용 기본값을 쓴다.
+    //
+    // 1화(FA 프리뷰)의 ACE·OUTFIELD·CATCHER 는 2화(방출 명단)에 아무
+    // 뜻이 없다. 달라지는 것이 단락 이름뿐이라 종류(KIND)를 새로 만들지
+    // 않고 편마다 들고 오게 했다.
+    sections: usableSections(sections),
+
     // 이 편에 나오는 사람들의 생김새.
     //
     // 왜 여기에 두는가 — 이미지 모델은 이 선수들의 얼굴을 모른다. 이름을
