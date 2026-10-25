@@ -30,6 +30,7 @@ import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
 import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor } from './assets/preview.mjs';
+import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
   narrationUnits,
@@ -835,6 +836,112 @@ async function cmdPreview(flags) {
   log.ok(`${made.length}장 완성 — ${outDir}`);
   log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
   log.info('같은 장면을 모델별로 나란히 놓고, 얼굴이 또렷한 쪽을 고르세요.');
+}
+
+/**
+ * 인물 시트를 만든다 — 사진을 참조로 캐리커처 얼굴 한 장.
+ *
+ * 사진은 **주소로만** 받는다. 저장소가 공개라 사진을 커밋하면 그걸
+ * 퍼블리싱하는 것이 된다. Replicate 가 주소에서 직접 받아 가고 우리
+ * 쪽엔 결과물(캐리커처)만 남는다.
+ */
+async function cmdPortrait(flags) {
+  const planPath = typeof flags.plan === 'string' ? flags.plan : '';
+  if (!planPath) {
+    log.error('어느 편의 사람을 만들지 알려주세요.');
+    log.info('  node src/main.mjs portrait --plan=스포츠영상/2화.json');
+    process.exit(1);
+  }
+  const full = path.isAbsolute(planPath) ? planPath : path.join(ROOT, '..', planPath);
+  if (!fs.existsSync(full)) {
+    log.error(`${planPath} 이 없습니다.`);
+    process.exit(1);
+  }
+  const plan = JSON.parse(fs.readFileSync(full, 'utf8'));
+  const variants = Number(flags.variants) > 0 ? Number(flags.variants) : VARIANTS_PER_PERSON;
+  const { jobs, skipped } = portraitJobs(plan.people, { variants });
+
+  log.section(`🙂 인물 시트  |  ${planPath}`);
+  for (const sk of skipped) log.warn(`${sk.name}: ${sk.reason}`);
+  if (!jobs.length) {
+    log.error('만들 사람이 없습니다.');
+    log.info('기획 파일의 people 에 photo 를 **사진 주소**로 넣어 주세요 (http 로 시작).');
+    log.info('사진 파일 자체는 저장소에 넣지 않습니다 — 공개 저장소라 그대로 퍼블리싱됩니다.');
+    process.exit(1);
+  }
+
+  const per = modelFor('portrait').usdPerImage;
+  const cost = Math.round(jobs.length * per * 10000) / 10000;
+  const names = [...new Set(jobs.map((j) => j.name))];
+  log.info(`사람 ${names.length}명 × ${variants}장 = ${jobs.length}장 — ${names.join(', ')}`);
+  log.info(`예상 비용 약 $${cost} (추정치 — 이 모델은 처음 써 봅니다)`);
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    log.raw(`  ${jobs[0].name}: ${jobs[0].prompt.slice(0, 140)}…`);
+    log.raw(`  참조: ${jobs[0].referenceImage}`);
+    return;
+  }
+
+  const token = env('REPLICATE_API_TOKEN');
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    process.exit(1);
+  }
+
+  const outDir = path.join(ROOT, 'preview', 'portrait');
+  fs.mkdirSync(outDir, { recursive: true });
+  const api = createReplicate({ token });
+
+  let spent = 0;
+  const made = [];
+  for (const [i, job] of jobs.entries()) {
+    log.step(`${i + 1}/${jobs.length} — ${job.file}`);
+    try {
+      const r = await api.generate(job.prompt, {
+        modelKey: 'portrait',
+        referenceImage: job.referenceImage,
+        negativePrompt: PORTRAIT_NEGATIVE,
+      });
+      spent += r.usdEstimate ?? per;
+      fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+      made.push(job.file);
+    } catch (e) {
+      log.error(`${job.file}: ${e.message}`);
+    }
+  }
+
+  fs.writeFileSync(
+    path.join(outDir, '고르는-법.md'),
+    [
+      '# 인물 시트 고르기',
+      '',
+      `쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`,
+      '',
+      '사람마다 두 장씩 있습니다. 나란히 놓고 한 장을 고르세요.',
+      '',
+      '- 실제 선수와 **닮았는가**. 이게 첫째입니다',
+      '- 사진처럼 보이지는 않는가 — 캐리커처로 보여야 합니다',
+      '- 유니폼에 글자나 로고가 섞여 들어가지 않았는가',
+      '',
+      '## 고른 뒤',
+      '',
+      '고른 파일을 `스포츠영상/인물/<이름>.png` 로 옮겨 커밋합니다.',
+      '**이건 우리가 만든 그림입니다** — 사진이 아니므로 저장소에 두어도 됩니다.',
+      '그다음부터 모든 샷이 이 시트를 참조합니다. 원본 사진은 두 번 다시 쓰지 않습니다.',
+      '',
+      '## 만든 것',
+      '',
+      ...made.map((f) => `- ${f}`),
+    ].join('\n') + '\n',
+    'utf8'
+  );
+
+  log.raw('');
+  log.ok(`${made.length}장 완성 — ${outDir}`);
+  log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
+  log.info('사람마다 두 장 중 하나를 골라 스포츠영상/인물/ 에 넣어 주세요.');
 }
 
 async function cmdUpload(flags) {
@@ -1941,6 +2048,9 @@ async function main() {
       break;
     case 'preview':
       await cmdPreview(flags);
+      break;
+    case 'portrait':
+      await cmdPortrait(flags);
       break;
     case 'upload':
       await cmdUpload(flags);

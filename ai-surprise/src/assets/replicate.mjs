@@ -62,6 +62,39 @@ export const IMAGE_MODELS = {
       num_inference_steps: 28,
     }),
   },
+  // 사진을 참조로 얼굴을 가져오는 모델.
+  //
+  // 글로만 생김새를 적으면 "그 조건에 맞는 아무 얼굴"이 나온다. 이 모델은
+  // 참조 사진에서 얼굴 특징을 직접 가져오므로 진짜로 닮는다. 인물 시트를
+  // 한 장 만들 때만 쓰고(assets/portrait.mjs), 본편 샷 수십 장에는 쓰지
+  // 않는다 — 느리고 비싸다.
+  //
+  // ⚠️ 입력 이름이 **버전마다 다르다.** main_face_image 는 여러 버전에
+  //    공통이지만 나머지는 바뀐 적이 있다. 모르는 이름을 보내면 모델이
+  //    통째로 거부하므로, 확실한 것만 보내고 나머지는 모델 기본값에 맡긴다.
+  portrait: {
+    key: 'portrait',
+    model: 'zsxkib/flux-pulid',
+    // 추정치다. 상한을 걸기 위한 기준이지 청구서가 아니다 — 이 모델은
+    // 처음 써 보는 것이라 실제 금액은 첫 실행 뒤 Replicate 사용량 화면에서
+    // 확인해야 한다.
+    usdPerImage: 0.05,
+    note: '사진을 참조로 얼굴을 가져온다. 인물 시트 전용.',
+    needsReference: true,
+    input: (prompt, { referenceImage, negativePrompt }) => ({
+      prompt,
+      main_face_image: referenceImage,
+      ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
+      width: 896,
+      height: 1152,
+      num_steps: 20,
+      guidance_scale: 4,
+      // 0 이면 첫 걸음부터 얼굴을 밀어 넣는다 — 제일 닮지만 화풍을 덜
+      // 따른다. 캐리커처로 만들어야 하므로 조금 늦게 넣는다.
+      start_step: 2,
+      output_format: 'png',
+    }),
+  },
 };
 
 export const DEFAULT_IMAGE_MODEL = 'schnell';
@@ -153,12 +186,23 @@ export function createClient({
    * `Prefer: wait` 를 쓰면 Replicate이 최대 60초까지 붙들고 있다가 끝난
    * 결과를 바로 준다. 대부분 한 번에 끝나고, 안 끝나면 아래에서 폴링한다.
    */
-  async function generate(prompt, { modelKey = DEFAULT_IMAGE_MODEL, aspectRatio = '16:9' } = {}) {
+  async function generate(prompt, {
+    modelKey = DEFAULT_IMAGE_MODEL,
+    aspectRatio = '16:9',
+    // 참조 사진 **주소**. 이걸 받는 모델에만 쓴다.
+    referenceImage = null,
+    negativePrompt = null,
+  } = {}) {
     const m = modelFor(modelKey);
+    // 참조가 필요한 모델에 참조를 안 주면 모델이 거부한다. 돈을 쓰기 전에
+    // 여기서 막는다.
+    if (m.needsReference && !referenceImage) {
+      throw new Error(`${m.model} 은 참조 사진 주소가 있어야 합니다.`);
+    }
     let prediction = await request(`${API_ROOT}/models/${m.model}/predictions`, {
       method: 'POST',
       headers: { Prefer: 'wait' },
-      body: JSON.stringify({ input: m.input(prompt, { aspectRatio }) }),
+      body: JSON.stringify({ input: m.input(prompt, { aspectRatio, referenceImage, negativePrompt }) }),
     });
 
     const deadline = Date.now() + maxWaitMs;

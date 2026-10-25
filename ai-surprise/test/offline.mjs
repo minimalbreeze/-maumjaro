@@ -3275,6 +3275,10 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     '동화': '동화',
     // '스포츠 분석 — 완성본' 도 마찬가지다. '완성본' 보다 **먼저** 와야 한다.
     '스포츠': '스포츠',
+    // '인물 시트 만들기 (사진을 참조로 얼굴 …)' 는 다른 낱말과 겹치지
+    // 않지만, 분기를 '화풍 미리보기' 보다 먼저 두었으므로 표에서도 먼저
+    // 둔다. 표 차례와 분기 차례가 어긋나면 이 검사가 거짓으로 통과한다.
+    '인물 시트': '인물 시트',
     // '화풍 미리보기 (그림 6장만 …)' 에는 '그림' 이 들어 있다.
     // 여기서도 **먼저** 와야 그림 분기로 새지 않는다.
     '화풍 미리보기': '화풍 미리보기',
@@ -4706,6 +4710,98 @@ await asyncTest('쉼표가 든 자막 경로로 ffmpeg가 실제로 돈다', asy
     '-vf', `ass=${escFilter(assName)}`, '-frames:v', '1', out, '-y'], { cwd: dir });
 
   assert.ok(fs.existsSync(out) && fs.statSync(out).size > 0, '쇼츠가 안 만들어졌습니다');
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('4-q. 인물 시트 — 사진은 주소로만 받는다');
+
+const { portraitJobs, portraitPrompt, PORTRAIT_STYLE } = await import('../src/assets/portrait.mjs');
+const { modelFor: modelOf } = await import('../src/assets/replicate.mjs');
+
+test('사진 주소가 없거나 로컬 경로면 만들지 않는다', () => {
+  // 저장소가 공개라 사진 파일을 커밋하면 그걸 퍼블리싱하는 것이 된다.
+  // 로컬 경로를 넣었다는 건 사진을 저장소에 들이려 한다는 뜻이므로 막는다.
+  const { jobs, skipped } = portraitJobs([
+    { name: '손아섭', photo: 'https://example.com/a.jpg' },
+    { name: '홍건희', photo: '스포츠영상/사진/홍건희.jpg' },
+    { name: '장시환' },
+  ]);
+  assert.deepEqual([...new Set(jobs.map((j) => j.name))], ['손아섭']);
+  assert.equal(skipped.length, 2);
+  assert.ok(skipped.every((x) => x.reason));
+});
+
+test('사람마다 두 장씩 뽑는다', () => {
+  const { jobs } = portraitJobs([
+    { name: '손아섭', photo: 'https://e.com/a.jpg' },
+    { name: '홍건희', photo: 'https://e.com/b.jpg' },
+  ]);
+  assert.equal(jobs.length, 4, '한 장만 뽑으면 이게 최선인지 알 수 없습니다');
+  assert.deepEqual(jobs.map((j) => j.file), ['손아섭-1.png', '손아섭-2.png', '홍건희-1.png', '홍건희-2.png']);
+  // 참조 주소가 작업마다 붙어 있어야 한다.
+  assert.ok(jobs.every((j) => j.referenceImage.startsWith('https://')));
+});
+
+test('시트 화풍이 본편과 같은 결이다', () => {
+  // 시트만 다른 그림체면 그걸 참조로 만든 샷이 본편에서 혼자 튄다.
+  const p = portraitPrompt({ name: '손아섭', role: '외야수', tell: 'black eye-black stripes' });
+  assert.ok(p.includes('caricature'), '캐리커처라고 적지 않습니다');
+  assert.ok(p.includes('black eye-black stripes'), '표식이 안 들어갑니다');
+  assert.ok(PORTRAIT_STYLE.includes('oversized head'), '본편 화풍과 결이 다릅니다');
+  // 닮게 만드는 것이 목적이므로 "누구도 닮지 말라"는 줄은 **없어야** 한다.
+  assert.ok(!/not resembling/.test(p), '닮지 말라는 지시가 남아 있습니다 — 시트는 닮아야 합니다');
+  // 그래도 사진처럼 보이면 안 된다.
+  assert.ok(!/photorealistic|photo of/.test(p), '사진처럼 그리라고 적혀 있습니다');
+});
+
+test('참조가 없으면 모델을 부르기 전에 막는다', () => {
+  const m = modelOf('portrait');
+  assert.equal(m.needsReference, true);
+  // 참조를 안 넣으면 input 에 main_face_image 가 비어 나간다 — 모델이
+  // 거부하고 그때는 이미 호출한 뒤다. generate 가 먼저 막아야 한다.
+  const made = m.input('글', { referenceImage: 'https://e.com/a.jpg' });
+  assert.equal(made.main_face_image, 'https://e.com/a.jpg');
+  assert.ok(made.prompt, '프롬프트가 안 들어갑니다');
+});
+
+await asyncTest('참조 없이 부르면 돈을 쓰기 전에 멈춘다', async () => {
+  const { createClient: createRep } = await import('../src/assets/replicate.mjs');
+  let called = 0;
+  const api = createRep({ token: 'r8_test', fetchFn: async () => { called += 1; return new Response('{}'); } });
+  await assert.rejects(
+    () => api.generate('글', { modelKey: 'portrait' }),
+    /참조 사진 주소/,
+    '참조 없이도 모델을 불렀습니다'
+  );
+  assert.equal(called, 0, `돈이 나가는 호출을 ${called}번 했습니다`);
+});
+
+test('인물 시트 모드가 제 갈 길로 간다', () => {
+  // '미리보기' 분기보다 먼저 와야 한다. 모드 이름에 든 낱말로 분기하는
+  // 곳에서 이미 두 번 샜다 ('그림' 때문에 라우팅과 ffmpeg 설치에서).
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const at = yml.indexOf("*'인물 시트'*)");
+  const preview = yml.indexOf("*'화풍 미리보기'*)");
+  assert.ok(at > 0, '인물 시트 분기가 없습니다');
+  assert.ok(at < preview, '미리보기 분기보다 뒤에 있어 그쪽으로 샙니다');
+
+  // 토큰 확인은 거쳐야 하고, ffmpeg 는 안 깔아야 한다.
+  const condOf = (name, end) => {
+    const i = yml.indexOf(`- name: ${name}`);
+    return yml.slice(i, yml.indexOf(end, i));
+  };
+  assert.ok(
+    condOf('이미지 토큰이 등록되어 있는지 확인', '\n        env:').includes("'인물 시트'"),
+    '인물 시트에 이미지 토큰 확인이 안 걸립니다'
+  );
+  assert.ok(
+    condOf('ffmpeg와 한글 글꼴 설치', '\n        timeout-minutes').includes("!contains(inputs.mode, '인물 시트')"),
+    '쓰지도 않는 ffmpeg 를 깝니다'
+  );
 });
 
 console.log(`\n${'═'.repeat(60)}`);
