@@ -127,6 +127,10 @@ on:
         description: "새 메타 설명 (제목·설명 고치기에서만 씁니다. 비우면 설명은 그대로)"
         required: false
         default: ''
+      new_seo_title:
+        description: "새 SEO 제목 (제목·설명 고치기에서만 씁니다. 비우면 그대로). 글 제목과 다르게 쓰고 싶을 때"
+        required: false
+        default: ''
       notice_text:
         description: "올해 글 안내 문구 (올해 글 안내 넣기에서만 씁니다). 예: 2026 서울세계불꽃축제 다시보기는 여기로"
         required: false
@@ -592,6 +596,7 @@ jobs:
           IN_TITLE: ${{ inputs.new_title }}
           IN_DESC: ${{ inputs.new_desc }}
           IN_KW: ${{ inputs.new_keyword }}
+          IN_SEO: ${{ inputs.new_seo_title }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
@@ -614,7 +619,8 @@ jobs:
             node src/wordpress/retitle.mjs set "$id" $dry \
               ${IN_TITLE:+--title="$IN_TITLE"} \
               ${IN_DESC:+--desc="$IN_DESC"} \
-              ${IN_KW:+--kw="$IN_KW"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+              ${IN_KW:+--kw="$IN_KW"} \
+              ${IN_SEO:+--seo="$IN_SEO"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           done
 
       - name: 중계 배너 넣기
