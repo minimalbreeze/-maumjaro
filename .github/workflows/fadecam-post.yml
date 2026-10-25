@@ -1,0 +1,48 @@
+name: 페이드캠 스레드 홍보
+
+on:
+  schedule:
+    # 09:00 UTC = 한국시간 오후 6시. 월·수·금만.
+    #
+    # 왜 매일이 아닌가
+    #   소재가 "실제로 있었던 일"뿐이라 수가 적다(지금 17개). 매일 올리면
+    #   3주도 안 돼 한 바퀴가 돌아 같은 글이 다시 나간다. 주 3회면 40일쯤
+    #   걸린다. 소재가 늘면 scripts/fadecam-content.mjs 의 POST_DAYS 와
+    #   여기 cron 을 같이 늘린다. (둘이 어긋나면 순번이 틀어진다)
+    #
+    # 왜 저녁 6시인가
+    #   올린 뒤 첫 1시간의 답글이 도달을 가른다. 그 시간에 사람이 깨어 있어야
+    #   답글이 붙는다.
+    - cron: '0 9 * * 1,3,5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '실제로 올리지 않고 글만 확인하기'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fadecam-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 오늘의 페이드캠 글 게시
+        env:
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          CONTENT: fadecam
+          # 예약 실행일 때 inputs.dry_run 은 비어 있으므로 실제 게시가 된다.
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/threads-post.mjs

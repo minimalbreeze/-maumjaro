@@ -1,0 +1,48 @@
+name: 스레드 답글 도우미
+
+# ⚠️ 이 워크플로는 스레드에 아무것도 올리지 않는다. 읽기만 한다.
+#    새 댓글을 모아서 답글 초안을 요약 화면에 적어 둘 뿐이다.
+#    왜 자동으로 답글을 안 다는지는 scripts/threads-replies.mjs 맨 위에 적어 뒀다.
+
+on:
+  schedule:
+    # 10:00 UTC = 한국시간 저녁 7시. 글이 저녁 6시에 올라가니 한 시간 뒤다.
+    #   스레드는 올린 뒤 첫 1시간의 답글이 도달을 크게 가른다. 그 시간에 붙은
+    #   댓글을 바로 받아야 효성님이 그 안에 답할 수 있다.
+    # 13:00 UTC = 한국시간 밤 10시. 저녁에 더 붙은 것들을 한 번 더 모은다.
+    #
+    # 매일 돈다. 글은 월·수·금만 올라가지만 댓글은 며칠 뒤에도 달린다.
+    - cron: '0 10 * * *'
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: '몇 시간 전까지의 댓글을 볼지 (기본 48)'
+        type: string
+        default: '48'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: threads-replies
+  cancel-in-progress: false
+
+jobs:
+  replies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 새 댓글 모으고 답글 초안 쓰기
+        env:
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          # 초안을 쓰는 데만 쓴다. 없으면 초안 없이 댓글 목록만 나온다.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HOURS: ${{ inputs.hours }}
+        run: node scripts/threads-replies.mjs

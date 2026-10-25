@@ -1,0 +1,64 @@
+name: 스레드 토큰 갱신 (선택)
+
+# 스레드 장기 토큰은 60일짜리다. 그냥 두면 어느 날 자동 게시가 조용히 멈춘다.
+# 이 워크플로가 매주 갱신해서 계속 60일로 유지한다.
+#
+# ⚠️ 이건 "선택"이다. 돌리려면 Secret이 하나 더 필요하다(THREADS_PAT).
+#    없으면 아무 일도 하지 않고 조용히 끝난다. 그 경우 두 달에 한 번
+#    손으로 갱신하면 된다(가이드 ⑥).
+
+on:
+  schedule:
+    # 매주 월요일 00:10 UTC (한국시간 월요일 오전 9시 10분)
+    - cron: '10 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: threads-token
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 설정 여부 확인
+        id: check
+        env:
+          PAT: ${{ secrets.THREADS_PAT }}
+          TOKEN: ${{ secrets.THREADS_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "⏸️  THREADS_TOKEN이 아직 없습니다. 가이드 ④를 먼저 하세요."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "$PAT" ]; then
+            echo "⏸️  THREADS_PAT이 없어 자동 갱신을 건너뜁니다(정상)."
+            echo "   두 달에 한 번 손으로 갱신하시거나, 가이드 ⑥을 따라 PAT을 넣으세요."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 토큰 갱신
+        id: refresh
+        if: steps.check.outputs.skip == 'false'
+        env:
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+        run: node scripts/threads-token.mjs
+
+      - name: 새 토큰을 Secret에 넣기
+        if: steps.check.outputs.skip == 'false' && steps.refresh.outputs.token != ''
+        env:
+          GH_TOKEN: ${{ secrets.THREADS_PAT }}
+          NEW_TOKEN: ${{ steps.refresh.outputs.token }}
+        run: |
+          printf '%s' "$NEW_TOKEN" | gh secret set THREADS_TOKEN --repo "$GITHUB_REPOSITORY"
+          echo "✅ THREADS_TOKEN을 새 값으로 바꿨습니다."
