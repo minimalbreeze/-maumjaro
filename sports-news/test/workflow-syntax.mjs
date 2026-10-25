@@ -343,4 +343,26 @@ check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
     assert.deepEqual(겹친것, [], `env: 가 두 번 나오는 단계: ${겹친것.join(' / ')}`);
   });
 
+  // 2026-10-25: new_seo_title 을 넣으면서 앞 입력(new_desc)의 required/default
+  // **앞에** 끼워 넣었다. 그 결과 required 와 default 가 한 블록에 두 번 나왔다.
+  // GitHub 은 422 로 거부했지만 파이썬 yaml.safe_load 는 조용히 삼켰다 —
+  // **돌려보기 전에는 못 잡는 종류다.** 그래서 여기서 막는다.
+  //
+  // 위의 env: 검사와 같은 병이다. 다만 그쪽은 단계(step) 안을 보고,
+  // 이쪽은 workflow_dispatch 입력 하나하나를 본다.
+  check('sports-news: 한 입력에 같은 칸을 두 번 쓰지 않는다', () => {
+    const 입력부 = text.split(/\n    inputs:\n/)[1] || '';
+    const 끝 = 입력부.search(/\n\S/);
+    const 입력들 = (끝 === -1 ? 입력부 : 입력부.slice(0, 끝)).split(/\n      (?=\S)/);
+    const 겹친것 = [];
+    for (const 덩이 of 입력들) {
+      const 이름 = 덩이.split('\n')[0].replace(':', '').trim();
+      for (const 칸 of ['description', 'required', 'default', 'type', 'options']) {
+        const 횟수 = (덩이.match(new RegExp(`^        ${칸}:`, 'gm')) || []).length;
+        if (횟수 > 1) 겹친것.push(`${이름}.${칸}`);
+      }
+    }
+    assert.deepEqual(겹친것, [], `같은 칸이 두 번 나오는 입력: ${겹친것.join(' / ')}`);
+  });
+
 }

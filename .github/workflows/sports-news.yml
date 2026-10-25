@@ -125,10 +125,10 @@ on:
         default: ''
       new_desc:
         description: "새 메타 설명 (제목·설명 고치기에서만 씁니다. 비우면 설명은 그대로)"
-      new_seo_title:
-        description: "새 SEO 제목 (제목·설명 고치기에서만 씁니다. 비우면 그대로). 글 제목과 다르게 쓰고 싶을 때"
         required: false
         default: ''
+      new_seo_title:
+        description: "새 SEO 제목 (제목·설명 고치기에서만 씁니다. 비우면 그대로). 글 제목과 다르게 쓰고 싶을 때"
         required: false
         default: ''
       notice_text:
