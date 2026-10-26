@@ -97,5 +97,60 @@ check('fc-list 가 아예 없는 기계에서는 막지 않는다', () => {
   }
 });
 
+// ── 끝단 검사 ───────────────────────────────────────────────────
+//
+// 2026-10-26: 위의 순수 함수들은 다 통과했는데 실제로 돌리니 두 군데서
+// 터졌다. `wpConfig().url`(없는 필드)과 `손대도되는글인가(post)`(인자가
+// 둘인데 하나만 줬다)다. 둘 다 **내가 돌려 보지 않은 경로**였다.
+// 그래서 가짜 워드프레스를 세워 끝까지 돌려 본다.
+
+import { startMockWordPress } from './mock-wordpress.mjs';
+import { recard } from '../src/wordpress/recard.mjs';
+
+const checkAsync = async (name, fn) => {
+  try { await fn(); console.log(`  ✅ ${name}`); 통과 += 1; }
+  catch (err) { console.log(`  ❌ ${name}\n     ${err.message}`); 실패 += 1; }
+};
+
+console.log('\n[가짜 워드프레스에 끝까지 돌려보기]');
+
+const wp = await startMockWordPress({
+  posts: {
+    11265: {
+      status: 'publish', slug: '리디아-고-통산-상금',
+      title: { raw: '리디아 고 통산 상금, 소렌스탐 기록까지 22만3228달러 남았다' },
+      content: { raw: 본문 }, meta: {},
+    },
+  },
+});
+// 손대도되는글인가() 는 글의 공개 주소 호스트를 본다. 포트는 서버가 뜬
+// 뒤에야 알 수 있으므로 여기서 채운다.
+wp.state.posts[11265].link = `http://127.0.0.1:${wp.port}/?p=11265`;
+process.env.WORDPRESS_URL = `http://127.0.0.1:${wp.port}`;
+process.env.WORDPRESS_USERNAME = 'tester';
+process.env.WORDPRESS_APP_PASSWORD = 'xxxx xxxx xxxx xxxx';
+
+await checkAsync('미리보기는 아무것도 저장하지 않는다', async () => {
+  await recard([11265], { apply: false });
+  assert.equal(wp.state.updated.length, 0);
+  assert.equal(wp.state.media.length, 0);
+});
+
+await checkAsync('실제 적용은 이미지를 올리고 src만 바꾼다', async () => {
+  await recard([11265], { apply: true });
+  assert.equal(wp.state.media.length, 2, '카드 두 장을 올려야 한다');
+  const patch = wp.state.updated.find((u) => u.id === 11265);
+  assert.ok(patch, '글을 저장해야 한다');
+  assert.ok(patch.content, 'content 를 보내야 한다');
+  assert.equal(patch.title, undefined, '제목은 보내지 않는다');
+  assert.equal(patch.slug, undefined, '슬러그는 보내지 않는다');
+  assert.equal(patch.status, undefined, '발행상태는 보내지 않는다');
+  assert.ok(patch.featured_media, '대표 이미지를 지정해야 한다');
+  assert.ok(src만바뀌었나(본문, patch.content), 'src 말고 다른 것이 바뀌면 안 된다');
+  assert.ok(patch.content.includes('alt="대표"') && patch.content.includes('alt="둘째"'), 'alt 는 그대로다');
+});
+
+wp.server.close();
+
 console.log(실패 ? `\n❌ 실패한 항목이 있습니다 (${실패}개)` : `\n✅ ${통과}개 항목 통과`);
 if (실패) process.exitCode = 1;

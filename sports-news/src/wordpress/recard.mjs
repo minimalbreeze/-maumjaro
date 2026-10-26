@@ -74,9 +74,9 @@ export function src만바뀌었나(전, 후) {
 }
 
 export async function recard(ids, { apply = false } = {}) {
-  const cfg = wpConfig();
+  const { base } = wpConfig();
   log.section(`🖼️ 카드 이미지를 다시 굽습니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
-  log.info(`대상 사이트: ${new URL(cfg.url).host}  ← 여기 글만 손댑니다`);
+  log.info(`대상 사이트: ${base.replace(/^https?:\/\//, '')}  ← 여기 글만 손댑니다`);
 
   if (!한글폰트있나()) {
     log.fail(
@@ -89,8 +89,8 @@ export async function recard(ids, { apply = false } = {}) {
 
   let 고친글 = 0;
   for (const id of ids) {
-    const post = await wpFetch(`/wp/v2/posts/${id}?context=edit`);
-    if (!손대도되는글인가(post)) {
+    const { data: post } = await wpFetch(`/wp/v2/posts/${id}`, { query: { context: 'edit' } });
+    if (!손대도되는글인가(post?.link, base)) {
       log.warn(`   ⏭  ${id} 이 사이트 글이 아닙니다 — 건너뜁니다`);
       continue;
     }
