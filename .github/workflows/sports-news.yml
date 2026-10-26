@@ -210,12 +210,21 @@ jobs:
         timeout-minutes: 5
         continue-on-error: true
         run: |
-          # fonts-nanum 을 먼저 본다. 한글 전용이라 fonts-noto-cjk(수백 MB,
+          # **apt-get update 를 먼저 돌리지 않는다.**
+          #
+          # 2026-10-26 에 이 단계가 두 번 매달려 5분 타임아웃에 걸렸다.
+          # 매달린 자리는 update 다 — 미러 몇 곳에 붙어 응답을 기다린다.
+          # 러너 이미지는 패키지 목록을 이미 들고 있으므로 바로 install 을
+          # 해 보고, 그게 "패키지를 못 찾겠다"로 실패할 때만 update 한다.
+          #
+          # fonts-nanum 을 먼저 고른다. 한글 전용이라 fonts-noto-cjk(수백 MB,
           # 중국어·일본어까지 들어 있다)보다 훨씬 작고 빨리 깔린다.
-          # 2026-10-26 에 apt 가 매달려 5분 타임아웃에 걸린 적이 있다.
-          sudo apt-get update -qq \
-            && sudo apt-get install -y -qq --no-install-recommends fonts-nanum fonts-noto-cjk \
-            || sudo apt-get install -y -qq --no-install-recommends fonts-nanum \
+          install_font() {
+            sudo apt-get install -y -qq --no-install-recommends "$1" 2>/dev/null
+          }
+          install_font fonts-nanum \
+            || install_font fonts-noto-cjk \
+            || { sudo apt-get update -qq && install_font fonts-nanum; } \
             || true
 
           # **깔렸는지 눈으로 확인한다.**
