@@ -6,6 +6,7 @@
 // SVG로 그린 뒤 sharp로 PNG로 굽는다. 브라우저를 띄우지 않으므로 빠르다.
 
 import sharp from 'sharp';
+import { execFileSync } from 'node:child_process';
 
 // 맘운자로 브랜드 색(CLAUDE.md의 팔레트)을 그대로 쓴다.
 // 스포츠 글이지만 같은 사람이 운영하는 사이트이므로 톤을 맞춘다.
@@ -166,7 +167,54 @@ export function cardSvg({ title, label = '', kind = 'hero', seed = '' }) {
 </svg>`;
 }
 
+/** 한글(자모·음절)이 들어 있나. */
+export function 한글들었나(text) {
+  return /[\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uAC00-\uD7A3]/.test(String(text || ''));
+}
+
+// 폰트 조회는 한 번만 한다. 한 번 돌 때 카드를 여러 장 그리기 때문이다.
+let _한글폰트 = null;
+
+/** 테스트에서 캐시를 비운다. */
+export function 폰트검사다시(){ _한글폰트 = null; }
+
+/**
+ * 한글을 그릴 수 있는 폰트가 이 기계에 있나.
+ *
+ * 왜 보나 — 2026-10-26 에 리디아 고 글(11265)의 카드가 통째로 두부(□)로
+ * 나갔다. 워크플로의 '한글 폰트 설치' 단계가 apt 가 매달려 5분 타임아웃에
+ * 걸렸는데, `continue-on-error: true` 와 `|| echo` 때문에 **성공으로
+ * 찍혔다.** 폰트가 없는 줄 모르고 카드를 그렸고, 그 글이 그대로 발행됐다.
+ *
+ * 폰트가 없으면 글자가 깨지는 것이 아니라 **코드포인트 상자**가 그려진다.
+ * 그림만 보면 알아채기 어렵고, 발행 뒤에야 눈에 띈다. 그래서 그리기 전에
+ * 막는다.
+ *
+ * fc-list 가 없는 기계에서는 '있다'로 본다 — 확인할 방법이 없는데 카드를
+ * 막아 버리면 멀쩡한 곳에서 이미지를 잃는다.
+ */
+export function 한글폰트있나() {
+  if (_한글폰트 !== null) return _한글폰트;
+  try {
+    const out = execFileSync('fc-list', [':lang=ko', 'family'], {
+      encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    _한글폰트 = String(out).trim().length > 0;
+  } catch (err) {
+    // ENOENT = fc-list 자체가 없다. 그 밖(권한·타임아웃)도 판단 불가로 본다.
+    _한글폰트 = true;
+  }
+  return _한글폰트;
+}
+
 export async function renderCard(opts) {
+  const 글자 = `${opts?.title || ''} ${opts?.label || ''}`;
+  if (한글들었나(글자) && !한글폰트있나()) {
+    throw new Error(
+      '한글 폰트가 없어 카드를 그리지 않았습니다 — 그리면 글자가 두부(□)로 나갑니다. '
+      + 'fonts-noto-cjk 또는 fonts-nanum 을 깔고 다시 돌리세요',
+    );
+  }
   const svg = cardSvg(opts);
   return sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
 }
