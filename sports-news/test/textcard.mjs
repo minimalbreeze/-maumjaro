@@ -5,7 +5,12 @@
 
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { wrapTitle, paletteFor, cardSvg, renderCard, PALETTES, mixHex, inkFor, contrastRatio, shortLabel, estimateTextWidth } from '../src/images/textcard.mjs';
+import { wrapTitle, paletteFor, cardSvg, renderCard, PALETTES, mixHex, inkFor, contrastRatio, shortLabel, estimateTextWidth, 한글폰트있나 } from '../src/images/textcard.mjs';
+
+// 이 기계가 한글을 그릴 수 있나. 못 그리면 renderCard 가 한글 카드를
+// **일부러 거부한다**(두부(□)를 올리지 않으려고). 그래서 크기·픽셀을 보는
+// 검사는 한글 없이 돌려서 기계 사정을 타지 않게 한다.
+const 한글가능 = 한글폰트있나();
 
 let passed = 0;
 const check = (name, fn) => {
@@ -51,7 +56,8 @@ check('맘운자로 주소를 표시한다', () => {
 });
 
 await checkAsync('대표 이미지가 1200x630으로 나온다', async () => {
-  const png = await renderCard({ title: 'KBO 포스트시즌 경쟁', label: '야구', kind: 'hero', seed: '야구' });
+  // 크기는 글자와 무관하다. 폰트가 없는 기계에서도 돌도록 영문으로 둔다.
+  const png = await renderCard({ title: 'KBO postseason race', label: 'KBO', kind: 'hero', seed: 'KBO' });
   const m = await sharp(png).metadata();
   assert.equal(m.width, 1200);
   assert.equal(m.height, 630);
@@ -59,20 +65,33 @@ await checkAsync('대표 이미지가 1200x630으로 나온다', async () => {
 });
 
 await checkAsync('본문 카드가 1200x400으로 나온다', async () => {
-  const png = await renderCard({ title: '관전 포인트', kind: 'section', seed: '야구' });
+  const png = await renderCard({ title: 'What to watch', kind: 'section', seed: 'KBO' });
   const m = await sharp(png).metadata();
   assert.equal(m.height, 400);
 });
 
-await checkAsync('한글이 네모로 깨지지 않는다', async () => {
-  // 글자 영역에 배경색과 다른 픽셀이 충분히 있어야 한다.
-  const png = await renderCard({ title: '한글제목테스트', kind: 'hero', seed: '딥틸테스트' });
-  const { data, info } = await sharp(png).greyscale().raw().toBuffer({ resolveWithObject: true });
-  const hist = new Map();
-  for (let i = 0; i < data.length; i += info.channels) hist.set(data[i], (hist.get(data[i]) || 0) + 1);
-  // 명도 종류가 몇 가지 안 되면 글자가 아예 안 그려진 것이다.
-  assert.ok(hist.size > 20, `명도 종류 ${hist.size}가지 — 글자가 그려지지 않았습니다`);
-});
+// 2026-10-26: **이 검사는 두부(□)를 못 잡는다.**
+//
+// 글 11265 의 카드가 통째로 두부로 나간 날, 러너에서 이 검사는 통과했다.
+// 명도 종류만 세기 때문이다 — 두부도 네모 테두리에 코드포인트 숫자까지
+// 그려지므로 명도가 넉넉히 다양하다. 픽셀만 봐서는 글자와 두부를 가를 수
+// 없다는 것이 이날 배운 것이다.
+//
+// 그래서 진짜 방어는 **그리기 전에 폰트가 있는지 묻는 것**이고, 그것은
+// textcard.mjs 의 한글폰트있나() 와 test/recard.mjs 가 맡는다.
+// 여기 남겨 두는 것은 "폰트가 있는데도 글자가 아예 안 그려지는" 경우를
+// 보는 연기 검사다. 폰트가 없는 기계에서는 돌리지 않는다.
+if (한글가능) {
+  await checkAsync('한글 카드에 글자가 실제로 그려진다 (두부 판별은 못 한다)', async () => {
+    const png = await renderCard({ title: '한글제목테스트', kind: 'hero', seed: '딥틸테스트' });
+    const { data, info } = await sharp(png).greyscale().raw().toBuffer({ resolveWithObject: true });
+    const hist = new Map();
+    for (let i = 0; i < data.length; i += info.channels) hist.set(data[i], (hist.get(data[i]) || 0) + 1);
+    assert.ok(hist.size > 20, `명도 종류 ${hist.size}가지 — 글자가 그려지지 않았습니다`);
+  });
+} else {
+  console.log('  ⏭  한글 카드 연기 검사 — 이 기계에 한글 폰트가 없어 건너뜁니다');
+}
 
 // ── 글씨가 보이는가 ────────────────────────────────────────
 // 실제로 당한 일: 라벨 알약이 280px 고정이라 긴 라벨이 밖으로 삐져나갔고,
