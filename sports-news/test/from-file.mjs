@@ -11,6 +11,13 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { startMockWordPress } from './mock-wordpress.mjs';
 import { parseDraftFile, publishFromFile } from '../src/wordpress/from-file.mjs';
+import { 한글폰트있나 } from '../src/images/textcard.mjs';
+
+// 한글 폰트가 없는 기계에서는 한글 카드를 **일부러 안 굽는다**(두부(□)를
+// 올리지 않으려고). 그러면 이미지가 한 장도 안 올라가는 것이 맞는 동작이다.
+// 그래서 이미지 관련 검사는 폰트가 있을 때만 본다 — 2026-10-26 에 러너의
+// 폰트 설치가 타임아웃에 걸린 채로 이 검사가 깨져 잡이 통째로 멈췄다.
+const 한글가능 = 한글폰트있나();
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -132,24 +139,35 @@ check('쿠팡 광고가 들어간다', () => {
   assert.ok(post.content.includes('ads-partners.coupang.com'), '광고 블록이 없습니다');
   assert.ok(post.content.includes('쿠팡 파트너스 활동의 일환'), '고지 문구가 없습니다');
 });
-check('이미지가 맘운자로로 링크된다', () => {
-  assert.ok(post.content.includes('maumjaro.minimalbreeze.com'), '이미지 링크가 없습니다');
-});
-check('대표 이미지가 지정된다', () => assert.ok(post.featured_media > 0, String(post.featured_media)));
-check('이미지가 실제로 업로드된다', () => {
-  assert.ok(wp.state.media.length >= 1, `업로드 ${wp.state.media.length}건`);
-  assert.ok(wp.state.media[0].bytes > 1000, `${wp.state.media[0].bytes}바이트 — 빈 파일입니다`);
-});
+if (한글가능) {
+  check('이미지가 맘운자로로 링크된다', () => {
+    assert.ok(post.content.includes('maumjaro.minimalbreeze.com'), '이미지 링크가 없습니다');
+  });
+  check('대표 이미지가 지정된다', () => assert.ok(post.featured_media > 0, String(post.featured_media)));
+  check('이미지가 실제로 업로드된다', () => {
+    assert.ok(wp.state.media.length >= 1, `업로드 ${wp.state.media.length}건`);
+    assert.ok(wp.state.media[0].bytes > 1000, `${wp.state.media[0].bytes}바이트 — 빈 파일입니다`);
+  });
+} else {
+  check('폰트가 없으면 이미지를 아예 올리지 않는다 (두부를 올리지 않는다)', () => {
+    assert.equal(wp.state.media.length, 0, `${wp.state.media.length}건이 올라갔습니다`);
+  });
+  check('폰트가 없어도 글 자체는 저장된다', () => {
+    assert.ok(post.content.length > 200, '본문이 비었습니다');
+  });
+}
 check('파일 이름이 헤더에 담을 수 있는 문자만 쓴다', () => {
   for (const m of wp.state.media) {
     assert.ok(/^[\x20-\x7E]+$/.test(m.fileName), `ASCII가 아닙니다: ${m.fileName}`);
     assert.ok(m.fileName.endsWith('.png'), m.fileName);
   }
 });
-check('이미지 alt에 키워드가 들어간다', () => {
-  const alts = wp.state.mediaMeta.map((m) => m.alt_text || '');
-  assert.ok(alts.some((a) => a.includes('KBO')), alts.join(' / '));
-});
+if (한글가능) {
+  check('이미지 alt에 키워드가 들어간다', () => {
+    const alts = wp.state.mediaMeta.map((m) => m.alt_text || '');
+    assert.ok(alts.some((a) => a.includes('KBO')), alts.join(' / '));
+  });
+}
 check('슬러그가 실린다', () => assert.equal(post.slug, 'kbo-신인-드래프트'));
 check('publish로 저장되지 않는다', () => assert.notEqual(post.status, 'publish'));
 

@@ -99,10 +99,17 @@ check('fc-list 가 아예 없는 기계에서는 막지 않는다', () => {
 
 // ── 끝단 검사 ───────────────────────────────────────────────────
 //
-// 2026-10-26: 위의 순수 함수들은 다 통과했는데 실제로 돌리니 두 군데서
-// 터졌다. `wpConfig().url`(없는 필드)과 `손대도되는글인가(post)`(인자가
-// 둘인데 하나만 줬다)다. 둘 다 **내가 돌려 보지 않은 경로**였다.
-// 그래서 가짜 워드프레스를 세워 끝까지 돌려 본다.
+// 2026-10-26: 위의 순수 함수들은 다 통과했는데 실제로 돌리니 세 군데서
+// 터졌다. `wpConfig().url`(없는 필드), `손대도되는글인가(post)`(인자가
+// 둘인데 하나만 줬다), `await wpFetch()`(글이 아니라 { data, headers } 를
+// 준다). 전부 **내가 돌려 보지 않은 경로**였다. 그래서 가짜 워드프레스를
+// 세워 끝까지 돌려 본다.
+//
+// **글자를 영문으로 둔다.** 한글로 두면 한글 폰트가 없는 기계에서 카드를
+// 못 굽고(그게 맞는 동작이다) 이 검사가 깨진다. 실제로 러너에서 그렇게
+// 깨져 잡이 통째로 멈췄다. 검사는 기계 사정을 타면 안 된다 — 여기서 보는
+// 것은 **배선**(주소·인자·응답 모양·무엇을 보내나)이고, 한글을 막는지는
+// 바로 위 '한글 폰트 가드' 에서 따로 본다.
 
 import { startMockWordPress } from './mock-wordpress.mjs';
 import { recard } from '../src/wordpress/recard.mjs';
@@ -114,12 +121,19 @@ const checkAsync = async (name, fn) => {
 
 console.log('\n[가짜 워드프레스에 끝까지 돌려보기]');
 
+const 영문본문 = [
+  '<!-- wp:paragraph --><p>first</p><!-- /wp:paragraph -->',
+  '<figure class="wp-block-image size-large"><a href="https://x/"><img src="https://wp/a.png" alt="hero alt"/></a></figure>',
+  '<!-- wp:heading --><h2>Prize money record</h2><!-- /wp:heading -->',
+  '<figure class="wp-block-image size-large"><a href="https://x/"><img src="https://wp/b.png" alt="second alt"/></a></figure>',
+].join('\n');
+
 const wp = await startMockWordPress({
   posts: {
     11265: {
-      status: 'publish', slug: '리디아-고-통산-상금',
-      title: { raw: '리디아 고 통산 상금, 소렌스탐 기록까지 22만3228달러 남았다' },
-      content: { raw: 본문 }, meta: {},
+      status: 'publish', slug: 'lydia-ko-career-earnings',
+      title: { raw: 'Lydia Ko career earnings' },
+      content: { raw: 영문본문 }, meta: {},
     },
   },
 });
@@ -146,8 +160,30 @@ await checkAsync('실제 적용은 이미지를 올리고 src만 바꾼다', asy
   assert.equal(patch.slug, undefined, '슬러그는 보내지 않는다');
   assert.equal(patch.status, undefined, '발행상태는 보내지 않는다');
   assert.ok(patch.featured_media, '대표 이미지를 지정해야 한다');
-  assert.ok(src만바뀌었나(본문, patch.content), 'src 말고 다른 것이 바뀌면 안 된다');
-  assert.ok(patch.content.includes('alt="대표"') && patch.content.includes('alt="둘째"'), 'alt 는 그대로다');
+  assert.ok(src만바뀌었나(영문본문, patch.content), 'src 말고 다른 것이 바뀌면 안 된다');
+  assert.ok(patch.content.includes('alt="hero alt"') && patch.content.includes('alt="second alt"'), 'alt 는 그대로다');
+});
+
+await checkAsync('폰트가 없으면 한글 글은 손대지 않는다 — 영문 글은 그대로 굽는다', async () => {
+  // 러너에서 실제로 일어난 상황이다. 폰트 설치가 타임아웃에 걸린 채로
+  // 이 도구가 돌면, 한글 카드를 구워 올려서는 **안 된다.**
+  폰트검사다시();
+  const 원래 = process.env.PATH;
+  process.env.PATH = `${new URL('./fixtures-nofont', import.meta.url).pathname}:${원래}`;
+  const 보낸수 = wp.state.updated.length;
+  const 올린수 = wp.state.media.length;
+  try {
+    wp.state.posts[11265].title = { raw: '리디아 고 통산 상금' };
+    wp.state.posts[11265].content = { raw: 영문본문 };
+    await recard([11265], { apply: true });
+    assert.equal(wp.state.media.length, 올린수 + 1, '영문 소제목 카드 한 장만 올라가야 한다');
+    const 마지막 = wp.state.updated[wp.state.updated.length - 1];
+    assert.ok(!마지막 || 마지막.featured_media === undefined, '한글 제목의 대표 이미지는 만들지 않아야 한다');
+    assert.ok(wp.state.updated.length >= 보낸수);
+  } finally {
+    process.env.PATH = 원래;
+    폰트검사다시();
+  }
 });
 
 wp.server.close();

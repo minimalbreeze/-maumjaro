@@ -78,13 +78,11 @@ export async function recard(ids, { apply = false } = {}) {
   log.section(`🖼️ 카드 이미지를 다시 굽습니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
   log.info(`대상 사이트: ${base.replace(/^https?:\/\//, '')}  ← 여기 글만 손댑니다`);
 
+  // 폰트가 없다고 여기서 통째로 멈추지는 않는다. 막는 일은 renderCard 가
+  // **카드마다** 한다 — 한글이 든 카드만 막고 영문 카드는 그대로 굽는다.
+  // 여기서는 한 번만 일러 둔다. 그래야 실패가 여러 줄 나와도 이유가 보인다.
   if (!한글폰트있나()) {
-    log.fail(
-      '한글 폰트가 없습니다',
-      new Error('이 기계에서 카드를 구우면 또 두부(□)가 됩니다. fonts-nanum 을 깔고 다시 돌리세요'),
-    );
-    process.exitCode = 1;
-    return;
+    log.warn('한글 폰트가 없습니다 — 한글이 든 카드는 건너뜁니다 (두부(□)를 올리지 않습니다)');
   }
 
   let 고친글 = 0;
