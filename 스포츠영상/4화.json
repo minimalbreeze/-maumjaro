@@ -1,0 +1,126 @@
+{
+  "title": "삼백칠억을 버리고 간다",
+  "premise": "\"떠나는 건 상상조차 싫다\"던 노시환이 10월 31일 MLB 포스팅에 들어갔다. 계약에 처음부터 들어 있던 조항이다.",
+  "angle": "성공 여부는 방망이가 아니라 자리가 가른다 — 앞서 간 네 명이 그걸 보여 준다",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "\"상상하고 싶지도 않다\"던 말과 10월 31일 포스팅을 나란히 놓는다."
+    },
+    {
+      "key": "RULES",
+      "label": "포스팅이 뭔가",
+      "note": "30일 창, 이적료 구간식, 불발 시 1년 대기. 이 편의 바닥.",
+      "value": 80
+    },
+    {
+      "key": "WHY",
+      "label": "왜 지금인가",
+      "note": "계약 조항, 11년 계약 효력 상실, 26세.",
+      "value": 75
+    },
+    {
+      "key": "NUMBERS",
+      "label": "숫자로 봅니다",
+      "note": "드래프트부터 올 시즌까지. 표 카드.",
+      "value": 60
+    },
+    {
+      "key": "PRECEDENT",
+      "label": "앞서 간 사람들",
+      "note": "강정호·박병호·김하성·이정후. 공통점은 수비로 자리를 만들었나.",
+      "value": 95
+    },
+    {
+      "key": "FIT",
+      "label": "노시환은 어떤가",
+      "note": "장타형 코너 내야수라는 흔한 유형, 그리고 나이.",
+      "value": 90
+    },
+    {
+      "key": "SCENARIO",
+      "label": "세 갈래",
+      "note": "대형 / 중간 / 불발. 진행 중인 협상이 아님을 분명히 한다.",
+      "value": 70
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "세 자리로 정리하고 댓글 질문.",
+      "value": 20
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "\"상상하고 싶지도 않다\"던 말과 10월 31일 포스팅을 나란히 놓는다."
+    },
+    {
+      "key": "RULES",
+      "what": "30일 창, 이적료 구간식, 불발 시 1년 대기. 이 편의 바닥."
+    },
+    {
+      "key": "WHY",
+      "what": "계약 조항, 11년 계약 효력 상실, 26세."
+    },
+    {
+      "key": "NUMBERS",
+      "what": "드래프트부터 올 시즌까지. 표 카드."
+    },
+    {
+      "key": "PRECEDENT",
+      "what": "강정호·박병호·김하성·이정후. 공통점은 수비로 자리를 만들었나."
+    },
+    {
+      "key": "FIT",
+      "what": "장타형 코너 내야수라는 흔한 유형, 그리고 나이."
+    },
+    {
+      "key": "SCENARIO",
+      "what": "대형 / 중간 / 불발. 진행 중인 협상이 아님을 분명히 한다."
+    },
+    {
+      "key": "CLOSE",
+      "what": "세 자리로 정리하고 댓글 질문."
+    }
+  ],
+  "sources": [
+    {
+      "name": "노시환 MLB 포스팅 요청 — KBO 공식 (2026-10-31, 스포탈코리아)",
+      "url": "https://www.sportalkorea.com/"
+    },
+    {
+      "name": "강정호 포스팅 첫 야수, 데뷔 .287 15홈런 / 이정후 비교",
+      "url": "https://www.maniareport.com/view.php?ud=20240409104408544591b55a0d56_19"
+    },
+    {
+      "name": "KBO 포스팅 시스템 개요",
+      "url": "https://en.wikipedia.org/wiki/Posting_system_(KBO)"
+    },
+    {
+      "name": "한·미 선수계약협정 개정 — 포스팅 절차·이적료 구간 (2018)",
+      "url": "https://www.xportsnews.com/article/996397"
+    },
+    {
+      "name": "김하성 — 2021 샌디에이고 4년 2800만 달러, 2023 골드글러브",
+      "url": "https://en.wikipedia.org/wiki/Ha-seong_Kim"
+    },
+    {
+      "name": "이정후 — 샌프란시스코 6년 1억1300만 달러",
+      "url": "https://en.wikipedia.org/wiki/Jung_Hoo_Lee"
+    },
+    {
+      "name": "KBO 한국야구위원회",
+      "url": "https://www.koreabaseball.com/"
+    }
+  ],
+  "people": [
+    {
+      "name": "노시환",
+      "role": "삼루수",
+      "look": "a Korean man around 26 with a large square face and a strong heavy jaw - the broad squared face is the defining trait - with thick dark eyebrows, calm narrow eyes, a straight nose and a firm closed mouth; short black hair, a big powerful slugger's build with thick shoulders and arms",
+      "tell": "a batting helmet"
+    }
+  ]
+}
