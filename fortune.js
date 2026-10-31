@@ -2234,7 +2234,10 @@
         ${paragraphs}
         <button class="rx-friend-quick-btn ai-maumun-goto-rx-btn" type="button" style="margin-top:10px;">처방 후보 보러가기 ›</button>
       </div>`;
-    answerEl.querySelector('.ai-maumun-goto-rx-btn').addEventListener('click', () => Rx.goToRxCategory(rxCategory));
+    answerEl.querySelector('.ai-maumun-goto-rx-btn').addEventListener('click', () => {
+      trackEvent('ai_maumun_rx_clicked', { source: 'proxy', category: rxCategory });
+      Rx.goToRxCategory(rxCategory);
+    });
     answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -2253,12 +2256,18 @@
         <button class="rx-friend-quick-btn ai-maumun-goto-rx-btn" type="button" style="margin-top:10px;">처방 후보 보러가기 ›</button>
       </div>`;
     document.getElementById('ai-maumun-answer').querySelector('.ai-maumun-goto-rx-btn')
-      .addEventListener('click', () => Rx.goToRxCategory(answer.rxCategory));
+      .addEventListener('click', () => {
+        trackEvent('ai_maumun_rx_clicked', { source: 'template', category: answer.rxCategory });
+        Rx.goToRxCategory(answer.rxCategory);
+      });
     answerEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function renderAiMaumun(profile) {
     const emotion = getTodayEmotionEntry();
+    // 이 기능은 2026-10까지 추적이 하나도 없어서 쓰이는지조차 알 수 없었다.
+    // 바꾸기 전에 재는 게 순서라, 입구/질문/응답/처방이동 네 지점을 전부 남긴다.
+    trackEvent('ai_maumun_opened', { state: emotion ? 'ready' : 'no_emotion' });
     if (!emotion) {
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
@@ -2298,9 +2307,18 @@
     submitBtn.addEventListener('click', () => {
       const question = input.value.trim();
       if (!question) {
+        // 빈 채로 누른 것도 신호다 — "무엇을 물어야 할지 모른다"는 뜻이라, 따로 센다.
+        trackEvent('ai_maumun_submit_empty', {});
         Core.showToast('궁금한 걸 먼저 적어주세요');
         return;
       }
+      const matchedCategory = detectAiMaumunCategory(question);
+      trackEvent('ai_maumun_asked', {
+        len: question.length,
+        matched: matchedCategory ? 1 : 0,
+        category: matchedCategory || 'none',
+      });
+      const askedAt = Date.now();
       const answerEl = document.getElementById('ai-maumun-answer');
       let lineIdx = 0;
       submitBtn.disabled = true;
@@ -2323,6 +2341,7 @@
       function fallBackToTemplate() {
         const answer = buildAiMaumunAnswer(profile, emotion, question);
         renderAiMaumunAnswer(answer);
+        trackEvent('ai_maumun_answered', { source: 'template', ms: Date.now() - askedAt });
         stopLoading();
       }
 
@@ -2330,6 +2349,7 @@
         fetchAiMaumunFromProxy(profile, emotion, question)
           .then(({ text, rxCategory }) => {
             renderAiMaumunRawAnswer(text, rxCategory);
+            trackEvent('ai_maumun_answered', { source: 'proxy', ms: Date.now() - askedAt });
             stopLoading();
           })
           .catch(fallBackToTemplate); // 프록시가 아직 없거나 응답에 실패해도 앱이 멈추지 않는다
