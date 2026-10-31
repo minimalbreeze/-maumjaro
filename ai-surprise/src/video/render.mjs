@@ -10,7 +10,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { clipArgs, concatArgs, concatList, finishArgs, shortsArgs } from './ffmpeg.mjs';
+import { clipArgs, concatArgs, concatList, finishArgs, shortsArgs, OUTRO_SECONDS } from './ffmpeg.mjs';
+import { FONT_FILE as CARD_FONT_FILE } from './card.mjs';
 
 /** ffmpeg 한 번 실행. 실패하면 stderr를 담아 던진다. */
 export function runFfmpeg(args, { cwd } = {}) {
@@ -191,6 +192,12 @@ export async function renderShort(short, {
   // 편 이름. 붙여 두면 여러 편의 결과물을 나란히 풀어도 섞이지 않는다.
   // 비우면 예전처럼 short-1.mp4 가 된다.
   prefix = '',
+  // 마지막 몇 초에 띄울 마무리 글. 비우면 안 붙인다.
+  //
+  // 쇼츠는 본편을 잘라 만들어서 **끝이 뚝 끊긴다.** 조회 2,500 에 구독이
+  // +1 이었던 이유다 — 보고 나서 무엇을 하라는 말이 없었다.
+  outro = null,
+  outroFontFile = CARD_FONT_FILE,
 }) {
   await requireFfmpeg();
   fs.mkdirSync(workDir, { recursive: true });
@@ -203,6 +210,15 @@ export async function renderShort(short, {
     fs.writeFileSync(path.join(workDir, subtitleName), subtitle, 'utf8');
   }
 
+  // 글자는 파일로 넘긴다. 명령줄에 한글을 직접 넣으면 따옴표와 콜론에서
+  // 깨지고, % 는 서식 문자로 먹힌다.
+  let outroName = null;
+  const outroText = String(outro || '').trim();
+  if (outroText && short.duration > OUTRO_SECONDS + 5) {
+    outroName = `${stem}-마무리.txt`;
+    fs.writeFileSync(path.join(workDir, outroName), outroText + '\n', 'utf8');
+  }
+
   const outputName = `${stem}.mp4`;
   await runFfmpeg(
     shortsArgs({
@@ -213,6 +229,8 @@ export async function renderShort(short, {
       subtitlePath: subtitleName,
       outputPath: outputName,
       fps,
+      outroTextPath: outroName,
+      outroFontFile: outroName ? outroFontFile : null,
     }),
     { cwd: workDir }
   );

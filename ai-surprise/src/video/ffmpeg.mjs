@@ -226,6 +226,39 @@ export function finishArgs({ videoPath, subtitlePath, audioPath, outputPath, fps
  * 그래서 쇼츠는 자막 없는 중간 영상(silent.mp4)에서 자르고, 쇼츠용 자막을
  * 여기서 새로 굽는다. 소리는 나레이션 파일에서 같은 시각을 잘라 붙인다.
  */
+/** 마무리 띠를 띄울 시간(초)과 생김새. */
+export const OUTRO_SECONDS = 3;
+export const OUTRO_BAR_HEIGHT = 300;
+
+/**
+ * 쇼츠 마지막 몇 초에 띄울 마무리 띠.
+ *
+ * 왜 필요한가 — 쇼츠는 본편을 잘라 만들기 때문에 **끝이 뚝 끊긴다.**
+ * 조회수 2,500 에 구독이 +1 이었던 이유가 이것이다(2026-10-31 성적).
+ * 보고 나서 무엇을 하라는 말이 한 줄도 없었다.
+ *
+ * 왜 영상을 덧붙이지 않고 **덮어씌우나** —
+ * 뒤에 카드를 이어 붙이려면 무음 구간을 만들고 두 영상을 합쳐야 한다.
+ * 붙이는 자리에서 소리가 끊기거나 길이가 틀어지기 쉽다. 마지막 3초
+ * 위에 띠를 덮으면 그 위험이 통째로 없다. 길이도 그대로다.
+ *
+ * 글자는 textfile 로 넘기고 expansion=none 을 쓴다. 한글을 명령줄에
+ * 직접 넣으면 따옴표와 콜론에서 깨지고, % 는 서식 문자로 먹힌다.
+ */
+export function outroFilters({ textPath, fontFile, duration, seconds = OUTRO_SECONDS, width = 1080, height = 1920 }) {
+  const from = Math.max(0, Number(duration) - seconds).toFixed(3);
+  const on = `between(t,${from},${Number(duration).toFixed(3)})`;
+  const barY = height - OUTRO_BAR_HEIGHT - 120;
+  return [
+    // 글자가 읽히도록 뒤를 깐다. 영상 위에 바로 흰 글씨를 얹으면
+    // 밝은 장면에서 사라진다.
+    `drawbox=x=0:y=${barY}:w=${width}:h=${OUTRO_BAR_HEIGHT}:color=black@0.72:t=fill:enable='${on}'`,
+    `drawtext=expansion=none:fontfile='${escapeFilterPath(fontFile)}':` +
+      `textfile='${escapeFilterPath(textPath)}':fontcolor=white:fontsize=58:` +
+      `line_spacing=18:x=(w-text_w)/2:y=${barY + 56}:enable='${on}'`,
+  ];
+}
+
 export function shortsArgs({
   videoPath,
   audioPath = null,
@@ -236,6 +269,9 @@ export function shortsArgs({
   width = 1080,
   height = 1920,
   fps = 30,
+  // 마무리 띠. 둘 다 있어야 붙인다.
+  outroTextPath = null,
+  outroFontFile = null,
 }) {
   const filters = [
     // 세로 화면을 채우도록 키운 뒤 가운데를 자른다.
@@ -243,6 +279,16 @@ export function shortsArgs({
     `crop=${width}:${height}`,
   ];
   if (subtitlePath) filters.push(`ass=${escapeFilterPath(subtitlePath)}`);
+  // 자막 **뒤에** 얹는다. 앞에 두면 자막이 띠 위에 겹쳐 찍힌다.
+  if (outroTextPath && outroFontFile) {
+    filters.push(...outroFilters({
+      textPath: outroTextPath,
+      fontFile: outroFontFile,
+      duration,
+      width,
+      height,
+    }));
+  }
 
   const ss = Number(start).toFixed(3);
   const args = [

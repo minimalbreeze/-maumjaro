@@ -1500,6 +1500,22 @@ function sectionValuesOf(sections) {
   return out;
 }
 
+/**
+ * 쇼츠 마지막 3초에 띄울 글.
+ *
+ * 두 줄이다. 첫 줄이 무엇을 더 볼 수 있는지, 둘째 줄이 무엇을 하라는지.
+ * 조회 2,500 에 구독이 +1 이었던 때(2026-10-31) 쇼츠에는 둘 다 없었다 —
+ * 본편을 잘라 만들어서 끝이 그냥 끊겼다.
+ *
+ * 채널 이름을 넣는다. Shorts 피드에서 유입이 96% 라, 보는 사람 대부분이
+ * 이 채널을 처음 본다.
+ */
+function outroLineFor(research) {
+  const channel = research?.kind === KIND.SPORTS ? '야포츠' : null;
+  if (!channel) return null;
+  return `전체 영상은 채널에 있습니다\n${channel} 구독하고 다음 편 보기`;
+}
+
 async function cmdVideo(flags) {
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
@@ -1680,6 +1696,8 @@ async function cmdVideo(flags) {
         index: s.rank,
         fps: timeline.fps,
         prefix: fileSlug(research.title),
+        // 쇼츠 끝에 붙일 한 줄. 끝이 뚝 끊기면 보고 나서 할 일이 없다.
+        outro: outroLineFor(research),
       });
       const si = await probe(out);
       log.ok(`쇼츠 ${s.rank}: ${si.width}x${si.height}, ${si.duration.toFixed(1)}초 — ${out}`);

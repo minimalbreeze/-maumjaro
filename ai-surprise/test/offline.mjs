@@ -3976,12 +3976,13 @@ await asyncTest('스포츠 화면 지시가 선수 이름을 쓰지 말라고 �
   assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
-await asyncTest('스포츠는 쇼츠를 여덟 개 뽑는다', async () => {
+await asyncTest('스포츠는 쇼츠를 열 개 뽑는다', async () => {
   const S = await import('../src/video/shorts.mjs');
-  // 처음엔 다섯이었다(월 본편 + 화~금 넷 + 예비 하나). 그런데 올려 보니
-  // **본편보다 쇼츠 반응이 좋아서** 늘렸다(2026-10-31). 9분대 대본에서
-  // 50~80초로 여덟까지는 겹침이 3%에 그친다.
-  assert.equal(S.shortsCountFor('SPORTS'), 8);
+  // 다섯 → 여덟 → 열로 왔다. 처음엔 올리는 리듬(화~금 넷)에서 나온
+  // 숫자였는데, 성적을 보니 **쇼츠가 전부**였고(유입 96% 가 Shorts 피드)
+  // **이탈이 73.4%** 였다. 짧게 자르면 완주율이 오르고 개수도 는다.
+  // 9분대 대본에서 40~70초로 열까지는 겹침이 11초(2%)다.
+  assert.equal(S.shortsCountFor('SPORTS'), 10);
   assert.equal(S.shortsCountFor('TALE'), 3, '동화까지 늘어나면 서로 겹칩니다');
   assert.equal(S.shortsCountFor('EVENT'), 3);
 });
@@ -4002,7 +4003,13 @@ await asyncTest('스포츠 섹션에 점수가 매겨져 있다', async () => {
     })
   );
   const picked = S.pickShorts(scenes, { kind: 'SPORTS' });
-  assert.equal(picked.length, 8, `여덟 개가 안 나왔습니다 (${picked.length}개)`);
+  // 개수는 **목표지 약속이 아니다.** 이 가짜 대본은 520초뿐이라 안 겹치고
+  // 열 편을 담을 수 없다. 그럴 때는 적게 뽑는 것이 맞다 — 같은 대목이 두
+  // 번 올라가면 두 편 다 손해다. 그래서 하한만 본다.
+  assert.ok(picked.length >= 5, `${picked.length}편뿐입니다 — 점수가 안 매겨진 것 같습니다`);
+  assert.ok(picked.length <= 10, `${picked.length}편은 요청(10)보다 많습니다`);
+  // 이 검사의 본뜻은 개수가 아니라 **값이 매겨졌는가**다. 점수가 없으면
+  // 순위가 길이로만 정해지고, 1화에서 실제로 ACE 가 통째로 빠졌다.
   assert.ok(
     picked.some((p) => p.sections.includes('ACE')),
     '가장 중요한 ACE 구간이 쇼츠에 없습니다'
@@ -4811,11 +4818,11 @@ section('4-r. 쇼츠를 여덟 편으로 늘린다');
 
 const shortsMod = await import('../src/video/shorts.mjs');
 
-test('스포츠만 여덟 편 50~80초, 나머지는 그대로', () => {
+test('스포츠만 열 편 40~70초, 나머지는 그대로', () => {
   // 본편보다 쇼츠 반응이 좋아서 늘렸다. 다른 종류까지 같이 바꾸면
   // 이야기 편이 토막난다 — 거기는 한 편이 완결돼야 한다.
-  assert.equal(shortsMod.shortsCountFor('SPORTS'), 8);
-  assert.deepEqual(shortsMod.shortsLengthFor('SPORTS'), { min: 50, max: 80 });
+  assert.equal(shortsMod.shortsCountFor('SPORTS'), 10);
+  assert.deepEqual(shortsMod.shortsLengthFor('SPORTS'), { min: 40, max: 70 });
   assert.equal(shortsMod.shortsCountFor('TALE'), 3);
   assert.deepEqual(shortsMod.shortsLengthFor('TALE'), { min: 60, max: 90 });
   assert.deepEqual(shortsMod.shortsLengthFor(null), { min: 60, max: 90 });
@@ -4847,10 +4854,12 @@ test('길이를 안 넘기면 0초가 되지 않는다', () => {
   assert.ok(narrow.every((p) => p.duration >= 100), '넘긴 길이를 안 씁니다');
 });
 
-test('여덟 편이 서로 거의 안 겹친다', () => {
+test('열 편이 서로 거의 안 겹친다', () => {
   // 늘리면 같은 내용이 두 쇼츠에 들어갈 위험이 커진다. 9분대 대본에서
   // 겹침이 전체의 5%를 넘으면 개수를 다시 생각해야 한다.
-  const scenes = Array.from({ length: 28 }, (_, i) => ({
+  // 열 편(평균 53초)을 담으려면 9분대 본편이 있어야 한다. 재료를 모자라게
+  // 두고 "왜 겹치냐"고 묻는 검사는 코드가 아니라 검사가 틀린 것이다.
+  const scenes = Array.from({ length: 34 }, (_, i) => ({
     scene_number: i + 1,
     section: i === 0 ? 'HOOK' : 'GAP',
     paragraphs: Array.from({ length: 6 }, (_, k) => ({
@@ -4859,12 +4868,70 @@ test('여덟 편이 서로 거의 안 겹친다', () => {
     })),
   }));
   const picked = shortsMod.pickShorts(scenes, { kind: 'SPORTS' });
-  assert.equal(picked.length, 8, `${picked.length}편만 나왔습니다`);
+  assert.equal(picked.length, 10, `${picked.length}편만 나왔습니다`);
   const spans = picked.map((p) => [p.start, p.end]).sort((a, b) => a[0] - b[0]);
   let overlap = 0;
   for (let i = 1; i < spans.length; i++) overlap += Math.max(0, spans[i - 1][1] - spans[i][0]);
   const total = picked.reduce((a, p) => a + p.duration, 0) + overlap;
   assert.ok(overlap / total < 0.05, `겹침이 ${Math.round((overlap / total) * 100)}% 입니다`);
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('4-s. 쇼츠 끝에 마무리를 붙인다');
+
+const { outroFilters, shortsArgs: sArgs, OUTRO_SECONDS: OUTRO_S } = await import('../src/video/ffmpeg.mjs');
+
+test('마지막 몇 초에만 띄운다', () => {
+  const f = outroFilters({ textPath: 't.txt', fontFile: '/f.ttc', duration: 60 });
+  // 60초짜리면 57~60초에만 보여야 한다. 처음부터 떠 있으면 본문을 가린다.
+  assert.ok(f.every((x) => x.includes(`between(t,${(60 - OUTRO_S).toFixed(3)},60.000)`)), f.join('\n'));
+  // 글자 뒤를 깐다. 밝은 장면에서 흰 글씨만 얹으면 사라진다.
+  assert.ok(f.some((x) => x.startsWith('drawbox=')), '글자 뒤를 안 깝니다');
+  // 한글은 파일로 넘긴다. 명령줄에 직접 넣으면 깨진다.
+  assert.ok(f.some((x) => x.includes('textfile=')), 'textfile 로 안 넘깁니다');
+  assert.ok(f.some((x) => x.includes('expansion=none')), '% 가 서식 문자로 먹힙니다');
+});
+
+test('자막 뒤에 얹는다', () => {
+  // 앞에 두면 자막이 띠 위에 겹쳐 찍힌다.
+  const args = sArgs({
+    videoPath: 'v.mp4', start: 0, duration: 60, subtitlePath: 's.ass',
+    outputPath: 'o.mp4', outroTextPath: 't.txt', outroFontFile: '/f.ttc',
+  });
+  const vf = args[args.indexOf('-vf') + 1];
+  assert.ok(vf.indexOf('ass=') < vf.indexOf('drawbox='), '자막보다 먼저 얹습니다');
+});
+
+test('마무리를 안 주면 아무것도 안 붙인다', () => {
+  const vf = (o) => {
+    const a = sArgs({ videoPath: 'v.mp4', start: 0, duration: 60, outputPath: 'o.mp4', ...o });
+    return a[a.indexOf('-vf') + 1];
+  };
+  assert.ok(!vf({}).includes('drawbox'), '안 줬는데 붙었습니다');
+  // 글만 있고 글꼴이 없으면 네모가 나온다. 둘 다 있을 때만 붙인다.
+  assert.ok(!vf({ outroTextPath: 't.txt' }).includes('drawbox'), '글꼴 없이 붙었습니다');
+  assert.ok(!vf({ outroFontFile: '/f.ttc' }).includes('drawbox'), '글 없이 붙었습니다');
+});
+
+await asyncTest('마무리 띠가 실제로 그려진다', async () => {
+  // 코드만 보고 넘기지 않는다. 한글 drawtext 는 글꼴·따옴표·% 에서
+  // 조용히 깨지고, 그건 영상을 눈으로 보기 전까지 모른다.
+  if (!hasFfmpeg()) return skip('ffmpeg 가 없습니다');
+  const { execFileSync } = await import('node:child_process');
+  const font = '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc';
+  if (!fs.existsSync(font)) return skip('한글 글꼴이 없습니다');
+
+  const dir = fs.mkdtempSync(path.join(TMP, 'outro-'));
+  const txt = path.join(dir, 't.txt');
+  fs.writeFileSync(txt, '전체 영상은 채널에 있습니다\n야포츠 구독하고 다음 편 보기\n', 'utf8');
+
+  const f = outroFilters({ textPath: 't.txt', fontFile: font, duration: 6 });
+  const vf = ['scale=1080:1920:force_original_aspect_ratio=increase', 'crop=1080:1920', ...f].join(',');
+  const out = path.join(dir, 'out.mp4');
+  execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=slategray:s=640x360:d=6', '-vf', vf, '-t', '6', out, '-y'], { cwd: dir });
+  assert.ok(fs.statSync(out).size > 1000, '영상이 안 만들어졌습니다');
 });
 
 console.log(`\n${'═'.repeat(60)}`);
