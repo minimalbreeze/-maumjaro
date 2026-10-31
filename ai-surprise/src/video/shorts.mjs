@@ -321,6 +321,115 @@ export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds
   return picked;
 }
 
+/**
+ * 쇼츠는 **잘라 낸 토막**이다. 그래서 시작과 끝이 제일 약하다.
+ *
+ * 본편에서는 앞뒤가 이어져 있으니 "그런데 이 열여섯 명 중에…" 로 열어도
+ * 된다. 그런데 그 문장이 쇼츠의 첫 줄이 되면 보는 사람은 **무엇에 대한
+ * '그런데'인지 모른다.** 3초 안에 못 알아들으면 넘긴다 — 이탈 73.4%의
+ * 상당 부분이 여기서 나온다고 본다.
+ *
+ * 끝도 마찬가지다. "…입니다." 로 끝나면 할 말이 끝난 느낌이라 그대로
+ * 나간다. 물음이나 예고로 끝나면 다음을 찾는다.
+ *
+ * 고칠 방법이 둘인데, 나레이션을 새로 만드는 쪽은 돈과 시간이 든다.
+ * 그래서 **고르는 단계에서 거른다** — 시작이 좋고 끝이 궁금한 구간에
+ * 점수를 더 준다. 공짜고, 재료가 넉넉하면 충분히 돈다.
+ */
+
+/** 앞을 받는 말. 쇼츠 첫 줄에 오면 무슨 소리인지 모른다. */
+export const BACK_REFERENCE = [
+  // 앞 문장을 가리키는 말
+  '그래서', '그런데', '그러니까', '그러면', '그럼', '그리고', '그게', '그거',
+  '그중', '그 중', '거기에', '여기에', '여기서', '이게', '이건', '이 숫자',
+  '이 두', '그 숫자', '이 군', '앞서', '아까', '그다음', '그 뒤', '그 자리',
+  // 앞말을 고쳐 말하는 꼴
+  '다시 말해', '쉽게 말하면', '정리하면', '요약하면', '즉', '반대로',
+  // 목록의 가운데 토막
+  '먼저', '둘째', '셋째', '마지막으로', '다음은',
+  // 앞에서 한쪽을 말했다는 전제가 깔린 꼴
+  '한쪽은', '다른 쪽', '다른 팀', '반면',
+  // 이어 붙이는 말
+  '또', '게다가', '다만', '물론', '하지만', '그렇다고',
+  // 앞에 무엇이 문제였는지 말해 놓고 쓰는 꼴
+  '문제는', '핵심은',
+  // 마무리하는 말로 여는 꼴. 본편의 끝자락이 쇼츠의 첫 줄이 되면
+  // 보는 사람은 **무엇을 정리한다는 것인지** 모른다. 제일 나쁘다.
+  '정리하겠습니다', '정리하면', '결론은', '끝으로',
+];
+
+/** 끝을 궁금하게 맺는 말. */
+export const CURIOSITY_END = [
+  // 대놓고 묻는 꼴 — 제일 세다
+  '?', '을까', '을까.', 'ㄹ까', '나요', '나요.',
+  // 다음을 예고하는 꼴
+  '봅시다', '보겠습니다', '보겠습니다.', '나눠 보겠습니다', '짚어 보겠습니다',
+  // 아직 안 끝났다고 말하는 꼴
+  '남았습니다', '남습니다', '모릅니다', '달라집니다', '시작됩니다',
+  '아닙니다', '아닙니다.', '그겁니다', '그겁니다.', '문제입니다', '문제입니다.',
+  '있습니다만', '됩니다', '됩니다.',
+];
+
+/** 다 끝났다는 느낌으로 맺는 말. 쇼츠 끝에 오면 그대로 나간다. */
+export const CLOSED_END = [
+  '정리하겠습니다', '정리했습니다', '이상입니다', '끝입니다', '전부입니다',
+  '남겨 주세요', '바랍니다',
+];
+
+function firstText(slice) {
+  return String(slice[0]?.text || '').trim();
+}
+
+function lastText(slice) {
+  return String(slice[slice.length - 1]?.text || '').trim();
+}
+
+/**
+ * 시작 점수. 앞을 받는 말로 열면 깎고, 숫자나 물음으로 열면 더 준다.
+ */
+export function openingScore(slice) {
+  const t = firstText(slice);
+  if (!t) return 0;
+  let score = 0;
+  // 벌점이 섹션 점수를 이길 만큼 세야 한다. -30 으로는 값 높은 단락이
+  // 그대로 뽑혔다. 시작이 무슨 소리인지 모르면 그 쇼츠는 값이 아무리
+  // 높아도 3초에서 넘어간다.
+  if (BACK_REFERENCE.some((w) => t.startsWith(w))) score -= 45;
+  // 숫자로 열면 세다. 성적에서 1등 한 쇼츠가 그랬다(1위 10명, 꼴찌 8명).
+  //
+  // 한자어 수(일·이·삼…)만 보면 **"서른두 명"** 같은 고유어 수를 놓친다.
+  // 우리 대본은 TTS 가 또박또박 읽도록 수를 한글로 풀어 쓰므로 둘 다 나온다.
+  const SINO = '[일이삼사오육칠팔구십백천만억]';
+  const NATIVE = '(한|두|세|네|다섯|여섯|일곱|여덟|아홉|열|스물|서른|마흔|쉰|예순|일흔|여든|아흔)';
+  const COUNTER = '[명개년억위번살차]';
+  if (
+    /^[0-9]/.test(t) ||
+    new RegExp(`^(${SINO}|${NATIVE}){1,5}\\s*${COUNTER}`).test(t)
+  ) {
+    score += 12;
+  }
+  if (/[?]$/.test(t.split(/(?<=[.?!])\s/)[0] || '')) score += 10;
+  return score;
+}
+
+/**
+ * 끝 점수. 물음이나 예고로 맺으면 더 주고, 다 끝난 느낌이면 깎는다.
+ */
+export function endingScore(slice) {
+  const t = lastText(slice);
+  if (!t) return 0;
+  let score = 0;
+  // 묻고 끝나는 것이 제일 세다. 예고·미완은 그다음.
+  //
+  // ⚠️ "까요" 로만 보면 **"거니까요" 가 물음으로 잡힌다.** 그건 이유를
+  //    대는 말이지 묻는 말이 아니다. 앞 글자가 '니' 면 뺀다.
+  const QUESTION = /[?]$|(?<!니)까요\.?$|(?<!니)을까\.?$|나요\.?$/;
+  if (QUESTION.test(t)) score += 28;
+  else if (CURIOSITY_END.some((w) => t.endsWith(w) || t.endsWith(w + '.'))) score += 16;
+  if (CLOSED_END.some((w) => t.includes(w))) score -= 20;
+  return score;
+}
+
 /** 구간 점수. 섹션 가치가 주고, 길이는 보조다. */
 function scoreSlice(slice, seconds, { minSeconds, maxSeconds, values = SECTION_VALUE }) {
   // 섹션 가치는 길이로 가중 평균한다. 짧게 스친 섹션이 점수를 끌어올리면 안 된다.
@@ -340,7 +449,14 @@ function scoreSlice(slice, seconds, { minSeconds, maxSeconds, values = SECTION_V
   // 시작이 HOOK이면 더 준다. 쇼츠는 첫 1초가 전부다.
   const startsWithHook = slice[0]?.section === 'HOOK' ? 15 : 0;
 
-  return sectionScore * 0.75 + lengthScore * 0.25 + startsWithHook;
+  // 잘라 낸 토막이라 시작과 끝이 제일 약하다. 거기를 점수로 거른다.
+  return (
+    sectionScore * 0.75 +
+    lengthScore * 0.25 +
+    startsWithHook +
+    openingScore(slice) +
+    endingScore(slice)
+  );
 }
 
 function explain(sections, duration) {

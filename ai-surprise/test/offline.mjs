@@ -4934,6 +4934,80 @@ await asyncTest('마무리 띠가 실제로 그려진다', async () => {
   assert.ok(fs.statSync(out).size > 1000, '영상이 안 만들어졌습니다');
 });
 
+// ─────────────────────────────────────────────────────────────
+
+section('4-t. 쇼츠의 시작과 끝을 고른다');
+
+const {
+  openingScore, endingScore, BACK_REFERENCE: BACKREF, CURIOSITY_END: CURIOUS,
+} = await import('../src/video/shorts.mjs');
+
+const para = (text) => [{ text, section: 'GAP', seconds: 8 }];
+
+test('앞을 받는 말로 시작하면 깎는다', () => {
+  // 본편에서는 "그런데 이 열여섯 명 중에…" 로 열어도 된다. 그 문장이
+  // 쇼츠 첫 줄이 되면 무엇에 대한 '그런데'인지 모른다.
+  for (const w of ['그런데', '그중', '쉽게 말하면', '먼저', '다른 쪽은', '정리하겠습니다']) {
+    assert.ok(openingScore(para(`${w} 이러저러합니다.`)) < 0, `"${w}" 가 안 걸립니다`);
+  }
+  // 스스로 서는 문장은 안 깎는다.
+  assert.ok(openingScore(para('황대인의 올해 일 군 기록입니다.')) >= 0);
+  assert.ok(openingScore(para('이천십구 년 한화에는 유망주 삼총사가 있었습니다.')) >= 0);
+});
+
+test('숫자로 열면 더 준다', () => {
+  // 성적에서 1등 한 쇼츠가 숫자로 열었다 (1위 10명, 꼴찌 8명 — 916회).
+  assert.ok(openingScore(para('서른두 명이 갑니다.')) > 0);
+  assert.ok(openingScore(para('86명입니다.')) > 0);
+});
+
+test('묻고 끝나면 더 주고, 다 끝나면 깎는다', () => {
+  assert.ok(endingScore(para('재능의 차이였을까요?')) > 15);
+  assert.ok(endingScore(para('왜 그럴까요?')) > 15);
+  assert.ok(endingScore(para('지금 벌어지고 있는 게 그겁니다.')) > 0);
+  assert.ok(endingScore(para('어떻게 보시는지 댓글로 남겨 주세요.')) < 0);
+  assert.ok(endingScore(para('이상입니다.')) < 0);
+});
+
+test('"거니까요" 를 물음으로 세지 않는다', () => {
+  // 까요 로만 보면 이유를 대는 말이 물음으로 잡힌다. 실제로 그렇게
+  // 잡혀서 끝이 안 궁금한 쇼츠가 위로 올라왔다.
+  const 이유 = endingScore(para('벤치에서 한 타석을 맡을 카드로도 안 뽑힌 거니까요.'));
+  const 물음 = endingScore(para('재능의 차이였을까요?'));
+  assert.ok(이유 < 물음, `이유(${이유})가 물음(${물음})만큼 점수를 받았습니다`);
+});
+
+await asyncTest('실제 대본에서 시작이 약한 쇼츠가 없다', async () => {
+  // 이 검사가 이 변경의 전부다. 규칙을 아무리 써도 실제 대본에서
+  // 안 걸러지면 소용없다.
+  const [{ splitIntoScenes: split3 }, S3] = await Promise.all([
+    import('../src/scenes/split.mjs'),
+    import('../src/video/shorts.mjs'),
+  ]);
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  const plan = JSON.parse(fs.readFileSync(path.join(base, '3화.json'), 'utf8'));
+  const md = fs.readFileSync(path.join(base, '3화-대본.md'), 'utf8');
+  const { scenes } = split3(md, { kind: 'SPORTS', sections: plan.sections });
+  const values = {};
+  for (const sec of plan.sections) values[sec.key] = sec.value ?? (sec.key === 'HOOK' ? 100 : 20);
+  const picked = S3.pickShorts(scenes, { kind: 'SPORTS', sectionValues: values });
+
+  assert.ok(picked.length >= 8, `${picked.length}편뿐입니다`);
+  for (const p of picked) {
+    const first = String(p.paragraphs[0].text).trim();
+    const weak = BACKREF.find((w) => first.startsWith(w));
+    assert.ok(!weak, `${p.rank}순위가 "${weak}" 로 시작합니다: ${first.slice(0, 30)}`);
+  }
+  // 끝이 궁금한 쇼츠가 적어도 셋은 있어야 한다. 전부는 못 만든다 —
+  // 대본이 50초마다 물음으로 끝나도록 쓰이지는 않았기 때문이다.
+  const Q = /[?]$|(?<!니)까요\.?$|(?<!니)을까\.?$|나요\.?$/;
+  const curious = picked.filter((p) => {
+    const last = String(p.paragraphs[p.paragraphs.length - 1].text).trim();
+    return Q.test(last) || CURIOUS.some((w) => last.endsWith(w));
+  });
+  assert.ok(curious.length >= 3, `끝이 궁금한 쇼츠가 ${curious.length}편뿐입니다`);
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
