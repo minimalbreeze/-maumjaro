@@ -202,7 +202,17 @@ export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds
   let cursor = 0;
   for (const scene of scenes || []) {
     for (const p of scene.paragraphs || []) {
-      const seconds = secondsForChars(countNarrationChars(p.text));
+      // ⚠️ **실제 음성 길이가 있으면 그것을 쓴다.** 글자 수 추정으로 다시
+      //    계산하면 안 된다 — 실행 #38 에서 그렇게 해서 마지막 쇼츠가
+      //    43초로 골라졌는데 21.8초로 잘려 나왔다. 추정은 562.55초였고
+      //    실제 음성은 540.97초였다. 21.6초 차이가 영상 끝에 쌓이니까
+      //    끝 구간을 고른 쇼츠만 잘린다.
+      //
+      //    narrate 단계의 applyTimings 가 문단마다 seconds 를 채워 둔다.
+      //    목소리를 아직 안 만들었으면 없으니, 그때만 추정으로 돈다.
+      const seconds = Number(p.seconds) > 0
+        ? Number(p.seconds)
+        : secondsForChars(countNarrationChars(p.text));
       paragraphs.push({
         section: scene.section,
         scene_number: scene.scene_number,

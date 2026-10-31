@@ -1677,6 +1677,9 @@ async function cmdVideo(flags) {
     log.error(`계획(${timeline.duration}초)과 실제 길이(${info.duration.toFixed(1)}초)가 ${drift.toFixed(1)}초 다릅니다.`);
   }
 
+  // 쇼츠가 본편 끝을 넘어 잘린 것들. 아래에서 모아 마지막에 알린다.
+  const shortsCut = [];
+
   // ── 5단계: 쇼츠 자르기
   if (shorts.length && !flags['no-shorts']) {
     log.section('📱 쇼츠 렌더링');
@@ -1701,7 +1704,21 @@ async function cmdVideo(flags) {
       });
       const si = await probe(out);
       log.ok(`쇼츠 ${s.rank}: ${si.width}x${si.height}, ${si.duration.toFixed(1)}초 — ${out}`);
+      // 고른 길이보다 실제가 짧으면 영상 끝을 넘어가 잘린 것이다. 실행
+      // #38 에서 43.45초로 고른 쇼츠가 21.8초로 나왔는데 로그가
+      // 조용해서 못 보고 넘어갔다. 이제는 눈에 띄게 적는다.
+      const cut = Number(s.duration) - Number(si.duration);
+      if (Number.isFinite(cut) && cut > SHORT_CUT_WARN_SECONDS) {
+        log.warn(`쇼츠 ${s.rank} 이 ${cut.toFixed(1)}초 잘렸습니다 — ${s.duration}초로 골랐는데 ${si.duration.toFixed(1)}초입니다.`);
+        log.info('  고른 구간이 본편 끝을 넘었을 때 이렇게 됩니다. 올리기 전에 꼭 보세요.');
+        shortsCut.push(s.rank);
+      }
     }
+  }
+
+  if (shortsCut.length) {
+    log.error(`잘린 쇼츠가 ${shortsCut.length}개 있습니다: ${shortsCut.join(', ')}번. 그대로 올리지 마세요.`);
+    process.exitCode = 1;
   }
 
   log.raw('');

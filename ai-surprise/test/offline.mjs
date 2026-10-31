@@ -5008,6 +5008,42 @@ await asyncTest('실제 대본에서 시작이 약한 쇼츠가 없다', async (
   assert.ok(curious.length >= 3, `끝이 궁금한 쇼츠가 ${curious.length}편뿐입니다`);
 });
 
+await asyncTest('쇼츠가 실제 음성 길이를 쓴다 — 글자 수로 다시 추정하지 않는다', async () => {
+  // 실행 #38 에서 마지막 쇼츠가 43.45초로 골라졌는데 21.8초로 잘려 나왔다.
+  // 글자 수 추정 562.55초로 구간을 고르는데 실제 음성은 540.97초였다.
+  // narrate 단계가 문단마다 채워 둔 seconds 를 쓰면 안 어긋난다.
+  const S = await import('../src/video/shorts.mjs');
+
+  // 실제 음성이 추정치의 절반인 대본. 추정만 쓰면 뒤로 갈수록 벌어진다.
+  const scenes = [];
+  for (let i = 1; i <= 24; i++) {
+    scenes.push({
+      scene_number: i,
+      section: i === 1 ? 'HOOK' : 'BODY',
+      paragraphs: [
+        { tag: 'FACT', text: '가'.repeat(120), seconds: 11 },
+        { tag: 'THEORY', text: '나'.repeat(120), seconds: 11 },
+      ],
+    });
+  }
+  const real = 24 * 22; // 528초
+  const picked = S.pickShorts(scenes, { kind: 'SPORTS' });
+  assert.ok(picked.length > 0, '쇼츠가 하나도 안 나왔습니다');
+  for (const p of picked) {
+    assert.ok(
+      p.end <= real + 0.01,
+      `${p.rank}순위가 본편 끝(${real}초)을 넘습니다: ${p.start}~${p.end}`
+    );
+  }
+
+  // seconds 가 없으면(목소리 전) 추정으로 돈다 — 그 길은 살아 있어야 한다.
+  const noAudio = scenes.map((sc) => ({
+    ...sc,
+    paragraphs: sc.paragraphs.map(({ seconds, ...rest }) => rest),
+  }));
+  assert.ok(S.pickShorts(noAudio, { kind: 'SPORTS' }).length > 0, '목소리 없이 고르지 못했습니다');
+});
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
@@ -5015,5 +5051,6 @@ console.log('═'.repeat(60));
 
 // 테스트가 만든 임시 폴더를 지운다.
 fs.rmSync(TMP, { recursive: true, force: true });
+
 
 if (failed) process.exit(1);
