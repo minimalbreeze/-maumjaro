@@ -1,0 +1,124 @@
+{
+  "title": "두 명단에서 동시에 빠진다는 것",
+  "premise": "황대인과 변우혁이 가을야구 엔트리에서도, 마무리캠프 32명에서도 빠졌다. 방출은 아닌데 갈 자리가 없다.",
+  "angle": "구단에는 선수를 담는 칸이 '지금'과 '나중' 둘뿐이다 — 둘 다 아니면 제도상 갈 곳이 없다",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "두 명단에서 동시에 빠졌다. 방출은 아니다."
+    },
+    {
+      "key": "TWOLISTS",
+      "label": "칸이 두 개뿐입니다",
+      "note": "포스트시즌 엔트리는 '지금', 마무리캠프는 '나중'. 이 편의 뼈대.",
+      "value": 85
+    },
+    {
+      "key": "WHO",
+      "label": "두 사람은 누구였나",
+      "note": "우타 거포 기대주. 1996년생과 2000년생.",
+      "value": 60
+    },
+    {
+      "key": "NUMBERS",
+      "label": "숫자로 봅니다",
+      "note": "1군과 2군을 나란히. 표 카드.",
+      "value": 70
+    },
+    {
+      "key": "GAP",
+      "label": "2군에서 잘 치는데 왜 안 부를까",
+      "note": "이 편의 중심. 돌아 나올 문이 없는 방.",
+      "value": 95
+    },
+    {
+      "key": "DEBATE",
+      "label": "기다려 줘야 할까",
+      "note": "한쪽 편을 들지 않는다. 다만 '둘 다 안 하는 것'이 제일 나쁘다.",
+      "value": 75
+    },
+    {
+      "key": "CHANGE",
+      "label": "무엇이 바뀌어야 할까",
+      "note": "선수 / 구단 / 제도 셋으로 나눈다.",
+      "value": 80
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "세 자리로 정리하고 댓글 질문.",
+      "value": 20
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "두 명단에서 동시에 빠졌다. 방출은 아니다."
+    },
+    {
+      "key": "TWOLISTS",
+      "what": "포스트시즌 엔트리는 '지금', 마무리캠프는 '나중'. 이 편의 뼈대."
+    },
+    {
+      "key": "WHO",
+      "what": "우타 거포 기대주. 1996년생과 2000년생."
+    },
+    {
+      "key": "NUMBERS",
+      "what": "1군과 2군을 나란히. 표 카드."
+    },
+    {
+      "key": "GAP",
+      "what": "이 편의 중심. 돌아 나올 문이 없는 방."
+    },
+    {
+      "key": "DEBATE",
+      "what": "한쪽 편을 들지 않는다. 다만 '둘 다 안 하는 것'이 제일 나쁘다."
+    },
+    {
+      "key": "CHANGE",
+      "what": "선수 / 구단 / 제도 셋으로 나눈다."
+    },
+    {
+      "key": "CLOSE",
+      "what": "세 자리로 정리하고 댓글 질문."
+    }
+  ],
+  "sources": [
+    {
+      "name": "가을야구·마무리캠프 동시 제외 — 황대인·변우혁 (2026-10-31, MHN)",
+      "url": "https://www.mhnse.com/"
+    },
+    {
+      "name": "황대인 2군 39경기 .302 4홈런, 1군 3경기 4타수 무안타",
+      "url": "https://www.xportsnews.com/article/2192456"
+    },
+    {
+      "name": "황대인 2군 3경기 연속 멀티히트, 1군 콜업 전망",
+      "url": "https://www.xportsnews.com/article/2193125"
+    },
+    {
+      "name": "변우혁 1군 47경기 .198 3홈런 9타점 (2026-10-15)",
+      "url": "https://m.news.nate.com/view/20261015n23440"
+    },
+    {
+      "name": "KBO 한국야구위원회",
+      "url": "https://www.koreabaseball.com/"
+    }
+  ],
+  "people": [
+    {
+      "name": "황대인",
+      "role": "내야수",
+      "look": "a Korean man around 30 with a broad squarish face, a solid heavy jaw, thick dark eyebrows, calm narrow eyes, a straight nose, short black hair, a big powerful build with broad shoulders and thick arms",
+      "tell": ""
+    },
+    {
+      "name": "변우혁",
+      "role": "내야수",
+      "look": "a Korean man in his mid-20s with a round full face and soft cheeks, large gentle eyes, thick eyebrows, a wide friendly mouth, short black hair, a very large tall frame with heavy shoulders",
+      "tell": ""
+    }
+  ]
+}
