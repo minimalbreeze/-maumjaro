@@ -5044,6 +5044,31 @@ await asyncTest('쇼츠가 실제 음성 길이를 쓴다 — 글자 수로 다�
   assert.ok(S.pickShorts(noAudio, { kind: 'SPORTS' }).length > 0, '목소리 없이 고르지 못했습니다');
 });
 
+await asyncTest('대본의 마크다운 강조를 떼고 읽는다', async () => {
+  // 3화에서 "**키우는 자리**" 가 그대로 음성으로 나갔다. 다섯 군데였다.
+  // 별표는 "여기 힘줘서 읽어라"는 표시지 읽을 글자가 아니다.
+  const { stripEmphasis, parseScript } = await import('../src/scenes/parse.mjs');
+
+  assert.equal(stripEmphasis('**키우는 자리**라는 거죠.'), '키우는 자리라는 거죠.');
+  assert.equal(stripEmphasis('다만 __하나는__ 분명합니다.'), '다만 하나는 분명합니다.');
+  assert.equal(stripEmphasis('그래서 *이것* 입니다.'), '그래서 이것 입니다.');
+  // 숫자나 말 안에 든 기호는 건드리지 않는다.
+  assert.equal(stripEmphasis('타율 .302, OPS .850'), '타율 .302, OPS .850');
+  assert.equal(stripEmphasis('2 * 3 은 6'), '2 * 3 은 6');
+  assert.equal(stripEmphasis('파일은 a_b_c 입니다'), '파일은 a_b_c 입니다');
+
+  // 실제 대본을 지나가도 남지 않는다.
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  const plan = JSON.parse(fs.readFileSync(path.join(base, '3화.json'), 'utf8'));
+  const md = fs.readFileSync(path.join(base, '3화-대본.md'), 'utf8');
+  assert.ok(md.includes('**'), '3화 대본에 별표가 없습니다 — 이 검사가 무의미해집니다');
+  const parsed = parseScript(md, { kind: 'SPORTS', sections: plan.sections });
+  for (const p of parsed.paragraphs) {
+    assert.ok(!/\*\*|__/.test(p.text), `별표가 남았습니다: ${p.text.slice(0, 40)}`);
+  }
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

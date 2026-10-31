@@ -33,6 +33,21 @@ const TAG_RE = new RegExp(`^\\[(${ALL_TAGS.join('|')})\\]\\s*(.*)$`);
  * problems 가 비어 있지 않으면 장면 분할로 넘기지 않는다. 깨진 대본으로
  * 장면을 만들면 Phase 3에서 돈을 쓴 뒤에야 문제를 발견한다.
  */
+/**
+ * 대본의 마크다운 강조를 뗀다. 읽을 글자만 남긴다.
+ *
+ * `**굵게**` · `__굵게__` · `*기울임*` · `_기울임_` 를 안쪽 글자로 바꾼다.
+ * 별표만 떼고 내용은 한 글자도 건드리지 않는다.
+ */
+export function stripEmphasis(text) {
+  return String(text ?? '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/(^|[\s(«"'])\*([^*\n]+)\*(?=$|[\s,.?!)»"'])/g, '$1$2')
+    .replace(/(^|[\s(«"'])_([^_\n]+)_(?=$|[\s,.?!)»"'])/g, '$1$2')
+    .trim();
+}
+
 export function parseScript(markdown, { kind = KIND.EVENT, sections: givenSections = null } = {}) {
   // 이 편의 단락 차례. 기획 파일이 들고 온 것이 있으면 그쪽이 이긴다.
   const expectedSections = sectionsFor(kind, { sections: givenSections });
@@ -74,7 +89,17 @@ export function parseScript(markdown, { kind = KIND.EVENT, sections: givenSectio
       continue;
     }
 
-    const [, tag, text] = tagMatch;
+    const [, tag, rawText] = tagMatch;
+    // 대본에 쓴 마크다운 강조(**…**)를 **여기서 뗀다.**
+    //
+    // 3화에서 "**키우는 자리**"가 그대로 음성으로 나갔다. 다섯 군데였다.
+    // 별표는 사람이 대본을 읽을 때 "여기 힘줘서 읽어라"는 표시지, 읽을
+    // 글자가 아니다. 자막에도 그대로 박혔다.
+    //
+    // 떼는 자리는 한 곳이어야 한다. 음성 쪽에서만 떼면 자막에 남고,
+    // 자막에서만 떼면 음성이 읽는다. 문단이 만들어지는 이 지점이 그
+    // 한 곳이다 — 여기서 떼면 음성·자막·장면·쇼츠가 전부 같은 글을 쓴다.
+    const text = stripEmphasis(rawText);
     if (!text) {
       problems.push(`[${tag}] 태그만 있고 내용이 없는 줄이 있습니다.`);
       continue;
