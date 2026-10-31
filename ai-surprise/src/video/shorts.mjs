@@ -113,11 +113,40 @@ export const SPOILER_SECTIONS = {
  * 결말을 빼고 나면 남는 구간이 애초에 적다.
  */
 export const SHORTS_COUNT = {
-  [KIND.SPORTS]: 5,
+  // 스포츠는 여덟 편이다.
+  //
+  // 처음엔 다섯이었다. 그런데 올려 보니 **본편보다 쇼츠 반응이 좋았고**,
+  // 운영자가 늘릴 수 있으면 늘리자고 했다(2026-10-31).
+  //
+  // 9.4분짜리 3화 대본으로 실제로 세어 본 값이다.
+  //
+  //   60~90초  7개까지 (겹침 23초) · 8개부터 92초로 튄다
+  //   50~80초  8개까지 (겹침 15초)
+  //   40~70초  10개까지 (겹침 11초)
+  //
+  // 열 편도 뽑히긴 한다. 다만 한 편이 55초짜리 **토막**이 된다. 여덟이
+  // 늘어난 만큼 얻고 완결성을 덜 잃는 자리다. 겹침 15초는 전체의 3%라
+  // 사실상 같은 내용이 두 번 나오지 않는다.
+  [KIND.SPORTS]: 8,
+};
+
+/**
+ * 쇼츠 길이 범위.
+ *
+ * 스포츠만 50~80초다. 여덟 편을 뽑으려면 60초 바닥으로는 자리가 안 나온다
+ * (위 표 참고). 다른 종류는 그대로 60~90초다 — 이야기 편은 한 편이
+ * 완결돼야 해서 짧게 자르면 손해가 크다.
+ */
+export const SHORTS_LENGTH = {
+  [KIND.SPORTS]: { min: 50, max: 80 },
 };
 
 export function shortsCountFor(kind) {
   return SHORTS_COUNT[kind] || 3;
+}
+
+export function shortsLengthFor(kind) {
+  return SHORTS_LENGTH[kind] || { min: SHORTS_MIN_SECONDS, max: SHORTS_MAX_SECONDS };
 }
 
 export function spoilerSectionsFor(kind) {
@@ -135,7 +164,20 @@ export function spoilerSectionsFor(kind) {
  *  2) 구간마다 점수를 낸다 (섹션 가치 + 길이 적합도)
  *  3) 점수 높은 순으로 고르되, 이미 고른 구간과 많이 겹치면 건너뛴다
  */
-export function pickShorts(scenes, { count = null, minSeconds = SHORTS_MIN_SECONDS, maxSeconds = SHORTS_MAX_SECONDS, kind = null, sectionValues = null } = {}) {
+export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds = null, kind = null, sectionValues = null } = {}) {
+  // 길이도 종류가 정한다. 호출하는 쪽에 숫자를 적어 두면 한 곳만 고치고
+  // 다른 곳이 그대로 남는다 — 개수에서 이미 한 번 겪었다.
+  const len = shortsLengthFor(kind);
+  // ⚠️ Number(null) 은 0 이고 Number.isFinite(0) 은 true 다. 그래서
+  //    isFinite 로만 거르면 안 넘긴 값이 0초가 된다 — 실제로 그렇게
+  //    되어 쇼츠가 562초짜리 한 편으로 나왔다. 빈 값을 먼저 가린다.
+  const given = (v, fallback) => {
+    if (v === null || v === undefined || v === '') return fallback;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+  minSeconds = given(minSeconds, len.min);
+  maxSeconds = given(maxSeconds, len.max);
   // 개수를 안 주면 종류가 정한다. 호출하는 쪽마다 숫자를 적어 두면
   // 한 곳만 고치고 다른 곳이 그대로 남는다.
   const want = Number.isFinite(Number(count)) && Number(count) > 0

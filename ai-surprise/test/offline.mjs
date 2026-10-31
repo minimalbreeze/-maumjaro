@@ -3976,11 +3976,12 @@ await asyncTest('스포츠 화면 지시가 선수 이름을 쓰지 말라고 �
   assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
-await asyncTest('스포츠는 쇼츠를 다섯 개 뽑는다 (월 본편 + 화~금 쇼츠)', async () => {
+await asyncTest('스포츠는 쇼츠를 여덟 개 뽑는다', async () => {
   const S = await import('../src/video/shorts.mjs');
-  // 올리는 리듬에서 나온 숫자다. 월요일 본편, 화~금 쇼츠 넷, 주말 휴식.
-  // 다섯을 뽑아 넷을 쓰고 하나는 버릴 여유로 둔다.
-  assert.equal(S.shortsCountFor('SPORTS'), 5);
+  // 처음엔 다섯이었다(월 본편 + 화~금 넷 + 예비 하나). 그런데 올려 보니
+  // **본편보다 쇼츠 반응이 좋아서** 늘렸다(2026-10-31). 9분대 대본에서
+  // 50~80초로 여덟까지는 겹침이 3%에 그친다.
+  assert.equal(S.shortsCountFor('SPORTS'), 8);
   assert.equal(S.shortsCountFor('TALE'), 3, '동화까지 늘어나면 서로 겹칩니다');
   assert.equal(S.shortsCountFor('EVENT'), 3);
 });
@@ -4001,7 +4002,7 @@ await asyncTest('스포츠 섹션에 점수가 매겨져 있다', async () => {
     })
   );
   const picked = S.pickShorts(scenes, { kind: 'SPORTS' });
-  assert.equal(picked.length, 5, `다섯 개가 안 나왔습니다 (${picked.length}개)`);
+  assert.equal(picked.length, 8, `여덟 개가 안 나왔습니다 (${picked.length}개)`);
   assert.ok(
     picked.some((p) => p.sections.includes('ACE')),
     '가장 중요한 ACE 구간이 쇼츠에 없습니다'
@@ -4802,6 +4803,68 @@ test('인물 시트 모드가 제 갈 길로 간다', () => {
     condOf('ffmpeg와 한글 글꼴 설치', '\n        timeout-minutes').includes("!contains(inputs.mode, '인물 시트')"),
     '쓰지도 않는 ffmpeg 를 깝니다'
   );
+});
+
+// ─────────────────────────────────────────────────────────────
+
+section('4-r. 쇼츠를 여덟 편으로 늘린다');
+
+const shortsMod = await import('../src/video/shorts.mjs');
+
+test('스포츠만 여덟 편 50~80초, 나머지는 그대로', () => {
+  // 본편보다 쇼츠 반응이 좋아서 늘렸다. 다른 종류까지 같이 바꾸면
+  // 이야기 편이 토막난다 — 거기는 한 편이 완결돼야 한다.
+  assert.equal(shortsMod.shortsCountFor('SPORTS'), 8);
+  assert.deepEqual(shortsMod.shortsLengthFor('SPORTS'), { min: 50, max: 80 });
+  assert.equal(shortsMod.shortsCountFor('TALE'), 3);
+  assert.deepEqual(shortsMod.shortsLengthFor('TALE'), { min: 60, max: 90 });
+  assert.deepEqual(shortsMod.shortsLengthFor(null), { min: 60, max: 90 });
+});
+
+test('길이를 안 넘기면 0초가 되지 않는다', () => {
+  // Number(null) 은 0 이고 Number.isFinite(0) 은 true 다. isFinite 로만
+  // 거르면 안 넘긴 값이 0초가 되는데, 실제로 그렇게 되어 쇼츠가
+  // 562초짜리 한 편으로 나왔다.
+  // 장면의 실제 꼴은 paragraphs 다. shots 로 만들면 길이가 0이 되어
+  // 검사만 혼자 다른 세상이 된다.
+  const scenes = Array.from({ length: 24 }, (_, i) => ({
+    scene_number: i + 1,
+    section: i === 0 ? 'HOOK' : 'GAP',
+    paragraphs: Array.from({ length: 6 }, (_, k) => ({
+      tag: 'THEORY',
+      text: `문단 ${i}-${k} ${'가'.repeat(40)}`,
+    })),
+  }));
+  for (const opts of [{}, { minSeconds: null }, { maxSeconds: undefined }, { minSeconds: '' }]) {
+    const picked = shortsMod.pickShorts(scenes, { kind: 'SPORTS', ...opts });
+    assert.ok(picked.length > 1, `${JSON.stringify(opts)} 에서 ${picked.length}편만 나왔습니다`);
+    for (const p of picked) {
+      assert.ok(p.duration >= 40, `${p.duration}초짜리가 나왔습니다 — 길이가 0으로 떨어졌습니다`);
+    }
+  }
+  // 넘긴 값은 그대로 이긴다.
+  const narrow = shortsMod.pickShorts(scenes, { kind: 'SPORTS', minSeconds: 100, maxSeconds: 130 });
+  assert.ok(narrow.every((p) => p.duration >= 100), '넘긴 길이를 안 씁니다');
+});
+
+test('여덟 편이 서로 거의 안 겹친다', () => {
+  // 늘리면 같은 내용이 두 쇼츠에 들어갈 위험이 커진다. 9분대 대본에서
+  // 겹침이 전체의 5%를 넘으면 개수를 다시 생각해야 한다.
+  const scenes = Array.from({ length: 28 }, (_, i) => ({
+    scene_number: i + 1,
+    section: i === 0 ? 'HOOK' : 'GAP',
+    paragraphs: Array.from({ length: 6 }, (_, k) => ({
+      tag: 'THEORY',
+      text: `문단 ${i}-${k} ${'가'.repeat(40)}`,
+    })),
+  }));
+  const picked = shortsMod.pickShorts(scenes, { kind: 'SPORTS' });
+  assert.equal(picked.length, 8, `${picked.length}편만 나왔습니다`);
+  const spans = picked.map((p) => [p.start, p.end]).sort((a, b) => a[0] - b[0]);
+  let overlap = 0;
+  for (let i = 1; i < spans.length; i++) overlap += Math.max(0, spans[i - 1][1] - spans[i][0]);
+  const total = picked.reduce((a, p) => a + p.duration, 0) + overlap;
+  assert.ok(overlap / total < 0.05, `겹침이 ${Math.round((overlap / total) * 100)}% 입니다`);
 });
 
 console.log(`\n${'═'.repeat(60)}`);
