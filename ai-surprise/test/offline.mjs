@@ -3266,6 +3266,9 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
   // 3) 모드마다 어디로 가는지. 셸 case 와 같은 "처음 맞는 것" 규칙.
   const route = (mode) => branches.find((b) => b === null || mode.includes(b));
   const expected = {
+    // '발음 들어보기' 에도 '들어보기' 가 들어 있다. '목소리 들어보기'
+    // 보다 **먼저** 와야 서로 가로채지 않는다. 분기에서도 맨 앞이다.
+    '발음 들어보기': '발음 들어보기',
     '소리 점검': '소리 점검',
     '목소리 들어보기': '목소리 들어보기',
     '대본만 다시 쓰기': '대본만 다시 쓰기',
@@ -5230,6 +5233,50 @@ await asyncTest('3화·4화 대본에 따옴표가 눈으로만 되는 자리가
     const bad = bareQuoteSpots(spokenSentences(md));
     assert.equal(bad.length, 0, `${ep}: ${bad[0]}`);
   }
+});
+
+
+test('발음 들어보기 모드가 TTS 키는 받고 ffmpeg는 안 깐다', () => {
+  // 모드를 늘릴 때마다 조건문 한 줄을 빠뜨려서 실행 중에 죽는 실패가
+  // 되살아난다. 실행 #30 이 그랬다 — '화풍 미리보기' 에 '그림' 이
+  // 들어 있어서 쓰지도 않는 ffmpeg 설치가 6분간 돌다 죽었다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const MODE = '발음 들어보기 (한 줄을 여러 꼴로 읽어 봅니다 · 1센트 미만)';
+  assert.ok(yml.includes(`- '${MODE}'`), '모드가 목록에 없습니다');
+
+  const condOf = (name) => {
+    const at = yml.indexOf(`- name: ${name}`);
+    assert.ok(at > 0, `${name} 단계를 찾지 못했습니다`);
+    const block = yml.slice(at, yml.indexOf('\n        env:', at));
+    const m = block.match(/if: \$\{\{ (.+?) \}\}/);
+    return m ? m[1] : '';
+  };
+
+  // GitHub 표현식을 **실제로 계산한다.** contains() 를 세는 것만으로는
+  // `!` 를 못 본다 — 그래서 한 번 틀렸다.
+  const evaluate = (cond, mode) => {
+    const js = cond
+      .replace(/contains\(inputs\.mode, '([^']+)'\)/g, (_m, needle) =>
+        mode.includes(needle) ? 'true' : 'false')
+      .replace(/\|\|/g, '||')
+      .replace(/&&/g, '&&');
+    // eslint-disable-next-line no-new-func
+    return Function(`"use strict"; return (${js});`)();
+  };
+
+  assert.equal(evaluate(condOf('목소리 키가 등록되어 있는지 확인'), MODE), true,
+    '발음 들어보기에 TTS 키 확인이 안 걸립니다 — 키 없이 돌다 죽습니다');
+  assert.equal(evaluate(condOf('ffmpeg와 한글 글꼴 설치'), MODE), false,
+    '발음 들어보기에 ffmpeg 를 깝니다 — 쓰지도 않는데 몇 분을 버립니다');
+  assert.equal(evaluate(condOf('이미지 토큰이 등록되어 있는지 확인'), MODE), false,
+    '발음 들어보기에 이미지 토큰을 요구합니다');
+
+  // 읽을 줄을 env 로 넘긴다. 표현식을 run 에 바로 쓰면 셸이 실행한다.
+  assert.ok(yml.includes('IN_SAY_LINES: ${{ inputs.say_lines }}'), 'say_lines 를 env 로 안 넘깁니다');
+  assert.ok(yml.includes("node src/main.mjs voice \"${args[@]}\""), 'voice --say 를 부르지 않습니다');
 });
 
 

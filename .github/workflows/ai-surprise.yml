@@ -23,6 +23,7 @@ on:
           - '테스트만 (비용 0원 · 처음엔 이걸로)'
           - '소리 점검만 (TTS 키가 되는지 · 비용 0원)'
           - '목소리 들어보기 (같은 문장을 여러 목소리로 · 약 $0.05)'
+          - '발음 들어보기 (한 줄을 여러 꼴로 읽어 봅니다 · 1센트 미만)'
           - '대본만 다시 쓰기 (이어하기 번호 필요 · 약 $0.5)'
           - '소재만 찾기 (대본 안 씀)'
           - '소재 찾고 대본까지 쓰기'
@@ -82,6 +83,10 @@ on:
         description: '영상 길이 (분)'
         required: false
         default: '8'
+      say_lines:
+        description: '발음 들어보기 — 읽어 볼 줄들. 줄바꿈으로 여러 개. 어느 쪽이 자연스러운지 듣고 고릅니다'
+        required: false
+        default: ''
       tts_voice:
         description: '목소리 (비우면 ko-KR-Neural2-C). 목록은 voice --voices 로 봅니다'
         required: false
@@ -190,7 +195,7 @@ jobs:
           echo "이미 있는 것은 다시 사지 않습니다."
 
       - name: 비밀값이 등록되어 있는지 확인
-        if: ${{ !contains(inputs.mode, '테스트만') && !contains(inputs.mode, '소리 점검') && !contains(inputs.mode, '목소리 들어보기') }}
+        if: ${{ !contains(inputs.mode, '테스트만') && !contains(inputs.mode, '소리 점검') && !contains(inputs.mode, '목소리 들어보기') && !contains(inputs.mode, '발음 들어보기') }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -202,7 +207,7 @@ jobs:
           echo "ANTHROPIC_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
       - name: 목소리 키가 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '완성본') || contains(inputs.mode, '소리 점검') || contains(inputs.mode, '목소리 들어보기') }}
+        if: ${{ contains(inputs.mode, '완성본') || contains(inputs.mode, '소리 점검') || contains(inputs.mode, '목소리 들어보기') || contains(inputs.mode, '발음 들어보기') }}
         env:
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
         run: |
@@ -305,6 +310,7 @@ jobs:
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
           IN_IMAGE_MODEL: ${{ inputs.image_model }}
           IN_MAX_USD: ${{ inputs.max_usd }}
+          IN_SAY_LINES: ${{ inputs.say_lines }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
           GOOGLE_TTS_API_KEY: ${{ secrets.GOOGLE_TTS_API_KEY }}
@@ -356,6 +362,27 @@ jobs:
           }
 
           case "$IN_MODE" in
+            *'발음 들어보기'*)
+              # 한 줄을 여러 꼴로 읽어 본다. 발음 사전에 무엇을 넣을지
+              # **짐작으로 정하지 않기 위한** 자리다 — 짐작으로 넣으면
+              # 멀쩡한 발음을 망친다. 20자 한 줄에 $0.0006 쯤이다.
+              if [ -z "$IN_SAY_LINES" ]; then
+                echo "::error::'발음 들어보기' 칸에 읽어 볼 줄을 넣어 주세요 (줄바꿈으로 여러 개)."
+                exit 1
+              fi
+              args=()
+              while IFS= read -r line; do
+                [ -n "$line" ] && args+=("--say=$line")
+              done <<SAYEOF
+$IN_SAY_LINES
+SAYEOF
+              if [ ${#args[@]} -eq 0 ]; then
+                echo "::error::읽어 볼 줄이 비어 있습니다."
+                exit 1
+              fi
+              echo "${#args[@]}줄을 읽어 봅니다."
+              node src/main.mjs voice "${args[@]}"
+              ;;
             *'올릴 거리'*)
               if [ -z "$RESUME_ID" ]; then
                 echo "::error::'이어하기' 칸에 앞 실행 번호를 넣어 주세요. 그 편의 올릴 거리를 만듭니다."
