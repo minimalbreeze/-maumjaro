@@ -5069,6 +5069,102 @@ await asyncTest('대본의 마크다운 강조를 떼고 읽는다', async () =>
 });
 
 
+await asyncTest('읽을 글에서 따옴표를 뗀다 — 글자는 그대로 둔다', async () => {
+  // 3화를 듣고 운영자가 잡았다: 따옴표 뒤가 느리고 어색하다.
+  // 눈에는 "여기까지가 남의 말"인데 귀에는 아무것도 아니다.
+  const { speechText, sameMeaning } = await import('../src/audio/speech.mjs');
+
+  assert.equal(
+    speechText('"상상하고 싶지도 않다"던 노시환이 말했습니다.'),
+    '상상하고 싶지도 않다던 노시환이 말했습니다.'
+  );
+  assert.equal(speechText('\u201c슈퍼 루키\u201d라는 말도 붙었고요.'), '슈퍼 루키라는 말도 붙었고요.');
+  assert.equal(speechText("쉽게 말하면 하나는 '지금', 하나는 '나중'이죠."), '쉽게 말하면 하나는 지금, 하나는 나중이죠.');
+
+  // 글자는 한 자도 지우지 않는다 — 기호만 뗀다.
+  for (const line of [
+    '"가능성"은 이제 안 통합니다.',
+    '타율 .302, OPS .850 입니다.',
+    '"7회에 왼손을 올리면 이 선수" — 이 한 줄이면 됩니다.',
+  ]) {
+    assert.ok(sameMeaning(line, speechText(line)), `글자가 달라졌습니다: ${line} → ${speechText(line)}`);
+  }
+
+  // 숫자와 소수점은 건드리지 않는다.
+  assert.equal(speechText('삼 할 이 리'), '삼 할 이 리');
+  assert.equal(speechText('OPS .850'), 'OPS .850');
+});
+
+await asyncTest('읽을 글이 음성 모델로 가고, 자막에는 원문이 남는다', async () => {
+  // 떼는 자리가 한 곳이어야 한다. 음성만 고치면 자막이 어긋난다.
+  const { narrationUnits } = await import('../src/audio/narrate.mjs');
+  const scenes = [{
+    scene_number: 1,
+    section: 'HOOK',
+    paragraphs: [{ tag: 'FACT', text: '"상상조차 싫다"던 말이 있었습니다.' }],
+  }];
+  const [u] = narrationUnits(scenes);
+  assert.equal(u.text, '"상상조차 싫다"던 말이 있었습니다.', '자막용 원문이 바뀌었습니다');
+  assert.equal(u.speech, '상상조차 싫다던 말이 있었습니다.', '읽을 글이 안 만들어졌습니다');
+  // 돈은 읽는 글자 수로 나간다.
+  assert.equal(u.chars, u.speech.length);
+});
+
+await asyncTest('발음 사전은 들어 보기 전에는 비어 있다', async () => {
+  // 짐작으로 넣으면 멀쩡한 발음을 망친다. 넣기 전에 반드시
+  // `voice --say` 로 양쪽을 만들어 듣는다.
+  const { PRONOUNCE, SOFTEN_LIST_COMMAS, softenListCommas } = await import('../src/audio/speech.mjs');
+  assert.equal(PRONOUNCE.size, 0, '듣지 않고 발음 사전에 넣은 것이 있습니다');
+  assert.equal(SOFTEN_LIST_COMMAS, false, '듣지 않고 쉼표 바꾸기를 켰습니다');
+  // 켤 때 어떻게 되는지는 미리 확인해 둔다.
+  assert.equal(softenListCommas('노시환, 유로결, 변우혁'), '노시환·유로결·변우혁');
+  assert.equal(softenListCommas('노시환, 변우혁'), '노시환, 변우혁', '둘뿐인 것은 건드리지 않습니다');
+});
+
+
+await asyncTest('따옴표가 눈으로만 되는 자리를 잡는다', async () => {
+  // 듣는 사람은 따옴표를 못 본다. 따옴표 안이 문장인데 조사가 바로
+  // 붙으면 귀로는 엉킨다. 3화·4화에서 다섯 줄이 그랬다.
+  const { bareQuoteSpots } = await import('../src/script/spoken.mjs');
+
+  const bad = [
+    '그런데 그게 "그러니까 안 쓴다"의 이유가 되면, 길이 사라집니다.',
+    '그러니까 삼백칠억은 "십일 년 동안 여기 있어라"가 아니었습니다.',
+    '"미국이 노린다"와 "그렇게 썼다"는 전혀 다른 말이죠.',
+    '이제 "왜 버리고 가나"가 설명됩니다.',
+  ];
+  for (const line of bad) {
+    assert.equal(bareQuoteSpots([line]).length, 1, `못 잡았습니다: ${line}`);
+  }
+
+  // 따옴표 안이 명사면 조사가 자연스럽게 붙는다 — 잡지 않는다.
+  // 묶어 주는 말이 뒤에 오는 것도 잡지 않는다.
+  const fine = [
+    '"가능성"은 이제 안 통합니다.',
+    '그 한 자리는 "칠 거 같은 사람"이 아니라 "치고 있는 사람"에게 갑니다.',
+    '이 군에서 잘 치면 "이 군이니까"라고 하거든요.',
+    '그래서 "삼백칠억을 버린다"는 말도 다르게 읽힙니다.',
+    '따옴표가 없는 문장은 당연히 괜찮습니다.',
+  ];
+  for (const line of fine) {
+    assert.equal(bareQuoteSpots([line]).length, 0, `잘못 잡았습니다: ${line}`);
+  }
+});
+
+await asyncTest('3화·4화 대본에 따옴표가 눈으로만 되는 자리가 없다', async () => {
+  // 고친 것이 되돌아오지 않게 실제 대본을 본다.
+  const [{ bareQuoteSpots, spokenSentences }] = await Promise.all([
+    import('../src/script/spoken.mjs'),
+  ]);
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  for (const ep of ['3화', '4화']) {
+    const md = fs.readFileSync(path.join(base, `${ep}-대본.md`), 'utf8');
+    const bad = bareQuoteSpots(spokenSentences(md));
+    assert.equal(bad.length, 0, `${ep}: ${bad[0]}`);
+  }
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

@@ -13,6 +13,7 @@
 
 import process from 'node:process';
 import fs from 'node:fs';
+import { speechText } from './audio/speech.mjs';
 import path from 'node:path';
 import { log } from './utils/logger.mjs';
 import { missingKeys, env, ROOT } from './utils/env.mjs';
@@ -1289,6 +1290,54 @@ async function cmdVoice(flags) {
     return;
   }
 
+  // 한 줄을 여러 꼴로 만들어 듣는다. 발음이 어색한 이름이나 따옴표가
+  // 든 줄을 **고치기 전에 들어 보는** 자리다. 짐작으로 발음 사전에
+  // 넣으면 멀쩡한 발음을 망치므로, 반드시 여기를 먼저 지난다.
+  //
+  //   node src/main.mjs voice --say="노시환, 유로결, 변우혁." --say="노시환·유로결·변우혁."
+  //
+  // 20자 한 줄에 $0.0006 쯤이다. 몇 줄을 들어도 1센트가 안 된다.
+  if (flags.say) {
+    const apiKey = requireTtsKey();
+    const client = createTtsClient({ apiKey });
+    const lines = (Array.isArray(flags.say) ? flags.say : [flags.say])
+      .map((x) => String(x || '').trim())
+      .filter(Boolean);
+    if (!lines.length) {
+      log.error('읽을 줄을 적어 주세요: --say="읽을 말"');
+      process.exit(2);
+    }
+    const voice = typeof flags.voice === 'string' ? flags.voice : voiceFor('SPORTS');
+    const rate = flags.rate !== undefined ? Number(flags.rate) : undefined;
+    const dir = contentPath('_발음', '');
+    fs.mkdirSync(dir, { recursive: true });
+
+    log.section(`🗣  발음 들어보기  |  ${lines.length}줄  |  ${voice}`);
+    let chars = 0;
+    const notes = [];
+    for (const [i, line] of lines.entries()) {
+      // 실제 파이프라인이 읽는 글과 **똑같이** 바꿔서 보낸다. 날글을
+      // 보내면 여기서 괜찮게 들려도 본편에서는 다르게 읽힌다.
+      const spoken = speechText(line);
+      const name = `${String(i + 1).padStart(2, '0')}.mp3`;
+      try {
+        const mp3 = await client.synthesize(spoken, { voice, speakingRate: rate });
+        fs.writeFileSync(path.join(dir, name), mp3);
+        chars += spoken.length;
+        log.ok(`${name}  ${spoken}`);
+        if (spoken !== line) log.info(`      (대본: ${line})`);
+        notes.push(`${name}\n  대본: ${line}\n  읽음: ${spoken}\n`);
+      } catch (err) {
+        log.warn(`${name}: ${err.message}`);
+      }
+    }
+    fs.writeFileSync(path.join(dir, '읽은-것.txt'), notes.join('\n'), 'utf8');
+    log.raw('');
+    log.info(`${dir} 에 넣었습니다. 듣고 어느 쪽이 나은지 알려 주세요.`);
+    log.info(`쓴 돈 약 $${estimateTtsUsd(chars)} (추정치).`);
+    return;
+  }
+
   const id = String(flags.id || '').padStart(3, '0');
   if (!flags.id) {
     log.error('어떤 편의 목소리를 만들지 알려주세요.');
@@ -2137,6 +2186,7 @@ async function main() {
       log.raw('      이미 만든 이미지는 건너뜁니다. 중간에 죽어도 돈을 다시 안 씁니다.');
       log.raw('');
       log.raw('  node src/main.mjs voice --id=001 [--dry-run] [--voice=이름] [--voices] [--no-bgm]');
+      log.raw('  node src/main.mjs voice --say="읽을 말" [--say="다른 꼴"]  발음만 들어보기 (1센트 미만)');
       log.raw('      대본을 읽는 목소리를 만들고 배경음악을 깝니다.');
       log.raw('      문단마다 따로 만들어 실제 길이를 재므로, 자막이 추정치가 아니라');
       log.raw('      진짜 음성에 맞습니다. --voices 는 쓸 수 있는 목소리 목록만 봅니다.');

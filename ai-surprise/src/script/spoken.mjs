@@ -77,6 +77,67 @@ function endingOf(sentence) {
  * 반환: { sentences, formalRatio, questions, longest, runs, notes }
  *   notes 는 사람이 읽을 한 줄짜리 말들이다. 비어 있으면 손댈 데가 없다.
  */
+/**
+ * 따옴표가 **눈으로만** 되는 자리.
+ *
+ * 듣는 사람은 따옴표를 못 본다. 그래서 따옴표 안이 **문장**인데 닫은
+ * 뒤에 조사가 바로 붙으면 귀로는 말이 엉킨다.
+ *
+ *   눈: "미국이 노린다"와 "그렇게 썼다"는 전혀 다른 말이죠
+ *   귀: 미국이 노린다와 그렇게 썼다는 전혀 다른 말이죠
+ *
+ * 음성 모델이 그 자리에서 쉬어 버리는 것도 같은 문제의 다른 얼굴이다.
+ * 기호를 떼는 것으로는 안 되고, **대본에서 말로 묶어 줘야** 한다.
+ *
+ * 따옴표 안이 **명사**면 괜찮다. 조사가 자연스럽게 붙는다.
+ *
+ *   "가능성"은      → 가능성은        ✅
+ *   "안 쓴다"의     → 안 쓴다의       ❌
+ *
+ * 묶어 주는 말이 뒤에 있으면 그것도 괜찮다.
+ *
+ *   "이 군이니까"라고   → 이 군이니까라고       ✅
+ *   "버린다"는 말도     → 버린다는 말도         ✅
+ */
+
+/** 문장이 끝났다는 신호가 되는 끝 글자. 이 뒤에 조사가 붙으면 엉킨다. */
+export const SENTENCE_END_SYLLABLE = /[다라나까요자냐니군로]$/;
+
+/** 따옴표 뒤에 바로 붙으면 문제가 되는 조사. */
+const CASE_PARTICLE = '(?:와|과|의|가|이|은|는|에|도|만|부터|에게|으로|로)';
+
+/** 따옴표가 하던 일을 대신 해 주는 말. 이게 있으면 괜찮다. */
+const QUOTE_MARKER = /^(?:라고|이라고|라는|이라는|고 |는 말|라는 말|이라는 말|던|이던)/;
+
+/** `"…"` + 조사 를 모두 찾는 정규식. */
+const QUOTED_THEN_PARTICLE = new RegExp(
+  `[\\u0022\\u201C]([^\\u0022\\u201C\\u201D]{2,})[\\u0022\\u201D](${CASE_PARTICLE})`,
+  'g'
+);
+
+/**
+ * 한 문장에서 따옴표가 눈으로만 되는 자리를 찾는다.
+ *
+ * 되돌려주는 것: 문제가 있는 문장만 (없으면 빈 배열)
+ */
+export function bareQuoteSpots(sentences) {
+  const out = [];
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    for (const m of text.matchAll(QUOTED_THEN_PARTICLE)) {
+      const inside = m[1].trim();
+      // 따옴표 안이 명사로 끝나면 조사가 자연스럽게 붙는다.
+      if (!SENTENCE_END_SYLLABLE.test(inside)) continue;
+      // 조사 뒤에 묶어 주는 말이 오면 괜찮다 ("버린다"는 말도).
+      const after = text.slice(m.index + m[0].length - m[2].length);
+      if (QUOTE_MARKER.test(after)) continue;
+      out.push(text);
+      break;
+    }
+  }
+  return out;
+}
+
 export function checkSpoken(markdown) {
   const sentences = spokenSentences(markdown);
   const notes = [];
@@ -136,6 +197,19 @@ export function checkSpoken(markdown) {
   }
   if (long.length > 5) {
     notes.push(`${SENTENCE_CHARS_MAX}자 넘는 문장이 ${long.length}개 더 있습니다.`);
+  }
+
+
+  // 따옴표가 눈으로만 되는 자리. 경고만 한다 — 고치는 건 사람이
+  // 문장을 다시 쓰는 일이라 자동으로 할 수 없다.
+  const bare = bareQuoteSpots(sentences);
+  if (bare.length) {
+    notes.push(
+      `따옴표 뒤에 조사가 바로 붙은 문장이 ${bare.length}개 있습니다. ` +
+        '듣는 사람은 따옴표를 못 보므로 귀로는 말이 엉킵니다. ' +
+        '"…" 뒤에 `라는 말`·`고 했습니다` 처럼 말로 묶어 주세요: ' +
+        `"${bare[0].slice(0, 46)}…"`
+    );
   }
 
   return { sentences, formalRatio, questions, longest, runs: worstRun, notes };

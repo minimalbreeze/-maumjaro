@@ -19,6 +19,7 @@
 //
 // 비용은 똑같다. 글자 수로 과금하므로 나눠 부르든 한 번에 부르든 같다.
 
+import { speechText } from './speech.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -79,13 +80,19 @@ export function narrationUnits(scenes) {
     for (const [i, p] of (scene.paragraphs || []).entries()) {
       const text = String(p?.text || '').trim();
       if (!text) continue;
+      // 읽을 글은 따로 만든다. 자막에는 `text` 가 나가고 음성 모델에는
+      // `speech` 를 보낸다 — 따옴표를 떼고 발음을 바로잡은 글이다.
+      // 3화에서 따옴표 뒤가 느리고 이름이 어색하다는 말을 들었다.
+      const speech = speechText(text);
       units.push({
         id: `S${String(scene.scene_number).padStart(2, '0')}-P${i + 1}`,
         scene_number: scene.scene_number,
         section: scene.section,
         tag: p.tag,
         text,
-        chars: text.length,
+        speech,
+        // 돈은 **읽는 글자 수**로 나간다. 따옴표를 떼면 그만큼 줄어든다.
+        chars: speech.length,
       });
     }
   }
@@ -224,7 +231,7 @@ export async function narrate(scenes, {
     let lastError = null;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
       try {
-        const bytes = await api.synthesize(unit.text, { voice, speakingRate });
+        const bytes = await api.synthesize(unit.speech || unit.text, { voice, speakingRate });
         spentUsd += cost;
         if (!looksLikeMp3(bytes)) {
           throw new Error(`받은 것이 mp3가 아닙니다 (${bytes?.length ?? 0}바이트)`);
