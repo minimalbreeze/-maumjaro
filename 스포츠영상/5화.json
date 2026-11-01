@@ -124,6 +124,12 @@
       "role": "내야수",
       "look": "a Venezuelan man in his 30s with an unmistakably thick full dark beard covering the whole jaw - the beard is the defining trait, exaggerate it - connected to a heavy mustache, with tan brown skin, a round broad face, thick dark eyebrows, short black hair cropped close at the sides, a heavy thick build with broad shoulders and thick arms, dark tattoos on both forearms",
       "tell": "짙은 턱수염과 양팔 문신. ⚠️ 실책 장면(END)에서는 얼굴을 그리지 않는다 — 부상 복귀 뒤 홈런 스무 개를 친 대목(CLIMB)에서만 그린다"
+    },
+    {
+      "name": "김호령",
+      "role": "중견수",
+      "look": "a Korean man in his mid-30s with a lean wiry athletic build, not thick, long legs, short black hair, wearing a red batting helmet and a black away uniform with white pants",
+      "tell": "빨간 헬멧, 등번호 27, 날렵한 몸. ⚠️ 타격 부진을 말하는 문장에는 얼굴을 그리지 않는다 — 한화 신인이 그의 수비를 보고 배웠다는 문장에 그린다"
     }
   ],
   "beats": [

@@ -4166,7 +4166,8 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   // 장면 지시는 얼굴을 아껴 쓰라고 말해야 한다 (3화 자리로도 안 간다).
   const sys = V.visualsSystemFor('SPORTS');
   assert.ok(/얼굴은 아껴 쓴다/.test(sys), '얼굴을 아끼라는 지시가 없습니다');
-  assert.ok(/많아야 다섯/.test(sys), '한 편 상한이 없습니다');
+  assert.ok(/한 사람에 한 장면/.test(sys), '한 사람에 한 장면 규칙이 없습니다');
+  assert.ok(/많아야 여섯/.test(sys), '한 편 상한이 없습니다');
   assert.ok(/덕아웃|전광판/.test(sys), '얼굴 대신 쓸 그림을 알려주지 않습니다');
   // 1화의 실수로는 돌아가지 않는다 — 뒷모습만 권하면 안 된다.
   assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습만 권하고 있습니다');
