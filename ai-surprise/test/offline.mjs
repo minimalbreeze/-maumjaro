@@ -4739,10 +4739,26 @@ test('단계가 엎어지면 초록불로 끝내지 않는다', () => {
   const at = src.indexOf('async function runStages');
   const stages = src.slice(at, src.indexOf('function endWithFailures', at));
 
-  // 네 단계가 전부 실패를 적어 두어야 한다. 하나라도 빠지면 그 단계만
-  // 조용히 넘어간다 — 지금까지 영상이 그랬다.
-  const marks = stages.match(/failed\.push\(/g) || [];
-  assert.equal(marks.length, 4, `실패를 적는 단계가 ${marks.length}개뿐입니다 (장면·그림·목소리·영상)`);
+  // 네 단계가 **전부** 실패를 적어 두어야 한다. 하나라도 빠지면 그
+  // 단계만 조용히 넘어간다 — 지금까지 영상이 그랬다.
+  //
+  // ⚠️ 예전에는 failed.push 의 **개수**를 셌다. 그런데 한 단계가
+  //    실패를 두 가지로 적게 되자(그림: 예외 / 그림: 몇 장 실패)
+  //    숫자가 어긋나 멀쩡한 코드에서 검사가 깨졌다. 개수가 아니라
+  //    **단계 이름이 다 있는지**를 본다.
+  for (const stage of ['장면', '그림', '목소리', '영상']) {
+    assert.ok(
+      new RegExp(`failed\\.push\\([\`'"]${stage}`).test(stages),
+      `${stage} 단계가 실패를 안 적습니다 — 그 단계만 조용히 넘어갑니다`
+    );
+  }
+
+  // 그림은 예외가 안 나도 **몇 장 실패했으면** 실패로 친다.
+  // 실행 #41 에서 58/88 장이 자리표시였는데 success 로 끝났다.
+  assert.ok(
+    /made\?\.failed\?\.length/.test(stages),
+    '그림이 몇 장 실패해도 초록불로 넘어갑니다'
+  );
 
   assert.ok(/return failed;/.test(stages), 'runStages 가 실패를 돌려주지 않습니다');
   assert.ok(/process\.exitCode = 1/.test(src), '종료 코드를 올리지 않습니다');

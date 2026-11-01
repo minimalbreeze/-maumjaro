@@ -1222,8 +1222,21 @@ async function cmdImages(flags) {
     log.info('그대로 영상을 만들면 실패한 샷만 자리표시 화면으로 나옵니다.');
   }
 
+  if (result.stoppedBy === 'credit') {
+    log.raw('');
+    log.error('Replicate 잔액이 없습니다. 그림을 한 장도 만들 수 없습니다.');
+    log.info('  https://replicate.com/account/billing 에서 충전하세요.');
+    log.info('  충전한 뒤 몇 분 기다렸다 다시 돌려야 합니다 (Replicate 안내).');
+    log.info('  ⚠️ 토큰이 가리키는 계정과 충전한 계정이 같은지도 확인하세요.');
+  }
+
   log.raw('');
   log.info(`다음: node src/main.mjs video --id=${id}`);
+
+  // 부른 쪽이 성패를 알아야 한다. 실행 #41 에서 **그림 58장이 전부
+  // 실패했는데 빌드가 success 로 끝났다.** 영상은 자리표시 화면
+  // 58장으로 만들어졌고, 로그를 한 줄씩 안 봤으면 그대로 올릴 뻔했다.
+  return result;
 }
 
 /**
@@ -1842,7 +1855,11 @@ async function runStages(id, flags) {
   // 그림 (Phase 3). 장당 돈이 나간다. 상한은 cmdImages 가 지킨다.
   if (flags.images && flags.scenes) {
     try {
-      await cmdImages({ id, model: flags['image-model'], 'max-usd': flags['max-usd'] });
+      const made = await cmdImages({ id, model: flags['image-model'], 'max-usd': flags['max-usd'] });
+      // 한 장이라도 못 만들었으면 이 단계는 실패다. 자리표시 화면이
+      // 섞인 영상을 **성공이라고 말하지 않는다** — 실행 #41 에서
+      // 58/88 장이 자리표시였는데 success 로 끝났다.
+      if (made?.failed?.length) failed.push(`그림(${made.failed.length}장 실패)`);
     } catch (err) {
       log.fail(`content/${id} 이미지 만들기 실패`, err);
       failed.push('그림');
