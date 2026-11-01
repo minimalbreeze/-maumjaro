@@ -20,6 +20,27 @@
       "match": [
         {
           "keywords": [
+            "NBA",
+            "미국프로농구",
+            "엔비에이",
+            "NBA 중계"
+          ],
+          "확인일": "2026-11-01",
+          "note": "2026-27시즌 국내 중계는 쿠팡플레이(스포츠 패스). 주소는 운영자 확인. 하이라이트 채널은 공식 생중계가 아니다.",
+          "primary": {
+            "text": "쿠팡플레이에서 NBA 중계 보기",
+            "url": "https://www.coupangplay.com/",
+            "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+          },
+          "vod": {
+            "text": "NBA 하이라이트 보기",
+            "url": "https://www.youtube.com/@TheGametimeHighlights",
+            "확인일": "2026-11-01",
+            "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+          }
+        },
+        {
+          "keywords": [
             "KBL",
             "부산 KCC",
             "창원 LG",
