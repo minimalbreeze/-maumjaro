@@ -99,7 +99,25 @@
       "name": "양현종",
       "role": "투수",
       "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait, exaggerate them - with short black hair under a cap, a thick sturdy build with broad shoulders and a thick neck, pitching left-handed",
-      "tell": "안경, 빨간 소매가 달린 검정 유니폼, 민트색 글러브. ⚠️ 얼굴형(둥근지 각진지)은 사진에서 못 읽어 일부러 비웠다 — 짐작으로 쓰면 틀린다"
+      "tell": "안경, 빨간 소매가 달린 검정 유니폼, 민트색 글러브. ⚠️ 얼굴형은 사진에서 못 읽어 일부러 비웠다"
+    },
+    {
+      "name": "이범호",
+      "role": "감독",
+      "look": "a Korean man in his mid-40s with an exaggeratedly round broad face - the roundness and width are the defining trait - with full soft cheeks and a soft jawline, narrow small eyes with no visible double eyelids, straight thin eyebrows, a broad nose, a thick neck, short black hair under a red cap",
+      "tell": "빨간 모자와 수수한 검정 후드. 유니폼이 아니다 — 감독이다"
+    },
+    {
+      "name": "나성범",
+      "role": "외야수",
+      "look": "a Korean man in his late 30s with an exaggeratedly long narrow face - the length and narrowness are the defining trait - with high cheekbones and hollow cheeks and a narrow chin, long narrow eyes with no pronounced double eyelids, thin straight eyebrows, ears that stick out slightly, short black hair",
+      "tell": "빨간 모자챙 위에 올려 쓴 빨간 선글라스"
+    },
+    {
+      "name": "김도영",
+      "role": "삼루수",
+      "look": "a Korean man in his early 20s with unmistakably long black eye-black stripes smeared under both eyes - the eye-black is the defining trait, exaggerate it - with a strikingly young boyish face, a lean narrow face with a narrow chin and little cheek fat, dark straight eyebrows, messy black hair with volume on top, a slim build with a thin neck",
+      "tell": "두 눈 밑의 긴 아이블랙, 흰색 홈 유니폼"
     }
   ],
   "beats": [
