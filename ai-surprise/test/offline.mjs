@@ -5280,6 +5280,74 @@ test('발음 들어보기 모드가 TTS 키는 받고 ffmpeg는 안 깐다', () 
 });
 
 
+test('워크플로 YAML 의 블록이 끊기지 않는다', () => {
+  // `run: |` 안의 줄은 run 보다 깊이 들여써야 한다. 한 줄이라도 맨 앞에
+  // 붙으면 **YAML 블록이 거기서 끝난다.** 그 뒤는 키로 읽히고, 깨진
+  // 워크플로는 GitHub 에서 "workflow_dispatch 트리거가 없습니다" 라는
+  // 엉뚱한 말로 거부된다 — 원인을 짐작하기 어렵다.
+  //
+  // 실제로 셸 히어독(<<EOF … EOF)을 넣다가 이렇게 깨뜨렸다. 히어독은
+  // 종료 표시를 줄 맨 앞에 붙여야 해서 YAML 블록과 같이 쓸 수 없다.
+  // (`<<-` 는 탭만 지우므로 공백 들여쓰기에는 안 듣는다.)
+  const dir = new URL('../../.github/workflows/', import.meta.url).pathname;
+  const files = fs.readdirSync(decodeURIComponent(dir)).filter((f) => /\.ya?ml$/.test(f));
+  assert.ok(files.length, '워크플로 파일을 못 찾았습니다');
+
+  for (const file of files) {
+    const lines = fs.readFileSync(path.join(decodeURIComponent(dir), file), 'utf8').split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^(\s*)[\w-]+: \|-?\s*$/);
+      if (!m) continue;
+      const keyIndent = m[1].length;
+      // 블록의 첫 줄이 들여쓰기 기준을 정한다.
+      let j = i + 1;
+      while (j < lines.length && !lines[j].trim()) j++;
+      if (j >= lines.length) continue;
+      const blockIndent = lines[j].match(/^\s*/)[0].length;
+      assert.ok(
+        blockIndent > keyIndent,
+        `${file}:${j + 1} 블록이 키보다 얕습니다`
+      );
+      // 블록이 끝날 때까지, 빈 줄이 아닌 줄은 모두 기준보다 깊어야 한다.
+      for (let k = j; k < lines.length; k++) {
+        const line = lines[k];
+        if (!line.trim()) continue;
+        const indent = line.match(/^\s*/)[0].length;
+        if (indent >= blockIndent) continue; // 아직 블록 안이다
+
+        // 여기부터는 블록 밖이다. 블록을 **제대로** 끝낸 줄인지 본다.
+        // 제대로 끝내는 줄은 그 자리에서 YAML 로 읽히는 것뿐이다 —
+        // 목록 항목(`- …`)이나 키(`이름:`)다.
+        //
+        // ⚠️ 이 검사를 처음 썼을 때 여기서 그냥 break 했다. 그래서
+        //    히어독으로 깨뜨린 파일을 **통과시켰다.** 맨 앞에 붙은
+        //    `$IN_SAY_LINES` 를 "블록이 끝났구나"로 읽은 것이다.
+        //    끝낸 줄이 YAML 인지까지 봐야 한다.
+        const looksLikeYaml = /^\s*(?:-\s|[\w.\-"']+\s*:|#)/.test(line);
+        assert.ok(
+          looksLikeYaml,
+          `${file}:${k + 1} 가 '${lines[i].trim()}' 블록을 끊습니다 — ` +
+            `들여쓰기 ${indent} 로는 YAML 로 읽힙니다: "${line.slice(0, 50)}"`
+        );
+        break;
+      }
+    }
+  }
+});
+
+test('워크플로에 셸 히어독을 쓰지 않는다', () => {
+  // 위 검사가 결과를 잡는다면 이것은 원인을 잡는다. 히어독은 종료
+  // 표시가 줄 맨 앞이라 YAML 블록 안에서 쓸 수 없다. 대신
+  // `< <(printf '%s\n' "$VAR")` 를 쓴다.
+  const dir = decodeURIComponent(new URL('../../.github/workflows/', import.meta.url).pathname);
+  for (const file of fs.readdirSync(dir).filter((f) => /\.ya?ml$/.test(f))) {
+    const text = fs.readFileSync(path.join(dir, file), 'utf8');
+    const hit = text.match(/<<-?\s*'?[A-Z_]{3,}'?\s*$/m);
+    assert.ok(!hit, `${file} 에 히어독이 있습니다: ${hit?.[0]} — YAML 블록을 끊습니다`);
+  }
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

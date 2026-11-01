@@ -370,12 +370,13 @@ jobs:
                 echo "::error::'발음 들어보기' 칸에 읽어 볼 줄을 넣어 주세요 (줄바꿈으로 여러 개)."
                 exit 1
               fi
+              # 히어독은 쓰지 않는다. 종료 표시를 줄 맨 앞에 붙여야 하는데
+              # 그러면 YAML 블록이 거기서 끊긴다 (실제로 한 번 깨뜨렸다).
+              # printf 로 파이프를 태우고, 셸이 쪼갠 조각을 배열에 담는다.
               args=()
               while IFS= read -r line; do
                 [ -n "$line" ] && args+=("--say=$line")
-              done <<SAYEOF
-$IN_SAY_LINES
-SAYEOF
+              done < <(printf '%s\n' "$IN_SAY_LINES")
               if [ ${#args[@]} -eq 0 ]; then
                 echo "::error::읽어 볼 줄이 비어 있습니다."
                 exit 1
