@@ -97,6 +97,14 @@ function requireApiKey() {
   }
 }
 
+/**
+ * 쇼츠가 고른 길이보다 이만큼 넘게 짧으면 **잘린 것으로 본다** (초).
+ *
+ * 실행 #38 에서 43.45초로 고른 쇼츠가 21.8초로 나왔는데 로그가
+ * 조용해서 그냥 넘어갈 뻔했다.
+ */
+const SHORT_CUT_WARN_SECONDS = 1.5;
+
 const GATE_LABEL = {
   [GATE.AUTO_OK]: '통과',
   [GATE.REVIEW_NEEDED]: '검토 필요',

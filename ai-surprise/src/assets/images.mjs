@@ -27,6 +27,41 @@ export const DEFAULT_MAX_USD = 3;
 /** 한 샷당 다시 걸어보는 횟수. */
 export const MAX_ATTEMPTS = 3;
 
+/**
+ * 잔액이 없어 **더 해 봐야 소용없는** 오류인가.
+ *
+ * 실행 #39 에서 Replicate 잔액이 떨어졌는데, 코드가 그걸 모르고 남은
+ * 41장을 전부 세 번씩 시도했다. 123번을 걸어서 123번 거절당했다.
+ * 로그만 길어지고 얻은 것은 없다.
+ */
+export function isOutOfCredit(err) {
+  const msg = String(err?.message || err || '');
+  return (
+    /insufficient credit/i.test(msg) ||
+    /requires credit to run/i.test(msg) ||
+    /Replicate 402/.test(msg)
+  );
+}
+
+/**
+ * 한도(429) 메시지에서 **얼마나 기다리라는지** 읽는다.
+ *
+ * Replicate 는 "Your rate limit resets in ~8s." 라고 알려 준다. 그걸
+ * 안 읽고 2초만 쉬면 또 걸린다 — 실행 #39 에서 그래서 세 번을 2초
+ * 간격으로 걸고 포기했다. 8초를 기다렸으면 됐을 일이다.
+ *
+ * 되돌려주는 것: 밀리초. 못 읽으면 null.
+ */
+export function retryAfterMs(err) {
+  const m = String(err?.message || err || '').match(/resets? in ~?(\d+(?:\.\d+)?)s/i);
+  if (!m) return null;
+  const seconds = Number(m[1]);
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  // 알려 준 시각 **직후**에 걸면 아슬아슬하게 또 걸린다. 1초를 더 준다.
+  return Math.min(60_000, Math.round(seconds * 1000) + 1000);
+}
+
+
 /** 규격별 가로세로비. 쇼츠는 본편을 잘라 만들므로 16:9 하나만 쓴다. */
 export const ASPECT_RATIO = '16:9';
 
@@ -165,6 +200,11 @@ export async function generateImages(prompts, {
   const perImage = modelFor(modelKey).usdPerImage;
 
   for (const [i, shot] of todo.entries()) {
+    // 잔액이 떨어졌으면 남은 것은 **걸어 보지도 않는다.**
+    if (stoppedBy === 'credit') {
+      failed.push({ shot_id: shot.shot_id, reason: '잔액이 떨어져 만들지 않았습니다' });
+      continue;
+    }
     // 상한을 넘기 **전에** 멈춘다. 넘은 다음에 세면 이미 쓴 뒤다.
     if (spentUsd + perImage > maxUsd) {
       stoppedBy = 'budget';
@@ -200,11 +240,22 @@ export async function generateImages(prompts, {
         done = true;
       } catch (err) {
         lastError = err;
+        // 잔액이 없으면 다시 거는 것이 의미가 없다. 바깥 루프도 멈춘다.
+        if (isOutOfCredit(err)) {
+          stoppedBy = 'credit';
+          onProgress?.(`  ${shot.shot_id} — 잔액이 떨어졌습니다. 남은 샷은 걸지 않습니다.`);
+          break;
+        }
         const canRetry = err?.retryable !== false && attempt < MAX_ATTEMPTS;
         if (!canRetry) break;
-        // 조금 기다렸다 다시. 한도(429)에 걸렸을 때 바로 다시 걸면 또 걸린다.
-        onProgress?.(`  ${shot.shot_id} 실패 (${attempt}/${MAX_ATTEMPTS}) — ${err.message}. 다시 겁니다.`);
-        await sleepFn(2000 * attempt);
+        // 한도(429)에 걸렸으면 **알려 준 만큼** 기다린다. 2초만 쉬고 다시
+        // 걸면 또 걸린다 — 실행 #39 에서 그렇게 세 번을 날렸다.
+        const wait = retryAfterMs(err) ?? 2000 * attempt;
+        onProgress?.(
+          `  ${shot.shot_id} 실패 (${attempt}/${MAX_ATTEMPTS}) — ${err.message} ` +
+            `${Math.round(wait / 1000)}초 쉬었다 다시 겁니다.`
+        );
+        await sleepFn(wait);
       }
     }
 

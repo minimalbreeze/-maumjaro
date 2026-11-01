@@ -5348,6 +5348,127 @@ test('워크플로에 셸 히어독을 쓰지 않는다', () => {
 });
 
 
+test('선언하지 않은 상수를 쓰지 않는다', () => {
+  // `node --check` 는 **문법만** 본다. 선언을 안 한 이름은 통과시키고,
+  // 그 줄이 실제로 돌 때 가서야 ReferenceError 로 죽는다.
+  //
+  // 실행 #39 에서 그렇게 죽었다. SHORT_CUT_WARN_SECONDS 를 넣으면서
+  // 선언을 끼워 넣는 자리를 잘못 잡아 **쓰기만 하고 선언이 없었다.**
+  // node --check 는 통과했고, 검사도 그 줄을 안 밟아서 못 봤다.
+  // 그림값 $0.45 를 쓰고 영상 단계에서 죽었다.
+  //
+  // 여기서는 대문자 상수만 본다. 이름 규칙이 뚜렷해서 오탐이 없고,
+  // 사람이 손으로 끼워 넣다 빠뜨리는 것도 거의 이쪽이다.
+  const GLOBALS = new Set([
+    'URL', 'JSON', 'NaN', 'Infinity', 'URLSearchParams', 'AbortController',
+    'TextEncoder', 'TextDecoder', 'Buffer', 'Math', 'Date', 'Promise',
+    'Array', 'Object', 'String', 'Number', 'Boolean', 'RegExp', 'Error',
+    'Map', 'Set', 'WeakMap', 'AbortSignal', 'Intl', 'Function',
+    'TypeError', 'RangeError', 'SyntaxError',
+  ]);
+
+  const srcDir = decodeURIComponent(new URL('../src/', import.meta.url).pathname);
+  const files = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (e.name.endsWith('.mjs')) files.push(full);
+    }
+  })(srcDir);
+  assert.ok(files.length > 10, `소스를 못 찾았습니다 (${files.length}개)`);
+
+  const missing = [];
+  for (const file of files) {
+    let t = fs.readFileSync(file, 'utf8');
+    // 주석·정규식·문자열을 지운다. 그 안의 대문자는 이름이 아니다.
+    t = t.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+    t = t.replace(/\/(?![/*])(?:\\.|\[(?:\\.|[^\]\\])*\]|[^/\\\n\[])+\/[gimsuy]*/g, ' RE ');
+    t = t.replace(/`(?:\\.|[^`\\])*`/g, '``')
+         .replace(/'(?:\\.|[^'\\\n])*'/g, "''")
+         .replace(/"(?:\\.|[^"\\\n])*"/g, '""');
+
+    const declared = new Set();
+    for (const m of t.matchAll(/(?:^|\s)(?:export\s+)?(?:const|let|var|function|class)\s+([A-Z][A-Z0-9_]{2,})\b/g)) {
+      declared.add(m[1]);
+    }
+    for (const m of t.matchAll(/import\s+(?:[\w*\s{},]+)\s+from/g)) {
+      for (const n of m[0].matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g)) declared.add(n[1]);
+    }
+
+    for (const m of new Set([...t.matchAll(/\b([A-Z][A-Z0-9_]{2,})\b/g)].map((x) => x[1]))) {
+      if (declared.has(m) || GLOBALS.has(m)) continue;
+      // 속성 이름(`x.FOO`)이나 객체 키(`FOO:`)는 선언이 아니어도 된다.
+      if (new RegExp(`[.\\w]\\s*${m}\\b|\\b${m}\\s*:`).test(t)) continue;
+      missing.push(`${path.relative(srcDir, file)}: ${m}`);
+    }
+  }
+  assert.deepEqual(missing, [], `선언 없이 쓰는 상수가 있습니다:\n  ${missing.join('\n  ')}`);
+});
+
+
+await asyncTest('잔액이 떨어지면 남은 샷을 걸지 않는다', async () => {
+  // 실행 #39: Replicate 잔액이 떨어졌는데 남은 41장을 세 번씩
+  // 시도했다. 123번을 걸어 123번 거절당했다.
+  const I = await import('../src/assets/images.mjs');
+  const dir = fs.mkdtempSync(path.join(TMP, 'credit-'));
+
+  let calls = 0;
+  const client = {
+    generate: async () => {
+      calls++;
+      throw new Error('Replicate 402: You have insufficient credit to run this model.');
+    },
+    download: async () => Buffer.alloc(0),
+  };
+  const prompts = Array.from({ length: 20 }, (_, i) => ({
+    shot_id: `S${i + 1}`, scene_number: i + 1, image_prompt: 'a dugout', card_text: '',
+  }));
+  const out = await I.generateImages(prompts, {
+    assetDir: dir, client, sleepFn: async () => {},
+  });
+
+  assert.equal(out.stoppedBy, 'credit', '잔액 없음으로 멈추지 않았습니다');
+  assert.equal(calls, 1, `${calls}번 걸었습니다 — 한 번이면 충분합니다`);
+  assert.equal(out.failed.length, 20, '실패 목록이 모자랍니다');
+  assert.equal(out.made.length, 0);
+});
+
+await asyncTest('한도에 걸리면 알려 준 만큼 기다린다', async () => {
+  // 2초만 쉬고 다시 걸면 또 걸린다. Replicate 는 "resets in ~8s" 라고
+  // 알려 주는데 그걸 안 읽고 있었다.
+  const I = await import('../src/assets/images.mjs');
+
+  assert.equal(I.retryAfterMs(new Error('throttled. Your rate limit resets in ~8s.')), 9000);
+  assert.equal(I.retryAfterMs(new Error('resets in ~0s')), 1000);
+  assert.equal(I.retryAfterMs(new Error('그냥 실패')), null, '없는 숫자를 지어냈습니다');
+  // 너무 오래 기다리지는 않는다.
+  assert.equal(I.retryAfterMs(new Error('resets in ~9999s')), 60000);
+
+  // 실제로 그만큼 쉬는지 본다.
+  const dir = fs.mkdtempSync(path.join(TMP, 'throttle-'));
+  const slept = [];
+  let n = 0;
+  const client = {
+    generate: async () => {
+      if (++n < 3) throw new Error('Replicate 429: throttled. Your rate limit resets in ~8s.');
+      return { url: 'http://x/y.png', usdEstimate: 0.025 };
+    },
+    // PNG 머리글 + 크기 검사를 넘길 만큼의 채움
+    download: async () => Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.alloc(I.MIN_IMAGE_BYTES || 4096),
+    ]),
+  };
+  const out = await I.generateImages(
+    [{ shot_id: 'S01-1', scene_number: 1, image_prompt: 'a dugout', card_text: '' }],
+    { assetDir: dir, client, sleepFn: async (ms) => { slept.push(ms); } }
+  );
+  assert.deepEqual(slept, [9000, 9000], `쉰 시간이 ${slept} 입니다`);
+  assert.equal(out.made.length, 1, '결국 만들어지지 않았습니다');
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
