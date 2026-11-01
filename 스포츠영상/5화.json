@@ -98,14 +98,8 @@
     {
       "name": "양현종",
       "role": "투수",
-      "look": "",
-      "tell": "⚠️ 사진을 아직 못 받았다. 생김새를 짐작으로 쓰지 않는다 — 세 번 틀렸다(황대인·변우혁·노시환). 사진을 받고 채운다."
-    },
-    {
-      "name": "이범호",
-      "role": "감독",
-      "look": "",
-      "tell": "⚠️ 사진을 아직 못 받았다. 위와 같다."
+      "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait, exaggerate them - with short black hair under a cap, a thick sturdy build with broad shoulders and a thick neck, pitching left-handed",
+      "tell": "안경, 빨간 소매가 달린 검정 유니폼, 민트색 글러브. ⚠️ 얼굴형(둥근지 각진지)은 사진에서 못 읽어 일부러 비웠다 — 짐작으로 쓰면 틀린다"
     }
   ],
   "beats": [
