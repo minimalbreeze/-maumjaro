@@ -52,6 +52,10 @@ export function buildTimeline(
 
       const isVideo = shot.asset_type === ASSET_TYPE.VIDEO;
 
+      // 그림 파일을 어느 샷에서 가져올지. 인물 샷은 첫 장을 나눠 쓴다.
+
+      const imageFrom = shot.same_image_as || shot.shot_id;
+
       clips.push({
         shot_id: shot.shot_id,
         scene_number: scene.scene_number,
@@ -61,9 +65,12 @@ export function buildTimeline(
         // 실제 파일은 Phase 3이 만든다. 지금은 어디에 있어야 하는지만 적는다.
         source: {
           type: isVideo ? 'video' : 'image',
-          path: `${assetDir}/${shot.shot_id}.${isVideo ? 'mp4' : 'png'}`,
+          // 인물 샷은 장면 안에서 **그림 한 장을 나눠 쓴다.** 그래서
+          // 파일 이름이 자기 샷 번호가 아니라 첫 장의 번호다.
+          // (visuals.mjs 에서 same_image_as 를 채운다)
+          path: `${assetDir}/${imageFrom}.${isVideo ? 'mp4' : 'png'}`,
           // 영상 생성이 실패하면 이미지로 대체한다 (기획서 9번).
-          fallback: isVideo ? `${assetDir}/${shot.shot_id}.png` : null,
+          fallback: isVideo ? `${assetDir}/${imageFrom}.png` : null,
         },
         // 이미지에 걸 카메라 움직임. 영상 샷에도 남겨둔다 — 대체될 때 쓴다.
         camera: shot.camera || 'zoom in',

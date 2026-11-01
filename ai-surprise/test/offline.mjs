@@ -4142,21 +4142,89 @@ await asyncTest('큰 어긋남은 흡수하지 않고 그대로 알린다', asyn
   assert.equal(big.clips.at(-1).duration, base.clips.at(-1).duration, '덮으면 안 되는데 덮었습니다');
 });
 
-await asyncTest('스포츠 캐리커처에 얼굴을 그리게 한다', async () => {
+await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한다', async () => {
   const V = await import('../src/scenes/visuals.mjs');
-  // 1화에서 얼굴 없는 영상이 나왔다 — 눈코입 없는 동그라미와 실루엣뿐이었다.
-  // 'simplified generic face' 로만 적고 장면 지시에서도 뒷모습을 권한 탓이다.
-  // 막아야 할 것은 "특정 선수를 닮는 것"이지 얼굴 자체가 아니다.
+  // 1화에서는 얼굴 없는 영상이 나왔다 — 눈코입 없는 동그라미와 실루엣뿐.
+  // 그래서 "얼굴을 그린다"로 밀었는데, 3화에서는 반대로 너무 많이
+  // 그려서 "동작이랑 얼굴 방향도 안 맞다, 도저히 볼 수가 없다"는
+  // 말을 들었다. 그림 모델은 같은 사람을 여러 번 그리면 매번 다른
+  // 사람을 그린다 — **많이 그릴수록 많이 틀린다.**
+  //
+  // 그래서 지금 자리는 가운데다. 얼굴은 그리되, 꼭 필요한 데만.
+
+  // 그릴 때는 표정 있는 얼굴로 그린다 (1화 자리로 돌아가지 않는다).
   const p = V.composeImagePrompt('a general manager at a desk', null, { kind: 'SPORTS' });
   assert.ok(/expressive cartoon face/.test(p), '표정 있는 얼굴 지시가 없습니다');
   assert.ok(/eyes/.test(p) && /mouth/.test(p), '눈·입 지시가 없습니다');
-  // 그래도 특정인을 닮히는 것은 여전히 막는다.
+  // 특정인을 닮히는 것은 여전히 막는다.
   assert.ok(/not resembling any specific real person/.test(p));
   assert.ok(/no real identifiable public figures/.test(p));
-  // 장면 지시도 뒷모습을 권하지 않아야 한다.
+
+  // 장면 지시는 얼굴을 아껴 쓰라고 말해야 한다 (3화 자리로도 안 간다).
   const sys = V.visualsSystemFor('SPORTS');
-  assert.ok(/얼굴을 그린다/.test(sys), '얼굴을 그리라는 지시가 없습니다');
-  assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습을 권하고 있습니다');
+  assert.ok(/얼굴은 아껴 쓴다/.test(sys), '얼굴을 아끼라는 지시가 없습니다');
+  assert.ok(/많아야 다섯/.test(sys), '한 편 상한이 없습니다');
+  assert.ok(/덕아웃|전광판/.test(sys), '얼굴 대신 쓸 그림을 알려주지 않습니다');
+  // 1화의 실수로는 돌아가지 않는다 — 뒷모습만 권하면 안 된다.
+  assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습만 권하고 있습니다');
+});
+
+await asyncTest('한 장면의 인물 샷은 그림 한 장을 나눠 쓰고 움직이지 않는다', async () => {
+  // 3화: 한 장면이 샷 두세 개로 쪼개지고 샷마다 그림을 따로 그렸다.
+  // 같은 사람을 따로 그리면 얼굴도 방향도 자세도 다 다르게 나온다 —
+  // 18초 동안 세 사람이 지나간다. 그려 달라는 장 수를 줄이는 것
+  // 말고는 방법이 없다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const scene = { scene_number: 19, section: 'GAP', shots: [
+    { shot_id: 'S19-1' }, { shot_id: 'S19-2' }, { shot_id: 'S19-3' },
+  ] };
+  const shot = (id, camera) => ({
+    shot_id: id, image_prompt: 'a round-faced slugger', video_prompt: 'he turns',
+    era: 'present', camera, motion_need: 6, depicts_real_person: true, card_text: '',
+  });
+  const { scene: out } = V.mergeVisuals(scene, {
+    mood: 'record', visual_description: 'x',
+    shots: [shot('S19-1', 'pan right'), shot('S19-2', 'zoom in'), shot('S19-3', 'parallax')],
+  }, { kind: 'SPORTS' });
+
+  // 그림은 한 장만 그린다.
+  const drawn = out.shots.filter((x) => x.image_prompt);
+  assert.equal(drawn.length, 1, `${drawn.length}장을 그립니다 — 한 장이어야 합니다`);
+  assert.equal(out.shots[1].same_image_as, 'S19-1');
+  assert.equal(out.shots[2].same_image_as, 'S19-1');
+  // 안 그리는 샷은 영상으로도 만들지 않는다 (돈이 샌다).
+  assert.equal(out.shots[1].video_prompt, '');
+
+  // 얼굴은 움직이지 않는다. 모델이 pan 을 골랐어도 덮어쓴다.
+  for (const x of out.shots) {
+    assert.equal(x.camera, 'hold', `${x.shot_id} 카메라가 ${x.camera} 입니다`);
+  }
+
+  // 사람이 안 나오는 샷은 건드리지 않는다.
+  const plain = V.mergeVisuals(
+    { scene_number: 4, shots: [{ shot_id: 'S04-1' }, { shot_id: 'S04-2' }] },
+    { mood: 'record', visual_description: 'x', shots: [
+      { ...shot('S04-1', 'pan right'), depicts_real_person: false },
+      { ...shot('S04-2', 'zoom in'), depicts_real_person: false },
+    ] },
+    { kind: 'SPORTS' }
+  ).scene;
+  assert.equal(plain.shots[0].camera, 'pan right');
+  assert.ok(!plain.shots[1].same_image_as, '사람 없는 샷을 묶었습니다');
+});
+
+await asyncTest('hold 카메라는 거의 움직이지 않는다', async () => {
+  const F = await import('../src/video/ffmpeg.mjs');
+  const hold = F.cameraFilter('hold', { width: 1920, height: 1080, fps: 30, duration: 5 });
+  const zoom = F.cameraFilter('zoom in', { width: 1920, height: 1080, fps: 30, duration: 5 });
+  // 중앙 기준이라 얼굴이 화면 밖으로 밀려나지 않는다.
+  assert.ok(/iw\/2-\(iw\/zoom\/2\)/.test(hold), 'hold 가 중앙 기준이 아닙니다');
+  // 확대량이 zoom in 보다 훨씬 작아야 한다.
+  assert.ok(F.HOLD_ZOOM_RANGE < 0.1, `hold 확대량이 ${F.HOLD_ZOOM_RANGE} 입니다 — 너무 큽니다`);
+  assert.ok(F.HOLD_ZOOM_RANGE > 0, 'hold 가 완전히 멈추면 영상이 끊긴 것처럼 보입니다');
+  assert.ok(hold !== zoom);
+  // 가로로 미는 성분이 없어야 한다 — 그게 "붕 뜨는" 느낌을 만들었다.
+  assert.ok(!/\(iw-iw\/zoom\)/.test(hold), 'hold 에 가로 이동이 들어 있습니다');
 });
 
 await asyncTest('스포츠는 중계 톤으로 조금 빠르게 읽는다', async () => {

@@ -36,6 +36,15 @@ export const ZOOM_RANGE = 0.3;
 export const PAN_ZOOM = 1.15;
 
 /**
+ * `hold` 카메라가 클립 동안 들어가는 양.
+ *
+ * 0.04 는 5초에 4%다. 사람이 "움직인다"고 느끼지 못하는 정도이면서
+ * 화면이 멈춘 것처럼 보이지도 않는 선이다. 더 키우면 얼굴이 뜨기
+ * 시작하고, 더 줄이면 정지 사진으로 보인다.
+ */
+export const HOLD_ZOOM_RANGE = 0.04;
+
+/**
  * 이미지에 걸 카메라 움직임 (기획서 8번).
  *
  * **움직임은 반드시 클립 길이로 나눈다(on/frames).** 예전에는 프레임당
@@ -59,6 +68,17 @@ export function cameraFilter(camera, { width, height, fps, duration }) {
   const amp = (px) => Math.round(px * (PRESCALE / 2));
 
   switch (camera) {
+    case 'hold':
+      // 눈에 거의 안 보이는 느린 밀기. 5초에 4% 들어간다.
+      //
+      // 사람 얼굴이 든 샷에 쓴다. 가로 이동이나 20% 확대를 걸면 얼굴이
+      // 배경과 같이 미끄러져 오려 붙인 것처럼 보인다(3화에서 그랬다).
+      // 중앙 기준이라 얼굴이 화면 밖으로 밀려나지도 않는다.
+      return (
+        `${pre},zoompan=z='1+${HOLD_ZOOM_RANGE}*on/${frames}':d=${frames}:` +
+        `${centerX}:${centerY}${out}`
+      );
+
     case 'zoom out':
       // 1.3배에서 시작해 클립이 끝날 때 1.0이 된다.
       return (
