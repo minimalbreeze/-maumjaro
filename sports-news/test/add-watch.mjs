@@ -255,6 +255,19 @@ await checkAsync('안내 글 자신에게는 허브일때의 바깥 링크를 �
   assert.ok(!r.url.includes('wiki.minimalbreeze.com'), '자기 자신을 걸었습니다');
 });
 
+await checkAsync('운영자가 못박은 배너(강제)가 허브보다 앞선다', async () => {
+  // 2026-11-02 지시: "앞으로 중계 배너는 허브로 진행한다. 다만 내가 강제한
+  // 배너는 강제로 넣는다." 그 글에만 해당하는 사정은 코드가 알 수 없다.
+  const 설정 = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'watch-links.json'), 'utf8'));
+  설정.byPost = { 7690: { primary: { text: '운영자 지정', url: 'https://only-here.example/' } } };
+  const r = pickWatchLinks('농구', { config: 설정, text: 'KBL 부산 KCC', postId: 7690 });
+  assert.equal(r.primary.url, 'https://only-here.example/');
+  assert.ok(r.강제됨, '강제됨 표시가 없습니다');
+  // 번호가 다르면 평소대로 간다
+  const 다른글 = pickWatchLinks('농구', { config: 설정, text: 'KBL 부산 KCC', postId: 7691 });
+  assert.match(다른글.primary.url, /프로농구-중계/, 다른글.primary.url);
+});
+
 await checkAsync('설정에 링크가 없는 종목은 건너뛴다', async () => {
   // 주소를 만들어내지 않는다. 없는 링크를 배너로 거는 것은 독자를 속이는 일이다.
   const before = wp.state.updated.length;

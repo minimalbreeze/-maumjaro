@@ -95,7 +95,20 @@ export function 낱말횟수(text, word) {
  * 그래서 match 를 먼저 본다. 글 제목·본문에 그 말이 있으면 그 항목을 쓰고,
  * 없으면 카테고리 기본값으로 돌아간다.
  */
-export function pickWatchLinks(category, { config = loadWatchLinks(), text = '' } = {}) {
+export function pickWatchLinks(category, { config = loadWatchLinks(), text = '', postId = null } = {}) {
+  // **운영자가 글 번호로 못박은 배너가 가장 세다** (2026-11-02 지시).
+  //
+  //   "이제 앞으로 중계 배너는 허브로 진행한다. 없으면 중계 허브를 만들어
+  //    진행한다. 다만 내가 강제한 배너는 강제로 넣는다."
+  //
+  // 기본은 허브다. 그런데 운영자가 특정 글에 특정 배너를 지정하면 카테고리·
+  // match·허브 판정을 전부 건너뛰고 그것을 쓴다. 코드가 고른 것보다 사람이
+  // 고른 것이 앞선다 — 그 글에만 해당하는 사정은 코드가 알 수 없다.
+  //
+  // 설정의 `byPost` 에 글 번호를 키로 적는다. 비워 두면 평소대로 간다.
+  const 강제 = postId == null ? null : config.byPost?.[String(postId)];
+  if (강제?.primary?.url) return { ...강제, 강제됨: true };
+
   const entry = config.byCategory?.[category];
   if (!entry) return null;
 

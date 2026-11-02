@@ -189,7 +189,7 @@ export async function removeWatchBanner(postId, { apply = false, siteCategories 
   };
 
   // 붙을 이유가 있으면 빼지 않는다. 여기가 이 도구의 전부다.
-  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  const entry = pickWatchLinks(category, { text: 고르기용글(title, content), postId });
   if (entry) return { ...base, skip: '지금 설정으로도 붙을 배너가 있습니다 — 빼지 않습니다' };
 
   const 표시들 = allWatchLabels();
@@ -229,7 +229,7 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     id: postId, title, status: post?.status, category, changed: false, backup: null,
   };
 
-  let entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  let entry = pickWatchLinks(category, { text: 고르기용글(title, content), postId });
   if (!entry) {
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
   }
@@ -248,7 +248,9 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     const x = 다듬기(a);
     return !!x && x === 다듬기(b);
   };
-  if (같은곳인가(entry.primary.url, post?.link)) {
+  // 운영자가 못박은 배너(강제)는 자기 자신이라도 그대로 넣는다. 그 글에만
+  // 해당하는 사정은 코드가 알 수 없고, 지정한 사람이 알고 지정한 것이다.
+  if (!entry.강제됨 && 같은곳인가(entry.primary.url, post?.link)) {
     // 안내 글 자신에게는 **바깥 공식 채널**을 걸어 준다. 설정에 `허브일때` 로
     // 적어 두면 그걸 쓴다 — 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.
     // 적어 두지 않았으면 아무것도 넣지 않는다. 주소를 만들어내지 않는다.
