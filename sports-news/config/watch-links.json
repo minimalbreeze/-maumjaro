@@ -706,7 +706,113 @@
         "text": "야구 중계 보는 법 보기",
         "hint": "KBO 중계 채널·시청 방법 정리 (내 블로그 글)"
       },
-      "라벨": "📺 중계 보는 법"
+      "라벨": "📺 중계 보는 법",
+      "note": "'야구'에는 KBO와 MLB가 같이 들어간다. 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(KBO)을 쓴다.",
+      "match": [
+        {
+          "keywords": [
+            "MLB",
+            "메이저리그",
+            "빅리그",
+            "월드시리즈"
+          ],
+          "확인일": "2026-11-02",
+          "note": "MLB 공식 유튜브는 운영자 확인. **국내 중계처는 아직 확인하지 못해 비워 뒀다** — 확인되면 허브일때 primary 를 국내 중계처로 바꾸고 공식 채널은 vod 로 내린다.",
+          "primary": {
+            "text": "MLB 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/mlb-중계",
+            "hint": "MLB 중계 채널·하이라이트 정리 (내 블로그 글)"
+          },
+          "허브일때": {
+            "note": "국내 중계처 미확인. 지금은 공식 채널만 건다.",
+            "primary": {
+              "text": "MLB 공식 채널에서 보기",
+              "url": "https://www.youtube.com/@MLB",
+              "hint": "MLB 공식 유튜브 · 국내 라이브는 지역 제한될 수 있음"
+            }
+          }
+        }
+      ]
+    },
+    "축구": {
+      "확인일": "2026-11-02",
+      "note": "'축구'에는 K리그와 EPL이 같이 들어간다. 중계 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(K리그)을 쓴다.",
+      "primary": {
+        "text": "K리그 중계 보는 법 보기",
+        "url": "https://wiki.minimalbreeze.com/k리그-중계",
+        "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
+      },
+      "허브일때": {
+        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+        "primary": {
+          "text": "쿠팡플레이에서 K리그 중계 보기",
+          "url": "https://www.coupangplay.com/",
+          "hint": "K리그 국내 중계 (운영자 확인)"
+        },
+        "vod": {
+          "text": "K리그 공식 하이라이트 보기",
+          "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
+          "확인일": "2026-11-02"
+        }
+      },
+      "match": [
+        {
+          "keywords": [
+            "K리그",
+            "K League",
+            "케이리그",
+            "K-리그"
+          ],
+          "확인일": "2026-11-02",
+          "note": "K리그 중계는 쿠팡플레이, 공식 채널은 유튜브. 둘로 갈려 있어 대회별 글은 안내 글로 보낸다.",
+          "primary": {
+            "text": "K리그 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/k리그-중계",
+            "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
+          },
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "쿠팡플레이에서 중계 보기",
+              "url": "https://www.coupangplay.com/",
+              "hint": "국내 중계 (운영자 확인)"
+            },
+            "vod": {
+              "text": "K리그 공식 하이라이트 보기",
+              "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
+              "확인일": "2026-11-02"
+            }
+          }
+        },
+        {
+          "keywords": [
+            "EPL",
+            "프리미어리그",
+            "프리미어 리그",
+            "Premier League"
+          ],
+          "확인일": "2026-11-02",
+          "note": "EPL 중계는 쿠팡플레이, 공식 채널은 Premier League 유튜브. 주소는 운영자 확인.",
+          "primary": {
+            "text": "EPL 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/epl-중계",
+            "hint": "EPL 중계 채널·하이라이트 정리 (내 블로그 글)"
+          },
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "쿠팡플레이에서 중계 보기",
+              "url": "https://www.coupangplay.com/",
+              "hint": "국내 중계 (운영자 확인)"
+            },
+            "vod": {
+              "text": "Premier League 공식 하이라이트 보기",
+              "url": "https://www.youtube.com/@premierleague",
+              "확인일": "2026-11-02"
+            }
+          }
+        }
+      ]
     }
   }
 }
