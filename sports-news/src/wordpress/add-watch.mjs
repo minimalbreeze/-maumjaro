@@ -235,6 +235,24 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
   }
   const url = entry.primary.url;
 
+  // 자기 자신을 가리키는 배너는 넣지 않는다 (2026-11-02).
+  //
+  // 중계처가 유료로 쪼개진 종목은 바깥이 아니라 **내 블로그 안의 안내 글**로
+  // 보낸다(야구가 2026-10-19 부터 그렇다). 그런데 그 안내 글도 같은
+  // 카테고리라서, 방어가 없으면 **안내 글이 자기 자신으로 가는 버튼**을 단다.
+  // 독자가 눌러도 같은 자리다.
+  //
+  // 공개 주소로 비교한다 — 설정에 적는 주소가 공개 주소이기 때문이다.
+  // 끝의 빗금과 대소문자 차이는 같은 것으로 본다.
+  const 같은곳인가 = (a, b) => {
+    const 다듬기 = (s) => decodeURIComponent(String(s || '').trim()).replace(/\/+$/, '').toLowerCase();
+    const x = 다듬기(a);
+    return !!x && x === 다듬기(b);
+  };
+  if (같은곳인가(url, post?.link)) {
+    return { ...base, url, skip: '이 글이 바로 그 안내 글입니다 — 자기 자신으로 가는 배너는 넣지 않습니다' };
+  }
+
   const banner = watchBannerHtml(entry);
   // 이미 들어 있는 배너는 머리글이 지금 것과 다를 수 있다. 설정에 있는
   // 머리글을 다 보고 찾는다 — 못 찾으면 배너가 둘이 된다.

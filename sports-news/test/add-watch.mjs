@@ -147,6 +147,20 @@ const wp = await startMockWordPress({
       title: { raw: '승마 대회 일정' },
       content: { raw: 본문 },
     },
+    // 7693·7694 는 '야구'(id 9) 의 안내 글 자신이다. 설정이 가리키는 주소가
+    // 곧 이 글의 공개 주소라, 방어가 없으면 자기 자신으로 가는 배너가 붙는다.
+    7693: {
+      status: 'publish', slug: '2026-kbo-프로야구', categories: [9], meta: {},
+      link: 'https://wiki.minimalbreeze.com/2026-kbo-프로야구',
+      title: { raw: '2026 KBO 프로야구 중계 보는 법' },
+      content: { raw: 본문 },
+    },
+    7694: {
+      status: 'publish', slug: '2026-kbo-프로야구', categories: [9], meta: {},
+      link: 'https://wiki.minimalbreeze.com/2026-kbo-프로야구/',
+      title: { raw: '2026 KBO 프로야구 중계 보는 법 (빗금 붙은 주소)' },
+      content: { raw: 본문 },
+    },
   },
 });
 process.env.WORDPRESS_URL = `http://127.0.0.1:${wp.port}`;
@@ -156,7 +170,7 @@ process.env.WORDPRESS_APP_PASSWORD = 'xxxx xxxx xxxx xxxx';
 // 2026-10-18: 'id 8' 이 예전에는 '바둑'이었다. 운영자가 바둑TV 주소를 줘서
 // 바둑에 중계 링크가 생겼으니 '링크 없는 종목'의 예가 되지 않는다. 검사의
 // 뜻(설정에 없으면 배너를 안 건다)은 그대로 두고 종목만 바꿨다.
-const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '승마' }];
+const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '승마' }, { id: 9, name: '야구' }];
 
 await checkAsync('미리보기는 저장하지 않는다', async () => {
   const r = await addWatchBanner(7690, { apply: false, siteCategories });
@@ -200,6 +214,22 @@ await checkAsync('여자농구 글에는 여농티비를 넣는다', async () =>
   const r = await addWatchBanner(7691, { apply: false, siteCategories });
   assert.ok(r.changed, r.skip);
   assert.match(r.url, /WKBL_official/);
+});
+
+await checkAsync('안내 글 자신에게는 배너를 넣지 않는다', async () => {
+  // 중계처가 유료로 쪼개진 종목은 바깥이 아니라 내 블로그 안의 안내 글로
+  // 보낸다(야구가 그렇다). 방어가 없으면 그 안내 글이 **자기 자신으로 가는
+  // 버튼**을 단다 — 눌러도 같은 자리다.
+  const r = await addWatchBanner(7693, { apply: true, siteCategories });
+  assert.ok(!r.changed, '자기 자신으로 가는 배너를 넣었습니다');
+  assert.match(r.skip, /자기 자신/);
+});
+
+await checkAsync('끝의 빗금이 달라도 같은 글로 본다', async () => {
+  // 설정 주소와 공개 주소가 빗금 하나로 갈리는 일이 흔하다.
+  const r = await addWatchBanner(7694, { apply: true, siteCategories });
+  assert.ok(!r.changed, '빗금 때문에 자기 자신으로 가는 배너를 넣었습니다');
+  assert.match(r.skip, /자기 자신/);
 });
 
 await checkAsync('설정에 링크가 없는 종목은 건너뛴다', async () => {
