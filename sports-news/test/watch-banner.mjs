@@ -164,7 +164,10 @@ check('링크가 없는 종목이면 자리표시자가 조용히 사라진다',
 check('배너가 최종 HTML에 실린다', () => {
   const plan = planPlacements(본문, { sectionImages: 0, withAd: false, withWatch: true });
   const html = markdownToBlocks(insertMarks(본문, plan), { watchHtml: 배너 });
-  assert.ok(html.includes('youtube.com/@WKBL_official'), '링크가 없습니다');
+  // 2026-11-02: 농구 기본값이 바깥 채널에서 **내 블로그 안내 글**로 바뀌었다.
+  // 이 검사의 요점은 "어느 주소인가"가 아니라 "배너가 최종 HTML 에 실리는가"다.
+  const 기대주소 = pickWatchLinks('농구').primary.url;
+  assert.ok(html.includes(기대주소.replace('https://', '')), '링크가 없습니다');
   assert.ok(!html.includes('&lt;!--WATCH--&gt;'), '자리표시자가 글자로 새어나왔습니다');
 });
 
@@ -226,14 +229,19 @@ check('KBL은 WKBL 안에 들어 있다 — 낱말로만 본다', () => {
   assert.ok(!낱말로있나('', 'KBL'));
 });
 
-check('WKBL 글에는 여농티비가 붙는다', () => {
+check('WKBL 글은 내 안내 글로 보내고, 여농티비는 허브일때에 남는다', () => {
+  // 2026-11-02 운영자 지시로 방향이 바뀌었다 — 대회별 글은 바깥이 아니라
+  // 내 블로그 안내 글로 보낸다. 바깥 주소를 잃어버리면 안내 글 자신이
+  // 걸 곳이 없어지므로 허브일때 에 그대로 남아 있어야 한다.
   const r = pickWatchLinks('농구', { text: 'WKBL 청주 KB 개막 일정·중계' });
-  assert.match(r.primary.url, /WKBL_official/, r.primary.url);
+  assert.match(r.primary.url, /여자농구-중계/, r.primary.url);
+  assert.match(r.허브일때.primary.url, /WKBL_official/, '여농티비 주소를 잃어버렸습니다');
 });
 
-check('KBL 글에는 tvN SPORTS가 붙는다', () => {
+check('KBL 글은 내 안내 글로 보내고, tvN SPORTS는 허브일때에 남는다', () => {
   const r = pickWatchLinks('농구', { text: '2026-27 KBL 부산 KCC 경기일정·중계' });
-  assert.equal(r.primary.url, 'https://tvnsports.cjenm.com/ko/');
+  assert.match(r.primary.url, /프로농구-중계/, r.primary.url);
+  assert.equal(r.허브일때.primary.url, 'https://tvnsports.cjenm.com/ko/');
 });
 
 
@@ -302,8 +310,11 @@ check('라벨을 안 적은 항목은 예전 머리글 그대로다', () => {
   // 이미 올린 글 수백 편이 이 글귀로 들어가 있다. 바뀌면 전부 못 찾는다.
   assert.equal(DEFAULT_WATCH_LABEL, '📺 경기 보러가기');
   assert.equal(watchLabel({ primary: { url: 'https://a.example', text: 'x' } }), '📺 경기 보러가기');
-  const kbl = pickWatchLinks('농구', { text: 'KBL 창원 LG 경기일정' });
-  assert.ok(watchBannerHtml(kbl).includes('📺 경기 보러가기'), '농구 배너 머리글이 바뀌었습니다');
+  // 2026-11-02: 농구·배드민턴·탁구는 내 안내 글로 보내면서 '📺 중계 보는 법'
+  // 라벨이 붙었다. 라벨을 안 적은 항목의 본보기를 골프로 바꾼다.
+  const klpga = pickWatchLinks('골프', { text: 'KLPGA 한국여자프로골프 중계' });
+  assert.equal(klpga.라벨, undefined, '골프 KLPGA 에 라벨이 생겼습니다');
+  assert.ok(watchBannerHtml(klpga).includes('📺 경기 보러가기'), '라벨 없는 항목의 머리글이 바뀌었습니다');
 });
 
 check('라벨을 적은 항목은 그 머리글을 쓴다', () => {

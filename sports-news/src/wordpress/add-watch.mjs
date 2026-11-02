@@ -229,11 +229,10 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     id: postId, title, status: post?.status, category, changed: false, backup: null,
   };
 
-  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  let entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
   if (!entry) {
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
   }
-  const url = entry.primary.url;
 
   // 자기 자신을 가리키는 배너는 넣지 않는다 (2026-11-02).
   //
@@ -249,9 +248,20 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     const x = 다듬기(a);
     return !!x && x === 다듬기(b);
   };
-  if (같은곳인가(url, post?.link)) {
-    return { ...base, url, skip: '이 글이 바로 그 안내 글입니다 — 자기 자신으로 가는 배너는 넣지 않습니다' };
+  if (같은곳인가(entry.primary.url, post?.link)) {
+    // 안내 글 자신에게는 **바깥 공식 채널**을 걸어 준다. 설정에 `허브일때` 로
+    // 적어 두면 그걸 쓴다 — 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.
+    // 적어 두지 않았으면 아무것도 넣지 않는다. 주소를 만들어내지 않는다.
+    if (entry.허브일때?.primary?.url) {
+      entry = { ...entry, ...entry.허브일때 };
+    } else {
+      return {
+        ...base, url: entry.primary.url,
+        skip: '이 글이 바로 그 안내 글입니다 — 자기 자신으로 가는 배너는 넣지 않습니다 (바깥 링크를 걸려면 설정에 허브일때 를 적으세요)',
+      };
+    }
   }
+  const url = entry.primary.url;
 
   const banner = watchBannerHtml(entry);
   // 이미 들어 있는 배너는 머리글이 지금 것과 다를 수 있다. 설정에 있는

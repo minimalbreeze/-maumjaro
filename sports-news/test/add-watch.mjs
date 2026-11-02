@@ -24,6 +24,12 @@ const checkAsync = async (name, fn) => {
 
 console.log('\n[이미 올린 글에 중계 배너 넣기]');
 
+// 2026-11-02: 설정의 주소를 하드코딩하지 않는다. 농구 중계처가 바깥 채널에서
+// 내 블로그 안내 글로 바뀌면서 이 파일의 검사 열두 개가 한꺼번에 깨졌다.
+// 설정에서 읽어 쓰면 방향이 또 바뀌어도 검사는 뜻을 그대로 지킨다.
+const KBL주소 = pickWatchLinks('농구', { text: 'KBL 부산 KCC 창원 LG' }).primary.url;
+const KBL조각 = KBL주소.replace(/^https?:\/\//, '');
+
 const H2 = (t) => `<!-- wp:heading -->\n<h2>${t}</h2>\n<!-- /wp:heading -->`;
 const P = (t) => `<!-- wp:paragraph -->\n<p>${t}</p>\n<!-- /wp:paragraph -->`;
 const 광고 = '<!-- wp:html -->\n<script src="https://ads-partners.coupang.com/g.js"></script>\n<!-- /wp:html -->';
@@ -70,13 +76,13 @@ const 배너 = watchBannerHtml(entry, { title: '2026-27 KBL 경기일정' });
 const { html: 넣은본문, 한일 } = applyBanner(본문, 배너);
 
 check('설정에서 KBL 중계처를 고른다', () => {
-  assert.equal(entry.primary.url, 'https://tvnsports.cjenm.com/ko/');
-  assert.ok(배너.includes('tvnsports.cjenm.com'), 배너.slice(0, 200));
+  assert.equal(entry.primary.url, KBL주소);
+  assert.ok(배너.includes(KBL조각), 배너.slice(0, 200));
 });
 
 check('배너가 들어간다', () => {
   assert.equal(한일, '추가');
-  assert.ok(넣은본문.includes('tvnsports.cjenm.com'));
+  assert.ok(넣은본문.includes(KBL조각));
   assert.ok(넣은본문.includes('📺 경기 보러가기'));
 });
 
@@ -106,25 +112,25 @@ check('배너가 있는지는 배너 블록으로 본다 — 주소로 보면 �
   // 안 들어갔다. 운영자가 "베너가 빠졌어"라고 짚은 게 이것이다.
   const 주소만있는본문 = 본문.replace(
     P('tvN SPORTS가 중계한다.'),
-    P('tvN SPORTS(<a href="https://tvnsports.cjenm.com/ko/" rel="nofollow">공식 사이트</a>)가 중계한다.'),
+    P(`tvN SPORTS(<a href="${KBL주소}" rel="nofollow">공식 사이트</a>)가 중계한다.`),
   );
-  assert.ok(주소만있는본문.includes('https://tvnsports.cjenm.com/ko/'), '준비가 잘못됐습니다');
-  assert.ok(!alreadyHasBanner(주소만있는본문, 'https://tvnsports.cjenm.com/ko/'), '주소만 보고 있습니다');
+  assert.ok(주소만있는본문.includes(KBL주소), '준비가 잘못됐습니다');
+  assert.ok(!alreadyHasBanner(주소만있는본문, KBL주소), '주소만 보고 있습니다');
   assert.equal(findBanners(주소만있는본문).length, 0);
 
-  assert.ok(alreadyHasBanner(넣은본문, 'https://tvnsports.cjenm.com/ko/'));
+  assert.ok(alreadyHasBanner(넣은본문, KBL주소));
   assert.equal(findBanners(넣은본문).length, 1);
-  assert.ok(!alreadyHasBanner(본문, 'https://tvnsports.cjenm.com/ko/'));
+  assert.ok(!alreadyHasBanner(본문, KBL주소));
 });
 
 check('중계처가 바뀌면 있는 배너를 바꾼다', () => {
   // 중계권이 옮겨가는 일이 실제로 있다(2026-27 KBL → tvN SPORTS).
   // 그때 배너를 하나 더 넣으면 둘이 되어 어느 쪽이 맞는지 알 수 없다.
-  const 옛배너본문 = 넣은본문.replace('https://tvnsports.cjenm.com/ko/', 'https://old.example.com/');
+  const 옛배너본문 = 넣은본문.replace(KBL주소, 'https://old.example.com/');
   const r = applyBanner(옛배너본문, 배너);
   assert.equal(r.한일, '교체');
   assert.equal(findBanners(r.html).length, 1, '배너가 둘이 됐습니다');
-  assert.ok(r.html.includes('tvnsports.cjenm.com'));
+  assert.ok(r.html.includes(KBL조각));
   assert.ok(!r.html.includes('old.example.com'), '옛 배너가 남았습니다');
   assert.ok(bannerOnlyChange(옛배너본문, r.html), '배너 말고 다른 게 바뀌었습니다');
 });
@@ -161,6 +167,14 @@ const wp = await startMockWordPress({
       title: { raw: '2026 KBO 프로야구 중계 보는 법 (빗금 붙은 주소)' },
       content: { raw: 본문 },
     },
+    // 7695 는 탁구 안내 글 자신이다. 설정에 `허브일때` 가 있어서, 자기 자신이
+    // 아니라 **바깥 공식 채널**이 걸려야 한다.
+    7695: {
+      status: 'publish', slug: 'wtt-중계', categories: [10], meta: {},
+      link: 'https://wiki.minimalbreeze.com/wtt-중계',
+      title: { raw: 'WTT 중계 보는 법' },
+      content: { raw: 본문.replace(/KBL/g, 'WTT').replace(/농구/g, '탁구') },
+    },
   },
 });
 process.env.WORDPRESS_URL = `http://127.0.0.1:${wp.port}`;
@@ -170,7 +184,7 @@ process.env.WORDPRESS_APP_PASSWORD = 'xxxx xxxx xxxx xxxx';
 // 2026-10-18: 'id 8' 이 예전에는 '바둑'이었다. 운영자가 바둑TV 주소를 줘서
 // 바둑에 중계 링크가 생겼으니 '링크 없는 종목'의 예가 되지 않는다. 검사의
 // 뜻(설정에 없으면 배너를 안 건다)은 그대로 두고 종목만 바꿨다.
-const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '승마' }, { id: 9, name: '야구' }];
+const siteCategories = [{ id: 6, name: '농구' }, { id: 8, name: '승마' }, { id: 9, name: '야구' }, { id: 10, name: '스포츠' }];
 
 await checkAsync('미리보기는 저장하지 않는다', async () => {
   const r = await addWatchBanner(7690, { apply: false, siteCategories });
@@ -183,9 +197,9 @@ let 저장;
 await checkAsync('본문에 배너를 넣어 저장한다', async () => {
   const r = await addWatchBanner(7690, { apply: true, siteCategories });
   assert.ok(r.changed, r.skip);
-  assert.equal(r.url, 'https://tvnsports.cjenm.com/ko/');
+  assert.equal(r.url, KBL주소);
   저장 = wp.state.updated.find((u) => u.id === 7690);
-  assert.ok(저장.content.includes('tvnsports.cjenm.com'), 저장.content.slice(0, 200));
+  assert.ok(저장.content.includes(KBL조각), 저장.content.slice(0, 200));
 });
 
 check('content 말고 아무것도 보내지 않는다', () => {
@@ -198,7 +212,7 @@ await checkAsync('고치기 전에 원본 본문을 남긴다', async () => {
   const files = fs.readdirSync(dir).filter((f) => f.startsWith('7690-'));
   assert.ok(files.length, '원본 파일이 없습니다');
   const saved = JSON.parse(fs.readFileSync(path.join(dir, files[0]), 'utf8'));
-  assert.ok(!saved.content.raw.includes('tvnsports'), '배너가 들어간 뒤의 본문을 남겼습니다');
+  assert.ok(!saved.content.raw.includes(KBL조각), '배너가 들어간 뒤의 본문을 남겼습니다');
 });
 
 await checkAsync('두 번 돌려도 배너가 둘이 되지 않는다', async () => {
@@ -206,14 +220,14 @@ await checkAsync('두 번 돌려도 배너가 둘이 되지 않는다', async ()
   assert.ok(!r.changed);
   assert.match(r.skip, /이미 지금 모양/);
   const 글 = wp.state.posts[7690].content.raw;
-  assert.equal((글.match(/tvnsports\.cjenm\.com/g) || []).length, 1, 글);
+  assert.equal((글.split(KBL조각).length - 1), 1, 글);
 });
 
 await checkAsync('여자농구 글에는 여농티비를 넣는다', async () => {
   // '농구' 한 카테고리에 KBL과 WKBL이 같이 있다. 중계처가 다르다.
   const r = await addWatchBanner(7691, { apply: false, siteCategories });
   assert.ok(r.changed, r.skip);
-  assert.match(r.url, /WKBL_official/);
+  assert.match(r.url, /여자농구-중계/);
 });
 
 await checkAsync('안내 글 자신에게는 배너를 넣지 않는다', async () => {
@@ -230,6 +244,15 @@ await checkAsync('끝의 빗금이 달라도 같은 글로 본다', async () => 
   const r = await addWatchBanner(7694, { apply: true, siteCategories });
   assert.ok(!r.changed, '빗금 때문에 자기 자신으로 가는 배너를 넣었습니다');
   assert.match(r.skip, /자기 자신/);
+});
+
+await checkAsync('안내 글 자신에게는 허브일때의 바깥 링크를 건다', async () => {
+  // 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다. 자기 자신이 아니라
+  // 공식 채널이 걸려야 한다.
+  const r = await addWatchBanner(7695, { apply: false, siteCategories });
+  assert.ok(r.changed, r.skip);
+  assert.match(r.url, /@wttglobal/, r.url);
+  assert.ok(!r.url.includes('wiki.minimalbreeze.com'), '자기 자신을 걸었습니다');
 });
 
 await checkAsync('설정에 링크가 없는 종목은 건너뛴다', async () => {
@@ -261,7 +284,7 @@ await checkAsync('상태 보기는 저장된 본문과 화면 본문을 함께 �
   // "본문에는 배너가 있는데 화면에는 안 보인다"를 가리려면 둘을 나란히 봐야 한다.
   const r = await showBanner(7690, { siteCategories });
   assert.equal(r.raw.배너블록, 1, JSON.stringify(r.raw));
-  assert.equal(r.url, 'https://tvnsports.cjenm.com/ko/');
+  assert.equal(r.url, KBL주소);
   assert.ok(r.raw.표시 >= 1);
 });
 

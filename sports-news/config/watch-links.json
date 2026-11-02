@@ -15,7 +15,7 @@
   ],
   "byCategory": {
     "농구": {
-      "확인일": "2026-10-04",
+      "확인일": "2026-11-02",
       "note": "'농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어간다. 중계처가 다르므로 match 로 가른다. match 가 안 걸리면 아래 기본값(WKBL)을 쓴다.",
       "match": [
         {
@@ -25,18 +25,26 @@
             "엔비에이",
             "NBA 중계"
           ],
-          "확인일": "2026-11-01",
+          "확인일": "2026-11-02",
           "note": "2026-27시즌 국내 중계는 쿠팡플레이(스포츠 패스). 주소는 운영자 확인. 하이라이트 채널은 공식 생중계가 아니다.",
           "primary": {
-            "text": "쿠팡플레이에서 NBA 중계 보기",
-            "url": "https://www.coupangplay.com/",
-            "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+            "text": "NBA 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/nba-중계",
+            "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
           },
-          "vod": {
-            "text": "NBA 하이라이트 보기",
-            "url": "https://www.youtube.com/@TheGametimeHighlights",
-            "확인일": "2026-11-01",
-            "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "쿠팡플레이에서 NBA 중계 보기",
+              "url": "https://www.coupangplay.com/",
+              "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+            },
+            "vod": {
+              "text": "NBA 하이라이트 보기",
+              "url": "https://www.youtube.com/@TheGametimeHighlights",
+              "확인일": "2026-11-01",
+              "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+            }
           }
         },
         {
@@ -53,12 +61,12 @@
             "대구 한국가스공사",
             "서울 삼성"
           ],
-          "확인일": "2026-10-04",
+          "확인일": "2026-11-02",
           "note": "2026-27 시즌 KBL 중계권이 tvN SPORTS(CJ ENM)로 옮겨졌다 — 운영자 확인.",
           "primary": {
-            "text": "tvN SPORTS에서 KBL 중계 보기",
-            "url": "https://tvnsports.cjenm.com/ko/",
-            "hint": "2026-27 시즌 KBL 중계처"
+            "text": "프로농구 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/프로농구-중계",
+            "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
           },
           "secondary": [
             {
@@ -66,18 +74,26 @@
               "url": "https://www.kbl.or.kr/game/schedule"
             }
           ],
-          "vod": {
-            "text": "KBL 경기 다시보기 (티빙스포츠)",
-            "url": "https://www.youtube.com/@tvingsports",
-            "확인일": "2026-11-01",
-            "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "tvN SPORTS에서 KBL 중계 보기",
+              "url": "https://tvnsports.cjenm.com/ko/",
+              "hint": "2026-27 시즌 KBL 중계처"
+            },
+            "vod": {
+              "text": "KBL 경기 다시보기 (티빙스포츠)",
+              "url": "https://www.youtube.com/@tvingsports",
+              "확인일": "2026-11-01",
+              "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+            }
           }
         }
       ],
       "primary": {
-        "text": "여농티비에서 생중계 보기",
-        "url": "https://www.youtube.com/@WKBL_official/streams",
-        "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+        "text": "여자농구 중계 보는 법 보기",
+        "url": "https://wiki.minimalbreeze.com/여자농구-중계",
+        "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
       },
       "secondary": [
         {
@@ -85,11 +101,19 @@
           "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
         }
       ],
-      "vod": {
-        "text": "WKBL 지난 경기 다시보기",
-        "url": "https://www.youtube.com/@WKBL_official/videos",
-        "확인일": "2026-11-01",
-        "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+      "허브일때": {
+        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+        "primary": {
+          "text": "여농티비에서 생중계 보기",
+          "url": "https://www.youtube.com/@WKBL_official/streams",
+          "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+        },
+        "vod": {
+          "text": "WKBL 지난 경기 다시보기",
+          "url": "https://www.youtube.com/@WKBL_official/videos",
+          "확인일": "2026-11-01",
+          "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+        }
       }
     },
     "배구": {
@@ -205,20 +229,28 @@
       ]
     },
     "배드민턴": {
-      "확인일": "2026-10-17",
+      "확인일": "2026-11-02",
       "note": "2026-10-17 운영자가 주소를 직접 줬다 — https://www.youtube.com/@BWF (세계배드민턴연맹 공식 유튜브). 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 한국 지상파·케이블 중계 편성은 대회마다 달라지고 이번 덴마크 오픈 편성은 확인하지 못했다 — 확인 못 한 채널은 링크로 걸지 않고 본문에서도 적지 않는다.",
       "primary": {
-        "text": "BWF 공식 유튜브에서 경기 보기",
-        "url": "https://www.youtube.com/@BWF",
-        "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+        "text": "배드민턴 중계 보는 법 보기",
+        "url": "https://wiki.minimalbreeze.com/안세영-중계",
+        "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
       },
-      "vod": {
-        "text": "배드민턴 경기 다시보기",
-        "url": "https://www.youtube.com/@BWF/videos",
-        "확인일": "2026-11-01",
-        "note": "BWF 공식 채널의 지난 영상 탭."
-      },
-      "_출처": "2026-10-17 운영자가 직접 준 주소. 코드가 확인한 것이 아니다."
+      "_출처": "2026-10-17 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+      "허브일때": {
+        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+        "primary": {
+          "text": "BWF 공식 유튜브에서 경기 보기",
+          "url": "https://www.youtube.com/@BWF",
+          "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+        },
+        "vod": {
+          "text": "배드민턴 경기 다시보기",
+          "url": "https://www.youtube.com/@BWF/videos",
+          "확인일": "2026-11-01",
+          "note": "BWF 공식 채널의 지난 영상 탭."
+        }
+      }
     },
     "스포츠": {
       "확인일": "2026-10-18",
@@ -247,7 +279,19 @@
             "확인일": "2026-11-02",
             "note": "운영자가 준 WTT 공식 채널. 경기 영상·하이라이트가 올라온다."
           },
-          "라벨": "📺 중계 보는 법"
+          "라벨": "📺 중계 보는 법",
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크. 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.",
+            "primary": {
+              "text": "WTT 공식 채널에서 경기 보기",
+              "url": "https://www.youtube.com/@wttglobal",
+              "hint": "World Table Tennis 공식 · 대회·국가에 따라 라이브가 제한될 수 있음"
+            },
+            "vod": {
+              "text": "WTT 하이라이트 보기",
+              "url": "https://www.youtube.com/@wttglobal/videos"
+            }
+          }
         },
         {
           "keywords": [
@@ -255,18 +299,26 @@
             "미국프로농구",
             "엔비에이"
           ],
-          "확인일": "2026-11-01",
+          "확인일": "2026-11-02",
           "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
           "primary": {
-            "text": "쿠팡플레이에서 NBA 중계 보기",
-            "url": "https://www.coupangplay.com/",
-            "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+            "text": "NBA 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/nba-중계",
+            "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
           },
-          "vod": {
-            "text": "NBA 하이라이트 보기",
-            "url": "https://www.youtube.com/@TheGametimeHighlights",
-            "확인일": "2026-11-01",
-            "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "쿠팡플레이에서 NBA 중계 보기",
+              "url": "https://www.coupangplay.com/",
+              "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+            },
+            "vod": {
+              "text": "NBA 하이라이트 보기",
+              "url": "https://www.youtube.com/@TheGametimeHighlights",
+              "확인일": "2026-11-01",
+              "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+            }
           }
         },
         {
@@ -276,12 +328,12 @@
             "티빙",
             "tvN SPORTS"
           ],
-          "확인일": "2026-11-01",
+          "확인일": "2026-11-02",
           "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다. '프로농구'는 '여자프로농구' 안에서도 잡혀 넣지 않았다.",
           "primary": {
-            "text": "tvN SPORTS에서 KBL 중계 보기",
-            "url": "https://tvnsports.cjenm.com/ko/",
-            "hint": "2026-27 시즌 KBL 중계처"
+            "text": "프로농구 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/프로농구-중계",
+            "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
           },
           "secondary": [
             {
@@ -289,11 +341,19 @@
               "url": "https://www.kbl.or.kr/game/schedule"
             }
           ],
-          "vod": {
-            "text": "KBL 경기 다시보기 (티빙스포츠)",
-            "url": "https://www.youtube.com/@tvingsports",
-            "확인일": "2026-11-01",
-            "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "tvN SPORTS에서 KBL 중계 보기",
+              "url": "https://tvnsports.cjenm.com/ko/",
+              "hint": "2026-27 시즌 KBL 중계처"
+            },
+            "vod": {
+              "text": "KBL 경기 다시보기 (티빙스포츠)",
+              "url": "https://www.youtube.com/@tvingsports",
+              "확인일": "2026-11-01",
+              "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+            }
           }
         },
         {
@@ -303,12 +363,12 @@
             "여자프로농구",
             "여농티비"
           ],
-          "확인일": "2026-11-01",
+          "확인일": "2026-11-02",
           "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
           "primary": {
-            "text": "여농티비에서 생중계 보기",
-            "url": "https://www.youtube.com/@WKBL_official/streams",
-            "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+            "text": "여자농구 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/여자농구-중계",
+            "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
           },
           "secondary": [
             {
@@ -316,11 +376,19 @@
               "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
             }
           ],
-          "vod": {
-            "text": "WKBL 지난 경기 다시보기",
-            "url": "https://www.youtube.com/@WKBL_official/videos",
-            "확인일": "2026-11-01",
-            "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "여농티비에서 생중계 보기",
+              "url": "https://www.youtube.com/@WKBL_official/streams",
+              "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+            },
+            "vod": {
+              "text": "WKBL 지난 경기 다시보기",
+              "url": "https://www.youtube.com/@WKBL_official/videos",
+              "확인일": "2026-11-01",
+              "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+            }
           }
         },
         {
@@ -329,18 +397,26 @@
             "배드민턴",
             "안세영"
           ],
-          "확인일": "2026-11-01",
+          "확인일": "2026-11-02",
           "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
           "primary": {
-            "text": "BWF 공식 유튜브에서 경기 보기",
-            "url": "https://www.youtube.com/@BWF",
-            "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+            "text": "배드민턴 중계 보는 법 보기",
+            "url": "https://wiki.minimalbreeze.com/안세영-중계",
+            "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
           },
-          "vod": {
-            "text": "배드민턴 경기 다시보기",
-            "url": "https://www.youtube.com/@BWF/videos",
-            "확인일": "2026-11-01",
-            "note": "BWF 공식 채널의 지난 영상 탭."
+          "허브일때": {
+            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+            "primary": {
+              "text": "BWF 공식 유튜브에서 경기 보기",
+              "url": "https://www.youtube.com/@BWF",
+              "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+            },
+            "vod": {
+              "text": "배드민턴 경기 다시보기",
+              "url": "https://www.youtube.com/@BWF/videos",
+              "확인일": "2026-11-01",
+              "note": "BWF 공식 채널의 지난 영상 탭."
+            }
           }
         },
         {
