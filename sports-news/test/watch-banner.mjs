@@ -164,7 +164,10 @@ check('링크가 없는 종목이면 자리표시자가 조용히 사라진다',
 check('배너가 최종 HTML에 실린다', () => {
   const plan = planPlacements(본문, { sectionImages: 0, withAd: false, withWatch: true });
   const html = markdownToBlocks(insertMarks(본문, plan), { watchHtml: 배너 });
-  assert.ok(html.includes('youtube.com/@WKBL_official'), '링크가 없습니다');
+  // 2026-11-02: 농구 기본값이 바깥 채널에서 **내 블로그 안내 글**로 바뀌었다.
+  // 이 검사의 요점은 "어느 주소인가"가 아니라 "배너가 최종 HTML 에 실리는가"다.
+  const 기대주소 = pickWatchLinks('농구').primary.url;
+  assert.ok(html.includes(기대주소.replace('https://', '')), '링크가 없습니다');
   assert.ok(!html.includes('&lt;!--WATCH--&gt;'), '자리표시자가 글자로 새어나왔습니다');
 });
 
@@ -226,14 +229,19 @@ check('KBL은 WKBL 안에 들어 있다 — 낱말로만 본다', () => {
   assert.ok(!낱말로있나('', 'KBL'));
 });
 
-check('WKBL 글에는 여농티비가 붙는다', () => {
+check('WKBL 글은 내 안내 글로 보내고, 여농티비는 허브일때에 남는다', () => {
+  // 2026-11-02 운영자 지시로 방향이 바뀌었다 — 대회별 글은 바깥이 아니라
+  // 내 블로그 안내 글로 보낸다. 바깥 주소를 잃어버리면 안내 글 자신이
+  // 걸 곳이 없어지므로 허브일때 에 그대로 남아 있어야 한다.
   const r = pickWatchLinks('농구', { text: 'WKBL 청주 KB 개막 일정·중계' });
-  assert.match(r.primary.url, /WKBL_official/, r.primary.url);
+  assert.match(r.primary.url, /여자농구-중계/, r.primary.url);
+  assert.match(r.허브일때.primary.url, /WKBL_official/, '여농티비 주소를 잃어버렸습니다');
 });
 
-check('KBL 글에는 tvN SPORTS가 붙는다', () => {
+check('KBL 글은 내 안내 글로 보내고, tvN SPORTS는 허브일때에 남는다', () => {
   const r = pickWatchLinks('농구', { text: '2026-27 KBL 부산 KCC 경기일정·중계' });
-  assert.equal(r.primary.url, 'https://tvnsports.cjenm.com/ko/');
+  assert.match(r.primary.url, /프로농구-중계/, r.primary.url);
+  assert.equal(r.허브일때.primary.url, 'https://tvnsports.cjenm.com/ko/');
 });
 
 
@@ -302,8 +310,11 @@ check('라벨을 안 적은 항목은 예전 머리글 그대로다', () => {
   // 이미 올린 글 수백 편이 이 글귀로 들어가 있다. 바뀌면 전부 못 찾는다.
   assert.equal(DEFAULT_WATCH_LABEL, '📺 경기 보러가기');
   assert.equal(watchLabel({ primary: { url: 'https://a.example', text: 'x' } }), '📺 경기 보러가기');
-  const kbl = pickWatchLinks('농구', { text: 'KBL 창원 LG 경기일정' });
-  assert.ok(watchBannerHtml(kbl).includes('📺 경기 보러가기'), '농구 배너 머리글이 바뀌었습니다');
+  // 2026-11-02: 농구·배드민턴·탁구는 내 안내 글로 보내면서 '📺 중계 보는 법'
+  // 라벨이 붙었다. 라벨을 안 적은 항목의 본보기를 골프로 바꾼다.
+  const klpga = pickWatchLinks('골프', { text: 'KLPGA 한국여자프로골프 중계' });
+  assert.equal(klpga.라벨, undefined, '골프 KLPGA 에 라벨이 생겼습니다');
+  assert.ok(watchBannerHtml(klpga).includes('📺 경기 보러가기'), '라벨 없는 항목의 머리글이 바뀌었습니다');
 });
 
 check('라벨을 적은 항목은 그 머리글을 쓴다', () => {
@@ -344,20 +355,27 @@ check('불꽃축제 배너는 유튜브로 가고 nofollow 가 붙는다', () =>
 });
 
 // ── 어느 대회 글인지는 몇 번 나오는지가 말해 준다 (2026-10-18) ──
+
+// 2026-11-03: 중계 배너가 '허브로 보내기'로 바뀌면서, 투어·종목을 가려낸
+// 결과는 primary 가 아니라 **허브일때** 에 남는다(허브는 종목마다 하나뿐이라
+// primary 만 보면 어느 투어를 골랐는지 알 수 없다). 매처가 하는 일은 그대로라
+// 검사도 그대로 뜻을 지킨다 — 보는 자리만 옮긴다.
+const 바깥주소 = (r) => (r?.허브일때?.primary ?? r?.primary)?.url;
+
 check('같은 종목에 투어가 여럿이면 더 많이 나온 쪽을 쓴다', () => {
   // 임성재 마카오 오픈 글은 아시안투어를 여덟 번, 'PGA 투어'를 두 번 쓴다.
   // 순서로 고르면 PGA TOUR 중계가 붙는다 — 눌러도 그 경기가 없다.
   const 마카오 = '임성재 마카오 오픈. 아시안투어 대회다. 아시안투어 상금. 아시안투어 순위. PGA 투어 선수.';
-  assert.equal(pickWatchLinks('골프', { text: 마카오 })?.primary.url, 'https://www.youtube.com/@theasiantour');
+  assert.equal(바깥주소(pickWatchLinks('골프', { text: 마카오 })), 'https://www.youtube.com/@theasiantour');
   const pga = 'PGA 투어 개막. PGA 투어 페덱스컵 순위. 아시안투어 출신 선수.';
-  assert.equal(pickWatchLinks('골프', { text: pga })?.primary.url, 'https://www.youtube.com/@PGATour');
+  assert.equal(바깥주소(pickWatchLinks('골프', { text: pga })), 'https://www.youtube.com/@PGATour');
 });
 
 check('당구는 기본값이 있고 PBA 글만 PBA LIVE 로 간다', () => {
   // 빌리어즈TV 는 당구 전반을 다루므로 어느 당구 글에 붙어도 헛걸음이 아니다.
-  assert.equal(pickWatchLinks('당구', { text: '3쿠션 당구 대회' })?.primary.url,
+  assert.equal(바깥주소(pickWatchLinks('당구', { text: '3쿠션 당구 대회' })),
     'https://www.youtube.com/@BilliardsTV_Official');
-  assert.equal(pickWatchLinks('당구', { text: 'PBA-LPBA 챔피언십 고양' })?.primary.url,
+  assert.equal(바깥주소(pickWatchLinks('당구', { text: 'PBA-LPBA 챔피언십 고양' })),
     'https://www.youtube.com/@TV-ou4mv');
 });
 
@@ -384,7 +402,7 @@ check('제외어가 스쳐도 본류가 더 많으면 배너를 지킨다', () =
   const 글 = 'KLPGA 투어 중계 시청 방법. KLPGA 경기는 KLPGA 채널에서 본다. KLPGA 일정과 KLPGA 중계, KLPGA 다시보기를 정리했다. 스크린골프는 다른 글에서 다룬다.';
   const r = pickWatchLinks('골프', { text: 글 });
   assert.ok(r, '본류가 더 많은데 배너가 사라졌습니다');
-  assert.match(r.primary.url, /KLPGA/i);
+  assert.match(바깥주소(r), /KLPGA/i);
 });
 
 check('골프 제외어에 주소를 받지 못한 것만 적혀 있다', () => {
@@ -459,7 +477,7 @@ check('라이더컵은 PGA 투어 채널로 간다', () => {
   // 라이더컵 글 3편(2974·2871·2680)이 'PGA 투어' 낱말이 없어 안 붙고 있었다.
   const e = pickWatchLinks('골프', { text: '2025 라이더컵 중계 경기일정 맥길로이 유럽 VS 셰플러 미국' });
   assert.ok(e, '라이더컵에 배너가 없습니다');
-  assert.match(e.primary.url, /@PGATour/, `라이더컵이 엉뚱한 곳으로 갑니다: ${e.primary.url}`);
+  assert.match(바깥주소(e), /@PGATour/, `라이더컵이 엉뚱한 곳으로 갑니다: ${바깥주소(e)}`);
 });
 
 check('경륜·경마·경정이 각자 제 채널로 간다', () => {
@@ -485,7 +503,7 @@ check('라이더컵을 넣어도 다른 투어가 흔들리지 않는다', () =>
     '2026 JLPGA 니토리 레이디스': /@LPGAJAPAN/,
   };
   for (const [글, 기대] of Object.entries(그대로)) {
-    assert.match(pickWatchLinks('골프', { text: 글 })?.primary?.url || '', 기대, 글);
+    assert.match(바깥주소(pickWatchLinks('골프', { text: 글 })) || '', 기대, 글);
   }
 });
 

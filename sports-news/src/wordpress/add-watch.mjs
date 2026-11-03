@@ -189,7 +189,7 @@ export async function removeWatchBanner(postId, { apply = false, siteCategories 
   };
 
   // 붙을 이유가 있으면 빼지 않는다. 여기가 이 도구의 전부다.
-  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  const entry = pickWatchLinks(category, { text: 고르기용글(title, content), postId });
   if (entry) return { ...base, skip: '지금 설정으로도 붙을 배너가 있습니다 — 빼지 않습니다' };
 
   const 표시들 = allWatchLabels();
@@ -229,9 +229,39 @@ export async function addWatchBanner(postId, { apply = true, siteCategories = []
     id: postId, title, status: post?.status, category, changed: false, backup: null,
   };
 
-  const entry = pickWatchLinks(category, { text: 고르기용글(title, content) });
+  let entry = pickWatchLinks(category, { text: 고르기용글(title, content), postId });
   if (!entry) {
     return { ...base, skip: `'${category || '분류 없음'}' 카테고리는 config/watch-links.json 에 중계 링크가 없습니다` };
+  }
+
+  // 자기 자신을 가리키는 배너는 넣지 않는다 (2026-11-02).
+  //
+  // 중계처가 유료로 쪼개진 종목은 바깥이 아니라 **내 블로그 안의 안내 글**로
+  // 보낸다(야구가 2026-10-19 부터 그렇다). 그런데 그 안내 글도 같은
+  // 카테고리라서, 방어가 없으면 **안내 글이 자기 자신으로 가는 버튼**을 단다.
+  // 독자가 눌러도 같은 자리다.
+  //
+  // 공개 주소로 비교한다 — 설정에 적는 주소가 공개 주소이기 때문이다.
+  // 끝의 빗금과 대소문자 차이는 같은 것으로 본다.
+  const 같은곳인가 = (a, b) => {
+    const 다듬기 = (s) => decodeURIComponent(String(s || '').trim()).replace(/\/+$/, '').toLowerCase();
+    const x = 다듬기(a);
+    return !!x && x === 다듬기(b);
+  };
+  // 운영자가 못박은 배너(강제)는 자기 자신이라도 그대로 넣는다. 그 글에만
+  // 해당하는 사정은 코드가 알 수 없고, 지정한 사람이 알고 지정한 것이다.
+  if (!entry.강제됨 && 같은곳인가(entry.primary.url, post?.link)) {
+    // 안내 글 자신에게는 **바깥 공식 채널**을 걸어 준다. 설정에 `허브일때` 로
+    // 적어 두면 그걸 쓴다 — 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.
+    // 적어 두지 않았으면 아무것도 넣지 않는다. 주소를 만들어내지 않는다.
+    if (entry.허브일때?.primary?.url) {
+      entry = { ...entry, ...entry.허브일때 };
+    } else {
+      return {
+        ...base, url: entry.primary.url,
+        skip: '이 글이 바로 그 안내 글입니다 — 자기 자신으로 가는 배너는 넣지 않습니다 (바깥 링크를 걸려면 설정에 허브일때 를 적으세요)',
+      };
+    }
   }
   const url = entry.primary.url;
 
