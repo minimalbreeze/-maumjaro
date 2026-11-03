@@ -189,6 +189,10 @@ export function saveScenes(id, { scenes, stats, problems = [], cost = null }) {
         // 카드 단계는 그릴 것이 없다고 봤다. 79샷 중 55장만 남았다.
         card_text: shot.card_text || '',
         depicts_real_person: shot.depicts_real_person,
+        // 누구인지. 그림 단계가 이걸 보고 참조 사진을 고른다 —
+        // 안 담으면 사진이 있어도 안 쓰인다 (카드 24장이 사라졌던
+        // 것과 같은 종류의 실수다).
+        person: shot.person || '',
         mood: scene.mood,
       });
     }

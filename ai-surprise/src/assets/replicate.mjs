@@ -81,12 +81,15 @@ export const IMAGE_MODELS = {
     usdPerImage: 0.05,
     note: '사진을 참조로 얼굴을 가져온다. 인물 시트 전용.',
     needsReference: true,
-    input: (prompt, { referenceImage, negativePrompt }) => ({
+    input: (prompt, { referenceImage, negativePrompt, aspectRatio }) => ({
       prompt,
       main_face_image: referenceImage,
       ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
-      width: 896,
-      height: 1152,
+      // 인물 시트는 세로(896x1152)지만 **본편 샷은 가로**다. 세로로
+      // 만들어 16:9 에 넣으면 좌우가 잘려 얼굴이 날아간다.
+      ...(aspectRatio === '16:9'
+        ? { width: 1344, height: 768 }
+        : { width: 896, height: 1152 }),
       num_steps: 20,
       guidance_scale: 4,
       // 0 이면 첫 걸음부터 얼굴을 밀어 넣는다 — 제일 닮지만 화풍을 덜

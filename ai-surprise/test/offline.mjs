@@ -4330,7 +4330,94 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
   assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
   assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
-  assert.ok(/no team logos/.test(jobs[0].prompt));
+  assert.ok(/no club team logos/.test(jobs[0].prompt));
+  // 2026-11-03 유니폼을 국대로 바꿨다. 가슴 글자는 **살아야** 한다 —
+  // 전에는 금지 목록의 'no readable jersey text' 가 그걸 지웠다.
+  assert.ok(/KOREA across the chest/.test(jobs[0].prompt), '국대 유니폼 지시가 없습니다');
+  assert.ok(
+    !/no readable jersey text/.test(jobs[0].prompt),
+    '유니폼 글자를 막는 줄이 되살아났습니다 — 국대 유니폼 지시와 충돌합니다'
+  );
+  // 미리보기는 참조 사진이 없다. 그러면 지어낸 인물이어야 한다.
+  assert.ok(/an invented character/.test(jobs[0].prompt));
+});
+
+await asyncTest('사진이 있는 사람만 닮게 그리라고 적는다', async () => {
+  // 사진이 없는데 "닮게 그려라"라고 하면, 닮지도 않으면서 닮은 척하는
+  // 얼굴이 나온다. 그게 제일 나쁘다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const plain = V.composeImagePrompt('a batter at the plate', null, { kind: 'SPORTS' });
+  const like = V.composeImagePrompt('a batter at the plate', null, {
+    kind: 'SPORTS',
+    likeness: true,
+  });
+
+  assert.ok(plain.includes(V.SPORTS_INVENTED_CLAUSE));
+  assert.ok(!plain.includes('reference photograph'));
+  assert.ok(like.includes(V.SPORTS_LIKENESS_CLAUSE));
+  // 둘을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
+  assert.ok(!like.includes(V.SPORTS_INVENTED_CLAUSE), '반대되는 두 줄이 같이 붙었습니다');
+  // 운영자가 "캐리커처 할 필요 없다"고 했다(2026-11-03).
+  assert.ok(/without\s+caricature or exaggeration/.test(like));
+
+  // 금지 목록의 이 줄은 닮게 그리라는 줄과 정반대다. 같이 보내면
+  // 모델이 하나를 버리는데, 어느 쪽을 버렸는지는 그림이 나와야 안다.
+  assert.ok(
+    !like.includes('no real identifiable public figures'),
+    '닮게 그리라면서 실존 인물을 막는 줄이 같이 갔습니다'
+  );
+  // 사진을 안 준 샷에서는 그대로 남아야 한다.
+  assert.ok(plain.includes('no real identifiable public figures'));
+  // 미스터리·동화 편은 건드리면 안 된다.
+  const tale = V.composeImagePrompt('a quiet road', null, { kind: 'TALE' });
+  assert.ok(tale.includes('no real identifiable public figures'));
+});
+
+await asyncTest('사진 주소가 http 일 때만 참조로 센다', async () => {
+  const V = await import('../src/scenes/visuals.mjs');
+  const names = V.photoNamesOf({
+    research: {
+      people: [
+        { name: '김도영', photo: 'https://example.com/a.jpg' },
+        // 로컬 경로는 이미지 모델이 열 수 없다. 세면 안 된다.
+        { name: '박재현', photo: '/home/user/photos/b.jpg' },
+        { name: '최원호', photo: '' },
+        { name: '', photo: 'https://example.com/c.jpg' },
+      ],
+    },
+  });
+  assert.deepEqual([...names], ['김도영']);
+  assert.equal(V.photoNamesOf(null).size, 0);
+  assert.equal(V.photoNamesOf({}).size, 0);
+});
+
+await asyncTest('설계한 샷이 사람 이름을 달고 나온다', async () => {
+  // 이름이 없으면 사진을 받아 둬도 어느 샷에 쓸지 알 수가 없다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const scene = {
+    scene_number: 1,
+    shots: [{ shot_id: 'S1-1', duration: 5 }, { shot_id: 'S1-2', duration: 5 }],
+  };
+  const { scene: out } = V.mergeVisuals(
+    scene,
+    {
+      shots: [
+        {
+          shot_id: 'S1-1', image_prompt: 'a batter', video_prompt: '', era: 'present',
+          camera: 'zoom in', motion_need: 3, depicts_real_person: true, person: ' 김도영 ',
+        },
+        {
+          shot_id: 'S1-2', image_prompt: 'an empty dugout', video_prompt: '', era: 'present',
+          camera: 'zoom in', motion_need: 1, depicts_real_person: false,
+        },
+      ],
+    },
+    { kind: 'SPORTS', photoNames: new Set(['김도영']) }
+  );
+  assert.equal(out.shots[0].person, '김도영', '앞뒤 공백을 안 털었습니다');
+  assert.equal(out.shots[1].person, '');
+  assert.ok(out.shots[0].image_prompt.includes('reference photograph'));
+  assert.ok(out.shots[1].image_prompt.includes('an invented character'));
 });
 
 test('미리보기 모드가 이미지 토큰 확인을 거친다', () => {
@@ -5598,6 +5685,82 @@ await asyncTest('읽을 글에 영어 글자를 넣지 않는다', async () => {
     const notes = checkSpoken(md).notes.filter((n) => n.includes('영어 글자'));
     assert.deepEqual(notes, [], `${ep}: ${notes[0]}`);
   }
+});
+
+
+await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', async () => {
+  // 운영자가 "그림이 진짜 선수 같은 느낌이었으면" 한다(2026-11-03).
+  // 글로만 생김새를 적으면 "그 조건에 맞는 아무 얼굴"이 나온다.
+  // 사진을 참조로 주면 실제로 닮는다.
+  //
+  // 그런데 참조 모델은 비싸다($0.05 대 $0.025). 그 사람이 나오는 샷에만 쓴다.
+  const I = await import('../src/assets/images.mjs');
+  const dir = fs.mkdtempSync(path.join(TMP, 'ref-'));
+
+  const calls = [];
+  const client = {
+    generate: async (prompt, o) => {
+      calls.push({ modelKey: o.modelKey, ref: o.referenceImage, ar: o.aspectRatio });
+      return { url: 'http://x/y.png', usdEstimate: o.referenceImage ? 0.05 : 0.025 };
+    },
+    download: async () => Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(4096),
+    ]),
+  };
+  const prompts = [
+    { shot_id: 'S1-1', scene_number: 1, image_prompt: 'a dugout', card_text: '', person: '' },
+    { shot_id: 'S1-2', scene_number: 1, image_prompt: 'kim', card_text: '', person: '김도영' },
+    { shot_id: 'S1-3', scene_number: 1, image_prompt: 'park', card_text: '', person: '박재현' },
+  ];
+  const out = await I.generateImages(prompts, {
+    assetDir: dir, client, sleepFn: async () => {},
+    people: [
+      { name: '김도영', photo: 'https://example.com/kim.jpg' },
+      // 사진 주소가 없는 사람은 그냥 글로 그린다.
+      { name: '박재현', photo: '' },
+    ],
+  });
+
+  assert.equal(out.made.length, 3);
+  assert.equal(calls[0].modelKey, 'schnell', '사람 없는 샷이 참조 모델로 갔습니다');
+  assert.equal(calls[1].modelKey, I.REFERENCE_MODEL, '사진 있는 사람이 참조 모델로 안 갔습니다');
+  assert.equal(calls[1].ref, 'https://example.com/kim.jpg');
+  assert.equal(calls[2].modelKey, 'schnell', '사진 없는 사람이 참조 모델로 갔습니다');
+
+  // 본편은 가로다. 세로로 만들면 16:9 에 넣을 때 위아래가 잘린다.
+  for (const c of calls) assert.equal(c.ar, '16:9');
+
+  // 참조 샷이 더 비싸다. 그 값으로 세야 상한이 맞는다.
+  assert.equal(out.spentUsd, 0.1, `쓴 돈이 $${out.spentUsd} 입니다 (0.025+0.05+0.025 여야 합니다)`);
+});
+
+await asyncTest('참조 샷은 비싼 값으로 상한을 센다', async () => {
+  // 싼 값으로 세면 상한을 넘겨 놓고 넘은 줄 모른다.
+  const I = await import('../src/assets/images.mjs');
+  const dir = fs.mkdtempSync(path.join(TMP, 'refcap-'));
+  let n = 0;
+  const client = {
+    generate: async (_p, o) => {
+      n++;
+      return { url: 'http://x/y.png', usdEstimate: o.referenceImage ? 0.05 : 0.025 };
+    },
+    download: async () => Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(4096),
+    ]),
+  };
+  const out = await I.generateImages(
+    [
+      { shot_id: 'A', scene_number: 1, image_prompt: 'x', card_text: '', person: '김도영' },
+      { shot_id: 'B', scene_number: 1, image_prompt: 'x', card_text: '', person: '김도영' },
+    ],
+    {
+      assetDir: dir, client, sleepFn: async () => {}, maxUsd: 0.06,
+      people: [{ name: '김도영', photo: 'https://example.com/kim.jpg' }],
+    }
+  );
+  // 0.05 한 장은 되고, 두 장째(0.10)는 상한 0.06 을 넘는다.
+  assert.equal(n, 1, `${n}장을 걸었습니다 — 한 장이어야 합니다`);
+  assert.equal(out.stoppedBy, 'budget');
 });
 
 
