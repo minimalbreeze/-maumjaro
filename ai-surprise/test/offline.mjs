@@ -4155,10 +4155,26 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   //
   // 그래서 지금 자리는 가운데다. 얼굴은 그리되, 꼭 필요한 데만.
 
-  // 그릴 때는 표정 있는 얼굴로 그린다 (1화 자리로 돌아가지 않는다).
+  // 그릴 때는 얼굴을 그린다 (1화의 "눈코입 없는 동그라미"로 안 돌아간다).
   const p = V.composeImagePrompt('a general manager at a desk', null, { kind: 'SPORTS' });
-  assert.ok(/expressive cartoon face/.test(p), '표정 있는 얼굴 지시가 없습니다');
-  assert.ok(/eyes/.test(p) && /mouth/.test(p), '눈·입 지시가 없습니다');
+  assert.ok(/eyebrows/.test(p) && /mouth/.test(p), '눈썹·입 지시가 없습니다');
+
+  // ── 3화·4화에서 나온 것들을 하나씩 막는다 (2026-11-03) ──
+  // 머리가 몸보다 큰 대머리 인형이 나왔다. 운영자 말로 "퀄리티가 너무
+  // 떨어진다". 원인이 전부 이 프롬프트 안에 적혀 있었다.
+  assert.ok(/manga|anime/.test(p), '2D 만화 지시가 없습니다');
+  assert.ok(/never a 3D render/.test(p), '3D 를 막지 않습니다');
+  assert.ok(/one seventh/.test(p), '등신 비율을 숫자로 안 박았습니다 — 말로 두면 흐려집니다');
+  assert.ok(/never bald/.test(p), '머리카락 지시가 없습니다 — 대머리가 나옵니다');
+  assert.ok(/whole figure inside the frame/.test(p), '프레이밍 지시가 없습니다 — 다리가 잘립니다');
+  // 옛 문구가 되살아나지 않는지 본다. 이 셋이 아기 인형을 만들었다.
+  for (const bad of ['oversized head on small body', 'glossy toy-figure', 'clear large eyes']) {
+    assert.ok(!p.includes(bad), `"${bad}" 가 되살아났습니다`);
+  }
+  // 금지 목록에도 이름을 적어 둔다.
+  for (const no of ['no 3D render', 'no chibi', 'no bald head', 'no cropped legs']) {
+    assert.ok(p.includes(no), `금지 목록에 "${no}" 가 없습니다`);
+  }
   // 특정인을 닮히는 것은 여전히 막는다.
   assert.ok(/not resembling any specific real person/.test(p));
   assert.ok(/no real identifiable public figures/.test(p));
@@ -4282,7 +4298,10 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   assert.equal(bySceneKey.length, 2, '같은 장면이 모델마다 하나씩 있어야 합니다');
   assert.equal(bySceneKey[0].prompt, bySceneKey[1].prompt, '같은 장면인데 프롬프트가 다릅니다');
   // 화풍과 금지 목록은 그대로 붙어야 한다.
-  assert.ok(/expressive cartoon face/.test(jobs[0].prompt));
+  // 미리보기도 본편과 **같은 화풍**이어야 뜻이 있다. 2D 만화로 바꾼 뒤
+  // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
+  assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
+  assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
   assert.ok(/no team logos/.test(jobs[0].prompt));
 });
 

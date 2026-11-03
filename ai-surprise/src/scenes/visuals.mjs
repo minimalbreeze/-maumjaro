@@ -127,21 +127,48 @@ export const TALE_STYLE_SUFFIX =
  * 안전한 쪽과 잘 되는 쪽이 같은 방향인, 드문 경우다.
  */
 export const SPORTS_STYLE_SUFFIX =
-  // 큰 머리 작은 몸. 캐리커처라는 걸 한눈에 알게 해서 "사진인 줄 알았다"는
-  // 오해를 처음부터 막는다.
-  'stylized 3D caricature render, oversized head on small body, ' +
-  'glossy toy-figure look, soft studio lighting, clean rim light, ' +
-  // 얼굴을 **그린다.** 다만 지어낸 만화 캐릭터 얼굴이다.
+  // ── 2D 만화다. 3D 렌더가 아니다 (2026-11-03 운영자 지시) ──
   //
-  // 처음엔 'simplified generic face' 로만 적고 장면 지시에서도 뒷모습을
-  // 권했더니, 얼굴이 아예 없는 영상이 나왔다 — 눈코입 없는 동그라미와
-  // 실루엣뿐이었다. 막아야 할 것은 "특정 선수를 닮는 것"이지 얼굴 자체가
-  // 아니다. 만화 캐릭터 얼굴은 누구의 초상도 아니다.
-  'expressive cartoon face with clear large eyes, visible eyebrows and mouth, ' +
+  // 3화·4화에서 **머리가 몸보다 큰 대머리 인형**이 나왔다. 운영자 말로
+  // "영상 퀄리티가 너무 떨어진다". 원인은 여기 적혀 있던 세 마디였다.
+  //
+  //   'stylized 3D caricature render, oversized head on small body'
+  //   'glossy toy-figure look'
+  //   'expressive cartoon face with clear large eyes'
+  //
+  // 사진으로 오해받지 않으려고 넣은 말인데, 그 값이 너무 컸다.
+  //
+  // 왜 2D인가
+  //   3D 캐릭터 렌더는 조금만 어긋나도 싸구려로 보인다. 선으로 그리는
+  //   2D는 어긋날 구석이 적어 같은 돈으로 더 안정적으로 나온다. 그리고
+  //   선 그림은 특징을 과장해도 자연스럽다 — 안경·턱수염·아이블랙 같은
+  //   표식이 또렷하게 살아난다. 3D에서는 그게 뭉개졌다.
+  //   야구 만화는 이미 있는 화법이라 내용과도 맞는다.
+  'japanese sports manga illustration, 2D anime cel shading, ' +
+  'clean confident ink linework, flat color with soft cel shadows, ' +
+  'drawn artwork, never a 3D render, never CGI, ' +
+  // ── 비율 ──
+  // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
+  // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
+  'realistic adult proportions, head about one seventh of total height, ' +
+  'an adult athlete in his twenties or thirties, never a child, ' +
+  'never chibi, never a toddler or baby face, ' +
+  // ── 머리카락 ──
+  // 이 줄이 통째로 없어서 **대머리**가 나왔다. 모자를 쓴 샷에서도
+  // 모자 밑으로 머리가 보여야 한다.
+  'a full head of short black hair, visible even under a cap, never bald, ' +
+  // ── 얼굴 ──
+  // 1화에서 눈코입 없는 동그라미가 나왔던 적이 있다. 얼굴은 그린다.
+  // 다만 'clear large eyes' 는 빼야 한다 — 그게 아기 눈을 만들었다.
+  'a face drawn in manga style with defined eyebrows, eyes and mouth, ' +
   'an invented character, not resembling any specific real person, ' +
+  // ── 프레이밍 ──
+  // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
+  'framed as a waist-up or full-body shot with the whole figure inside the frame, ' +
+  'never cropping limbs at an awkward point, ' +
   // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
   'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
-  'shallow depth of field, dark office or stadium background, ' +
+  'cinematic lighting, dark office or stadium background, ' +
   'no text, no watermark, no captions, no subtitles, no logo';
 
 /**
@@ -154,7 +181,12 @@ export const SPORTS_STYLE_SUFFIX =
 export const SPORTS_NEGATIVE_EXTRA =
   'no team logos, no team names, no brand marks, no sponsor text on uniforms, ' +
   'no readable jersey text, no photorealistic faces, no photograph, ' +
-  'no real stadium signage, no league emblem';
+  'no real stadium signage, no league emblem, ' +
+  // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
+  'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
+  'no chibi, no oversized head, no baby face, no toddler, ' +
+  'no bald head, no hairless character, ' +
+  'no cropped legs, no cut-off limbs';
 
 export const NEGATIVE_SUFFIX =
   'no blood, no gore, no corpses, no wounds, no injury, no violence, ' +
