@@ -38,7 +38,7 @@ import {
   applyTimings,
   DEFAULT_MAX_USD as DEFAULT_TTS_MAX_USD,
 } from './audio/narrate.mjs';
-import { SAMPLE_TEXT, pickSampleVoices, sampleFileName } from './audio/sample.mjs';
+import { sampleTextFor, pickSampleVoices, sampleFileName } from './audio/sample.mjs';
 import { makeUploadPack, finishDescription } from './upload/pack.mjs';
 import { thumbnailArgs, pickThumbnailMoments } from './upload/thumbnail.mjs';
 import {
@@ -1279,9 +1279,14 @@ async function cmdVoice(flags) {
   if (flags.sample) {
     const apiKey = requireTtsKey();
     const client = createTtsClient({ apiKey });
-    const rate = flags.rate !== undefined ? Number(flags.rate) : 0.95;
+    // 종류를 받으면 그 종류의 문장과 속도로 들려준다. 미스터리 문장으로
+    // 야구 캐스터 톤을 고를 수는 없다.
+    const kind = typeof flags.kind === 'string' ? flags.kind.toUpperCase() : null;
+    const text = sampleTextFor(kind);
+    const rate = flags.rate !== undefined ? Number(flags.rate) : (kind ? speakingRateFor(kind) : 0.95);
     const voices = pickSampleVoices(await client.listVoices(), {
-      current: typeof flags.voice === 'string' ? flags.voice : DEFAULT_VOICE,
+      // 지금 쓰는 것이 후보에 들어가야 "전보다 나은가"를 판단할 수 있다.
+      current: typeof flags.voice === 'string' ? flags.voice : (kind ? voiceFor(kind) : DEFAULT_VOICE),
     });
     if (!voices.length) {
       log.error('들어볼 수 있는 한국어 목소리를 찾지 못했습니다.');
@@ -1289,16 +1294,16 @@ async function cmdVoice(flags) {
     }
     const dir = contentPath('_목소리', '');
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, '읽은-문장.txt'), `${SAMPLE_TEXT}\n\n속도 ${rate}\n`, 'utf8');
+    fs.writeFileSync(path.join(dir, '읽은-문장.txt'), `${text}\n\n속도 ${rate}\n`, 'utf8');
 
     log.section(`🗣  목소리 들어보기  |  ${voices.length}개  |  속도 ${rate}`);
-    log.info(`읽는 문장: ${SAMPLE_TEXT.slice(0, 40)}…`);
+    log.info(`읽는 문장: ${text.slice(0, 40)}…`);
     let chars = 0;
     for (const voice of voices) {
       try {
-        const mp3 = await client.synthesize(SAMPLE_TEXT, { voice, speakingRate: rate });
+        const mp3 = await client.synthesize(text, { voice, speakingRate: rate });
         fs.writeFileSync(path.join(dir, sampleFileName(voice, rate)), mp3);
-        chars += SAMPLE_TEXT.length;
+        chars += text.length;
         log.ok(voice);
       } catch (err) {
         // 한 목소리가 안 돼도 나머지는 만든다. 계열마다 받는 설정이 다르다.
