@@ -138,6 +138,35 @@ export function bareQuoteSpots(sentences) {
   return out;
 }
 
+/**
+ * 읽을 글에 **영어 글자**가 있는가.
+ *
+ * 음성 모델은 알파벳을 만나면 철자로 읽는다. "OPS" 는 "오 피 에스",
+ * "FA" 는 "에프 에이" 가 된다. 눈으로는 멀쩡한데 귀로는 뚝 끊긴다.
+ * 운영자가 잡았다(2026-11-03) — "영어는 되도록 넣지 말고, 영어
+ * 스펠로 읽는 경우가 많더라".
+ *
+ * 고치는 법은 간단하다. **한글로 적는다.**
+ *
+ *   OPS 팔 할 오 푼   →  오피에스 팔 할 오 푼
+ *   FA 시장          →  에프에이 시장
+ *   A등급            →  에이등급
+ *   MLB              →  메이저리그
+ *   KBO              →  케이비오
+ *
+ * 한글로 적으면 음성 모델이 글자 그대로 읽어서 흐름이 안 끊긴다.
+ * 자막에도 한글이 나가는데, 듣는 말과 보이는 말이 같은 편이 낫다.
+ */
+export function latinSpots(sentences) {
+  const out = [];
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    const hits = [...new Set((text.match(/[A-Za-z]{1,}/g) || []))];
+    if (hits.length) out.push({ text, hits });
+  }
+  return out;
+}
+
 export function checkSpoken(markdown) {
   const sentences = spokenSentences(markdown);
   const notes = [];
@@ -209,6 +238,18 @@ export function checkSpoken(markdown) {
         '듣는 사람은 따옴표를 못 보므로 귀로는 말이 엉킵니다. ' +
         '"…" 뒤에 `라는 말`·`고 했습니다` 처럼 말로 묶어 주세요: ' +
         `"${bare[0].slice(0, 46)}…"`
+    );
+  }
+
+
+  // 영어 글자. 음성 모델이 철자로 읽어서 흐름이 끊긴다.
+  const latin = latinSpots(sentences);
+  if (latin.length) {
+    const words = [...new Set(latin.flatMap((x) => x.hits))].join(', ');
+    notes.push(
+      `영어 글자가 ${latin.length}개 문장에 있습니다 (${words}). ` +
+        '음성 모델이 철자로 읽습니다 — "OPS" 는 "오 피 에스" 가 됩니다. ' +
+        '한글로 적어 주세요: OPS→오피에스, FA→에프에이, MLB→메이저리그.'
     );
   }
 

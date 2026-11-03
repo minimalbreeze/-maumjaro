@@ -31,8 +31,70 @@ import {
   MAX_CHARS_PER_REQUEST,
 } from './tts.mjs';
 
-/** 문단 사이 쉼(초). 다큐 나레이션은 사이가 있어야 긴장이 생긴다. */
+/**
+ * 문단 사이 쉼(초). 다큐 나레이션은 사이가 있어야 긴장이 생긴다.
+ *
+ * 이 값은 **가운데 값**이다. 실제로는 pauseAfter() 가 자리마다 다르게
+ * 정한다 — 아래를 보라.
+ */
 export const PAUSE_SECONDS = 0.45;
+
+/**
+ * 자리마다 다르게 쉰다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 고쳤나
+ * ─────────────────────────────────────────────────────────────
+ * 운영자가 "어딘가 기계 같은 느낌이 든다"고 했다(2026-11-03).
+ *
+ * 제일 큰 원인은 목소리가 아니라 **쉼이 전부 똑같다**는 것이었다.
+ * 문단마다 0.45 초짜리 같은 파일을 끼워 넣으니 메트로놈처럼 들린다.
+ * 사람은 그렇게 말하지 않는다 — 단락이 바뀔 때는 숨을 고르고, 같은
+ * 흐름이면 거의 안 쉬고 넘어간다.
+ *
+ * 목소리를 바꾸는 것보다 이쪽이 크다. 아무리 좋은 목소리도 똑같은
+ * 간격으로 끊으면 기계로 들린다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 규칙
+ * ─────────────────────────────────────────────────────────────
+ *   단락이 바뀐다        0.85   숨을 고르고 새 이야기를 시작한다
+ *   물음표로 끝났다      0.65   듣는 사람이 생각할 틈을 준다
+ *   장면이 바뀐다        0.50   화면도 같이 바뀌는 자리다
+ *   짧은 토막 (20자 밑)  0.22   "아닙니다." 뒤에 길게 쉬면 어색하다
+ *   그 밖                0.35   같은 흐름이면 빨리 넘어간다
+ *
+ * 숫자는 0.22 ~ 0.85 사이에 흩어져 있다. 네 배 차이라 귀에 들린다.
+ *
+ * @param unit 지금 문단
+ * @param next 다음 문단 (없으면 마지막)
+ */
+export function pauseAfter(unit, next) {
+  if (!next) return 0;
+  const text = String(unit?.text || '').trim();
+
+  // 단락이 바뀌는 자리가 제일 길다. 여기서 안 쉬면 이야기가 뭉친다.
+  if (unit?.section && next?.section && unit.section !== next.section) return 0.85;
+
+  // 물음표 뒤. 묻고 바로 답하면 묻지 않은 것과 같다.
+  if (/[?？]$/.test(text)) return 0.65;
+
+  // 장면이 바뀌는 자리. 화면도 같이 바뀐다.
+  if (unit?.scene_number !== next?.scene_number) return 0.5;
+
+  // 짧은 토막. "아닙니다." "그게 전부입니다." 뒤에 길게 쉬면 어색하다.
+  //
+  // ⚠️ **구조가 바뀌는 자리를 먼저 본다.** 단락·물음표·장면이 전부
+  //    이 줄보다 위에 있다. 처음엔 이 줄을 장면 바뀜보다 위에 뒀는데,
+  //    짧은 문장 뒤에 화면이 바뀌어도 0.22초만 쉬어서 쫓기듯 들렸다.
+  //    글자 수는 구조보다 약한 단서다.
+  if (text.length < 20) return 0.22;
+
+  return 0.35;
+}
+
+/** 쉼 길이별로 무음 파일을 하나씩만 만든다. 같은 길이는 다시 안 만든다. */
+export const PAUSE_LENGTHS = [0.22, 0.35, 0.5, 0.65, 0.85];
 
 /** 기본 비용 상한(달러). 1편 8분이면 $0.05 안팎이라 넉넉하다. */
 export const DEFAULT_MAX_USD = 1;
@@ -267,9 +329,15 @@ export async function narrate(scenes, {
 
   // 쉼 파일 하나를 만들어 돌려 쓴다.
   onProgress?.('문단을 이어 붙이는 중...');
-  const silencePath = path.join(partsDir, '_pause.mp3');
-  if (!fs.existsSync(silencePath)) {
-    await runFfmpeg(silenceArgs({ seconds: PAUSE_SECONDS, outputPath: silencePath }));
+  // 쉼 길이가 여러 가지다. 길이마다 무음 파일을 하나씩 만들어 두고
+  // 돌려 쓴다 — 문단마다 만들면 백 번 넘게 ffmpeg 를 부른다.
+  const silenceFor = new Map();
+  for (const sec of PAUSE_LENGTHS) {
+    const file = path.join(partsDir, `_pause-${String(sec).replace('.', '_')}.mp3`);
+    if (!fs.existsSync(file)) {
+      await runFfmpeg(silenceArgs({ seconds: sec, outputPath: file }));
+    }
+    silenceFor.set(sec, file);
   }
 
   // 길이를 재면서 목록을 만든다. 여기서 나온 숫자가 자막의 근거가 된다.
@@ -291,9 +359,11 @@ export async function narrate(scenes, {
 
     listLines.push(`file '${unit.file.replace(/'/g, "'\\''")}'`);
     // 마지막 문단 뒤에는 쉼을 넣지 않는다. 영상 끝에 빈 소리가 남는다.
-    if (i < usable.length - 1) {
-      listLines.push(`file '${silencePath.replace(/'/g, "'\\''")}'`);
-      cursor += PAUSE_SECONDS;
+    const gap = pauseAfter(unit, usable[i + 1]);
+    if (gap > 0) {
+      const file = silenceFor.get(gap);
+      listLines.push(`file '${file.replace(/'/g, "'\\''")}'`);
+      cursor += gap;
     }
   }
 

@@ -5529,6 +5529,74 @@ await asyncTest('한도에 걸리면 알려 준 만큼 기다린다', async () =
 });
 
 
+await asyncTest('쉼이 자리마다 다르다 — 메트로놈처럼 끊지 않는다', async () => {
+  // 운영자가 "어딘가 기계 같은 느낌"이라고 했다(2026-11-03). 제일 큰
+  // 원인은 목소리가 아니라 **문단마다 똑같이 0.45초**를 끼운 것이었다.
+  // 아무리 좋은 목소리도 같은 간격으로 끊으면 기계로 들린다.
+  const N = await import('../src/audio/narrate.mjs');
+  const u = (o) => ({ section: 'A', scene_number: 1, text: '이 정도면 보통 길이의 문장이라고 할 수 있겠습니다', ...o });
+
+  // 마지막 문단 뒤에는 안 쉰다. 영상 끝에 빈 소리가 남는다.
+  assert.equal(N.pauseAfter(u(), null), 0);
+
+  // 단락이 바뀌면 제일 길게.
+  assert.equal(N.pauseAfter(u(), u({ section: 'B' })), 0.85);
+  // 물음표 뒤에는 생각할 틈.
+  assert.equal(N.pauseAfter(u({ text: '왜 그럴까요?' }), u()), 0.65);
+  // 장면이 바뀌면 중간.
+  assert.equal(N.pauseAfter(u(), u({ scene_number: 2 })), 0.5);
+  // 짧은 토막 뒤에 길게 쉬면 어색하다.
+  assert.equal(N.pauseAfter(u({ text: '아닙니다.' }), u()), 0.22);
+  // 다만 **구조가 글자 수보다 먼저다.** 짧은 문장 뒤라도 화면이
+  // 바뀌면 그만큼 쉰다 — 안 그러면 쫓기듯 들린다.
+  assert.equal(
+    N.pauseAfter(u({ text: '아닙니다.' }), u({ scene_number: 2 })), 0.5,
+    '짧은 토막이 장면 바뀜을 이겼습니다'
+  );
+  // 그 밖에는 짧게 넘어간다.
+  assert.equal(N.pauseAfter(u(), u()), 0.35);
+
+  // ⚠️ 차례가 중요하다. 짧은 물음("왜죠?")이 "짧은 토막"으로 떨어지면
+  //    생각할 틈이 사라진다. 물음표를 먼저 봐야 한다.
+  assert.equal(N.pauseAfter(u({ text: '왜죠?' }), u()), 0.65, '짧은 물음이 토막으로 떨어졌습니다');
+  // 단락 바뀜은 물음표보다도 앞이다.
+  assert.equal(N.pauseAfter(u({ text: '왜죠?' }), u({ section: 'B' })), 0.85);
+
+  // 쓰는 길이가 전부 무음 파일 목록에 있어야 한다. 없으면 이어붙이다 죽는다.
+  const used = new Set();
+  for (const a of [{}, { text: '짧다.' }, { text: '왜요?' }]) {
+    for (const b of [{}, { section: 'B' }, { scene_number: 2 }]) {
+      used.add(N.pauseAfter(u(a), u(b)));
+    }
+  }
+  for (const sec of used) {
+    assert.ok(N.PAUSE_LENGTHS.includes(sec), `${sec}초 무음 파일을 안 만듭니다`);
+  }
+
+  // 간격이 실제로 흩어져 있어야 귀에 들린다.
+  const lo = Math.min(...N.PAUSE_LENGTHS), hi = Math.max(...N.PAUSE_LENGTHS);
+  assert.ok(hi / lo >= 3, `쉼 차이가 ${(hi / lo).toFixed(1)}배뿐입니다 — 들리지 않습니다`);
+});
+
+await asyncTest('읽을 글에 영어 글자를 넣지 않는다', async () => {
+  // 음성 모델이 알파벳을 철자로 읽는다. "OPS" 가 "오 피 에스" 가 된다.
+  // 운영자가 잡았다 (2026-11-03).
+  const { latinSpots, checkSpoken } = await import('../src/script/spoken.mjs');
+
+  assert.equal(latinSpots(['오피에스 팔 할 오 푼입니다.']).length, 0);
+  assert.equal(latinSpots(['OPS 팔 할 오 푼입니다.']).length, 1);
+  assert.deepEqual(latinSpots(['FA 시장과 MLB.'])[0].hits, ['FA', 'MLB']);
+
+  // 2화 이후 대본은 깨끗해야 한다. 1화는 이미 올린 편이라 둔다.
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  for (const ep of ['2화', '3화', '4화', '5화']) {
+    const md = fs.readFileSync(path.join(base, `${ep}-대본.md`), 'utf8');
+    const notes = checkSpoken(md).notes.filter((n) => n.includes('영어 글자'));
+    assert.deepEqual(notes, [], `${ep}: ${notes[0]}`);
+  }
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
