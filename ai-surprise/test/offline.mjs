@@ -4253,6 +4253,24 @@ await asyncTest('hold 카메라는 거의 움직이지 않는다', async () => {
   assert.ok(!/\(iw-iw\/zoom\)/.test(hold), 'hold 에 가로 이동이 들어 있습니다');
 });
 
+test('스포츠 목소리는 들어 보고 고른 것이다', () => {
+  // Puck 은 Google 의 성격 설명(upbeat)만 보고 골랐다가 운영자에게
+  // "너무 어린 하이톤"이라는 말을 들었다. Algieba 는 같은 야구 문장을
+  // 여덟 목소리로 읽혀 나란히 듣고 고른 것이다 (2026-11-03).
+  const src = fs.readFileSync(
+    fileURLToPath(new URL('../src/audio/tts.mjs', import.meta.url)), 'utf8'
+  );
+  assert.ok(
+    /SPORTS_VOICE = 'ko-KR-Chirp3-HD-Algieba'/.test(src),
+    '스포츠 목소리가 바뀌었습니다 — 바꿀 때는 먼저 들어 보세요 (voice --sample --kind=SPORTS)'
+  );
+  // 되돌아가지 않는지 본다.
+  assert.ok(!/SPORTS_VOICE = 'ko-KR-Chirp3-HD-Puck'/.test(src), 'Puck 으로 되돌아갔습니다');
+  // 왜 바꿨는지가 코드에 남아 있어야 한다. 안 남기면 다음에 또 설명만
+  // 보고 고른다.
+  assert.ok(/들어 보고 골랐다/.test(src), '고른 근거가 안 적혀 있습니다');
+});
+
 await asyncTest('스포츠는 중계 톤으로 조금 빠르게 읽는다', async () => {
   const T = await import('../src/audio/tts.mjs');
   // 0.95 는 미스터리·동화에 맞춘 속도다. 야구 분석에 쓰면 늘어진다.
