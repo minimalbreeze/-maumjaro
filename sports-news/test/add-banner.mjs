@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { pickBanner } from '../src/wordpress/add-banner.mjs';
 import { applyBanner, bannerOnlyChange, findBanners, bannerSlot, BANNER_SIGN } from '../src/wordpress/add-watch.mjs';
 import { APP_MARK } from '../src/seo/app-banner.mjs';
-import { OFFICIAL_MARK, officialBannerFor } from '../src/seo/official-banner.mjs';
+import { OFFICIAL_MARK, officialBannerFor, 공식배너빼는글인가, 공식배너뺀이유 } from '../src/seo/official-banner.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -117,6 +117,35 @@ check('빈 배너는 아무것도 하지 않는다', () => {
   const { html, 한일 } = applyBanner(본문, '', OFFICIAL_MARK);
   assert.equal(한일, null);
   assert.equal(html, 본문);
+});
+
+// ── 운영자가 빼라고 한 글 (2026-11-03) ─────────────────────
+// 조명우 3쿠션 월드컵 글(11797)에 PBA 배너가 붙었다. 본문에 "국내 프로당구
+// (PBA)"가 한 번 나와서다. 같은 당구지만 UMB 월드컵과 PBA 는 다른 대회다.
+check('빼는글에 적힌 글은 숫자로도 글자로도 알아본다', () => {
+  assert.equal(공식배너빼는글인가(11797), true);
+  assert.equal(공식배너빼는글인가('11797'), true, '문자열 번호를 못 알아봅니다');
+  assert.equal(공식배너빼는글인가(7801), false, '엉뚱한 글이 걸렸습니다');
+  assert.equal(공식배너빼는글인가(null), false, '번호가 없으면 빼지 않습니다');
+});
+
+check('왜 뺐는지를 설정에서 그대로 꺼내 온다', () => {
+  // 번호만 남으면 나중에 이유를 잃는다. 보고에 그대로 찍는다.
+  assert.match(공식배너뺀이유(11797), /PBA/);
+  assert.equal(공식배너뺀이유(7801), '');
+});
+
+check('뺀 자리에 빈 줄이 셋 넘게 남지 않는다', () => {
+  // add-banner 가 쓰는 것과 같은 식이다. removeWatchBanner 와 맞춰 둔다.
+  const 한번 = applyBanner(본문, 배너, OFFICIAL_MARK).html;
+  const 있는것 = findBanners(한번, OFFICIAL_MARK);
+  assert.equal(있는것.length, 1);
+  let html = 한번;
+  for (const x of [...있는것].reverse()) html = html.slice(0, x.start) + html.slice(x.end);
+  html = html.replace(/\n{3,}/g, '\n\n');
+  assert.equal(findBanners(html, OFFICIAL_MARK).length, 0, '배너가 안 빠졌습니다');
+  assert.ok(!/\n{3,}/.test(html), '빈 줄이 셋 넘게 남았습니다');
+  assert.ok(bannerOnlyChange(한번, html, OFFICIAL_MARK), '배너 말고 다른 것이 바뀌었습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
