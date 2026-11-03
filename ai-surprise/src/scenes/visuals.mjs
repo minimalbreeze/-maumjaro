@@ -144,8 +144,14 @@ export const SPORTS_STYLE_SUFFIX =
   //   선 그림은 특징을 과장해도 자연스럽다 — 안경·턱수염·아이블랙 같은
   //   표식이 또렷하게 살아난다. 3D에서는 그게 뭉개졌다.
   //   야구 만화는 이미 있는 화법이라 내용과도 맞는다.
-  'japanese sports manga illustration, 2D anime cel shading, ' +
-  'clean confident ink linework, flat color with soft cel shadows, ' +
+  // 운영자가 지브리 느낌을 원한다(2026-11-03). 스튜디오 이름을 적는
+  // 대신 **그 느낌을 만드는 것들을 직접 적는다.** 이름으로 부르면
+  // 모델이 그걸 어떻게 이해하는지 우리가 통제할 수 없다. 요소로 적으면
+  // 결과가 고르고, 어디를 고칠지도 분명하다.
+  'hand-painted 2D anime illustration in a warm classic Japanese ' +
+  'animation style, soft watercolour-like painted backgrounds, ' +
+  'gentle natural light, warm muted palette, visible brush texture, ' +
+  'clean confident linework, flat color with soft shadows, ' +
   'drawn artwork, never a 3D render, never CGI, ' +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
@@ -168,7 +174,8 @@ export const SPORTS_STYLE_SUFFIX =
   'never cropping limbs at an awkward point, ' +
   // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
   'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
-  'cinematic lighting, dark office or stadium background, ' +
+  'unhurried composition with room around the subject, ' +
+  'soft depth, stadium or clubhouse background painted with care, ' +
   'no text, no watermark, no captions, no subtitles, no logo';
 
 /**
@@ -397,9 +404,13 @@ export function peopleRules(people) {
     '표식이 적힌 사람은 그 표식도 같이 넣는다 — 얼굴만으로는 섞인다.',
     '',
     '그리고 생김새 문장 **맨 앞에 적힌 것이 그 사람의 표식**이다.',
-    '거기에 exaggerated / strongly / unmistakably 같은 말을 붙여 **과장해서**',
-    '그리라고 적는다. 캐리커처는 특징을 고르게 그리면 닮지 않는다 — 하나를',
-    '밀어야 그 사람이 떠오른다. 나머지는 적힌 대로만 둔다.',
+    '그 표식을 또렷하게 그린다 — 안경, 아이블랙, 앞머리, 수염처럼',
+    '멀리서도 읽히는 것이다. 그것만 살려 주면 사람이 구분된다.',
+    '',
+    '⚠️ **과장하지 않는다.** 전에는 exaggerated 같은 말을 붙여 특징을',
+    '밀라고 적었는데(사진으로 오해받을까 봐 넣은 장치였다), 그 바람에',
+    '얼굴이 일그러졌다. 보이는 대로 그린다 — 적힌 생김새를 그대로',
+    '옮기고, 없는 말을 더하지 않는다.',
     '',
     ...lines,
     '',

@@ -4162,7 +4162,11 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   // ── 3화·4화에서 나온 것들을 하나씩 막는다 (2026-11-03) ──
   // 머리가 몸보다 큰 대머리 인형이 나왔다. 운영자 말로 "퀄리티가 너무
   // 떨어진다". 원인이 전부 이 프롬프트 안에 적혀 있었다.
-  assert.ok(/manga|anime/.test(p), '2D 만화 지시가 없습니다');
+  assert.ok(/anime|manga/.test(p), '2D 만화 지시가 없습니다');
+  // 지브리 결은 **요소로** 적는다. 스튜디오 이름을 적으면 모델이
+  // 그걸 어떻게 이해하는지 통제할 수 없다 (2026-11-03).
+  assert.ok(/hand-painted|watercolour/.test(p), '손으로 칠한 결이 없습니다');
+  assert.ok(!/ghibli/i.test(p), '스튜디오 이름이 들어갔습니다 — 요소로 적으세요');
   assert.ok(/never a 3D render/.test(p), '3D 를 막지 않습니다');
   assert.ok(/one seventh/.test(p), '등신 비율을 숫자로 안 박았습니다 — 말로 두면 흐려집니다');
   assert.ok(/never bald/.test(p), '머리카락 지시가 없습니다 — 대머리가 나옵니다');
