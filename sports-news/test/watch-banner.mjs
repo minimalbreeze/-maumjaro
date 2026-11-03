@@ -355,20 +355,27 @@ check('불꽃축제 배너는 유튜브로 가고 nofollow 가 붙는다', () =>
 });
 
 // ── 어느 대회 글인지는 몇 번 나오는지가 말해 준다 (2026-10-18) ──
+
+// 2026-11-03: 중계 배너가 '허브로 보내기'로 바뀌면서, 투어·종목을 가려낸
+// 결과는 primary 가 아니라 **허브일때** 에 남는다(허브는 종목마다 하나뿐이라
+// primary 만 보면 어느 투어를 골랐는지 알 수 없다). 매처가 하는 일은 그대로라
+// 검사도 그대로 뜻을 지킨다 — 보는 자리만 옮긴다.
+const 바깥주소 = (r) => (r?.허브일때?.primary ?? r?.primary)?.url;
+
 check('같은 종목에 투어가 여럿이면 더 많이 나온 쪽을 쓴다', () => {
   // 임성재 마카오 오픈 글은 아시안투어를 여덟 번, 'PGA 투어'를 두 번 쓴다.
   // 순서로 고르면 PGA TOUR 중계가 붙는다 — 눌러도 그 경기가 없다.
   const 마카오 = '임성재 마카오 오픈. 아시안투어 대회다. 아시안투어 상금. 아시안투어 순위. PGA 투어 선수.';
-  assert.equal(pickWatchLinks('골프', { text: 마카오 })?.primary.url, 'https://www.youtube.com/@theasiantour');
+  assert.equal(바깥주소(pickWatchLinks('골프', { text: 마카오 })), 'https://www.youtube.com/@theasiantour');
   const pga = 'PGA 투어 개막. PGA 투어 페덱스컵 순위. 아시안투어 출신 선수.';
-  assert.equal(pickWatchLinks('골프', { text: pga })?.primary.url, 'https://www.youtube.com/@PGATour');
+  assert.equal(바깥주소(pickWatchLinks('골프', { text: pga })), 'https://www.youtube.com/@PGATour');
 });
 
 check('당구는 기본값이 있고 PBA 글만 PBA LIVE 로 간다', () => {
   // 빌리어즈TV 는 당구 전반을 다루므로 어느 당구 글에 붙어도 헛걸음이 아니다.
-  assert.equal(pickWatchLinks('당구', { text: '3쿠션 당구 대회' })?.primary.url,
+  assert.equal(바깥주소(pickWatchLinks('당구', { text: '3쿠션 당구 대회' })),
     'https://www.youtube.com/@BilliardsTV_Official');
-  assert.equal(pickWatchLinks('당구', { text: 'PBA-LPBA 챔피언십 고양' })?.primary.url,
+  assert.equal(바깥주소(pickWatchLinks('당구', { text: 'PBA-LPBA 챔피언십 고양' })),
     'https://www.youtube.com/@TV-ou4mv');
 });
 
@@ -395,7 +402,7 @@ check('제외어가 스쳐도 본류가 더 많으면 배너를 지킨다', () =
   const 글 = 'KLPGA 투어 중계 시청 방법. KLPGA 경기는 KLPGA 채널에서 본다. KLPGA 일정과 KLPGA 중계, KLPGA 다시보기를 정리했다. 스크린골프는 다른 글에서 다룬다.';
   const r = pickWatchLinks('골프', { text: 글 });
   assert.ok(r, '본류가 더 많은데 배너가 사라졌습니다');
-  assert.match(r.primary.url, /KLPGA/i);
+  assert.match(바깥주소(r), /KLPGA/i);
 });
 
 check('골프 제외어에 주소를 받지 못한 것만 적혀 있다', () => {
@@ -470,7 +477,7 @@ check('라이더컵은 PGA 투어 채널로 간다', () => {
   // 라이더컵 글 3편(2974·2871·2680)이 'PGA 투어' 낱말이 없어 안 붙고 있었다.
   const e = pickWatchLinks('골프', { text: '2025 라이더컵 중계 경기일정 맥길로이 유럽 VS 셰플러 미국' });
   assert.ok(e, '라이더컵에 배너가 없습니다');
-  assert.match(e.primary.url, /@PGATour/, `라이더컵이 엉뚱한 곳으로 갑니다: ${e.primary.url}`);
+  assert.match(바깥주소(e), /@PGATour/, `라이더컵이 엉뚱한 곳으로 갑니다: ${바깥주소(e)}`);
 });
 
 check('경륜·경마·경정이 각자 제 채널로 간다', () => {
@@ -496,7 +503,7 @@ check('라이더컵을 넣어도 다른 투어가 흔들리지 않는다', () =>
     '2026 JLPGA 니토리 레이디스': /@LPGAJAPAN/,
   };
   for (const [글, 기대] of Object.entries(그대로)) {
-    assert.match(pickWatchLinks('골프', { text: 글 })?.primary?.url || '', 기대, 글);
+    assert.match(바깥주소(pickWatchLinks('골프', { text: 글 })) || '', 기대, 글);
   }
 });
 

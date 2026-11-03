@@ -88,7 +88,10 @@ check('중계 고르기도 같은 글을 쓴다', () => {
   const 본문 = '<p>KLPGA 대회입니다.</p><h2>🔗 같이 읽을 글</h2><p>LPGA 투어 LPGA 투어 LPGA 투어 LPGA 투어</p>';
   const r = pickWatchLinks('골프', { text: 고르기용글(제목, 본문) });
   assert.ok(r, '배너가 안 붙었습니다');
-  assert.match(r.primary.url, /KLPGA/i, `다른 투어로 갔습니다: ${r.primary.url}`);
+  // 2026-11-03: 골프 배너가 허브로 가게 바뀌어, 어느 투어를 골랐는지는
+  // primary 가 아니라 허브일때 에 남는다. 매처가 하는 일은 그대로다.
+  const 바깥 = (r.허브일때?.primary ?? r.primary).url;
+  assert.match(바깥, /KLPGA/i, `다른 투어로 갔습니다: ${바깥}`);
 });
 
 check('두 배너 도구가 고르기용글을 쓴다 — 본문 전체를 넘기지 않는다', () => {
