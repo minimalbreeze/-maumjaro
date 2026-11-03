@@ -148,11 +148,20 @@ export const SPORTS_STYLE_SUFFIX =
   // 대신 **그 느낌을 만드는 것들을 직접 적는다.** 이름으로 부르면
   // 모델이 그걸 어떻게 이해하는지 우리가 통제할 수 없다. 요소로 적으면
   // 결과가 고르고, 어디를 고칠지도 분명하다.
-  'hand-painted 2D anime illustration in a warm classic Japanese ' +
-  'animation style, soft watercolour-like painted backgrounds, ' +
-  'gentle natural light, warm muted palette, visible brush texture, ' +
-  'clean confident linework, flat color with soft shadows, ' +
-  'drawn artwork, never a 3D render, never CGI, ' +
+  //
+  // 2026-11-03 운영자가 참조 그림 두 장을 줬다. 거기서 **보이는 것**을
+  // 그대로 적는다 — 느낌말로 적으면 모델이 제 맘대로 해석한다.
+  //   · 종이 결이 비치는 과슈·수채. 번들거리지 않는다.
+  //   · 색이 가라앉아 있다. 크림·먼지 낀 파랑·흙색.
+  //   · 관중은 또렷하게 그리지 않고 붓 자국으로 뭉갠다.
+  //   · 그런데 유니폼 글자와 솔기는 오히려 또렷하다.
+  'hand-painted 2D anime illustration in the style of a classic Japanese ' +
+  'animated film, gouache and watercolour on paper with visible brush ' +
+  'texture and a faint paper grain, soft natural light, ' +
+  'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
+  'clean confident linework, flat colour with soft hand-painted shading, ' +
+  'crowds and distant background painted as loose soft dabs, ' +
+  'drawn artwork, never a 3D render, never CGI, never a photograph, ' +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
   // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
@@ -166,17 +175,44 @@ export const SPORTS_STYLE_SUFFIX =
   // ── 얼굴 ──
   // 1화에서 눈코입 없는 동그라미가 나왔던 적이 있다. 얼굴은 그린다.
   // 다만 'clear large eyes' 는 빼야 한다 — 그게 아기 눈을 만들었다.
-  'a face drawn in manga style with defined eyebrows, eyes and mouth, ' +
-  'an invented character, not resembling any specific real person, ' +
+  'a face drawn in anime style with defined eyebrows, eyes and mouth, ' +
   // ── 프레이밍 ──
   // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
   'framed as a waist-up or full-body shot with the whole figure inside the frame, ' +
   'never cropping limbs at an awkward point, ' +
-  // 유니폼은 색으로만. 로고·구단명·스폰서 글자를 넣지 않는다.
-  'plain unbranded uniform with solid team colors only, no logos or lettering, ' +
+  // ── 유니폼 ──
+  // 2026-11-03 운영자: "유니폼은 전부 국대 유니폼으로 바꿔라".
+  // 전에는 'plain unbranded uniform ... no logos or lettering' 이었다.
+  // 그래서 어느 팀인지 읽히지 않는 흰 옷만 나왔다. 참조 그림에서는
+  // 가슴 글자가 그림의 중심이다 — 글자를 지우면 야구 그림이 아니게 된다.
+  'wearing the South Korea national baseball team uniform: a white or light ' +
+  'grey jersey with KOREA across the chest in navy block letters, navy and ' +
+  'red trim, a navy cap, dark belt, the lettering and seams painted with ' +
+  'the same care as the rest of the picture, ' +
   'unhurried composition with room around the subject, ' +
-  'soft depth, stadium or clubhouse background painted with care, ' +
-  'no text, no watermark, no captions, no subtitles, no logo';
+  'soft depth, stadium or dugout background painted with care, ' +
+  'no caption text, no watermark, no subtitles, no sponsor logo';
+
+/**
+ * 참조 사진이 **없는** 샷에 붙이는 줄.
+ *
+ * 글만으로 그릴 때는 실존 인물을 닮히려 하면 안 된다. 닮지도 않으면서
+ * 닮은 척하는 얼굴이 제일 나쁘다.
+ */
+export const SPORTS_INVENTED_CLAUSE =
+  'an invented character, not resembling any specific real person';
+
+/**
+ * 참조 사진이 **있는** 샷에 붙이는 줄.
+ *
+ * 2026-11-03 운영자: "실제 이미지를 기반으로 지브리 스타일로 그리면
+ * 문제가 안 될 것 같다", "캐리커처 할 필요 없다", "준 사진을 참고하라".
+ * 과장하지 말라는 것이 핵심이다 — 닮게, 그러나 그림으로.
+ */
+export const SPORTS_LIKENESS_CLAUSE =
+  'match the face, hairstyle, facial hair and build of the person in the ' +
+  'reference photograph, keeping their real proportions without ' +
+  'caricature or exaggeration, redrawn as a painting rather than traced';
 
 /**
  * 스포츠 편에만 더 붙이는 금지 목록.
@@ -186,8 +222,11 @@ export const SPORTS_STYLE_SUFFIX =
  * 실사 쪽을 한 겹 더 막는 것이다.
  */
 export const SPORTS_NEGATIVE_EXTRA =
-  'no team logos, no team names, no brand marks, no sponsor text on uniforms, ' +
-  'no readable jersey text, no photorealistic faces, no photograph, ' +
+  // ⚠️ 'no team names, no readable jersey text' 가 여기 있었다. 그 두 줄이
+  //    가슴 글자를 지웠다. 국대 유니폼을 그리라면서 글자를 막으면 모델은
+  //    글자 쪽을 버린다. 뺀다. 구단 로고와 스폰서 글자만 계속 막는다.
+  'no club team logos, no brand marks, no sponsor text on uniforms, ' +
+  'no photorealistic faces, no photograph, ' +
   'no real stadium signage, no league emblem, ' +
   // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
   'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
@@ -452,6 +491,7 @@ export const VISUALS_SCHEMA = {
           'camera',
           'motion_need',
           'depicts_real_person',
+          'person',
         ],
         properties: {
           shot_id: { type: 'string', description: '주어진 샷 번호를 그대로' },
@@ -486,6 +526,13 @@ export const VISUALS_SCHEMA = {
             type: 'boolean',
             description:
               '실존 인물의 얼굴이 알아볼 수 있게 나오는가. true면 AI 영상으로 만들지 않는다.',
+          },
+          person: {
+            type: 'string',
+            description:
+              '이 샷에 나오는 사람의 이름. 취재 자료의 people 에 있는 이름을 ' +
+              '그대로 쓴다. 사람이 안 나오거나 누구인지 정해지지 않았으면 빈 문자열. ' +
+              '사진을 받아 둔 사람이면 그 사진을 참조로 그린다.',
           },
         },
       },
@@ -543,7 +590,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content, era = null, { kind = null } = {}) {
+export function composeImagePrompt(content, era = null, { kind = null, likeness = false } = {}) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -561,8 +608,18 @@ export function composeImagePrompt(content, era = null, { kind = null } = {}) {
   const isTale = kind === KIND.TALE;
   const isSports = kind === KIND.SPORTS;
   const fixed = isTale || isSports;
-  const style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
-  const negative = isSports ? `${NEGATIVE_SUFFIX}, ${SPORTS_NEGATIVE_EXTRA}` : NEGATIVE_SUFFIX;
+  let style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
+  // 사진을 받아 둔 사람이면 닮게 그리라고 하고, 아니면 지어내라고 한다.
+  // 두 줄을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
+  if (isSports) {
+    style += `, ${likeness ? SPORTS_LIKENESS_CLAUSE : SPORTS_INVENTED_CLAUSE}`;
+  }
+  let negative = isSports ? `${NEGATIVE_SUFFIX}, ${SPORTS_NEGATIVE_EXTRA}` : NEGATIVE_SUFFIX;
+  // ⚠️ 공통 금지 목록의 'no real identifiable public figures' 는 닮게
+  //    그리라는 줄과 **정반대**다. 둘을 같이 보내면 모델이 하나를 버리고,
+  //    어느 쪽을 버렸는지는 그림이 나와야 안다. 닮게 그리는 샷에서만 뺀다.
+  //    사진을 안 준 샷에서는 그대로 남는다.
+  if (likeness) negative = negative.replace('no real identifiable public figures, ', '');
   const tone = !fixed && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
   if (!body) return `${tone}${style}. ${negative}`;
   return `${body}. ${tone}${style}. ${negative}`;
@@ -604,7 +661,23 @@ export function checkPrompts(shots) {
  * AI가 샷을 빠뜨리거나 없는 샷 번호를 보내는 경우를 여기서 흡수한다.
  * 합치지 못한 샷은 problems로 알린다.
  */
-export function mergeVisuals(scene, design, { kind = null } = {}) {
+/**
+ * 참조 사진을 받아 둔 사람 이름.
+ *
+ * `research.people[].photo` 가 http(s) 주소일 때만 센다. 로컬 경로는
+ * 이미지 모델이 열 수 없다 — 적어 놓고 안 쓰면 닮지 않은 그림이 나오는데
+ * 왜 그런지 알 길이 없다.
+ */
+export function photoNamesOf(item) {
+  const out = new Set();
+  for (const p of item?.research?.people || []) {
+    const name = String(p?.name || '').trim();
+    if (name && /^https?:\/\//.test(String(p?.photo || '').trim())) out.add(name);
+  }
+  return out;
+}
+
+export function mergeVisuals(scene, design, { kind = null, photoNames = null } = {}) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
   );
@@ -627,12 +700,17 @@ export function mergeVisuals(scene, design, { kind = null } = {}) {
       card_text: cardText,
       image_prompt: cardText
         ? ''
-        : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', { kind }),
+        : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
+            kind,
+            likeness: Boolean(photoNames && photoNames.has(String(d.person || '').trim())),
+          }),
       image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
       camera: IMAGE_CAMERA_MOVES.includes(d.camera) ? d.camera : 'zoom in',
       motion_need: clampInt(d.motion_need, 0, 10),
       depicts_real_person: Boolean(d.depicts_real_person),
+      // 누구인지. 사진을 받아 둔 사람이면 그 사진을 참조로 그린다.
+      person: String(d.person || '').trim(),
     };
   });
 
@@ -762,7 +840,10 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
     check = checkPrompts(design?.shots);
   }
 
-  const merged = mergeVisuals(scene, design, { kind: item?.kind });
+  const merged = mergeVisuals(scene, design, {
+    kind: item?.kind,
+    photoNames: photoNamesOf(item),
+  });
   const problems = [...merged.problems];
   if (!check.ok) {
     problems.push(

@@ -1195,11 +1195,24 @@ async function cmdImages(flags) {
   }
 
   const started = Date.now();
+  // 이 편에 나오는 사람들. 사진 주소가 있으면 그 사람이 나오는 샷을
+  // 참조 모델로 그린다 — 글로만 적으면 "그 조건에 맞는 아무 얼굴"이
+  // 나오고, 참조를 주면 실제로 닮는다.
+  const people = loadContent(id)?.research?.people || [];
+  const withPhoto = people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  if (withPhoto.length) {
+    log.info(`사진을 받아 둔 사람 ${withPhoto.length}명: ${withPhoto.map((p) => p.name).join(', ')}`);
+    log.info('  이 사람들이 나오는 샷은 사진을 참조로 그립니다 (장당 조금 더 비쌉니다).');
+  } else if (people.length) {
+    log.info(`생김새만 적힌 사람 ${people.length}명 — 사진 주소를 넣으면 실제로 닮게 그립니다.`);
+  }
+
   const result = await generateImages(prompts, {
     assetDir,
     token,
     modelKey,
     maxUsd,
+    people,
     force: Boolean(flags.force),
     onProgress: (m) => log.step(m),
   });
