@@ -4155,10 +4155,26 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   //
   // 그래서 지금 자리는 가운데다. 얼굴은 그리되, 꼭 필요한 데만.
 
-  // 그릴 때는 표정 있는 얼굴로 그린다 (1화 자리로 돌아가지 않는다).
+  // 그릴 때는 얼굴을 그린다 (1화의 "눈코입 없는 동그라미"로 안 돌아간다).
   const p = V.composeImagePrompt('a general manager at a desk', null, { kind: 'SPORTS' });
-  assert.ok(/expressive cartoon face/.test(p), '표정 있는 얼굴 지시가 없습니다');
-  assert.ok(/eyes/.test(p) && /mouth/.test(p), '눈·입 지시가 없습니다');
+  assert.ok(/eyebrows/.test(p) && /mouth/.test(p), '눈썹·입 지시가 없습니다');
+
+  // ── 3화·4화에서 나온 것들을 하나씩 막는다 (2026-11-03) ──
+  // 머리가 몸보다 큰 대머리 인형이 나왔다. 운영자 말로 "퀄리티가 너무
+  // 떨어진다". 원인이 전부 이 프롬프트 안에 적혀 있었다.
+  assert.ok(/manga|anime/.test(p), '2D 만화 지시가 없습니다');
+  assert.ok(/never a 3D render/.test(p), '3D 를 막지 않습니다');
+  assert.ok(/one seventh/.test(p), '등신 비율을 숫자로 안 박았습니다 — 말로 두면 흐려집니다');
+  assert.ok(/never bald/.test(p), '머리카락 지시가 없습니다 — 대머리가 나옵니다');
+  assert.ok(/whole figure inside the frame/.test(p), '프레이밍 지시가 없습니다 — 다리가 잘립니다');
+  // 옛 문구가 되살아나지 않는지 본다. 이 셋이 아기 인형을 만들었다.
+  for (const bad of ['oversized head on small body', 'glossy toy-figure', 'clear large eyes']) {
+    assert.ok(!p.includes(bad), `"${bad}" 가 되살아났습니다`);
+  }
+  // 금지 목록에도 이름을 적어 둔다.
+  for (const no of ['no 3D render', 'no chibi', 'no bald head', 'no cropped legs']) {
+    assert.ok(p.includes(no), `금지 목록에 "${no}" 가 없습니다`);
+  }
   // 특정인을 닮히는 것은 여전히 막는다.
   assert.ok(/not resembling any specific real person/.test(p));
   assert.ok(/no real identifiable public figures/.test(p));
@@ -4169,6 +4185,12 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   assert.ok(/한 사람에 한 장면/.test(sys), '한 사람에 한 장면 규칙이 없습니다');
   assert.ok(/많아야 여섯/.test(sys), '한 편 상한이 없습니다');
   assert.ok(/덕아웃|전광판/.test(sys), '얼굴 대신 쓸 그림을 알려주지 않습니다');
+
+  // 글자 카드는 중요한 숫자만 (2026-11-03). 3화·4화에서 30~41장을
+  // 썼다가 글자만 보는 영상이 됐다.
+  assert.ok(/6~10장만 쓴다/.test(sys), '카드 상한이 안 줄었습니다');
+  assert.ok(/카드로 쓰지 말 것/.test(sys), '카드로 쓰면 안 되는 것을 안 알려줍니다');
+  assert.ok(!/10~20장/.test(sys), '옛 카드 상한이 남아 있습니다');
   // 1화의 실수로는 돌아가지 않는다 — 뒷모습만 권하면 안 된다.
   assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습만 권하고 있습니다');
 });
@@ -4231,6 +4253,24 @@ await asyncTest('hold 카메라는 거의 움직이지 않는다', async () => {
   assert.ok(!/\(iw-iw\/zoom\)/.test(hold), 'hold 에 가로 이동이 들어 있습니다');
 });
 
+test('스포츠 목소리는 들어 보고 고른 것이다', () => {
+  // Puck 은 Google 의 성격 설명(upbeat)만 보고 골랐다가 운영자에게
+  // "너무 어린 하이톤"이라는 말을 들었다. Algieba 는 같은 야구 문장을
+  // 여덟 목소리로 읽혀 나란히 듣고 고른 것이다 (2026-11-03).
+  const src = fs.readFileSync(
+    fileURLToPath(new URL('../src/audio/tts.mjs', import.meta.url)), 'utf8'
+  );
+  assert.ok(
+    /SPORTS_VOICE = 'ko-KR-Chirp3-HD-Algieba'/.test(src),
+    '스포츠 목소리가 바뀌었습니다 — 바꿀 때는 먼저 들어 보세요 (voice --sample --kind=SPORTS)'
+  );
+  // 되돌아가지 않는지 본다.
+  assert.ok(!/SPORTS_VOICE = 'ko-KR-Chirp3-HD-Puck'/.test(src), 'Puck 으로 되돌아갔습니다');
+  // 왜 바꿨는지가 코드에 남아 있어야 한다. 안 남기면 다음에 또 설명만
+  // 보고 고른다.
+  assert.ok(/들어 보고 골랐다/.test(src), '고른 근거가 안 적혀 있습니다');
+});
+
 await asyncTest('스포츠는 중계 톤으로 조금 빠르게 읽는다', async () => {
   const T = await import('../src/audio/tts.mjs');
   // 0.95 는 미스터리·동화에 맞춘 속도다. 야구 분석에 쓰면 늘어진다.
@@ -4282,7 +4322,10 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   assert.equal(bySceneKey.length, 2, '같은 장면이 모델마다 하나씩 있어야 합니다');
   assert.equal(bySceneKey[0].prompt, bySceneKey[1].prompt, '같은 장면인데 프롬프트가 다릅니다');
   // 화풍과 금지 목록은 그대로 붙어야 한다.
-  assert.ok(/expressive cartoon face/.test(jobs[0].prompt));
+  // 미리보기도 본편과 **같은 화풍**이어야 뜻이 있다. 2D 만화로 바꾼 뒤
+  // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
+  assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
+  assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
   assert.ok(/no team logos/.test(jobs[0].prompt));
 });
 
@@ -5483,6 +5526,74 @@ await asyncTest('한도에 걸리면 알려 준 만큼 기다린다', async () =
   );
   assert.deepEqual(slept, [9000, 9000], `쉰 시간이 ${slept} 입니다`);
   assert.equal(out.made.length, 1, '결국 만들어지지 않았습니다');
+});
+
+
+await asyncTest('쉼이 자리마다 다르다 — 메트로놈처럼 끊지 않는다', async () => {
+  // 운영자가 "어딘가 기계 같은 느낌"이라고 했다(2026-11-03). 제일 큰
+  // 원인은 목소리가 아니라 **문단마다 똑같이 0.45초**를 끼운 것이었다.
+  // 아무리 좋은 목소리도 같은 간격으로 끊으면 기계로 들린다.
+  const N = await import('../src/audio/narrate.mjs');
+  const u = (o) => ({ section: 'A', scene_number: 1, text: '이 정도면 보통 길이의 문장이라고 할 수 있겠습니다', ...o });
+
+  // 마지막 문단 뒤에는 안 쉰다. 영상 끝에 빈 소리가 남는다.
+  assert.equal(N.pauseAfter(u(), null), 0);
+
+  // 단락이 바뀌면 제일 길게.
+  assert.equal(N.pauseAfter(u(), u({ section: 'B' })), 0.85);
+  // 물음표 뒤에는 생각할 틈.
+  assert.equal(N.pauseAfter(u({ text: '왜 그럴까요?' }), u()), 0.65);
+  // 장면이 바뀌면 중간.
+  assert.equal(N.pauseAfter(u(), u({ scene_number: 2 })), 0.5);
+  // 짧은 토막 뒤에 길게 쉬면 어색하다.
+  assert.equal(N.pauseAfter(u({ text: '아닙니다.' }), u()), 0.22);
+  // 다만 **구조가 글자 수보다 먼저다.** 짧은 문장 뒤라도 화면이
+  // 바뀌면 그만큼 쉰다 — 안 그러면 쫓기듯 들린다.
+  assert.equal(
+    N.pauseAfter(u({ text: '아닙니다.' }), u({ scene_number: 2 })), 0.5,
+    '짧은 토막이 장면 바뀜을 이겼습니다'
+  );
+  // 그 밖에는 짧게 넘어간다.
+  assert.equal(N.pauseAfter(u(), u()), 0.35);
+
+  // ⚠️ 차례가 중요하다. 짧은 물음("왜죠?")이 "짧은 토막"으로 떨어지면
+  //    생각할 틈이 사라진다. 물음표를 먼저 봐야 한다.
+  assert.equal(N.pauseAfter(u({ text: '왜죠?' }), u()), 0.65, '짧은 물음이 토막으로 떨어졌습니다');
+  // 단락 바뀜은 물음표보다도 앞이다.
+  assert.equal(N.pauseAfter(u({ text: '왜죠?' }), u({ section: 'B' })), 0.85);
+
+  // 쓰는 길이가 전부 무음 파일 목록에 있어야 한다. 없으면 이어붙이다 죽는다.
+  const used = new Set();
+  for (const a of [{}, { text: '짧다.' }, { text: '왜요?' }]) {
+    for (const b of [{}, { section: 'B' }, { scene_number: 2 }]) {
+      used.add(N.pauseAfter(u(a), u(b)));
+    }
+  }
+  for (const sec of used) {
+    assert.ok(N.PAUSE_LENGTHS.includes(sec), `${sec}초 무음 파일을 안 만듭니다`);
+  }
+
+  // 간격이 실제로 흩어져 있어야 귀에 들린다.
+  const lo = Math.min(...N.PAUSE_LENGTHS), hi = Math.max(...N.PAUSE_LENGTHS);
+  assert.ok(hi / lo >= 3, `쉼 차이가 ${(hi / lo).toFixed(1)}배뿐입니다 — 들리지 않습니다`);
+});
+
+await asyncTest('읽을 글에 영어 글자를 넣지 않는다', async () => {
+  // 음성 모델이 알파벳을 철자로 읽는다. "OPS" 가 "오 피 에스" 가 된다.
+  // 운영자가 잡았다 (2026-11-03).
+  const { latinSpots, checkSpoken } = await import('../src/script/spoken.mjs');
+
+  assert.equal(latinSpots(['오피에스 팔 할 오 푼입니다.']).length, 0);
+  assert.equal(latinSpots(['OPS 팔 할 오 푼입니다.']).length, 1);
+  assert.deepEqual(latinSpots(['FA 시장과 MLB.'])[0].hits, ['FA', 'MLB']);
+
+  // 2화 이후 대본은 깨끗해야 한다. 1화는 이미 올린 편이라 둔다.
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  for (const ep of ['2화', '3화', '4화', '5화']) {
+    const md = fs.readFileSync(path.join(base, `${ep}-대본.md`), 'utf8');
+    const notes = checkSpoken(md).notes.filter((n) => n.includes('영어 글자'));
+    assert.deepEqual(notes, [], `${ep}: ${notes[0]}`);
+  }
 });
 
 

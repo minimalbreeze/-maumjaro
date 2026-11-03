@@ -506,9 +506,12 @@ jobs:
               node src/main.mjs script --id="$RESUME_ID" --minutes="$IN_MINUTES"
               ;;
             *'목소리 들어보기'*)
+              # 스포츠 문장과 스포츠 속도로 들려준다. 미스터리 문장으로
+              # 야구 캐스터 톤을 고를 수는 없다 (2026-11-03).
+              # 다른 종류를 들어볼 일이 생기면 그때 입력을 하나 더 만든다.
               echo "같은 문장을 여러 목소리로 만듭니다. 그림도 영상도 만들지 않습니다."
               echo "끝나면 Artifacts 의 content/_목소리 에서 받아 들어 보세요."
-              node src/main.mjs voice --sample
+              node src/main.mjs voice --sample --kind=SPORTS
               ;;
             *'소리 점검'*)
               # 키가 진짜 되는지만 본다. 목소리 목록을 받아오는 호출은
