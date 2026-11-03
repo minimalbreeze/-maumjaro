@@ -29,6 +29,32 @@ export function loadOfficialLinks() {
 }
 
 /**
+ * **운영자가 이 글에는 공식 배너를 걸지 말라고 했는가.** (2026-11-03 지시)
+ *
+ * 왜 필요한가
+ *   조명우 3쿠션 월드컵 글(11797)에 PBA 배너가 붙었다. 본문에 "국내 프로당구
+ *   (PBA)"라는 말이 한 번 나와서다. 그런데 그 글의 무대는 UMB 세계3쿠션월드컵
+ *   이고 PBA 는 국내 프로당구다 — **같은 당구지만 다른 대회다.** 본문이 둘을
+ *   가르는 글에 한쪽 배너만 걸면 독자가 헷갈린다.
+ *
+ *   match 를 손대서 고칠 일이 아니다. "PBA" 라는 말이 나오는 PBA 글에는
+ *   그 배너가 맞다. 이 글 하나의 사정이다.
+ *
+ * watch-links.json 의 byPost 와 같은 생각이다 — 코드가 고른 것보다 사람이
+ * 고른 것이 앞선다. 다만 byPost 는 "이것을 넣어라"고, 이쪽은 "넣지 마라"다.
+ */
+export function 공식배너빼는글인가(postId, cfg = loadOfficialLinks()) {
+  if (postId == null) return false;
+  return Object.prototype.hasOwnProperty.call(cfg.빼는글 || {}, String(postId));
+}
+
+/** 왜 뺐는지. 보고할 때 그대로 찍는다 — 번호만 남으면 나중에 이유를 잃는다. */
+export function 공식배너뺀이유(postId, cfg = loadOfficialLinks()) {
+  if (postId == null) return '';
+  return String((cfg.빼는글 || {})[String(postId)] || '');
+}
+
+/**
  * 공식 홈페이지로 쓸 만한 주소인가.
  *
  * 모양만 본다. 그 페이지가 실제로 열리는지는 확인하지 못한다 — 이 컨테이너는

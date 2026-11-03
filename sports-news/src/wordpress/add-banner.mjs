@@ -16,7 +16,7 @@ import { applyBanner, bannerOnlyChange, findBanners } from './add-watch.mjs';
 // 백업은 이미 있는 것을 쓴다. 되돌리는 방법이 두 벌이면 한쪽만 고쳐진다.
 import { saveContentBackup } from './fix-alt.mjs';
 import { pickApp, appBannerHtml, APP_MARK } from '../seo/app-banner.mjs';
-import { pickOfficial, officialBannerHtml, OFFICIAL_MARK } from '../seo/official-banner.mjs';
+import { pickOfficial, officialBannerHtml, OFFICIAL_MARK, 공식배너빼는글인가, 공식배너뺀이유 } from '../seo/official-banner.mjs';
 
 /**
  * 글에 맞는 배너를 고른다. 앱이 먼저다 — 운영자가 만든 앱 글에 구단 링크를
@@ -47,6 +47,35 @@ export async function addBannerToPost(postId, { apply = false } = {}) {
   const content = post?.content?.raw ?? post?.content?.rendered ?? '';
   const title = post?.title?.raw || post?.title?.rendered || '';
   const base = { id: postId, title, status: post?.status, changed: false, backup: null };
+
+  // **운영자가 빼라고 한 글이 가장 세다** (2026-11-03 지시).
+  // match 가 맞아도 넣지 않고, 이미 들어 있으면 뺀다. 넣는 쪽보다 먼저 본다 —
+  // 뒤에 두면 "넣을 것이 있다"는 판정이 먼저 나와 영영 빠지지 않는다.
+  if (공식배너빼는글인가(postId)) {
+    const 있는것 = findBanners(content, OFFICIAL_MARK);
+    const 이유 = 공식배너뺀이유(postId);
+    if (!있는것.length) return { ...base, skip: `운영자가 공식 배너를 빼라고 한 글입니다 — ${이유}` };
+
+    let html = content;
+    for (const x of [...있는것].reverse()) html = html.slice(0, x.start) + html.slice(x.end);
+    // 블록을 빼면 빈 줄이 셋씩 남는다. removeWatchBanner 와 같게 둘로 줄인다.
+    html = html.replace(/\n{3,}/g, '\n\n');
+    if (html === content) return { ...base, skip: '뺄 것이 없습니다' };
+    if (!bannerOnlyChange(content, html, OFFICIAL_MARK)) {
+      throw new Error('배너 말고 다른 내용이 바뀌었습니다 — 저장하지 않습니다');
+    }
+
+    let backup = null;
+    if (apply) {
+      backup = saveContentBackup({ id: postId, status: post?.status, title: post?.title, slug: post?.slug, content: post?.content });
+      await wpFetch(`/wp/v2/posts/${postId}`, { method: 'POST', body: { content: html }, timeoutMs: 45000 });
+    }
+    return {
+      ...base, 종류: '공식 홈페이지', 이름: '(뺌)', url: 있는것[0].url, 한일: '뺌',
+      changed: true, backup, 미리보기: !apply,
+      진단: `뺀 배너 ${있는것.length}개 — ${이유}`,
+    };
+  }
 
   const banner = pickBanner(고르기용글(title, content));
   if (!banner) {
