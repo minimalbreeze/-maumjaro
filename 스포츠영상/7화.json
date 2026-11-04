@@ -91,7 +91,12 @@
       "role": "중견수",
       "look": "a Korean man in his mid 30s with short black hair, a lean long-limbed build that reads as a defender and baserunner rather than a slugger, wearing a plain white national team uniform with a navy cap",
       "tell": "날렵한 몸. ⚠️ 얼굴형은 적지 않는다 — 받은 사진이 헬멧 쓰고 달리는 것뿐이라 이마와 턱선이 가린다. 짐작으로 쓰면 황대인·노시환처럼 또 틀린다.",
-      "photo": ""
+      "photo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlMForNtBLCePCT3BgasWxukRPlfrBMjw0efDvcUXAGQ&s=10",
+      "photo_예비": [
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxZkzqWdGknyavOwjxE1UxK52KxXLYAqULkbL5B2XNjg&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQl_YKXf4AjdWVt7Nca-sKsuI53DHS5pNWQDHSdvDT4KQ&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR0T4rxXXapU4BiK14zrGEZwCaz4D2_JHWLQkywpVojGw&s=10"
+      ]
     },
     {
       "name": "양현종",
