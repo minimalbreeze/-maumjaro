@@ -5969,6 +5969,44 @@ await asyncTest('화면을 층으로 채우되 요란하게 하지 않는다', a
 });
 
 
+await asyncTest('주요 인물은 한 명도 빠뜨리지 말라고 적는다', async () => {
+  // 2026-11-04 운영자: "주요 인물들은 꼭 들어가야 하고."
+  //
+  // 전에는 "얼굴은 아껴 쓴다"까지만 있었다. 아끼라고만 하면 아예 안
+  // 그리게 된다 — 그러면 이름만 나오고 얼굴은 없는 영상이 된다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+  assert.ok(/주요 인물은 반드시 한 번씩 넣는다/.test(r), '반드시 넣으라는 말이 없습니다');
+  assert.ok(/한 명도 빠뜨리지 않는다/.test(r));
+  // 아끼는 규칙도 같이 남아야 한다. 둘 다 있어야 "한 번씩"이 된다.
+  assert.ok(/안 그린다 — 제도·규정/.test(r), '아껴 쓰는 규칙이 사라졌습니다');
+
+  // 사람 목록 쪽에도 적혀 있어야 한다. 규칙만 보고 목록을 안 볼 수 있다.
+  const pr = V.peopleRules([{ name: '김도영', role: '삼루수', look: 'a man' }]);
+  assert.ok(/한 명도 빠뜨리지 않는다/.test(pr), '사람 목록에 그 말이 없습니다');
+  assert.ok(/person 칸에 이름을 적어야/.test(pr), 'person 칸을 채우라는 말이 없습니다');
+});
+
+await asyncTest('7화에 나오는 사람이 모두 적혀 있다', async () => {
+  // 대본이 한 단락을 통째로 쓰는 사람이 people 에 없으면, 설계 AI 가
+  // 아무 얼굴이나 그린다. 김태군이 실제로 그랬다(2026-11-04).
+  const file = new URL('../../스포츠영상/7화.json', import.meta.url).pathname;
+  const script = new URL('../../스포츠영상/7화-대본.md', import.meta.url).pathname;
+  if (!fs.existsSync(file) || !fs.existsSync(script)) return;
+  const item = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const text = fs.readFileSync(script, 'utf8');
+  const named = new Set(item.people.map((p) => String(p.name).trim()));
+
+  // 대본에서 세 번 이상 나오는 사람 이름은 주요 인물로 본다.
+  for (const name of ['정해영', '김호령', '김태군', '김도영', '박재현', '양현종']) {
+    const hits = text.split(name).length - 1;
+    if (hits >= 2) {
+      assert.ok(named.has(name), `${name} 이 대본에 ${hits}번 나오는데 people 에 없습니다`);
+    }
+  }
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
