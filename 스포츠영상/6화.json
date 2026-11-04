@@ -1,0 +1,120 @@
+{
+  "title": "십일월 일 일에 끝났는데 십일월 육 일에 또 친다",
+  "premise": "플레이오프에서 떨어진 KIA 선수들이 나흘 쉬고 대표팀에 간다. 감독은 무리시킬 생각이 없었는데 김도영과 박재현이 타석에 들어가고 싶다고 했다.",
+  "angle": "감독도 선수도 탓하지 않는다. 왜 지쳐 있는데 치겠다고 하는지, 그 자리가 왜 그렇게 귀한지를 설명한다",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "감독이 웃었다 — '아니, 타석에 들어가고 싶다고'",
+      "value": 100
+    },
+    {
+      "key": "DATES",
+      "label": "십일월 일 일과 십일월 육 일",
+      "note": "나흘. 5화의 '안 아픈 선수가 없다'와 이어 붙인다. 표 카드.",
+      "value": 95
+    },
+    {
+      "key": "WHAT",
+      "label": "어떤 대회인가",
+      "note": "12~15일 도쿄돔, 네 나라, 풀리그. 나이 기준은 단정하지 않는다.",
+      "value": 70
+    },
+    {
+      "key": "ASK",
+      "label": "본인들이 하겠다고 했습니다",
+      "note": "야수 11명, 지명타자 둘, 세 타석.",
+      "value": 88
+    },
+    {
+      "key": "THIN",
+      "label": "엔트리가 얇습니다",
+      "note": "부상 둘, 한국시리즈 삼성 투수 빠짐, 열다섯 명.",
+      "value": 75
+    },
+    {
+      "key": "WHY",
+      "label": "왜 지쳐도 가고 싶을까",
+      "note": "젊은 선수가 국제 경기를 해 볼 자리가 거의 없다. 이 편의 중심.",
+      "value": 92
+    },
+    {
+      "key": "COST",
+      "label": "그런데 값이 있습니다",
+      "note": "겨울이 깎인다. 어느 쪽도 편들지 않는다.",
+      "value": 80
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "12일 호주전부터. 댓글 질문.",
+      "value": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "최원호 감독 인터뷰 — 김도영·박재현 지명타자 출전 (마이데일리 김진성, 2026-11-03 대전)",
+      "url": "",
+      "note": "운영자가 전달한 기사. 원문 주소 없음 — 본문 사실만 사용."
+    },
+    {
+      "name": "2026 아시아프로야구챔피언십 일정·방식 — 11월 12~15일 도쿄돔, 한국·일본·대만·호주",
+      "url": "https://www.koreabaseball.com/"
+    }
+  ],
+  "people": [
+    {
+      "name": "김도영",
+      "role": "삼루수",
+      "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, medium eyes, a slim athletic build, wearing a plain white national team uniform with a navy cap",
+      "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. 홈런 뒤에는 양손을 머리 위로 올려 손가락을 펴 보이는 시그니처 세리머니를 한다 — 활약을 말하는 대목에서는 얼굴보다 이 자세가 강하다"
+    },
+    {
+      "name": "박재현",
+      "role": "외야수",
+      "look": "a Korean man in his early 20s with neat straight black bangs falling evenly to the eyebrows and covering the forehead - the fringe is the defining trait - with a strikingly young almost high-school face, a long slender face with a narrow chin and almost no cheek fat, long narrow eyes without pronounced double eyelids, thin straight eyebrows, a small mouth with thin lips, a very slim light build with a thin neck and narrow shoulders, wearing a plain white national team uniform with a navy cap",
+      "tell": "눈썹까지 덮는 가지런한 일자 앞머리. ⚠️ 김도영과 섞이기 쉽다 — 김도영은 이마가 드러나고 박재현은 앞머리가 덮는다"
+    },
+    {
+      "name": "최원호",
+      "role": "대표팀 감독",
+      "look": "a Korean man in his 50s with a broad square face and a strong heavy jaw - the width and the squared jaw are the defining trait - with small narrow eyes and almost no double eyelids, straight eyebrows that slope slightly down at the outer ends, a broad nose, a firm straight closed mouth, a thick neck and broad heavy shoulders, clean shaven, short black hair under a navy cap, wearing a plain white national team uniform with a navy cap",
+      "tell": "남색 모자와 흰 대표팀 유니폼. 이 편에서 유일하게 나이 든 얼굴이다"
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "감독이 웃었다 — '아니, 타석에 들어가고 싶다고'"
+    },
+    {
+      "key": "DATES",
+      "what": "나흘. 5화의 '안 아픈 선수가 없다'와 이어 붙인다. 표 카드."
+    },
+    {
+      "key": "WHAT",
+      "what": "12~15일 도쿄돔, 네 나라, 풀리그. 나이 기준은 단정하지 않는다."
+    },
+    {
+      "key": "ASK",
+      "what": "야수 11명, 지명타자 둘, 세 타석."
+    },
+    {
+      "key": "THIN",
+      "what": "부상 둘, 한국시리즈 삼성 투수 빠짐, 열다섯 명."
+    },
+    {
+      "key": "WHY",
+      "what": "젊은 선수가 국제 경기를 해 볼 자리가 거의 없다. 이 편의 중심."
+    },
+    {
+      "key": "COST",
+      "what": "겨울이 깎인다. 어느 쪽도 편들지 않는다."
+    },
+    {
+      "key": "CLOSE",
+      "what": "12일 호주전부터. 댓글 질문."
+    }
+  ]
+}

@@ -27,6 +27,9 @@ export const DEFAULT_MAX_USD = 3;
 /** 한 샷당 다시 걸어보는 횟수. */
 export const MAX_ATTEMPTS = 3;
 
+/** 참조 사진이 있는 샷에 쓰는 모델. 사진에서 얼굴을 가져온다. */
+export const REFERENCE_MODEL = 'portrait';
+
 /**
  * 잔액이 없어 **더 해 봐야 소용없는** 오류인가.
  *
@@ -181,6 +184,11 @@ export async function generateImages(prompts, {
   assetDir,
   token,
   modelKey = DEFAULT_IMAGE_MODEL,
+  /* 이 편에 나오는 사람들 [{ name, photo }]. 사진 주소가 있는 사람이
+     나오는 샷은 **그 사진을 참조로** 그린다 — 글로만 적으면 "그 조건에
+     맞는 아무 얼굴"이 나오고, 참조를 주면 실제로 닮는다.
+     운영자 요청(2026-11-03): "그림이 진짜 선수 같은 느낌이었으면". */
+  people = [],
   maxUsd = DEFAULT_MAX_USD,
   force = false,
   client = null,
@@ -191,6 +199,14 @@ export async function generateImages(prompts, {
 
   const api = client || createClient({ token, sleepFn });
   const { todo, skipped } = shotsToGenerate(prompts, { assetDir, force });
+
+  // 이름 → 사진 주소. 주소가 아닌 것은 안 담는다.
+  const photoOf = new Map();
+  for (const p of people || []) {
+    const name = String(p?.name || '').trim();
+    const photo = String(p?.photo || '').trim();
+    if (name && /^https?:\/\//.test(photo)) photoOf.set(name, photo);
+  }
 
   const made = [];
   const failed = [];
@@ -206,7 +222,12 @@ export async function generateImages(prompts, {
       continue;
     }
     // 상한을 넘기 **전에** 멈춘다. 넘은 다음에 세면 이미 쓴 뒤다.
-    if (spentUsd + perImage > maxUsd) {
+    // ⚠️ 참조 모델이 더 비싸므로 **그 샷의 값**으로 센다. 싼 값으로
+    //    세면 상한을 넘겨 놓고 넘은 줄 모른다.
+    const nextCost = photoOf.get(String(shot.person || '').trim())
+      ? modelFor(REFERENCE_MODEL).usdPerImage
+      : perImage;
+    if (spentUsd + nextCost > maxUsd) {
       stoppedBy = 'budget';
       for (const rest of todo.slice(i)) {
         failed.push({ shot_id: rest.shot_id, reason: `비용 상한 $${maxUsd}에 걸려 만들지 않았습니다` });
@@ -214,16 +235,28 @@ export async function generateImages(prompts, {
       break;
     }
 
-    onProgress?.(`이미지 ${i + 1}/${todo.length} — ${shot.shot_id} (장면 ${shot.scene_number})`);
+    // 이 샷에 사진을 받아 둔 사람이 나오면 참조 모델로 그린다.
+    const reference = photoOf.get(String(shot.person || '').trim()) || null;
+    const useKey = reference ? REFERENCE_MODEL : modelKey;
+    const shotCost = modelFor(useKey).usdPerImage;
+
+    onProgress?.(
+      `이미지 ${i + 1}/${todo.length} — ${shot.shot_id} (장면 ${shot.scene_number})` +
+        (reference ? `  👤 ${shot.person} 사진 참조` : '')
+    );
 
     let lastError = null;
     let done = false;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
       try {
-        const result = await api.generate(shot.image_prompt, { modelKey, aspectRatio: ASPECT_RATIO });
+        const result = await api.generate(shot.image_prompt, {
+          modelKey: useKey,
+          aspectRatio: ASPECT_RATIO,
+          referenceImage: reference,
+        });
         // 호출이 성공한 시점에 돈이 나갔다. 내려받기가 실패해도 쓴 건 쓴 거다.
-        spentUsd += result.usdEstimate ?? perImage;
+        spentUsd += result.usdEstimate ?? shotCost;
 
         const bytes = await api.download(result.url);
         if (!looksLikeImage(bytes)) {
