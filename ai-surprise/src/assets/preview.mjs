@@ -14,38 +14,49 @@
 // 그래서 **그림 몇 장만** 뽑는다. 장당 schnell 0.003, dev 0.025 이므로
 // 세 장씩 두 모델을 비교해도 10센트가 안 된다.
 
-import { composeImagePrompt } from '../scenes/visuals.mjs';
+import { composeImagePrompt, photoNamesOf } from '../scenes/visuals.mjs';
+import { REFERENCE_MODEL } from './images.mjs';
 import { KIND } from '../model.mjs';
 
 /**
  * 미리 볼 장면.
  *
  * 고르는 기준은 "지금 못 하는 것"이다. 예쁜 장면이 아니라 **깨졌던
- * 장면**을 넣어야 고쳤는지 알 수 있다. 스포츠 쪽은 전부 얼굴이다 —
- * 1화에서 사라진 것이 얼굴이기 때문이다.
+ * 장면**을 넣어야 고쳤는지 알 수 있다.
+ *
+ * 2026-11-04 에 세 장면을 통째로 갈았다. 전에 보던 것은 "얼굴이 그려지는가"
+ * 였는데 그건 이제 된다. 지금 못 하는 것은 **그 사람처럼 보이는가**다 —
+ * 3·5화에서 김도영이 샷마다 다른 남자였다.
+ *
+ * `person` 이 붙은 장면은 기획 파일에서 그 사람의 사진을 찾아 참조로 쓴다.
+ * 사진이 없으면 그냥 글로 그린다 — 장면이 사라지지는 않는다.
  */
 export const PREVIEW_SCENES = {
   [KIND.SPORTS]: [
     {
-      key: '단장-정면',
-      why: '정면 얼굴과 표정. 1화에서 이 자리가 동그라미로 나왔다.',
+      key: '김도영-정면',
+      person: '김도영',
+      why: '사진과 닮았는가. 아이블랙과 이마가 드러난 머리가 살아 있는가.',
       content:
-        'close-up of a baseball team general manager at a dark office desk at night, ' +
-        'frowning in thought while pressing a calculator, contract papers around him',
+        'close-up portrait of a young Korean baseball player in his early twenties ' +
+        'standing at the plate, black eye-black stripes under both eyes, ' +
+        'hair swept up so the forehead shows, calm focused expression before a pitch',
     },
     {
-      key: '투수-상반신',
-      why: '선수 얼굴. 유니폼은 색만, 로고와 글자는 없어야 한다.',
+      key: '박재현-전신',
+      person: '박재현',
+      why: '전신에서 다리가 안 잘리는가. 가슴의 KOREA 글자가 읽히는가.',
       content:
-        'upper body of a young baseball pitcher standing on the mound, ' +
-        'navy and grey uniform with no markings, looking down at the ball in his glove, calm serious expression',
+        'full-body shot of a Korean baseball outfielder standing on the grass, ' +
+        'glove at his side, looking toward the infield, late afternoon light',
     },
     {
-      key: '협상-두사람',
-      why: '한 화면에 얼굴 둘. 여럿이 나오면 얼굴이 먼저 뭉개진다.',
+      key: '최원호-감독',
+      person: '최원호',
+      why: '선수들과 안 섞이는가. 감독답게 나이가 들어 보이는가.',
       content:
-        'two people facing each other across a negotiation table in a bright meeting room, ' +
-        'one in a suit and one in a plain baseball jacket, both mid-conversation, visible faces',
+        'a Korean baseball manager in his fifties standing at the dugout rail, ' +
+        'arms folded, watching the field with a steady expression, players blurred behind him',
     },
   ],
 };
@@ -58,20 +69,44 @@ export function previewScenesFor(kind) {
 /**
  * 미리보기로 만들 그림 목록.
  *
- * 모델마다 같은 장면을 뽑는다. **같은 프롬프트로 나란히 놓고 봐야**
- * 모델 차이인지 프롬프트 차이인지 가를 수 있다.
+ * 참조 사진이 있는 장면은 **참조 모델 한 장만** 뽑는다. 거기서는
+ * schnell 과 dev 를 견줄 일이 없다 — 둘 다 사진을 못 받는다.
+ * 사진이 없는 장면만 모델별로 나란히 뽑아 견준다.
  */
-export function previewJobs(kind, { models = ['schnell'] } = {}) {
-  const scenes = previewScenesFor(kind);
+export function previewJobs(kind, { models = ['schnell'], people = [] } = {}) {
+  const photoOf = new Map();
+  const withPhoto = photoNamesOf({ people });
+  for (const p of people || []) {
+    const name = String(p?.name || '').trim();
+    if (withPhoto.has(name)) photoOf.set(name, String(p.photo).trim());
+  }
+
   const jobs = [];
-  for (const model of models) {
-    for (const scene of scenes) {
+  for (const scene of previewScenesFor(kind)) {
+    const reference = photoOf.get(String(scene.person || '').trim()) || null;
+    const prompt = composeImagePrompt(scene.content, null, {
+      kind,
+      likeness: Boolean(reference),
+    });
+    if (reference) {
+      jobs.push({
+        model: REFERENCE_MODEL,
+        key: scene.key,
+        why: scene.why,
+        reference,
+        file: `${REFERENCE_MODEL}-${scene.key}.png`,
+        prompt,
+      });
+      continue;
+    }
+    for (const model of models) {
       jobs.push({
         model,
         key: scene.key,
         why: scene.why,
+        reference: null,
         file: `${model}-${scene.key}.png`,
-        prompt: composeImagePrompt(scene.content, null, { kind }),
+        prompt,
       });
     }
   }

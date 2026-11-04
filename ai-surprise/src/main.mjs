@@ -775,12 +775,33 @@ async function cmdPreview(flags) {
     .filter(Boolean);
   for (const m of models) modelFor(m); // 모르는 이름이면 여기서 분명히 막힌다
 
-  const jobs = previewJobs(kind, { models });
+  // 참조 사진은 기획 파일에 적혀 있다. 없으면 그냥 글로 그린다 —
+  // 미리보기가 사라지지는 않지만, 닮았는지는 못 본다.
+  let people = [];
+  const planGiven = String(flags.plan || '스포츠영상/6화.json');
+  const planFile = findPlanFile(planGiven);
+  if (planFile) {
+    try {
+      people = JSON.parse(fs.readFileSync(planFile, 'utf8'))?.people || [];
+    } catch (e) {
+      log.warn(`기획 파일을 읽지 못했습니다 (${planGiven}): ${e.message}`);
+    }
+  } else {
+    log.warn(`기획 파일을 못 찾았습니다: ${planGiven}`);
+  }
+
+  const jobs = previewJobs(kind, { models, people });
+  const withRef = jobs.filter((j) => j.reference).length;
   const cost = jobs.reduce((sum, j) => sum + modelFor(j.model).usdPerImage, 0);
 
   log.section(`🎨 화풍 미리보기  |  ${kind}  |  ${models.join(' vs ')}`);
-  log.info(`장면 ${scenes.length}개 × 모델 ${models.length}개 = ${jobs.length}장`);
-  for (const sc of scenes) log.raw(`  · ${sc.key} — ${sc.why}`);
+  log.info(`장면 ${scenes.length}개 → ${jobs.length}장 (참조 사진 ${withRef}장)`);
+  for (const job of jobs) {
+    log.raw(`  · ${job.key} [${job.model}] ${job.reference ? '📷 사진 참조' : '글로만'} — ${job.why}`);
+  }
+  if (!withRef) {
+    log.warn('참조 사진이 한 장도 안 붙었습니다. 닮았는지는 이번 미리보기로 못 봅니다.');
+  }
   log.info(`예상 비용 약 $${Math.round(cost * 10000) / 10000}`);
 
   if (flags['dry-run']) {
@@ -805,7 +826,11 @@ async function cmdPreview(flags) {
   for (const [i, job] of jobs.entries()) {
     log.step(`${i + 1}/${jobs.length} — ${job.file}`);
     try {
-      const r = await api.generate(job.prompt, { modelKey: job.model, aspectRatio: '16:9' });
+      const r = await api.generate(job.prompt, {
+        modelKey: job.model,
+        aspectRatio: '16:9',
+        referenceImage: job.reference || undefined,
+      });
       spent += r.usdEstimate ?? modelFor(job.model).usdPerImage;
       const bytes = await api.download(r.url);
       fs.writeFileSync(path.join(outDir, job.file), bytes);
@@ -829,9 +854,11 @@ async function cmdPreview(flags) {
     '',
     '같은 장면을 모델별로 나란히 놓고 본다. 얼굴이 또렷한 쪽을 고른다.',
     '',
-    '- 눈·눈썹·입이 보이는가 (1화에서는 동그라미만 나왔다)',
-    '- 유니폼에 글자나 로고가 섞여 들어가지 않았는가',
-    '- 특정 선수를 닮지 않았는가 — 닮았으면 그 쪽이 오히려 문제다',
+    '- **사진 속 사람과 닮았는가.** 이번 미리보기의 본 질문이다.',
+    '- 가슴의 KOREA 글자가 읽히는가 (전에는 금지 목록이 이걸 지웠다)',
+    '- 전신 샷에서 다리가 잘리지 않았는가',
+    '- 머리가 몸보다 크지 않은가, 대머리가 아닌가',
+    '- 3D 렌더처럼 번들거리지 않는가 — 종이에 칠한 결이 보여야 한다',
     '',
     '## 프롬프트',
     '',
