@@ -869,9 +869,22 @@ async function cmdPreview(flags) {
   fs.writeFileSync(path.join(outDir, '보는-법.md'), notes + '\n', 'utf8');
 
   log.raw('');
+  // ⚠️ 한 장도 못 만들고 ✅ 로 끝낸 적이 있다(실행 #52). 로그 맨 아래만
+  //    보면 성공으로 읽혀서, 받을 그림이 있는 줄 알고 기다리게 된다.
+  //    그림 단계에서 같은 실수를 한 번 고쳤는데 여기만 남아 있었다.
+  if (!made.length) {
+    log.error(`한 장도 만들지 못했습니다 — ${jobs.length}장 모두 실패`);
+    log.info('위의 ❌ 줄에 이유가 있습니다. 돈은 나가지 않았습니다.');
+    process.exitCode = 1;
+    return;
+  }
+  if (made.length < jobs.length) {
+    log.warn(`${jobs.length - made.length}장 실패 (${made.length}/${jobs.length} 성공)`);
+    process.exitCode = 1;
+  }
   log.ok(`${made.length}장 완성 — ${outDir}`);
   log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
-  log.info('같은 장면을 모델별로 나란히 놓고, 얼굴이 또렷한 쪽을 고르세요.');
+  log.info('무엇을 보는지는 같은 폴더의 보는-법.md 에 적어 뒀습니다.');
 }
 
 /**
