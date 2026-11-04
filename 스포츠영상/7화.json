@@ -1,0 +1,141 @@
+{
+  "title": "빠지는 다섯 명이 전부 같은 일을 한다 (2027 기아가 메워야 할 자리)",
+  "premise": "기아는 2026년을 3위로 끝냈다. 반등이다. 그런데 겨울에 빠질 수 있는 이름이 다섯인데, 그 다섯이 전부 점수를 막는 자리다. 치는 쪽은 한 명도 안 빠진다.",
+  "angle": "원 기사는 과제를 불펜·선발·센터라인 세 칸으로 나눠 적었다. 칸마다 따로 읽으면 \"할 일이 많구나\"로 끝난다. 이름만 뽑아 한 줄로 세우면 같은 이야기다. 사실은 기사에 있는 것만 쓰고, 늘어놓는 순서를 바꾼다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "삼 위로 반등했는데 겨울에 이름 다섯이 걸려 있다. 치는 사람이 하나도 없다.",
+      "value": 100
+    },
+    {
+      "key": "LEAVE",
+      "label": "어떻게 빠지나",
+      "note": "⚠️ 셋은 확정(상무), 둘은 모름(자유계약). 절대 \"다섯이 나간다\"고 말하지 않는다. 표 카드.",
+      "value": 90
+    },
+    {
+      "key": "SAME",
+      "label": "다섯이 전부 같은 일을 한다",
+      "note": "마무리·중간계투·내야·포수·중견수. 이 편의 중심. 표 카드.",
+      "value": 98
+    },
+    {
+      "key": "PEN",
+      "label": "마무리가 한 해 내내 안 정해졌다",
+      "note": "정해영 → 성영탁·이의리·전상현 → 전상현. 오 년 연속 이십 세이브.",
+      "value": 85
+    },
+    {
+      "key": "ROT",
+      "label": "국내 선발이 비어 있다",
+      "note": "네일·올러·시라카와·양현종. 양현종은 1988년생. 뒤가 없다.",
+      "value": 78
+    },
+    {
+      "key": "SS",
+      "label": "유격수는 이미 한 번 메꿔 봤다",
+      "note": "박찬호 → 데일 실패 → 하주석. 거기에 윤도현까지 상무.",
+      "value": 70
+    },
+    {
+      "key": "FA",
+      "label": "자유계약 둘 — 성격이 다르다",
+      "note": "김태군은 포수층, 김호령은 대체 불가. 5화 카스트로 대목과 이어 붙인다.",
+      "value": 88
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "막는 쪽을 메워야 하는 겨울. 셋 중 뭐가 먼저인지 댓글 질문.",
+      "value": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "[KIA 2026 결산] 다시 우승하려면…불펜·센터라인·선발 '빈틈' 메워야 — 차솔빈, 2026-11-04 16:56",
+      "url": "",
+      "note": "운영자가 전달한 기사. 원문 주소 없음 — 본문 사실만 사용."
+    },
+    {
+      "name": "5화 — 플레이오프 5차전 탈락 (2026-11-01, 1-6, 시리즈 2승 3패)",
+      "url": "",
+      "note": "이미 확인한 사실. 김호령·카스트로 대목을 여기서 이어 붙인다."
+    }
+  ],
+  "people": [
+    {
+      "name": "김도영",
+      "role": "삼루수",
+      "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, medium eyes, a slim athletic build, wearing a plain white national team uniform with a navy cap",
+      "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. 홈런 뒤에는 양손을 머리 위로 올려 손가락을 펴 보이는 시그니처 세리머니를 한다 — 활약을 말하는 대목에서는 얼굴보다 이 자세가 강하다",
+      "photo": "https://images.khan.co.kr/article/r/700xX/2026/11/02/l_2026110302000007200006041.webp",
+      "photo_예비": [
+        "https://www.sportschosun.com/article/html/2026/11/03/2026110301000161300014142_w.jpg"
+      ]
+    },
+    {
+      "name": "박재현",
+      "role": "외야수",
+      "look": "a Korean man in his early 20s with neat straight black bangs falling evenly to the eyebrows and covering the forehead - the fringe is the defining trait - with a strikingly young almost high-school face, a long slender face with a narrow chin and almost no cheek fat, long narrow eyes without pronounced double eyelids, thin straight eyebrows, a small mouth with thin lips, a very slim light build with a thin neck and narrow shoulders, wearing a plain white national team uniform with a navy cap",
+      "tell": "눈썹까지 덮는 가지런한 일자 앞머리. ⚠️ 김도영과 섞이기 쉽다 — 김도영은 이마가 드러나고 박재현은 앞머리가 덮는다",
+      "photo": "https://raw.githubusercontent.com/minimalbreeze/-maumjaro/main/ai-surprise/reference-faces/park-jaehyun.jpg"
+    },
+    {
+      "name": "김호령",
+      "role": "중견수",
+      "look": "a Korean man in his mid 30s with short black hair, a lean long-limbed build that reads as a defender and baserunner rather than a slugger, wearing a plain white national team uniform with a navy cap",
+      "tell": "날렵한 몸. ⚠️ 얼굴형은 적지 않는다 — 받은 사진이 헬멧 쓰고 달리는 것뿐이라 이마와 턱선이 가린다. 짐작으로 쓰면 황대인·노시환처럼 또 틀린다.",
+      "photo": ""
+    },
+    {
+      "name": "양현종",
+      "role": "투수",
+      "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait - with short black hair under a cap, a thick solid torso with broad shoulders and a heavy neck, a left-handed pitcher with the glove on his right hand, wearing a plain white national team uniform",
+      "tell": "안경 쓰고 던지는 왼손 투수. 안경 하나로 사람이 특정된다 — 생김새 문장 맨 앞에 둔다. ⚠️ 얼굴형은 적지 않는다.",
+      "photo": ""
+    },
+    {
+      "name": "정해영",
+      "role": "마무리 투수",
+      "look": "a Korean man in his mid 20s with short black hair under a cap, a sturdy pitcher build, wearing a plain white national team uniform",
+      "tell": "⚠️ 생김새 자료가 없다. 사진을 못 받았다 — 이 사람이 나오는 샷은 얼굴을 크게 쓰지 않는다. 뒷모습이나 원경으로 둔다.",
+      "photo": ""
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "삼 위로 반등했는데, 겨울에 걸린 이름 다섯에 치는 사람이 없다"
+    },
+    {
+      "key": "LEAVE",
+      "what": "셋은 확정(상무 십이월 입대), 둘은 모름(자유계약 자격)"
+    },
+    {
+      "key": "SAME",
+      "what": "마무리·중간계투·내야·포수·중견수 — 전부 막는 자리"
+    },
+    {
+      "key": "PEN",
+      "what": "뒷문이 한 해 내내 안 정해졌고, 그 출발점이 입대한다"
+    },
+    {
+      "key": "ROT",
+      "what": "외국인 셋과 양현종. 국내 젊은 선발이 안 보인다"
+    },
+    {
+      "key": "SS",
+      "what": "유격수는 급한 불만 껐는데 윤도현까지 빠진다"
+    },
+    {
+      "key": "FA",
+      "what": "김태군은 포수층, 김호령은 대체 자원이 아예 없다"
+    },
+    {
+      "key": "CLOSE",
+      "what": "막는 쪽을 메워야 하는 겨울 — 뭐가 먼저인지 묻는다"
+    }
+  ]
+}

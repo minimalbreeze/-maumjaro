@@ -72,9 +72,19 @@ export const IMAGE_MODELS = {
   // ⚠️ 입력 이름이 **버전마다 다르다.** main_face_image 는 여러 버전에
   //    공통이지만 나머지는 바뀐 적이 있다. 모르는 이름을 보내면 모델이
   //    통째로 거부하므로, 확실한 것만 보내고 나머지는 모델 기본값에 맡긴다.
+  // ⚠️ 이 모델은 **커뮤니티 모델**이다(2026-11-04 에 404 로 알았다).
+  //    공식 모델(black-forest-labs/flux-*)은 /models/{이름}/predictions 가
+  //    있지만 커뮤니티 모델은 없다. 버전을 먼저 찾아 /predictions 로 건다.
+  //    community: true 가 그 분기를 켠다.
+  //
+  //    이름도 하나가 아니다. 같은 PuLID 를 올린 사람이 여럿이고, 올린
+  //    사람이 지우면 그날로 404 다. 후보를 차례로 찾아보고 되는 것을 쓴다 —
+  //    모델 정보를 읽는 것은 공짜라서 몇 번 더 물어도 돈이 안 든다.
   portrait: {
     key: 'portrait',
     model: 'zsxkib/flux-pulid',
+    community: true,
+    alsoTry: ['jichengdu/flux-pulid'],
     // 추정치다. 상한을 걸기 위한 기준이지 청구서가 아니다 — 이 모델은
     // 처음 써 보는 것이라 실제 금액은 첫 실행 뒤 Replicate 사용량 화면에서
     // 확인해야 한다.
@@ -184,6 +194,37 @@ export function createClient({
   }
 
   /**
+   * 커뮤니티 모델의 최신 버전 번호를 찾는다.
+   *
+   * 번호를 코드에 박아 두면 올린 사람이 새 버전을 내는 날 멈춘다. 매번
+   * 물어본다 — 모델 정보를 읽는 것은 돈이 안 들고, 한 번 찾으면 이 실행
+   * 안에서는 다시 묻지 않는다.
+   */
+  const versionCache = new Map();
+  async function latestVersionOf(m) {
+    const names = [m.model, ...(m.alsoTry || [])];
+    for (const name of names) {
+      if (versionCache.has(name)) return { name, version: versionCache.get(name) };
+      try {
+        const info = await request(`${API_ROOT}/models/${name}`, { method: 'GET' });
+        const version = info?.latest_version?.id;
+        if (version) {
+          versionCache.set(name, version);
+          return { name, version };
+        }
+      } catch (e) {
+        // 404 면 다음 후보로. 그 밖의 오류(401·429)는 후보를 바꿔도 같으므로
+        // 그대로 올린다.
+        if (!/\b404\b/.test(String(e.message))) throw e;
+      }
+    }
+    throw new Error(
+      `참조 모델을 찾지 못했습니다. 찾아본 이름: ${names.join(', ')}. ` +
+        'Replicate 에서 지워졌거나 이름이 바뀐 것입니다 — replicate.mjs 의 portrait.model 을 고치세요.'
+    );
+  }
+
+  /**
    * 이미지 하나를 만든다. 끝날 때까지 기다린다.
    *
    * `Prefer: wait` 를 쓰면 Replicate이 최대 60초까지 붙들고 있다가 끝난
@@ -202,11 +243,26 @@ export function createClient({
     if (m.needsReference && !referenceImage) {
       throw new Error(`${m.model} 은 참조 사진 주소가 있어야 합니다.`);
     }
-    let prediction = await request(`${API_ROOT}/models/${m.model}/predictions`, {
-      method: 'POST',
-      headers: { Prefer: 'wait' },
-      body: JSON.stringify({ input: m.input(prompt, { aspectRatio, referenceImage, negativePrompt }) }),
-    });
+    const input = m.input(prompt, { aspectRatio, referenceImage, negativePrompt });
+    let usedModel = m.model;
+    let prediction;
+    if (m.community) {
+      // 커뮤니티 모델에는 /models/{이름}/predictions 가 없다. 버전을 찾아
+      // /predictions 에 건다.
+      const { name, version } = await latestVersionOf(m);
+      usedModel = name;
+      prediction = await request(`${API_ROOT}/predictions`, {
+        method: 'POST',
+        headers: { Prefer: 'wait' },
+        body: JSON.stringify({ version, input }),
+      });
+    } else {
+      prediction = await request(`${API_ROOT}/models/${m.model}/predictions`, {
+        method: 'POST',
+        headers: { Prefer: 'wait' },
+        body: JSON.stringify({ input }),
+      });
+    }
 
     const deadline = Date.now() + maxWaitMs;
     while (prediction && !isDone(prediction.status)) {
@@ -233,7 +289,7 @@ export function createClient({
       throw new Error(`결과에 이미지 주소가 없습니다: ${JSON.stringify(prediction.output).slice(0, 200)}`);
     }
 
-    return { url, usdEstimate: m.usdPerImage, model: m.model, predictionId: prediction.id };
+    return { url, usdEstimate: m.usdPerImage, model: usedModel, predictionId: prediction.id };
   }
 
   /** 만들어진 이미지를 내려받아 바이트로 돌려준다. */
