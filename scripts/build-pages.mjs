@@ -623,6 +623,37 @@ ${best.length ? `<p>${esc(best[0].l.line)}</p>
     return out;
   };
 
+  // 연도 → 간지(60갑자). 천간 10 × 지지 12라 60년마다 돌아온다.
+  // 검산: 2023 → 계묘(癸卯, 검은 토끼), 2024 → 갑진(甲辰, 푸른 용), 2029 → 기유(己酉).
+  // 실제로 쓰는 이름과 같다. 색은 천간의 오행에서 나온다(목=청, 화=적, 토=황, 금=백, 수=흑).
+  // 이건 계산으로 나오는 값이라 지어낼 여지가 없다.
+  const GAN = [
+    { h: '甲', ko: '갑', el: '목', color: '푸른' },
+    { h: '乙', ko: '을', el: '목', color: '푸른' },
+    { h: '丙', ko: '병', el: '화', color: '붉은' },
+    { h: '丁', ko: '정', el: '화', color: '붉은' },
+    { h: '戊', ko: '무', el: '토', color: '노란' },
+    { h: '己', ko: '기', el: '토', color: '노란' },
+    { h: '庚', ko: '경', el: '금', color: '흰' },
+    { h: '辛', ko: '신', el: '금', color: '흰' },
+    { h: '壬', ko: '임', el: '수', color: '검은' },
+    { h: '癸', ko: '계', el: '수', color: '검은' },
+  ];
+  const ZHI_KO = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
+  // 띠 이름에서 '띠'를 뗀 동물 이름("호랑이띠" → "호랑이"). "푸른 호랑이의 해"처럼 쓴다.
+  const animalNoun = (z) => z.name.replace(/띠$/, '');
+  function ganjiOf(y) {
+    const g = GAN[((y - 4) % 10 + 10) % 10];
+    const z = CHINESE_ZODIAC[animalIndexOfYear(y)];
+    return {
+      gan: g,
+      z,
+      han: `${g.h}${z.zhi}`,
+      ko: `${g.ko}${ZHI_KO[z.zhi]}`,
+      colorAnimal: `${g.color} ${animalNoun(z)}`,
+    };
+  }
+
   const inSam = (a, b) => Z.SAMHAP.some((g) => g.includes(a) && g.includes(b));
   const pk = (a, b) => [a, b].sort().join('-');
   const inList = (l, a, b) => l.some((p) => pk(p[0], p[1]) === pk(a, b));
@@ -757,7 +788,7 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
     const rows = [];
     for (let y = YEAR_TO; y >= YEAR_FROM; y--) {
       const z = CHINESE_ZODIAC[animalIndexOfYear(y)];
-      rows.push(`<tr><td><strong>${y}</strong>년생</td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td><td>${esc(z.zhi)}</td><td>${esc(z.keyword)}</td></tr>`);
+      rows.push(`<tr><td><a href="/animal/year/${y}/"><strong>${y}</strong>년생</a></td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td><td>${esc(ganjiOf(y).ko)}년</td><td>${esc(ganjiOf(y).colorAnimal)}</td></tr>`);
     }
     const body = `
 <div class="card">
@@ -772,7 +803,7 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 
 <h2>출생연도별 띠 표</h2>
 <div class="tw"><table>
-  <thead><tr><th>출생연도</th><th>띠</th><th>지지</th><th>키워드</th></tr></thead>
+  <thead><tr><th>출생연도</th><th>띠</th><th>간지</th><th>그 해 이름</th></tr></thead>
   <tbody>${rows.join('')}</tbody>
 </table></div>
 
@@ -801,6 +832,128 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         body,
       }),
     });
+  }
+
+  // ---------- 연도별 띠 페이지 (1936~2032, 97장) ----------
+  // 2026-11-04 네이버 키워드 TOP10 중 여덟 개가 연도 쿼리였다
+  // (2029년 띠 노출 281, 1937년생 띠 154, 2004년생 띠 66 …).
+  // 그런데 여덟 개가 전부 /animal/years/ 한 장으로 들어왔다 — 합쳐서 노출 707에 클릭 8,
+  // CTR 1.1%다. 같은 날 전용 페이지가 있는 "호랑이띠 삼합, 육합, 충"은
+  // 노출 15에 클릭 3으로 CTR 20%였다. 노출이 모자란 게 아니라 안 눌린 것이다.
+  //
+  // 차이는 제목이다. "출생연도별 띠 찾기 (1936~2032)"는 답이 아니라 도구로 읽힌다.
+  // "2029년 띠"를 검색한 사람은 "닭띠"라는 답을 보고 싶지, 표를 뒤지고 싶지 않다.
+  // 그래서 연도마다 한 장씩 끊고, 제목이 곧 답이 되게 한다.
+  //
+  // ⚠️ 97장을 같은 틀로 찍으면 유사도가 올라 색인이 막힌다(2026-09에 85%로 겪었다).
+  // 그래서 연도마다 실제로 갈리는 것만 쓴다 — 간지(60갑자라 60가지), 거기서 나오는
+  // 오행과 색("검은 토끼"·"푸른 용"처럼 실제로 쓰는 이름), 띠(12가지), 나이, 앞뒤 해.
+  // 그해 유명인이나 그해 운세처럼 지어내야 하는 것은 넣지 않는다.
+  //
+  // ⚠️ 나이는 빌드 시점 기준이다. 해가 바뀌면 다시 빌드해야 한다.
+  // 틀린 값이 조용히 남지 않도록 기준 연도를 페이지에 그대로 적는다.
+  {
+    const REF_YEAR = Number(today().slice(0, 4));
+    for (let y = YEAR_FROM; y <= YEAR_TO; y++) {
+      const url = `/animal/year/${y}/`;
+      const gj = ganjiOf(y);
+      const z = gj.z;
+      const prevZ = CHINESE_ZODIAC[animalIndexOfYear(y - 1)];
+      const sameYears = yearsOf(z);
+      const isFuture = y > REF_YEAR;
+      const korAge = REF_YEAR - y + 1;   // 세는 나이
+      const intlAge = REF_YEAR - y;      // 만 나이(생일 지난 경우)
+
+
+      // ⚠️ 본문을 길게 쓰면 안 된다. 97장이 같은 설명을 반복하면 유사도가 올라
+      // 색인이 통째로 막힌다(2026-09에 85%로 겪었다). 첫 판에서 긴 문단으로 썼다가
+      // 중앙 80.8% / 같은 띠끼리 92%가 나와서 갈아엎었다.
+      // 그래서 설명은 허브(/animal/years/)와 띠 페이지에 두고, 여기는 이 해에만
+      // 해당하는 값으로 채운다 — 연도·간지·오행·나이·같은 간지 해·앞뒤 해.
+      // 표가 문단보다 낫다. 값이 전부 다르기 때문이다.
+      const ageRows = isFuture
+        ? `<tr><td>나이</td><td>${REF_YEAR}년 기준 ${y - REF_YEAR}년 뒤에 오는 해입니다</td></tr>`
+        : `<tr><td>만 나이</td><td><strong>${intlAge}세</strong> · 생일 전이면 ${intlAge - 1}세</td></tr>
+    <tr><td>세는 나이</td><td>${korAge}세</td></tr>`;
+
+      const body = `
+<div class="card">
+  <p class="k">${y}년생</p>
+  <p style="margin:0;font-size:19px;font-weight:700;">${esc(z.emoji)} ${esc(z.name)}입니다</p>
+  <p style="margin:6px 0 0;">${esc(gj.ko)}년(${esc(gj.han)}) · ${esc(gj.colorAnimal)}의 해</p>
+</div>
+
+<h2>${y}년생 한눈에</h2>
+<div class="tw"><table>
+  <tbody>
+    <tr><td>띠</td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td></tr>
+    <tr><td>간지</td><td><strong>${esc(gj.ko)}년</strong> (${esc(gj.han)})</td></tr>
+    <tr><td>그 해 이름</td><td>${esc(gj.colorAnimal)}의 해</td></tr>
+    <tr><td>천간 · 오행</td><td>${esc(gj.gan.ko)}(${esc(gj.gan.h)}) · ${esc(gj.gan.el)}</td></tr>
+    <tr><td>지지</td><td>${esc(ZHI_KO[z.zhi])}(${esc(z.zhi)})</td></tr>
+    ${ageRows}
+    <tr><td>1~2월생이면</td><td><a href="/animal/${prevZ.key}/">${esc(prevZ.emoji)} ${esc(prevZ.name)}</a> (${y - 1}년생)</td></tr>
+    <tr><td>60갑자 순번</td><td>${((y - 4) % 60 + 60) % 60 + 1}번째 / 60</td></tr>
+    <tr><td>같은 ${esc(gj.ko)}년</td><td>${y - 60}년 · <strong>${y}년</strong> · ${y + 60}년</td></tr>
+    <tr><td>윤년</td><td>${(y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? `윤년입니다 (2월이 29일까지)` : '평년입니다'}</td></tr>
+  </tbody>
+</table></div>
+<p class="k">${isFuture ? '간지와 띠는 달력으로 이미 정해져 있어 미리 알 수 있습니다.' : `나이는 ${REF_YEAR}년 기준입니다. 2023년 6월부터 법으로 쓰는 나이는 만 나이입니다.`}</p>
+
+<h2>${y}년 1월생은 ${esc(prevZ.name)}입니다</h2>
+<p>띠는 1월 1일이 아니라 <strong>입춘</strong>에 바뀝니다. ${y}년 1월 1일부터 2월 3일경 사이에 태어났다면 ${esc(z.name)}가 아니라 ${y - 1}년의 <a href="/animal/${prevZ.key}/">${esc(prevZ.name)}</a>입니다. 맘운자로에 생년월일을 넣으면 그 해의 실제 입춘으로 맞춰 줍니다.</p>
+<p><a href="/animal/years/">입춘 기준 자세히 ›</a></p>
+
+<h2>${esc(z.name)}는 어떤 사람인가</h2>
+<p>${noDot(z.trait)}. 키워드는 <strong>${esc(z.keyword)}</strong>입니다.</p>
+<p><a href="/animal/${z.key}/">${esc(z.name)} 성격과 띠 궁합(삼합·육합·충) 전체 보기 ›</a></p>
+
+<h2>${esc(z.name)}인 다른 해</h2>
+<div class="grid">${sameYears.map((o) => (o === y
+  ? `<span><strong>${o}년</strong></span>`
+  : `<a href="/animal/year/${o}/">${o}년</a>`)).join('')}</div>
+
+<h2>앞뒤 해</h2>
+<div class="grid">${[y - 1, y + 1].filter((o) => o >= YEAR_FROM && o <= YEAR_TO).map((o) => {
+  const og = ganjiOf(o);
+  return `<a href="/animal/year/${o}/">${o}년생 ${esc(og.z.emoji)} ${esc(og.z.name)} (${esc(og.ko)}년)</a>`;
+}).join('')}</div>
+<p><a href="/animal/years/">출생연도 전체 표 (1936~2032) ›</a></p>`;
+
+      const answer = `${y}년생은 ${z.name}입니다. ${y}년의 간지는 ${gj.ko}년(${gj.han})이고, 천간 ${gj.gan.ko}의 오행이 ${gj.gan.el}${josa(gj.gan.el, '이라', '라')} ${gj.colorAnimal}의 해라고 부릅니다. `
+        + `다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, ${y}년 1월에서 2월 초에 태어났다면 앞 해 ${y - 1}년의 ${prevZ.name}가 됩니다.`
+        + (isFuture ? '' : ` ${REF_YEAR}년 기준 만 ${intlAge}세입니다.`);
+
+      const faq = [
+        { q: `${y}년생은 무슨 띠인가요?`,
+          a: `${z.name}입니다. ${y}년의 간지가 ${gj.ko}년(${gj.han})이고 지지가 ${ZHI_KO[z.zhi]}(${z.zhi})이기 때문입니다. `
+             + `단 ${y}년 1월에서 2월 초 사이에 태어났다면 입춘 전이라 ${y - 1}년의 ${prevZ.name}가 됩니다.` },
+        { q: `${y}년은 무슨 해인가요?`,
+          a: `${gj.ko}년(${gj.han}), ${gj.colorAnimal}의 해입니다. 천간 ${gj.gan.ko}의 오행이 ${gj.gan.el}${josa(gj.gan.el, '이라', '라')} 그 색이 붙습니다. `
+             + `간지는 60년마다 돌아오므로 ${y - 60}년과 ${y + 60}년도 ${gj.ko}년입니다.` },
+        ...(isFuture ? [] : [{ q: `${y}년생은 몇 살인가요?`,
+          a: `${REF_YEAR}년 기준 만 ${intlAge}세, 생일 전이면 ${intlAge - 1}세입니다. 세는 나이로는 ${korAge}세입니다.` }]),
+      ];
+
+      const titleAge = isFuture ? '' : ` · ${REF_YEAR}년 나이`;
+      pages.push({
+        url,
+        html: shell({
+          url,
+          answer,
+          faq,
+          title: `${y}년생은 무슨 띠? ${z.name}입니다 (${gj.ko}년)${titleAge} | 맘운자로`,
+          desc: `${y}년생은 ${z.name}. ${gj.ko}년(${gj.han}), ${gj.colorAnimal}의 해입니다.`
+            + (isFuture ? '' : ` ${REF_YEAR}년 기준 만 ${intlAge}세.`)
+            + ` 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.`,
+          keywords: `${y}년생, ${y}년생 띠, ${y}년 띠, ${y}년생 무슨 띠, ${y}년생 나이, ${gj.ko}년, ${gj.colorAnimal}의 해, ${z.name}, ${z.name} 몇년생, 띠 궁합, 입춘 띠 기준, 무료 운세`,
+          h1: `${z.emoji} ${y}년생`,
+          sub: `${z.name} · ${gj.ko}년(${gj.han}) · ${gj.colorAnimal}의 해`,
+          breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/animal/years/">출생연도</a> › ${y}년생`,
+          body,
+        }),
+      });
+    }
   }
 }
 
