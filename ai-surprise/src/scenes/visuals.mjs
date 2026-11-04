@@ -664,13 +664,19 @@ export function checkPrompts(shots) {
 /**
  * 참조 사진을 받아 둔 사람 이름.
  *
- * `research.people[].photo` 가 http(s) 주소일 때만 센다. 로컬 경로는
- * 이미지 모델이 열 수 없다 — 적어 놓고 안 쓰면 닮지 않은 그림이 나오는데
- * 왜 그런지 알 길이 없다.
+ * `people[].photo` 가 http(s) 주소일 때만 센다. 로컬 경로는 이미지 모델이
+ * 열 수 없다 — 적어 놓고 안 쓰면 닮지 않은 그림이 나오는데 왜 그런지
+ * 알 길이 없다.
+ *
+ * ⚠️ 여기 넘어오는 `item` 은 **이미 research 다**(main.mjs 가
+ *    `item: loaded.research` 로 넘긴다). 처음에 `item.research.people` 을
+ *    봤는데 그건 항상 비어 있었다 — 사진을 넣어도 한 장도 안 붙는다.
+ *    조용히 실패하는 종류라, 두 모양을 다 받아 둔다.
  */
 export function photoNamesOf(item) {
   const out = new Set();
-  for (const p of item?.research?.people || []) {
+  const people = item?.people || item?.research?.people || [];
+  for (const p of people) {
     const name = String(p?.name || '').trim();
     if (name && /^https?:\/\//.test(String(p?.photo || '').trim())) out.add(name);
   }
