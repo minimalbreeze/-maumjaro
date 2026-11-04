@@ -4389,6 +4389,38 @@ await asyncTest('사진 주소가 http 일 때만 참조로 센다', async () =>
   assert.deepEqual([...names], ['김도영']);
   assert.equal(V.photoNamesOf(null).size, 0);
   assert.equal(V.photoNamesOf({}).size, 0);
+
+  // ⚠️ 실제로 넘어오는 모양은 이쪽이다. main.mjs 가 `item: loaded.research`
+  //    로 넘기므로 item 이 **이미** research 다. 처음에 한 겹 더 들어가서
+  //    봤는데 그러면 사진을 넣어도 한 장도 안 붙는다 — 조용히 실패한다.
+  const flat = V.photoNamesOf({
+    title: '6화',
+    people: [
+      { name: '박재현', photo: 'https://example.com/p.jpg' },
+      { name: '최원호', photo: 'https://example.com/c.jpg' },
+      { name: '김도영', photo: '' },
+    ],
+  });
+  assert.deepEqual([...flat].sort(), ['박재현', '최원호']);
+});
+
+await asyncTest('6화 사람 목록이 실제 파일 모양과 맞는다', async () => {
+  // 파일이 바뀌어도 코드가 사진을 찾을 수 있는지 본다. 모양이 어긋나면
+  // 돈을 다 쓰고 나서야 "왜 안 닮았지" 하게 된다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const file = new URL('../../스포츠영상/6화.json', import.meta.url).pathname;
+  if (!fs.existsSync(file)) return; // 대본은 리포에 있지만 없는 환경도 있다
+  const item = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.ok(Array.isArray(item.people) && item.people.length, '6화에 people 이 없습니다');
+  for (const p of item.people) {
+    assert.ok(String(p.name || '').trim(), 'people 에 이름 없는 항목이 있습니다');
+  }
+  // 사진 주소를 아직 안 넣었으면 여기는 비어 있다. 그건 정상이다 —
+  // 다만 넣었는데도 비면 모양이 어긋난 것이므로 그때 이 검사가 잡는다.
+  const named = new Set(item.people.map((p) => String(p.name).trim()));
+  for (const n of V.photoNamesOf(item)) {
+    assert.ok(named.has(n), `${n} 은 people 에 없는 이름입니다`);
+  }
 });
 
 await asyncTest('설계한 샷이 사람 이름을 달고 나온다', async () => {
