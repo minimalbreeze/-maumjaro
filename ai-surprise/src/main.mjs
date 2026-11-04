@@ -30,7 +30,7 @@ import { assignAssetTypes, assignSound, estimateCost, DEFAULT_VIDEO_RATIO, ASSET
 import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
 import { renderCardImage } from './video/card.mjs';
-import { previewJobs, previewScenesFor } from './assets/preview.mjs';
+import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -790,12 +790,25 @@ async function cmdPreview(flags) {
     log.warn(`기획 파일을 못 찾았습니다: ${planGiven}`);
   }
 
-  const jobs = previewJobs(kind, { models, people });
+  // --styles 를 주면 **같은 장면을 그림체마다** 한 장씩 뽑는다.
+  // 장면을 고정해야 그림체 차이만 보인다.
+  const styleMode = Boolean(flags.styles);
+  const jobs = styleMode
+    ? previewStyleJobs(kind, { people })
+    : previewJobs(kind, { models, people });
   const withRef = jobs.filter((j) => j.reference).length;
   const cost = jobs.reduce((sum, j) => sum + modelFor(j.model).usdPerImage, 0);
 
-  log.section(`🎨 화풍 미리보기  |  ${kind}  |  ${models.join(' vs ')}`);
-  log.info(`장면 ${scenes.length}개 → ${jobs.length}장 (참조 사진 ${withRef}장)`);
+  log.section(
+    styleMode
+      ? `🎨 화풍 후보 비교  |  ${kind}  |  같은 장면, 그림체만 바꿈`
+      : `🎨 화풍 미리보기  |  ${kind}  |  ${models.join(' vs ')}`
+  );
+  log.info(
+    styleMode
+      ? `그림체 ${jobs.length}가지 (참조 사진 ${withRef}장)`
+      : `장면 ${scenes.length}개 → ${jobs.length}장 (참조 사진 ${withRef}장)`
+  );
   for (const job of jobs) {
     log.raw(`  · ${job.key} [${job.model}] ${job.reference ? '📷 사진 참조' : '글로만'} — ${job.why}`);
   }
@@ -817,7 +830,7 @@ async function cmdPreview(flags) {
     process.exit(1);
   }
 
-  const outDir = path.join(ROOT, 'preview', kind.toLowerCase());
+  const outDir = path.join(ROOT, 'preview', styleMode ? '화풍후보' : kind.toLowerCase());
   fs.mkdirSync(outDir, { recursive: true });
   const api = createReplicate({ token });
 
@@ -842,17 +855,32 @@ async function cmdPreview(flags) {
 
   // 무엇을 보려고 뽑았는지 함께 적어 둔다. 나중에 폴더만 열면 알 수 없다.
   const notes = [
-    `# 화풍 미리보기 — ${kind}`,
+    styleMode ? `# 화풍 후보 비교 — ${kind}` : `# 화풍 미리보기 — ${kind}`,
     '',
-    `모델: ${models.join(', ')}`,
+    styleMode
+      ? '같은 장면을 그림체만 바꿔 뽑았습니다. 장면이 같아야 그림체 차이만 보입니다.'
+      : `모델: ${models.join(', ')}`,
     `쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`,
     '',
     '## 무엇을 보나',
-    ...scenes.map((sc) => `- **${sc.key}** — ${sc.why}`),
+    ...(styleMode ? jobs : scenes).map((x) => `- **${x.key}** — ${x.why}`),
     '',
     '## 고를 때',
     '',
-    '같은 장면을 모델별로 나란히 놓고 본다. 얼굴이 또렷한 쪽을 고른다.',
+    ...(styleMode
+      ? [
+          '네 장을 나란히 놓고 **이 중 하나가 평생 야포츠 색이 된다**고 생각하고 고른다.',
+          '',
+          '- 섬네일 크기로 줄여도 눈에 띄는가 (조회수가 여기서 갈린다)',
+          '- 얼굴이 그림의 일부로 보이는가, 사진을 붙인 것처럼 보이는가',
+          '- 숫자 카드를 얹었을 때 어울릴 색인가',
+          '- 다른 야구 채널에서 본 적 있는 그림인가 — 있으면 우리 것이 아니다',
+          '',
+          '고르면 visuals.mjs 의 SPORTS_PAINT_KEY 한 줄만 바꾸면 된다.',
+        ]
+      : [
+          '같은 장면을 모델별로 나란히 놓고 본다. 얼굴이 또렷한 쪽을 고른다.',
+        ]),
     '',
     '- **사진 속 사람과 닮았는가.** 이번 미리보기의 본 질문이다.',
     '- 가슴의 KOREA 글자가 읽히는가 (전에는 금지 목록이 이걸 지웠다)',
