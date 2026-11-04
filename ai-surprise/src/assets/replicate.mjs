@@ -22,6 +22,26 @@
 const API_ROOT = 'https://api.replicate.com/v1';
 
 /**
+ * 참조 사진에서 얼굴을 얼마나 세게 가져올지 (0~1, 기본 1).
+ *
+ * 1 이면 사진 얼굴이 거의 그대로 들어가 **화풍을 이긴다.** 몸과 배경만
+ * 그림이 되고 얼굴만 사진이라 붕 떠 보인다.
+ *
+ * 0.7 은 들어 보고 고른 값이 아니라 **첫 시도값**이다. 결과를 보고
+ * 올리거나 내린다. 너무 낮추면 남이 되고, 너무 높이면 사진이 된다.
+ */
+export const PORTRAIT_ID_WEIGHT = 0.7;
+
+/**
+ * 몇 번째 단계부터 얼굴을 얹을지 (기본 0).
+ *
+ * 0 이면 처음부터 얼굴을 밀어 넣어서 그림체가 자리를 못 잡는다.
+ * 뒤로 미루면 구도와 화풍이 먼저 잡히고 그 위에 얼굴이 얹히므로
+ * 얼굴도 그림체를 따라간다.
+ */
+export const PORTRAIT_START_STEP = 2;
+
+/**
  * 쓸 수 있는 모델.
  *
  * 'schnell'은 빠르고 싸다. 'dev'는 느리고 비싸지만 묘사가 정확하다.
@@ -95,6 +115,22 @@ export const IMAGE_MODELS = {
       prompt,
       main_face_image: referenceImage,
       ...(negativePrompt ? { negative_prompt: negativePrompt } : {}),
+      // ── 얼굴 힘을 낮춘다 (2026-11-04) ──
+      //
+      // 기본값은 "최대한 닮게"다. 그래서 사진 얼굴이 그대로 들어가고,
+      // 몸과 배경만 그림이 된다. 운영자가 최원호 감독 그림을 보고
+      // "얼굴이 그냥 얼굴이잖아, 애니메이션으로 그려야지" 라고 했다.
+      // 3화 때 "얼굴이 붕 떠있다" 던 것과 같은 증상이다.
+      //
+      // id_weight 를 내리면 닮음이 약해지는 대신 화풍이 이긴다.
+      // start_step 을 올리면 그림의 구도와 화풍이 먼저 잡힌 뒤에
+      // 얼굴이 얹히므로, 얼굴도 그림체를 따라간다.
+      //
+      // ⚠️ 이 두 이름은 **모델 버전에 따라 없을 수 있다.** 없는 이름을
+      //    보내면 모델이 통째로 거부한다. 그래서 아래 filterInput 이
+      //    모델이 선언한 이름만 남긴다 — 없으면 조용히 빠진다.
+      id_weight: PORTRAIT_ID_WEIGHT,
+      start_step: PORTRAIT_START_STEP,
       // 인물 시트는 세로(896x1152)지만 **본편 샷은 가로**다. 세로로
       // 만들어 16:9 에 넣으면 좌우가 잘려 얼굴이 날아간다.
       ...(aspectRatio === '16:9'
@@ -201,6 +237,28 @@ export function createClient({
    * 안에서는 다시 묻지 않는다.
    */
   const versionCache = new Map();
+  const schemaCache = new Map();
+
+  /**
+   * 모델이 받는 입력 이름만 남긴다.
+   *
+   * PuLID 는 올린 사람과 버전마다 입력 이름이 다르다. 모르는 이름을
+   * 하나라도 보내면 모델이 **요청을 통째로 거부한다.** 그러면 얼굴 힘을
+   * 조절하려다 그림을 한 장도 못 만든다.
+   *
+   * 버전 정보에 입력 목록이 들어 있으므로 그걸로 거른다. 목록을 못
+   * 읽으면 거르지 않는다 — 여태 돌던 것을 새 코드가 막으면 안 된다.
+   */
+  function filterInput(input, name) {
+    const allowed = schemaCache.get(name);
+    if (!allowed || !allowed.size) return input;
+    const out = {};
+    for (const [k, v] of Object.entries(input)) {
+      if (allowed.has(k)) out[k] = v;
+    }
+    return out;
+  }
+
   async function latestVersionOf(m) {
     const names = [m.model, ...(m.alsoTry || [])];
     for (const name of names) {
@@ -210,6 +268,11 @@ export function createClient({
         const version = info?.latest_version?.id;
         if (version) {
           versionCache.set(name, version);
+          const props =
+            info?.latest_version?.openapi_schema?.components?.schemas?.Input?.properties;
+          if (props && typeof props === 'object') {
+            schemaCache.set(name, new Set(Object.keys(props)));
+          }
           return { name, version };
         }
       } catch (e) {
@@ -254,7 +317,7 @@ export function createClient({
       prediction = await request(`${API_ROOT}/predictions`, {
         method: 'POST',
         headers: { Prefer: 'wait' },
-        body: JSON.stringify({ version, input }),
+        body: JSON.stringify({ version, input: filterInput(input, name) }),
       });
     } else {
       prediction = await request(`${API_ROOT}/models/${m.model}/predictions`, {

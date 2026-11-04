@@ -43,20 +43,27 @@ export const PREVIEW_SCENES = {
         'hair swept up so the forehead shows, calm focused expression before a pitch',
     },
     {
-      key: '박재현-전신',
+      key: '박재현-상반신',
       person: '박재현',
-      why: '전신에서 다리가 안 잘리는가. 가슴의 KOREA 글자가 읽히는가.',
+      why: '사진과 닮았는가. 앞머리가 눈썹까지 내려오는가.',
+      // ⚠️ 2026-11-04 까지 이 장면이 **전신**이었다. 전신이면 얼굴이
+      //    그림의 5% 다. 운영자가 "박재현은 왜 얼굴이 안 나와" 라고
+      //    물었고, 당연한 말이었다 — 참조 모델을 쓰면서 얼굴을 작게
+      //    그리라고 한 셈이다. 돈만 나가고 얼굴은 안 보인다.
       content:
-        'full-body shot of a Korean baseball outfielder standing on the grass, ' +
-        'glove at his side, looking toward the infield, late afternoon light',
+        'upper body portrait of a young Korean baseball outfielder in the dugout, ' +
+        'facing the camera, neat straight black bangs falling to the eyebrows, ' +
+        'calm quiet expression, evening stadium lights behind him',
     },
     {
       key: '최원호-감독',
       person: '최원호',
-      why: '선수들과 안 섞이는가. 감독답게 나이가 들어 보이는가.',
+      why: '얼굴이 사진처럼 들뜨지 않고 그림체를 따라가는가.',
+      // 2026-11-04 운영자: "감독 얼굴이 그냥 얼굴이잖아, 애니메이션으로
+      // 그려야지". 이 장면은 이제 닮음이 아니라 **화풍**을 보는 자리다.
       content:
-        'a Korean baseball manager in his fifties standing at the dugout rail, ' +
-        'arms folded, watching the field with a steady expression, players blurred behind him',
+        'close-up portrait of a Korean baseball manager in his fifties at the dugout rail, ' +
+        'arms folded, a steady unsmiling expression, soft evening light on his face',
     },
   ],
 };
