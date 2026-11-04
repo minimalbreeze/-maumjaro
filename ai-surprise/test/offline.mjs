@@ -6007,6 +6007,59 @@ await asyncTest('7화에 나오는 사람이 모두 적혀 있다', async () => 
 });
 
 
+await asyncTest('5.7초 어긋남을 고르게 나눠 맞춘다 (실행 #58)', async () => {
+  // 실행 #58 이 여기서 죽었다. 샷 합계 288.63초, 나레이션 282.91초.
+  // 그림 50장과 음성을 이미 만들어 놓고($0.17) 영상이 안 나왔다.
+  //
+  // 마지막 클립 하나로 5.7초를 흡수하면 그 화면이 눈에 띄게 끌린다.
+  // 예순 개에 나누면 샷마다 0.1초라 안 보인다.
+  const P = await import('../src/video/plan.mjs');
+
+  // 샷 60개 × 4.81초 = 288.6초, 나레이션은 282.91초
+  const shots = [];
+  for (let i = 1; i <= 60; i++) {
+    shots.push({
+      shot_id: `S1-${i}`, duration: 4.81, asset_type: 'image', camera: 'zoom in',
+    });
+  }
+  const scenes = [{ scene_number: 1, section: 'HOOK', shots, paragraphs: [] }];
+
+  const plan = P.buildTimeline(scenes, { narrationSeconds: 282.91, assetDir: 'assets' });
+  assert.deepEqual(plan.problems ?? [], [], `문제가 남았습니다: ${JSON.stringify(plan.problems)}`);
+  assert.ok(
+    Math.abs(plan.duration - 282.91) <= 1,
+    `합계가 ${plan.duration} 입니다 — 282.91 에 맞아야 합니다`
+  );
+
+  // 한 클립에 몰리지 않았는지 본다. 몰면 그 화면만 길게 끌린다.
+  const longest = Math.max(...plan.clips.map((c) => c.duration));
+  assert.ok(longest < 6, `한 클립이 ${longest}초입니다 — 한 곳에 몰렸습니다`);
+
+  // start 가 이어져야 한다. 틀리면 영상 중간이 비거나 겹친다.
+  let t = 0;
+  for (const c of plan.clips) {
+    assert.ok(Math.abs(c.start - t) < 0.05, `${c.shot_id} 의 시작이 어긋납니다`);
+    t = Math.round((t + c.duration) * 100) / 100;
+  }
+});
+
+await asyncTest('정말 크게 어긋나면 그대로 실패시킨다', async () => {
+  // 고르게 나눈다고 뭐든 맞추면 안 된다. 절반이 어긋나는 것은 반올림도
+  // 오차도 아니라 설계가 틀린 것이다. 조용히 늘리면 영상이 늘어진 채 나간다.
+  const P = await import('../src/video/plan.mjs');
+  const shots = [];
+  for (let i = 1; i <= 10; i++) {
+    shots.push({ shot_id: `S1-${i}`, duration: 10, asset_type: 'image', camera: 'zoom in' });
+  }
+  const scenes = [{ scene_number: 1, section: 'HOOK', shots, paragraphs: [] }];
+  const plan = P.buildTimeline(scenes, { narrationSeconds: 50, assetDir: 'assets' });
+  assert.ok(
+    (plan.problems || []).some((x) => /어긋납니다/.test(x)),
+    '100초짜리를 50초로 우겨 넣고도 통과했습니다'
+  );
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

@@ -31,6 +31,30 @@ export const TRANSITION_SECONDS = 0.4;
  */
 export const DRIFT_ABSORB_MAX = 3;
 
+/**
+ * 고르게 늘려서 맞출 수 있는 어긋남의 한계 (나레이션 길이에 대한 비율).
+ *
+ * 2026-11-04 실행 #58 이 5.7초(2%) 로 죽었다. 반올림이 아니라 진짜
+ * 차이다 — 클립 예순 개를 소수 둘째 자리로 반올림해도 0.3초를 못 넘는다.
+ * 장면 설계가 잡은 샷 길이와 실제로 읽힌 음성 길이가 그만큼 달랐다.
+ *
+ * 전에는 **마지막 클립 하나**로만 흡수했다. 3초를 넘으면 마지막 화면
+ * 하나가 그만큼 늘어나 눈에 띄므로 한계를 뒀고, 넘으면 실패시켰다.
+ * 그런데 실패시키면 그림 50장과 음성을 이미 만들어 놓고($0.17) 영상이
+ * 안 나온다.
+ *
+ * 고르게 나누면 그 문제가 없다. 2% 면 샷마다 0.1초쯤이라 안 보인다.
+ *
+ * ⚠️ 자막은 안 밀린다. buildCues 가 **실제 음성 타이밍**
+ *    (paragraphTimings)을 쓰기 때문이다 — 클립 길이와 무관하다.
+ *    예전 주석이 "중간 클립을 건드리면 자막이 밀린다"고 적어 둔 것은
+ *    음성 타이밍이 없던 시절 이야기다.
+ *
+ * 이보다 크게 어긋나면 고르게 늘려도 장면이 눈에 띄게 끌린다. 그건
+ * 반올림도 오차도 아니라 설계가 틀린 것이므로 실패시킨다.
+ */
+export const DRIFT_SCALE_MAX_RATIO = 0.08;
+
 /** 흡수한 뒤에도 마지막 클립이 이보다는 길어야 한다. */
 export const MIN_CLIP_SECONDS = 0.5;
 
@@ -115,6 +139,33 @@ export function buildTimeline(
     // 큰 차이는 반올림이 아니라 진짜 문제다. 그건 아래 검사가 잡게 둔다.
     if (drift !== 0 && Math.abs(drift) <= DRIFT_ABSORB_MAX && adjusted >= MIN_CLIP_SECONDS) {
       last.duration = adjusted;
+      total = round2(clips.reduce((sum, c) => sum + c.duration, 0));
+    }
+  }
+
+  // 마지막 클립 하나로 못 흡수한 차이는 **모든 클립에 고르게 나눈다.**
+  //
+  // 실행 #58 이 5.7초로 죽었다. 그림 50장과 음성을 이미 만들어 놓고
+  // 영상이 안 나왔다. 마지막 클립 하나에 5.7초를 몰면 눈에 띄지만,
+  // 예순 개에 나누면 샷마다 0.1초라 안 보인다.
+  if (Number(narrationSeconds) > 0 && clips.length) {
+    const drift = round2(narration - total);
+    const limit = narration * DRIFT_SCALE_MAX_RATIO;
+    if (drift !== 0 && Math.abs(drift) <= limit && total > 0) {
+      const scale = narration / total;
+      let cursor2 = 0;
+      for (const c of clips) {
+        c.duration = Math.max(MIN_CLIP_SECONDS, round2(c.duration * scale));
+        c.start = round2(cursor2);
+        cursor2 = round2(cursor2 + c.duration);
+      }
+      // 곱하면서 생긴 반올림 찌꺼기는 마지막 클립이 받는다.
+      const after = round2(clips.reduce((sum, c) => sum + c.duration, 0));
+      const rest = round2(narration - after);
+      const last = clips[clips.length - 1];
+      if (rest !== 0 && round2(last.duration + rest) >= MIN_CLIP_SECONDS) {
+        last.duration = round2(last.duration + rest);
+      }
       total = round2(clips.reduce((sum, c) => sum + c.duration, 0));
     }
   }

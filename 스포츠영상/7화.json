@@ -103,7 +103,12 @@
       "role": "투수",
       "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait - with short black hair under a cap, a thick solid torso with broad shoulders and a heavy neck, a left-handed pitcher with the glove on his right hand, wearing a plain white national team uniform",
       "tell": "안경 쓰고 던지는 왼손 투수. 안경 하나로 사람이 특정된다 — 생김새 문장 맨 앞에 둔다. ⚠️ 얼굴형은 적지 않는다.",
-      "photo": ""
+      "photo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRO8fpxlYlCap88kh0sznb900tPkabNlWLNPEsEMkWqKw&s=10",
+      "photo_예비": [
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTomIazDOfgOxAvuMqgBYujJlKV_OnjZBuf37b0YLZhnw&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgiHe2QuFInp_NdYDWjeFx-JIqRi6blmZgvzwWpQLgAA&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQkVNLmNFKCbzwVX1FKQC2igS68IXZDGuGLNlWPYgVeRQ&s=10"
+      ]
     },
     {
       "name": "정해영",
@@ -121,8 +126,13 @@
       "name": "김태군",
       "role": "포수",
       "look": "a Korean man in his mid 30s with short black hair, a catcher's sturdy thick-set build, wearing a plain white national team uniform",
-      "tell": "⚠️ 생김새 자료가 없다. 사진을 못 받았다 — 얼굴을 크게 쓰지 않고 포수 장비와 자세로 누구인지 알린다.",
-      "photo": ""
+      "tell": "포수. 사진을 참조로 그린다.",
+      "photo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ34FBkXhh_Qc_0u_mYoPTJTfxBZs7ZG8NXqpl_60unMg&s=10",
+      "photo_예비": [
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQV3PBwLe1C5F_AlTyVSrPBb81SBEEkN3vsJS0u6gaphw&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQ6rll1EWuGwSfw5MhbCEC55-vDIn_VCJl6HMYptAGYw&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIRXVzbZHiOUuIKSqRfF1RtIVqOMGfeVb4NnwLi8_XzA&s=10"
+      ]
     }
   ],
   "beats": [
