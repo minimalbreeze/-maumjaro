@@ -210,9 +210,21 @@ export const SPORTS_INVENTED_CLAUSE =
  * 과장하지 말라는 것이 핵심이다 — 닮게, 그러나 그림으로.
  */
 export const SPORTS_LIKENESS_CLAUSE =
-  'match the face, hairstyle, facial hair and build of the person in the ' +
-  'reference photograph, keeping their real proportions without ' +
-  'caricature or exaggeration, redrawn as a painting rather than traced';
+  // ⚠️ 2026-11-04 에 고쳤다. 전에는 "닮게 그려라"만 적었더니 **사진
+  //    얼굴이 그대로** 들어왔다. 몸과 배경은 그림인데 얼굴만 사진이라
+  //    따로 놀았다. 운영자 말: "감독 얼굴이 그냥 얼굴이잖아".
+  //
+  //    닮는 것과 그림체를 지키는 것은 서로 싸운다. 그래서 **어느 쪽이
+  //    이겨야 하는지를 글로 못 박는다** — 그림체가 먼저고, 닮음은 그
+  //    안에서다. 힘 조절은 replicate.mjs 의 id_weight 가 따로 한다.
+  'recognisably the same person as in the reference photograph - same face ' +
+  'shape, hairline, eyebrows and eye shape - but redrawn completely as a ' +
+  'hand-painted 2D anime character: flat cel-shaded skin with no ' +
+  'photographic texture or skin pores, inked linework around the eyes and ' +
+  'brows, a simplified painted nose and mouth, the face finished in exactly ' +
+  'the same painting style as the rest of the picture, ' +
+  'never a photographic face, never a photo head on a drawn body, ' +
+  'no caricature or exaggeration of his features';
 
 /**
  * 스포츠 편에만 더 붙이는 금지 목록.

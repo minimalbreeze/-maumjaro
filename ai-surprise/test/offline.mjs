@@ -4358,7 +4358,11 @@ await asyncTest('사진이 있는 사람만 닮게 그리라고 적는다', asyn
   // 둘을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
   assert.ok(!like.includes(V.SPORTS_INVENTED_CLAUSE), '반대되는 두 줄이 같이 붙었습니다');
   // 운영자가 "캐리커처 할 필요 없다"고 했다(2026-11-03).
-  assert.ok(/without\s+caricature or exaggeration/.test(like));
+  assert.ok(/no caricature or exaggeration/.test(like));
+  // 2026-11-04: "감독 얼굴이 그냥 얼굴이잖아, 애니메이션으로 그려야지".
+  // 닮음 지시 안에 **그림체가 먼저**라는 말이 들어 있어야 한다.
+  assert.ok(/hand-painted 2D anime character/.test(like), '그림으로 그리라는 말이 없습니다');
+  assert.ok(/never a photographic face/.test(like), '사진 얼굴을 막는 말이 없습니다');
 
   // 금지 목록의 이 줄은 닮게 그리라는 줄과 정반대다. 같이 보내면
   // 모델이 하나를 버리는데, 어느 쪽을 버렸는지는 그림이 나와야 안다.
