@@ -156,6 +156,12 @@ export const SPORTS_PAINT_CANDIDATES = {
       'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
       'clean confident linework, flat colour with soft hand-painted shading, ' +
       'crowds and distant background painted as loose soft dabs, ' +
+      // 층이 셋이어야 썰렁하지 않다 (2026-11-04 운영자 요청).
+      // 앞을 흐리게 두는 것이 깊이를 만든다.
+      'composed in three layers - a soft out-of-focus object close to the ' +
+      'camera, the subject sharp in the middle, and a loosely painted ' +
+      'background behind - with gentle atmosphere such as light haze, ' +
+      'drifting dust or low sun, ' +
       'drawn artwork, never a 3D render, never CGI, never a photograph',
   },
   리소: {
@@ -481,6 +487,33 @@ D. **얼굴을 안 쓰는 샷에는 야구장을 그린다.** 빈 화면이 아�
 
    뒷모습·손·발·실루엣은 얼굴이 아니다. 마음껏 쓴다 — 얼굴이
    안 나오면 틀릴 일도 없다.
+
+E. **화면을 채우되 과하지 않게.**
+
+   2026-11-04 운영자 말이다 —
+   "너무 썰렁하지도 너무 과하지도 않게, 적당한 구성과 배경과 배경
+    흐리기 등등의 다양한 효과를 넣어서 화면을 풍성하게 만든다."
+
+   한 그림에 **층이 셋** 있어야 한다. 하나뿐이면 썰렁하고, 전부
+   또렷하면 눈이 쉴 데가 없다.
+
+     앞     가까이 있는 것 하나. 더그아웃 난간, 그물, 벗어 둔 글러브,
+            기둥, 흙더미. 살짝 흐리게 — 깊이를 만드는 것은 이것이다
+     가운데 이야기의 주인. 여기만 또렷하다
+     뒤     관중, 전광판, 조명탑, 담장 광고 자리, 하늘.
+            **붓 자국으로 뭉갠다** — 또렷하게 그리면 주인을 가린다
+
+   그리고 공기를 채운다. 빛줄기, 흙먼지, 숨, 비, 조명 번짐, 그림자.
+   한 그림에 **하나만** 쓴다 — 전부 넣으면 탁해진다.
+
+   ⚠️ 과하게 하지 않는다. 폭발·불꽃·번개·속도선·만화 효과음은 쓰지
+      않는다. 이 채널은 차분하게 설명하는 채널이고, 화려하게 만들수록
+      싸구려로 보인다. **풍성함은 층과 공기에서 나오지 요란함에서
+      나오지 않는다.**
+
+   ⚠️ 빈 화면도 쓸 데가 있다. 사람이 떠나는 대목(입대·이적)에서는
+      일부러 비운다. 다만 그때도 **야구장 안**이다 — 빈 라커, 벗어 둔
+      유니폼, 불 꺼진 관중석.
    숫자 자체보다 이 규칙이 중요하다.
 
    한 편에 얼굴이 보이는 장면은 **많아야 여섯**으로 둔다. 적힌 사람이
