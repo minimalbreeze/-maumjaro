@@ -126,6 +126,79 @@ export const TALE_STYLE_SUFFIX =
  * 그래서 프롬프트에는 선수 이름 대신 팀 색·등번호·상황만 적는다.
  * 안전한 쪽과 잘 되는 쪽이 같은 방향인, 드문 경우다.
  */
+/**
+ * 그림체 후보.
+ *
+ * 2026-11-04 운영자: "잘 그리는 화풍이 있는가? 우리만의 특징이 있어야 한다.
+ * 영상을 딱 보면 이건 우리 거다 하는".
+ *
+ * 맞는 말이고, 지브리 느낌이 실패한 이유이기도 하다. 그건 모델이 가장
+ * 평균적으로 아는 화풍이라 **누구나 같은 그림을 받는다.** 우리 것이 될
+ * 수가 없다.
+ *
+ * 그리고 하나 더 있다. 지브리풍은 반쯤 사실적인 그림이라 사진에서 가져온
+ * 얼굴이 제일 티가 난다 — 감독 얼굴이 붕 뜬 게 그래서다.
+ * **그림체가 평면적이고 질감이 거칠수록 얼굴도 같이 뭉개져서 이질감이
+ * 사라진다.** 그림체를 고르는 일이 얼굴 문제까지 같이 푼다.
+ *
+ * 말로 고르면 또 틀리므로 같은 장면을 후보마다 한 장씩 뽑아서 고른다
+ * (`preview --styles`).
+ */
+export const SPORTS_PAINT_CANDIDATES = {
+  // 지금 쓰는 것. 비교 기준으로 남긴다.
+  지브리: {
+    label: '지브리 느낌 (지금 쓰는 것)',
+    why: '부드럽고 따뜻하다. 다만 흔하고, 사진 얼굴이 제일 티가 난다.',
+    paint:
+      'hand-painted 2D anime illustration in the style of a classic Japanese ' +
+      'animated film, gouache and watercolour on paper with visible brush ' +
+      'texture and a faint paper grain, soft natural light, ' +
+      'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
+      'clean confident linework, flat colour with soft hand-painted shading, ' +
+      'crowds and distant background painted as loose soft dabs, ' +
+      'drawn artwork, never a 3D render, never CGI, never a photograph',
+  },
+  리소: {
+    label: '리소그래프 2~3색',
+    why: '색이 두세 개뿐이라 한 번 정하면 그게 채널 색이 된다. 섬네일만 봐도 우리 것이 된다.',
+    paint:
+      'risograph print illustration using only three ink colours - deep navy, ' +
+      'warm red and cream - printed one layer at a time with the layers ' +
+      'slightly out of register, visible halftone dot texture, coarse grain, ' +
+      'the paper stock showing through, flat areas of solid ink with no ' +
+      'gradients, bold simple shapes, heavy black linework, ' +
+      'printed artwork on paper, never a 3D render, never CGI, never a photograph',
+  },
+  야구카드: {
+    label: '1970년대 야구 카드 수채',
+    why: '야구 채널에 맞는 향수. 다만 "옛날 이야기" 느낌이 강하다 — 우리는 지금 일을 다룬다.',
+    paint:
+      'vintage 1970s baseball card illustration, watercolour and gouache on ' +
+      'aged cream cardstock, soft bleeding edges where the paint meets the ' +
+      'paper, faded sun-bleached colours, slight print misalignment and ' +
+      'off-register colour, visible paper fibre and light foxing, ' +
+      'warm nostalgic palette of butter yellow, dusty red and faded teal, ' +
+      'painted artwork, never a 3D render, never CGI, never a photograph',
+  },
+  르포: {
+    label: '신문 르포 스케치 (연필+담채)',
+    why: '분석 톤에 가장 맞고 차분하다. 다만 약해서 섬네일에서 눈에 안 띈다.',
+    paint:
+      'reportage sketch illustration, confident graphite pencil linework with ' +
+      'visible construction lines left in, loose watercolour washes laid over ' +
+      'the drawing and running slightly past the lines, large areas of bare ' +
+      'white paper left unpainted, restrained palette of ink blue, ochre and ' +
+      'a single warm red accent, the immediacy of a drawing made on the spot, ' +
+      'drawn artwork, never a 3D render, never CGI, never a photograph',
+  },
+};
+
+/** 지금 쓰는 그림체. 후보를 고르면 이 이름만 바꾼다. */
+export const SPORTS_PAINT_KEY = '지브리';
+
+/** 그림체 문장. */
+export const SPORTS_PAINT = SPORTS_PAINT_CANDIDATES[SPORTS_PAINT_KEY].paint;
+
 export const SPORTS_STYLE_SUFFIX =
   // ── 2D 만화다. 3D 렌더가 아니다 (2026-11-03 운영자 지시) ──
   //
@@ -155,13 +228,7 @@ export const SPORTS_STYLE_SUFFIX =
   //   · 색이 가라앉아 있다. 크림·먼지 낀 파랑·흙색.
   //   · 관중은 또렷하게 그리지 않고 붓 자국으로 뭉갠다.
   //   · 그런데 유니폼 글자와 솔기는 오히려 또렷하다.
-  'hand-painted 2D anime illustration in the style of a classic Japanese ' +
-  'animated film, gouache and watercolour on paper with visible brush ' +
-  'texture and a faint paper grain, soft natural light, ' +
-  'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
-  'clean confident linework, flat colour with soft hand-painted shading, ' +
-  'crowds and distant background painted as loose soft dabs, ' +
-  'drawn artwork, never a 3D render, never CGI, never a photograph, ' +
+  `${SPORTS_PAINT}, ` +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
   // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
@@ -602,7 +669,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content, era = null, { kind = null, likeness = false } = {}) {
+export function composeImagePrompt(content, era = null, { kind = null, likeness = false, paint = null } = {}) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -621,6 +688,11 @@ export function composeImagePrompt(content, era = null, { kind = null, likeness 
   const isSports = kind === KIND.SPORTS;
   const fixed = isTale || isSports;
   let style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
+  // 그림체만 갈아 끼운다. 사람 규칙(비율·머리카락·얼굴·프레이밍·유니폼)은
+  // 그대로 둔다 — 그게 바뀌면 무엇 때문에 달라졌는지 가를 수가 없다.
+  if (isSports && paint && paint !== SPORTS_PAINT) {
+    style = style.replace(SPORTS_PAINT, paint);
+  }
   // 사진을 받아 둔 사람이면 닮게 그리라고 하고, 아니면 지어내라고 한다.
   // 두 줄을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
   if (isSports) {

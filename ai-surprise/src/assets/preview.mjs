@@ -14,7 +14,12 @@
 // 그래서 **그림 몇 장만** 뽑는다. 장당 schnell 0.003, dev 0.025 이므로
 // 세 장씩 두 모델을 비교해도 10센트가 안 된다.
 
-import { composeImagePrompt, photoNamesOf } from '../scenes/visuals.mjs';
+import {
+  composeImagePrompt,
+  photoNamesOf,
+  SPORTS_PAINT_CANDIDATES,
+  SPORTS_PAINT_KEY,
+} from '../scenes/visuals.mjs';
 import { REFERENCE_MODEL } from './images.mjs';
 import { KIND } from '../model.mjs';
 
@@ -119,3 +124,49 @@ export function previewJobs(kind, { models = ['schnell'], people = [] } = {}) {
   }
   return jobs;
 }
+
+/**
+ * 그림체 후보를 **같은 장면으로** 나란히 뽑는다.
+ *
+ * 2026-11-04 운영자: "잘 그리는 화풍이 있는가? 예시를 들어 주면 정해
+ * 주겠다. 영상을 딱 보면 이건 우리 거다 하는".
+ *
+ * 설명 세 줄 읽고 고르면 또 틀린다. 장면을 하나로 고정하고 그림체만
+ * 바꿔야 **무엇 때문에 달라졌는지** 가를 수 있다 — 장면까지 같이 바뀌면
+ * 그림체 차이인지 장면 차이인지 알 수가 없다.
+ *
+ * 장면은 김도영 정면으로 고정한다. 채널에서 가장 많이 나오는 얼굴이고,
+ * 사진 참조가 붙어 있어서 "얼굴이 붕 뜨는가"까지 같이 볼 수 있다.
+ */
+export function previewStyleJobs(kind, { people = [] } = {}) {
+  const scene = previewScenesFor(kind)[0];
+  if (!scene) return [];
+
+  const photoOf = new Map();
+  const withPhoto = photoNamesOf({ people });
+  for (const p of people || []) {
+    const name = String(p?.name || '').trim();
+    if (withPhoto.has(name)) photoOf.set(name, String(p.photo).trim());
+  }
+  const reference = photoOf.get(String(scene.person || '').trim()) || null;
+
+  const jobs = [];
+  for (const [key, cand] of Object.entries(SPORTS_PAINT_CANDIDATES)) {
+    jobs.push({
+      model: reference ? REFERENCE_MODEL : 'dev',
+      key,
+      why: `${cand.label} — ${cand.why}`,
+      reference,
+      file: `화풍-${key}.png`,
+      prompt: composeImagePrompt(scene.content, null, {
+        kind,
+        likeness: Boolean(reference),
+        paint: cand.paint,
+      }),
+    });
+  }
+  return jobs;
+}
+
+/** 지금 쓰는 그림체 이름. 보고서에 적는다. */
+export { SPORTS_PAINT_KEY };
