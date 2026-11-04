@@ -5948,6 +5948,27 @@ await asyncTest('사진이 있는 사람은 한 장으로 묶지 않는다', asy
 });
 
 
+await asyncTest('화면을 층으로 채우되 요란하게 하지 않는다', async () => {
+  // 2026-11-04 운영자: "너무 썰렁하지도 너무 과하지도 않게, 적당한 구성과
+  // 배경과 배경 흐리기 등등의 다양한 효과를 넣어서 화면을 풍성하게."
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+
+  assert.ok(/층이 셋/.test(r), '층 지시가 없습니다');
+  for (const w of ['앞', '가운데', '뒤']) assert.ok(r.includes(w));
+  assert.ok(/흐리게/.test(r), '배경 흐리기 지시가 없습니다');
+
+  // 과하게 가는 것도 막아야 한다. "풍성하게"만 적으면 폭발과 속도선이 나온다.
+  assert.ok(/폭발·불꽃·번개·속도선/.test(r), '과한 효과를 막는 말이 없습니다');
+
+  // 화풍 문장에도 들어가야 한다 — 규칙은 설계 AI 가 읽고, 화풍 문장은
+  // 그림 모델이 읽는다. 한쪽에만 적으면 다른 쪽이 모른다.
+  const p = V.composeImagePrompt('a batter', null, { kind: 'SPORTS' });
+  assert.ok(/three layers/.test(p), '그림 모델에게 가는 글에 층 지시가 없습니다');
+  assert.ok(/out-of-focus/.test(p), '앞을 흐리게 하라는 말이 없습니다');
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
