@@ -5796,6 +5796,91 @@ await asyncTest('참조 샷은 비싼 값으로 상한을 센다', async () => {
 });
 
 
+await asyncTest('커뮤니티 모델은 버전을 찾아 /predictions 에 건다', async () => {
+  // 실행 #52 가 404 로 죽었다. 코드가 /models/{이름}/predictions 를 썼는데
+  // 그 주소는 **공식 모델에만** 있다. flux schnell·dev 는 공식이라 되고,
+  // flux-pulid 는 커뮤니티 모델이라 없다.
+  const R = await import('../src/assets/replicate.mjs');
+  const calls = [];
+  const fetchFn = async (url, opt = {}) => {
+    calls.push({ url, method: opt.method || 'GET', body: opt.body });
+    if (url.endsWith('/models/zsxkib/flux-pulid')) {
+      return {
+        ok: true, status: 200,
+        text: async () => JSON.stringify({ latest_version: { id: 'ver-abc123' } }),
+        json: async () => ({ latest_version: { id: 'ver-abc123' } }),
+      };
+    }
+    const done = { id: 'p1', status: 'succeeded', output: ['http://x/y.png'] };
+    return { ok: true, status: 200, text: async () => JSON.stringify(done), json: async () => done };
+  };
+  const api = R.createClient({ token: 't', fetchFn, sleepFn: async () => {} });
+  const out = await api.generate('a batter', {
+    modelKey: 'portrait',
+    referenceImage: 'https://example.com/k.jpg',
+    aspectRatio: '16:9',
+  });
+  assert.equal(out.url, 'http://x/y.png');
+
+  // 먼저 모델 정보를 읽어 버전을 찾아야 한다.
+  assert.ok(
+    calls[0].url.endsWith('/models/zsxkib/flux-pulid'),
+    `첫 호출이 ${calls[0].url} 입니다 — 모델 정보를 먼저 읽어야 합니다`
+  );
+  assert.equal(calls[0].method, 'GET');
+
+  // 그다음 /predictions 에 version 을 실어 건다.
+  const post = calls.find((c) => c.method === 'POST');
+  assert.ok(post, 'POST 가 없습니다');
+  assert.ok(
+    post.url.endsWith('/v1/predictions'),
+    `${post.url} 에 걸었습니다 — 커뮤니티 모델은 /v1/predictions 입니다`
+  );
+  const sent = JSON.parse(post.body);
+  assert.equal(sent.version, 'ver-abc123', '버전을 안 실었습니다');
+  assert.equal(sent.input.main_face_image, 'https://example.com/k.jpg');
+  // 가로 샷이어야 한다. 세로로 만들면 16:9 에 넣을 때 위아래가 잘린다.
+  assert.equal(sent.input.width, 1344);
+});
+
+await asyncTest('공식 모델은 예전 주소를 그대로 쓴다', async () => {
+  // 커뮤니티 분기를 넣으면서 공식 모델까지 바꾸면 되던 것이 깨진다.
+  const R = await import('../src/assets/replicate.mjs');
+  const calls = [];
+  const fetchFn = async (url, opt = {}) => {
+    calls.push({ url, method: opt.method || 'GET' });
+    const done = { id: 'p1', status: 'succeeded', output: ['http://x/y.png'] };
+    return { ok: true, status: 200, text: async () => JSON.stringify(done), json: async () => done };
+  };
+  const api = R.createClient({ token: 't', fetchFn, sleepFn: async () => {} });
+  await api.generate('a dugout', { modelKey: 'schnell' });
+  assert.equal(calls.length, 1, '공식 모델인데 모델 정보를 따로 읽었습니다');
+  assert.ok(calls[0].url.includes('/models/'), calls[0].url);
+  assert.ok(calls[0].url.endsWith('/predictions'), calls[0].url);
+});
+
+await asyncTest('참조 모델 이름이 다 404 면 분명히 말한다', async () => {
+  // 올린 사람이 모델을 지우면 그날로 404 다. "resource could not be found"
+  // 만 보고는 무엇을 고쳐야 하는지 알 수 없다.
+  const R = await import('../src/assets/replicate.mjs');
+  const fetchFn = async () => ({
+    ok: false, status: 404,
+    text: async () => 'not found',
+    json: async () => ({ detail: 'not found' }),
+  });
+  const api = R.createClient({ token: 't', fetchFn, sleepFn: async () => {}, maxAttempts: 1 });
+  await assert.rejects(
+    () => api.generate('x', { modelKey: 'portrait', referenceImage: 'https://e.com/a.jpg' }),
+    (e) => {
+      assert.ok(/찾아본 이름/.test(e.message), `메시지: ${e.message}`);
+      assert.ok(/zsxkib\/flux-pulid/.test(e.message), '찾아본 이름을 안 알려줍니다');
+      assert.ok(/replicate\.mjs/.test(e.message), '어디를 고쳐야 하는지 안 알려줍니다');
+      return true;
+    }
+  );
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
