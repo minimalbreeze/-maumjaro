@@ -1,1014 +1,1022 @@
 {
+ "_설명": [
+  "경기를 바로 볼 수 있는 곳과 다시보기, 공식 일정 페이지. 본문 중간에 배너로 들어간다.",
+  "",
+  "여기 적힌 주소만 쓴다. 코드가 주소를 만들어내지 않는다 — 없는 링크를 배너로",
+  "거는 것은 독자를 속이는 일이고, 깨진 링크는 검색 순위에도 나쁘다.",
+  "새 종목을 추가하려면 실제로 열리는 공식 주소를 확인한 뒤 여기에 적는다.",
+  "match가 본문·제목에 들어 있으면 그 항목을 쓴다. 없으면 카테고리 기본값.",
+  "",
+  "primary = 생중계로 가는 곳. vod = 다시보기로 가는 곳.",
+  "둘은 주소가 다르다. 끝난 경기 글에는 다시보기가 더 맞다 — 글 대부분이 끝난",
+  "경기를 다룬다. vod 가 없는 종목은 다시보기 버튼을 넣지 않는다.",
+  "",
+  "라벨 = 배너 머리글. 안 적으면 '📺 경기 보러가기' 다. 경기가 아닌 글(축제 등)만 적는다."
+ ],
+ "byPost": {
   "_설명": [
-    "경기를 바로 볼 수 있는 곳과 다시보기, 공식 일정 페이지. 본문 중간에 배너로 들어간다.",
-    "",
-    "여기 적힌 주소만 쓴다. 코드가 주소를 만들어내지 않는다 — 없는 링크를 배너로",
-    "거는 것은 독자를 속이는 일이고, 깨진 링크는 검색 순위에도 나쁘다.",
-    "새 종목을 추가하려면 실제로 열리는 공식 주소를 확인한 뒤 여기에 적는다.",
-    "match가 본문·제목에 들어 있으면 그 항목을 쓴다. 없으면 카테고리 기본값.",
-    "",
-    "primary = 생중계로 가는 곳. vod = 다시보기로 가는 곳.",
-    "둘은 주소가 다르다. 끝난 경기 글에는 다시보기가 더 맞다 — 글 대부분이 끝난",
-    "경기를 다룬다. vod 가 없는 종목은 다시보기 버튼을 넣지 않는다.",
-    "",
-    "라벨 = 배너 머리글. 안 적으면 '📺 경기 보러가기' 다. 경기가 아닌 글(축제 등)만 적는다."
+   "운영자가 글 번호로 못박은 배너. 여기 적힌 글은 카테고리·match·허브 판정을",
+   "전부 건너뛰고 이것을 쓴다 (2026-11-02 지시: \"내가 강제한 배너는 강제로 넣는다\").",
+   "",
+   "기본은 허브다. 이 칸은 그 글에만 해당하는 사정이 있을 때만 쓴다.",
+   "자기 자신을 가리켜도 그대로 넣는다 — 지정한 사람이 알고 지정한 것이다.",
+   "",
+   "쓰는 법: \"글번호\": { \"primary\": {\"text\":..., \"url\":...}, \"vod\": {...} }"
   ],
-  "byPost": {
-    "_설명": [
-      "운영자가 글 번호로 못박은 배너. 여기 적힌 글은 카테고리·match·허브 판정을",
-      "전부 건너뛰고 이것을 쓴다 (2026-11-02 지시: \"내가 강제한 배너는 강제로 넣는다\").",
-      "",
-      "기본은 허브다. 이 칸은 그 글에만 해당하는 사정이 있을 때만 쓴다.",
-      "자기 자신을 가리켜도 그대로 넣는다 — 지정한 사람이 알고 지정한 것이다.",
-      "",
-      "쓰는 법: \"글번호\": { \"primary\": {\"text\":..., \"url\":...}, \"vod\": {...} }"
-    ]
-  },
-  "byCategory": {
-    "농구": {
-      "확인일": "2026-11-02",
-      "note": "'농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어간다. 중계처가 다르므로 match 로 가른다. match 가 안 걸리면 아래 기본값(WKBL)을 쓴다.",
-      "match": [
-        {
-          "keywords": [
-            "NBA",
-            "미국프로농구",
-            "엔비에이",
-            "NBA 중계"
-          ],
-          "확인일": "2026-11-02",
-          "note": "2026-27시즌 국내 중계는 쿠팡플레이(스포츠 패스). 주소는 운영자 확인. 하이라이트 채널은 공식 생중계가 아니다.",
-          "primary": {
-            "text": "NBA 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/nba-중계",
-            "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "쿠팡플레이에서 NBA 중계 보기",
-              "url": "https://www.coupangplay.com/",
-              "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
-            },
-            "vod": {
-              "text": "NBA 하이라이트 보기",
-              "url": "https://www.youtube.com/@TheGametimeHighlights",
-              "확인일": "2026-11-01",
-              "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
-            },
-            "secondary": [
-              {
-                "text": "SOOP 해외프로농구 생중계",
-                "url": "https://www.sooplive.com/live/group/sports?categoryNo=00690000&categoryName=%ED%95%B4%EC%99%B8%ED%94%84%EB%A1%9C%EB%86%8D%EA%B5%AC"
-              }
-            ],
-            "확인일": "2026-11-02"
-          }
-        },
-        {
-          "keywords": [
-            "KBL",
-            "부산 KCC",
-            "창원 LG",
-            "서울 SK",
-            "안양 정관장",
-            "수원 KT",
-            "울산 현대모비스",
-            "원주 DB",
-            "고양 소노",
-            "대구 한국가스공사",
-            "서울 삼성"
-          ],
-          "확인일": "2026-11-02",
-          "note": "2026-27 시즌 KBL 중계권이 tvN SPORTS(CJ ENM)로 옮겨졌다 — 운영자 확인.",
-          "primary": {
-            "text": "프로농구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/프로농구-중계",
-            "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
-          },
-          "secondary": [
-            {
-              "text": "KBL 공식 경기 일정",
-              "url": "https://www.kbl.or.kr/game/schedule"
-            }
-          ],
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "tvN SPORTS에서 KBL 중계 보기",
-              "url": "https://tvnsports.cjenm.com/ko/",
-              "hint": "2026-27 시즌 KBL 중계처"
-            },
-            "vod": {
-              "text": "KBL 경기 다시보기 (티빙스포츠)",
-              "url": "https://www.youtube.com/@tvingsports",
-              "확인일": "2026-11-01",
-              "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
-            }
-          }
-        }
-      ],
-      "primary": {
-        "text": "여자농구 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/여자농구-중계",
-        "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
-      },
-      "secondary": [
-        {
-          "text": "WKBL 공식 경기 일정",
-          "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
-        }
-      ],
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "여농티비에서 생중계 보기",
-          "url": "https://www.youtube.com/@WKBL_official/streams",
-          "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
-        },
-        "vod": {
-          "text": "WKBL 지난 경기 다시보기",
-          "url": "https://www.youtube.com/@WKBL_official/videos",
-          "확인일": "2026-11-01",
-          "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
-        },
-        "secondary": [
-          {
-            "text": "SOOP WKBL 생중계",
-            "url": "https://www.sooplive.com/live/group/sports?categoryNo=00060002&categoryName=WKBL"
-          }
-        ],
-        "확인일": "2026-11-02"
-      }
-    },
-    "배구": {
-      "확인일": "2026-11-03",
-      "note": "2026-10-10 운영자가 중계처를 알려줬다 — KBS N SPORTS, SBS SPORTS, SOOP, 치지직. 그중 **주소를 받은 것은 SOOP 하나뿐**이라 생중계 배너는 SOOP 만 건다. KOVO 공식 홈페이지 주소도 같은 날 운영자가 직접 줬다(https://kovo.co.kr/). 나머지 셋(KBS N SPORTS·SBS SPORTS·치지직)은 주소를 확인하지 못했다 — 이 환경에서는 바깥 사이트를 열 수 없어(프록시 403) 내가 확인할 방법이 없고, 기억으로 주소를 적는 것은 '코드가 주소를 만들어내지 않는다'는 이 파일의 원칙을 어기는 일이다. 본문에서는 채널 이름만 글로 적고 링크를 걸지 않는다.",
-      "primary": {
-        "text": "배구 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/배구-중계",
-        "hint": "SOOP·KOVO 보는 법 (내 블로그 글)"
-      },
-      "_출처": "SOOP·KOVO 주소 모두 2026-10-10 운영자가 직접 줬다. 코드가 확인한 것이 아니다.",
-      "match": [
-        {
-          "keywords": [
-            "신인감독",
-            "원더독스",
-            "김연경2"
-          ],
-          "primary": {
-            "text": "배구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/배구-중계",
-            "hint": "SOOP·KOVO 보는 법 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "_주의": "이 유튜브는 **본방송 채널이 아니다** — 원더독스 구단 채널이다. 본방송은 MBC 이고, 편성 주소를 확인하지 못해 링크로 걸지 않았다.",
-          "_키워드주의": "'신인감독 김연경' 으로만 적었더니 '신인감독 김연경2' 에서 안 걸렸다 — 낱말 경계가 뒤에 붙은 숫자 2 를 막기 때문이다. 그래서 '신인감독' 과 '김연경2' 를 따로 적었다. '김연경' 만 적으면 선수 시절 글까지 전부 걸리므로 쓰지 않는다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "원더독스 라커룸에서 보기",
-              "url": "https://www.youtube.com/@%EC%9B%90%EB%8D%94%EB%8F%85%EC%8A%A4",
-              "hint": "원더독스 공식 유튜브 · 미공개 영상과 뒷이야기"
-            },
-            "vod": {
-              "text": "",
-              "url": "",
-              "_비어있는이유": "본방송 다시보기 주소를 받지 못했다. 유튜브는 본방송이 아니라 구단 채널이다."
-            }
-          },
-          "확인일": "2026-11-03"
-        }
-      ],
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "SOOP에서 프로배구 생중계 보기",
-          "url": "https://www.sooplive.com/live/group/sports",
-          "hint": "운영자가 준 주소 · 스포츠 생중계 모음"
-        },
-        "secondary": [
-          {
-            "text": "KOVO 공식 홈페이지 (경기 일정·결과)",
-            "url": "https://kovo.co.kr/"
-          }
-        ],
-        "vod": {
-          "text": "프로배구 다시보기",
-          "url": "",
-          "_비어있는이유": "다시보기 전용 주소를 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다)."
-        }
-      }
-    },
-    "생활정보": {
-      "확인일": "2026-10-13",
-      "note": "생활정보에는 축제·행사·시설 글이 섞여 있다. **기본값(entry.primary)을 두지 않는다** — 두면 불꽃축제와 상관없는 생활정보 글 전부에 이 배너가 붙는다. match 에 걸린 글만 받는다.",
-      "match": [
-        {
-          "keywords": [
-            "서울세계불꽃축제",
-            "불꽃축제"
-          ],
-          "확인일": "2026-10-14",
-          "라벨": "📺 영상 보러가기",
-          "note": "운영자가 2026-10-13 에 넘겨준 유튜브 주소다. 2026-10-14 에 '2026년 영상'이라고 확인해 줬다.",
-          "primary": {
-            "text": "2026 한화TV 한국팀 피날레 풀영상",
-            "url": "https://www.youtube.com/watch?v=IPNxeKx_nso",
-            "hint": "유튜브에서 2026 한국팀 피날레 불꽃쇼 다시보기"
-          }
-        },
-        {
-          "keywords": [
-            "경륜"
-          ],
-          "확인일": "2026-10-19",
-          "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "primary": {
-            "text": "경륜 중계 보기",
-            "url": "https://youtube.com/channel/UCZZZHqYbfPpq6noP2DH6B7w",
-            "hint": "경륜 공식 유튜브 채널"
-          },
-          "secondary": [
-            {
-              "text": "경마·경륜·경정 한 곳에서 보기",
-              "url": "https://youtube.com/@speed-on"
-            }
-          ]
-        },
-        {
-          "keywords": [
-            "경마"
-          ],
-          "확인일": "2026-10-19",
-          "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "primary": {
-            "text": "경마 중계 보기",
-            "url": "https://youtube.com/@korearace1999",
-            "hint": "경마 공식 유튜브 채널"
-          },
-          "secondary": [
-            {
-              "text": "경마·경륜·경정 한 곳에서 보기",
-              "url": "https://youtube.com/@speed-on"
-            }
-          ]
-        },
-        {
-          "keywords": [
-            "경정"
-          ],
-          "확인일": "2026-10-19",
-          "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "_메모": "경정 전용 채널을 따로 받지 못했다. 운영자가 준 '경마·경륜·경정' 통합 채널을 쓴다.",
-          "primary": {
-            "text": "경정 중계 보기",
-            "url": "https://youtube.com/@speed-on",
-            "hint": "경마·경륜·경정 통합 채널"
-          }
-        }
-      ]
-    },
-    "배드민턴": {
-      "확인일": "2026-11-02",
-      "note": "2026-10-17 운영자가 주소를 직접 줬다 — https://www.youtube.com/@BWF (세계배드민턴연맹 공식 유튜브). 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 한국 지상파·케이블 중계 편성은 대회마다 달라지고 이번 덴마크 오픈 편성은 확인하지 못했다 — 확인 못 한 채널은 링크로 걸지 않고 본문에서도 적지 않는다.",
-      "primary": {
-        "text": "배드민턴 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/안세영-중계",
-        "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
-      },
-      "_출처": "2026-10-17 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "BWF 공식 유튜브에서 경기 보기",
-          "url": "https://www.youtube.com/@BWF",
-          "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
-        },
-        "vod": {
-          "text": "배드민턴 경기 다시보기",
-          "url": "https://www.youtube.com/@BWF/videos",
-          "확인일": "2026-11-01",
-          "note": "BWF 공식 채널의 지난 영상 탭."
-        }
-      }
-    },
-    "스포츠": {
-      "확인일": "2026-10-18",
-      "note": "'스포츠'는 넓은 카테고리다. **기본값(entry.primary)을 두지 않는다** — 두면 상관없는 스포츠 글 전부에 이 배너가 붙는다. match 에 걸린 글만 받는다(생활정보와 같은 방식).",
-      "match": [
-        {
-          "keywords": [
-            "WTT",
-            "탁구",
-            "신유빈",
-            "장우진",
-            "ITTF",
-            "챔피언스",
-            "스매시"
-          ],
-          "확인일": "2026-11-02",
-          "note": "WTT 중계는 대회·국가마다 편성이 갈린다. 그래서 바깥이 아니라 내 블로그 안의 안내 글(wtt-중계)로 보낸다 — 야구(2026-10-19)와 같은 방식. 안내 글 자신에게는 add-watch 의 self-link 방어가 붙지 않게 막는다.",
-          "primary": {
-            "text": "탁구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/wtt-중계",
-            "hint": "WTT·ITTF 중계 채널과 다시보기 정리 (내 블로그 글)"
-          },
-          "vod": {
-            "text": "WTT 하이라이트 보기",
-            "url": "https://www.youtube.com/@wttglobal",
-            "확인일": "2026-11-02",
-            "note": "운영자가 준 WTT 공식 채널. 경기 영상·하이라이트가 올라온다."
-          },
-          "라벨": "📺 중계 보는 법",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크. 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.",
-            "primary": {
-              "text": "WTT 공식 채널에서 경기 보기",
-              "url": "https://www.youtube.com/@wttglobal",
-              "hint": "World Table Tennis 공식 · 대회·국가에 따라 라이브가 제한될 수 있음"
-            },
-            "vod": {
-              "text": "WTT 하이라이트 보기",
-              "url": "https://www.youtube.com/@wttglobal/videos"
-            }
-          }
-        },
-        {
-          "keywords": [
-            "NBA",
-            "미국프로농구",
-            "엔비에이"
-          ],
-          "확인일": "2026-11-02",
-          "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
-          "primary": {
-            "text": "NBA 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/nba-중계",
-            "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "쿠팡플레이에서 NBA 중계 보기",
-              "url": "https://www.coupangplay.com/",
-              "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
-            },
-            "vod": {
-              "text": "NBA 하이라이트 보기",
-              "url": "https://www.youtube.com/@TheGametimeHighlights",
-              "확인일": "2026-11-01",
-              "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
-            },
-            "secondary": [
-              {
-                "text": "SOOP 해외프로농구 생중계",
-                "url": "https://www.sooplive.com/live/group/sports?categoryNo=00690000&categoryName=%ED%95%B4%EC%99%B8%ED%94%84%EB%A1%9C%EB%86%8D%EA%B5%AC"
-              }
-            ],
-            "확인일": "2026-11-02"
-          }
-        },
-        {
-          "keywords": [
-            "KBL",
-            "KCC 프로농구",
-            "티빙",
-            "tvN SPORTS"
-          ],
-          "확인일": "2026-11-02",
-          "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다. '프로농구'는 '여자프로농구' 안에서도 잡혀 넣지 않았다.",
-          "primary": {
-            "text": "프로농구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/프로농구-중계",
-            "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
-          },
-          "secondary": [
-            {
-              "text": "KBL 공식 경기 일정",
-              "url": "https://www.kbl.or.kr/game/schedule"
-            }
-          ],
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "tvN SPORTS에서 KBL 중계 보기",
-              "url": "https://tvnsports.cjenm.com/ko/",
-              "hint": "2026-27 시즌 KBL 중계처"
-            },
-            "vod": {
-              "text": "KBL 경기 다시보기 (티빙스포츠)",
-              "url": "https://www.youtube.com/@tvingsports",
-              "확인일": "2026-11-01",
-              "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
-            }
-          }
-        },
-        {
-          "keywords": [
-            "WKBL",
-            "여자농구",
-            "여자프로농구",
-            "여농티비"
-          ],
-          "확인일": "2026-11-02",
-          "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
-          "primary": {
-            "text": "여자농구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/여자농구-중계",
-            "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
-          },
-          "secondary": [
-            {
-              "text": "WKBL 공식 경기 일정",
-              "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
-            }
-          ],
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "여농티비에서 생중계 보기",
-              "url": "https://www.youtube.com/@WKBL_official/streams",
-              "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
-            },
-            "vod": {
-              "text": "WKBL 지난 경기 다시보기",
-              "url": "https://www.youtube.com/@WKBL_official/videos",
-              "확인일": "2026-11-01",
-              "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
-            },
-            "secondary": [
-              {
-                "text": "SOOP WKBL 생중계",
-                "url": "https://www.sooplive.com/live/group/sports?categoryNo=00060002&categoryName=WKBL"
-              }
-            ],
-            "확인일": "2026-11-02"
-          }
-        },
-        {
-          "keywords": [
-            "BWF",
-            "배드민턴",
-            "안세영"
-          ],
-          "확인일": "2026-11-02",
-          "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
-          "primary": {
-            "text": "배드민턴 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/안세영-중계",
-            "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "BWF 공식 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@BWF",
-              "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
-            },
-            "vod": {
-              "text": "배드민턴 경기 다시보기",
-              "url": "https://www.youtube.com/@BWF/videos",
-              "확인일": "2026-11-01",
-              "note": "BWF 공식 채널의 지난 영상 탭."
-            }
-          }
-        },
-        {
-          "keywords": [
-            "쇼트트랙",
-            "ISU 쇼트트랙",
-            "월드투어 쇼트트랙",
-            "최민정",
-            "심석희"
-          ],
-          "확인일": "2026-11-01",
-          "note": "운영자가 준 ISU 공식 유튜브. 국내 생중계 채널은 대회마다 달라 공식 채널만 건다.",
-          "primary": {
-            "text": "ISU 공식 유튜브에서 경기 보기",
-            "url": "https://www.youtube.com/@SkatingISU",
-            "hint": "국제빙상경기연맹 공식 · 대회·국가에 따라 라이브가 제한될 수 있음"
-          },
-          "vod": {
-            "text": "쇼트트랙 경기 다시보기",
-            "url": "https://www.youtube.com/@SkatingISU/videos",
-            "확인일": "2026-11-01",
-            "note": "ISU 공식 채널의 지난 영상 탭."
-          }
-        },
-        {
-          "keywords": [
-            "전국체육대회",
-            "전국체전",
-            "전국 체육대회"
-          ],
-          "확인일": "2026-10-18",
-          "note": "2026-10-18 운영자가 주소를 직접 줬다. 네이버 지식카드에 적힌 중계는 KBS·KBS N SPORTS·치지직·SOOP(일부) 넷인데 **주소를 받은 것은 KBS N SPORTS 하나뿐**이라 배너는 이것만 건다. 나머지 셋은 본문에 채널 이름만 글로 적고 링크를 걸지 않는다(배구 항목과 같은 처리).",
-          "primary": {
-            "text": "KBS N SPORTS에서 전국체육대회 보기",
-            "url": "https://www.kbsn.co.kr/nsports/",
-            "hint": "운영자가 준 주소 · KBS N SPORTS 편성·중계"
-          },
-          "secondary": [
-            {
-              "text": "전국체육대회 공식 홈페이지 (일정·결과)",
-              "url": "https://meet.sports.or.kr/national/main.do"
-            }
-          ],
-          "vod": {
-            "text": "전국체전 경기 다시보기",
-            "url": "https://www.youtube.com/@kbssports_alls",
-            "_출처": "2026-10-18 운영자가 직접 준 주소 — KBS 스포츠 ALLS 유튜브. 전국체전 경기 영상이 올라오는 곳이다. 코드가 열어본 것은 아니다."
-          }
-        }
-      ],
-      "_출처": "2026-10-18 운영자가 직접 준 주소 둘. 코드가 확인한 것이 아니다."
-    },
-    "바둑": {
-      "확인일": "2026-11-03",
-      "note": "2026-10-18 운영자가 주소를 직접 줬다 — https://www.youtube.com/@baduk_tv (바둑TV 공식 유튜브). 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 대회별 편성(생중계인지 녹화인지)은 확인하지 못했다 — 확인 못 한 것은 본문에 적지 않는다.",
-      "primary": {
-        "text": "바둑 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/바둑-중계",
-        "hint": "바둑TV·SOOP 대국 보는 법 (내 블로그 글)"
-      },
-      "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "바둑TV에서 대국 보기",
-          "url": "https://www.youtube.com/@baduk_tv",
-          "hint": "바둑TV 공식 채널 · 대국 중계와 해설"
-        },
-        "secondary": [
-          {
-            "text": "SOOP 마인드 스포츠 생중계",
-            "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570013&categoryName=%EB%A7%88%EC%9D%B8%EB%93%9C+%EC%8A%A4%ED%8F%AC%EC%B8%A0"
-          }
-        ],
-        "vod": {
-          "text": "바둑 대국 다시보기",
-          "url": "",
-          "_비어있는이유": "다시보기 전용 주소를 따로 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다). 운영자가 다시보기 재생목록 주소를 주면 바로 붙는다."
-        }
-      }
-    },
-    "볼링": {
-      "확인일": "2026-11-03",
-      "note": "2026-10-18 운영자가 주소를 직접 줬다 — 한국프로볼링협회(KPBA) 공식 유튜브. 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 대회별 편성은 확인하지 못했다.",
-      "primary": {
-        "text": "볼링 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/볼링-중계",
-        "hint": "KPBA 중계·대회 보는 법 (내 블로그 글)"
-      },
-      "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "KPBA 유튜브에서 경기 보기",
-          "url": "https://www.youtube.com/channel/UCvqG0FNvh9SUGyI6HNXxqgQ",
-          "hint": "한국프로볼링협회 공식 채널 · 대회 중계"
-        },
-        "vod": {
-          "text": "볼링 경기 다시보기",
-          "url": "",
-          "_비어있는이유": "다시보기 전용 주소를 따로 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다)."
-        }
-      }
-    },
-    "골프": {
-      "확인일": "2026-11-02",
-      "note": "2026-10-18 운영자가 PGA TOUR 공식 유튜브 주소를 줬다. **기본값(primary)을 일부러 두지 않았다** — 골프 카테고리에는 KPGA·KLPGA 국내 대회 글이 훨씬 많고, 거기에 PGA TOUR 중계를 걸면 눌러도 그 경기가 없다. 농구에서 KBL 글에 여자농구 중계가 붙었던 것과 같은 실수다. 'PGA 투어'가 글에 나올 때만 붙는다. LPGA 는 낱말 경계로 찾으므로 KLPGA·JLPGA 안에서 걸리지 않는다 — 국내 KLPGA 대회 글에 LPGA 중계가 붙지 않는다.",
-      "match": [
-        {
-          "keywords": [
-            "KPGA",
-            "코리안투어",
-            "코리안 투어",
-            "한국프로골프"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "KPGA 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@KPGATOUR",
-              "hint": "한국프로골프 공식 채널 · 중계와 하이라이트"
-            },
-            "vod": {
-              "text": "KPGA 다시보기 (SBS골프)",
-              "url": "https://www.youtube.com/@SBSGolfnow",
-              "확인일": "2026-11-01",
-              "note": "운영자가 준 주소. SBS골프가 KPGA 중계를 맡는다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "KLPGA",
-            "한국여자프로골프"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "KLPGA 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@KLPGAtour",
-              "hint": "한국여자프로골프 공식 채널 · 중계와 하이라이트"
-            },
-            "vod": {
-              "text": "KLPGA 다시보기",
-              "url": "https://www.youtube.com/@KLPGAtour/videos",
-              "확인일": "2026-11-01",
-              "note": "KLPGA 공식 채널의 지난 영상 탭."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "PGA 투어",
-            "PGA투어",
-            "PGA TOUR",
-            "페덱스컵",
-            "라이더컵"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "_라이더컵": "2026-10-19 운영자: '라이더컵 PGA 유튜브로 걸면 된다.' 라이더컵 글 3편(2974·2871·2680)이 PGA 투어 낱말이 없어 안 붙고 있었다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "PGA TOUR 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@PGATour",
-              "hint": "PGA 투어 공식 채널 · 하이라이트와 중계"
-            },
-            "vod": {
-              "text": "PGA 투어 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "LPGA 투어",
-            "LPGA투어",
-            "LPGA"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "LPGA 코리아 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@LPGA_Korea",
-              "hint": "LPGA 한국 공식 채널 · 하이라이트와 중계"
-            },
-            "vod": {
-              "text": "LPGA 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "JLPGA",
-            "일본여자프로골프"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "JLPGA 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@LPGAJAPAN",
-              "hint": "일본여자프로골프 공식 채널 · 하이라이트와 중계"
-            },
-            "vod": {
-              "text": "JLPGA 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "DP 월드 투어",
-            "DP월드투어",
-            "유러피언투어",
-            "유러피언 투어",
-            "레이스 투 두바이"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "DP 월드 투어 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@DPWorldTour",
-              "hint": "DP 월드 투어 공식 채널 · 하이라이트와 중계"
-            },
-            "vod": {
-              "text": "DP 월드 투어 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "LIV 골프",
-            "LIV골프"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "LIV 골프 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@LIVGolf",
-              "hint": "LIV 골프 공식 채널 · 중계와 하이라이트"
-            },
-            "vod": {
-              "text": "LIV 골프 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        },
-        {
-          "keywords": [
-            "아시안투어",
-            "아시안 투어"
-          ],
-          "primary": {
-            "text": "골프 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/골프-중계",
-            "hint": "투어 8곳 채널 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다. 처음에는 공식 홈페이지(asiantour.com)를 primary 로 뒀다가 같은 날 유튜브 주소를 받아 바꿨다 — 공식 홈페이지는 official-links.json 쪽에서 따로 붙는다.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "아시안투어 유튜브에서 경기 보기",
-              "url": "https://www.youtube.com/@theasiantour",
-              "hint": "아시안투어 공식 채널 · 중계와 하이라이트"
-            },
-            "vod": {
-              "text": "아시안투어 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        }
-      ],
-      "_기본값없는이유": "국내 대회 글에 미국 투어 중계를 걸지 않기 위해서다. 이제 KPGA·KLPGA·PGA 투어·LPGA·JLPGA·DP 월드 투어·LIV 골프 일곱 곳이 들어왔으므로, 투어 이름이 글에 나오면 거의 다 걸린다. 그래도 기본값은 두지 않는다 — 어느 투어인지 글이 말해 주지 않으면 배너를 비워 두는 쪽이 맞다. 아직 없는 것: 아시안투어.",
-      "제외": [
-        "GTOUR",
-        "WGTOUR",
-        "스크린골프",
-        "TGL"
-      ],
-      "제외메모": "스크린골프 중계 주소를 운영자가 아직 주지 않았다. 투어 채널(KLPGA·PGA 등)에는 스크린골프 경기가 올라오지 않아 붙이면 독자를 헛걸음시킨다. 주소를 받으면 match 항목으로 옮긴다.",
-      "secondary": [
-        {
-          "text": "SOOP 골프 생중계",
-          "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570007&categoryName=%EA%B3%A8%ED%94%84"
-        }
-      ]
-    },
-    "당구": {
-      "확인일": "2026-11-03",
-      "note": "2026-10-18 운영자가 두 주소를 줬다. PBA LIVE 는 프로당구(PBA·LPBA) 중계 채널이고, 빌리어즈TV 는 당구 전반을 다루는 채널이다. 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다.",
-      "match": [
-        {
-          "keywords": [
-            "PBA",
-            "LPBA",
-            "프로당구",
-            "PBA-LPBA"
-          ],
-          "primary": {
-            "text": "당구 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/당구-중계",
-            "hint": "3쿠션·PBA 중계처 정리 (내 블로그 글)"
-          },
-          "_출처": "2026-10-18 운영자가 직접 준 주소.",
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "PBA LIVE 에서 경기 보기",
-              "url": "https://www.youtube.com/@TV-ou4mv",
-              "hint": "프로당구 공식 중계 채널"
-            },
-            "vod": {
-              "text": "PBA 경기 다시보기",
-              "url": "",
-              "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-            }
-          },
-          "확인일": "2026-11-03"
-        }
-      ],
-      "primary": {
-        "text": "당구 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/당구-중계",
-        "hint": "3쿠션·PBA 중계처 정리 (내 블로그 글)"
-      },
-      "_기본값을둔이유": "골프와 달리 당구는 기본값을 뒀다. 빌리어즈TV 가 당구 전반을 다루는 채널이라 어느 당구 글에 붙어도 헛걸음이 아니다. PBA·LPBA 글에는 match 가 먼저 걸려 PBA LIVE 로 간다.",
-      "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "빌리어즈TV에서 당구 경기 보기",
-          "url": "https://www.youtube.com/@BilliardsTV_Official",
-          "hint": "당구 전문 채널 · 중계와 경기 영상"
-        },
-        "secondary": [
-          {
-            "text": "SOOP 당구 생중계",
-            "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570002&categoryName=%EB%8B%B9%EA%B5%AC"
-          }
-        ],
-        "vod": {
-          "text": "당구 경기 다시보기",
-          "url": "",
-          "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
-        }
-      }
-    },
-    "야구": {
-      "확인일": "2026-11-02",
-      "메모": "2026-10-19 운영자 지시. KBO 중계는 티빙·쿠팡플레이·네이버로 쪼개져 있고 유료라, 바깥으로 보내면 독자가 거기서 또 헤맨다. 그래서 **내 블로그 안의 안내 글**로 보낸다. 중계권이 바뀌어도 그 글 하나만 고치면 된다. 운영자가 '다 걸어'라고 해서 야구 글 전체에 건다(기본값).",
-      "primary": {
-        "url": "https://wiki.minimalbreeze.com/2026-kbo-프로야구",
-        "text": "야구 중계 보는 법 보기",
-        "hint": "KBO 중계 채널·시청 방법 정리 (내 블로그 글)"
-      },
-      "라벨": "📺 중계 보는 법",
-      "note": "'야구'에는 KBO와 MLB가 같이 들어간다. 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(KBO)을 쓴다.",
-      "match": [
-        {
-          "keywords": [
-            "MLB",
-            "메이저리그",
-            "빅리그",
-            "월드시리즈"
-          ],
-          "확인일": "2026-11-02",
-          "note": "MLB 국내 중계는 스포티비(SPOTV), 공식 채널은 MLB 유튜브. 둘 다 운영자 확인(2026-11-02).",
-          "primary": {
-            "text": "MLB 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/mlb-중계",
-            "hint": "MLB 중계 채널·하이라이트 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "스포티비에서 MLB 중계 보기",
-              "url": "https://www.spotv.net/",
-              "hint": "MLB 국내 중계 (운영자 확인)"
-            },
-            "vod": {
-              "text": "MLB 공식 하이라이트 보기",
-              "url": "https://www.youtube.com/@MLB",
-              "확인일": "2026-11-02"
-            }
-          }
-        }
-      ],
-      "secondary": [
-        {
-          "text": "SOOP 국내프로야구 생중계",
-          "url": "https://www.sooplive.com/live/group/sports?categoryNo=00140000%2C00140001%2C00140002%2C00140003%2C00140004%2C00140005%2C00140006%2C00140007%2C00140008%2C00140010%2C00140011%2C00140009&categoryName=%EA%B5%AD%EB%82%B4%ED%94%84%EB%A1%9C%EC%95%BC%EA%B5%AC"
-        }
-      ]
-    },
-    "축구": {
-      "확인일": "2026-11-02",
-      "note": "'축구'에는 K리그와 EPL이 같이 들어간다. 중계 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(K리그)을 쓴다.",
-      "primary": {
-        "text": "K리그 중계 보는 법 보기",
-        "url": "https://wiki.minimalbreeze.com/k리그-중계",
-        "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
-      },
-      "허브일때": {
-        "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-        "primary": {
-          "text": "쿠팡플레이에서 K리그 중계 보기",
-          "url": "https://www.coupangplay.com/",
-          "hint": "K리그 국내 중계 (운영자 확인)"
-        },
-        "vod": {
-          "text": "K리그 공식 하이라이트 보기",
-          "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
-          "확인일": "2026-11-02"
-        }
-      },
-      "match": [
-        {
-          "keywords": [
-            "K리그",
-            "K League",
-            "케이리그",
-            "K-리그"
-          ],
-          "확인일": "2026-11-02",
-          "note": "K리그 중계는 쿠팡플레이, 공식 채널은 유튜브. 둘로 갈려 있어 대회별 글은 안내 글로 보낸다.",
-          "primary": {
-            "text": "K리그 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/k리그-중계",
-            "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "쿠팡플레이에서 중계 보기",
-              "url": "https://www.coupangplay.com/",
-              "hint": "국내 중계 (운영자 확인)"
-            },
-            "vod": {
-              "text": "K리그 공식 하이라이트 보기",
-              "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
-              "확인일": "2026-11-02"
-            }
-          }
-        },
-        {
-          "keywords": [
-            "EPL",
-            "프리미어리그",
-            "프리미어 리그",
-            "Premier League"
-          ],
-          "확인일": "2026-11-02",
-          "note": "EPL 국내 중계는 쿠팡플레이, SOOP 에도 프리미어리그 생중계 분류가 있다. 공식 채널은 Premier League 유튜브. 모두 운영자 확인(2026-11-02).",
-          "primary": {
-            "text": "EPL 중계 보는 법 보기",
-            "url": "https://wiki.minimalbreeze.com/epl-중계",
-            "hint": "EPL 중계 채널·하이라이트 정리 (내 블로그 글)"
-          },
-          "허브일때": {
-            "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
-            "primary": {
-              "text": "쿠팡플레이에서 중계 보기",
-              "url": "https://www.coupangplay.com/",
-              "hint": "국내 중계 (운영자 확인)"
-            },
-            "vod": {
-              "text": "Premier League 공식 하이라이트 보기",
-              "url": "https://www.youtube.com/@premierleague",
-              "확인일": "2026-11-02"
-            },
-            "secondary": [
-              {
-                "text": "SOOP 프리미어리그 생중계",
-                "url": "https://www.sooplive.com/live/group/sports?categoryNo=00370011&categoryName=%ED%94%84%EB%A6%AC%EB%AF%B8%EC%96%B4%EB%A6%AC%EA%B7%B8"
-              }
-            ]
-          }
-        }
-      ]
-    }
+  "11834": {
+   "_이유": "글 11834(트리스탄 벡). 야구 카테고리의 match 규칙이 'MLB·메이저리그·빅리그'를 보고 MLB 허브로 보냈다. 그런데 벡은 샌프란시스코에서 방출돼 MLB 에서 더 던지지 않는다 — 독자가 그를 볼 수 있는 곳은 KBO 다. 글을 고칠 자리는 아니었다. '메이저리그'·'빅리그'는 그의 실제 이력이라 빼면 글이 부정확해진다. 2026-11-04.",
+   "primary": {
+    "text": "야구 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/2026-kbo-프로야구",
+    "hint": "KBO 중계 채널·시청 방법 정리 (내 블로그 글)"
+   }
   }
+ },
+ "byCategory": {
+  "농구": {
+   "확인일": "2026-11-02",
+   "note": "'농구'에는 KBL(남자)과 WKBL(여자)이 같이 들어간다. 중계처가 다르므로 match 로 가른다. match 가 안 걸리면 아래 기본값(WKBL)을 쓴다.",
+   "match": [
+    {
+     "keywords": [
+      "NBA",
+      "미국프로농구",
+      "엔비에이",
+      "NBA 중계"
+     ],
+     "확인일": "2026-11-02",
+     "note": "2026-27시즌 국내 중계는 쿠팡플레이(스포츠 패스). 주소는 운영자 확인. 하이라이트 채널은 공식 생중계가 아니다.",
+     "primary": {
+      "text": "NBA 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/nba-중계",
+      "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "쿠팡플레이에서 NBA 중계 보기",
+       "url": "https://www.coupangplay.com/",
+       "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+      },
+      "vod": {
+       "text": "NBA 하이라이트 보기",
+       "url": "https://www.youtube.com/@TheGametimeHighlights",
+       "확인일": "2026-11-01",
+       "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+      },
+      "secondary": [
+       {
+        "text": "SOOP 해외프로농구 생중계",
+        "url": "https://www.sooplive.com/live/group/sports?categoryNo=00690000&categoryName=%ED%95%B4%EC%99%B8%ED%94%84%EB%A1%9C%EB%86%8D%EA%B5%AC"
+       }
+      ],
+      "확인일": "2026-11-02"
+     }
+    },
+    {
+     "keywords": [
+      "KBL",
+      "부산 KCC",
+      "창원 LG",
+      "서울 SK",
+      "안양 정관장",
+      "수원 KT",
+      "울산 현대모비스",
+      "원주 DB",
+      "고양 소노",
+      "대구 한국가스공사",
+      "서울 삼성"
+     ],
+     "확인일": "2026-11-02",
+     "note": "2026-27 시즌 KBL 중계권이 tvN SPORTS(CJ ENM)로 옮겨졌다 — 운영자 확인.",
+     "primary": {
+      "text": "프로농구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/프로농구-중계",
+      "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
+     },
+     "secondary": [
+      {
+       "text": "KBL 공식 경기 일정",
+       "url": "https://www.kbl.or.kr/game/schedule"
+      }
+     ],
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "tvN SPORTS에서 KBL 중계 보기",
+       "url": "https://tvnsports.cjenm.com/ko/",
+       "hint": "2026-27 시즌 KBL 중계처"
+      },
+      "vod": {
+       "text": "KBL 경기 다시보기 (티빙스포츠)",
+       "url": "https://www.youtube.com/@tvingsports",
+       "확인일": "2026-11-01",
+       "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+      }
+     }
+    }
+   ],
+   "primary": {
+    "text": "여자농구 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/여자농구-중계",
+    "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
+   },
+   "secondary": [
+    {
+     "text": "WKBL 공식 경기 일정",
+     "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
+    }
+   ],
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "여농티비에서 생중계 보기",
+     "url": "https://www.youtube.com/@WKBL_official/streams",
+     "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+    },
+    "vod": {
+     "text": "WKBL 지난 경기 다시보기",
+     "url": "https://www.youtube.com/@WKBL_official/videos",
+     "확인일": "2026-11-01",
+     "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+    },
+    "secondary": [
+     {
+      "text": "SOOP WKBL 생중계",
+      "url": "https://www.sooplive.com/live/group/sports?categoryNo=00060002&categoryName=WKBL"
+     }
+    ],
+    "확인일": "2026-11-02"
+   }
+  },
+  "배구": {
+   "확인일": "2026-11-03",
+   "note": "2026-10-10 운영자가 중계처를 알려줬다 — KBS N SPORTS, SBS SPORTS, SOOP, 치지직. 그중 **주소를 받은 것은 SOOP 하나뿐**이라 생중계 배너는 SOOP 만 건다. KOVO 공식 홈페이지 주소도 같은 날 운영자가 직접 줬다(https://kovo.co.kr/). 나머지 셋(KBS N SPORTS·SBS SPORTS·치지직)은 주소를 확인하지 못했다 — 이 환경에서는 바깥 사이트를 열 수 없어(프록시 403) 내가 확인할 방법이 없고, 기억으로 주소를 적는 것은 '코드가 주소를 만들어내지 않는다'는 이 파일의 원칙을 어기는 일이다. 본문에서는 채널 이름만 글로 적고 링크를 걸지 않는다.",
+   "primary": {
+    "text": "배구 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/배구-중계",
+    "hint": "SOOP·KOVO 보는 법 (내 블로그 글)"
+   },
+   "_출처": "SOOP·KOVO 주소 모두 2026-10-10 운영자가 직접 줬다. 코드가 확인한 것이 아니다.",
+   "match": [
+    {
+     "keywords": [
+      "신인감독",
+      "원더독스",
+      "김연경2"
+     ],
+     "primary": {
+      "text": "배구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/배구-중계",
+      "hint": "SOOP·KOVO 보는 법 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "_주의": "이 유튜브는 **본방송 채널이 아니다** — 원더독스 구단 채널이다. 본방송은 MBC 이고, 편성 주소를 확인하지 못해 링크로 걸지 않았다.",
+     "_키워드주의": "'신인감독 김연경' 으로만 적었더니 '신인감독 김연경2' 에서 안 걸렸다 — 낱말 경계가 뒤에 붙은 숫자 2 를 막기 때문이다. 그래서 '신인감독' 과 '김연경2' 를 따로 적었다. '김연경' 만 적으면 선수 시절 글까지 전부 걸리므로 쓰지 않는다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "원더독스 라커룸에서 보기",
+       "url": "https://www.youtube.com/@%EC%9B%90%EB%8D%94%EB%8F%85%EC%8A%A4",
+       "hint": "원더독스 공식 유튜브 · 미공개 영상과 뒷이야기"
+      },
+      "vod": {
+       "text": "",
+       "url": "",
+       "_비어있는이유": "본방송 다시보기 주소를 받지 못했다. 유튜브는 본방송이 아니라 구단 채널이다."
+      }
+     },
+     "확인일": "2026-11-03"
+    }
+   ],
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "SOOP에서 프로배구 생중계 보기",
+     "url": "https://www.sooplive.com/live/group/sports",
+     "hint": "운영자가 준 주소 · 스포츠 생중계 모음"
+    },
+    "secondary": [
+     {
+      "text": "KOVO 공식 홈페이지 (경기 일정·결과)",
+      "url": "https://kovo.co.kr/"
+     }
+    ],
+    "vod": {
+     "text": "프로배구 다시보기",
+     "url": "",
+     "_비어있는이유": "다시보기 전용 주소를 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다)."
+    }
+   }
+  },
+  "생활정보": {
+   "확인일": "2026-10-13",
+   "note": "생활정보에는 축제·행사·시설 글이 섞여 있다. **기본값(entry.primary)을 두지 않는다** — 두면 불꽃축제와 상관없는 생활정보 글 전부에 이 배너가 붙는다. match 에 걸린 글만 받는다.",
+   "match": [
+    {
+     "keywords": [
+      "서울세계불꽃축제",
+      "불꽃축제"
+     ],
+     "확인일": "2026-10-14",
+     "라벨": "📺 영상 보러가기",
+     "note": "운영자가 2026-10-13 에 넘겨준 유튜브 주소다. 2026-10-14 에 '2026년 영상'이라고 확인해 줬다.",
+     "primary": {
+      "text": "2026 한화TV 한국팀 피날레 풀영상",
+      "url": "https://www.youtube.com/watch?v=IPNxeKx_nso",
+      "hint": "유튜브에서 2026 한국팀 피날레 불꽃쇼 다시보기"
+     }
+    },
+    {
+     "keywords": [
+      "경륜"
+     ],
+     "확인일": "2026-10-19",
+     "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "primary": {
+      "text": "경륜 중계 보기",
+      "url": "https://youtube.com/channel/UCZZZHqYbfPpq6noP2DH6B7w",
+      "hint": "경륜 공식 유튜브 채널"
+     },
+     "secondary": [
+      {
+       "text": "경마·경륜·경정 한 곳에서 보기",
+       "url": "https://youtube.com/@speed-on"
+      }
+     ]
+    },
+    {
+     "keywords": [
+      "경마"
+     ],
+     "확인일": "2026-10-19",
+     "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "primary": {
+      "text": "경마 중계 보기",
+      "url": "https://youtube.com/@korearace1999",
+      "hint": "경마 공식 유튜브 채널"
+     },
+     "secondary": [
+      {
+       "text": "경마·경륜·경정 한 곳에서 보기",
+       "url": "https://youtube.com/@speed-on"
+      }
+     ]
+    },
+    {
+     "keywords": [
+      "경정"
+     ],
+     "확인일": "2026-10-19",
+     "_출처": "2026-10-19 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "_메모": "경정 전용 채널을 따로 받지 못했다. 운영자가 준 '경마·경륜·경정' 통합 채널을 쓴다.",
+     "primary": {
+      "text": "경정 중계 보기",
+      "url": "https://youtube.com/@speed-on",
+      "hint": "경마·경륜·경정 통합 채널"
+     }
+    }
+   ]
+  },
+  "배드민턴": {
+   "확인일": "2026-11-02",
+   "note": "2026-10-17 운영자가 주소를 직접 줬다 — https://www.youtube.com/@BWF (세계배드민턴연맹 공식 유튜브). 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 한국 지상파·케이블 중계 편성은 대회마다 달라지고 이번 덴마크 오픈 편성은 확인하지 못했다 — 확인 못 한 채널은 링크로 걸지 않고 본문에서도 적지 않는다.",
+   "primary": {
+    "text": "배드민턴 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/안세영-중계",
+    "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
+   },
+   "_출처": "2026-10-17 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "BWF 공식 유튜브에서 경기 보기",
+     "url": "https://www.youtube.com/@BWF",
+     "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+    },
+    "vod": {
+     "text": "배드민턴 경기 다시보기",
+     "url": "https://www.youtube.com/@BWF/videos",
+     "확인일": "2026-11-01",
+     "note": "BWF 공식 채널의 지난 영상 탭."
+    }
+   }
+  },
+  "스포츠": {
+   "확인일": "2026-10-18",
+   "note": "'스포츠'는 넓은 카테고리다. **기본값(entry.primary)을 두지 않는다** — 두면 상관없는 스포츠 글 전부에 이 배너가 붙는다. match 에 걸린 글만 받는다(생활정보와 같은 방식).",
+   "match": [
+    {
+     "keywords": [
+      "WTT",
+      "탁구",
+      "신유빈",
+      "장우진",
+      "ITTF",
+      "챔피언스",
+      "스매시"
+     ],
+     "확인일": "2026-11-02",
+     "note": "WTT 중계는 대회·국가마다 편성이 갈린다. 그래서 바깥이 아니라 내 블로그 안의 안내 글(wtt-중계)로 보낸다 — 야구(2026-10-19)와 같은 방식. 안내 글 자신에게는 add-watch 의 self-link 방어가 붙지 않게 막는다.",
+     "primary": {
+      "text": "탁구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/wtt-중계",
+      "hint": "WTT·ITTF 중계 채널과 다시보기 정리 (내 블로그 글)"
+     },
+     "vod": {
+      "text": "WTT 하이라이트 보기",
+      "url": "https://www.youtube.com/@wttglobal",
+      "확인일": "2026-11-02",
+      "note": "운영자가 준 WTT 공식 채널. 경기 영상·하이라이트가 올라온다."
+     },
+     "라벨": "📺 중계 보는 법",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크. 안내 글을 읽은 사람이 다음에 갈 곳은 바깥이다.",
+      "primary": {
+       "text": "WTT 공식 채널에서 경기 보기",
+       "url": "https://www.youtube.com/@wttglobal",
+       "hint": "World Table Tennis 공식 · 대회·국가에 따라 라이브가 제한될 수 있음"
+      },
+      "vod": {
+       "text": "WTT 하이라이트 보기",
+       "url": "https://www.youtube.com/@wttglobal/videos"
+      }
+     }
+    },
+    {
+     "keywords": [
+      "NBA",
+      "미국프로농구",
+      "엔비에이"
+     ],
+     "확인일": "2026-11-02",
+     "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
+     "primary": {
+      "text": "NBA 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/nba-중계",
+      "hint": "NBA 중계 채널·하이라이트 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "쿠팡플레이에서 NBA 중계 보기",
+       "url": "https://www.coupangplay.com/",
+       "hint": "스포츠 패스 가입자 대상 · 한국어 해설 약 300경기"
+      },
+      "vod": {
+       "text": "NBA 하이라이트 보기",
+       "url": "https://www.youtube.com/@TheGametimeHighlights",
+       "확인일": "2026-11-01",
+       "note": "운영자가 준 하이라이트 채널. 생중계가 아니라 하이라이트라 vod 자리에 둔다."
+      },
+      "secondary": [
+       {
+        "text": "SOOP 해외프로농구 생중계",
+        "url": "https://www.sooplive.com/live/group/sports?categoryNo=00690000&categoryName=%ED%95%B4%EC%99%B8%ED%94%84%EB%A1%9C%EB%86%8D%EA%B5%AC"
+       }
+      ],
+      "확인일": "2026-11-02"
+     }
+    },
+    {
+     "keywords": [
+      "KBL",
+      "KCC 프로농구",
+      "티빙",
+      "tvN SPORTS"
+     ],
+     "확인일": "2026-11-02",
+     "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다. '프로농구'는 '여자프로농구' 안에서도 잡혀 넣지 않았다.",
+     "primary": {
+      "text": "프로농구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/프로농구-중계",
+      "hint": "KBL 중계 채널·다시보기 정리 (내 블로그 글)"
+     },
+     "secondary": [
+      {
+       "text": "KBL 공식 경기 일정",
+       "url": "https://www.kbl.or.kr/game/schedule"
+      }
+     ],
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "tvN SPORTS에서 KBL 중계 보기",
+       "url": "https://tvnsports.cjenm.com/ko/",
+       "hint": "2026-27 시즌 KBL 중계처"
+      },
+      "vod": {
+       "text": "KBL 경기 다시보기 (티빙스포츠)",
+       "url": "https://www.youtube.com/@tvingsports",
+       "확인일": "2026-11-01",
+       "note": "운영자가 준 주소. tvN SPORTS(CJ ENM)와 티빙은 같은 그룹이라 생중계·다시보기가 이렇게 갈린다."
+      }
+     }
+    },
+    {
+     "keywords": [
+      "WKBL",
+      "여자농구",
+      "여자프로농구",
+      "여농티비"
+     ],
+     "확인일": "2026-11-02",
+     "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
+     "primary": {
+      "text": "여자농구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/여자농구-중계",
+      "hint": "WKBL 9개 채널·다시보기 정리 (내 블로그 글)"
+     },
+     "secondary": [
+      {
+       "text": "WKBL 공식 경기 일정",
+       "url": "https://www.wkbl.or.kr/game/sch/scheduleb1.asp"
+      }
+     ],
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "여농티비에서 생중계 보기",
+       "url": "https://www.youtube.com/@WKBL_official/streams",
+       "hint": "WKBL 공식 유튜브 · 전 경기 무료 생중계"
+      },
+      "vod": {
+       "text": "WKBL 지난 경기 다시보기",
+       "url": "https://www.youtube.com/@WKBL_official/videos",
+       "확인일": "2026-11-01",
+       "note": "생중계는 /streams, 지난 경기는 /videos 로 갈린다. 같은 주소가 아니라 버튼이 붙는다."
+      },
+      "secondary": [
+       {
+        "text": "SOOP WKBL 생중계",
+        "url": "https://www.sooplive.com/live/group/sports?categoryNo=00060002&categoryName=WKBL"
+       }
+      ],
+      "확인일": "2026-11-02"
+     }
+    },
+    {
+     "keywords": [
+      "BWF",
+      "배드민턴",
+      "안세영"
+     ],
+     "확인일": "2026-11-02",
+     "note": "워드프레스에 '스포츠 └ 농구'(4447)·'스포츠 └ 배드민턴'(4443)이 있지만 부모 '스포츠'로 올라간 글이 있다. 그 글에도 배너가 붙도록 같은 항목을 여기에도 둔다.",
+     "primary": {
+      "text": "배드민턴 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/안세영-중계",
+      "hint": "BWF 중계 채널·다시보기 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "BWF 공식 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@BWF",
+       "hint": "세계배드민턴연맹 공식 채널 · 중계와 경기 영상"
+      },
+      "vod": {
+       "text": "배드민턴 경기 다시보기",
+       "url": "https://www.youtube.com/@BWF/videos",
+       "확인일": "2026-11-01",
+       "note": "BWF 공식 채널의 지난 영상 탭."
+      }
+     }
+    },
+    {
+     "keywords": [
+      "쇼트트랙",
+      "ISU 쇼트트랙",
+      "월드투어 쇼트트랙",
+      "최민정",
+      "심석희"
+     ],
+     "확인일": "2026-11-01",
+     "note": "운영자가 준 ISU 공식 유튜브. 국내 생중계 채널은 대회마다 달라 공식 채널만 건다.",
+     "primary": {
+      "text": "ISU 공식 유튜브에서 경기 보기",
+      "url": "https://www.youtube.com/@SkatingISU",
+      "hint": "국제빙상경기연맹 공식 · 대회·국가에 따라 라이브가 제한될 수 있음"
+     },
+     "vod": {
+      "text": "쇼트트랙 경기 다시보기",
+      "url": "https://www.youtube.com/@SkatingISU/videos",
+      "확인일": "2026-11-01",
+      "note": "ISU 공식 채널의 지난 영상 탭."
+     }
+    },
+    {
+     "keywords": [
+      "전국체육대회",
+      "전국체전",
+      "전국 체육대회"
+     ],
+     "확인일": "2026-10-18",
+     "note": "2026-10-18 운영자가 주소를 직접 줬다. 네이버 지식카드에 적힌 중계는 KBS·KBS N SPORTS·치지직·SOOP(일부) 넷인데 **주소를 받은 것은 KBS N SPORTS 하나뿐**이라 배너는 이것만 건다. 나머지 셋은 본문에 채널 이름만 글로 적고 링크를 걸지 않는다(배구 항목과 같은 처리).",
+     "primary": {
+      "text": "KBS N SPORTS에서 전국체육대회 보기",
+      "url": "https://www.kbsn.co.kr/nsports/",
+      "hint": "운영자가 준 주소 · KBS N SPORTS 편성·중계"
+     },
+     "secondary": [
+      {
+       "text": "전국체육대회 공식 홈페이지 (일정·결과)",
+       "url": "https://meet.sports.or.kr/national/main.do"
+      }
+     ],
+     "vod": {
+      "text": "전국체전 경기 다시보기",
+      "url": "https://www.youtube.com/@kbssports_alls",
+      "_출처": "2026-10-18 운영자가 직접 준 주소 — KBS 스포츠 ALLS 유튜브. 전국체전 경기 영상이 올라오는 곳이다. 코드가 열어본 것은 아니다."
+     }
+    }
+   ],
+   "_출처": "2026-10-18 운영자가 직접 준 주소 둘. 코드가 확인한 것이 아니다."
+  },
+  "바둑": {
+   "확인일": "2026-11-03",
+   "note": "2026-10-18 운영자가 주소를 직접 줬다 — https://www.youtube.com/@baduk_tv (바둑TV 공식 유튜브). 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 대회별 편성(생중계인지 녹화인지)은 확인하지 못했다 — 확인 못 한 것은 본문에 적지 않는다.",
+   "primary": {
+    "text": "바둑 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/바둑-중계",
+    "hint": "바둑TV·SOOP 대국 보는 법 (내 블로그 글)"
+   },
+   "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "바둑TV에서 대국 보기",
+     "url": "https://www.youtube.com/@baduk_tv",
+     "hint": "바둑TV 공식 채널 · 대국 중계와 해설"
+    },
+    "secondary": [
+     {
+      "text": "SOOP 마인드 스포츠 생중계",
+      "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570013&categoryName=%EB%A7%88%EC%9D%B8%EB%93%9C+%EC%8A%A4%ED%8F%AC%EC%B8%A0"
+     }
+    ],
+    "vod": {
+     "text": "바둑 대국 다시보기",
+     "url": "",
+     "_비어있는이유": "다시보기 전용 주소를 따로 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다). 운영자가 다시보기 재생목록 주소를 주면 바로 붙는다."
+    }
+   }
+  },
+  "볼링": {
+   "확인일": "2026-11-03",
+   "note": "2026-10-18 운영자가 주소를 직접 줬다 — 한국프로볼링협회(KPBA) 공식 유튜브. 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다. 대회별 편성은 확인하지 못했다.",
+   "primary": {
+    "text": "볼링 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/볼링-중계",
+    "hint": "KPBA 중계·대회 보는 법 (내 블로그 글)"
+   },
+   "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "KPBA 유튜브에서 경기 보기",
+     "url": "https://www.youtube.com/channel/UCvqG0FNvh9SUGyI6HNXxqgQ",
+     "hint": "한국프로볼링협회 공식 채널 · 대회 중계"
+    },
+    "vod": {
+     "text": "볼링 경기 다시보기",
+     "url": "",
+     "_비어있는이유": "다시보기 전용 주소를 따로 확인하지 못했다. 생중계와 같은 주소를 넣으면 버튼이 안 나온다(코드가 막는다)."
+    }
+   }
+  },
+  "골프": {
+   "확인일": "2026-11-02",
+   "note": "2026-10-18 운영자가 PGA TOUR 공식 유튜브 주소를 줬다. **기본값(primary)을 일부러 두지 않았다** — 골프 카테고리에는 KPGA·KLPGA 국내 대회 글이 훨씬 많고, 거기에 PGA TOUR 중계를 걸면 눌러도 그 경기가 없다. 농구에서 KBL 글에 여자농구 중계가 붙었던 것과 같은 실수다. 'PGA 투어'가 글에 나올 때만 붙는다. LPGA 는 낱말 경계로 찾으므로 KLPGA·JLPGA 안에서 걸리지 않는다 — 국내 KLPGA 대회 글에 LPGA 중계가 붙지 않는다.",
+   "match": [
+    {
+     "keywords": [
+      "KPGA",
+      "코리안투어",
+      "코리안 투어",
+      "한국프로골프"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "KPGA 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@KPGATOUR",
+       "hint": "한국프로골프 공식 채널 · 중계와 하이라이트"
+      },
+      "vod": {
+       "text": "KPGA 다시보기 (SBS골프)",
+       "url": "https://www.youtube.com/@SBSGolfnow",
+       "확인일": "2026-11-01",
+       "note": "운영자가 준 주소. SBS골프가 KPGA 중계를 맡는다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "KLPGA",
+      "한국여자프로골프"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "KLPGA 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@KLPGAtour",
+       "hint": "한국여자프로골프 공식 채널 · 중계와 하이라이트"
+      },
+      "vod": {
+       "text": "KLPGA 다시보기",
+       "url": "https://www.youtube.com/@KLPGAtour/videos",
+       "확인일": "2026-11-01",
+       "note": "KLPGA 공식 채널의 지난 영상 탭."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "PGA 투어",
+      "PGA투어",
+      "PGA TOUR",
+      "페덱스컵",
+      "라이더컵"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "_라이더컵": "2026-10-19 운영자: '라이더컵 PGA 유튜브로 걸면 된다.' 라이더컵 글 3편(2974·2871·2680)이 PGA 투어 낱말이 없어 안 붙고 있었다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "PGA TOUR 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@PGATour",
+       "hint": "PGA 투어 공식 채널 · 하이라이트와 중계"
+      },
+      "vod": {
+       "text": "PGA 투어 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "LPGA 투어",
+      "LPGA투어",
+      "LPGA"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "LPGA 코리아 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@LPGA_Korea",
+       "hint": "LPGA 한국 공식 채널 · 하이라이트와 중계"
+      },
+      "vod": {
+       "text": "LPGA 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "JLPGA",
+      "일본여자프로골프"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "JLPGA 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@LPGAJAPAN",
+       "hint": "일본여자프로골프 공식 채널 · 하이라이트와 중계"
+      },
+      "vod": {
+       "text": "JLPGA 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "DP 월드 투어",
+      "DP월드투어",
+      "유러피언투어",
+      "유러피언 투어",
+      "레이스 투 두바이"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "DP 월드 투어 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@DPWorldTour",
+       "hint": "DP 월드 투어 공식 채널 · 하이라이트와 중계"
+      },
+      "vod": {
+       "text": "DP 월드 투어 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "LIV 골프",
+      "LIV골프"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "LIV 골프 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@LIVGolf",
+       "hint": "LIV 골프 공식 채널 · 중계와 하이라이트"
+      },
+      "vod": {
+       "text": "LIV 골프 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    },
+    {
+     "keywords": [
+      "아시안투어",
+      "아시안 투어"
+     ],
+     "primary": {
+      "text": "골프 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/골프-중계",
+      "hint": "투어 8곳 채널 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다. 처음에는 공식 홈페이지(asiantour.com)를 primary 로 뒀다가 같은 날 유튜브 주소를 받아 바꿨다 — 공식 홈페이지는 official-links.json 쪽에서 따로 붙는다.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "아시안투어 유튜브에서 경기 보기",
+       "url": "https://www.youtube.com/@theasiantour",
+       "hint": "아시안투어 공식 채널 · 중계와 하이라이트"
+      },
+      "vod": {
+       "text": "아시안투어 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    }
+   ],
+   "_기본값없는이유": "국내 대회 글에 미국 투어 중계를 걸지 않기 위해서다. 이제 KPGA·KLPGA·PGA 투어·LPGA·JLPGA·DP 월드 투어·LIV 골프 일곱 곳이 들어왔으므로, 투어 이름이 글에 나오면 거의 다 걸린다. 그래도 기본값은 두지 않는다 — 어느 투어인지 글이 말해 주지 않으면 배너를 비워 두는 쪽이 맞다. 아직 없는 것: 아시안투어.",
+   "제외": [
+    "GTOUR",
+    "WGTOUR",
+    "스크린골프",
+    "TGL"
+   ],
+   "제외메모": "스크린골프 중계 주소를 운영자가 아직 주지 않았다. 투어 채널(KLPGA·PGA 등)에는 스크린골프 경기가 올라오지 않아 붙이면 독자를 헛걸음시킨다. 주소를 받으면 match 항목으로 옮긴다.",
+   "secondary": [
+    {
+     "text": "SOOP 골프 생중계",
+     "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570007&categoryName=%EA%B3%A8%ED%94%84"
+    }
+   ]
+  },
+  "당구": {
+   "확인일": "2026-11-03",
+   "note": "2026-10-18 운영자가 두 주소를 줬다. PBA LIVE 는 프로당구(PBA·LPBA) 중계 채널이고, 빌리어즈TV 는 당구 전반을 다루는 채널이다. 이 환경에서는 바깥 사이트를 열 수 없어(DNS 차단) 코드가 확인한 것이 아니다.",
+   "match": [
+    {
+     "keywords": [
+      "PBA",
+      "LPBA",
+      "프로당구",
+      "PBA-LPBA"
+     ],
+     "primary": {
+      "text": "당구 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/당구-중계",
+      "hint": "3쿠션·PBA 중계처 정리 (내 블로그 글)"
+     },
+     "_출처": "2026-10-18 운영자가 직접 준 주소.",
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "PBA LIVE 에서 경기 보기",
+       "url": "https://www.youtube.com/@TV-ou4mv",
+       "hint": "프로당구 공식 중계 채널"
+      },
+      "vod": {
+       "text": "PBA 경기 다시보기",
+       "url": "",
+       "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+      }
+     },
+     "확인일": "2026-11-03"
+    }
+   ],
+   "primary": {
+    "text": "당구 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/당구-중계",
+    "hint": "3쿠션·PBA 중계처 정리 (내 블로그 글)"
+   },
+   "_기본값을둔이유": "골프와 달리 당구는 기본값을 뒀다. 빌리어즈TV 가 당구 전반을 다루는 채널이라 어느 당구 글에 붙어도 헛걸음이 아니다. PBA·LPBA 글에는 match 가 먼저 걸려 PBA LIVE 로 간다.",
+   "_출처": "2026-10-18 운영자가 직접 준 주소. 코드가 확인한 것이 아니다.",
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "빌리어즈TV에서 당구 경기 보기",
+     "url": "https://www.youtube.com/@BilliardsTV_Official",
+     "hint": "당구 전문 채널 · 중계와 경기 영상"
+    },
+    "secondary": [
+     {
+      "text": "SOOP 당구 생중계",
+      "url": "https://www.sooplive.com/live/group/sports?categoryNo=00570002&categoryName=%EB%8B%B9%EA%B5%AC"
+     }
+    ],
+    "vod": {
+     "text": "당구 경기 다시보기",
+     "url": "",
+     "_비어있는이유": "다시보기 전용 주소를 따로 받지 못했다."
+    }
+   }
+  },
+  "야구": {
+   "확인일": "2026-11-02",
+   "메모": "2026-10-19 운영자 지시. KBO 중계는 티빙·쿠팡플레이·네이버로 쪼개져 있고 유료라, 바깥으로 보내면 독자가 거기서 또 헤맨다. 그래서 **내 블로그 안의 안내 글**로 보낸다. 중계권이 바뀌어도 그 글 하나만 고치면 된다. 운영자가 '다 걸어'라고 해서 야구 글 전체에 건다(기본값).",
+   "primary": {
+    "url": "https://wiki.minimalbreeze.com/2026-kbo-프로야구",
+    "text": "야구 중계 보는 법 보기",
+    "hint": "KBO 중계 채널·시청 방법 정리 (내 블로그 글)"
+   },
+   "라벨": "📺 중계 보는 법",
+   "note": "'야구'에는 KBO와 MLB가 같이 들어간다. 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(KBO)을 쓴다.",
+   "match": [
+    {
+     "keywords": [
+      "MLB",
+      "메이저리그",
+      "빅리그",
+      "월드시리즈"
+     ],
+     "확인일": "2026-11-02",
+     "note": "MLB 국내 중계는 스포티비(SPOTV), 공식 채널은 MLB 유튜브. 둘 다 운영자 확인(2026-11-02).",
+     "primary": {
+      "text": "MLB 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/mlb-중계",
+      "hint": "MLB 중계 채널·하이라이트 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "스포티비에서 MLB 중계 보기",
+       "url": "https://www.spotv.net/",
+       "hint": "MLB 국내 중계 (운영자 확인)"
+      },
+      "vod": {
+       "text": "MLB 공식 하이라이트 보기",
+       "url": "https://www.youtube.com/@MLB",
+       "확인일": "2026-11-02"
+      }
+     }
+    }
+   ],
+   "secondary": [
+    {
+     "text": "SOOP 국내프로야구 생중계",
+     "url": "https://www.sooplive.com/live/group/sports?categoryNo=00140000%2C00140001%2C00140002%2C00140003%2C00140004%2C00140005%2C00140006%2C00140007%2C00140008%2C00140010%2C00140011%2C00140009&categoryName=%EA%B5%AD%EB%82%B4%ED%94%84%EB%A1%9C%EC%95%BC%EA%B5%AC"
+    }
+   ]
+  },
+  "축구": {
+   "확인일": "2026-11-02",
+   "note": "'축구'에는 K리그와 EPL이 같이 들어간다. 중계 안내 글이 달라 match 로 가른다. match 가 안 걸리면 기본값(K리그)을 쓴다.",
+   "primary": {
+    "text": "K리그 중계 보는 법 보기",
+    "url": "https://wiki.minimalbreeze.com/k리그-중계",
+    "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
+   },
+   "허브일때": {
+    "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+    "primary": {
+     "text": "쿠팡플레이에서 K리그 중계 보기",
+     "url": "https://www.coupangplay.com/",
+     "hint": "K리그 국내 중계 (운영자 확인)"
+    },
+    "vod": {
+     "text": "K리그 공식 하이라이트 보기",
+     "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
+     "확인일": "2026-11-02"
+    }
+   },
+   "match": [
+    {
+     "keywords": [
+      "K리그",
+      "K League",
+      "케이리그",
+      "K-리그"
+     ],
+     "확인일": "2026-11-02",
+     "note": "K리그 중계는 쿠팡플레이, 공식 채널은 유튜브. 둘로 갈려 있어 대회별 글은 안내 글로 보낸다.",
+     "primary": {
+      "text": "K리그 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/k리그-중계",
+      "hint": "K리그 중계 채널·하이라이트 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "쿠팡플레이에서 중계 보기",
+       "url": "https://www.coupangplay.com/",
+       "hint": "국내 중계 (운영자 확인)"
+      },
+      "vod": {
+       "text": "K리그 공식 하이라이트 보기",
+       "url": "https://www.youtube.com/channel/UCak5ZEX4BjijJcf7fdppuIQ",
+       "확인일": "2026-11-02"
+      }
+     }
+    },
+    {
+     "keywords": [
+      "EPL",
+      "프리미어리그",
+      "프리미어 리그",
+      "Premier League"
+     ],
+     "확인일": "2026-11-02",
+     "note": "EPL 국내 중계는 쿠팡플레이, SOOP 에도 프리미어리그 생중계 분류가 있다. 공식 채널은 Premier League 유튜브. 모두 운영자 확인(2026-11-02).",
+     "primary": {
+      "text": "EPL 중계 보는 법 보기",
+      "url": "https://wiki.minimalbreeze.com/epl-중계",
+      "hint": "EPL 중계 채널·하이라이트 정리 (내 블로그 글)"
+     },
+     "허브일때": {
+      "note": "이 글이 안내 글 자신일 때 쓰는 링크 — 바깥 공식 채널.",
+      "primary": {
+       "text": "쿠팡플레이에서 중계 보기",
+       "url": "https://www.coupangplay.com/",
+       "hint": "국내 중계 (운영자 확인)"
+      },
+      "vod": {
+       "text": "Premier League 공식 하이라이트 보기",
+       "url": "https://www.youtube.com/@premierleague",
+       "확인일": "2026-11-02"
+      },
+      "secondary": [
+       {
+        "text": "SOOP 프리미어리그 생중계",
+        "url": "https://www.sooplive.com/live/group/sports?categoryNo=00370011&categoryName=%ED%94%84%EB%A6%AC%EB%AF%B8%EC%96%B4%EB%A6%AC%EA%B7%B8"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ }
 }
