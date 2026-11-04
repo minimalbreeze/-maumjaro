@@ -5889,6 +5889,65 @@ await asyncTest('참조 모델 이름이 다 404 면 분명히 말한다', async
 });
 
 
+await asyncTest('얼굴을 안 쓰는 샷에 무엇을 그릴지 알려 준다', async () => {
+  // 2026-11-04 운영자: "사람 정면만 넣지 말고, 수비 보는 장면, 타격하는
+  // 장면 등등 야구장 같은 현장감을 넣어서 만들어 줘."
+  //
+  // 전에는 "얼굴은 아껴 쓴다"까지만 적혀 있었다. 아끼라고만 하고 **대신
+  // 뭘 그리라는 말이 없으니** 빈 화면이나 회의실이 나왔다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+
+  assert.ok(/야구장을 그린다/.test(r), '현장을 그리라는 말이 없습니다');
+  // 종목 장면이 실제로 적혀 있어야 한다. 말만 "현장감"이라고 하면
+  // 모델이 알아서 하지 않는다.
+  for (const w of ['불펜', '수비', '타격', '전광판']) {
+    assert.ok(r.includes(w), `${w} 장면 예시가 없습니다`);
+  }
+  // 그림이 그 문장과 맞아야 한다는 말
+  assert.ok(/그 문장이 말하는 것을 보여야/.test(r));
+  // 얼굴 아끼기 규칙은 그대로 남아 있어야 한다
+  assert.ok(/한 사람에 한 장면이 기본/.test(r));
+});
+
+await asyncTest('사진이 있는 사람은 한 장으로 묶지 않는다', async () => {
+  // 묶기는 "같은 사람이 샷마다 다른 얼굴로 나온다"를 막으려고 넣었다.
+  // 참조 사진이 그 문제를 이미 푼다. 그런데도 묶으면 한 장면이 통째로
+  // 정지 그림 한 장이 되어 현장감이 죽는다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const scene = {
+    scene_number: 1,
+    shots: [{ shot_id: 'S1-1', duration: 5 }, { shot_id: 'S1-2', duration: 5 }],
+  };
+  const design = {
+    shots: [
+      {
+        shot_id: 'S1-1', image_prompt: 'a batter swinging', video_prompt: '', era: 'present',
+        camera: 'pan right', motion_need: 6, depicts_real_person: true, person: '김도영',
+      },
+      {
+        shot_id: 'S1-2', image_prompt: 'rounding first base', video_prompt: '', era: 'present',
+        camera: 'zoom in', motion_need: 7, depicts_real_person: true, person: '김도영',
+      },
+    ],
+  };
+
+  // 사진이 있으면 둘 다 제 그림을 그리고 카메라도 그대로다.
+  const withPhoto = V.mergeVisuals(scene, design, {
+    kind: 'SPORTS', photoNames: new Set(['김도영']),
+  }).scene;
+  assert.ok(withPhoto.shots[1].image_prompt, '사진이 있는데 두 번째 샷을 비웠습니다');
+  assert.ok(!withPhoto.shots[1].same_image_as, '사진이 있는데 묶었습니다');
+  assert.equal(withPhoto.shots[0].camera, 'pan right', '사진이 있는데 카메라를 멈췄습니다');
+
+  // 사진이 없으면 여태대로 묶는다 — 3화를 망친 문제가 그대로이므로.
+  const noPhoto = V.mergeVisuals(scene, design, { kind: 'SPORTS' }).scene;
+  assert.equal(noPhoto.shots[1].same_image_as, 'S1-1', '사진이 없는데 안 묶었습니다');
+  assert.equal(noPhoto.shots[1].image_prompt, '');
+  assert.equal(noPhoto.shots[0].camera, 'hold');
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);
