@@ -69,11 +69,14 @@
       "role": "삼루수",
       "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, medium eyes, a slim athletic build, wearing a plain white national team uniform with a navy cap",
       "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. 홈런 뒤에는 양손을 머리 위로 올려 손가락을 펴 보이는 시그니처 세리머니를 한다 — 활약을 말하는 대목에서는 얼굴보다 이 자세가 강하다",
-      "photo": "",
+      "photo": "https://images.khan.co.kr/article/r/700xX/2026/11/02/l_2026110302000007200006041.webp",
       "photo_안되는주소": [
         "https://github.com/user-attachments/assets/71214e7c-71a3-4465-9cfe-2c0ad5e5fca0",
         "https://github.com/user-attachments/assets/bcde3ba3-b714-4701-9ad1-9ace4405088d",
         "https://github.com/user-attachments/assets/c9b78efd-b7c7-49ba-b36f-4fafd827d3fd"
+      ],
+      "photo_예비": [
+        "https://www.sportschosun.com/article/html/2026/11/03/2026110301000161300014142_w.jpg"
       ]
     },
     {
