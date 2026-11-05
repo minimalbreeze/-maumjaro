@@ -58,10 +58,22 @@ export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: 
       continue;
     }
 
+    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+
+    // 표. 두 번째 줄이 |---|---| 꼴이면 표로 본다.
+    //
+    // 2026-11-05 에 더했다. 그전에는 표를 모르는 채로 지나가서
+    // `<p>| | 주소 |<br>|---|---|<br>…` 가 그대로 독자에게 나갔다
+    // (글 11866 에서 발견). 마크다운 초안에 표를 쓰는 것이 이미 관행이라
+    // 변환기 쪽을 맞추는 것이 맞다.
+    if (lines.length >= 2 && 표인가(lines)) {
+      out.push(표블록(lines));
+      continue;
+    }
+
     // ✅ 나 - 로 시작하는 줄이 이어지면 목록으로 만든다.
     // '-'/'*'는 뒤에 공백이 있어야 한다 — 그러지 않으면 '**굵게**'로 시작하는 줄이
     // 목록으로 오인되어 굵은 표시가 깨진다.
-    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
     if (lines.length > 1 && lines.every((l) => BULLET.test(l))) {
       const items = lines.map((l) => `<li>${inline(l.replace(BULLET, ''))}</li>`).join('\n');
       out.push(`<!-- wp:list -->\n<ul>\n${items}\n</ul>\n<!-- /wp:list -->`);
@@ -74,8 +86,43 @@ export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: 
   return out.join('\n\n');
 }
 
+/** 두 번째 줄이 |---|---| 꼴이고 모든 줄이 | 로 시작하면 표다. */
+function 표인가(lines) {
+  if (!lines.every((l) => l.startsWith('|'))) return false;
+  return /^\|[\s:|-]+\|$/.test(lines[1]) && lines[1].includes('-');
+}
+
+function 표칸(line) {
+  return line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+}
+
+function 표블록(lines) {
+  const head = 표칸(lines[0]).map((c) => `<th>${inline(c)}</th>`).join('');
+  const body = lines
+    .slice(2)
+    .map((l) => `<tr>${표칸(l).map((c) => `<td>${inline(c)}</td>`).join('')}</tr>`)
+    .join('');
+  const thead = `<thead><tr>${head}</tr></thead>`;
+  const tbody = body ? `<tbody>${body}</tbody>` : '';
+  return `<!-- wp:table -->\n<figure class="wp-block-table"><table>${thead}${tbody}</table></figure>\n<!-- /wp:table -->`;
+}
+
+/**
+ * 마크다운 링크를 실제 링크로 바꾼다.
+ *
+ * 현재 창에서 연다 — `target="_blank"` 를 쓰지 않는다(지시서). 그래서
+ * `rel="noopener"` 도 필요 없다. 바깥으로 나가는 링크에만 nofollow 를 남긴다.
+ */
+function 링크(text, url) {
+  const 우리것 = /^(https?:\/\/)?(wiki|maumjaro)\.minimalbreeze\.com/.test(url) || url.startsWith('/');
+  return `<a href="${url}"${우리것 ? '' : ' rel="nofollow"'}>${text}</a>`;
+}
+
 function inline(s) {
   return escapeHtml(s)
+    // 인라인 코드가 먼저다 — 코드 안의 * 나 [ 가 다른 표시로 읽히지 않게 한다.
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_, text, url) => 링크(text, url))
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
 }
