@@ -623,6 +623,37 @@ ${best.length ? `<p>${esc(best[0].l.line)}</p>
     return out;
   };
 
+  // 연도 → 간지(60갑자). 천간 10 × 지지 12라 60년마다 돌아온다.
+  // 검산: 2023 → 계묘(癸卯, 검은 토끼), 2024 → 갑진(甲辰, 푸른 용), 2029 → 기유(己酉).
+  // 실제로 쓰는 이름과 같다. 색은 천간의 오행에서 나온다(목=청, 화=적, 토=황, 금=백, 수=흑).
+  // 이건 계산으로 나오는 값이라 지어낼 여지가 없다.
+  const GAN = [
+    { h: '甲', ko: '갑', el: '목', color: '푸른' },
+    { h: '乙', ko: '을', el: '목', color: '푸른' },
+    { h: '丙', ko: '병', el: '화', color: '붉은' },
+    { h: '丁', ko: '정', el: '화', color: '붉은' },
+    { h: '戊', ko: '무', el: '토', color: '노란' },
+    { h: '己', ko: '기', el: '토', color: '노란' },
+    { h: '庚', ko: '경', el: '금', color: '흰' },
+    { h: '辛', ko: '신', el: '금', color: '흰' },
+    { h: '壬', ko: '임', el: '수', color: '검은' },
+    { h: '癸', ko: '계', el: '수', color: '검은' },
+  ];
+  const ZHI_KO = { 子: '자', 丑: '축', 寅: '인', 卯: '묘', 辰: '진', 巳: '사', 午: '오', 未: '미', 申: '신', 酉: '유', 戌: '술', 亥: '해' };
+  // 띠 이름에서 '띠'를 뗀 동물 이름("호랑이띠" → "호랑이"). "푸른 호랑이의 해"처럼 쓴다.
+  const animalNoun = (z) => z.name.replace(/띠$/, '');
+  function ganjiOf(y) {
+    const g = GAN[((y - 4) % 10 + 10) % 10];
+    const z = CHINESE_ZODIAC[animalIndexOfYear(y)];
+    return {
+      gan: g,
+      z,
+      han: `${g.h}${z.zhi}`,
+      ko: `${g.ko}${ZHI_KO[z.zhi]}`,
+      colorAnimal: `${g.color} ${animalNoun(z)}`,
+    };
+  }
+
   const inSam = (a, b) => Z.SAMHAP.some((g) => g.includes(a) && g.includes(b));
   const pk = (a, b) => [a, b].sort().join('-');
   const inList = (l, a, b) => l.some((p) => pk(p[0], p[1]) === pk(a, b));
@@ -691,6 +722,10 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 <p class="k" style="margin-top:10px;"><strong>1~2월에 태어났다면 한 번 더 확인하세요.</strong> 띠가 바뀌는 기준은 1월 1일이 아니라 <strong>입춘(양력 2월 4일 전후)</strong>입니다. 예를 들어 ${yearsOf(z)[Math.floor(yearsOf(z).length / 2)]}년 1월에 태어났다면 ${esc(z.name)}가 아니라 앞 해의 ${esc(CHINESE_ZODIAC[(animalIndexOfYear(yearsOf(z)[Math.floor(yearsOf(z).length / 2)]) + 11) % 12].name)}입니다. 맘운자로는 생년월일을 넣으면 이 경계까지 자동으로 맞춰 계산합니다.</p>
 <p><a href="/animal/years/">출생연도로 내 띠 찾기 (1936~2032 전체 표) ›</a></p>
 
+<h2>${esc(z.name)} 행운의 숫자</h2>
+<p>${esc(z.name)}의 지지 ${esc(z.zhi)}에는 십이지 순번과 오행 생성수가 붙어 있습니다. 거기서 나오는 수와 색을 따로 정리했습니다.</p>
+<p><a href="/animal/${z.key}/lucky/">${esc(z.name)} 행운의 숫자와 색 보기 ›</a></p>
+
 <h2>${esc(z.name)} 오늘의 운세</h2>
 <p>맘운자로에서 ${esc(z.name)}의 오늘 기운을 무료로 볼 수 있습니다. 생년월일을 넣으면 <strong>띠가 자동으로 계산</strong>됩니다. 태어난 시간은 몰라도 됩니다.</p>
 <p>하루의 기운은 ${Z.SIGN_DAY_SEED.length}가지 유형 중 하나로 나옵니다.</p>
@@ -757,7 +792,7 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
     const rows = [];
     for (let y = YEAR_TO; y >= YEAR_FROM; y--) {
       const z = CHINESE_ZODIAC[animalIndexOfYear(y)];
-      rows.push(`<tr><td><strong>${y}</strong>년생</td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td><td>${esc(z.zhi)}</td><td>${esc(z.keyword)}</td></tr>`);
+      rows.push(`<tr><td><a href="/animal/year/${y}/"><strong>${y}</strong>년생</a></td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td><td>${esc(ganjiOf(y).ko)}년</td><td>${esc(ganjiOf(y).colorAnimal)}</td></tr>`);
     }
     const body = `
 <div class="card">
@@ -772,7 +807,7 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 
 <h2>출생연도별 띠 표</h2>
 <div class="tw"><table>
-  <thead><tr><th>출생연도</th><th>띠</th><th>지지</th><th>키워드</th></tr></thead>
+  <thead><tr><th>출생연도</th><th>띠</th><th>간지</th><th>그 해 이름</th></tr></thead>
   <tbody>${rows.join('')}</tbody>
 </table></div>
 
@@ -801,6 +836,339 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         body,
       }),
     });
+  }
+
+  // ---------- 연도별 띠 페이지 (1936~2032, 97장) ----------
+  // 2026-11-04 네이버 키워드 TOP10 중 여덟 개가 연도 쿼리였다
+  // (2029년 띠 노출 281, 1937년생 띠 154, 2004년생 띠 66 …).
+  // 그런데 여덟 개가 전부 /animal/years/ 한 장으로 들어왔다 — 합쳐서 노출 707에 클릭 8,
+  // CTR 1.1%다. 같은 날 전용 페이지가 있는 "호랑이띠 삼합, 육합, 충"은
+  // 노출 15에 클릭 3으로 CTR 20%였다. 노출이 모자란 게 아니라 안 눌린 것이다.
+  //
+  // 차이는 제목이다. "출생연도별 띠 찾기 (1936~2032)"는 답이 아니라 도구로 읽힌다.
+  // "2029년 띠"를 검색한 사람은 "닭띠"라는 답을 보고 싶지, 표를 뒤지고 싶지 않다.
+  // 그래서 연도마다 한 장씩 끊고, 제목이 곧 답이 되게 한다.
+  //
+  // ⚠️ 97장을 같은 틀로 찍으면 유사도가 올라 색인이 막힌다(2026-09에 85%로 겪었다).
+  // 그래서 연도마다 실제로 갈리는 것만 쓴다 — 간지(60갑자라 60가지), 거기서 나오는
+  // 오행과 색("검은 토끼"·"푸른 용"처럼 실제로 쓰는 이름), 띠(12가지), 나이, 앞뒤 해.
+  // 그해 유명인이나 그해 운세처럼 지어내야 하는 것은 넣지 않는다.
+  //
+  // ⚠️ 나이는 빌드 시점 기준이다. 해가 바뀌면 다시 빌드해야 한다.
+  // 틀린 값이 조용히 남지 않도록 기준 연도를 페이지에 그대로 적는다.
+  {
+    const REF_YEAR = Number(today().slice(0, 4));
+    for (let y = YEAR_FROM; y <= YEAR_TO; y++) {
+      const url = `/animal/year/${y}/`;
+      const gj = ganjiOf(y);
+      const z = gj.z;
+      const prevZ = CHINESE_ZODIAC[animalIndexOfYear(y - 1)];
+      const sameYears = yearsOf(z);
+      const isFuture = y > REF_YEAR;
+      const korAge = REF_YEAR - y + 1;   // 세는 나이
+      const intlAge = REF_YEAR - y;      // 만 나이(생일 지난 경우)
+
+
+      // ⚠️ 본문을 길게 쓰면 안 된다. 97장이 같은 설명을 반복하면 유사도가 올라
+      // 색인이 통째로 막힌다(2026-09에 85%로 겪었다). 첫 판에서 긴 문단으로 썼다가
+      // 중앙 80.8% / 같은 띠끼리 92%가 나와서 갈아엎었다.
+      // 그래서 설명은 허브(/animal/years/)와 띠 페이지에 두고, 여기는 이 해에만
+      // 해당하는 값으로 채운다 — 연도·간지·오행·나이·같은 간지 해·앞뒤 해.
+      // 표가 문단보다 낫다. 값이 전부 다르기 때문이다.
+      const ageRows = isFuture
+        ? `<tr><td>나이</td><td>${REF_YEAR}년 기준 ${y - REF_YEAR}년 뒤에 오는 해입니다</td></tr>`
+        : `<tr><td>만 나이</td><td><strong>${intlAge}세</strong> · 생일 전이면 ${intlAge - 1}세</td></tr>
+    <tr><td>세는 나이</td><td>${korAge}세</td></tr>`;
+
+      const body = `
+<div class="card">
+  <p class="k">${y}년생</p>
+  <p style="margin:0;font-size:19px;font-weight:700;">${esc(z.emoji)} ${esc(z.name)}입니다</p>
+  <p style="margin:6px 0 0;">${esc(gj.ko)}년(${esc(gj.han)}) · ${esc(gj.colorAnimal)}의 해</p>
+</div>
+
+<h2>${y}년생 한눈에</h2>
+<div class="tw"><table>
+  <tbody>
+    <tr><td>띠</td><td><a href="/animal/${z.key}/">${esc(z.emoji)} ${esc(z.name)}</a></td></tr>
+    <tr><td>간지</td><td><strong>${esc(gj.ko)}년</strong> (${esc(gj.han)})</td></tr>
+    <tr><td>그 해 이름</td><td>${esc(gj.colorAnimal)}의 해</td></tr>
+    <tr><td>천간 · 오행</td><td>${esc(gj.gan.ko)}(${esc(gj.gan.h)}) · ${esc(gj.gan.el)}</td></tr>
+    <tr><td>지지</td><td>${esc(ZHI_KO[z.zhi])}(${esc(z.zhi)})</td></tr>
+    ${ageRows}
+    <tr><td>1~2월생이면</td><td><a href="/animal/${prevZ.key}/">${esc(prevZ.emoji)} ${esc(prevZ.name)}</a> (${y - 1}년생)</td></tr>
+    <tr><td>60갑자 순번</td><td>${((y - 4) % 60 + 60) % 60 + 1}번째 / 60</td></tr>
+    <tr><td>같은 ${esc(gj.ko)}년</td><td>${y - 60}년 · <strong>${y}년</strong> · ${y + 60}년</td></tr>
+    <tr><td>윤년</td><td>${(y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? `윤년입니다 (2월이 29일까지)` : '평년입니다'}</td></tr>
+  </tbody>
+</table></div>
+<p class="k">${isFuture ? '간지와 띠는 달력으로 이미 정해져 있어 미리 알 수 있습니다.' : `나이는 ${REF_YEAR}년 기준입니다. 2023년 6월부터 법으로 쓰는 나이는 만 나이입니다.`}</p>
+
+<h2>${y}년 1월생은 ${esc(prevZ.name)}입니다</h2>
+<p>띠는 1월 1일이 아니라 <strong>입춘</strong>에 바뀝니다. ${y}년 1월 1일부터 2월 3일경 사이에 태어났다면 ${esc(z.name)}가 아니라 ${y - 1}년의 <a href="/animal/${prevZ.key}/">${esc(prevZ.name)}</a>입니다. 맘운자로에 생년월일을 넣으면 그 해의 실제 입춘으로 맞춰 줍니다.</p>
+<p><a href="/animal/years/">입춘 기준 자세히 ›</a></p>
+
+<h2>${esc(z.name)}는 어떤 사람인가</h2>
+<p>${noDot(z.trait)}. 키워드는 <strong>${esc(z.keyword)}</strong>입니다.</p>
+<p><a href="/animal/${z.key}/">${esc(z.name)} 성격과 띠 궁합(삼합·육합·충) 전체 보기 ›</a></p>
+
+<h2>${esc(z.name)}인 다른 해</h2>
+<div class="grid">${sameYears.map((o) => (o === y
+  ? `<span><strong>${o}년</strong></span>`
+  : `<a href="/animal/year/${o}/">${o}년</a>`)).join('')}</div>
+
+<h2>앞뒤 해</h2>
+<div class="grid">${[y - 1, y + 1].filter((o) => o >= YEAR_FROM && o <= YEAR_TO).map((o) => {
+  const og = ganjiOf(o);
+  return `<a href="/animal/year/${o}/">${o}년생 ${esc(og.z.emoji)} ${esc(og.z.name)} (${esc(og.ko)}년)</a>`;
+}).join('')}</div>
+<p><a href="/animal/years/">출생연도 전체 표 (1936~2032) ›</a></p>`;
+
+      const answer = `${y}년생은 ${z.name}입니다. ${y}년의 간지는 ${gj.ko}년(${gj.han})이고, 천간 ${gj.gan.ko}의 오행이 ${gj.gan.el}${josa(gj.gan.el, '이라', '라')} ${gj.colorAnimal}의 해라고 부릅니다. `
+        + `다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, ${y}년 1월에서 2월 초에 태어났다면 앞 해 ${y - 1}년의 ${prevZ.name}가 됩니다.`
+        + (isFuture ? '' : ` ${REF_YEAR}년 기준 만 ${intlAge}세입니다.`);
+
+      const faq = [
+        { q: `${y}년생은 무슨 띠인가요?`,
+          a: `${z.name}입니다. ${y}년의 간지가 ${gj.ko}년(${gj.han})이고 지지가 ${ZHI_KO[z.zhi]}(${z.zhi})이기 때문입니다. `
+             + `단 ${y}년 1월에서 2월 초 사이에 태어났다면 입춘 전이라 ${y - 1}년의 ${prevZ.name}가 됩니다.` },
+        { q: `${y}년은 무슨 해인가요?`,
+          a: `${gj.ko}년(${gj.han}), ${gj.colorAnimal}의 해입니다. 천간 ${gj.gan.ko}의 오행이 ${gj.gan.el}${josa(gj.gan.el, '이라', '라')} 그 색이 붙습니다. `
+             + `간지는 60년마다 돌아오므로 ${y - 60}년과 ${y + 60}년도 ${gj.ko}년입니다.` },
+        ...(isFuture ? [] : [{ q: `${y}년생은 몇 살인가요?`,
+          a: `${REF_YEAR}년 기준 만 ${intlAge}세, 생일 전이면 ${intlAge - 1}세입니다. 세는 나이로는 ${korAge}세입니다.` }]),
+      ];
+
+      const titleAge = isFuture ? '' : ` · ${REF_YEAR}년 나이`;
+      pages.push({
+        url,
+        html: shell({
+          url,
+          answer,
+          faq,
+          title: `${y}년생은 무슨 띠? ${z.name}입니다 (${gj.ko}년)${titleAge} | 맘운자로`,
+          desc: `${y}년생은 ${z.name}. ${gj.ko}년(${gj.han}), ${gj.colorAnimal}의 해입니다.`
+            + (isFuture ? '' : ` ${REF_YEAR}년 기준 만 ${intlAge}세.`)
+            + ` 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.`,
+          keywords: `${y}년생, ${y}년생 띠, ${y}년 띠, ${y}년생 무슨 띠, ${y}년생 나이, ${gj.ko}년, ${gj.colorAnimal}의 해, ${z.name}, ${z.name} 몇년생, 띠 궁합, 입춘 띠 기준, 무료 운세`,
+          h1: `${z.emoji} ${y}년생`,
+          sub: `${z.name} · ${gj.ko}년(${gj.han}) · ${gj.colorAnimal}의 해`,
+          breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/animal/years/">출생연도</a> › ${y}년생`,
+          body,
+        }),
+      });
+    }
+  }
+
+  // ---------- 띠별 행운의 숫자 (12장 + 허브 1장) ----------
+  // 앱에 주간 행운번호(lucky.js)가 있는데 바깥에 한 글자도 안 보였다.
+  // "로또번호 생성기"로 가면 동행복권과 수백 개 사이트에 밀린다 — 타로가 그래서
+  // 노출 334에 클릭 3이었다. 우리가 남과 다른 건 "띠로 뽑는다"는 쪽이라
+  // "쥐띠 행운의 숫자"처럼 답이 정해진 틈새로 간다.
+  //
+  // ⚠️ 가장 중요한 선. lucky.js 맨 위에 효성님이 써둔 규칙을 그대로 지킨다 —
+  // "어떤 방식으로 뽑아도 당첨 확률은 같은데, 분석해서 뽑았다고 하면 당첨
+  // 가능성을 암시하게 된다. 돈이 오가는 영역이라 그 선은 넘지 않는다."
+  // 그래서 이 페이지들은 (1) 당첨을 암시하는 문장을 한 줄도 쓰지 않고,
+  // (2) 확률이 같다는 것을 페이지마다 분명히 적고,
+  // (3) 지어낸 당첨 사례를 절대 쓰지 않는다.
+  //
+  // 숫자의 근거도 지어내지 않는다. 십이지 순번(자1~해12)과 오행 생성수
+  // (수 1·6, 화 2·7, 목 3·8, 금 4·9, 토 5·10)는 하도에서 온 전통 값이다.
+  // 앱이 뽑는 번호는 사주+주차 해시라 띠만으로는 안 나온다. 그래서 페이지는
+  // "전통이 이 띠에 붙여온 수"까지만 말하고, 본인 번호는 앱으로 보낸다.
+  {
+    // 지지의 오행. 십이지에 고정으로 붙는 값이다.
+    const ZHI_ELEMENT = {
+      子: '수', 丑: '토', 寅: '목', 卯: '목', 辰: '토', 巳: '화',
+      午: '화', 未: '토', 申: '금', 酉: '금', 戌: '토', 亥: '수',
+    };
+    // 오행 생성수(하도)와 색. GAN의 색 규칙과 같은 체계다.
+    const EL_NUM = { 수: [1, 6], 화: [2, 7], 목: [3, 8], 금: [4, 9], 토: [5, 10] };
+    const EL_COLOR = { 수: '검정', 화: '빨강', 목: '파랑', 금: '하양', 토: '노랑' };
+    // 십이지에 원래 붙어 있는 시간과 방위. 전통 값이라 지어낼 게 없고, 띠마다 다르다.
+    // ("호랑이띠 시간", "인시 몇시" 같은 검색도 여기로 받는다)
+    const ZHI_HOUR = {
+      子: '23시~01시', 丑: '01시~03시', 寅: '03시~05시', 卯: '05시~07시',
+      辰: '07시~09시', 巳: '09시~11시', 午: '11시~13시', 未: '13시~15시',
+      申: '15시~17시', 酉: '17시~19시', 戌: '19시~21시', 亥: '21시~23시',
+    };
+    const ZHI_DIR = {
+      子: '북', 丑: '북북동', 寅: '동북동', 卯: '동', 辰: '동남동', 巳: '남남동',
+      午: '남', 未: '남남서', 申: '서남서', 酉: '서', 戌: '서북서', 亥: '북북서',
+    };
+    const ZHI_NAME = {
+      子: '자시', 丑: '축시', 寅: '인시', 卯: '묘시', 辰: '진시', 巳: '사시',
+      午: '오시', 未: '미시', 申: '신시', 酉: '유시', 戌: '술시', 亥: '해시',
+    };
+    const MAXN = 45; // 앱의 행운번호와 같은 범위
+
+    const luckyOf = (z) => {
+      const order = CHINESE_ZODIAC.findIndex((x) => x.zhi === z.zhi) + 1; // 자=1 … 해=12
+      const el = ZHI_ELEMENT[z.zhi];
+      const base = EL_NUM[el];
+      // 십이지 수 계열 — 순번에 12씩 더한다
+      const byZhi = [];
+      for (let n = order; n <= MAXN; n += 12) byZhi.push(n);
+      // 오행 수 계열 — 생성수에 10씩 더한다
+      const byEl = [];
+      base.forEach((b) => { for (let n = b; n <= MAXN; n += 10) byEl.push(n); });
+      byEl.sort((a, b) => a - b);
+      // 순번과 생성수가 겹칠 수 있다(쥐는 순번 1, 수의 생성수도 1). 대표 수에서는 합치고 중복을 뺀다.
+      const headline = [...new Set(byZhi.concat(base))].sort((a, b) => a - b);
+      return { order, el, base, byZhi, byEl, headline, color: EL_COLOR[el] };
+    };
+
+    // 당첨을 암시하지 않으면서 재미는 남기는 공통 문단. 페이지마다 같은 말을
+    // 반복하는 자리라 짧게 쓴다(유사도).
+    const fairPlay = `
+<div class="card">
+  <p style="margin:0;"><strong>전통에서 붙여온 수</strong>입니다. 로또는 어떤 방법으로 뽑아도 확률이 같습니다.</p>
+</div>`;
+
+    CHINESE_ZODIAC.forEach((z) => {
+      const L = luckyOf(z);
+      const url = `/animal/${z.key}/lucky/`;
+      const sam = Z.SAMHAP.find((g) => g.includes(z.zhi)) || [];
+      const samNames = sam.filter((x) => x !== z.zhi).map((x) => CHINESE_ZODIAC.find((c) => c.zhi === x));
+
+      const body = `
+<div class="card">
+  <p class="k">${esc(z.name)} · 십이지 ${esc(z.zhi)} · 오행 ${esc(L.el)}</p>
+  <p style="margin:0;font-size:19px;font-weight:700;">${L.headline.join(' · ')}</p>
+  <p style="margin:6px 0 0;">색은 <strong>${esc(L.color)}</strong>입니다</p>
+</div>
+${fairPlay}
+
+<h2>${esc(z.name)}의 수는 어디서 나오나</h2>
+<p>두 갈래입니다. 지어낸 것이 아니라 십이지와 오행에 원래 붙어 있는 값입니다.</p>
+<div class="tw"><table>
+  <tbody>
+    <tr><td>십이지 순번</td><td><strong>${L.order}</strong>번째 (${esc(z.zhi)})</td></tr>
+    <tr><td>지지의 오행</td><td>${esc(L.el)}</td></tr>
+    <tr><td>오행 생성수</td><td><strong>${L.base.join(' · ')}</strong></td></tr>
+    <tr><td>오행의 색</td><td>${esc(L.color)}</td></tr>
+    <tr><td>시간</td><td>${esc(ZHI_NAME[z.zhi])} · <strong>${esc(ZHI_HOUR[z.zhi])}</strong></td></tr>
+    <tr><td>방위</td><td>${esc(ZHI_DIR[z.zhi])}</td></tr>
+    <tr><td>삼합 무리</td><td>${esc(z.name)} · ${samNames.map((o) => esc(o.name)).join(' · ')}</td></tr>
+  </tbody>
+</table></div>
+<p>십이지는 수만 아니라 <strong>시간과 방위</strong>도 나눠 가집니다. ${esc(z.zhi)}가 맡은 시간은 ${esc(ZHI_NAME[z.zhi])}, 곧 ${esc(ZHI_HOUR[z.zhi])}이고 방위는 ${esc(ZHI_DIR[z.zhi])}입니다. 사주에서 태어난 시(時)를 따질 때 쓰는 그 구분입니다.</p>
+<p>지지 ${esc(z.zhi)}의 오행이 ${esc(L.el)}이고, 하도(河圖)에서 ${esc(L.el)}에 붙는 수가 <strong>${L.base.join('과 ')}</strong>입니다. <a href="/animal/lucky/">오행별 수가 어떻게 정해지는지 ›</a></p>
+
+<h2>1~45로 펼치면</h2>
+<p>로또 범위에 맞춰 늘리면 이렇게 됩니다.</p>
+<div class="tw"><table>
+  <tbody>
+    <tr><td>십이지 계열<br><span class="k">${L.order}에 12씩</span></td><td><strong>${L.byZhi.join(' · ')}</strong></td></tr>
+    <tr><td>오행 계열<br><span class="k">${L.base.join('·')}에 10씩</span></td><td><strong>${L.byEl.join(' · ')}</strong></td></tr>
+  </tbody>
+</table></div>
+
+<h2>내 번호는 따로 있습니다</h2>
+<p>위의 수는 ${esc(z.name)}이면 누구나 같습니다. 맘운자로는 사주와 별자리까지 넣어 사람마다 다른 번호를 주 1회 뽑습니다(기록 탭 → 행운번호). 번호를 AI로 분석해서 뽑지 않습니다 — 어떤 방식으로 뽑아도 확률은 같기 때문입니다.</p>
+
+<p><a href="/animal/${z.key}/">${esc(z.name)} 성격 · 띠 궁합 · 몇년생인지 보기 ›</a></p>
+
+<h2>다른 띠의 행운의 숫자</h2>
+<div class="grid">${CHINESE_ZODIAC.map((x) => (x.key === z.key
+  ? `<span><strong>${esc(x.emoji)} ${esc(x.name)}</strong></span>`
+  : `<a href="/animal/${x.key}/lucky/">${esc(x.emoji)} ${esc(x.name)}</a>`)).join('')}</div>
+<p><a href="/animal/lucky/">띠별 행운의 숫자 한눈에 보기 ›</a></p>`;
+
+      pages.push({
+        url,
+        html: shell({
+          url,
+          answer: `${z.name}의 수는 십이지 순번 ${L.order}번과 오행 ${L.el}의 생성수 ${L.base.join('·')}입니다. `
+            + `지지 ${z.zhi}의 오행이 ${L.el}이고, 하도에서 ${L.el}에 붙는 수가 ${L.base.join('과 ')}이기 때문입니다. 색은 ${L.color}입니다. `
+            + `1~45로 펼치면 십이지 계열은 ${L.byZhi.join('·')}, 오행 계열은 ${L.byEl.join('·')}입니다. `
+            + `다만 이 수는 전통 풀이이지 당첨을 예측하는 수가 아닙니다. 로또는 어떤 방법으로 뽑아도 확률이 같습니다.`,
+          faq: [
+            { q: `${z.name} 행운의 숫자는 뭔가요?`,
+              a: `십이지 순번 ${L.order}번과 오행 ${L.el}의 생성수 ${L.base.join('·')}입니다. `
+                 + `1~45로 펼치면 ${L.byZhi.join('·')}(십이지 계열), ${L.byEl.join('·')}(오행 계열)입니다. `
+                 + `전통에서 붙여온 수이지 당첨을 예측하는 수가 아닙니다.` },
+            { q: `${z.name}의 시간은 몇 시인가요?`,
+              a: `${ZHI_NAME[z.zhi]}, 곧 ${ZHI_HOUR[z.zhi]}입니다. 십이지가 하루 24시간을 두 시간씩 나눠 맡는데 ${z.name}의 지지 ${z.zhi}가 그 자리입니다. 방위로는 ${ZHI_DIR[z.zhi]}입니다.` },
+            { q: `${z.name} 행운의 색은 뭔가요?`,
+              a: `${L.color}입니다. 지지 ${z.zhi}의 오행이 ${L.el}이고, 오행마다 색이 정해져 있기 때문입니다(수는 검정, 화는 빨강, 목은 파랑, 금은 하양, 토는 노랑).` },
+            { q: `이 번호로 로또를 사면 당첨 확률이 올라가나요?`,
+              a: `아닙니다. 어떤 방법으로 뽑아도 확률이 같습니다. 맘운자로도 번호를 AI로 분석해서 뽑지 않습니다.` },
+          ],
+          title: `${z.name} 행운의 숫자 — ${L.headline.join('·')} (오행 ${L.el}, 색은 ${L.color}) | 맘운자로`,
+          desc: `${z.name}의 행운의 숫자와 색. 십이지 순번 ${L.order}번, 오행 ${L.el}의 생성수 ${L.base.join('·')}, 색은 ${L.color}. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.`,
+          keywords: `${z.name} 행운의 숫자, ${z.name} 행운의 색, ${z.name} 시간, ${z.name} 방위, ${ZHI_NAME[z.zhi]}, ${ZHI_NAME[z.zhi]} 몇시, 띠별 행운의 숫자, 띠별 행운의 색, 십이지 ${z.zhi}, 오행 ${L.el}, 오행 생성수`,
+          h1: `${z.emoji} ${z.name} 행운의 숫자`,
+          sub: `십이지 ${z.zhi} · 오행 ${L.el} · ${L.color} · ${ZHI_NAME[z.zhi]}(${ZHI_HOUR[z.zhi]})`,
+          breadcrumb: `<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/animal/lucky/">띠별 행운의 숫자</a> › ${esc(z.name)}`,
+          body,
+        }),
+      });
+    });
+
+    // 허브
+    {
+      const url = '/animal/lucky/';
+      const rows = CHINESE_ZODIAC.map((z) => {
+        const L = luckyOf(z);
+        return `<tr><td><a href="/animal/${z.key}/lucky/">${esc(z.emoji)} ${esc(z.name)}</a></td><td><strong>${L.headline.join(' · ')}</strong></td><td>${esc(L.el)}</td><td>${esc(L.color)}</td></tr>`;
+      }).join('');
+      const body = `
+<div class="card">
+  <p class="k">십이지 12띠</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">띠마다 붙어 있는 수와 색</p>
+</div>
+${fairPlay}
+
+<h2>띠별 행운의 숫자 · 색</h2>
+<div class="tw"><table>
+  <thead><tr><th>띠</th><th>수</th><th>오행</th><th>색</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table></div>
+
+<h2>이 수는 어떻게 나오나</h2>
+<p>두 갈래를 씁니다. 둘 다 지어낸 값이 아닙니다.</p>
+<ul>
+  <li><strong>십이지 순번</strong> — 자(쥐)가 1번, 해(돼지)가 12번입니다.</li>
+  <li><strong>오행 생성수</strong> — 하도(河圖)에서 온 값입니다. 수는 1·6, 화는 2·7, 목은 3·8, 금은 4·9, 토는 5·10.</li>
+</ul>
+<p>띠마다 지지가 다르고 지지마다 오행이 달라서, 띠가 다르면 수도 색도 달라집니다.</p>
+
+<h2>내 번호는 따로 있습니다</h2>
+<p>위의 수는 같은 띠면 누구나 같습니다. 맘운자로는 띠만 보지 않고 <strong>사주와 별자리까지</strong> 같이 넣어 사람마다 다른 번호를 주 1회 뽑아 줍니다. 기록 탭의 <strong>행운번호</strong>에 있습니다.</p>
+<p>번호를 AI로 분석해서 뽑지 않습니다. 어떤 방식으로 뽑아도 확률은 같기 때문입니다. 매주 한 번, 고르는 수고를 더는 쪽입니다.</p>
+
+<h2>12띠 전체</h2>
+<div class="grid">${CHINESE_ZODIAC.map((x) => `<a href="/animal/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>`;
+
+      pages.push({
+        url,
+        html: shell({
+          url,
+          answer: '띠별 행운의 숫자는 십이지 순번(자1~해12)과 지지 오행의 생성수(수 1·6, 화 2·7, 목 3·8, 금 4·9, 토 5·10)에서 나옵니다. '
+            + '색도 오행을 따라 수는 검정, 화는 빨강, 목은 파랑, 금은 하양, 토는 노랑입니다. '
+            + '다만 전통 풀이이지 당첨을 예측하는 수가 아니며, 로또는 어떤 방법으로 뽑아도 확률이 같습니다.',
+          faq: [
+            { q: '띠별 행운의 숫자는 어떻게 정해지나요?',
+              a: '십이지 순번과 지지 오행의 생성수를 씁니다. 순번은 자(쥐)가 1번, 해(돼지)가 12번입니다. '
+                 + '생성수는 하도에서 온 값으로 수 1·6, 화 2·7, 목 3·8, 금 4·9, 토 5·10입니다.' },
+            { q: '띠별 행운의 색은 뭔가요?',
+              a: '오행을 따릅니다. 수는 검정, 화는 빨강, 목은 파랑, 금은 하양, 토는 노랑입니다. '
+                 + '쥐띠와 돼지띠는 수라 검정, 호랑이띠와 토끼띠는 목이라 파랑입니다.' },
+            { q: '이 번호로 로또를 사면 당첨 확률이 올라가나요?',
+              a: '아닙니다. 로또는 어떤 방법으로 뽑아도 확률이 같습니다. 맘운자로도 번호를 AI로 분석해서 뽑지 않습니다.' },
+          ],
+          title: '띠별 행운의 숫자와 색 — 12띠 전부 (십이지·오행 기준) | 맘운자로',
+          desc: '12띠 각각의 행운의 숫자와 색을 한 표로. 십이지 순번과 오행 생성수에서 나온 값입니다. 당첨 확률과는 무관합니다.',
+          keywords: '띠별 행운의 숫자, 띠별 행운의 색, 띠 행운번호, 십이지 순번, 오행 생성수, 쥐띠 행운의 숫자, 호랑이띠 행운의 숫자, 용띠 행운의 숫자',
+          h1: '🔢 띠별 행운의 숫자',
+          sub: '십이지 12띠 · 수와 색',
+          breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 띠별 행운의 숫자',
+          body,
+        }),
+      });
+    }
   }
 }
 

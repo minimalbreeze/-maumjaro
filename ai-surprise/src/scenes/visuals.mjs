@@ -126,6 +126,85 @@ export const TALE_STYLE_SUFFIX =
  * 그래서 프롬프트에는 선수 이름 대신 팀 색·등번호·상황만 적는다.
  * 안전한 쪽과 잘 되는 쪽이 같은 방향인, 드문 경우다.
  */
+/**
+ * 그림체 후보.
+ *
+ * 2026-11-04 운영자: "잘 그리는 화풍이 있는가? 우리만의 특징이 있어야 한다.
+ * 영상을 딱 보면 이건 우리 거다 하는".
+ *
+ * 맞는 말이고, 지브리 느낌이 실패한 이유이기도 하다. 그건 모델이 가장
+ * 평균적으로 아는 화풍이라 **누구나 같은 그림을 받는다.** 우리 것이 될
+ * 수가 없다.
+ *
+ * 그리고 하나 더 있다. 지브리풍은 반쯤 사실적인 그림이라 사진에서 가져온
+ * 얼굴이 제일 티가 난다 — 감독 얼굴이 붕 뜬 게 그래서다.
+ * **그림체가 평면적이고 질감이 거칠수록 얼굴도 같이 뭉개져서 이질감이
+ * 사라진다.** 그림체를 고르는 일이 얼굴 문제까지 같이 푼다.
+ *
+ * 말로 고르면 또 틀리므로 같은 장면을 후보마다 한 장씩 뽑아서 고른다
+ * (`preview --styles`).
+ */
+export const SPORTS_PAINT_CANDIDATES = {
+  // 지금 쓰는 것. 비교 기준으로 남긴다.
+  지브리: {
+    label: '지브리 느낌 (지금 쓰는 것)',
+    why: '부드럽고 따뜻하다. 다만 흔하고, 사진 얼굴이 제일 티가 난다.',
+    paint:
+      'hand-painted 2D anime illustration in the style of a classic Japanese ' +
+      'animated film, gouache and watercolour on paper with visible brush ' +
+      'texture and a faint paper grain, soft natural light, ' +
+      'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
+      'clean confident linework, flat colour with soft hand-painted shading, ' +
+      'crowds and distant background painted as loose soft dabs, ' +
+      // 층이 셋이어야 썰렁하지 않다 (2026-11-04 운영자 요청).
+      // 앞을 흐리게 두는 것이 깊이를 만든다.
+      'composed in three layers - a soft out-of-focus object close to the ' +
+      'camera, the subject sharp in the middle, and a loosely painted ' +
+      'background behind - with gentle atmosphere such as light haze, ' +
+      'drifting dust or low sun, ' +
+      'drawn artwork, never a 3D render, never CGI, never a photograph',
+  },
+  리소: {
+    label: '리소그래프 2~3색',
+    why: '색이 두세 개뿐이라 한 번 정하면 그게 채널 색이 된다. 섬네일만 봐도 우리 것이 된다.',
+    paint:
+      'risograph print illustration using only three ink colours - deep navy, ' +
+      'warm red and cream - printed one layer at a time with the layers ' +
+      'slightly out of register, visible halftone dot texture, coarse grain, ' +
+      'the paper stock showing through, flat areas of solid ink with no ' +
+      'gradients, bold simple shapes, heavy black linework, ' +
+      'printed artwork on paper, never a 3D render, never CGI, never a photograph',
+  },
+  야구카드: {
+    label: '1970년대 야구 카드 수채',
+    why: '야구 채널에 맞는 향수. 다만 "옛날 이야기" 느낌이 강하다 — 우리는 지금 일을 다룬다.',
+    paint:
+      'vintage 1970s baseball card illustration, watercolour and gouache on ' +
+      'aged cream cardstock, soft bleeding edges where the paint meets the ' +
+      'paper, faded sun-bleached colours, slight print misalignment and ' +
+      'off-register colour, visible paper fibre and light foxing, ' +
+      'warm nostalgic palette of butter yellow, dusty red and faded teal, ' +
+      'painted artwork, never a 3D render, never CGI, never a photograph',
+  },
+  르포: {
+    label: '신문 르포 스케치 (연필+담채)',
+    why: '분석 톤에 가장 맞고 차분하다. 다만 약해서 섬네일에서 눈에 안 띈다.',
+    paint:
+      'reportage sketch illustration, confident graphite pencil linework with ' +
+      'visible construction lines left in, loose watercolour washes laid over ' +
+      'the drawing and running slightly past the lines, large areas of bare ' +
+      'white paper left unpainted, restrained palette of ink blue, ochre and ' +
+      'a single warm red accent, the immediacy of a drawing made on the spot, ' +
+      'drawn artwork, never a 3D render, never CGI, never a photograph',
+  },
+};
+
+/** 지금 쓰는 그림체. 후보를 고르면 이 이름만 바꾼다. */
+export const SPORTS_PAINT_KEY = '지브리';
+
+/** 그림체 문장. */
+export const SPORTS_PAINT = SPORTS_PAINT_CANDIDATES[SPORTS_PAINT_KEY].paint;
+
 export const SPORTS_STYLE_SUFFIX =
   // ── 2D 만화다. 3D 렌더가 아니다 (2026-11-03 운영자 지시) ──
   //
@@ -155,13 +234,7 @@ export const SPORTS_STYLE_SUFFIX =
   //   · 색이 가라앉아 있다. 크림·먼지 낀 파랑·흙색.
   //   · 관중은 또렷하게 그리지 않고 붓 자국으로 뭉갠다.
   //   · 그런데 유니폼 글자와 솔기는 오히려 또렷하다.
-  'hand-painted 2D anime illustration in the style of a classic Japanese ' +
-  'animated film, gouache and watercolour on paper with visible brush ' +
-  'texture and a faint paper grain, soft natural light, ' +
-  'muted desaturated palette of creams, dusty blues and warm earth tones, ' +
-  'clean confident linework, flat colour with soft hand-painted shading, ' +
-  'crowds and distant background painted as loose soft dabs, ' +
-  'drawn artwork, never a 3D render, never CGI, never a photograph, ' +
+  `${SPORTS_PAINT}, ` +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
   // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
@@ -210,9 +283,21 @@ export const SPORTS_INVENTED_CLAUSE =
  * 과장하지 말라는 것이 핵심이다 — 닮게, 그러나 그림으로.
  */
 export const SPORTS_LIKENESS_CLAUSE =
-  'match the face, hairstyle, facial hair and build of the person in the ' +
-  'reference photograph, keeping their real proportions without ' +
-  'caricature or exaggeration, redrawn as a painting rather than traced';
+  // ⚠️ 2026-11-04 에 고쳤다. 전에는 "닮게 그려라"만 적었더니 **사진
+  //    얼굴이 그대로** 들어왔다. 몸과 배경은 그림인데 얼굴만 사진이라
+  //    따로 놀았다. 운영자 말: "감독 얼굴이 그냥 얼굴이잖아".
+  //
+  //    닮는 것과 그림체를 지키는 것은 서로 싸운다. 그래서 **어느 쪽이
+  //    이겨야 하는지를 글로 못 박는다** — 그림체가 먼저고, 닮음은 그
+  //    안에서다. 힘 조절은 replicate.mjs 의 id_weight 가 따로 한다.
+  'recognisably the same person as in the reference photograph - same face ' +
+  'shape, hairline, eyebrows and eye shape - but redrawn completely as a ' +
+  'hand-painted 2D anime character: flat cel-shaded skin with no ' +
+  'photographic texture or skin pores, inked linework around the eyes and ' +
+  'brows, a simplified painted nose and mouth, the face finished in exactly ' +
+  'the same painting style as the rest of the picture, ' +
+  'never a photographic face, never a photo head on a drawn body, ' +
+  'no caricature or exaggeration of his features';
 
 /**
  * 스포츠 편에만 더 붙이는 금지 목록.
@@ -343,7 +428,21 @@ A. 선수 이름을 프롬프트에 쓰지 않는다. **생김새를 쓴다.**
 B. 구단 로고·팀 이름·스폰서 글자를 넣지 않는다.
    유니폼은 색으로만 말한다. 상표를 그리면 쓸 수 없는 그림이 된다.
 
-C. **얼굴은 아껴 쓴다.** 그 사람이 그 문장의 주인일 때만 그린다.
+C. **주요 인물은 반드시 한 번씩 넣는다. 다만 한 번씩만.**
+
+   2026-11-04 운영자: "화면은 대본 내용과 연관이 충실한 그림을 사용한다.
+   **주요 인물들은 꼭 들어가야 하고.**"
+
+   전에는 "얼굴은 아껴 쓴다"까지만 적혀 있었다. 아끼라고만 하면 아예
+   안 그리게 된다 — 그러면 이름만 나오고 얼굴은 없는 영상이 된다.
+   아래 「이 편에 나오는 사람」에 적힌 사람은 **편마다 적어도 한 번**
+   얼굴이 나와야 한다. 한 명도 빠뜨리지 않는다.
+
+   어디에 넣는가 — 그 사람의 이름이 처음 나오는 대목, 또는 그 사람의
+   성적·처지를 말하는 대목이다. 그 사람 이야기를 하는데 다른 그림이
+   올라가 있으면 안 된다.
+
+   그 대신 **그 사람이 주인이 아닌 문장에는 그리지 않는다.**
 
    3화에서 얼굴을 너무 많이 그렸다가 운영자에게 이런 말을 들었다 —
    "동작이랑 얼굴 방향도 안 맞다", "얼굴이 영상에서 붕 떠있다",
@@ -352,13 +451,83 @@ C. **얼굴은 아껴 쓴다.** 그 사람이 그 문장의 주인일 때만 그
 
    그러니 얼굴이 꼭 필요한 자리만 고른다.
 
-     그린다  — 그 사람을 처음 꺼낼 때 한 번
-     그린다  — 그 사람의 성적·처지를 말하는 대목에서 한 번
+     반드시   — 그 사람을 처음 꺼낼 때 한 번
+     반드시   — 그 사람의 성적·처지를 말하는 대목에서 한 번
      안 그린다 — 제도·규정·구단·시장을 말하는 대목
      안 그린다 — 이미 바로 앞 장면에서 그 사람을 그렸을 때
 
    **한 사람에 한 장면이 기본이다.** 같은 사람을 여러 장면에 그리면
    그릴 때마다 다른 사람이 나온다 — 3화를 망친 것이 이것이다.
+
+   참조 사진을 받아 둔 사람은 사정이 다르다. 그 사람은 샷마다 같은
+   얼굴로 나오므로 여러 장면에 그려도 된다. 다만 **그래도 아껴 쓴다** —
+   아래 D 를 먼저 읽는다.
+
+D. **얼굴을 안 쓰는 샷에는 야구장을 그린다.** 빈 화면이 아니다.
+
+   2026-11-04 운영자 말이다 —
+   "사람 정면만 넣지 말고, 수비 보는 장면, 타격하는 장면 등등 뭔가
+    야구장 같은 현장감을 넣어서 만들어 줘."
+   "관련도 없는 부분에 그런 영상을 넣지 말고, 이야기랑 관련 있게
+    영상과 그림을 만들어 넣어야지. 선수들 이미지는 중요한 부분에
+    선수임을 구분할 수 있게 하라는 거고."
+
+   두 가지를 말하고 있다.
+
+   ① **그림은 그 문장이 말하는 것을 보여야 한다.** 아무 선수 얼굴을
+      채워 넣는 것이 아니다. 문장이 불펜 이야기면 불펜을 그리고,
+      수비 이야기면 수비를 그린다.
+   ② 선수 얼굴은 **누구인지 구분해야 하는 대목**에서만 쓴다.
+
+   문장이 말하는 것 → 그릴 것
+
+     마무리·불펜      불펜에서 몸 푸는 투수, 마운드에 오르는 뒷모습,
+                      포수 미트에 꽂히는 공, 9회 전광판
+     선발·로테이션    와인드업 중간, 더그아웃 난간의 투수들,
+                      교체되어 내려오는 뒷모습
+     수비·유격수      타구를 쫓는 내야수, 더블플레이 중계 동작,
+                      글러브로 받는 순간, 흙먼지
+     타격             스윙 궤적, 공을 따라가는 시선, 배트를 던지고
+                      1루로 뛰는 뒷모습, 관중석
+     포수             마스크 너머 사인 내는 손, 투수와 마주 보는 구도
+     중견수 수비      외야 깊은 곳에서 달려 들어오는 몸,
+                      펜스 앞 점프
+     입대·이적·계약   비어 있는 라커, 벗어 둔 유니폼, 가방,
+                      밤의 빈 구장
+     숫자·제도        전광판, 기록지, 라인업 카드 (사람 없이)
+
+   얼굴이 없어도 **야구장 안**이다. 회의실·사무실·추상적인 그림으로
+   때우지 않는다. 지금 일어나는 일을 다루는 채널이라, 현장이 보여야 한다.
+
+   뒷모습·손·발·실루엣은 얼굴이 아니다. 마음껏 쓴다 — 얼굴이
+   안 나오면 틀릴 일도 없다.
+
+E. **화면을 채우되 과하지 않게.**
+
+   2026-11-04 운영자 말이다 —
+   "너무 썰렁하지도 너무 과하지도 않게, 적당한 구성과 배경과 배경
+    흐리기 등등의 다양한 효과를 넣어서 화면을 풍성하게 만든다."
+
+   한 그림에 **층이 셋** 있어야 한다. 하나뿐이면 썰렁하고, 전부
+   또렷하면 눈이 쉴 데가 없다.
+
+     앞     가까이 있는 것 하나. 더그아웃 난간, 그물, 벗어 둔 글러브,
+            기둥, 흙더미. 살짝 흐리게 — 깊이를 만드는 것은 이것이다
+     가운데 이야기의 주인. 여기만 또렷하다
+     뒤     관중, 전광판, 조명탑, 담장 광고 자리, 하늘.
+            **붓 자국으로 뭉갠다** — 또렷하게 그리면 주인을 가린다
+
+   그리고 공기를 채운다. 빛줄기, 흙먼지, 숨, 비, 조명 번짐, 그림자.
+   한 그림에 **하나만** 쓴다 — 전부 넣으면 탁해진다.
+
+   ⚠️ 과하게 하지 않는다. 폭발·불꽃·번개·속도선·만화 효과음은 쓰지
+      않는다. 이 채널은 차분하게 설명하는 채널이고, 화려하게 만들수록
+      싸구려로 보인다. **풍성함은 층과 공기에서 나오지 요란함에서
+      나오지 않는다.**
+
+   ⚠️ 빈 화면도 쓸 데가 있다. 사람이 떠나는 대목(입대·이적)에서는
+      일부러 비운다. 다만 그때도 **야구장 안**이다 — 빈 라커, 벗어 둔
+      유니폼, 불 꺼진 관중석.
    숫자 자체보다 이 규칙이 중요하다.
 
    한 편에 얼굴이 보이는 장면은 **많아야 여섯**으로 둔다. 적힌 사람이
@@ -454,6 +623,10 @@ export function peopleRules(people) {
     ...lines,
     '',
     '여기 없는 사람(단장, 기자, 관중 등)은 지어내도 된다.',
+    '',
+    '⚠️ **위 사람은 한 명도 빠뜨리지 않는다.** 편 전체에서 적어도 한 번은',
+    '얼굴이 나와야 하고, 그 샷의 person 칸에 이름을 적어야 한다. 이름을',
+    '적어야 받아 둔 사진을 참조로 쓸 수 있고, 그래야 실제로 닮게 나온다.',
   ].join('\n');
 }
 
@@ -530,9 +703,11 @@ export const VISUALS_SCHEMA = {
           person: {
             type: 'string',
             description:
-              '이 샷에 나오는 사람의 이름. 취재 자료의 people 에 있는 이름을 ' +
+              '이 샷에 나오는 사람의 이름. 「이 편에 나오는 사람」에 있는 이름을 ' +
               '그대로 쓴다. 사람이 안 나오거나 누구인지 정해지지 않았으면 빈 문자열. ' +
-              '사진을 받아 둔 사람이면 그 사진을 참조로 그린다.',
+              '사진을 받아 둔 사람이면 그 사진을 참조로 그려서 실제로 닮게 나온다. ' +
+              '⚠️ 그 사람 이야기를 하는 대목인데 이 칸을 비우면 엉뚱한 얼굴이 ' +
+              '올라간다. 누구 이야기인지 분명하면 반드시 적는다.',
           },
         },
       },
@@ -590,7 +765,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content, era = null, { kind = null, likeness = false } = {}) {
+export function composeImagePrompt(content, era = null, { kind = null, likeness = false, paint = null } = {}) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -609,6 +784,11 @@ export function composeImagePrompt(content, era = null, { kind = null, likeness 
   const isSports = kind === KIND.SPORTS;
   const fixed = isTale || isSports;
   let style = isTale ? TALE_STYLE_SUFFIX : isSports ? SPORTS_STYLE_SUFFIX : STYLE_SUFFIX;
+  // 그림체만 갈아 끼운다. 사람 규칙(비율·머리카락·얼굴·프레이밍·유니폼)은
+  // 그대로 둔다 — 그게 바뀌면 무엇 때문에 달라졌는지 가를 수가 없다.
+  if (isSports && paint && paint !== SPORTS_PAINT) {
+    style = style.replace(SPORTS_PAINT, paint);
+  }
   // 사진을 받아 둔 사람이면 닮게 그리라고 하고, 아니면 지어내라고 한다.
   // 두 줄을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
   if (isSports) {
@@ -738,9 +918,19 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null } =
   //      (얼굴이 바뀔 수가 없어진다. 돈도 그만큼 덜 든다)
   //   ② 인물 샷의 카메라를 `hold` 로 고정한다
   //      (가로 이동·큰 확대가 "붕 뜨는" 느낌을 만들었다)
+  //
+  // ⚠️ 2026-11-04 에 조건을 달았다. 이 묶기는 **참조 사진이 없을 때만**
+  //    한다. 사진이 있으면 샷마다 같은 얼굴이 나오므로 묶을 이유가
+  //    없고, 묶으면 한 장면이 통째로 정지 그림 한 장이 된다.
+  //    운영자가 "야구장 같은 현장감을 넣어 달라"고 했는데 이 코드가
+  //    바로 그 반대를 하고 있었다.
+  const hasPhoto = (name) =>
+    Boolean(photoNames && photoNames.has(String(name || '').trim()));
+
   let faceSource = null;
   for (const shot of shots) {
     if (!shot.depicts_real_person || shot.card_text) continue;
+    if (hasPhoto(shot.person)) continue; // 사진이 있으면 그대로 둔다
     // 얼굴은 움직이지 않는다. 모델이 pan 을 골랐어도 덮어쓴다.
     shot.camera = 'hold';
     if (!faceSource) {

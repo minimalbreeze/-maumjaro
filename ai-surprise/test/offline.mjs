@@ -3282,6 +3282,10 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     // 않지만, 분기를 '화풍 미리보기' 보다 먼저 두었으므로 표에서도 먼저
     // 둔다. 표 차례와 분기 차례가 어긋나면 이 검사가 거짓으로 통과한다.
     '인물 시트': '인물 시트',
+    // '화풍 후보 비교 (같은 장면 네 **그림**체 …)' 에도 '그림' 이 들어 있다.
+    // 2026-11-04 에 넣으면서 똑같이 그림 분기로 샜고 이 검사가 잡았다.
+    // '화풍 미리보기' 와도 '화풍' 을 같이 쓰므로 둘의 차례도 중요하다.
+    '화풍 후보 비교': '화풍 후보 비교',
     // '화풍 미리보기 (그림 6장만 …)' 에는 '그림' 이 들어 있다.
     // 여기서도 **먼저** 와야 그림 분기로 새지 않는다.
     '화풍 미리보기': '화풍 미리보기',
@@ -4358,7 +4362,11 @@ await asyncTest('사진이 있는 사람만 닮게 그리라고 적는다', asyn
   // 둘을 같이 붙이면 서로 반대라 모델이 하나를 버린다.
   assert.ok(!like.includes(V.SPORTS_INVENTED_CLAUSE), '반대되는 두 줄이 같이 붙었습니다');
   // 운영자가 "캐리커처 할 필요 없다"고 했다(2026-11-03).
-  assert.ok(/without\s+caricature or exaggeration/.test(like));
+  assert.ok(/no caricature or exaggeration/.test(like));
+  // 2026-11-04: "감독 얼굴이 그냥 얼굴이잖아, 애니메이션으로 그려야지".
+  // 닮음 지시 안에 **그림체가 먼저**라는 말이 들어 있어야 한다.
+  assert.ok(/hand-painted 2D anime character/.test(like), '그림으로 그리라는 말이 없습니다');
+  assert.ok(/never a photographic face/.test(like), '사진 얼굴을 막는 말이 없습니다');
 
   // 금지 목록의 이 줄은 닮게 그리라는 줄과 정반대다. 같이 보내면
   // 모델이 하나를 버리는데, 어느 쪽을 버렸는지는 그림이 나와야 안다.
@@ -5877,6 +5885,177 @@ await asyncTest('참조 모델 이름이 다 404 면 분명히 말한다', async
       assert.ok(/replicate\.mjs/.test(e.message), '어디를 고쳐야 하는지 안 알려줍니다');
       return true;
     }
+  );
+});
+
+
+await asyncTest('얼굴을 안 쓰는 샷에 무엇을 그릴지 알려 준다', async () => {
+  // 2026-11-04 운영자: "사람 정면만 넣지 말고, 수비 보는 장면, 타격하는
+  // 장면 등등 야구장 같은 현장감을 넣어서 만들어 줘."
+  //
+  // 전에는 "얼굴은 아껴 쓴다"까지만 적혀 있었다. 아끼라고만 하고 **대신
+  // 뭘 그리라는 말이 없으니** 빈 화면이나 회의실이 나왔다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+
+  assert.ok(/야구장을 그린다/.test(r), '현장을 그리라는 말이 없습니다');
+  // 종목 장면이 실제로 적혀 있어야 한다. 말만 "현장감"이라고 하면
+  // 모델이 알아서 하지 않는다.
+  for (const w of ['불펜', '수비', '타격', '전광판']) {
+    assert.ok(r.includes(w), `${w} 장면 예시가 없습니다`);
+  }
+  // 그림이 그 문장과 맞아야 한다는 말
+  assert.ok(/그 문장이 말하는 것을 보여야/.test(r));
+  // 얼굴 아끼기 규칙은 그대로 남아 있어야 한다
+  assert.ok(/한 사람에 한 장면이 기본/.test(r));
+});
+
+await asyncTest('사진이 있는 사람은 한 장으로 묶지 않는다', async () => {
+  // 묶기는 "같은 사람이 샷마다 다른 얼굴로 나온다"를 막으려고 넣었다.
+  // 참조 사진이 그 문제를 이미 푼다. 그런데도 묶으면 한 장면이 통째로
+  // 정지 그림 한 장이 되어 현장감이 죽는다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const scene = {
+    scene_number: 1,
+    shots: [{ shot_id: 'S1-1', duration: 5 }, { shot_id: 'S1-2', duration: 5 }],
+  };
+  const design = {
+    shots: [
+      {
+        shot_id: 'S1-1', image_prompt: 'a batter swinging', video_prompt: '', era: 'present',
+        camera: 'pan right', motion_need: 6, depicts_real_person: true, person: '김도영',
+      },
+      {
+        shot_id: 'S1-2', image_prompt: 'rounding first base', video_prompt: '', era: 'present',
+        camera: 'zoom in', motion_need: 7, depicts_real_person: true, person: '김도영',
+      },
+    ],
+  };
+
+  // 사진이 있으면 둘 다 제 그림을 그리고 카메라도 그대로다.
+  const withPhoto = V.mergeVisuals(scene, design, {
+    kind: 'SPORTS', photoNames: new Set(['김도영']),
+  }).scene;
+  assert.ok(withPhoto.shots[1].image_prompt, '사진이 있는데 두 번째 샷을 비웠습니다');
+  assert.ok(!withPhoto.shots[1].same_image_as, '사진이 있는데 묶었습니다');
+  assert.equal(withPhoto.shots[0].camera, 'pan right', '사진이 있는데 카메라를 멈췄습니다');
+
+  // 사진이 없으면 여태대로 묶는다 — 3화를 망친 문제가 그대로이므로.
+  const noPhoto = V.mergeVisuals(scene, design, { kind: 'SPORTS' }).scene;
+  assert.equal(noPhoto.shots[1].same_image_as, 'S1-1', '사진이 없는데 안 묶었습니다');
+  assert.equal(noPhoto.shots[1].image_prompt, '');
+  assert.equal(noPhoto.shots[0].camera, 'hold');
+});
+
+
+await asyncTest('화면을 층으로 채우되 요란하게 하지 않는다', async () => {
+  // 2026-11-04 운영자: "너무 썰렁하지도 너무 과하지도 않게, 적당한 구성과
+  // 배경과 배경 흐리기 등등의 다양한 효과를 넣어서 화면을 풍성하게."
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+
+  assert.ok(/층이 셋/.test(r), '층 지시가 없습니다');
+  for (const w of ['앞', '가운데', '뒤']) assert.ok(r.includes(w));
+  assert.ok(/흐리게/.test(r), '배경 흐리기 지시가 없습니다');
+
+  // 과하게 가는 것도 막아야 한다. "풍성하게"만 적으면 폭발과 속도선이 나온다.
+  assert.ok(/폭발·불꽃·번개·속도선/.test(r), '과한 효과를 막는 말이 없습니다');
+
+  // 화풍 문장에도 들어가야 한다 — 규칙은 설계 AI 가 읽고, 화풍 문장은
+  // 그림 모델이 읽는다. 한쪽에만 적으면 다른 쪽이 모른다.
+  const p = V.composeImagePrompt('a batter', null, { kind: 'SPORTS' });
+  assert.ok(/three layers/.test(p), '그림 모델에게 가는 글에 층 지시가 없습니다');
+  assert.ok(/out-of-focus/.test(p), '앞을 흐리게 하라는 말이 없습니다');
+});
+
+
+await asyncTest('주요 인물은 한 명도 빠뜨리지 말라고 적는다', async () => {
+  // 2026-11-04 운영자: "주요 인물들은 꼭 들어가야 하고."
+  //
+  // 전에는 "얼굴은 아껴 쓴다"까지만 있었다. 아끼라고만 하면 아예 안
+  // 그리게 된다 — 그러면 이름만 나오고 얼굴은 없는 영상이 된다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const r = V.SPORTS_VISUALS_RULES;
+  assert.ok(/주요 인물은 반드시 한 번씩 넣는다/.test(r), '반드시 넣으라는 말이 없습니다');
+  assert.ok(/한 명도 빠뜨리지 않는다/.test(r));
+  // 아끼는 규칙도 같이 남아야 한다. 둘 다 있어야 "한 번씩"이 된다.
+  assert.ok(/안 그린다 — 제도·규정/.test(r), '아껴 쓰는 규칙이 사라졌습니다');
+
+  // 사람 목록 쪽에도 적혀 있어야 한다. 규칙만 보고 목록을 안 볼 수 있다.
+  const pr = V.peopleRules([{ name: '김도영', role: '삼루수', look: 'a man' }]);
+  assert.ok(/한 명도 빠뜨리지 않는다/.test(pr), '사람 목록에 그 말이 없습니다');
+  assert.ok(/person 칸에 이름을 적어야/.test(pr), 'person 칸을 채우라는 말이 없습니다');
+});
+
+await asyncTest('7화에 나오는 사람이 모두 적혀 있다', async () => {
+  // 대본이 한 단락을 통째로 쓰는 사람이 people 에 없으면, 설계 AI 가
+  // 아무 얼굴이나 그린다. 김태군이 실제로 그랬다(2026-11-04).
+  const file = new URL('../../스포츠영상/7화.json', import.meta.url).pathname;
+  const script = new URL('../../스포츠영상/7화-대본.md', import.meta.url).pathname;
+  if (!fs.existsSync(file) || !fs.existsSync(script)) return;
+  const item = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const text = fs.readFileSync(script, 'utf8');
+  const named = new Set(item.people.map((p) => String(p.name).trim()));
+
+  // 대본에서 세 번 이상 나오는 사람 이름은 주요 인물로 본다.
+  for (const name of ['정해영', '김호령', '김태군', '김도영', '박재현', '양현종']) {
+    const hits = text.split(name).length - 1;
+    if (hits >= 2) {
+      assert.ok(named.has(name), `${name} 이 대본에 ${hits}번 나오는데 people 에 없습니다`);
+    }
+  }
+});
+
+
+await asyncTest('5.7초 어긋남을 고르게 나눠 맞춘다 (실행 #58)', async () => {
+  // 실행 #58 이 여기서 죽었다. 샷 합계 288.63초, 나레이션 282.91초.
+  // 그림 50장과 음성을 이미 만들어 놓고($0.17) 영상이 안 나왔다.
+  //
+  // 마지막 클립 하나로 5.7초를 흡수하면 그 화면이 눈에 띄게 끌린다.
+  // 예순 개에 나누면 샷마다 0.1초라 안 보인다.
+  const P = await import('../src/video/plan.mjs');
+
+  // 샷 60개 × 4.81초 = 288.6초, 나레이션은 282.91초
+  const shots = [];
+  for (let i = 1; i <= 60; i++) {
+    shots.push({
+      shot_id: `S1-${i}`, duration: 4.81, asset_type: 'image', camera: 'zoom in',
+    });
+  }
+  const scenes = [{ scene_number: 1, section: 'HOOK', shots, paragraphs: [] }];
+
+  const plan = P.buildTimeline(scenes, { narrationSeconds: 282.91, assetDir: 'assets' });
+  assert.deepEqual(plan.problems ?? [], [], `문제가 남았습니다: ${JSON.stringify(plan.problems)}`);
+  assert.ok(
+    Math.abs(plan.duration - 282.91) <= 1,
+    `합계가 ${plan.duration} 입니다 — 282.91 에 맞아야 합니다`
+  );
+
+  // 한 클립에 몰리지 않았는지 본다. 몰면 그 화면만 길게 끌린다.
+  const longest = Math.max(...plan.clips.map((c) => c.duration));
+  assert.ok(longest < 6, `한 클립이 ${longest}초입니다 — 한 곳에 몰렸습니다`);
+
+  // start 가 이어져야 한다. 틀리면 영상 중간이 비거나 겹친다.
+  let t = 0;
+  for (const c of plan.clips) {
+    assert.ok(Math.abs(c.start - t) < 0.05, `${c.shot_id} 의 시작이 어긋납니다`);
+    t = Math.round((t + c.duration) * 100) / 100;
+  }
+});
+
+await asyncTest('정말 크게 어긋나면 그대로 실패시킨다', async () => {
+  // 고르게 나눈다고 뭐든 맞추면 안 된다. 절반이 어긋나는 것은 반올림도
+  // 오차도 아니라 설계가 틀린 것이다. 조용히 늘리면 영상이 늘어진 채 나간다.
+  const P = await import('../src/video/plan.mjs');
+  const shots = [];
+  for (let i = 1; i <= 10; i++) {
+    shots.push({ shot_id: `S1-${i}`, duration: 10, asset_type: 'image', camera: 'zoom in' });
+  }
+  const scenes = [{ scene_number: 1, section: 'HOOK', shots, paragraphs: [] }];
+  const plan = P.buildTimeline(scenes, { narrationSeconds: 50, assetDir: 'assets' });
+  assert.ok(
+    (plan.problems || []).some((x) => /어긋납니다/.test(x)),
+    '100초짜리를 50초로 우겨 넣고도 통과했습니다'
   );
 });
 
