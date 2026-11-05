@@ -1629,6 +1629,92 @@ export const 바로잡기 = [
     맞는: '<p><strong>정규시즌 일정</strong>: 팀당 144경기, 총 720경기 / 9월 초 정규시즌 종료 후 가을야구 </p>\n<!-- /wp:paragraph -->\n<!-- wp:paragraph -->\n<p><strong>2027 시즌 일정은 2026년 11월 5일 기준 아직 발표되지 않았습니다.</strong> 2026 시즌 일정은 2025년 12월 19일에 공개됐으니 2027 일정도 그 무렵에 나올 가능성이 큽니다. 개막일·경기 수·올스타전 날짜는 그때 함께 발표되며, <a href="https://www.koreabaseball.com/Schedule/Schedule.aspx" rel="nofollow">KBO 공식 일정 페이지</a>에 가장 먼저 올라옵니다.</p>',
     이유: '글 5762. 2027 시즌을 찾아 들어오는 사람에게 "아직 안 나왔다"와 "언제쯤 나온다"를 알려준다. 없는 일정을 지어내지 않는다',
     글: [5762],
+  },
+
+  // ── 기아 타이거즈 스토어 글(11866) — 주소를 눌러 갈 수 있게 (2026-11-05)
+  //
+  // 운영자 지시: "각각을 찾아 갈 수 있는 베너와, 제목에 내용을 반영해서".
+  //
+  // 이 글은 변환기를 고치기 **전에** 올라가서 주소가 백틱에 싸인 글자로만
+  // 남았다. 누를 수가 없다. 표는 fix-tables 가 되돌렸으니 여기서는 주소를
+  // 실제 링크로 바꾼다.
+  //
+  // ⚠️ 순서가 중요하다. **표 셀(긴 문맥)을 먼저** 링크로 바꾸고, 남은
+  // 백틱은 뒤에서 글자만 벗긴다. 뒤엣것을 먼저 넣으면 표 셀의 백틱이
+  // 사라져 앞엣것이 안 걸린다.
+  //
+  // ⚠️ 자주 묻는 질문의 답은 **본문과 구조화 데이터(JSON-LD) 양쪽에** 있다.
+  // 거기 걸리는 치환에는 HTML 태그를 넣지 않는다 — JSON 안에 태그가 들어가면
+  // 구글이 스팸으로 본다. 그래서 백틱만 벗긴다.
+  {
+    틀린: '<td>`teamstore.tigers.co.kr`</td>',
+    맞는: '<td><a href="https://teamstore.tigers.co.kr/" rel="nofollow">teamstore.tigers.co.kr 바로가기</a></td>',
+    이유: '글 11866. 표에 적힌 주소를 눌러서 갈 수 있게 한다 (운영자 지시)',
+    글: [11866],
+  },
+  {
+    틀린: '<td>`tigersshop.kr`</td>',
+    맞는: '<td><a href="https://www.tigersshop.kr/" rel="nofollow">tigersshop.kr 바로가기</a></td>',
+    이유: '글 11866. 같은 표의 둘째 줄',
+    글: [11866],
+  },
+  {
+    틀린: '<td>`koreabaseball.com/Schedule/Schedule.aspx`</td>',
+    맞는: '<td><a href="https://www.koreabaseball.com/Schedule/Schedule.aspx" rel="nofollow">KBO 일정·중계 바로가기</a></td>',
+    이유: '글 11866. 일정 표. 이 페이지에 중계 채널도 같이 나온다',
+    글: [11866],
+  },
+  {
+    틀린: '<td>`tigers.co.kr`</td>',
+    맞는: '<td><a href="https://tigers.co.kr/" rel="nofollow">KIA 타이거즈 공식 홈페이지</a></td>',
+    이유: '글 11866. 일정 표의 둘째 줄',
+    글: [11866],
+  },
+  {
+    틀린: '주소는 `gall.dcinside.com/mgallery/board/lists/?id=kiakia` 입니다.',
+    맞는: '주소는 <a href="https://gall.dcinside.com/mgallery/board/lists/?id=kiakia" rel="nofollow">gall.dcinside.com/mgallery/board/lists/?id=kiakia</a> 입니다.',
+    이유: '글 11866. 갤러리도 눌러서 가게 한다. 구단 공식이 아니라는 설명은 바로 아래 문단에 그대로 남는다',
+    글: [11866],
+  },
+  // 여기부터는 남은 백틱을 벗기기만 한다. 자주 묻는 질문과 정리 절은
+  // 구조화 데이터와 글자가 같아야 하므로 **태그를 넣지 않는다.**
+  {
+    틀린: '`teamstore.tigers.co.kr`',
+    맞는: 'teamstore.tigers.co.kr',
+    이유: '글 11866. 자주 묻는 질문·정리 절에 남은 백틱을 벗긴다. 구조화 데이터와 글자가 같아야 해서 태그를 넣지 않는다',
+    글: [11866],
+  },
+  {
+    틀린: '`tigersshop.kr`',
+    맞는: 'tigersshop.kr',
+    이유: '글 11866. 같은 이유',
+    글: [11866],
+  },
+  {
+    틀린: '`koreabaseball.com/Schedule/Schedule.aspx`',
+    맞는: 'koreabaseball.com/Schedule/Schedule.aspx',
+    이유: '글 11866. 같은 이유',
+    글: [11866],
+  },
+  {
+    틀린: '`gall.dcinside.com/mgallery/board/lists/?id=kiakia`',
+    맞는: 'gall.dcinside.com/mgallery/board/lists/?id=kiakia',
+    이유: '글 11866. 같은 이유',
+    글: [11866],
+  },
+  {
+    틀린: '`tigers.co.kr`',
+    맞는: 'tigers.co.kr',
+    이유: '글 11866. 같은 이유. 표 셀은 앞 항목에서 이미 링크가 됐으므로 여기 걸리지 않는다',
+    글: [11866],
+  },
+  {
+    // 제목이다. 운영자가 준 검색어 넷(스토어·일정·팀스토어·갤러리)을
+    // 모두 담는다. 슬러그는 건드리지 않는다.
+    틀린: '기아 타이거즈 팀스토어와 타이거즈샵은 다릅니다 (스토어·일정·갤러리 한 곳에)',
+    맞는: '기아 타이거즈 스토어 두 곳 차이, 팀스토어 전용 상품 주의 (일정·갤러리 바로가기)',
+    이유: '글 11866 제목. 운영자 지시로 검색어 넷을 제목에 다 담는다 — 스토어·팀스토어·일정·갤러리',
+    글: [11866],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
