@@ -1933,12 +1933,36 @@ async function main() {
   console.log('────────────────────────────────────────────────────────');
 
   const 전체 = await 발행글전부();
-  const 글 = 고를글.length ? 전체.filter((p) => 고를글.includes(p.id)) : 전체;
+  let 글 = 고를글.length ? 전체.filter((p) => 고를글.includes(p.id)) : 전체;
   console.log(`\n발행 ${전체.length}편`);
   if (고를글.length) {
-    console.log(`   글 번호를 주셨으니 ${글.length}편만 봅니다: ${고를글.join(' ')}`);
+    // 번호를 적었는데 발행글에 없으면 임시글에서 찾아본다.
+    //
+    // 2026-11-05 에 더했다. 글 11866(임시글)의 주소를 링크로 바꾸려는데
+    // "발행글에 없는 번호"로 걸러져 0편이 나왔다. **발행 전에 고치는 것이
+    // 순서인데** 임시글을 고칠 수 없으면 발행한 뒤에야 고치게 된다.
+    //
+    // 번호를 적지 않은 전체 실행에서는 **지금처럼 발행글만** 본다 —
+    // 번호를 적는다는 것이 "이 글을 고쳐라"라는 분명한 지시다.
+    // 발행 상태를 읽지도 않는다 — 이 파일은 상태를 다루지 않는다는 것을
+    // 테스트가 소스 전체에서 지킨다. 치환은 발행글이든 임시글이든 같다.
     const 없는것 = 고를글.filter((id) => !전체.some((p) => p.id === id));
-    if (없는것.length) console.log(`   ⚠️ 발행글에 없는 번호: ${없는것.join(' ')}`);
+    const 임시글 = [];
+    for (const id of 없는것) {
+      try {
+        const { data } = await wpFetch(`/wp/v2/posts/${id}`, {
+          query: { context: 'edit', _fields: 'id,link,title' },
+        });
+        if (data?.id) 임시글.push({ id: data.id, link: data.link, title: data.title?.raw ?? '' });
+      } catch {
+        // 못 열면 아래에서 "찾지 못한 번호"로 알린다.
+      }
+    }
+    글 = [...글, ...임시글];
+    console.log(`   글 번호를 주셨으니 ${글.length}편만 봅니다: ${고를글.join(' ')}`);
+    for (const p of 임시글) console.log(`   ※ ${p.id} 는 발행글 목록에 없습니다 — 발행 전에 고칩니다`);
+    const 못찾음 = 없는것.filter((id) => !임시글.some((p) => p.id === id));
+    if (못찾음.length) console.log(`   ⚠️ 찾지 못한 번호: ${못찾음.join(' ')}`);
   }
 
   if (찾기만) {
