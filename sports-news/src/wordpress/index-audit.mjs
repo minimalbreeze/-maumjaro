@@ -212,14 +212,28 @@ export function 보강1순위(글, { 최소글자수 = 3000 } = {}) {
 export async function 발행글전부({ perPage = 100, max = 2000 } = {}) {
   const 모음 = [];
   for (let page = 1; 모음.length < max; page += 1) {
-    const { data } = await wpFetch('/wp/v2/posts', {
-      query: {
-        per_page: perPage, page, status: 'publish', context: 'edit',
-        orderby: 'date', order: 'desc',
-      },
-      timeoutMs: 40000,
-    });
-    const 목록 = Array.isArray(data) ? data : [];
+    let 목록;
+    try {
+      const { data } = await wpFetch('/wp/v2/posts', {
+        query: {
+          per_page: perPage, page, status: 'publish', context: 'edit',
+          orderby: 'date', order: 'desc',
+        },
+        timeoutMs: 40000,
+      });
+      목록 = Array.isArray(data) ? data : [];
+    } catch (err) {
+      // 발행 글이 **정확히 perPage 의 배수**면 마지막 페이지가 꽉 차서
+      // 다음 페이지를 한 번 더 묻게 된다. 워드프레스는 그것을
+      // 400 rest_post_invalid_page_number 로 답한다. 끝에 닿은 것이지
+      // 오류가 아니다.
+      //
+      // 2026-11-05 에 발행 700편이 되면서 실제로 터졌다. 그 순간
+      // 이 함수를 쓰는 0원 모드가 전부 멈췄다 — 오타 고치기·글끼리
+      // 링크·배너까지. 100편마다 다시 멈출 자리였다.
+      if (err?.code === 'rest_post_invalid_page_number') break;
+      throw err;
+    }
     if (!목록.length) break;
     for (const p of 목록) {
       모음.push({
