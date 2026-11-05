@@ -243,6 +243,56 @@ check('HTML 특수문자를 이스케이프한다', () => {
   assert.ok(h.includes('&lt;script&gt;') && h.includes('&amp;'));
 });
 
+// 2026-11-05. 표·링크·인라인 코드를 모르는 채로 글이 나가고 있었다.
+// 글 11866 에서 `<p>| | 주소 |<br>|---|---|<br>…` 가 그대로 찍힌 것을 보고 더했다.
+check('마크다운 표가 표 블록이 된다', () => {
+  const h = markdownToBlocks('| 가게 | 주소 |\n|---|---|\n| 팀스토어 | teamstore |');
+  assert.ok(h.includes('<!-- wp:table -->'), '표 블록이 아닙니다');
+  assert.ok(h.includes('<th>가게</th>') && h.includes('<td>팀스토어</td>'), '칸이 깨졌습니다');
+  assert.ok(!h.includes('|---|'), '구분선이 본문에 남았습니다');
+});
+check('빈 머리칸이 있는 표도 표로 본다', () => {
+  const h = markdownToBlocks('| | 주소 |\n|---|---|\n| 팀스토어 | teamstore |');
+  assert.ok(h.includes('<!-- wp:table -->') && h.includes('<th></th>'));
+});
+check('표가 아닌 것을 표로 보지 않는다', () => {
+  const h = markdownToBlocks('| 그냥 줄 |\n| 또 한 줄 |');
+  assert.ok(!h.includes('<!-- wp:table -->'));
+});
+check('표 안에서도 굵게와 인라인 코드가 산다', () => {
+  const h = markdownToBlocks('| 이름 | 값 |\n|---|---|\n| **굵게** | `코드` |');
+  assert.ok(h.includes('<strong>굵게</strong>') && h.includes('<code>코드</code>'));
+});
+check('마크다운 링크가 실제 링크가 된다', () => {
+  const h = markdownToBlocks('[KBO 일정](https://www.koreabaseball.com/Schedule/Schedule.aspx) 보기');
+  assert.ok(h.includes('<a href="https://www.koreabaseball.com/Schedule/Schedule.aspx"'), '링크가 안 걸렸습니다');
+  assert.ok(!h.includes('[KBO 일정]'), '마크다운이 그대로 남았습니다');
+});
+check('바깥 링크에만 nofollow 를 단다', () => {
+  const 바깥 = markdownToBlocks('[밖](https://www.koreabaseball.com/)');
+  const 우리 = markdownToBlocks('[안](https://wiki.minimalbreeze.com/2026-kbo-프로야구)');
+  assert.ok(바깥.includes('rel="nofollow"'), '바깥 링크에 nofollow 가 없습니다');
+  assert.ok(!우리.includes('rel="nofollow"'), '우리 글 링크에 nofollow 가 붙었습니다');
+});
+check('링크를 새 창으로 열지 않는다', () => {
+  const h = markdownToBlocks('[밖](https://www.koreabaseball.com/) [안](/a)');
+  assert.ok(!h.includes('target='), 'target 이 붙었습니다 — 지시서가 금지합니다');
+  assert.ok(!h.includes('noopener'), 'target 이 없으면 noopener 도 필요 없습니다');
+});
+check('굵은 링크가 둘 다 산다', () => {
+  const h = markdownToBlocks('- **[글 제목](https://wiki.minimalbreeze.com/가)** — 설명');
+  assert.ok(h.includes('<strong><a href="https://wiki.minimalbreeze.com/가">글 제목</a></strong>'));
+});
+check('인라인 코드가 <code>가 된다', () => {
+  const h = markdownToBlocks('주소는 `teamstore.tigers.co.kr` 입니다');
+  assert.ok(h.includes('<code>teamstore.tigers.co.kr</code>'));
+  assert.ok(!h.includes('`'), '백틱이 남았습니다');
+});
+check('링크 주소의 &를 이스케이프한다', () => {
+  const h = markdownToBlocks('[목록](https://gall.dcinside.com/board/lists/?id=kiakia&page=2)');
+  assert.ok(h.includes('&amp;page=2'), '& 가 날것으로 남았습니다');
+});
+
 console.log('\n[7] 저장 상태 고정');
 const draftSrc = fs.readFileSync(path.join(HERE, '../src/wordpress/draft.mjs'), 'utf8');
 check("코드에 'publish' 상태가 존재하지 않는다", () => {
