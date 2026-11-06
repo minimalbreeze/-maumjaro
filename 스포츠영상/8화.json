@@ -126,8 +126,13 @@
       "name": "김민혁",
       "role": "KT 외야수",
       "look": "a Korean man in his early 30s with short black hair, a lean contact hitter's build, wearing a plain white home uniform with red and black trim",
-      "tell": "⚠️ 생김새 자료가 없다. 얼굴을 크게 쓰지 않는다. 고관절이 불편한 상태라 무겁게 그리지 않는다 — 탓하는 그림을 만들지 않는다.",
-      "photo": ""
+      "tell": "케이티 외야수. 2번에서 내려온 선수다. 고관절이 불편한 상태라 무겁게 그리지 않는다 — 탓하는 그림을 만들지 않는다. ⚠️ 예비 주소 중 넷째는 2015년 사진이라 얼굴이 어리다. 쓸 때 조심한다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5348%2F2026%2F11%2F03%2F03_1096998_29889_20261103192419851.jpg&type=a340",
+      "photo_예비": [
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F11%2F03%2F0001277765_001_20261103195628760.jpg&type=a340",
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5348%2F2024%2F04%2F05%2F1712325091_20231105153339-401_20240405225403476.jpg&type=a340",
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2015%2F05%2F15%2Fl_2015051501000904600060461_99_20150515200205.jpg&type=a340"
+      ]
     },
     {
       "name": "김도영",
