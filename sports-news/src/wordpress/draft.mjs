@@ -113,7 +113,7 @@ function 표블록(lines) {
  * 현재 창에서 연다 — `target="_blank"` 를 쓰지 않는다(지시서). 그래서
  * `rel="noopener"` 도 필요 없다. 바깥으로 나가는 링크에만 nofollow 를 남긴다.
  */
-function 링크(text, url) {
+export function 링크(text, url) {
   const 우리것 = /^(https?:\/\/)?(wiki|maumjaro)\.minimalbreeze\.com/.test(url) || url.startsWith('/');
   return `<a href="${url}"${우리것 ? '' : ' rel="nofollow"'}>${text}</a>`;
 }
