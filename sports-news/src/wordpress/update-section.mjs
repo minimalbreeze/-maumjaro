@@ -39,6 +39,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { wpFetch, wpConfig } from './client.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
+import { markdownToBlocks } from './draft.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 import { 소제목자리, 섹션끝, 공백빼고 } from './drop-section.mjs';
 import { ROOT } from '../utils/env.mjs';
@@ -47,19 +48,20 @@ import { ROOT } from '../utils/env.mjs';
 export const 내부메모말 = ['안 쓴 것', '처리 기록'];
 
 /**
- * 빈 줄로 나뉜 평문을 워드프레스 문단 블록으로 바꾼다.
- * `- ` 로 시작하는 줄이 이어지면 목록 블록으로 묶는다.
+ * 빈 줄로 나뉜 마크다운을 워드프레스 블록으로 바꾼다.
+ *
+ * 2026-11-06 에 **초안 변환기(markdownToBlocks)로 넘겼다.** 그전에는 이 함수가
+ * 문단과 목록만 알아서, 섹션 파일에 쓴 표·`###` 소제목·굵게·링크가 전부
+ * `<p>| 라운드 | 기간 |…</p>` 로 그대로 나갔다. 초안 쪽은 같은 문제를
+ * 11-05 에 고쳤는데 이쪽은 같이 고치지 않았다 — 변환기를 두 벌 두면
+ * 이렇게 어긋난다. 그래서 한 벌만 쓴다.
+ *
+ * 자리표시자(이미지·광고·배너)는 섹션 파일에 쓰지 않으므로 넘기지 않는다.
  */
 export function 블록으로(글) {
-  const 토막 = String(글 || '').replace(/\r/g, '').trim().split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean);
-  return 토막.map((t) => {
-    const 줄 = t.split('\n').map((l) => l.trim()).filter(Boolean);
-    if (줄.length && 줄.every((l) => /^[-*]\s+/.test(l))) {
-      const 항목 = 줄.map((l) => `<li>${l.replace(/^[-*]\s+/, '')}</li>`).join('\n');
-      return `<!-- wp:list -->\n<ul class="wp-block-list">\n${항목}\n</ul>\n<!-- /wp:list -->`;
-    }
-    return `<!-- wp:paragraph -->\n<p>${줄.join(' ')}</p>\n<!-- /wp:paragraph -->`;
-  }).join('\n\n');
+  const 글자 = String(글 || '').replace(/\r/g, '').trim();
+  if (!글자) return '';
+  return markdownToBlocks(글자);
 }
 
 /**

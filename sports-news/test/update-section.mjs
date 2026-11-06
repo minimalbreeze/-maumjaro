@@ -215,4 +215,18 @@ check('끼우기도 본문만 보낸다', () => {
   assert.deepEqual(보내는것, ['content: r.html', 'content: r.html'], `본문 말고 다른 것을 보냅니다: ${보내는것.join(' / ')}`);
 });
 
+check('섹션 파일의 표·소제목·굵게·링크를 그대로 찍지 않는다', () => {
+  // 2026-11-06. 초안 변환기는 11-05 에 표를 배웠는데 이 함수는 못 배워서,
+  // 섹션 파일에 쓴 표가 `<p>| 라운드 | 기간 |…</p>` 로 나갔다.
+  const 글 = ['**굵게**', '| 라운드 | 기간 |\n|---|---|\n| 4라운드 | 10월 31일 |', '### 소제목', '[공식](https://example.com/a)'].join('\n\n');
+  const 블록 = 블록으로(글);
+  assert.match(블록, /<!-- wp:table -->/, '표를 표 블록으로 만들지 않았습니다');
+  assert.match(블록, /<th>라운드<\/th>/, '표 머리칸이 없습니다');
+  assert.match(블록, /<!-- wp:heading \{"level":3\} -->/, '### 를 소제목으로 만들지 않았습니다');
+  assert.match(블록, /<strong>굵게<\/strong>/, '굵게 표시가 글자로 남았습니다');
+  assert.match(블록, /<a href="https:\/\/example\.com\/a" rel="nofollow">공식<\/a>/, '링크가 글자로 남았습니다');
+  assert.ok(!/\|---\|/.test(블록), `표 구분선이 글자로 남았습니다: ${블록}`);
+  assert.ok(!/<p>#/.test(블록), '소제목 표시가 글자로 남았습니다');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
