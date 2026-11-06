@@ -65,4 +65,6 @@ Allow: /
 
 Sitemap: https://maumjaro.minimalbreeze.com/sitemap.xml
 
+# RSS(최근 추가된 페이지): https://maumjaro.minimalbreeze.com/rss.xml
+
 # LLM용 사이트 요약(llms.txt 관례): https://maumjaro.minimalbreeze.com/llms.txt

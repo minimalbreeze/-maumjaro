@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  이 파일은 scripts/build-pages.mjs가 생성한다. 손으로 고치면 덮어써진다.
+  최근 45일 안에 새로 생긴 페이지만 담는다(최대 100장).
+  날짜는 git에서 꺼낸 실제 추가일이고, 한 번 정해지면 .pages-first-seen.json에 남는다.
+-->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>맘운자로</title>
+  <link>https://maumjaro.minimalbreeze.com/</link>
+  <description>오늘의 마음에 한 대. 감정을 고르면 용량이 뜨고, 그날 해볼 처방을 하나 알려주는 무료 웹앱입니다.</description>
+  <language>ko</language>
+  <lastBuildDate>Fri, 06 Nov 2026 00:00:00 +0900</lastBuildDate>
+  <atom:link href="https://maumjaro.minimalbreeze.com/rss.xml" rel="self" type="application/rss+xml" />
+  <item>
+    <title>개띠 행운의 숫자 — 5·10·11·23·35 (오행 토, 색은 노랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/dog/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/dog/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>개띠의 행운의 숫자와 색. 십이지 순번 11번, 오행 토의 생성수 5·10, 색은 노랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>용띠 행운의 숫자 — 5·10·17·29·41 (오행 토, 색은 노랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/dragon/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/dragon/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>용띠의 행운의 숫자와 색. 십이지 순번 5번, 오행 토의 생성수 5·10, 색은 노랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>양띠 행운의 숫자 — 5·8·10·20·32·44 (오행 토, 색은 노랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/goat/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/goat/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>양띠의 행운의 숫자와 색. 십이지 순번 8번, 오행 토의 생성수 5·10, 색은 노랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>말띠 행운의 숫자 — 2·7·19·31·43 (오행 화, 색은 빨강) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/horse/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/horse/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>말띠의 행운의 숫자와 색. 십이지 순번 7번, 오행 화의 생성수 2·7, 색은 빨강. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>띠별 행운의 숫자와 색 — 12띠 전부 (십이지·오행 기준) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>12띠 각각의 행운의 숫자와 색을 한 표로. 십이지 순번과 오행 생성수에서 나온 값입니다. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>원숭이띠 행운의 숫자 — 4·9·21·33·45 (오행 금, 색은 하양) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/monkey/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/monkey/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>원숭이띠의 행운의 숫자와 색. 십이지 순번 9번, 오행 금의 생성수 4·9, 색은 하양. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>소띠 행운의 숫자 — 2·5·10·14·26·38 (오행 토, 색은 노랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/ox/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/ox/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>소띠의 행운의 숫자와 색. 십이지 순번 2번, 오행 토의 생성수 5·10, 색은 노랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>돼지띠 행운의 숫자 — 1·6·12·24·36 (오행 수, 색은 검정) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/pig/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/pig/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>돼지띠의 행운의 숫자와 색. 십이지 순번 12번, 오행 수의 생성수 1·6, 색은 검정. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>토끼띠 행운의 숫자 — 3·4·8·16·28·40 (오행 목, 색은 파랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/rabbit/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/rabbit/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>토끼띠의 행운의 숫자와 색. 십이지 순번 4번, 오행 목의 생성수 3·8, 색은 파랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>쥐띠 행운의 숫자 — 1·6·13·25·37 (오행 수, 색은 검정) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/rat/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/rat/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>쥐띠의 행운의 숫자와 색. 십이지 순번 1번, 오행 수의 생성수 1·6, 색은 검정. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>닭띠 행운의 숫자 — 4·9·10·22·34 (오행 금, 색은 하양) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/rooster/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/rooster/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>닭띠의 행운의 숫자와 색. 십이지 순번 10번, 오행 금의 생성수 4·9, 색은 하양. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>뱀띠 행운의 숫자 — 2·6·7·18·30·42 (오행 화, 색은 빨강) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/snake/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/snake/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>뱀띠의 행운의 숫자와 색. 십이지 순번 6번, 오행 화의 생성수 2·7, 색은 빨강. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>호랑이띠 행운의 숫자 — 3·8·15·27·39 (오행 목, 색은 파랑) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/tiger/lucky/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/tiger/lucky/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>호랑이띠의 행운의 숫자와 색. 십이지 순번 3번, 오행 목의 생성수 3·8, 색은 파랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.</description>
+  </item>
+  <item>
+    <title>1936년생은 무슨 띠? 쥐띠입니다 (병자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1936/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1936/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1936년생은 쥐띠. 병자년(丙子), 붉은 쥐의 해입니다. 2026년 기준 만 90세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1937년생은 무슨 띠? 소띠입니다 (정축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1937/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1937/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1937년생은 소띠. 정축년(丁丑), 붉은 소의 해입니다. 2026년 기준 만 89세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1938년생은 무슨 띠? 호랑이띠입니다 (무인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1938/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1938/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1938년생은 호랑이띠. 무인년(戊寅), 노란 호랑이의 해입니다. 2026년 기준 만 88세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1939년생은 무슨 띠? 토끼띠입니다 (기묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1939/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1939/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1939년생은 토끼띠. 기묘년(己卯), 노란 토끼의 해입니다. 2026년 기준 만 87세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1940년생은 무슨 띠? 용띠입니다 (경진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1940/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1940/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1940년생은 용띠. 경진년(庚辰), 흰 용의 해입니다. 2026년 기준 만 86세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1941년생은 무슨 띠? 뱀띠입니다 (신사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1941/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1941/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1941년생은 뱀띠. 신사년(辛巳), 흰 뱀의 해입니다. 2026년 기준 만 85세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1942년생은 무슨 띠? 말띠입니다 (임오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1942/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1942/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1942년생은 말띠. 임오년(壬午), 검은 말의 해입니다. 2026년 기준 만 84세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1943년생은 무슨 띠? 양띠입니다 (계미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1943/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1943/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1943년생은 양띠. 계미년(癸未), 검은 양의 해입니다. 2026년 기준 만 83세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1944년생은 무슨 띠? 원숭이띠입니다 (갑신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1944/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1944/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1944년생은 원숭이띠. 갑신년(甲申), 푸른 원숭이의 해입니다. 2026년 기준 만 82세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1945년생은 무슨 띠? 닭띠입니다 (을유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1945/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1945/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1945년생은 닭띠. 을유년(乙酉), 푸른 닭의 해입니다. 2026년 기준 만 81세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1946년생은 무슨 띠? 개띠입니다 (병술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1946/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1946/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1946년생은 개띠. 병술년(丙戌), 붉은 개의 해입니다. 2026년 기준 만 80세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1947년생은 무슨 띠? 돼지띠입니다 (정해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1947/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1947/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1947년생은 돼지띠. 정해년(丁亥), 붉은 돼지의 해입니다. 2026년 기준 만 79세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1948년생은 무슨 띠? 쥐띠입니다 (무자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1948/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1948/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1948년생은 쥐띠. 무자년(戊子), 노란 쥐의 해입니다. 2026년 기준 만 78세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1949년생은 무슨 띠? 소띠입니다 (기축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1949/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1949/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1949년생은 소띠. 기축년(己丑), 노란 소의 해입니다. 2026년 기준 만 77세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1950년생은 무슨 띠? 호랑이띠입니다 (경인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1950/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1950/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1950년생은 호랑이띠. 경인년(庚寅), 흰 호랑이의 해입니다. 2026년 기준 만 76세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1951년생은 무슨 띠? 토끼띠입니다 (신묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1951/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1951/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1951년생은 토끼띠. 신묘년(辛卯), 흰 토끼의 해입니다. 2026년 기준 만 75세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1952년생은 무슨 띠? 용띠입니다 (임진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1952/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1952/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1952년생은 용띠. 임진년(壬辰), 검은 용의 해입니다. 2026년 기준 만 74세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1953년생은 무슨 띠? 뱀띠입니다 (계사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1953/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1953/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1953년생은 뱀띠. 계사년(癸巳), 검은 뱀의 해입니다. 2026년 기준 만 73세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1954년생은 무슨 띠? 말띠입니다 (갑오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1954/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1954/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1954년생은 말띠. 갑오년(甲午), 푸른 말의 해입니다. 2026년 기준 만 72세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1955년생은 무슨 띠? 양띠입니다 (을미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1955/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1955/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1955년생은 양띠. 을미년(乙未), 푸른 양의 해입니다. 2026년 기준 만 71세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1956년생은 무슨 띠? 원숭이띠입니다 (병신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1956/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1956/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1956년생은 원숭이띠. 병신년(丙申), 붉은 원숭이의 해입니다. 2026년 기준 만 70세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1957년생은 무슨 띠? 닭띠입니다 (정유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1957/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1957/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1957년생은 닭띠. 정유년(丁酉), 붉은 닭의 해입니다. 2026년 기준 만 69세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1958년생은 무슨 띠? 개띠입니다 (무술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1958/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1958/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1958년생은 개띠. 무술년(戊戌), 노란 개의 해입니다. 2026년 기준 만 68세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1959년생은 무슨 띠? 돼지띠입니다 (기해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1959/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1959/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1959년생은 돼지띠. 기해년(己亥), 노란 돼지의 해입니다. 2026년 기준 만 67세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1960년생은 무슨 띠? 쥐띠입니다 (경자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1960/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1960/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1960년생은 쥐띠. 경자년(庚子), 흰 쥐의 해입니다. 2026년 기준 만 66세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1961년생은 무슨 띠? 소띠입니다 (신축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1961/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1961/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1961년생은 소띠. 신축년(辛丑), 흰 소의 해입니다. 2026년 기준 만 65세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1962년생은 무슨 띠? 호랑이띠입니다 (임인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1962/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1962/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1962년생은 호랑이띠. 임인년(壬寅), 검은 호랑이의 해입니다. 2026년 기준 만 64세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1963년생은 무슨 띠? 토끼띠입니다 (계묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1963/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1963/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1963년생은 토끼띠. 계묘년(癸卯), 검은 토끼의 해입니다. 2026년 기준 만 63세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1964년생은 무슨 띠? 용띠입니다 (갑진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1964/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1964/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1964년생은 용띠. 갑진년(甲辰), 푸른 용의 해입니다. 2026년 기준 만 62세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1965년생은 무슨 띠? 뱀띠입니다 (을사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1965/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1965/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1965년생은 뱀띠. 을사년(乙巳), 푸른 뱀의 해입니다. 2026년 기준 만 61세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1966년생은 무슨 띠? 말띠입니다 (병오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1966/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1966/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1966년생은 말띠. 병오년(丙午), 붉은 말의 해입니다. 2026년 기준 만 60세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1967년생은 무슨 띠? 양띠입니다 (정미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1967/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1967/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1967년생은 양띠. 정미년(丁未), 붉은 양의 해입니다. 2026년 기준 만 59세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1968년생은 무슨 띠? 원숭이띠입니다 (무신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1968/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1968/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1968년생은 원숭이띠. 무신년(戊申), 노란 원숭이의 해입니다. 2026년 기준 만 58세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1969년생은 무슨 띠? 닭띠입니다 (기유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1969/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1969/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1969년생은 닭띠. 기유년(己酉), 노란 닭의 해입니다. 2026년 기준 만 57세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1970년생은 무슨 띠? 개띠입니다 (경술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1970/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1970/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1970년생은 개띠. 경술년(庚戌), 흰 개의 해입니다. 2026년 기준 만 56세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1971년생은 무슨 띠? 돼지띠입니다 (신해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1971/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1971/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1971년생은 돼지띠. 신해년(辛亥), 흰 돼지의 해입니다. 2026년 기준 만 55세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1972년생은 무슨 띠? 쥐띠입니다 (임자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1972/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1972/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1972년생은 쥐띠. 임자년(壬子), 검은 쥐의 해입니다. 2026년 기준 만 54세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1973년생은 무슨 띠? 소띠입니다 (계축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1973/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1973/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1973년생은 소띠. 계축년(癸丑), 검은 소의 해입니다. 2026년 기준 만 53세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1974년생은 무슨 띠? 호랑이띠입니다 (갑인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1974/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1974/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1974년생은 호랑이띠. 갑인년(甲寅), 푸른 호랑이의 해입니다. 2026년 기준 만 52세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1975년생은 무슨 띠? 토끼띠입니다 (을묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1975/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1975/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1975년생은 토끼띠. 을묘년(乙卯), 푸른 토끼의 해입니다. 2026년 기준 만 51세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1976년생은 무슨 띠? 용띠입니다 (병진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1976/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1976/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1976년생은 용띠. 병진년(丙辰), 붉은 용의 해입니다. 2026년 기준 만 50세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1977년생은 무슨 띠? 뱀띠입니다 (정사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1977/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1977/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1977년생은 뱀띠. 정사년(丁巳), 붉은 뱀의 해입니다. 2026년 기준 만 49세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1978년생은 무슨 띠? 말띠입니다 (무오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1978/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1978/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1978년생은 말띠. 무오년(戊午), 노란 말의 해입니다. 2026년 기준 만 48세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1979년생은 무슨 띠? 양띠입니다 (기미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1979/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1979/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1979년생은 양띠. 기미년(己未), 노란 양의 해입니다. 2026년 기준 만 47세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1980년생은 무슨 띠? 원숭이띠입니다 (경신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1980/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1980/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1980년생은 원숭이띠. 경신년(庚申), 흰 원숭이의 해입니다. 2026년 기준 만 46세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1981년생은 무슨 띠? 닭띠입니다 (신유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1981/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1981/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1981년생은 닭띠. 신유년(辛酉), 흰 닭의 해입니다. 2026년 기준 만 45세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1982년생은 무슨 띠? 개띠입니다 (임술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1982/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1982/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1982년생은 개띠. 임술년(壬戌), 검은 개의 해입니다. 2026년 기준 만 44세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1983년생은 무슨 띠? 돼지띠입니다 (계해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1983/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1983/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1983년생은 돼지띠. 계해년(癸亥), 검은 돼지의 해입니다. 2026년 기준 만 43세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1984년생은 무슨 띠? 쥐띠입니다 (갑자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1984/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1984/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1984년생은 쥐띠. 갑자년(甲子), 푸른 쥐의 해입니다. 2026년 기준 만 42세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1985년생은 무슨 띠? 소띠입니다 (을축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1985/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1985/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1985년생은 소띠. 을축년(乙丑), 푸른 소의 해입니다. 2026년 기준 만 41세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1986년생은 무슨 띠? 호랑이띠입니다 (병인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1986/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1986/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1986년생은 호랑이띠. 병인년(丙寅), 붉은 호랑이의 해입니다. 2026년 기준 만 40세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1987년생은 무슨 띠? 토끼띠입니다 (정묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1987/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1987/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1987년생은 토끼띠. 정묘년(丁卯), 붉은 토끼의 해입니다. 2026년 기준 만 39세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1988년생은 무슨 띠? 용띠입니다 (무진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1988/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1988/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1988년생은 용띠. 무진년(戊辰), 노란 용의 해입니다. 2026년 기준 만 38세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1989년생은 무슨 띠? 뱀띠입니다 (기사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1989/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1989/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1989년생은 뱀띠. 기사년(己巳), 노란 뱀의 해입니다. 2026년 기준 만 37세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1990년생은 무슨 띠? 말띠입니다 (경오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1990/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1990/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1990년생은 말띠. 경오년(庚午), 흰 말의 해입니다. 2026년 기준 만 36세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1991년생은 무슨 띠? 양띠입니다 (신미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1991/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1991/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1991년생은 양띠. 신미년(辛未), 흰 양의 해입니다. 2026년 기준 만 35세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1992년생은 무슨 띠? 원숭이띠입니다 (임신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1992/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1992/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1992년생은 원숭이띠. 임신년(壬申), 검은 원숭이의 해입니다. 2026년 기준 만 34세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1993년생은 무슨 띠? 닭띠입니다 (계유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1993/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1993/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1993년생은 닭띠. 계유년(癸酉), 검은 닭의 해입니다. 2026년 기준 만 33세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1994년생은 무슨 띠? 개띠입니다 (갑술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1994/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1994/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1994년생은 개띠. 갑술년(甲戌), 푸른 개의 해입니다. 2026년 기준 만 32세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1995년생은 무슨 띠? 돼지띠입니다 (을해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1995/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1995/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1995년생은 돼지띠. 을해년(乙亥), 푸른 돼지의 해입니다. 2026년 기준 만 31세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1996년생은 무슨 띠? 쥐띠입니다 (병자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1996/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1996/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1996년생은 쥐띠. 병자년(丙子), 붉은 쥐의 해입니다. 2026년 기준 만 30세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1997년생은 무슨 띠? 소띠입니다 (정축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1997/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1997/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1997년생은 소띠. 정축년(丁丑), 붉은 소의 해입니다. 2026년 기준 만 29세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1998년생은 무슨 띠? 호랑이띠입니다 (무인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1998/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1998/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1998년생은 호랑이띠. 무인년(戊寅), 노란 호랑이의 해입니다. 2026년 기준 만 28세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>1999년생은 무슨 띠? 토끼띠입니다 (기묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/1999/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/1999/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>1999년생은 토끼띠. 기묘년(己卯), 노란 토끼의 해입니다. 2026년 기준 만 27세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2000년생은 무슨 띠? 용띠입니다 (경진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2000/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2000/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2000년생은 용띠. 경진년(庚辰), 흰 용의 해입니다. 2026년 기준 만 26세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2001년생은 무슨 띠? 뱀띠입니다 (신사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2001/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2001/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2001년생은 뱀띠. 신사년(辛巳), 흰 뱀의 해입니다. 2026년 기준 만 25세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2002년생은 무슨 띠? 말띠입니다 (임오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2002/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2002/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2002년생은 말띠. 임오년(壬午), 검은 말의 해입니다. 2026년 기준 만 24세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2003년생은 무슨 띠? 양띠입니다 (계미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2003/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2003/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2003년생은 양띠. 계미년(癸未), 검은 양의 해입니다. 2026년 기준 만 23세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2004년생은 무슨 띠? 원숭이띠입니다 (갑신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2004/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2004/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2004년생은 원숭이띠. 갑신년(甲申), 푸른 원숭이의 해입니다. 2026년 기준 만 22세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2005년생은 무슨 띠? 닭띠입니다 (을유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2005/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2005/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2005년생은 닭띠. 을유년(乙酉), 푸른 닭의 해입니다. 2026년 기준 만 21세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2006년생은 무슨 띠? 개띠입니다 (병술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2006/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2006/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2006년생은 개띠. 병술년(丙戌), 붉은 개의 해입니다. 2026년 기준 만 20세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2007년생은 무슨 띠? 돼지띠입니다 (정해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2007/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2007/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2007년생은 돼지띠. 정해년(丁亥), 붉은 돼지의 해입니다. 2026년 기준 만 19세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2008년생은 무슨 띠? 쥐띠입니다 (무자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2008/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2008/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2008년생은 쥐띠. 무자년(戊子), 노란 쥐의 해입니다. 2026년 기준 만 18세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2009년생은 무슨 띠? 소띠입니다 (기축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2009/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2009/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2009년생은 소띠. 기축년(己丑), 노란 소의 해입니다. 2026년 기준 만 17세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2010년생은 무슨 띠? 호랑이띠입니다 (경인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2010/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2010/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2010년생은 호랑이띠. 경인년(庚寅), 흰 호랑이의 해입니다. 2026년 기준 만 16세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2011년생은 무슨 띠? 토끼띠입니다 (신묘년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2011/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2011/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2011년생은 토끼띠. 신묘년(辛卯), 흰 토끼의 해입니다. 2026년 기준 만 15세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2012년생은 무슨 띠? 용띠입니다 (임진년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2012/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2012/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2012년생은 용띠. 임진년(壬辰), 검은 용의 해입니다. 2026년 기준 만 14세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2013년생은 무슨 띠? 뱀띠입니다 (계사년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2013/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2013/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2013년생은 뱀띠. 계사년(癸巳), 검은 뱀의 해입니다. 2026년 기준 만 13세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2014년생은 무슨 띠? 말띠입니다 (갑오년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2014/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2014/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2014년생은 말띠. 갑오년(甲午), 푸른 말의 해입니다. 2026년 기준 만 12세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2015년생은 무슨 띠? 양띠입니다 (을미년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2015/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2015/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2015년생은 양띠. 을미년(乙未), 푸른 양의 해입니다. 2026년 기준 만 11세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2016년생은 무슨 띠? 원숭이띠입니다 (병신년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2016/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2016/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2016년생은 원숭이띠. 병신년(丙申), 붉은 원숭이의 해입니다. 2026년 기준 만 10세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2017년생은 무슨 띠? 닭띠입니다 (정유년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2017/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2017/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2017년생은 닭띠. 정유년(丁酉), 붉은 닭의 해입니다. 2026년 기준 만 9세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2018년생은 무슨 띠? 개띠입니다 (무술년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2018/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2018/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2018년생은 개띠. 무술년(戊戌), 노란 개의 해입니다. 2026년 기준 만 8세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2019년생은 무슨 띠? 돼지띠입니다 (기해년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2019/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2019/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2019년생은 돼지띠. 기해년(己亥), 노란 돼지의 해입니다. 2026년 기준 만 7세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2020년생은 무슨 띠? 쥐띠입니다 (경자년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2020/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2020/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2020년생은 쥐띠. 경자년(庚子), 흰 쥐의 해입니다. 2026년 기준 만 6세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2021년생은 무슨 띠? 소띠입니다 (신축년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2021/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2021/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2021년생은 소띠. 신축년(辛丑), 흰 소의 해입니다. 2026년 기준 만 5세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+  <item>
+    <title>2022년생은 무슨 띠? 호랑이띠입니다 (임인년) · 2026년 나이 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/animal/year/2022/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2022/</guid>
+    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
+    <description>2022년생은 호랑이띠. 임인년(壬寅), 검은 호랑이의 해입니다. 2026년 기준 만 4세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
+  </item>
+</channel>
+</rss>
