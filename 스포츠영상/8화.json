@@ -1,0 +1,183 @@
+{
+  "title": "안타는 더 쳤는데 다섯 배로 졌다 (한국시리즈 3차전, 케이티의 2번 자리)",
+  "premise": "11월 6일 한국시리즈 3차전, KT가 안타 일곱 개를 치고 1점, 삼성이 네 개를 치고 5점을 냈다. 아픈 선수 둘이 빠졌고, 그 전부터 2번 자리가 비어 있었고, 그걸 고치려고 꺼낸 카드가 통하지 않았다.",
+  "angle": "세 겹이다. ① 최원준·허경민이 빠졌다 ② 1·2차전 내내 2번 타순이 안 터졌다 ③ 그래서 413타석을 3번으로 뛴 안현민을 2번에 올렸는데 그날도 안 됐다. 그리고 같은 문제를 KIA가 플레이오프에서 먼저 겪었다 — 5화에서 다룬 그 시리즈다. 이범호의 \"기다릴 수 있는 상황은 아닌 것 같다\"가 두 팀을 잇는다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "첫 줄",
+      "note": "안타 일곱에 1점, 넷에 5점. 더 친 쪽이 다섯 배로 졌다. 표 카드.",
+      "value": 100
+    },
+    {
+      "key": "OUT",
+      "label": "둘이 빠졌다",
+      "note": "최원준(2차전 펜스 충돌 손가락), 허경민(담). 이강철 감독의 말 그대로.",
+      "value": 82
+    },
+    {
+      "key": "TWO",
+      "label": "그런데 더 오래된 문제가 있었습니다",
+      "note": "2번 김민혁 8타수 1안타 .125. 2차전 3회 번트 실패. 아프기 전부터 빈 자리.",
+      "value": 90
+    },
+    {
+      "key": "KIA",
+      "label": "어디서 본 장면입니다",
+      "note": "KIA도 같았다. 선발 2번 .167, 플레이오프만 .000. 2도영. 이범호의 말이 중심.",
+      "value": 95
+    },
+    {
+      "key": "CARD",
+      "label": "그래서 케이티도 카드를 꺼냈습니다",
+      "note": "안현민 413/415타석이 3번이었는데 2번으로. 이 시리즈 최대 카드. 표 카드.",
+      "value": 98
+    },
+    {
+      "key": "TURN",
+      "label": "2회 말, 저울이 뒤집힌 자리",
+      "note": "구자욱 3루타. 아픈 몸으로 3루까지. 이 편의 중심 장면.",
+      "value": 96
+    },
+    {
+      "key": "PITCH",
+      "label": "후라도와 소형준",
+      "note": "7이닝 1실점 무볼넷 대 2회 4실점 뒤 3~6회 퍼펙트. 소형준을 탓하지 않는다.",
+      "value": 72
+    },
+    {
+      "key": "NUM",
+      "label": "안타 넷에 다섯 점",
+      "note": "효율의 차이. 박승규 8회 솔로. 표 카드.",
+      "value": 80
+    },
+    {
+      "key": "NEXT",
+      "label": "오늘은 루키 대 로건입니다",
+      "note": "장찬희 4.50 대 로건 3.59. 후라도의 7이닝이 오늘까지 간다. 표 카드.",
+      "value": 85
+    },
+    {
+      "key": "ODDS",
+      "label": "88.9%, 그리고 예외 둘",
+      "note": "예외 2003 현대·2020 NC 둘 다 1위 팀. 케이티가 직행한 쪽. 예언으로 쓰지 않는다.",
+      "value": 88
+    },
+    {
+      "key": "CLOSE",
+      "label": "마무리",
+      "note": "2번 자리를 어떻게 할까 — 댓글. 오늘 2시.",
+      "value": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "KT 최원준·허경민 3차전 선발 제외, 이강철 감독 설명 (2026-11-06)",
+      "url": "",
+      "note": "운영자 전달. 3차전 타순도 여기서 나왔다 — 1번 김민혁, 2번 안현민, 3번 김현수."
+    },
+    {
+      "name": "한국시리즈 3차전 삼성 5-1 KT, 후라도 7이닝 1실점, 구자욱 2타점 3루타 (2026-11-06 대구)",
+      "url": "",
+      "note": "운영자 전달. \"부상으로 몸 상태가 완전하지 않았던 구자욱도 3루까지 진루했다\"."
+    },
+    {
+      "name": "삼성 4차전 선발 장찬희 예고, KT 로건 (한동훈, 2026-11-06)",
+      "url": "",
+      "note": "88.9%의 예외 둘(2003 현대·2020 NC)이 모두 1위 팀이었다는 사실도 여기서."
+    },
+    {
+      "name": "KT 2번 타순 문제와 KIA의 2도영 (2026-11-06, 3차전 전에 쓰인 기사)",
+      "url": "",
+      "note": "이범호 감독의 \"기다릴 수 있는 상황은 아닌 것 같다\"와 안현민 타석 분포."
+    },
+    {
+      "name": "5화 — KIA 플레이오프 5차전 탈락 (2026-11-01)",
+      "url": "",
+      "note": "이미 확인한 사실. KIA 쪽 이야기를 여기서 이어 붙인다."
+    }
+  ],
+  "people": [
+    {
+      "name": "안현민",
+      "role": "KT 외야수",
+      "look": "a Korean man in his early 20s with short black hair, a solid athletic build with broad shoulders, a calm steady face, wearing a plain white home uniform with red and black trim",
+      "tell": "⚠️ 생김새 자료가 없다. 사진을 못 받았다 — 얼굴을 크게 쓰지 않고 타석 자세와 우익수 수비 위치로 누구인지 알린다. 이 편에서 가장 중요한 선수이므로 사진 주소를 받으면 제일 먼저 넣는다.",
+      "photo": ""
+    },
+    {
+      "name": "구자욱",
+      "role": "삼성 외야수",
+      "look": "a Korean man in his early 30s with short black hair, a long face with a sharply defined jawline and high cheekbones, narrow long eyes, thin straight eyebrows, a tall lean build with narrow shoulders and long limbs, wearing a plain white home uniform with navy trim",
+      "tell": "긴 얼굴에 턱선이 뚜렷하고 광대가 높다. 마르고 키가 크다. ⚠️ 2015년 사진 기준이라 얼굴은 30대 초반으로 올려 적었다.",
+      "photo": ""
+    },
+    {
+      "name": "김민혁",
+      "role": "KT 외야수",
+      "look": "a Korean man in his early 30s with short black hair, a lean contact hitter's build, wearing a plain white home uniform with red and black trim",
+      "tell": "⚠️ 생김새 자료가 없다. 얼굴을 크게 쓰지 않는다. 고관절이 불편한 상태라 무겁게 그리지 않는다 — 탓하는 그림을 만들지 않는다.",
+      "photo": ""
+    },
+    {
+      "name": "김도영",
+      "role": "KIA 삼루수",
+      "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, a slim athletic build, wearing a plain white home uniform",
+      "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. KIA 대목에서 한 번 나온다 — 2번으로 내려간 선수다.",
+      "photo": "https://images.khan.co.kr/article/r/700xX/2026/11/02/l_2026110302000007200006041.webp"
+    },
+    {
+      "name": "소형준",
+      "role": "KT 투수",
+      "look": "a Korean man in his mid 20s with short black hair under a cap, a tall solid pitcher build, wearing a plain white home uniform with red and black trim",
+      "tell": "⚠️ 생김새 자료가 없다. 3~6회를 퍼펙트로 막은 대목에서 쓴다 — 2회 실점 대목에는 얼굴을 띄우지 않는다.",
+      "photo": ""
+    }
+  ],
+  "beats": [
+    {
+      "key": "HOOK",
+      "what": "안타는 케이티가 더 쳤는데 1 대 5로 졌다"
+    },
+    {
+      "key": "OUT",
+      "what": "최원준(손가락)과 허경민(담)이 선발에서 빠졌다"
+    },
+    {
+      "key": "TWO",
+      "what": "아프기 전부터 2번 자리가 비어 있었다 — 8타수 1안타"
+    },
+    {
+      "key": "KIA",
+      "what": "KIA가 먼저 겪었고, 김도영을 2번으로 내려 한 경기를 벌었다"
+    },
+    {
+      "key": "CARD",
+      "what": "케이티도 꺼냈다 — 413타석을 3번으로 뛴 안현민을 2번으로"
+    },
+    {
+      "key": "TURN",
+      "what": "아픈 구자욱이 3루까지 뛰었고 그 한 타석에서 2점이 났다"
+    },
+    {
+      "key": "PITCH",
+      "what": "후라도 7이닝 1실점, 소형준은 2회 뒤 퍼펙트였지만 타선이 없었다"
+    },
+    {
+      "key": "NUM",
+      "what": "네 번 쳐서 다섯 점, 일곱 번 쳐서 한 점"
+    },
+    {
+      "key": "NEXT",
+      "what": "후라도가 불펜을 아껴 줘서 삼성이 신인을 세울 수 있게 됐다"
+    },
+    {
+      "key": "ODDS",
+      "what": "88.9%를 뒤집은 두 팀은 둘 다 직행 팀이었다"
+    },
+    {
+      "key": "CLOSE",
+      "what": "오늘 2시, 2번 자리를 어떻게 할까 — 묻는다"
+    }
+  ]
+}
