@@ -30,6 +30,7 @@ import { dirname, join } from 'node:path';
 import { loadSymptoms } from './lib/symptoms.mjs';
 import { EMOTION_COPY } from './data/emotion-copy.mjs';
 import { ATHLETE_MBTI } from './data/athletes.mjs';
+import { execFileSync } from 'node:child_process';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -1797,6 +1798,112 @@ ${Z.CHINESE_ZODIAC.map((x) => line(`/animal/${x.key}/`, `${x.name} (십이지 ${
 `;
 }
 
+// ---------- RSS ----------
+//
+// 2026-11-06. 네이버 서치어드바이저에 "RSS 제출"이 비어 있어서 만든다.
+// 사이트맵(208 URL)이 이미 같은 일을 하고 색인을 30 → 79로 올렸으므로 RSS가
+// 주력은 아니다. 다만 수집 요청은 하루 30장 제한이 있는데 RSS는 그 할당량을
+// 쓰지 않는 별도 경로라, 공짜로 하나 더 두는 셈이다.
+//
+// ⚠️ 날짜를 지어내지 않는다. RSS의 pubDate는 "언제 올라왔나"인데, 우리는
+// 정적 페이지라 그 값을 들고 있지 않았다. git에서 파일이 처음 들어온 날을
+// 꺼내 쓰되, 히스토리가 다시 쓰인 탓에 옛 페이지는 전부 2026-11-01로 뭉쳐
+// 나온다(9월에 만든 것도 그렇다). 그건 사실이 아니므로 피드에 넣지 않는다.
+// 그래서 이 피드는 **날짜가 확실한 최근 페이지만** 담는다. RSS가 원래
+// "새로 올라온 것"을 알리는 물건이기도 해서 용도와도 맞는다.
+//
+// 한 번 정해진 날짜는 scripts/.pages-first-seen.json 에 남겨 다음 빌드에서
+// 흔들리지 않게 한다. git 히스토리가 또 바뀌어도 피드의 날짜는 그대로다.
+const FIRST_SEEN = join(ROOT, 'scripts', '.pages-first-seen.json');
+const RSS_MAX = 100;          // 피드에 담을 최대 항목 수
+const RSS_RECENT_DAYS = 45;   // 이 기간 안에 처음 생긴 것만 담는다
+
+function gitFirstSeen() {
+  // 한 번의 git 호출로 "각 index.html이 처음 추가된 날"을 모은다.
+  const out = execFileSync('git',
+    ['log', '--diff-filter=A', '--name-only', '--format=@%aI', '--reverse', '--', '*/index.html'],
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const first = {};
+  let cur = null;
+  for (const raw of out.split('\n')) {
+    const ln = raw.trim();
+    if (ln.startsWith('@')) cur = ln.slice(1, 11);
+    else if (ln.endsWith('index.html') && !first[ln]) first[ln] = cur;
+  }
+  return first;
+}
+
+function rfc822(ymd) {
+  // 자정 KST로 읽는다. 날짜만 있는 값이라 시각은 의미가 없다.
+  const d = new Date(`${ymd}T00:00:00+09:00`);
+  const D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const kst = new Date(d.getTime() + 9 * 3600 * 1000); // UTC 필드를 KST로 읽기 위해
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${D[kst.getUTCDay()]}, ${pad(kst.getUTCDate())} ${M[kst.getUTCMonth()]} ${kst.getUTCFullYear()} `
+    + `${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}:00 +0900`;
+}
+
+async function buildRss() {
+  let cache = {};
+  try { cache = JSON.parse(await readFile(FIRST_SEEN, 'utf8')); } catch (e) { cache = {}; }
+
+  let fromGit = {};
+  try { fromGit = gitFirstSeen(); } catch (e) { fromGit = {}; } // git이 없어도 빌드는 돈다
+
+  const today0 = today();
+  let changed = false;
+  for (const pg of pages) {
+    if (cache[pg.url]) continue;
+    const rel = `${pg.url.replace(/^\/|\/$/g, '')}/index.html`;
+    cache[pg.url] = fromGit[rel] || today0;   // git에 없으면 이번 빌드에 새로 생긴 것
+    changed = true;
+  }
+  if (changed) await writeFile(FIRST_SEEN, JSON.stringify(cache, null, 2), 'utf8');
+
+  const cutoff = new Date(Date.now() - RSS_RECENT_DAYS * 86400000).toISOString().slice(0, 10);
+  const items = pages
+    .map((pg) => {
+      // 제목·설명은 이미 만들어 둔 HTML에서 그대로 꺼낸다. 따로 들고 다니지 않아도
+      // 되고, 피드와 페이지가 어긋날 일이 없다.
+      const t = /<title>([\s\S]*?)<\/title>/.exec(pg.html);
+      const d = /<meta name="description" content="([\s\S]*?)" \/>/.exec(pg.html);
+      return { url: pg.url, date: cache[pg.url], title: t ? t[1] : '', desc: d ? d[1] : '' };
+    })
+    .filter((it) => it.title && it.date >= cutoff)
+    .sort((a, b) => (a.date === b.date ? a.url.localeCompare(b.url) : b.date.localeCompare(a.date)))
+    .slice(0, RSS_MAX);
+
+  const body = items.map((it) => `  <item>
+    <title>${it.title}</title>
+    <link>${SITE}${it.url}</link>
+    <guid isPermaLink="true">${SITE}${it.url}</guid>
+    <pubDate>${rfc822(it.date)}</pubDate>
+    <description>${it.desc}</description>
+  </item>`).join('\n');
+
+  await writeFile(join(ROOT, 'rss.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  이 파일은 scripts/build-pages.mjs가 생성한다. 손으로 고치면 덮어써진다.
+  최근 ${RSS_RECENT_DAYS}일 안에 새로 생긴 페이지만 담는다(최대 ${RSS_MAX}장).
+  날짜는 git에서 꺼낸 실제 추가일이고, 한 번 정해지면 .pages-first-seen.json에 남는다.
+-->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>맘운자로</title>
+  <link>${SITE}/</link>
+  <description>오늘의 마음에 한 대. 감정을 고르면 용량이 뜨고, 그날 해볼 처방을 하나 알려주는 무료 웹앱입니다.</description>
+  <language>ko</language>
+  <lastBuildDate>${rfc822(today())}</lastBuildDate>
+  <atom:link href="${SITE}/rss.xml" rel="self" type="application/rss+xml" />
+${body}
+</channel>
+</rss>
+`, 'utf8');
+  return items.length;
+}
+
 // ---------- 실행 ----------
 async function main() {
   const M = await loadData('mbti-data.js', 'MAUMJARO_MBTI_DATA');
@@ -1857,7 +1964,9 @@ async function main() {
 
   await writeFile(join(ROOT, 'llms.txt'), buildLlmsTxt(M, T, Z, S), 'utf8');
 
-  console.log(`페이지 ${pages.length}장 생성 + 사이트맵 ${pages.length + 1}개 URL + llms.txt`);
+  const rssCount = await buildRss();
+
+  console.log(`페이지 ${pages.length}장 생성 + 사이트맵 ${pages.length + 1}개 URL + llms.txt + RSS ${rssCount}장`);
   const byKind = {};
   pages.forEach((p) => { const k = p.url.split('/')[1]; byKind[k] = (byKind[k] || 0) + 1; });
   console.log(byKind);
