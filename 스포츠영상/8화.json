@@ -102,8 +102,13 @@
       "name": "안현민",
       "role": "KT 외야수",
       "look": "a Korean man in his early 20s with short black hair, a solid athletic build with broad shoulders, a calm steady face, wearing a plain white home uniform with red and black trim",
-      "tell": "⚠️ 생김새 자료가 없다. 사진을 못 받았다 — 얼굴을 크게 쓰지 않고 타석 자세와 우익수 수비 위치로 누구인지 알린다. 이 편에서 가장 중요한 선수이므로 사진 주소를 받으면 제일 먼저 넣는다.",
-      "photo": ""
+      "tell": "KT 외야수. 3차전에서 2번으로 올라온 선수 — 이 편의 주인공이다. ⚠️ 네이버 검색 프록시 주소다(search.pstatic.net). 안 열리면 photo_예비로 바꾼다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F03%2FPYH2026110323100006100_P4_20261103192718049.jpg&type=a340",
+      "photo_예비": [
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F529%2F2026%2F11%2F02%2F0000079130_001_20261102083109788.png&type=a340",
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F03%2FPYH2026110323880001300_P4_20261103195915494.jpg&type=a340",
+        "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F410%2F2026%2F11%2F03%2F0001145995_001_20261103215109456.jpg&type=a340"
+      ]
     },
     {
       "name": "구자욱",
