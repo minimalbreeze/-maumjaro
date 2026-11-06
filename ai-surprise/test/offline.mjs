@@ -6060,6 +6060,66 @@ await asyncTest('정말 크게 어긋나면 그대로 실패시킨다', async ()
 });
 
 
+await asyncTest('숫자와 단위를 붙여 읽는다 — 이회말', async () => {
+  // 2026-11-06 운영자: "2회 말 이런 부분도 어색하다. 2회말 이렇게
+  // 붙여서 읽어라."
+  //
+  // 야구에서 "이회말"은 한 낱말이다. 띄어 적으면 음성 모델이
+  // "이 / 회 / 말" 로 끊어 읽어서 숫자를 세는 것처럼 들린다.
+  const S = await import('../src/audio/speech.mjs');
+
+  assert.equal(S.speechText('이 회 말에 소형준이 흔들렸습니다.'), '이회말에 소형준이 흔들렸습니다.');
+  assert.equal(S.speechText('삼 차전에서 졌습니다.'), '삼차전에서 졌습니다.');
+  assert.equal(S.speechText('일 번은 김민혁이었습니다.'), '일번은 김민혁이었습니다.');
+  assert.equal(S.speechText('구자욱도 삼 루까지 갔습니다.'), '구자욱도 삼루까지 갔습니다.');
+
+  // ⚠️ 처음에 "단위 뒤에 한글이 오면 건드리지 않는다"로 막아 뒀는데
+  //    그러면 아무것도 안 붙었다. 한국어는 단위 뒤에 조사가 늘 온다.
+  //    조사가 붙은 자리에서 실제로 붙는지 본다 — 이게 핵심이다.
+  for (const [a, b] of [
+    ['이 회 말에', '이회말에'], ['삼 차전에서', '삼차전에서'],
+    ['일 번은', '일번은'], ['삼 루까지', '삼루까지'],
+  ]) {
+    assert.equal(S.speechText(a), b, `조사가 붙으면 안 붙습니다: ${a}`);
+  }
+
+  // 날짜·점수·비율은 건드리면 안 된다.
+  // "십일월 일 일"을 붙이면 "십일월일일"이 되어 매일처럼 들린다.
+  for (const t of ['십일월 일 일에 끝났습니다.', '일 대 육이었습니다.', '팔십팔 점 구 퍼센트입니다.']) {
+    assert.equal(S.speechText(t), t, `건드리면 안 되는 자리를 바꿨습니다: ${t}`);
+  }
+
+  // 자막과 뜻이 같아야 한다. 공백만 지웠으므로 같아야 한다.
+  const src = '이 회 말에 삼 루까지 갔습니다.';
+  assert.ok(S.sameMeaning(src, S.speechText(src)), '글자를 건드렸습니다');
+});
+
+await asyncTest('이름을 쉼표로 셋 이상 이으면 잡는다', async () => {
+  // 2026-11-06 운영자: "이재현, 류지혁, 김지찬 이렇게 선수가 연속으로
+  // 나오면 말이 어색하다. 사람마다 좀 끊어서 읽어라."
+  //
+  // 쉼표는 눈으로는 목록인데 귀로는 한 덩어리다. 마침표로 끊어야
+  // 음성이 실제로 쉰다 — pauseAfter 는 문단이 바뀔 때 쉼을 준다.
+  const S = await import('../src/script/spoken.mjs');
+
+  assert.equal(S.nameListSpots(['이재현, 류지혁, 김지찬에게 연속으로 볼넷을 줬어요.']).length, 1);
+  // 둘까지는 자연스럽다.
+  assert.equal(S.nameListSpots(['최원준과 이정훈을 잡고 끝냈습니다.']).length, 0);
+  assert.equal(S.nameListSpots(['김도영, 나성범이 있습니다.']).length, 0);
+  // 고친 모양은 안 걸려야 한다.
+  assert.equal(
+    S.nameListSpots(['이재현에게 볼넷. 류지혁에게 볼넷. 김지찬에게도 볼넷이었습니다.']).length, 0
+  );
+
+  // checkSpoken 이 실제로 알려 주는지 본다. 함수만 있고 안 부르면 소용없다.
+  const r = S.checkSpoken('## [HOOK] 첫 줄\n\n[FACT] 이재현, 류지혁, 김지찬에게 볼넷을 줬어요.\n');
+  assert.ok(
+    (r.notes || []).some((n) => /쉼표로 셋 이상/.test(n)),
+    `알려 주지 않았습니다: ${JSON.stringify(r.notes)}`
+  );
+});
+
+
 console.log(`\n${'═'.repeat(60)}`);
 console.log(`통과 ${passed}건  실패 ${failed}건` + (skipped ? `  건너뜀 ${skipped}건` : ''));
 console.log(`임시 폴더: ${TMP}`);

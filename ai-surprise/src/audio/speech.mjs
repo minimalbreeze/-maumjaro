@@ -63,6 +63,29 @@ export const PRONOUNCE = new Map([]);
  */
 export const SOFTEN_LIST_COMMAS = false;
 
+/**
+ * 숫자와 단위를 붙여 읽을 자리.
+ *
+ * 2026-11-06 운영자: "2회 말 이런 부분도 어색하다. 2회말 이렇게
+ * 붙여서 읽어라."
+ *
+ * 맞는 말이다. 야구에서 "이회말"은 한 낱말처럼 쓴다. 띄어 적으면
+ * 음성 모델이 "이 / 회 / 말" 로 세 번 끊어 읽어서, 숫자를 세는
+ * 것처럼 들린다.
+ *
+ * **자막은 띄어 쓴 채로 둔다.** 눈으로는 "이 회 말"이 읽기 쉽고,
+ * 붙여 적으면 오히려 이상해 보인다. 읽는 글만 붙인다 — 이 파일이
+ * 하는 일이 그것이다.
+ *
+ * ⚠️ 단위를 넓게 잡지 않는다. "십일월 일 일"을 붙이면 "십일월일일"이
+ *    되어 매일이라는 말처럼 들린다. 야구 경기 구조를 가리키는
+ *    단위만 넣는다. 늘릴 때는 하나씩, 들어 보고 넣는다.
+ */
+const JOIN_UNITS = ['회', '차전', '번', '루'];
+
+/** 회 뒤에 붙는 말. "이 회 말" → "이회말" */
+const INNING_HALF = ['말', '초'];
+
 /** 2음절 이상 한글 낱말 사이에 든 홑따옴표만 떼는 자리. */
 const INNER_SINGLE_QUOTE = /(?<=[가-힣0-9])[\u0027\u2018\u2019](?=[가-힣0-9])/g;
 
@@ -88,11 +111,41 @@ export function speechText(text) {
   out = out.replace(WRAPPING_SINGLE_QUOTE, '');
   out = out.replace(INNER_SINGLE_QUOTE, '');
 
+  out = joinNumberUnits(out);
+
   for (const [from, to] of PRONOUNCE) out = out.split(from).join(to);
 
   if (SOFTEN_LIST_COMMAS) out = softenListCommas(out);
 
   return out.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
+/**
+ * 한글 숫자와 단위 사이의 공백을 없앤다.
+ *
+ *   "이 회 말"   → "이회말"
+ *   "삼 차전"    → "삼차전"
+ *   "일 번"      → "일번"
+ *   "삼 루"      → "삼루"
+ *
+ * 글자는 그대로다. 공백만 지운다 — sameMeaning() 이 공백을 빼고
+ * 비교하므로 자막과 뜻이 같은지 검사도 그대로 통과한다.
+ */
+export function joinNumberUnits(text) {
+  let out = String(text ?? '');
+  const num = '[일이삼사오육칠팔구십백천만]+';
+  for (const unit of JOIN_UNITS) {
+    // ⚠️ 처음에 뒤에 한글이 오면 건드리지 말라고 막아 뒀는데, 그러면
+    //    **아무것도 안 붙는다.** 한국어는 단위 뒤에 조사가 늘 따라온다 —
+    //    "이 회 말에", "삼 차전에서", "일 번은", "삼 루까지".
+    //    조사를 막으면 실제 문장에서 한 번도 안 걸린다.
+    out = out.replace(new RegExp(`(${num}) (${unit})`, 'g'), '$1$2');
+  }
+  // "이회 말" 처럼 반만 붙은 것도 마저 붙인다.
+  for (const half of INNING_HALF) {
+    out = out.replace(new RegExp(`(${num}회) (${half})`, 'g'), '$1$2');
+  }
+  return out;
 }
 
 /**

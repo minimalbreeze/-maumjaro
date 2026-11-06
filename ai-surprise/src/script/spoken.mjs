@@ -167,6 +167,41 @@ export function latinSpots(sentences) {
   return out;
 }
 
+/**
+ * 이름을 쉼표로 줄줄이 이어 놓은 자리.
+ *
+ * 2026-11-06 운영자: "이재현, 류지혁, 김지찬 이렇게 선수가 연속으로
+ * 나오면 말이 어색하다. 사람마다 좀 끊어서 읽어라."
+ *
+ * 맞는 말이다. 쉼표는 눈으로 읽을 때는 목록으로 보이는데, 귀로는 한
+ * 덩어리로 지나간다. 이름이 셋이면 셋 다 안 들린다.
+ *
+ * 고치는 법은 **마침표로 끊는 것**이다. narrate.mjs 의 pauseAfter 는
+ * 문단이 바뀔 때 쉼을 주지, 문장 안의 쉼표는 음성 모델에 맡긴다.
+ * 그래서 쉼표를 아무리 찍어도 우리가 쉼을 못 늘린다.
+ *
+ *   나쁨: 이재현, 류지찬, 김지찬에게 연속으로 볼넷을 줬어요.
+ *   좋음: 이재현에게 볼넷. 류지혁에게 볼넷. 김지찬에게도 볼넷이었습니다.
+ *
+ * ⚠️ 두 개까지는 넘어간다. "최원준과 이정훈을 잡고"는 자연스럽다.
+ *    셋부터 걸린다.
+ *
+ * ⚠️ 이름인지 아닌지를 가리지 않는다. 두세 글자 한글 낱말이 쉼표로
+ *    셋 이상 이어지면 걸린다 — 이름이 아니어도 귀로는 똑같이
+ *    한 덩어리로 지나가기 때문이다.
+ */
+export function nameListSpots(sentences) {
+  const out = [];
+  // 두세 글자 한글 낱말 + 쉼표가 두 번, 그리고 세 번째 낱말.
+  const re = /([가-힣]{2,4}), ?([가-힣]{2,4}), ?([가-힣]{2,4})/;
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    const m = re.exec(text);
+    if (m) out.push({ text, names: [m[1], m[2], m[3]] });
+  }
+  return out;
+}
+
 export function checkSpoken(markdown) {
   const sentences = spokenSentences(markdown);
   const notes = [];
@@ -183,6 +218,17 @@ export function checkSpoken(markdown) {
       `문장 ${sentences.length}개 중 ${formal}개(${Math.round(formalRatio * 100)}%)가 ` +
         '「-습니다 / -입니다」로 끝납니다. 읽어 주면 같은 가락이 되풀이됩니다 — ' +
         '일부를 「-죠 / -거든요 / -는데요」나 짧은 토막으로 바꿔 보세요.'
+    );
+  }
+
+  // 1-b) 이름을 쉼표로 줄줄이 이었는가
+  const nameLists = nameListSpots(sentences);
+  for (const spot of nameLists) {
+    notes.push(
+      `이름이 쉼표로 셋 이상 이어집니다 (${spot.names.join(' / ')}). ` +
+        '귀로는 한 덩어리로 지나가서 셋 다 안 들립니다 — ' +
+        '마침표로 끊어 주세요. 예: 「가에게 볼넷. 나에게 볼넷. 다에게도 볼넷이었습니다.」 ' +
+        `본문: ${spot.text.slice(0, 40)}…`
     );
   }
 
