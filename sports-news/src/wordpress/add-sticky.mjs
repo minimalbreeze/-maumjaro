@@ -1,0 +1,158 @@
+#!/usr/bin/env node
+/**
+ * 쿠팡 하단 고정 바를 글에 넣는다 / 뺀다. (2026-11-07)
+ *
+ * ── 왜 ─────────────────────────────────────────────────────
+ * 쿠팡 수익이 사실상 0 이었다. 운영자가 확인해 보니 그나마 잡힌 구매도
+ * 거의 본인 집 구매였다. 글마다 쿠팡 블록이 **첫 문단 뒤 하나뿐**이라
+ * 독자가 답을 읽고 나가는 지점에는 아무것도 없다.
+ *
+ * 운영자가 전면 팝업을 꺼냈지만 그쪽은 **구글이 순위를 깎는 것이 확인된
+ * 방식**이다(모바일 검색 결과 직후 콘텐츠를 가리는 인터스티셜). 그래서
+ * 화면을 가리지 않는 **하단 고정 바**로 간다 — 2026-11-07 운영자 선택.
+ *
+ * ── 지키는 선 ───────────────────────────────────────────────
+ *   - 쿠팡 코드(iframe 위젯)는 **제휴사가 준 그대로** 쓴다. 숫자 하나
+ *     바꾸지 않는다(지시서). 감싸는 상자와 닫기 버튼만 우리 것이다.
+ *   - **닫기 버튼을 단다.** 한 번 닫으면 그 방문 동안 다시 뜨지 않는다.
+ *   - 바 높이만큼 본문 아래 여백을 줘서 **마지막 줄을 덮지 않는다.**
+ *   - content 하나만 보낸다. 제목·슬러그·발행상태는 보내지 않는다.
+ *   - 바 말고 **나머지 본문이 글자 하나까지 같아야** 저장한다.
+ *   - 이미 있으면 건너뛴다. 두 번 돌려도 하나다.
+ *   - `--빼기` 로 되돌린다. 넣은 것을 지우는 길을 같이 둔다.
+ *   - wiki 밖의 글은 건드리지 않는다.
+ *
+ * 미리보기가 기본이다. `--apply` 를 붙여야 저장한다.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { wpFetch, wpConfig } from './client.mjs';
+import { log } from '../utils/logger.mjs';
+import { 손대도되는글인가 } from './noindex.mjs';
+import { 발행글전부 } from './index-audit.mjs';
+import { saveContentBackup } from './fix-alt.mjs';
+import { ROOT } from '../utils/env.mjs';
+
+/** 바를 알아보는 표식. 우리가 붙인 id 다. */
+export const 표식 = 'id="cpst"';
+
+export function 바HTML() {
+  const p = path.join(ROOT, 'config/ad-coupang-sticky.html');
+  return fs.readFileSync(p, 'utf8').trim();
+}
+
+export function 바블록(html = 바HTML()) {
+  return `<!-- wp:html -->\n${html}\n<!-- /wp:html -->`;
+}
+
+/** 본문에 바가 이미 있나. */
+export function 바있나(content) {
+  return String(content || '').includes(표식);
+}
+
+/** 본문 끝에 바를 붙인 결과. 이미 있으면 null. */
+export function 바넣기(content, html = 바HTML()) {
+  const s = String(content || '');
+  if (바있나(s)) return null;
+  return `${s.trimEnd()}\n\n${바블록(html)}`;
+}
+
+/** 바를 들어낸 결과. 없으면 null. */
+export function 바빼기(content) {
+  const s = String(content || '');
+  if (!바있나(s)) return null;
+  // wp:html 로 감싼 덩어리째 들어낸다.
+  const 덩어리 = /<!-- wp:html -->\s*<div id="cpst"[\s\S]*?<\/script>\s*<!-- \/wp:html -->/g;
+  const after = s.replace(덩어리, '').trimEnd();
+  if (바있나(after)) return null;
+  return after;
+}
+
+/** 바 말고 다른 것이 바뀌지 않았는지. */
+export function 바만바뀌었나(before, after) {
+  return 글자만(바빼기(after) ?? after) === 글자만(바빼기(before) ?? before);
+}
+
+function 글자만(html) {
+  return String(html || '')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const apply = args.includes('--apply');
+  const 빼기 = args.includes('--빼기');
+  const 전체 = args.includes('--전체');
+  let ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
+
+  log.section(`${빼기 ? '🧹 쿠팡 하단 고정 바를 뺍니다' : '📌 쿠팡 하단 고정 바를 넣습니다'}${apply ? '' : ' (미리보기 · 저장하지 않습니다)'}`);
+
+  // 발행 글 전부를 도는 길. 글 번호를 적는 쪽이 기본이고, 전체는
+  // **--전체 를 분명히 적었을 때만** 돈다. 700편을 실수로 건드리지 않는다.
+  if (전체) {
+    const 글 = await 발행글전부();
+    ids = 글.map((p) => p.id);
+    log.info(`발행 ${ids.length}편을 돕니다`);
+  }
+
+  if (!ids.length) {
+    log.warn('글 번호를 적어주세요. 예: 11953 11909   (전부 하려면 --전체)');
+    process.exitCode = 1;
+    return;
+  }
+
+  const base = wpConfig().base;
+  const html = 빼기 ? '' : 바HTML();
+  let 센것 = 0;
+  for (const id of ids) {
+    let post;
+    try {
+      const { data } = await wpFetch(`/wp/v2/posts/${id}`, {
+        query: { context: 'edit', _fields: 'id,link,title,content' },
+      });
+      post = data;
+    } catch (err) {
+      log.warn(`${id} 를 열지 못했습니다 — ${err.message}`);
+      process.exitCode = 1;
+      continue;
+    }
+    if (!손대도되는글인가(post?.link, base)) {
+      log.warn(`${id} 는 wiki 밖의 글입니다 — 건너뜁니다`);
+      continue;
+    }
+    const content = post.content?.raw ?? '';
+    const after = 빼기 ? 바빼기(content) : 바넣기(content, html);
+    const 제목 = String(post.title?.raw || '').slice(0, 40);
+    if (after === null) {
+      log.info(`[${id}] ${빼기 ? '뺄 바가 없습니다' : '이미 있습니다'} — ${제목}`);
+      continue;
+    }
+    if (!바만바뀌었나(content, after)) {
+      log.warn(`[${id}] 바 말고 다른 내용이 바뀝니다 — 저장하지 않습니다`);
+      process.exitCode = 1;
+      continue;
+    }
+    log.info(`   [${id}] ${빼기 ? '바를 뺍니다' : '바를 넣습니다'} — ${제목}`);
+    센것 += 1;
+    if (!apply) continue;
+    await saveContentBackup(post);
+    await wpFetch(`/wp/v2/posts/${id}`, { method: 'POST', body: { content: after } });
+  }
+
+  if (!센것) {
+    log.info('바뀔 글이 없습니다.');
+    return;
+  }
+  log.info(apply
+    ? `${센것}편을 고쳤습니다. 주소는 그대로입니다.`
+    : `${센것}편이 바뀝니다. 실제로 적용하려면 --apply 를 붙이세요.`);
+  if (!빼기) log.info('되돌리려면 같은 모드에 --빼기 를 붙입니다.');
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await main();
+}
