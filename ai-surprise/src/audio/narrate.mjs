@@ -411,17 +411,49 @@ function round4(n) {
  * 멈춰 있으면 안 되기 때문이다.
  */
 export function applyTimings(scenes, timings) {
-  const byId = new Map((timings || []).map((t) => [t.id, t]));
+  const list = Array.isArray(timings) ? timings : [];
+  const byId = new Map(list.map((t) => [t.id, t]));
   if (!byId.size) return scenes || [];
+  // 차례를 기억해 둔다. 바로 **다음 문단이 언제 시작하는지**를 봐야
+  // 그 사이에 들어간 쉼의 길이를 알 수 있다.
+  const orderById = new Map(list.map((t, i) => [t.id, i]));
 
   return (scenes || []).map((scene) => {
     const paragraphs = (scene.paragraphs || []).map((p, i) => {
       const id = `S${String(scene.scene_number).padStart(2, '0')}-P${i + 1}`;
       const t = byId.get(id);
       if (!t) return p;
-      // 쉼까지 포함한 길이. 마지막 문단에는 쉼이 없지만, 조금 길게 잡는 쪽이
-      // 짧게 잡는 쪽보다 낫다 — 화면이 먼저 끝나면 검은 화면이 남는다.
-      return { ...p, seconds: round2(t.seconds + PAUSE_SECONDS) };
+      // ── 쉼은 **실제로 들어간 만큼** 센다 (2026-11-07) ──
+      //
+      // 전에는 여기서 PAUSE_SECONDS(0.45초)를 더했다. 그런데 그건
+      // 가운데 값일 뿐이고, 실제 쉼은 pauseAfter() 가 자리마다 다르게
+      // 정한다 — 0.22 / 0.35 / 0.5 / 0.65 / 0.85.
+      //
+      // 그래서 문단마다 조금씩 틀리고, 그 오차가 **쌓인다.** 8분 영상이면
+      // 끝에서 몇 초가 어긋난다. 그 어긋남이 어디로 가느냐면,
+      //
+      //   · 자막이 밀린다
+      //   · **쇼츠를 자르는 자리가 밀린다** ← 7화·8화에서 5번 쇼츠가
+      //     두 편 연속 잘려 나온 이유가 이것이다. 계산한 자리가 실제보다
+      //     앞이라, 그 구간의 마지막 문장이 끝나기 전에 잘린다.
+      //
+      // 고칠 필요가 없는 문제였다. timings 에는 이미 **진짜 시각**이
+      // 들어 있다 — concat 하면서 쉼까지 더한 cursor 로 찍은 값이다.
+      // 다음 문단의 start 에서 이 문단의 end 를 빼면 그 사이 쉼이 나온다.
+      // 짐작하지 말고 그걸 쓴다.
+      const i2 = orderById.get(id);
+      const next = i2 === undefined ? null : list[i2 + 1];
+      // ⚠️ start/end 가 없는 타이밍도 들어온다 (예전에 저장해 둔 것,
+      //    그리고 seconds 만 채운 테스트용). 그때는 예전처럼 가운데
+      //    값으로 돈다 — 없는 값을 빼면 NaN 이 되고, NaN 은 뒤에서
+      //    0으로 접혀서 **길이가 0인 문단**이 된다. 실제로 그렇게 됐다.
+      const measured = next && Number.isFinite(Number(next.start)) && Number.isFinite(Number(t.end))
+        ? Math.max(0, Number(next.start) - Number(t.end))
+        : null;
+      // 마지막 문단에는 뒤에 쉼이 없다. 그래도 조금 길게 잡는다 —
+      // 화면이 소리보다 먼저 끝나면 검은 화면이 남는다.
+      const gap = measured === null ? PAUSE_SECONDS : measured;
+      return { ...p, seconds: round2(t.seconds + gap) };
     });
 
     const duration = round2(paragraphs.reduce((s, p) => s + (Number(p.seconds) || 0), 0));
