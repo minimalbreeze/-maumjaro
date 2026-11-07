@@ -396,6 +396,10 @@ export const SPORTS_LIKENESS_CLAUSE =
   'the same line weight and brush quality as the hands and the uniform, ' +
   'no soft airbrushed gradient on the skin, no smooth rounded 3D shading ' +
   'on the cheeks or nose, no semi-realistic portrait rendering, ' +
+  // "너무 번들번들" (2026-11-23 아님 — 2026-11-07 운영자). 살갗에 윤이
+  // 나면 그림이 아니라 렌더처럼 보인다. 종이에 칠한 결이어야 한다.
+  'matte skin with the grain of the paper showing through, no specular ' +
+  'highlight or shine on the forehead, nose or cheeks, ' +
   'no caricature or exaggeration of his features, ' +
   // ⚠️ 2026-11-07. 이 줄이 없어서 목이 꺾였다. "사진과 같은 얼굴"은
   //    얼굴이 보일 때만 적용되는 말인데, 그렇게 안 적었더니 모델이
