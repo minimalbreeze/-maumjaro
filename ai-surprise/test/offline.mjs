@@ -1004,6 +1004,62 @@ test('장면·샷 길이가 실제 음성 길이로 바뀐다 — 자막만 고�
   assert.deepEqual(fixed[0].shots.map((x) => x.shot_id), ['S01-1', 'S01-2']);
 });
 
+await asyncTest('문단 길이가 실제 쉼을 센다 — 쇼츠 자르는 자리가 밀리지 않는다', async () => {
+  // 7화·8화에서 **5번 쇼츠가 두 편 연속 잘려** 나왔다. 원인이 여기였다.
+  //
+  // applyTimings 가 문단 길이에 PAUSE_SECONDS(0.45초)를 더했다. 그런데
+  // 그건 가운데 값이고, 실제 쉼은 pauseAfter() 가 자리마다 다르게
+  // 정한다 (0.22 / 0.35 / 0.5 / 0.65 / 0.85). 문단마다 조금씩 틀린
+  // 값이 쌓여서, 8분 영상이면 끝에서 몇 초가 어긋났다.
+  //
+  // 쇼츠는 그 어긋난 시각으로 영상을 자른다. 계산한 자리가 실제보다
+  // 앞이면 그 구간의 마지막 문장이 끝나기 전에 잘린다.
+  //
+  // timings 에는 이미 진짜 시각이 들어 있었다 — concat 하면서 쉼까지
+  // 더한 cursor 로 찍은 값이다. 그걸 쓰면 어긋날 일이 없다.
+  const { applyTimings, PAUSE_SECONDS } = await import('../src/audio/narrate.mjs');
+
+  const scenes = [
+    { scene_number: 1, section: 'HOOK', paragraphs: [{ tag: 'FACT', text: '가' }, { tag: 'FACT', text: '나' }] },
+    { scene_number: 2, section: 'BODY', paragraphs: [{ tag: 'FACT', text: '다' }] },
+  ];
+  // 쉼을 일부러 제각각으로 둔다 — 0.85, 0.22. 둘 다 0.45 가 아니다.
+  const timings = [
+    { id: 'S01-P1', start: 0, end: 10, seconds: 10 },
+    { id: 'S01-P2', start: 10.85, end: 20.85, seconds: 10 },
+    { id: 'S02-P1', start: 21.07, end: 31.07, seconds: 10 },
+  ];
+
+  const out = applyTimings(scenes, timings);
+  assert.equal(out[0].paragraphs[0].seconds, 10.85, '첫 문단이 실제 쉼(0.85)을 안 셉니다');
+  assert.equal(out[0].paragraphs[1].seconds, 10.22, '둘째 문단이 실제 쉼(0.22)을 안 셉니다');
+  // 마지막 문단 뒤에는 쉼이 없다. 그래도 조금 길게 잡는다 —
+  // 화면이 소리보다 먼저 끝나면 검은 화면이 남는다.
+  assert.equal(out[1].paragraphs[0].seconds, 10 + PAUSE_SECONDS);
+
+  // ── 핵심 ── 길이를 더해 나간 자리가 실제 시각과 **똑같아야** 한다.
+  // 여기가 어긋나면 그만큼 쇼츠가 잘린다.
+  const flat = out.flatMap((sc) => sc.paragraphs);
+  let cursor = 0;
+  for (let i = 0; i < timings.length; i += 1) {
+    assert.equal(cursor, timings[i].start, `${timings[i].id}: 계산한 시작이 실제와 다릅니다`);
+    cursor = Math.round((cursor + flat[i].seconds) * 100) / 100;
+  }
+
+  // start/end 가 없는 예전 타이밍도 받아야 한다. NaN 이 되면 길이가
+  // 0인 문단이 생긴다 — 실제로 한 번 그렇게 만들었다.
+  const old = applyTimings(scenes, [
+    { id: 'S01-P1', seconds: 10 },
+    { id: 'S01-P2', seconds: 10 },
+    { id: 'S02-P1', seconds: 10 },
+  ]);
+  for (const sc of old) {
+    for (const par of sc.paragraphs) {
+      assert.ok(Number(par.seconds) > 0, `길이가 0이 됐습니다: ${par.text}`);
+    }
+  }
+});
+
 test('타이밍이 없으면 장면을 건드리지 않는다', () => {
   const before = voiceScenes();
   assert.deepEqual(applyTimings(before, []), before);
