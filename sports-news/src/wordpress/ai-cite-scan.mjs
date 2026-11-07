@@ -105,6 +105,26 @@ export function 흔들리는표현(content) {
   };
 }
 
+/**
+ * 글 안에 적힌 **고정된 날짜**를 모은다.
+ *
+ * "지난주"를 날짜로 바꾸려면 그 날짜가 글 안에 있어야 한다. 없으면
+ * 바꿀 수 없다 — 발행일에서 역산해 지어내지 않는다. 글이 올라온 날과
+ * 사건이 일어난 날은 다르고, 틀린 날짜는 흔들리는 말보다 나쁘다.
+ */
+export function 글속날짜(content) {
+  const 글 = 글자만(content);
+  const 모음 = new Set();
+  for (const m of 글.matchAll(/((?:19|20)\d{2})년\s?(\d{1,2})월\s?(\d{1,2})일/g)) 모음.add(`${m[1]}-${m[2]}-${m[3]}`);
+  for (const m of 글.matchAll(/(?<!\d)(\d{1,2})월\s?(\d{1,2})일/g)) 모음.add(`${m[1]}월 ${m[2]}일`);
+  return [...모음];
+}
+
+/** 흔들리는 말이 든 문장만 뽑는다. 고치기 전에 눈으로 보려고. */
+export function 흔들린문장들(content) {
+  return 문장들(글자만(content)).filter((s) => { 흔들리는말.lastIndex = 0; return 흔들리는말.test(s); }).map((s) => s.trim());
+}
+
 /** 글 한 편을 재서 어긴 항목을 돌려준다. */
 export function 재기(post) {
   const 질문 = 질문절(post.content);
@@ -120,7 +140,33 @@ export function 재기(post) {
   return { 어긴것, 질문, 흔들림, 키워드 };
 }
 
+async function 문장보기(ids) {
+  console.log('\n────────────────────────────────────────────────────────');
+  console.log('🔎 읽는 시점에 흔들리는 문장을 그대로 보여줍니다 (읽기만 · 비용 0원)');
+  console.log('────────────────────────────────────────────────────────');
+  for (const id of ids) {
+    let data;
+    try { ({ data } = await wpFetch(`/wp/v2/posts/${id}`, { query: { context: 'edit' } })); }
+    catch (err) { console.log(`\n   ❌ ${id} 못 읽었습니다 — ${err.message}`); continue; }
+    const content = data?.content?.raw ?? data?.content?.rendered ?? '';
+    const 제목 = data?.title?.raw || data?.title?.rendered || '';
+    const 문장 = 흔들린문장들(content);
+    console.log(`\n   [${id}] ${제목}`);
+    console.log(`     글 안에 적힌 날짜: ${글속날짜(content).join(' · ') || '없음'}`);
+    console.log(`     흔들린 문장 ${문장.length}개:`);
+    for (const one of 문장) console.log(`       · ${one}`);
+  }
+  console.log('\n아무것도 바꾸지 않았습니다.\n');
+}
+
 async function main() {
+  const 문장자리 = process.argv.indexOf('--문장');
+  if (문장자리 >= 0) {
+    const ids = String(process.argv[문장자리 + 1] || '').split(/[\s,]+/).filter(Boolean);
+    if (!ids.length) { console.log('글 번호를 적어주세요'); return; }
+    await 문장보기(ids);
+    return;
+  }
   const 보기수 = (() => {
     const i = process.argv.indexOf('--보기');
     const n = i >= 0 ? Number(process.argv[i + 1]) : 15;

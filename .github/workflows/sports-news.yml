@@ -1425,12 +1425,19 @@ jobs:
         if: ${{ contains(inputs.mode, 'AI 인용 기준') }}
         working-directory: sports-news
         env:
+          IN_POST_IDS: ${{ inputs.post_ids }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
-          node src/wordpress/ai-cite-scan.mjs --보기 20 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          # 글 번호를 적으면 그 글의 흔들린 문장을 그대로 보여준다.
+          # 비우면 706편 전체를 센다. 어느 쪽이든 아무것도 바꾸지 않는다.
+          if [ -n "$IN_POST_IDS" ]; then
+            node src/wordpress/ai-cite-scan.mjs --문장 "$IN_POST_IDS" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          else
+            node src/wordpress/ai-cite-scan.mjs --보기 20 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          fi
           exit "${PIPESTATUS[0]}"
 
       - name: 글끼리 링크 걸기
