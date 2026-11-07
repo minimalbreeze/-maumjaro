@@ -427,14 +427,44 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
     // 그래서 노리는 것은 닮음이 아니라 **일관성과 구분**이다. look 문장을
     // 그대로 프롬프트에 넣어 같은 사람이 같은 얼굴로 나오게 하고, tell 로
     // 서로 섞이지 않게 한다.
+    // ⚠️ 2026-11-07. 여기서 **photo 를 떨어뜨리고 있었다.**
+    //
+    //    기획 파일에 사진 주소를 넣어도 이 map 이 name·role·look·tell
+    //    네 개만 옮겨서, 뒤에서 사진을 읽는 코드가 늘 빈손이었다.
+    //
+    //      main.mjs:  loadContent(id)?.research?.people
+    //                 → photo 가 없으니 withPhoto 가 늘 0명
+    //                 → "생김새만 적힌 사람 N명" 만 찍히고 참조 모델을
+    //                   한 번도 안 부른다
+    //
+    //    실행 #64(9화)에서 사진 다섯 장을 다 넣고 돌렸는데 한 장도 안
+    //    쓰였다. 앞선 편들도 마찬가지였다 — 사진을 모아 넣는 일만 하고
+    //    그림은 계속 글로만 그리고 있었다.
+    //
+    //    미리보기(preview)와 인물 시트(portrait)는 멀쩡해 보였는데,
+    //    그 둘은 기획 파일을 **직접** 읽어서 이 map 을 안 거치기
+    //    때문이다. 그래서 더 늦게 알아챘다.
+    //
+    //    photo_예비 도 같이 옮긴다. 뉴스 사진 주소는 자주 죽어서 기획
+    //    파일에 예비를 하나씩 적어 두는데, 레코드에 없으면 갈아 끼울
+    //    때 기획 파일을 다시 열어야 한다.
     people: (Array.isArray(people) ? people : [])
       .filter((p) => p?.name && p?.look)
-      .map((p) => ({
-        name: String(p.name).trim(),
-        role: String(p.role || '').trim(),
-        look: String(p.look).trim(),
-        tell: String(p.tell || '').trim(),
-      })),
+      .map((p) => {
+        const out = {
+          name: String(p.name).trim(),
+          role: String(p.role || '').trim(),
+          look: String(p.look).trim(),
+          tell: String(p.tell || '').trim(),
+        };
+        // 빈 값을 넣지 않는다. 사진이 없는 사람에게 photo: '' 가 붙으면
+        // 레코드를 눈으로 볼 때 "넣었는데 안 됐나" 하고 헷갈린다.
+        const photo = String(p.photo || '').trim();
+        if (photo) out.photo = photo;
+        const spare = String(p.photo_예비 || '').trim();
+        if (spare) out.photo_예비 = spare;
+        return out;
+      }),
     beats: (Array.isArray(beats) ? beats : [])
       .filter((b) => b?.key && b?.what)
       .map((b) => ({ key: String(b.key), what: String(b.what).trim() })),
