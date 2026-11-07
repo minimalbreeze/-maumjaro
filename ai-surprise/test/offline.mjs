@@ -4294,6 +4294,45 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습만 권하고 있습니다');
 });
 
+await asyncTest('몸이 사라지는 네 가지를 막는다 (실행 #65 화면)', async () => {
+  // 운영자가 실행 #65 영상을 보면서 하나씩 짚었다. 전부 **몸이
+  // 사라지는** 같은 병이고, 나타나는 꼴만 달랐다.
+  //
+  //   "이건 왜 목만 둥둥 떠 있나?"        → 클립보드가 화면 아래를 덮고
+  //                                         머리와 어깨만 그 위에 떴다
+  //   "다리는 어디 가고? 유니폼이 의자에   → 앉은 뒷모습인데 다리가 없고
+  //    걸려 있는 것 같나"                   점퍼만 의자에 걸린 꼴
+  //   "이건 왜 등에 걸려 있나?"            → 클립보드가 점퍼 등판에 붙었다
+  //   "유니폼에 왜 목만 둥둥 떠 있나?"      → 라커룸에서 옷걸이에 걸린
+  //                                         유니폼 위에 머리만 얹혔다
+  //
+  // 뿌리는 하나다. 우리가 "머리부터 발끝까지"라고만 적고 **소품을
+  // 어디에 얼마나 크게 두는지, 앉으면 어떻게 하는지**를 안 적었다.
+  // 모델은 빈자리를 제 맘대로 채운다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const p = V.composeImagePrompt('a manager with a clipboard', null, { kind: 'SPORTS' });
+
+  // ① 소품이 몸을 가리지 않는다
+  assert.ok(/never covering the/.test(p), '소품이 몸 가리는 것을 안 막습니다');
+  assert.ok(/never enlarged to fill the lower half/.test(p), '소품 크기를 안 막습니다');
+  assert.ok(/never a head and shoulders sitting on top of a large object/.test(p), '목만 뜨는 것을 안 막습니다');
+
+  // ② 앉아도 다리를 그린다
+  assert.ok(/a seated figure still has legs/.test(p), '앉은 자세에 다리 지시가 없습니다');
+  assert.ok(/never an empty jacket or uniform draped over a chair/.test(p), '빈 옷이 사람 자리를 차지하는 것을 안 막습니다');
+
+  // ③ 물건은 손에 들거나 어디에 놓는다
+  assert.ok(/objects are held in a hand/.test(p), '물건 두는 자리가 없습니다');
+  assert.ok(/never stuck to the back or chest/.test(p), '등에 붙는 것을 안 막습니다');
+
+  // ④ 사람과 걸어 둔 옷은 다른 것이다
+  assert.ok(/never a head on top of a jersey on a hanger/.test(p), '옷걸이 유니폼과 섞이는 것을 안 막습니다');
+
+  // 그리고 전신은 그대로 지켜져야 한다. 위의 것들을 넣느라 이게
+  // 빠지면 처음 문제로 돌아간다.
+  assert.ok(/from head to feet/.test(p), '전신 지시가 사라졌습니다');
+});
+
 await asyncTest('한 장면의 인물 샷은 그림 한 장을 나눠 쓰고 움직이지 않는다', async () => {
   // 3화: 한 장면이 샷 두세 개로 쪼개지고 샷마다 그림을 따로 그렸다.
   // 같은 사람을 따로 그리면 얼굴도 방향도 자세도 다 다르게 나온다 —
@@ -5445,9 +5484,13 @@ await asyncTest('읽을 글에서 따옴표를 뗀다 — 글자는 그대로 �
 
   // 숫자와 소수점은 건드리지 않는다.
   assert.equal(speechText('삼 할 이 리'), '삼 할 이 리');
-  // ⚠️ 2026-11-07 에 바뀌었다. 전에는 'OPS .850' 이 그대로 나갔는데,
-  //    이제 PRONOUNCE 가 읽기를 한글로 바꾼다. 소수점은 그대로다.
-  assert.equal(speechText('OPS .850'), '오피에스 .850');
+  // ⚠️ 2026-11-07 에 두 번 바뀌었다.
+  //    ① PRONOUNCE 가 OPS 를 '오피에스'로 읽는다.
+  //    ② numbers.mjs 가 .850 을 '팔 할 오 푼'으로 읽는다. 야구에서
+  //       점으로 시작하는 세 자리는 할·푼·리로 읽는다 — 타율이든
+  //       출루율이든 오피에스든 같다.
+  //    자막에는 'OPS .850' 이 그대로 나간다. 눈에 익은 쪽이다.
+  assert.equal(speechText('OPS .850'), '오피에스 팔 할 오 푼');
 });
 
 await asyncTest('자막은 영어, 읽기는 한글 (2026-11-07 운영자)', async () => {
@@ -5999,9 +6042,14 @@ await asyncTest('기획 파일의 사진 주소가 소재 레코드까지 간다
   const plan = JSON.parse(fs.readFileSync(path.join(base, '9화.json'), 'utf8'));
   const real = makeSports({ title: plan.title, people: plan.people });
   const realWithPhoto = real.people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  // ⚠️ 처음에는 5 라고 숫자를 박아 뒀는데, 사람이 아홉으로 늘자 이
+  //    테스트가 먼저 걸렸다. 제 일을 한 것이다. 그래도 숫자를 박으면
+  //    사람을 더할 때마다 여기를 고쳐야 하고, 고치다 보면 생각 없이
+  //    숫자만 바꾸게 된다. **"전원인지"로 바꾼다** — 그게 진짜 규칙이다.
+  assert.ok(real.people.length >= 5, `9화 사람이 ${real.people.length}명뿐입니다`);
   assert.equal(
     realWithPhoto.length,
-    5,
+    real.people.length,
     `9화 사람 ${real.people.length}명 중 사진이 레코드까지 간 사람이 ${realWithPhoto.length}명입니다`
   );
 });
@@ -6050,6 +6098,75 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
 
   // 참조 샷이 더 비싸다. 그 값으로 세야 상한이 맞는다.
   assert.equal(out.spentUsd, 0.1, `쓴 돈이 $${out.spentUsd} 입니다 (0.025+0.05+0.025 여야 합니다)`);
+});
+
+await asyncTest('사진에서 얼굴을 못 찾으면 예비로, 그래도 안 되면 참조 없이 그린다 (실행 #65)', async () => {
+  // 실행 #65 에서 류현진 사진으로 건 두 샷이 이렇게 죽었다.
+  //
+  //     facexlib align face fail
+  //
+  // 참조 모델이 사진에서 얼굴을 못 찾은 것이다. 투구 동작 사진이라
+  // 얼굴이 작거나 글러브에 가렸을 것이다.
+  //
+  // 문제는 그 둘이 **자리표시 화면**으로 영상에 남았다는 것이다.
+  // 7분짜리에 빈 화면 두 장은 눈에 띈다. 안 닮은 그림이 빈 화면보다
+  // 백 배 낫다.
+  const I = await import('../src/assets/images.mjs');
+  const V = await import('../src/scenes/visuals.mjs');
+  const dir = fs.mkdtempSync(path.join(TMP, 'face-'));
+
+  const calls = [];
+  const client = {
+    generate: async (prompt, o) => {
+      calls.push({ ref: o.referenceImage, prompt });
+      // 본 사진과 예비 사진 둘 다 얼굴을 못 찾는다고 해 본다.
+      if (o.referenceImage) {
+        const err = new Error('이미지 생성 실패 (failed): facexlib align face fail');
+        throw err;
+      }
+      return { url: 'http://x/y.png', usdEstimate: 0.025 };
+    },
+    // PNG 머리 + 넉넉한 길이. 짧으면 looksLikeImage 가 거른다.
+    download: async () =>
+      Buffer.concat([
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        Buffer.alloc(I.MIN_IMAGE_BYTES || 4096),
+      ]),
+  };
+
+  const prompt = V.composeImagePrompt('a pitcher', null, { kind: 'SPORTS', likeness: true });
+  const out = await I.generateImages(
+    [{ shot_id: 'S05-2', scene_number: 5, person: '류현진', image_prompt: prompt }],
+    {
+      assetDir: dir,
+      token: 't',
+      client,
+      people: [{ name: '류현진', photo: 'https://e.com/main.jpg', photo_예비: 'https://e.com/spare.jpg' }],
+      sleep: async () => {},
+    }
+  );
+
+  // 세 번 걸었어야 한다: 본 사진 → 예비 사진 → 참조 없이.
+  assert.deepEqual(
+    calls.map((c) => c.ref),
+    ['https://e.com/main.jpg', 'https://e.com/spare.jpg', null],
+    '세 단으로 안 내려갑니다'
+  );
+
+  // 그리고 **그림은 나와야 한다.** 자리표시 화면이 아니다.
+  assert.equal(out.failed.length, 0, `실패로 남았습니다: ${JSON.stringify(out.failed)}`);
+  assert.equal(out.made.length, 1, '그림이 안 나왔습니다');
+
+  // 참조를 뗀 마지막 호출은 "사진과 같은 얼굴" 지시도 떼야 한다.
+  // 안 떼면 모델이 있지도 않은 사진을 찾느라 얼굴이 더 이상해진다.
+  const last = calls[calls.length - 1];
+  assert.ok(!last.prompt.includes(V.SPORTS_LIKENESS_CLAUSE), '닮음 지시가 남아 있습니다');
+  assert.ok(last.prompt.includes(V.SPORTS_INVENTED_CLAUSE), '지어낸 인물 지시가 안 붙었습니다');
+
+  // 얼굴 못 찾음을 보통 실패와 갈라 보는가. 다시 걸어도 똑같은 실패라
+  // 사진을 바꿔야 하는 쪽이다.
+  assert.ok(I.isFaceFail(new Error('facexlib align face fail')));
+  assert.ok(!I.isFaceFail(new Error('Replicate 429: Request was throttled')));
 });
 
 await asyncTest('참조 샷은 비싼 값으로 상한을 센다', async () => {
