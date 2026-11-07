@@ -148,4 +148,13 @@ check('따옴표가 든 메타 설명이 글자 그대로 저장된다', () => {
 // 뒷정리
 fs.rmSync(path.join(ROOT, 'out', 'backup'), { recursive: true, force: true });
 wp.server.close();
+check('글 찾기가 한 번에 여러 편을 보여준다', () => {
+  // 5편만 보여주던 탓에 찾는 글이 안 보이는 일이 네 번 났다(2026-11-07).
+  // 706편에서 5편은 너무 좁다.
+  const src = fs.readFileSync(path.join(ROOT, 'src/wordpress/retitle.mjs'), 'utf8');
+  const m = /findPosts\(q, \{ perPage: (\d+) \}\)/.exec(src);
+  assert.ok(m, '글 찾기가 perPage 를 지정하지 않습니다');
+  assert.ok(Number(m[1]) >= 20, `한 번에 보여주는 편수가 적습니다: ${m[1]}`);
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
