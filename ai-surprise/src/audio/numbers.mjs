@@ -169,22 +169,32 @@ export function readNumbers(text) {
   // 퍼센트 기호는 글자로 바꾼다. 그냥 두면 음성이 안 읽고 지나간다.
   out = out.replace(/%/g, ' 퍼센트');
 
-  // ① 분수. "3분의 1" → "삼분의 일". 다른 규칙보다 먼저 본다 —
+  // ① 더하기. "4+2년" → "사 플러스 이 년" (2026-11-07 운영자).
+  //
+  //    계약을 "4+2년"이라고 적는 것은 야구 글의 관행이다 — 4년을
+  //    보장하고 2년을 더 붙일 수 있다는 뜻이다. 눈에는 그 꼴이
+  //    익었으니 자막에는 그대로 두고, 읽을 때만 풀어 준다.
+  //
+  //    ⚠️ 숫자 규칙보다 **먼저** 본다. 뒤로 미루면 4 와 2 가 따로
+  //       바뀌고 '+' 만 남아서 음성이 그냥 지나간다.
+  out = out.replace(/(\d+)\s*\+\s*(\d+)/g, (_m, a, b) => `${sinoNumber(a)} 플러스 ${sinoNumber(b)}`);
+
+  // ② 분수. "3분의 1" → "삼분의 일". 다른 규칙보다 먼저 본다 —
   //    안 그러면 "3분"이 시간으로 읽힌다.
   out = out.replace(/(\d+)분의\s*(\d+)/g, (_m, a, b) => `${sinoNumber(a)}분의 ${sinoNumber(b)}`);
 
-  // ② 타율·승률. 점으로 시작하는 세 자리다.
+  // ③ 타율·승률. 점으로 시작하는 세 자리다.
   //    ⚠️ 앞에 숫자가 붙어 있으면 소수점이지 타율이 아니다 — 5.26 을
   //       여기서 잡으면 안 된다. 그래서 앞을 본다.
   out = out.replace(/(^|[^\d.])\.(\d{3})(?!\d)/g, (_m, pre, d) => `${pre}${rateNumber(d)}`);
 
-  // ③ 소수. 1,234.56 처럼 자릿점이 든 것도 받는다.
+  // ④ 소수. 1,234.56 처럼 자릿점이 든 것도 받는다.
   out = out.replace(/(\d[\d,]*)\.(\d+)/g, (_m, whole, frac) => {
     const w = sinoNumber(whole.replace(/,/g, ''));
     return `${w} 점 ${decimalTail(frac)}`;
   });
 
-  // ④ 정수. 뒤에 붙은 단위를 보고 고유어로 갈지 정한다.
+  // ⑤ 정수. 뒤에 붙은 단위를 보고 고유어로 갈지 정한다.
   const nativeUnit = NATIVE_UNITS.join('|');
   out = out.replace(new RegExp(`(\\d[\\d,]*)\\s*(${nativeUnit})?`, 'g'), (m, num, unit) => {
     const n = Number(String(num).replace(/,/g, ''));
@@ -195,6 +205,6 @@ export function readNumbers(text) {
     return sinoNumber(n);
   });
 
-  // ⑤ 겹친 공백을 하나로.
+  // ⑥ 겹친 공백을 하나로.
   return out.replace(/[ \t]{2,}/g, ' ');
 }
