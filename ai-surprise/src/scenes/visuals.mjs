@@ -248,10 +248,43 @@ export const SPORTS_STYLE_SUFFIX =
   // ── 얼굴 ──
   // 1화에서 눈코입 없는 동그라미가 나왔던 적이 있다. 얼굴은 그린다.
   // 다만 'clear large eyes' 는 빼야 한다 — 그게 아기 눈을 만들었다.
-  'a face drawn in anime style with defined eyebrows, eyes and mouth, ' +
+  //
+  // ⚠️ 2026-11-07. 여기에 조건이 붙었다. 전에는 얼굴을 **무조건** 그리라고
+  //    했는데, 그 줄이 뒷모습·옆모습 샷에서 목을 꺾어 놨다. 운영자 말:
+  //    "뒷모습으로 달리는데 얼굴 정면, 옆으로 달리는데 얼굴 정면이나
+  //     뒤통수 등등 동작과 얼굴이 안 맞아 어색하다".
+  //    그래서 "얼굴이 카메라를 향한 자세일 때"로 범위를 좁힌다.
+  'when the face is turned toward the camera it is drawn in anime style ' +
+  'with defined eyebrows, eyes and mouth, ' +
+  // ── 머리 방향은 몸이 정한다 (2026-11-07 운영자 지시) ──
+  //
+  // "뒷모습으로 달리는데 얼굴 정면, 옆으로 달리는데 얼굴 정면이나
+  //  뒤통수 등등 동작과 얼굴이 안 맞아 어색하다."
+  //
+  // 원인은 우리 프롬프트였다. 얼굴을 무조건 그리라고 했고, 참조 사진이
+  // 붙은 샷에는 "사진과 같은 얼굴"까지 요구했다. 모델은 두 지시를 다
+  // 지키려다 **몸은 뒤를 보는데 머리만 앞으로 돌려** 놓는다.
+  //
+  // 고치는 법은 우선순위를 정하는 것이다. **몸의 동작이 먼저고, 머리는
+  // 거기 따라간다.** 얼굴을 보여야 하면 애초에 얼굴이 보이는 자세를
+  // 고르면 된다 — 그건 아래 SPORTS_VISUALS_RULES 가 설계 단계에서 한다.
+  'the head faces the same way the body is moving: if the figure is seen ' +
+  'from behind, draw the back of the head and no face at all; if the figure ' +
+  'runs or throws across the frame, draw the head in profile or ' +
+  'three-quarter view; only draw a front-facing face when the body itself ' +
+  'faces the camera, ' +
+  'never twist the neck to show the face against the direction of the body, ' +
+  'never a front-facing face on a figure seen from behind, ' +
+  'anatomically correct neck and shoulders, ' +
   // ── 프레이밍 ──
   // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
-  'framed as a waist-up or full-body shot with the whole figure inside the frame, ' +
+  //
+  // ⚠️ 2026-11-07 운영자: "그림 위에 얼굴을 얹지 말고, 머리부터 발끝까지
+  //    그려서 넣어라." 전신을 기본으로 올린다. 허리 위 샷은 얼굴만 큰
+  //    그림이 되기 쉽고, 그럴수록 얼굴이 따로 노는 게 눈에 띈다.
+  'drawn as one whole figure from head to feet, the complete body inside ' +
+  'the frame with the feet and the ground visible, ' +
+  'never a floating head or a face pasted onto a scene, ' +
   'never cropping limbs at an awkward point, ' +
   // ── 유니폼 ──
   // 2026-11-03 운영자: "유니폼은 전부 국대 유니폼으로 바꿔라".
@@ -297,7 +330,13 @@ export const SPORTS_LIKENESS_CLAUSE =
   'brows, a simplified painted nose and mouth, the face finished in exactly ' +
   'the same painting style as the rest of the picture, ' +
   'never a photographic face, never a photo head on a drawn body, ' +
-  'no caricature or exaggeration of his features';
+  'no caricature or exaggeration of his features, ' +
+  // ⚠️ 2026-11-07. 이 줄이 없어서 목이 꺾였다. "사진과 같은 얼굴"은
+  //    얼굴이 보일 때만 적용되는 말인데, 그렇게 안 적었더니 모델이
+  //    뒷모습 샷에서도 얼굴을 돌려 끼워 넣었다.
+  'this likeness applies only when the pose actually shows his face: ' +
+  'if the body is seen from behind, draw the back of his head and do not ' +
+  'show his face at all rather than turning it toward the camera';
 
 /**
  * 스포츠 편에만 더 붙이는 금지 목록.
@@ -501,6 +540,41 @@ D. **얼굴을 안 쓰는 샷에는 야구장을 그린다.** 빈 화면이 아�
 
    뒷모습·손·발·실루엣은 얼굴이 아니다. 마음껏 쓴다 — 얼굴이
    안 나오면 틀릴 일도 없다.
+
+D-2. **자세와 얼굴 방향을 한 문장 안에서 맞춘다.** (2026-11-07)
+
+   운영자가 잡은 것이다 —
+   "뒷모습으로 달리는데 얼굴 정면, 옆으로 달리는데 얼굴 정면이나
+    뒤통수 등등 동작과 얼굴이 안 맞아 어색하다."
+
+   프롬프트를 쓸 때 **몸이 어디를 보는지와 머리가 어디를 보는지를
+   한 번에 정한다.** 둘을 따로 적으면 모델이 목을 꺾어서 둘 다
+   맞추려 든다.
+
+   샷을 둘 중 하나로만 쓴다. 섞지 않는다.
+
+     ① 얼굴 샷 — 몸이 카메라를 향한다
+        서 있다, 더그아웃에 기대 있다, 타석에 들어서며 정면을 본다,
+        마운드에서 포수를 보다 고개를 든다, 모자를 고쳐 쓴다.
+        **사진을 받아 둔 사람은 여기서만 쓴다.** 누구인지 보여야
+        하는 대목이 이 샷이다.
+
+     ② 동작 샷 — 몸이 움직인다. 얼굴을 요구하지 않는다
+        뒤에서 본 달리기, 옆에서 본 투구, 스윙 뒤 1루로 뛰는 뒷모습,
+        펜스 앞 점프.
+        이런 샷에는 **"from behind, back of the head"** 또는
+        **"in profile"** 이라고 못 박는다. 얼굴 이야기는 아예 꺼내지
+        않는다 — 꺼내는 순간 모델이 돌려 끼운다.
+
+     나쁨: "a pitcher running toward the bullpen seen from behind,
+            his face determined"
+            → 뒤를 보는 몸에 앞을 보는 얼굴이 붙는다
+     좋음: "a pitcher running toward the bullpen seen from behind,
+            the back of his head and his number visible, no face"
+
+   그리고 **머리부터 발끝까지 그린다**(운영자, 같은 날). 얼굴만 크게
+   잡은 샷은 쓰지 않는다. 몸 전체가 보여야 자세가 읽히고, 자세가
+   읽혀야 얼굴 방향이 맞는지도 보인다.
 
 E. **화면을 채우되 과하지 않게.**
 

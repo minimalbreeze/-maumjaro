@@ -4174,7 +4174,42 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   assert.ok(/never a 3D render/.test(p), '3D 를 막지 않습니다');
   assert.ok(/one seventh/.test(p), '등신 비율을 숫자로 안 박았습니다 — 말로 두면 흐려집니다');
   assert.ok(/never bald/.test(p), '머리카락 지시가 없습니다 — 대머리가 나옵니다');
-  assert.ok(/whole figure inside the frame/.test(p), '프레이밍 지시가 없습니다 — 다리가 잘립니다');
+
+  // ── 머리부터 발끝까지 (2026-11-07 운영자) ──
+  // "그림 위에 얼굴을 얹지 말고, 머리부터 발끝까지 그려서 넣어라."
+  // 전에는 'waist-up or full-body' 였다. 허리 위 샷은 얼굴만 큰 그림이
+  // 되기 쉽고, 그럴수록 얼굴이 따로 노는 게 눈에 띈다.
+  assert.ok(/from head to feet/.test(p), '전신 지시가 없습니다');
+  assert.ok(/complete body inside\s+the frame|complete body inside the frame/.test(p), '프레이밍 지시가 없습니다 — 다리가 잘립니다');
+  assert.ok(/never a floating head/.test(p), '얼굴만 얹는 것을 안 막습니다');
+
+  // ── 머리 방향은 몸이 정한다 (2026-11-07 운영자) ──
+  // 이 테스트 맨 위 주석에 3화 때도 "동작이랑 얼굴 방향도 안 맞다"는
+  // 말이 적혀 있다. 같은 지적이 두 번 나왔다는 뜻이다. 그때는 얼굴을
+  // 적게 그리는 쪽으로 때웠는데, 적게 그려도 그린 것이 틀리면 똑같다.
+  // 이번에는 **방향 자체**를 못 박는다.
+  assert.ok(/from behind, draw the back of the head/.test(p), '뒷모습 지시가 없습니다');
+  assert.ok(/never twist the neck/.test(p), '목 꺾기를 안 막습니다');
+  assert.ok(
+    /never a front-facing face on a figure seen from behind/.test(p),
+    '뒷모습에 정면 얼굴 붙이는 것을 안 막습니다'
+  );
+  // 얼굴 지시는 **조건부**여야 한다. 무조건이면 뒷모습에서도 얼굴을 그린다.
+  assert.ok(
+    /when the face is turned toward the camera/.test(p),
+    '얼굴 지시가 조건 없이 걸려 있습니다 — 뒷모습 샷에서 목이 꺾입니다'
+  );
+
+  // 닮게 그리는 샷에서도 같은 조건이 걸려야 한다. 여기가 더 세다 —
+  // "사진과 같은 얼굴"은 얼굴이 안 보이는 자세에서도 얼굴을 불러낸다.
+  const ref = V.composeImagePrompt('a pitcher seen from behind', null, {
+    kind: 'SPORTS',
+    likeness: true,
+  });
+  assert.ok(
+    /likeness applies only when the pose actually shows his face/.test(ref),
+    '닮음 지시에 자세 조건이 없습니다'
+  );
   // 옛 문구가 되살아나지 않는지 본다. 이 셋이 아기 인형을 만들었다.
   for (const bad of ['oversized head on small body', 'glossy toy-figure', 'clear large eyes']) {
     assert.ok(!p.includes(bad), `"${bad}" 가 되살아났습니다`);
@@ -5354,7 +5389,44 @@ await asyncTest('읽을 글에서 따옴표를 뗀다 — 글자는 그대로 �
 
   // 숫자와 소수점은 건드리지 않는다.
   assert.equal(speechText('삼 할 이 리'), '삼 할 이 리');
-  assert.equal(speechText('OPS .850'), 'OPS .850');
+  // ⚠️ 2026-11-07 에 바뀌었다. 전에는 'OPS .850' 이 그대로 나갔는데,
+  //    이제 PRONOUNCE 가 읽기를 한글로 바꾼다. 소수점은 그대로다.
+  assert.equal(speechText('OPS .850'), '오피에스 .850');
+});
+
+await asyncTest('자막은 영어, 읽기는 한글 (2026-11-07 운영자)', async () => {
+  // "영어가 어색하게 읽히면 한글로 해서 읽는다. 그리고 자막에는 보는
+  //  사람을 위해 익숙한 영어로 적는다. 가능한가?"
+  //
+  // 가능하다. 대본에 영어로 쓰면 자막은 영어로 나가고, speechText() 가
+  // 읽을 글만 한글로 바꾼다. 둘이 갈라지는 자리가 여기다.
+  const { speechText, sameMeaning, PRONOUNCE } = await import('../src/audio/speech.mjs');
+  const { narrationUnits } = await import('../src/audio/narrate.mjs');
+
+  assert.equal(speechText('FA 시장이 열립니다.'), '에프에이 시장이 열립니다.');
+  assert.equal(speechText('MLB 와 KBO.'), '메이저리그 와 케이비오.');
+
+  // 뜻이 같은지 검사가 이걸 버그로 보면 안 된다.
+  for (const line of ['FA 시장이 열립니다.', 'OPS 가 높습니다.', 'MLB 진출입니다.']) {
+    assert.ok(sameMeaning(line, speechText(line)), `뜻이 달라졌다고 잡혔습니다: ${line}`);
+  }
+
+  // 그리고 자막에는 영어가 그대로 남아야 한다. 이게 운영자가 원한 것이다.
+  const [u] = narrationUnits([
+    { scene_number: 1, section: 'HOOK', paragraphs: [{ tag: 'FACT', text: 'FA 시장이 열립니다.' }] },
+  ]);
+  assert.equal(u.text, 'FA 시장이 열립니다.', '자막까지 한글로 바뀌었습니다');
+  assert.equal(u.speech, '에프에이 시장이 열립니다.', '읽을 글이 안 바뀌었습니다');
+
+  // 긴 것이 먼저 와야 한다. 'FA' 가 'MLB' 보다 앞에 있으면 상관없지만,
+  // 세 글자가 두 글자보다 뒤에 오면 반쪽만 바뀌는 사고가 난다.
+  const keys = [...PRONOUNCE.keys()];
+  for (let i = 1; i < keys.length; i += 1) {
+    assert.ok(
+      keys[i].length <= keys[i - 1].length,
+      `발음 사전 차례가 뒤집혔습니다: ${keys[i - 1]} 뒤에 ${keys[i]}`
+    );
+  }
 });
 
 await asyncTest('읽을 글이 음성 모델로 가고, 자막에는 원문이 남는다', async () => {
@@ -5372,11 +5444,21 @@ await asyncTest('읽을 글이 음성 모델로 가고, 자막에는 원문이 �
   assert.equal(u.chars, u.speech.length);
 });
 
-await asyncTest('발음 사전은 들어 보기 전에는 비어 있다', async () => {
-  // 짐작으로 넣으면 멀쩡한 발음을 망친다. 넣기 전에 반드시
-  // `voice --say` 로 양쪽을 만들어 듣는다.
+await asyncTest('발음 사전에는 영어 약어만, 한글 읽기로 넣는다', async () => {
+  // ⚠️ 이 테스트는 원래 "발음 사전은 비어 있다"였다. 짐작으로 넣으면
+  //    멀쩡한 발음을 망치니까 들어 보기 전에는 아무것도 넣지 말자는
+  //    규칙이었다.
+  //
+  //    2026-11-07 에 운영자가 그 자리를 쓰기로 했다 — "영어가 어색하게
+  //    읽히면 한글로 해서 읽고, 자막에는 익숙한 영어로 적는다."
+  //    그래서 비어 있으라고는 못 한다. 대신 **무엇을 넣어도 되는지**를
+  //    좁힌다. 영어 약어의 한글 읽기만이다. 한글 낱말의 발음을 짐작으로
+  //    고치는 것은 여전히 막는다 — 그게 원래 이 테스트가 막던 사고다.
   const { PRONOUNCE, SOFTEN_LIST_COMMAS, softenListCommas } = await import('../src/audio/speech.mjs');
-  assert.equal(PRONOUNCE.size, 0, '듣지 않고 발음 사전에 넣은 것이 있습니다');
+  for (const [from, to] of PRONOUNCE) {
+    assert.ok(/^[A-Z]{2,5}$/.test(from), `영어 약어가 아닌 것이 들어 있습니다: ${from}`);
+    assert.ok(/^[가-힣]+$/.test(to), `읽기가 한글이 아닙니다: ${from} → ${to}`);
+  }
   assert.equal(SOFTEN_LIST_COMMAS, false, '듣지 않고 쉼표 바꾸기를 켰습니다');
   // 켤 때 어떻게 되는지는 미리 확인해 둔다.
   assert.equal(softenListCommas('노시환, 유로결, 변우혁'), '노시환·유로결·변우혁');
@@ -5715,18 +5797,59 @@ await asyncTest('읽을 글에 영어 글자를 넣지 않는다', async () => {
   const { latinSpots, checkSpoken } = await import('../src/script/spoken.mjs');
 
   assert.equal(latinSpots(['오피에스 팔 할 오 푼입니다.']).length, 0);
-  assert.equal(latinSpots(['OPS 팔 할 오 푼입니다.']).length, 1);
-  assert.deepEqual(latinSpots(['FA 시장과 MLB.'])[0].hits, ['FA', 'MLB']);
+
+  // ⚠️ 2026-11-07 에 바뀌었다. 전에는 영어가 보이면 전부 걸었다.
+  //    이제 PRONOUNCE 에 읽기가 등록된 것은 **해결된 것**이라 안 건다.
+  //    이미 해결된 것을 계속 지적하면 진짜 문제가 묻힌다.
+  assert.equal(latinSpots(['OPS 팔 할 오 푼입니다.']).length, 0, '등록된 약어를 걸었습니다');
+  assert.equal(latinSpots(['FA 시장과 MLB.']).length, 0, '등록된 약어를 걸었습니다');
+
+  // 등록 안 된 영어는 그대로 걸린다. 이게 이 검사의 본래 일이다.
+  assert.equal(latinSpots(['WHIP 가 낮습니다.']).length, 1);
+  assert.deepEqual(latinSpots(['WHIP 과 BABIP.'])[0].hits, ['WHIP', 'BABIP']);
+  // 섞여 있으면 등록 안 된 것만 집는다.
+  assert.deepEqual(latinSpots(['FA 와 WHIP.'])[0].hits, ['WHIP']);
 
   // 2화 이후 대본은 깨끗해야 한다. 1화는 이미 올린 편이라 둔다.
   const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
-  for (const ep of ['2화', '3화', '4화', '5화']) {
+  for (const ep of ['2화', '3화', '4화', '5화', '9화']) {
     const md = fs.readFileSync(path.join(base, `${ep}-대본.md`), 'utf8');
-    const notes = checkSpoken(md).notes.filter((n) => n.includes('영어 글자'));
+    const notes = checkSpoken(md).notes.filter((n) => n.includes('영어'));
     assert.deepEqual(notes, [], `${ep}: ${notes[0]}`);
   }
 });
 
+
+await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜브 정책)', async () => {
+  // 2026-11-07 운영자: "구글 유튜브 정책에 안 걸리게 부탁한다.
+  // 잘하다가 정책에 걸려 정지당하면 큰일이다."
+  //
+  // 유튜브는 **현실로 오인될 수 있는** 합성 콘텐츠에 공시를 요구한다.
+  // 분명한 일러스트는 대상이 아니다. 그러니까 우리 그림체가 그 자체로
+  // 방어다 — 실사로 가는 순간 그 방어가 통째로 무너진다.
+  //
+  // 걱정되는 자리가 하나 있다. 닮게 그리는 샷에서는 공통 금지 목록의
+  // 'no real identifiable public figures' 를 **일부러 뺀다**(안 빼면
+  // 닮으라는 지시와 정면으로 싸운다). 그때 실사 금지까지 같이 빠지면
+  // 사진 같은 실존 인물 얼굴이 나올 수 있다.
+  //
+  // 그래서 여기서 못 박는다. 닮음은 풀어도 **실사는 안 풀린다.**
+  const V = await import('../src/scenes/visuals.mjs');
+
+  for (const likeness of [false, true]) {
+    const p = V.composeImagePrompt('a pitcher on the mound', null, { kind: 'SPORTS', likeness });
+    assert.ok(/no photorealistic faces/.test(p), `실사 얼굴 금지가 빠졌습니다 (likeness=${likeness})`);
+    assert.ok(/no photograph/.test(p), `사진 금지가 빠졌습니다 (likeness=${likeness})`);
+    assert.ok(/no club team logos/.test(p), `구단 로고 금지가 빠졌습니다 (likeness=${likeness})`);
+    assert.ok(/no sponsor text/.test(p), `스폰서 글자 금지가 빠졌습니다 (likeness=${likeness})`);
+  }
+
+  // 닮음을 켰을 때만 실존 인물 금지가 빠진다. 끄면 그대로 있어야 한다.
+  const off = V.composeImagePrompt('x', null, { kind: 'SPORTS', likeness: false });
+  const on = V.composeImagePrompt('x', null, { kind: 'SPORTS', likeness: true });
+  assert.ok(/no real identifiable public figures/.test(off), '사진 없는 샷에서 빠졌습니다');
+  assert.ok(!/no real identifiable public figures/.test(on), '닮음 지시와 싸우는 줄이 남아 있습니다');
+});
 
 await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', async () => {
   // 운영자가 "그림이 진짜 선수 같은 느낌이었으면" 한다(2026-11-03).
