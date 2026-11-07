@@ -285,6 +285,56 @@ export const SPORTS_STYLE_SUFFIX =
   'drawn as one whole figure from head to feet, the complete body inside ' +
   'the frame with the feet and the ground visible, ' +
   'never a floating head or a face pasted onto a scene, ' +
+  // ── 앞에 둔 물건이 몸을 가리지 않는다 (2026-11-07 운영자) ──
+  //
+  // "이건 왜 목만 둥둥 떠 있나?"
+  //
+  // 실행 #65 의 한 샷에서 클립보드가 화면 아래 절반을 덮어, 머리와
+  // 어깨만 그 위에 떠 있는 그림이 나왔다. 몸이 통째로 가려졌다.
+  //
+  // 원인은 우리가 적은 "앞에 가까이 있는 것 하나"(SPORTS_VISUALS_RULES
+  // E 의 세 층)다. 그 물건을 **사람 앞에** 두라고만 했지 얼마나 크게
+  // 두라고는 안 했다. 모델이 화면 반을 채우는 크기로 그린다.
+  //
+  // 소품은 깊이를 만들라고 넣은 것이지 주인공을 가리라고 넣은 게
+  // 아니다. 크기와 자리를 못 박는다.
+  'any foreground object stays small and to one side, never covering the ' +
+  'body: the torso, arms and legs of the person remain fully visible, ' +
+  'a held object such as a clipboard, ball or glove is held at natural ' +
+  'size in one hand and never enlarged to fill the lower half of the frame, ' +
+  'never a head and shoulders sitting on top of a large object, ' +
+  // ── 앉은 사람도 다리를 그린다 (2026-11-07 운영자) ──
+  //
+  // "다리는 어디 가고? 유니폼이 의자에 걸려 있는 것 같나."
+  //
+  // 실행 #65. 의자에 앉은 뒷모습을 그렸는데 **다리가 통째로 없었다.**
+  // 점퍼만 의자 등받이에 걸쳐 둔 것처럼 보였다.
+  //
+  // 우리가 "머리부터 발끝까지"라고만 적어서 생긴 일이다. 앉으면 발이
+  // 의자에 가려지니, 모델이 둘을 다 맞추려다 사람을 지우고 옷만
+  // 남겼다. 앉은 자세를 따로 적어야 한다.
+  'a seated figure still has legs: thighs, knees and feet are drawn and ' +
+  'the body fills the clothing, ' +
+  'never an empty jacket or uniform draped over a chair in place of a person, ' +
+  // ⚠️ 옷걸이에 걸린 유니폼에 머리만 얹힌 그림도 나왔다(실행 #65,
+  //    라커룸 샷). 사람과 걸어 둔 옷은 **다른 것**이라고 적어야 한다.
+  //    라커룸처럼 옷이 여러 벌 걸린 배경에서 특히 잘 섞인다.
+  'a person and a hanging garment are never merged: if a person stands ' +
+  'among hanging uniforms, he has his own shoulders, arms, torso and legs ' +
+  'in front of them, never a head on top of a jersey on a hanger, ' +
+  // ── 물건은 손에 들거나 바닥에 놓는다 (2026-11-07 운영자) ──
+  //
+  // "이건 왜 등에 걸려 있나?"
+  //
+  // 실행 #65. 뒷모습 샷에서 클립보드가 **점퍼 등판에 붙어** 있었다.
+  // 들고 있는 것도 아니고 걸린 것도 아니고, 그냥 등에 얹혀 있었다.
+  //
+  // 앞의 두 줄이 "앞에 크게 두지 마라"까지만 말해서, 모델이 자리를
+  // 못 찾고 아무 데나 붙였다. **어디에 두는지**를 적어야 한다.
+  'objects are held in a hand, tucked under an arm, or resting on a ' +
+  'surface such as a bench, rail or ground, ' +
+  'never stuck to the back or chest of a jacket, never floating against ' +
+  'the body with nothing holding it, ' +
   'never cropping limbs at an awkward point, ' +
   // ── 유니폼 ──
   // 2026-11-03 운영자: "유니폼은 전부 국대 유니폼으로 바꿔라".
@@ -330,6 +380,26 @@ export const SPORTS_LIKENESS_CLAUSE =
   'brows, a simplified painted nose and mouth, the face finished in exactly ' +
   'the same painting style as the rest of the picture, ' +
   'never a photographic face, never a photo head on a drawn body, ' +
+  // ── 문지른 얼굴을 막는다 (2026-11-07 운영자) ──
+  //
+  //   "선수 얼굴 부분이 만화 같지 않고 어색하다"
+  //   "여기도 얼굴이 너무 만화 같지 않아 어색하다"
+  //
+  // 실행 #65 에서 얼굴만 에어브러시로 문지른 것처럼 부드럽게 나왔다.
+  // 빛과 그늘이 서서히 섞이고 윤곽선이 없어서, 납작하게 칠한 몸·배경
+  // 위에 혼자 입체로 떠 보인다.
+  //
+  // 위의 'flat cel-shaded' 만으로는 부족했다. **무엇을 하지 말라고**
+  // 적어야 한다 — 그라데이션과 살갗 질감이 범인이다.
+  'the face shaded in two or three flat tones with a hard edge between ' +
+  'light and shadow, a visible ink outline along the jaw, nose and eyelids, ' +
+  'the same line weight and brush quality as the hands and the uniform, ' +
+  'no soft airbrushed gradient on the skin, no smooth rounded 3D shading ' +
+  'on the cheeks or nose, no semi-realistic portrait rendering, ' +
+  // "너무 번들번들" (2026-11-23 아님 — 2026-11-07 운영자). 살갗에 윤이
+  // 나면 그림이 아니라 렌더처럼 보인다. 종이에 칠한 결이어야 한다.
+  'matte skin with the grain of the paper showing through, no specular ' +
+  'highlight or shine on the forehead, nose or cheeks, ' +
   'no caricature or exaggeration of his features, ' +
   // ⚠️ 2026-11-07. 이 줄이 없어서 목이 꺾였다. "사진과 같은 얼굴"은
   //    얼굴이 보일 때만 적용되는 말인데, 그렇게 안 적었더니 모델이
@@ -351,6 +421,9 @@ export const SPORTS_NEGATIVE_EXTRA =
   //    글자 쪽을 버린다. 뺀다. 구단 로고와 스폰서 글자만 계속 막는다.
   'no club team logos, no brand marks, no sponsor text on uniforms, ' +
   'no photorealistic faces, no photograph, ' +
+  // 실행 #65 에서 얼굴만 문질러진 채 나왔다. 이름을 적어 막는다.
+  'no airbrushed face, no soft gradient skin shading, no glossy skin, ' +
+  'no semi-realistic face on a flat drawn body, ' +
   'no real stadium signage, no league emblem, ' +
   // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
   'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
@@ -576,6 +649,70 @@ D-2. **자세와 얼굴 방향을 한 문장 안에서 맞춘다.** (2026-11-07)
    잡은 샷은 쓰지 않는다. 몸 전체가 보여야 자세가 읽히고, 자세가
    읽혀야 얼굴 방향이 맞는지도 보인다.
 
+D-3. **카드와 자막의 숫자는 숫자로 적는다.** (2026-11-07)
+
+   운영자가 잡은 것이다 —
+   "151억 7천 1백 8만원 이렇게 표기 되어야지, 한글로 다 나오잖아."
+   "계약 8년이다. 이것도 다 한글이다."
+   "79승 2무 63패 이런 것도 자막이 숫자로 되어야지."
+   "3위 이런 순위도 숫자로 해야지."
+
+   **눈으로 보는 글자와 귀로 듣는 말은 다르다.**
+
+     카드·자막   151억 1,709만 원 · 8년 · 79승 2무 63패 · 3위 · 5.26
+     읽는 말     백오십일억 천칠백구만 원 · 팔 년 · 칠십구 승 …
+
+   읽는 쪽은 speech.mjs 가 알아서 바꾼다(numbers.mjs). 그러니
+   **card_text 와 대본에는 숫자를 숫자로 적는다.** 한글로 적으면
+   화면에 "백오십일억 천칠백구만 원"이 뜬다 — 읽기 어렵다.
+
+   ⚠️ 큰 돈은 **자릿점을 찍는다.** 1709만이 아니라 1,709만이다.
+      숫자가 길수록 자릿점이 있어야 한눈에 읽힌다.
+
+   ⚠️ 적게 세는 것은 한글 그대로 둔다. "세 명", "두 경기", "한 번"은
+      숫자로 쓰면 오히려 어색하다. 열 이하의 사람·경기·횟수가 그렇다.
+
+D-4. **야구가 움직이는 장면을 넣는다.** (2026-11-07)
+
+   운영자가 실행 #65 를 보고 말했다 —
+   "공 던지는 장면, 치는 장면, 도루하는 장면, 홈쇄도하는 장면,
+    외야 수비, 내야 수비 등등 역동적인 장면들을 더 넣자.
+    이거 너무 정적이다."
+
+   맞는 말이다. #65 는 **서 있거나 앉아 있는 사람**과 **글자 카드**로
+   가득했다. 야구 영상인데 공이 날아가는 장면이 거의 없었다.
+
+   그래서 **한 단락에 적어도 한 장은 움직이는 장면**을 넣는다.
+
+     던진다    와인드업 꼭대기, 공을 놓는 순간, 다리를 끌며 마무리,
+               포수 미트에 꽂히는 공
+     친다      배트에 맞는 순간, 끝까지 돌아간 몸, 공을 따라가는 시선,
+               배트를 던지고 1루로
+     달린다    2루로 몸을 던지는 슬라이딩, 흙먼지, 홈으로 파고드는 몸,
+               태그하려 내려오는 미트
+     지킨다    타구를 쫓아 담장으로 달리는 외야수, 펜스 앞 점프,
+               몸을 날리는 내야수, 2루 베이스 위 중계 동작, 더블플레이
+
+   ⚠️ 움직이는 장면에서는 **얼굴을 요구하지 않는다.** 뒷모습·측면·
+      실루엣으로 간다 (D-2 의 ② 동작 샷). 얼굴을 넣으려다 목이 꺾인다.
+
+   ⚠️ 그래도 **대본이 말하는 것**과 이어져야 한다. 불펜 이야기에
+      홈 쇄도를 넣지 않는다. 움직임을 넣으려고 아무 장면이나 붙이는
+      것이 정적인 화면보다 나쁘다.
+
+   ⚠️ 그 사람의 **본업**을 그린다. 2026-11-07 운영자 —
+      "그래서 내가 사진을 투수는 던지는 장면, 타자는 치는 장면,
+       수비 잘하는 선수는 수비 장면을 같이 주지 않았나."
+
+      맞는 말이다. 아래 「이 편에 나오는 사람」의 role 을 보고 정한다.
+
+        투수   던지는 장면
+        타자   치는 장면, 달리는 장면
+        내야수·외야수  수비 장면
+        감독   더그아웃 난간, 사인, 마운드로 걸어 나가는 뒷모습
+
+      투수를 타석에 세우거나 타자를 마운드에 올리지 않는다.
+
 E. **화면을 채우되 과하지 않게.**
 
    2026-11-04 운영자 말이다 —
@@ -636,6 +773,23 @@ D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_
      백억이 아닙니다
 
    한 줄은 24자 안쪽, 줄은 6줄 안쪽으로 한다. 넘으면 글자가 작아져 안 읽힌다.
+
+   ⚠️ **한 장면에 카드는 0장이 기본이다.** (2026-11-07)
+
+   전에는 "한 편에 6~10장"이라고 적었다. 그런데 당신은 **장면 하나만**
+   보고 설계한다 — 편 전체가 몇 장인지 알 수가 없다. 그래서 장면마다
+   한 장씩 넣었고, 실행 #65 에서 24장이 나왔다. 운영자 말로
+   **"글씨가 너무 많다, 사진이 더 많았으면 좋겠다"**.
+
+   그러니 장면 기준으로 말한다.
+
+     · 이 장면의 카드는 **0장이 기본**이다
+     · 숫자가 **셋 이상 맞서는 표**일 때만 1장 넣는다
+       (390억 대 42억, 상한 대 하한, 세 팀 계약 비교처럼)
+     · 숫자가 하나뿐이면 카드로 만들지 않는다. 그림으로 간다
+     · 한 장면에 2장은 **없다**
+
+   편 전체로 6~10장이 되게 하려면 장면 넷 중 셋은 카드가 없어야 한다.
 
    **한 편에 6~10장만 쓴다** (2026-11-03 운영자 지시).
 
@@ -888,6 +1042,36 @@ export function composeImagePrompt(content, era = null, { kind = null, likeness 
  * 걸린 샷은 다시 설계시킨다. 조용히 통과시키면 Phase 3에서 돈을 써서
  * 불쾌한 이미지를 만들어 놓고 나서야 알게 된다.
  */
+/**
+ * 한 편에 글자 카드가 몇 장인지 센다.
+ *
+ * 2026-11-07 운영자: "글씨가 너무 많다, 사진이 더 많았으면 좋겠다."
+ * 실행 #65 가 74 샷 중 24장이 카드였다.
+ *
+ * 규칙은 전부터 "한 편에 6~10장"이었는데, 장면을 하나씩 설계하는
+ * AI 는 편 전체를 못 본다. 그래서 **다 모인 뒤에** 센다.
+ *
+ * 막지는 않는다 — 여기서 실패시키면 이미 돈을 쓴 설계를 버리게 된다.
+ * 사람에게 보이게만 한다. 넘치면 기획을 고치거나 다시 설계시킨다.
+ */
+export const CARD_MAX = 10;
+
+export function countCards(shots) {
+  const list = Array.isArray(shots) ? shots : [];
+  const cards = list.filter((x) => String(x?.card_text || '').trim()).length;
+  return {
+    cards,
+    total: list.length,
+    tooMany: cards > CARD_MAX,
+    note:
+      cards > CARD_MAX
+        ? `글자 카드가 ${cards}장입니다 (샷 ${list.length}개 중). ` +
+          `한 편에 ${CARD_MAX}장까지가 좋습니다 — 글씨가 많으면 보는 사람이 읽기만 합니다. ` +
+          '숫자가 셋 이상 맞서는 자리만 카드로 두고 나머지는 그림으로 바꾸세요.'
+        : '',
+  };
+}
+
 export function checkPrompts(shots) {
   const violations = [];
   for (const shot of Array.isArray(shots) ? shots : []) {

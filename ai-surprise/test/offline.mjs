@@ -4294,6 +4294,45 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
   assert.ok(!/뒷모습·옆모습·손·책상 위가 낫다/.test(sys), '아직 뒷모습만 권하고 있습니다');
 });
 
+await asyncTest('몸이 사라지는 네 가지를 막는다 (실행 #65 화면)', async () => {
+  // 운영자가 실행 #65 영상을 보면서 하나씩 짚었다. 전부 **몸이
+  // 사라지는** 같은 병이고, 나타나는 꼴만 달랐다.
+  //
+  //   "이건 왜 목만 둥둥 떠 있나?"        → 클립보드가 화면 아래를 덮고
+  //                                         머리와 어깨만 그 위에 떴다
+  //   "다리는 어디 가고? 유니폼이 의자에   → 앉은 뒷모습인데 다리가 없고
+  //    걸려 있는 것 같나"                   점퍼만 의자에 걸린 꼴
+  //   "이건 왜 등에 걸려 있나?"            → 클립보드가 점퍼 등판에 붙었다
+  //   "유니폼에 왜 목만 둥둥 떠 있나?"      → 라커룸에서 옷걸이에 걸린
+  //                                         유니폼 위에 머리만 얹혔다
+  //
+  // 뿌리는 하나다. 우리가 "머리부터 발끝까지"라고만 적고 **소품을
+  // 어디에 얼마나 크게 두는지, 앉으면 어떻게 하는지**를 안 적었다.
+  // 모델은 빈자리를 제 맘대로 채운다.
+  const V = await import('../src/scenes/visuals.mjs');
+  const p = V.composeImagePrompt('a manager with a clipboard', null, { kind: 'SPORTS' });
+
+  // ① 소품이 몸을 가리지 않는다
+  assert.ok(/never covering the/.test(p), '소품이 몸 가리는 것을 안 막습니다');
+  assert.ok(/never enlarged to fill the lower half/.test(p), '소품 크기를 안 막습니다');
+  assert.ok(/never a head and shoulders sitting on top of a large object/.test(p), '목만 뜨는 것을 안 막습니다');
+
+  // ② 앉아도 다리를 그린다
+  assert.ok(/a seated figure still has legs/.test(p), '앉은 자세에 다리 지시가 없습니다');
+  assert.ok(/never an empty jacket or uniform draped over a chair/.test(p), '빈 옷이 사람 자리를 차지하는 것을 안 막습니다');
+
+  // ③ 물건은 손에 들거나 어디에 놓는다
+  assert.ok(/objects are held in a hand/.test(p), '물건 두는 자리가 없습니다');
+  assert.ok(/never stuck to the back or chest/.test(p), '등에 붙는 것을 안 막습니다');
+
+  // ④ 사람과 걸어 둔 옷은 다른 것이다
+  assert.ok(/never a head on top of a jersey on a hanger/.test(p), '옷걸이 유니폼과 섞이는 것을 안 막습니다');
+
+  // 그리고 전신은 그대로 지켜져야 한다. 위의 것들을 넣느라 이게
+  // 빠지면 처음 문제로 돌아간다.
+  assert.ok(/from head to feet/.test(p), '전신 지시가 사라졌습니다');
+});
+
 await asyncTest('한 장면의 인물 샷은 그림 한 장을 나눠 쓰고 움직이지 않는다', async () => {
   // 3화: 한 장면이 샷 두세 개로 쪼개지고 샷마다 그림을 따로 그렸다.
   // 같은 사람을 따로 그리면 얼굴도 방향도 자세도 다 다르게 나온다 —
@@ -5445,9 +5484,13 @@ await asyncTest('읽을 글에서 따옴표를 뗀다 — 글자는 그대로 �
 
   // 숫자와 소수점은 건드리지 않는다.
   assert.equal(speechText('삼 할 이 리'), '삼 할 이 리');
-  // ⚠️ 2026-11-07 에 바뀌었다. 전에는 'OPS .850' 이 그대로 나갔는데,
-  //    이제 PRONOUNCE 가 읽기를 한글로 바꾼다. 소수점은 그대로다.
-  assert.equal(speechText('OPS .850'), '오피에스 .850');
+  // ⚠️ 2026-11-07 에 두 번 바뀌었다.
+  //    ① PRONOUNCE 가 OPS 를 '오피에스'로 읽는다.
+  //    ② numbers.mjs 가 .850 을 '팔 할 오 푼'으로 읽는다. 야구에서
+  //       점으로 시작하는 세 자리는 할·푼·리로 읽는다 — 타율이든
+  //       출루율이든 오피에스든 같다.
+  //    자막에는 'OPS .850' 이 그대로 나간다. 눈에 익은 쪽이다.
+  assert.equal(speechText('OPS .850'), '오피에스 팔 할 오 푼');
 });
 
 await asyncTest('자막은 영어, 읽기는 한글 (2026-11-07 운영자)', async () => {
