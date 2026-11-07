@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {
   첫문단, 문장들, 인사말로열었나, 받는말로시작하나, 키워드가첫문장에,
-  질문절, 흔들리는표현, 재기,
+  질문절, 흔들리는표현, 재기, 글속날짜, 흔들린문장들,
 } from '../src/wordpress/ai-cite-scan.mjs';
 
 let passed = 0;
@@ -73,6 +73,21 @@ check('어긴 항목을 이름으로 돌려준다', () => {
   assert.ok(r.어긴것.includes('인사말로 열었다'));
   assert.ok(r.어긴것.includes('자주 묻는 질문 절이 없다'));
   assert.ok(r.어긴것.some((x) => x.startsWith('읽는 시점에 흔들리는 말')));
+});
+
+check('글 안에 적힌 날짜를 모은다 — 바꿀 날짜가 있는지 보려고', () => {
+  const r = 글속날짜('<p>2026년 11월 1일 결승이 열렸고 10월 30일 준결승이 있었습니다.</p>');
+  assert.ok(r.includes('2026-11-1'));
+  assert.ok(r.includes('10월 30일'));
+  assert.deepEqual(글속날짜('<p>날짜가 없는 글입니다.</p>'), []);
+});
+
+check('흔들리는 말이 든 문장만 뽑는다 — 여러 번 불러도 같은 결과', () => {
+  const 글 = '<p>지난주 경기에서 이겼습니다. 11월 1일 결승이 열립니다. 이번 주에도 나섭니다.</p>';
+  const 한번 = 흔들린문장들(글);
+  assert.equal(한번.length, 2);
+  // 정규식에 /g 가 붙어 있어 lastIndex 가 남으면 두 번째 호출이 틀린다.
+  assert.deepEqual(흔들린문장들(글), 한번);
 });
 
 console.log(`\n  ${passed}개 통과`);
