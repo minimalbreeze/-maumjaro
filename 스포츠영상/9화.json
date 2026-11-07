@@ -124,8 +124,9 @@
       "name": "한승혁",
       "role": "KT 투수 (2025년까지 한화)",
       "look": "a Korean man in his early 30s, a relief pitcher, short black hair under a baseball cap, a lean and wiry build, a sharp focused expression",
-      "tell": "이 편의 주인공이다. 강백호 보상선수로 한화에서 KT로 갔고, 2026년 KT가 1위를 했다. LEFT 섹션에서 한 번 제대로 보여야 한다.",
-      "photo": ""
+      "tell": "이 편의 주인공이다. 강백호 보상선수로 한화에서 KT로 갔고, 2026년 KT가 1위를 했다. LEFT 섹션에서 한 번 제대로 보여야 한다. ⚠️ 사진은 2026-03-02 기사 것이라 KT 유니폼이다 — 이 편에서 KT 소속으로 나오니 맞다. photo_예비는 2025-06-14 한화 시절 사진이다. 본 주소가 안 열리면 그걸 쓴다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F03%2F02%2F2026030201000048700002921_20260302075220264.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2025%2F06%2F14%2F0001878694_001_20250614193410498.jpg&type=a340"
     },
     {
       "name": "김범수",
@@ -157,13 +158,37 @@
     }
   ],
   "beats": [
-    { "key": "HOOK", "what": "홈런 1위, 득점 2위, 타율 3위. 그런데 9위로 끝났다" },
-    { "key": "MONEY", "what": "4년 동안 밖에서 다섯 명을 데려오는 데 390억을 썼다" },
-    { "key": "SPENT", "what": "78억짜리 투수의 한 시즌이 ⅓이닝이었다" },
-    { "key": "LEFT", "what": "16홀드 필승조를 돈 한 푼 안 받고 1위 팀에 넘겼다" },
-    { "key": "KIA", "what": "한화가 안 잡은 투수를 KIA가 20억에 데려가 3위를 했다" },
-    { "key": "CAP", "what": "2027년부터는 안 써도 벌금을 낸다 — 하한선 60억" },
-    { "key": "NOW", "what": "1위 팀 감독은 역대 최고 대우, 9위 팀은 감독과 단장이 같이 나갔다" },
-    { "key": "CLOSE", "what": "썼느냐가 아니라 어디에 썼고 무엇을 내줬느냐였다" }
+    {
+      "key": "HOOK",
+      "what": "홈런 1위, 득점 2위, 타율 3위. 그런데 9위로 끝났다"
+    },
+    {
+      "key": "MONEY",
+      "what": "4년 동안 밖에서 다섯 명을 데려오는 데 390억을 썼다"
+    },
+    {
+      "key": "SPENT",
+      "what": "78억짜리 투수의 한 시즌이 ⅓이닝이었다"
+    },
+    {
+      "key": "LEFT",
+      "what": "16홀드 필승조를 돈 한 푼 안 받고 1위 팀에 넘겼다"
+    },
+    {
+      "key": "KIA",
+      "what": "한화가 안 잡은 투수를 KIA가 20억에 데려가 3위를 했다"
+    },
+    {
+      "key": "CAP",
+      "what": "2027년부터는 안 써도 벌금을 낸다 — 하한선 60억"
+    },
+    {
+      "key": "NOW",
+      "what": "1위 팀 감독은 역대 최고 대우, 9위 팀은 감독과 단장이 같이 나갔다"
+    },
+    {
+      "key": "CLOSE",
+      "what": "썼느냐가 아니라 어디에 썼고 무엇을 내줬느냐였다"
+    }
   ]
 }
