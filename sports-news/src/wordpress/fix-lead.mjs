@@ -41,6 +41,7 @@ import { wpFetch, wpConfig } from './client.mjs';
 import { 발행글전부 } from './index-audit.mjs';
 import { 손대도되는글인가 } from './noindex.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
+import { 숫자옵션, 글번호들 } from './args.mjs';
 import { callForJson, usageSummary, MODELS } from '../ai/client.mjs';
 import { 첫문단블록 } from './fix-greeting.mjs';
 import { 글자만, 문장들, 첫문단, 키워드가첫문장에 } from './ai-cite-scan.mjs';
@@ -176,12 +177,10 @@ export async function 한편(postId, { apply = false } = {}) {
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
-  const 한번에 = (() => {
-    const i = args.indexOf('--한번에');
-    const n = i >= 0 ? Number(args[i + 1]) : 10;
-    return Number.isFinite(n) && n > 0 ? n : 10;
-  })();
-  let ids = args.filter((a) => /^\d+$/.test(a));
+  // ⚠️ 글 번호를 고를 때 '--한번에' 의 값을 빼야 한다. 안 빼면 그 숫자를
+  // 글 번호로 집어간다 — 2026-11-07 에 10번 글을 고치려 해서 404 가 났다.
+  const 한번에 = 숫자옵션(args, '--한번에', 10);
+  let ids = 글번호들(args, ['--한번에']);
 
   console.log('\n────────────────────────────────────────────────────────');
   console.log(`✍️  첫 문장을 결론 한 줄로 ${apply ? '(실제 적용)' : '(미리보기)'}`);
@@ -191,15 +190,24 @@ async function main() {
   console.log('\n※ 원문에 없는 숫자가 들어오면 버립니다. 못 고치는 것이 틀리게');
   console.log('  고치는 것보다 낫습니다.');
 
+  // ⚠️ **앞에서부터 N편**을 고르면 안 된다 (2026-11-07 에 그래서 0편이 나왔다).
+  // 발행글전부 는 최신 글부터 주는데, 최근 글은 내가 제대로 써서 ③ 을 다
+  // 지키고 있다. 그래서 앞 10편을 집으면 전부 "이미 키워드가 있습니다"로
+  // 건너뛰고 한 편도 안 고친 채 끝난다.
+  //
+  // 고쳐야 할 글을 **N편 모을 때까지** 훑는다. 읽기는 0원이고, 모델은
+  // 고칠 글에만 부른다.
+  let 훑은수 = 0;
   if (!ids.length) {
     const 글 = await 발행글전부();
-    const 후보 = 글.filter((p) => String(p.focusKeyword || '').trim().length >= 2);
-    ids = 후보.map((p) => String(p.id)).slice(0, 한번에);
-    console.log(`\n발행 ${글.length}편 중 대표 키워드가 있는 ${후보.length}편 · 이번에 ${ids.length}편만 봅니다`);
+    ids = 글.filter((p) => String(p.focusKeyword || '').trim().length >= 2).map((p) => String(p.id));
+    console.log(`\n발행 ${글.length}편을 훑어 고칠 글 ${한번에}편을 모읍니다 (읽기는 0원)`);
   }
 
   let 바뀔글 = 0; const 버린것 = [];
   for (const id of ids) {
+    if (바뀔글 + 버린것.length >= 한번에) break;
+    훑은수 += 1;
     let r;
     try { r = await 한편(id, { apply }); }
     catch (err) { console.log(`   ❌ ${id} ${err.message}`); process.exitCode = 1; continue; }
@@ -224,7 +232,7 @@ async function main() {
     for (const one of 버린것) console.log(`     · ${one}`);
   }
 
-  console.log(`\n   ▶ ${apply ? '고친' : '바뀔'} 글 ${바뀔글}편`);
+  console.log(`\n   ▶ ${apply ? '고친' : '바뀔'} 글 ${바뀔글}편 · 훑은 글 ${훑은수}편`);
   console.log('\n   실제 사용량 (추정이 아닙니다):');
   for (const u of usageSummary()) {
     console.log(`     ${u.model} · 호출 ${u.calls}회 · 입력 ${u.input.toLocaleString()} · 출력 ${u.output.toLocaleString()} · 웹검색 ${u.searches}회`);
