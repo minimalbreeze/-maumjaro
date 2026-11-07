@@ -234,7 +234,50 @@ async function 첫문장보기(ids) {
   console.log('\n아무것도 바꾸지 않았습니다.\n');
 }
 
+/**
+ * ① 을 고치려면 **인사말이 문장 하나인지 문단 하나인지** 봐야 한다.
+ *
+ * "안녕하세요, 오늘은 볼링 대회를 소개합니다." 한 문장이면 떼면 끝이다.
+ * 그런데 그 문장이 **주제를 말하는 유일한 문장**이면, 떼면 글이 뜬금없이
+ * 시작한다. 어느 쪽인지는 첫 문단을 통째로 봐야 갈린다.
+ */
+async function 인사말보기(ids) {
+  console.log('\n────────────────────────────────────────────────────────');
+  console.log('🙇 인사말로 연 글의 첫 문단을 그대로 보여줍니다 (읽기만 · 비용 0원)');
+  console.log('────────────────────────────────────────────────────────');
+
+  let 대상 = ids;
+  if (!대상.length) {
+    const 목록 = await 발행글전부();
+    대상 = 목록.map((p) => String(p.id));
+    console.log(`\n발행 ${대상.length}편을 봅니다…`);
+  }
+
+  let 센것 = 0;
+  for (const id of 대상) {
+    let data;
+    try { ({ data } = await wpFetch(`/wp/v2/posts/${id}`, { query: { context: 'edit' } })); }
+    catch (err) { console.log(`\n   ❌ ${id} 못 읽었습니다 — ${err.message}`); continue; }
+    const content = data?.content?.raw ?? data?.content?.rendered ?? '';
+    if (!인사말로열었나(content)) continue;
+    센것 += 1;
+    const 문단 = 첫문단(content);
+    const 문장 = 문장들(문단);
+    console.log(`\n   [${id}] ${(data?.title?.raw || data?.title?.rendered || '').slice(0, 55)}`);
+    console.log(`     첫 문단 문장 ${문장.length}개:`);
+    문장.forEach((one, i) => console.log(`       ${i + 1}. ${one.slice(0, 150)}`));
+  }
+  console.log(`\n   ▶ 인사말로 연 글 ${센것}편`);
+  console.log('\n아무것도 바꾸지 않았습니다.\n');
+}
+
 async function main() {
+  const 인사자리 = process.argv.indexOf('--인사말');
+  if (인사자리 >= 0) {
+    const ids = String(process.argv[인사자리 + 1] || '').split(/[\s,]+/).filter(Boolean);
+    await 인사말보기(ids);
+    return;
+  }
   const 첫자리 = process.argv.indexOf('--첫문장');
   if (첫자리 >= 0) {
     const ids = String(process.argv[첫자리 + 1] || '').split(/[\s,]+/).filter(Boolean);
