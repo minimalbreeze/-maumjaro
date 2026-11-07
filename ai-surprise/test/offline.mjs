@@ -6042,9 +6042,14 @@ await asyncTest('기획 파일의 사진 주소가 소재 레코드까지 간다
   const plan = JSON.parse(fs.readFileSync(path.join(base, '9화.json'), 'utf8'));
   const real = makeSports({ title: plan.title, people: plan.people });
   const realWithPhoto = real.people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  // ⚠️ 처음에는 5 라고 숫자를 박아 뒀는데, 사람이 아홉으로 늘자 이
+  //    테스트가 먼저 걸렸다. 제 일을 한 것이다. 그래도 숫자를 박으면
+  //    사람을 더할 때마다 여기를 고쳐야 하고, 고치다 보면 생각 없이
+  //    숫자만 바꾸게 된다. **"전원인지"로 바꾼다** — 그게 진짜 규칙이다.
+  assert.ok(real.people.length >= 5, `9화 사람이 ${real.people.length}명뿐입니다`);
   assert.equal(
     realWithPhoto.length,
-    5,
+    real.people.length,
     `9화 사람 ${real.people.length}명 중 사진이 레코드까지 간 사람이 ${realWithPhoto.length}명입니다`
   );
 });
