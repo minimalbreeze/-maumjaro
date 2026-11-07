@@ -459,6 +459,25 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
         };
         // 빈 값을 넣지 않는다. 사진이 없는 사람에게 photo: '' 가 붙으면
         // 레코드를 눈으로 볼 때 "넣었는데 안 됐나" 하고 헷갈린다.
+        // ── 구단과 등번호 (2026-11-07) ──
+        //
+        //   "유니폼이 완전 다른 색상이다."
+        //   "유니폼과 등번호가 같아야 선수임을 뒤만 봐도 알 수 있지 않나."
+        //
+        // 전에는 유니폼을 look 문장 안에 글로 적어 뒀다. look 은 설계
+        // AI 의 시스템 프롬프트로 가고, 그 AI 가 베껴 주기를 **부탁**하는
+        // 구조였다. 안 베끼면 색이 사라진다.
+        //
+        // 이제 team·number 를 따로 싣는다. uniforms.mjs 가 이 두 칸으로
+        // 구단 표를 찾아 문장을 만들고, 코드가 프롬프트에 직접 꽂는다.
+        //
+        // ⚠️ 빈 값을 넣지 않는다. 등번호를 못 찾은 사람이 실제로 있고
+        //    (엄상백·류지현·이강철), 빈 칸이 붙으면 모델이 채우려고
+        //    아무 번호나 그린다. 틀린 번호는 번호가 없는 것보다 나쁘다.
+        const team = String(p.team || '').trim();
+        if (team) out.team = team;
+        const number = String(p.number ?? '').trim();
+        if (number) out.number = number;
         const photo = String(p.photo || '').trim();
         if (photo) out.photo = photo;
         const spare = String(p.photo_예비 || '').trim();

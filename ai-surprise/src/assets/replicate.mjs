@@ -144,6 +144,18 @@ export const IMAGE_MODELS = {
     usdPerImage: 0.05,
     note: '사진을 참조로 얼굴을 가져온다. 인물 시트 전용.',
     needsReference: true,
+    // ⚠️ 이 모델은 **flux-dev 위에** 얹혀 있다. PuLID 는 바탕 모델에
+    //    얼굴을 끼워 넣는 장치이지 그림을 처음부터 그리는 모델이 아니다.
+    //
+    //    그래서 나머지 샷을 schnell 로 그리면 **바탕이 서로 다르다.**
+    //    프롬프트를 아무리 맞춰도 결이 다르게 나온다 — 2026-11-07
+    //    운영자가 "선수 사진만 갑자기 캐리커처가 나오니 이상하다"고 한
+    //    것이 이것이다. id_weight 를 0.7 에서 0.35 까지 내려도 안
+    //    없어졌던 까닭도 여기 있다. 세기 문제가 아니라 모델 문제였다.
+    //
+    //    baseModel 을 적어 두면 images.mjs 가 나머지 샷을 같은 바탕으로
+    //    맞춘다.
+    baseModel: 'dev',
     input: (prompt, { referenceImage, negativePrompt, aspectRatio }) => ({
       prompt,
       main_face_image: referenceImage,

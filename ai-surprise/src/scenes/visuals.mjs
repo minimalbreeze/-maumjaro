@@ -24,6 +24,7 @@
 import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
+import { uniformClause } from './uniforms.mjs';
 
 /**
  * 이 채널의 고정 화면 스타일 (기획서 10번).
@@ -235,12 +236,31 @@ export const SPORTS_STYLE_SUFFIX =
   //   · 관중은 또렷하게 그리지 않고 붓 자국으로 뭉갠다.
   //   · 그런데 유니폼 글자와 솔기는 오히려 또렷하다.
   `${SPORTS_PAINT}, ` +
+  // ── 한 편의 그림은 한 결이다 (2026-11-07 운영자) ──
+  //
+  //   "앞으로 전체 그림톤이 유사하게 지브리 톤으로 맞춰줘"
+  //   "전체 그림톤은 통일이다. 지브리다. 달라지면 안 된다"
+  //
+  // 바탕 모델을 맞춘 것(images.mjs)이 큰 몫이지만, 글로도 못 박는다.
+  // 한 샷만 결이 달라도 거기서 눈이 걸린다.
+  'every picture in this series shares one look: the same hand-painted ' +
+  '2D film-animation finish, the same muted palette, the same line weight, ' +
+  'never switching to another medium or rendering style mid-series, ' +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
   // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
+  // ⚠️ 2026-11-07 운영자: "그림의 비율이 이상하면 안 된다."
+  //    머리 크기만 적어 뒀더니 어깨가 좁거나 팔이 짧은 그림이 나왔다.
+  //    비율은 **재는 자리마다** 적어야 지켜진다. 말로 'realistic' 만
+  //    적으면 모델이 제 평균으로 돌아간다.
   'realistic adult proportions, head about one seventh of total height, ' +
+  'shoulders about two head-widths across, the arms long enough that the ' +
+  'fingertips reach mid-thigh when they hang down, the legs about half the ' +
+  'total height, hands and feet sized to the body, ' +
   'an adult athlete in his twenties or thirties, never a child, ' +
   'never chibi, never a toddler or baby face, ' +
+  'never a small head on a huge body or a huge head on a small body, ' +
+  'never arms shorter than the torso, never a torso longer than the legs, ' +
   // ── 머리카락 ──
   // 이 줄이 통째로 없어서 **대머리**가 나왔다. 모자를 쓴 샷에서도
   // 모자 밑으로 머리가 보여야 한다.
@@ -275,7 +295,27 @@ export const SPORTS_STYLE_SUFFIX =
   'faces the camera, ' +
   'never twist the neck to show the face against the direction of the body, ' +
   'never a front-facing face on a figure seen from behind, ' +
+  // 2026-11-07 운영자: "선수 동작이 이상하게 팔이 3개인 경우도 있구나."
+  // 움직이는 장면을 늘리면서 생긴 일이다. 팔다리 개수를 못 박는다.
+  'exactly one head, two arms and two legs, no extra or duplicated limbs, ' +
+  'no third arm, no spare hand, five fingers on each hand, ' +
   'anatomically correct neck and shoulders, ' +
+  // ── 동작은 자연스러워야 한다 (2026-11-07 운영자) ──
+  //
+  //   "선수 동작 그림을 만들 때 그림이 자연스러워야 한다.
+  //    어색한 동작이 나오면 안 된다. 꼭! 기억해라."
+  //
+  // D-4 에서 던지고·치고·달리는 장면을 넣으라고 했는데, 움직임을
+  // 넣으면 어색해질 자리도 같이 늘어난다. 팔이 반대로 꺾이거나,
+  // 발이 땅에서 떠 있거나, 몸은 왼쪽인데 공은 오른쪽으로 가거나.
+  //
+  // **어색한 동작은 정적인 화면보다 나쁘다.** 보는 사람이 거기서
+  // 멈춘다. 그래서 움직임을 요구한 만큼 자연스러움도 요구한다.
+  'the pose is a real moment a human body can hold: joints bend the way ' +
+  'they actually bend, the weight is on a foot that touches the ground, ' +
+  'the arms and legs follow through in the direction of the motion, ' +
+  'never a limb bent backwards, never a body twisted past what is possible, ' +
+  'never floating above the ground when the pose is a standing or running one, ' +
   // ── 프레이밍 ──
   // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
   //
@@ -341,10 +381,48 @@ export const SPORTS_STYLE_SUFFIX =
   // 전에는 'plain unbranded uniform ... no logos or lettering' 이었다.
   // 그래서 어느 팀인지 읽히지 않는 흰 옷만 나왔다. 참조 그림에서는
   // 가슴 글자가 그림의 중심이다 — 글자를 지우면 야구 그림이 아니게 된다.
-  'wearing the South Korea national baseball team uniform: a white or light ' +
-  'grey jersey with KOREA across the chest in navy block letters, navy and ' +
-  'red trim, a navy cap, dark belt, the lettering and seams painted with ' +
-  'the same care as the rest of the picture, ' +
+  // ── 유니폼은 그 선수의 팀 것이어야 한다 (2026-11-07 운영자) ──
+  //
+  //   "그림에 팀 로고와 이름 등번호 등은 진짜 선수 등번호와 구단
+  //    유니폼으로 만들어라. 이 부분이 어색하다.
+  //    갑자기 뉴욕양키즈가 나오는 건 뭐냐?"
+  //   "전혀 팀과 관련이 없는 로고와 유니폼이다"
+  //
+  // 내 탓이다. 2026-11-03 에 "유니폼은 전부 국대 유니폼으로"라고
+  // 적어 뒀는데, 그러면 모델이 **야구 유니폼처럼 생긴 아무것**을
+  // 그린다. 미국 야구 사진을 훨씬 많이 봤으니 양키스 모자가 나온다.
+  //
+  // 이제는 샷마다 **그 선수의 팀 색**을 적는다. 아래 「이 편에 나오는
+  // 사람」의 team_colors 를 프롬프트에 그대로 넣는다.
+  //
+  // ⚠️ 그래도 **미국 구단 표시는 막는다.** 양키스의 겹친 NY, 다저스의
+  //    흘림체, 레드삭스의 B — 이름을 적어 막아야 안 나온다.
+  // ── 2026-11-07. 이 줄을 다시 고쳤다 ──
+  //
+  //   "그럼 유니폼은 어떻게 구현을 하나? 유니폼이 완전 다른 색상이다."
+  //
+  // 아침에 "the team colours **named in the scene description**" 으로
+  // 바꿔 놓은 그 줄이 문제였다. 색을 적는 주체가 내가 아니라 **장면을
+  // 설계하는 AI** 였다. look 문장을 베껴 넣어 달라고 부탁해 뒀는데,
+  // 베끼면 색이 맞고 줄여 쓰면 색이 사라진다. 부탁으로 지켜지는 규칙이
+  // 아니다.
+  //
+  // 이제 유니폼 문장은 **코드가 쓴다.** uniforms.mjs 의 구단 표에서
+  // 만들어 composeImagePrompt 가 장면 설명 바로 뒤에 꽂는다. 설계 AI 가
+  // 무엇을 쓰든 유니폼은 프롬프트에 있다.
+  //
+  // 여기 남는 것은 **표에 없는 팀**을 위한 밑줄이다.
+  'wearing a Korean professional baseball uniform, the cap and jersey in ' +
+  'the team colours given for this figure, and when a jersey number is ' +
+  'given for this figure that exact number on the back — never an ' +
+  'invented number, and no number at all when none is given, ' +
+  'the team wordmark across the chest and the number across the back both ' +
+  'legible, so the figure is identifiable from behind as well as from the ' +
+  'front, ' +
+  'the lettering and seams painted with the same care as the rest of ' +
+  'the picture, ' +
+  'never a Major League Baseball team: no interlocking NY, no Dodgers ' +
+  'script, no Boston B, no American team wordmark or cap logo, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
   'no caption text, no watermark, no subtitles, no sponsor logo';
@@ -419,7 +497,12 @@ export const SPORTS_NEGATIVE_EXTRA =
   // ⚠️ 'no team names, no readable jersey text' 가 여기 있었다. 그 두 줄이
   //    가슴 글자를 지웠다. 국대 유니폼을 그리라면서 글자를 막으면 모델은
   //    글자 쪽을 버린다. 뺀다. 구단 로고와 스폰서 글자만 계속 막는다.
-  'no club team logos, no brand marks, no sponsor text on uniforms, ' +
+  // ⚠️ 2026-11-07 에 'no club team logos' 를 뺐다. 그 줄 때문에 모델이
+  //    "야구 유니폼처럼 생긴 아무것"을 그렸고, 거기서 양키스 모자가
+  //    나왔다. 이제는 **한국 구단 색을 적어 주고** 미국 구단만 막는다.
+  'no Major League Baseball logos, no foreign team wordmarks, ' +
+  'no sponsor text on uniforms, ' +
+  'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
   'no photorealistic faces, no photograph, ' +
   // 실행 #65 에서 얼굴만 문질러진 채 나왔다. 이름을 적어 막는다.
   'no airbrushed face, no soft gradient skin shading, no glossy skin, ' +
@@ -427,6 +510,12 @@ export const SPORTS_NEGATIVE_EXTRA =
   'no real stadium signage, no league emblem, ' +
   // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
   'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
+  // 2026-11-07 운영자: "갑자기 3D 사람 영상이 있는데 이건 뭐지.
+  // 이런 것은 다음부터 안 된다." 한 샷이 통째로 다른 매체로 나왔다.
+  // 위의 'no 3D render' 만으로는 안 걸렸으니 이름을 더 적는다.
+  'no video game cutscene, no game engine render, no Unreal Engine, ' +
+  'no realistic 3D character model, no motion capture figure, ' +
+  'no live-action footage, no photographic person, ' +
   'no chibi, no oversized head, no baby face, no toddler, ' +
   'no bald head, no hairless character, ' +
   'no cropped legs, no cut-off limbs';
@@ -669,8 +758,17 @@ D-3. **카드와 자막의 숫자는 숫자로 적는다.** (2026-11-07)
    ⚠️ 큰 돈은 **자릿점을 찍는다.** 1709만이 아니라 1,709만이다.
       숫자가 길수록 자릿점이 있어야 한눈에 읽힌다.
 
-   ⚠️ 적게 세는 것은 한글 그대로 둔다. "세 명", "두 경기", "한 번"은
-      숫자로 쓰면 오히려 어색하다. 열 이하의 사람·경기·횟수가 그렇다.
+   ⚠️ **세는 말도 숫자로 쓴다.** (2026-11-07 운영자 —
+      "다섯 명이면 5명으로 써야지", "한 명은 1명으로 자막에 표기하고")
+
+      처음엔 "적게 세는 것은 한글로 두라"고 적었는데 운영자가 뒤집었다.
+      자막은 **눈에 익은 쪽**이고, 눈에 익은 것은 숫자다.
+
+        자막   5명 · 1명 · 2경기 · 3년
+        읽기   다섯 명 · 한 명 · 두 경기 · 삼 년
+
+      읽기는 numbers.mjs 가 알아서 고유어로 바꾼다(20 이하의 명·개·
+      경기 같은 단위). 그러니 대본에는 숫자만 쓰면 된다.
 
 D-4. **야구가 움직이는 장면을 넣는다.** (2026-11-07)
 
@@ -695,6 +793,20 @@ D-4. **야구가 움직이는 장면을 넣는다.** (2026-11-07)
 
    ⚠️ 움직이는 장면에서는 **얼굴을 요구하지 않는다.** 뒷모습·측면·
       실루엣으로 간다 (D-2 의 ② 동작 샷). 얼굴을 넣으려다 목이 꺾인다.
+
+   ⚠️ **어색한 동작은 정적인 화면보다 나쁘다.** (2026-11-07 운영자 —
+      "선수 동작 그림을 만들 때 그림이 자연스러워야 한다. 어색한
+       동작이 나오면 안 된다. 꼭!")
+
+      그러니 **한순간을 고른다.** 동작의 가운데가 아니라 멈추는 자리다.
+
+        좋음: 와인드업 꼭대기 · 공을 놓기 직전 · 배트가 공에 닿는 순간 ·
+              2루에 손이 닿는 순간 · 점프의 꼭대기
+        나쁨: 팔다리가 한창 돌아가는 중간 · 공중에서 몸이 꼬인 자세 ·
+              여러 명이 뒤엉킨 장면
+
+      멈춘 자리는 몸이 어떻게 놓여야 하는지가 분명해서 덜 틀린다.
+      한창 움직이는 중간은 모델이 팔을 반대로 꺾어 놓는다.
 
    ⚠️ 그래도 **대본이 말하는 것**과 이어져야 한다. 불펜 이야기에
       홈 쇄도를 넣지 않는다. 움직임을 넣으려고 아무 장면이나 붙이는
@@ -831,9 +943,31 @@ export function peopleRules(people) {
     return `  · ${head}\n    ${p.look}${tell}`;
   });
 
+  // ── 유니폼은 여기 적지 않는다 (2026-11-07) ──
+  //
+  //   "유니폼이 완전 다른 색상이다."
+  //
+  // 전에는 look 문장 안에 "a KIA Tigers uniform in red and black" 을
+  // 적어 두고, 설계 AI 에게 베껴 달라고 **부탁**했다. 안 베끼면 색이
+  // 사라진다. 그게 색이 틀린 까닭이었다.
+  //
+  // 이제 유니폼은 uniforms.mjs 가 만들고 코드가 프롬프트에 직접 꽂는다.
+  // 그래서 설계 AI 에게는 **적지 말라고** 한다 — 양쪽이 다 적으면
+  // "red and black uniform" 과 "white jersey with black wordmark" 가
+  // 서로 싸워 모델이 하나를 버린다.
   return [
     '',
     '━━━ 이 편에 나오는 사람 ━━━',
+    '',
+    '⚠️ **유니폼 색과 등번호는 적지 않는다.** 그건 코드가 샷마다 구단',
+    '표에서 꺼내 붙인다. 여기서 또 적으면 두 지시가 싸워서 색이 틀어진다.',
+    '얼굴·몸집·머리·표식만 적는다.',
+    '',
+    '⚠️ **한 사람에게 샷이 둘 이상이면 하나는 뒷모습이나 뒤쪽 3/4 로',
+    '잡는다.** 등번호가 읽혀야 뒤만 봐도 누구인지 안다 — 우리 그림에는',
+    '뒷모습이 많고, 거기서는 얼굴로 사람을 가릴 수가 없다(머리 방향',
+    '규칙이 뒷모습에 얼굴을 못 그리게 한다). 그 샷에서 사람을 말해',
+    '주는 것은 등번호와 유니폼 색뿐이다.',
     '',
     '이 사람이 나오는 샷에는 생김새 문장을 **영어 그대로 베껴** 넣는다.',
     '줄여 쓰거나 말을 바꾸면 샷마다 다른 얼굴이 된다. 이름은 넣지 않는다.',
@@ -993,7 +1127,7 @@ export function buildVisualsPrompt(scene, { item = null, totalScenes = 0 } = {})
 }
 
 /** 완성된 이미지 프롬프트. 내용 + 고정 스타일 + 금지 목록. */
-export function composeImagePrompt(content, era = null, { kind = null, likeness = false, paint = null } = {}) {
+export function composeImagePrompt(content, era = null, { kind = null, likeness = false, paint = null, uniform = '' } = {}) {
   // AI가 문장을 마침표로 끝내 줄 때가 있고 아닐 때가 있다. 그대로 이으면
   // "...a single empty bench.. documentary reenactment still" 처럼 점이 두 개
   // 찍힌다. 실행 #5의 프롬프트 절반이 이랬다.
@@ -1029,8 +1163,16 @@ export function composeImagePrompt(content, era = null, { kind = null, likeness 
   //    사진을 안 준 샷에서는 그대로 남는다.
   if (likeness) negative = negative.replace('no real identifiable public figures, ', '');
   const tone = !fixed && ERA_TONES[era] ? `${ERA_TONES[era]}. ` : '';
-  if (!body) return `${tone}${style}. ${negative}`;
-  return `${body}. ${tone}${style}. ${negative}`;
+  // ── 유니폼은 장면 설명 **바로 뒤**다 (2026-11-07) ──
+  //
+  // 고정 스타일 문구가 수백 자다. 그 뒤에 색을 적으면 모델이 앞쪽만
+  // 무겁게 보고 색을 흘린다. 장면 바로 뒤, 스타일 앞에 둔다.
+  //
+  // 글자 카드 샷에는 사람이 없으니 uniform 이 빈 값으로 온다.
+  const uni = String(uniform || '').trim().replace(/[.,;:\s]+$/, '');
+  const dressed = uni ? `${uni}. ` : '';
+  if (!body) return `${dressed}${tone}${style}. ${negative}`;
+  return `${body}. ${dressed}${tone}${style}. ${negative}`;
 }
 
 /**
@@ -1121,7 +1263,32 @@ export function photoNamesOf(item) {
   return out;
 }
 
-export function mergeVisuals(scene, design, { kind = null, photoNames = null } = {}) {
+/**
+ * 이름 → 유니폼 문장.
+ *
+ * 2026-11-07 운영자: "유니폼이 완전 다른 색상이다."
+ *
+ * 유니폼을 설계 AI 에게 맡기지 않고 **코드가 프롬프트에 적기 위한** 지도다.
+ * photoNamesOf 와 같은 자리에서 같은 모양으로 만든다 — 둘 다 `item` 의
+ * 사람 목록을 보고, 샷의 `person` 칸으로 꺼내 쓴다.
+ *
+ * 표에 없는 팀이거나 team 을 안 적은 사람은 **넣지 않는다.** 그러면
+ * composeImagePrompt 가 유니폼 문장 없이 그리고, 고정 문구의 밑줄만
+ * 적용된다 — 지금과 같아진다.
+ */
+export function uniformsOf(item) {
+  const out = new Map();
+  const people = item?.people || item?.research?.people || [];
+  for (const p of people) {
+    const name = String(p?.name || '').trim();
+    if (!name) continue;
+    const clause = uniformClause({ team: p?.team, number: p?.number, role: p?.role });
+    if (clause) out.set(name, clause);
+  }
+  return out;
+}
+
+export function mergeVisuals(scene, design, { kind = null, photoNames = null, uniforms = null } = {}) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
   );
@@ -1147,6 +1314,9 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null } =
         : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
             kind,
             likeness: Boolean(photoNames && photoNames.has(String(d.person || '').trim())),
+            // 이 샷에 누가 나오는지는 설계 AI 가 person 칸에 적어 준다.
+            // 그 이름으로 구단 표를 찾아 유니폼을 **코드가** 적는다.
+            uniform: (uniforms && uniforms.get(String(d.person || '').trim())) || '',
           }),
       image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
@@ -1297,6 +1467,7 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
   const merged = mergeVisuals(scene, design, {
     kind: item?.kind,
     photoNames: photoNamesOf(item),
+    uniforms: uniformsOf(item),
   });
   const problems = [...merged.problems];
   if (!check.ok) {
