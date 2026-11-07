@@ -122,43 +122,74 @@
   "people": [
     {
       "name": "한승혁",
-      "role": "KT 투수 (2025년까지 한화)",
-      "look": "a Korean man in his early 30s, a relief pitcher, short black hair under a baseball cap, a lean and wiry build, a sharp focused expression",
-      "tell": "이 편의 주인공이다. 강백호 보상선수로 한화에서 KT로 갔고, 2026년 KT가 1위를 했다. LEFT 섹션에서 한 번 제대로 보여야 한다. ⚠️ 사진은 2026-03-02 기사 것이라 KT 유니폼이다 — 이 편에서 KT 소속으로 나오니 맞다. photo_예비는 2025-06-14 한화 시절 사진이다. 본 주소가 안 열리면 그걸 쓴다.",
+      "role": "KT 투수 (2025년까지 한화) · 1993년생 33세 · 185cm 100kg · 우투좌타",
+      "look": "a Korean man of 33, a tall and heavily built relief pitcher, 185cm and about 100kg, broad thick shoulders and a wide chest and a full neck, short black hair under a navy cap, a square heavy jaw, a steady unsmiling look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "이 편의 주인공. 강백호 보상선수로 한화→KT, 그 KT가 1위를 했다. ⚠️ 전에 \"마른 체격\"이라고 적었던 것은 틀렸다 — 185cm 100kg 으로 이 편에서 제일 큰 선수다. 김범수(181cm 좌완)와 몸집으로 가른다. 투수이므로 **던지는 장면**으로 그린다. ⚠️ 사진은 2026-03-02 기사 것이라 KT 유니폼이다 — 이 편에서 KT 소속으로 나오니 맞다. photo_예비는 2025-06-14 한화 시절 사진이다. 본 주소가 안 열리면 그걸 쓴다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F03%2F02%2F2026030201000048700002921_20260302075220264.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2025%2F06%2F14%2F0001878694_001_20250614193410498.jpg&type=a340"
     },
     {
       "name": "김범수",
-      "role": "KIA 투수 (2025년까지 한화)",
-      "look": "a Korean man in his early 30s, a left-handed relief pitcher, short black hair, a solid athletic build, a calm steady face",
-      "tell": "한화가 안 잡아서 KIA가 3년 20억에 데려갔다. 한화와 KIA를 잇는 선수라 KIA 섹션에서 떠올라야 한다 — 다만 그림은 한 번만 넣는다. ⚠️ 사진은 2026-03-12 연합뉴스 것(PYH 번호)이라 KIA 유니폼이다. photo_예비는 2020-06-14 한화 시절이라 6년 전 얼굴이다 — 본 주소가 죽을 때만 쓴다.",
+      "role": "KIA 투수 (2025년까지 한화) · 1995년생 31세 · 181cm · 좌투좌타",
+      "look": "a Korean man of 31, a left-handed relief pitcher, 181cm with a lean wiry frame and narrow shoulders, noticeably smaller than a power pitcher, short black hair, a thin face with a pointed chin, a calm flat expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "한화가 안 잡아 KIA가 3년 20억에 데려갔다. 한승혁과 나란히 나오는 자리가 있으므로 **몸집이 확실히 달라야 한다** — 한승혁은 크고 두껍고, 김범수는 마르고 좁다. 좌완이라 왼손으로 던진다. ⚠️ 사진은 2026-03-12 연합뉴스 것(PYH 번호)이라 KIA 유니폼이다. photo_예비는 2020-06-14 한화 시절이라 6년 전 얼굴이다 — 본 주소가 죽을 때만 쓴다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAzMjVfMjc5%2FMDAxNzc0MzcwNjEzMjQx.oFt1gCRf46HdzsDfHuR7ro9NyPZUAnTfGd5YjwHSvMgg.op8VzVBqCMPtXIVflTCnh_YD5WmmEtlcTjPt9EsXID0g.JPEG%2FPYH2026031216060005400%25A3%25DFP4%25A3%25DF20260312152035287.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F410%2F2020%2F06%2F14%2F0000703446_001_20200614145107240.jpg&type=a340"
     },
     {
       "name": "강백호",
-      "role": "한화 타자 (2025년까지 KT)",
-      "look": "a Korean man in his late 20s, a power hitter, short black hair, a thick powerful upper body and broad shoulders, a confident open face",
-      "tell": "4년 최대 100억에 한화로 왔다. 이 계약 때문에 한승혁이 KT로 갔다. MONEY 섹션에서 한 번. 돈이 들어온 자리와 사람이 나간 자리를 같은 흐름에서 본다. ⚠️ 사진은 2026-02-12 기사 것이라 한화 유니폼이다 — 이 편에서 한화 소속으로 나오니 맞다. photo_예비는 나무위키 것인데 /sunny/ 경로에 webp라 /common/ 과 다르다. 본 주소가 죽을 때만 쓰고, 안 되면 photo 없이 돌린다.",
+      "role": "한화 타자 (2025년까지 KT) · 1999년생 27세 · 184cm · 우투좌타",
+      "look": "a Korean man of 27, the youngest of the group, a left-handed power hitter, 184cm with a thick powerful torso and heavy forearms, short black hair, round full cheeks and a soft rounded jaw, an open confident face, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "4년 최대 100억에 한화로 왔고, 이 계약 때문에 한승혁이 KT로 갔다. 타자이므로 **치는 장면**으로 그린다 — 배트에 맞는 순간이나 끝까지 돌아간 몸. 이 편에서 가장 어리니 얼굴이 제일 둥글다. ⚠️ 사진은 2026-02-12 기사 것이라 한화 유니폼이다 — 이 편에서 한화 소속으로 나오니 맞다. photo_예비는 나무위키 것인데 /sunny/ 경로에 webp라 /common/ 과 다르다. 본 주소가 죽을 때만 쓰고, 안 되면 photo 없이 돌린다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F032%2F2026%2F02%2F12%2F0003427760_002_20260212212910614.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi.namu.wiki%2Fi%2FReossVnFAvg3cF-3Zq3KGZSr5tCuG0D7wRklcPhwk8jQz_lxy0yTx4r-EwhiLrUXpreRIHdfgkk8YV8pU5YhXw.webp&type=a340"
     },
     {
       "name": "류현진",
-      "role": "한화 투수",
-      "look": "a Korean man in his late 30s, a veteran left-handed starting pitcher, short black hair, a heavy-set sturdy build, a calm composed face",
-      "tell": "8년 170억. FA가 아니라 복귀 계약이고, 8년이 된 이유가 샐러리캡이다. SPENT 와 CAP 두 군데에 걸치는 인물이라 그림은 SPENT 에서 한 번만. ⚠️ 2026-11-07 실행 #65에서 109/2026-09-02 뉴스 사진이 두 샷 모두 facexlib align face fail 로 죽었다 — 참조 모델이 그 사진에서 얼굴을 못 찾는다. 투구 동작이라 얼굴이 작거나 가린 것으로 보인다. 그래서 예비였던 블로그 사진을 본으로 올리고, 그 뉴스 사진을 예비로 내렸다. 이제 코드가 본 → 예비 → 참조 없이 순으로 내려가므로 둘 다 실패해도 자리표시 화면은 안 나온다.",
+      "role": "한화 투수 · 1987년생 39세 · 좌투우타",
+      "look": "a Korean man of 39, a veteran left-handed starting pitcher near the end of his career, a heavy-set sturdy build with a thick waist, short black hair thinning at the temples, a broad round face with full cheeks, faint lines across the forehead and at the corners of the eyes, a calm composed look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "8년 170억. 이 편에서 류지현 다음으로 나이가 많다 — 39세라 이마와 눈가에 선이 보여야 한다. 젊은 셋과 그걸로 갈린다. 좌완이라 왼손으로 던진다. ⚠️ 2026-09-02 뉴스 사진은 facexlib 가 얼굴을 못 찾아 실패했다. 본/예비를 뒤바꿔 뒀고, 둘 다 실패해도 코드가 참조 없이 그린다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA1MjRfMSAg%2FMDAxNzc5NjE4MTkyNjYx.zCJjL_mQxDmLoq6_1dJ8kFUFpHozhVU5DJxRVUdqAuAg.KU_VnZRZo76wKP8w34tYBWq8P93Vlwl4IEQFk-B4dI8g.JPEG%2F%25B4%25D9%25BF%25EE%25B7%25CE%25B5%25E5%25C6%25C4%25C0%25CF_20260524_185245.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F09%2F02%2F0005599373_001_20260902185039858.jpg&type=a340"
     },
     {
       "name": "류지현",
-      "role": "한화 신임 감독",
-      "look": "a Korean man in his late 50s, a baseball manager, short greying black hair, a trim build, wearing a team jacket over a uniform, a composed serious expression",
-      "tell": "3년 20억. 올해 WBC 8강과 아시안게임 금메달을 지휘한 대표팀 감독이었다. NOW 섹션 마무리에 한 번. ⚠️ 사진 둘 다 2026-10-16 기사 것이다 — 한화 감독 선임(10/13) 직후라 이 편에서 말하는 바로 그 자리의 모습이다. photo 는 뉴시스(NISI 번호).",
+      "role": "한화 신임 감독 · 55세",
+      "look": "a Korean man of 55, a baseball manager, a trim build in a team jacket over a uniform, short black hair clearly greying at the temples, a lean lined face with creases across the forehead, deep lines from the nose to the mouth and creases at the outer corners of the eyes, a composed serious look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "3년 20억. ⭐ 실행 #65 에서 운영자가 **이 그림 하나만** \"자연스럽다, 이 정도가 좋다\"고 했다. 까닭은 나이다 — 주름이 있어서 모델이 선으로 그릴 게 있었다. 다른 사람들의 look 도 이쪽을 본보기로 고쳤다. 감독이므로 더그아웃 난간이나 마운드로 걸어 나가는 모습으로 그린다. ⚠️ 사진 둘 다 2026-10-16 기사 것이다 — 한화 감독 선임(10/13) 직후라 이 편에서 말하는 바로 그 자리의 모습이다. photo 는 뉴시스(NISI 번호).",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F10%2F16%2FNISI20261016_0021491605_web_20261016144051_20261016144238938.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F10%2F16%2F0002069357_001_20261016140112977.jpg&type=a340"
+    },
+    {
+      "name": "노시환",
+      "role": "한화 내야수(3루) · 2000년생 25세 · 185cm 105kg · 우투우타",
+      "look": "a Korean man of 25, a third baseman with a big heavy frame, 185cm and about 105kg, very broad shoulders and thick arms, short black hair, a wide square face with a heavy jaw, a serious set mouth, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "11년 307억. 이 편에서 가장 큰 숫자이고 MONEY 와 CAP 두 군데에 나온다 — 캡이 빡빡한 까닭이 이 계약이다. 그림은 한 번만, MONEY 에서. 타자이므로 **치는 장면**이나 3루 수비 장면으로. 사진은 468/2025-10-22 뉴스 것, 예비는 파일 이름이 \"노시환3.jpg\"인 2026-06 사진이다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2025%2F10%2F22%2F0001187118_001_20251022163214148.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA2MjRfNzAg%2FMDAxNzgyMjMyMDYzODY4.U1vJ2ON81pCbCj2wdHymHLXDnj7Y2yhsDRRSK6Nr0wkg.lA7fXo9eAXUXw47P-x7gCS-7N33iUAT0Gap3_nslPwcg.JPEG%2F%25B3%25EB%25BD%25C3%25C8%25AF3.jpg&type=a340"
+    },
+    {
+      "name": "엄상백",
+      "role": "한화 투수 · 1996년생 30세 · 191cm · 우투우타",
+      "look": "a Korean man of 30, a right-handed pitcher, 191cm and the tallest of the group, a long lean frame with long arms and narrow hips, short black hair, a long narrow face, a tired flat expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "4년 78억을 받고 올해 1경기 ⅓이닝 뒤 팔꿈치 수술로 시즌아웃. \"78억을 받은 투수의 한 시즌이 ⅓이닝\" 이 이 편에서 가장 센 한 줄이다. ⚠️ 탓하는 그림을 그리지 않는다 — 대본에도 \"팔꿈치가 아픈 걸 미리 알 수 있는 사람은 없다\"고 적었다. 비어 있는 마운드나 재활 쪽을 본다. 191cm 로 이 편에서 제일 크고 마른 체형이라 한승혁(두껍다)과 갈린다. ⚠️ 받은 주소 넷 중 하나만 썼다. 나머지 셋은 blogfiles 의 image.png 라 무엇이 찍혔는지 알 수가 없다. 예비가 없으므로 이 하나가 실패하면 코드가 참조 없이 그린다(#423).",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAxMDRfMTc3%2FMDAxNzY3NDU5MDcyMzI1.qnL0r9zvjVSe3SV7zvaZJXlXZcU7CpHdpxzlBiCX1vIg.G75_hFY2UmfgxYPkaVld-e1O2JGuddQPsaB-Fmf9_fUg.JPEG%2F202601021804773903_6957910242b4e_1024x.jpg&type=a340"
+    },
+    {
+      "name": "최형우",
+      "role": "삼성 지명타자 (2025년까지 KIA) · 1983년생 42세 · 180cm 106kg · 우투좌타",
+      "look": "a Korean man of 42, by far the oldest player here, a veteran designated hitter, 180cm and about 106kg with a thick solid torso, short black hair with grey showing at the sides, a full weathered face with deep lines from the nose to the mouth and lines across the forehead, a calm veteran look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "KIA가 2년 26억에 삼성으로 보냈다. KIA 섹션에서 \"주전 셋이 빠졌다\"의 얼굴이다. 42세라 **주름이 뚜렷해야 한다** — 류지현처럼 선으로 그릴 게 많은 얼굴이라 잘 나올 자리다. 타자이므로 치는 장면으로. 받은 주소 다섯 개가 전부 imgnews 뉴스 사진이라 하나도 안 버렸다 — 지금까지 중 처음이다. 본은 2026-11-06 뉴시스, 예비는 2026-11-01 스포츠조선.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F06%2FNISI20261106_0021522431_web_20261106185750_20261106185917209.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F01%2F2026110101000057500002832_20261101162514186.jpg&type=a340"
+    },
+    {
+      "name": "이강철",
+      "role": "KT 감독 · 60대 초반",
+      "look": "a Korean man in his early 60s, a baseball manager in a team jacket, a solid build with a slight stoop, short greying hair under a cap, a broad face deeply lined across the forehead and around the mouth, heavy eyelids, a calm weathered look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "3년 34억, 역대 감독 최고 대우. NOW 섹션에서 \"1위 팀 감독\"으로 류지현(9위 팀, 3년 20억)과 **나란히 놓이는 자리**라 둘이 확실히 달라야 한다 — 이강철이 더 나이 들고 더 두껍다. ⚠️ 생년은 이번 검색에서 확인하지 못했다. 60대 초반으로만 적는다. 받은 셋이 전부 뉴스 사진이다. 본은 2026-11-07(오늘) 것이라 한국시리즈 중 모습이고, 예비는 2026-11-04 것이다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F07%2F0000637830_001_20261107170815243.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F04%2F0002076447_001_20261104162020096.jpg&type=a340"
     }
   ],
   "beats": [
