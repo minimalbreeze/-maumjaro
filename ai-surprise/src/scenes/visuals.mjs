@@ -380,6 +380,22 @@ export const SPORTS_LIKENESS_CLAUSE =
   'brows, a simplified painted nose and mouth, the face finished in exactly ' +
   'the same painting style as the rest of the picture, ' +
   'never a photographic face, never a photo head on a drawn body, ' +
+  // ── 문지른 얼굴을 막는다 (2026-11-07 운영자) ──
+  //
+  //   "선수 얼굴 부분이 만화 같지 않고 어색하다"
+  //   "여기도 얼굴이 너무 만화 같지 않아 어색하다"
+  //
+  // 실행 #65 에서 얼굴만 에어브러시로 문지른 것처럼 부드럽게 나왔다.
+  // 빛과 그늘이 서서히 섞이고 윤곽선이 없어서, 납작하게 칠한 몸·배경
+  // 위에 혼자 입체로 떠 보인다.
+  //
+  // 위의 'flat cel-shaded' 만으로는 부족했다. **무엇을 하지 말라고**
+  // 적어야 한다 — 그라데이션과 살갗 질감이 범인이다.
+  'the face shaded in two or three flat tones with a hard edge between ' +
+  'light and shadow, a visible ink outline along the jaw, nose and eyelids, ' +
+  'the same line weight and brush quality as the hands and the uniform, ' +
+  'no soft airbrushed gradient on the skin, no smooth rounded 3D shading ' +
+  'on the cheeks or nose, no semi-realistic portrait rendering, ' +
   'no caricature or exaggeration of his features, ' +
   // ⚠️ 2026-11-07. 이 줄이 없어서 목이 꺾였다. "사진과 같은 얼굴"은
   //    얼굴이 보일 때만 적용되는 말인데, 그렇게 안 적었더니 모델이
@@ -401,6 +417,9 @@ export const SPORTS_NEGATIVE_EXTRA =
   //    글자 쪽을 버린다. 뺀다. 구단 로고와 스폰서 글자만 계속 막는다.
   'no club team logos, no brand marks, no sponsor text on uniforms, ' +
   'no photorealistic faces, no photograph, ' +
+  // 실행 #65 에서 얼굴만 문질러진 채 나왔다. 이름을 적어 막는다.
+  'no airbrushed face, no soft gradient skin shading, no glossy skin, ' +
+  'no semi-realistic face on a flat drawn body, ' +
   'no real stadium signage, no league emblem, ' +
   // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
   'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
