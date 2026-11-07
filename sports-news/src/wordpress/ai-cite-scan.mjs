@@ -41,7 +41,13 @@ export function 첫문단(content) {
   const 덩어리 = String(content || '').split(/<!--\s*\/?wp:/);
   for (const d of 덩어리) {
     if (/coupang|cpst|adsbygoogle|wp-block-buttons|wp-block-image/i.test(d)) continue;
-    const 글 = 글자만(d.replace(/^paragraph[^>]*-->/, ''));
+    // 블록 이름 머리를 벗긴다. 처음에는 `^paragraph` 만 벗겼는데,
+    // 2026-11-07 에 글 2922·1576 의 첫 문장이 'ub/preview-provider /-->' 로
+    // 찍혔다. wp:paragraph 가 아닌 블록(플러그인 블록)의 머리가 글자로
+    // 남은 것이고, 그 글들은 ③ 을 어긴 것으로 **잘못 세였다.**
+    // 블록 이름이 무엇이든 첫 `-->` 까지 벗긴다.
+    const 알맹이 = d.replace(/^[A-Za-z0-9/_-]+(?:\s[^>]*?)?\/?-->/, '');
+    const 글 = 글자만(알맹이);
     if (글.length >= 20) return 글;
   }
   return 글자만(content).slice(0, 300);
@@ -72,6 +78,29 @@ export function 받는말로시작하나(content) {
 
 /** ③ 대표 키워드가 첫 문장 안에 있나. 키워드가 없는 글은 셈에서 뺀다. */
 export function 키워드가첫문장에(post) {
+  const kw = String(post.focusKeyword || '').trim();
+  if (kw.length < 2) return null;
+  const 첫 = 문장들(첫문단(post.content))[0] || '';
+  // **낱말이 다 들어 있으면 지킨 것으로 본다.**
+  //
+  // 처음에는 통째로 일치하는지만 봤다(`첫.includes(kw)`). 2026-11-07 에
+  // 표본을 열어 보니 그 셈이 틀렸다.
+  //
+  //   키워드 '롤드컵 중계'      첫 문장 "롤드컵 한국어 중계는 치지직과…"
+  //   키워드 '맥길로이 두바이 레이스' 첫 문장 "로리 맥길로이가 두바이 레이스 8번째…"
+  //   키워드 '기아 타이거즈 팀스토어'  첫 문장 "기아 타이거즈 온라인 스토어는…"
+  //
+  // 사람이 읽으면 키워드가 들어 있는 글인데 전부 '없다'로 세였다. ③ 의
+  // 목적은 **AI 가 첫 문단만 읽고 글의 주제를 잡는가**이고, 그건 낱말이
+  // 들어 있으면 된다. 통째로 일치하는지는 Rank Math 가 따로 본다.
+  //
+  // 그래서 어긴 글 560편(79.3%)은 이 셈 때문에 부푼 숫자였다.
+  const 낱말 = kw.split(/\s+/).filter(Boolean);
+  return 낱말.every((w) => 첫.includes(w));
+}
+
+/** 통째로 일치하나. Rank Math 가 보는 기준이라 참고로 따로 센다. */
+export function 키워드가통째로첫문장에(post) {
   const kw = String(post.focusKeyword || '').trim();
   if (kw.length < 2) return null;
   const 첫 = 문장들(첫문단(post.content))[0] || '';

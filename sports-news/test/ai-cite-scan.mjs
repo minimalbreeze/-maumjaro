@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {
   첫문단, 문장들, 인사말로열었나, 받는말로시작하나, 키워드가첫문장에,
-  질문절, 흔들리는표현, 재기, 글속날짜, 흔들린문장들,
+  질문절, 흔들리는표현, 재기, 글속날짜, 흔들린문장들, 키워드가통째로첫문장에,
 } from '../src/wordpress/ai-cite-scan.mjs';
 
 let passed = 0;
@@ -41,6 +41,33 @@ check('대표 키워드가 첫 문장에 있는지 본다', () => {
   assert.equal(키워드가첫문장에({ focusKeyword: '목동야구장', content: 글 }), false);
   // 키워드 자체가 없으면 셈에서 뺀다 — 못 본 것과 어긴 것을 섞지 않는다.
   assert.equal(키워드가첫문장에({ focusKeyword: '', content: 글 }), null);
+});
+
+check('낱말이 흩어져 있어도 지킨 것으로 본다 — 560편이 부풀었던 자리', () => {
+  // 실제 글 11906. 사람이 읽으면 '롤드컵 중계'가 들어 있다.
+  const 글 = '<p>롤드컵 한국어 중계는 치지직과 SOOP의 LCK 공식 채널에서 볼 수 있습니다.</p>';
+  assert.equal(키워드가첫문장에({ focusKeyword: '롤드컵 중계', content: 글 }), true);
+  // 통째로는 없다 — Rank Math 가 보는 기준은 따로 센다.
+  assert.equal(키워드가통째로첫문장에({ focusKeyword: '롤드컵 중계', content: 글 }), false);
+});
+
+check('낱말 하나라도 없으면 어긴 것이다', () => {
+  // 실제 글 11909. 첫 문장에 'TGL'도 '중계'도 없다.
+  const 글 = '<p>스크린골프 리그는 하나가 아닙니다. 둘이 서로 다릅니다.</p>';
+  assert.equal(키워드가첫문장에({ focusKeyword: 'TGL 중계', content: 글 }), false);
+});
+
+check('플러그인 블록 머리가 첫 문장으로 새지 않는다', () => {
+  // 글 2922·1576 의 첫 문장이 'ub/preview-provider /-->' 로 찍혔던 자리.
+  const 글 = [
+    '<!-- wp:ub/preview-provider /-->',
+    '',
+    '<!-- wp:paragraph -->',
+    '<p>생생경마 라이브는 한국마사회 공식 채널에서 볼 수 있습니다.</p>',
+    '<!-- /wp:paragraph -->',
+  ].join('\n');
+  assert.ok(첫문단(글).startsWith('생생경마'), `첫 문단이 "${첫문단(글).slice(0, 40)}" 로 나왔다`);
+  assert.equal(키워드가첫문장에({ focusKeyword: '생생경마 라이브', content: 글 }), true);
 });
 
 check('자주 묻는 질문 절과 질문 수를 센다', () => {
