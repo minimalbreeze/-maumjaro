@@ -236,12 +236,44 @@ export async function generateImages(prompts, {
   const photoOf = new Map();
   // 예비 주소. 본 사진에서 얼굴을 못 찾으면 이쪽으로 한 번 더 해 본다.
   const sparePhotoOf = new Map();
+  // ── 한 편의 그림 바탕을 하나로 맞춘다 (2026-11-07 운영자) ──
+  //
+  //   "다 좋은데 그림에 선수 사진이 너무 다른 그림과 차이가 나,
+  //    지브리 스타일로 만들어 달라니…"
+  //   "선수 사진만 갑자기 캐리커처가 나오니 이상하잖아"
+  //   "앞으로 전체 그림톤이 유사하게 지브리 톤으로 맞춰줘"
+  //
+  // 원인은 프롬프트가 아니라 **모델**이었다. 참조 샷은 flux-pulid 가
+  // 그리는데 그건 flux-dev 위에 얹혀 있고, 나머지 샷은 flux-schnell 이
+  // 그렸다. 바탕이 다르니 결이 다르다.
+  //
+  // id_weight 를 0.7 → 0.5 → 0.35 로 내려도 안 없어졌던 까닭이 이것이다.
+  // 세기를 아무리 낮춰도 **다른 모델이 그린 그림**인 것은 그대로다.
+  //
+  // 그래서 이 편에 참조 샷이 하나라도 있으면 나머지도 같은 바탕으로
+  // 그린다. 비싸지지만(장당 $0.003 → $0.025) 한 편의 그림이 한 결로
+  // 나온다. 톤이 튀는 것보다 그 값이 싸다.
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
     const photo = String(p?.photo || '').trim();
     if (name && /^https?:\/\//.test(photo)) photoOf.set(name, photo);
     const spare = String(p?.photo_예비 || '').trim();
     if (name && /^https?:\/\//.test(spare)) sparePhotoOf.set(name, spare);
+  }
+
+  // 참조 샷이 있으면 나머지도 그 바탕으로 맞춘다.
+  //
+  // ⚠️ 사람이 모델을 **직접 골랐으면 그 말을 따른다.** 화풍을 비교해
+  //    보려고 일부러 schnell 을 고르는 일이 있다.
+  const refBase = modelFor(REFERENCE_MODEL).baseModel;
+  // 기본값 그대로 들어왔으면 "사람이 안 골랐다"로 본다. 호출하는 쪽이
+  // 늘 값을 채워 보내서 "안 줬다"를 따로 알 수가 없다.
+  const modelGiven = modelKey !== DEFAULT_IMAGE_MODEL;
+  if (photoOf.size && refBase && !modelGiven) {
+    modelKey = refBase;
+    onProgress?.(
+      `참조 사진이 있어서 나머지 샷도 ${refBase} 로 그립니다 — 한 편의 그림 결을 맞춥니다.`
+    );
   }
 
   const made = [];

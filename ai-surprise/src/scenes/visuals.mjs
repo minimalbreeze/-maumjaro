@@ -235,6 +235,16 @@ export const SPORTS_STYLE_SUFFIX =
   //   · 관중은 또렷하게 그리지 않고 붓 자국으로 뭉갠다.
   //   · 그런데 유니폼 글자와 솔기는 오히려 또렷하다.
   `${SPORTS_PAINT}, ` +
+  // ── 한 편의 그림은 한 결이다 (2026-11-07 운영자) ──
+  //
+  //   "앞으로 전체 그림톤이 유사하게 지브리 톤으로 맞춰줘"
+  //   "전체 그림톤은 통일이다. 지브리다. 달라지면 안 된다"
+  //
+  // 바탕 모델을 맞춘 것(images.mjs)이 큰 몫이지만, 글로도 못 박는다.
+  // 한 샷만 결이 달라도 거기서 눈이 걸린다.
+  'every picture in this series shares one look: the same hand-painted ' +
+  '2D film-animation finish, the same muted palette, the same line weight, ' +
+  'never switching to another medium or rendering style mid-series, ' +
   // ── 비율 ──
   // 'oversized head on small body' 를 쓰다가 아기 인형이 나왔다.
   // 어른 비율을 숫자로 못 박는다. 비율은 말로 두면 반드시 흐려진다.
@@ -276,6 +286,22 @@ export const SPORTS_STYLE_SUFFIX =
   'never twist the neck to show the face against the direction of the body, ' +
   'never a front-facing face on a figure seen from behind, ' +
   'anatomically correct neck and shoulders, ' +
+  // ── 동작은 자연스러워야 한다 (2026-11-07 운영자) ──
+  //
+  //   "선수 동작 그림을 만들 때 그림이 자연스러워야 한다.
+  //    어색한 동작이 나오면 안 된다. 꼭! 기억해라."
+  //
+  // D-4 에서 던지고·치고·달리는 장면을 넣으라고 했는데, 움직임을
+  // 넣으면 어색해질 자리도 같이 늘어난다. 팔이 반대로 꺾이거나,
+  // 발이 땅에서 떠 있거나, 몸은 왼쪽인데 공은 오른쪽으로 가거나.
+  //
+  // **어색한 동작은 정적인 화면보다 나쁘다.** 보는 사람이 거기서
+  // 멈춘다. 그래서 움직임을 요구한 만큼 자연스러움도 요구한다.
+  'the pose is a real moment a human body can hold: joints bend the way ' +
+  'they actually bend, the weight is on a foot that touches the ground, ' +
+  'the arms and legs follow through in the direction of the motion, ' +
+  'never a limb bent backwards, never a body twisted past what is possible, ' +
+  'never floating above the ground when the pose is a standing or running one, ' +
   // ── 프레이밍 ──
   // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
   //
@@ -427,6 +453,12 @@ export const SPORTS_NEGATIVE_EXTRA =
   'no real stadium signage, no league emblem, ' +
   // 3화·4화에서 실제로 나온 것들이다. 하나씩 이름을 적어 막는다.
   'no 3D render, no CGI, no Pixar style, no toy figure, no doll, no figurine, ' +
+  // 2026-11-07 운영자: "갑자기 3D 사람 영상이 있는데 이건 뭐지.
+  // 이런 것은 다음부터 안 된다." 한 샷이 통째로 다른 매체로 나왔다.
+  // 위의 'no 3D render' 만으로는 안 걸렸으니 이름을 더 적는다.
+  'no video game cutscene, no game engine render, no Unreal Engine, ' +
+  'no realistic 3D character model, no motion capture figure, ' +
+  'no live-action footage, no photographic person, ' +
   'no chibi, no oversized head, no baby face, no toddler, ' +
   'no bald head, no hairless character, ' +
   'no cropped legs, no cut-off limbs';
@@ -695,6 +727,20 @@ D-4. **야구가 움직이는 장면을 넣는다.** (2026-11-07)
 
    ⚠️ 움직이는 장면에서는 **얼굴을 요구하지 않는다.** 뒷모습·측면·
       실루엣으로 간다 (D-2 의 ② 동작 샷). 얼굴을 넣으려다 목이 꺾인다.
+
+   ⚠️ **어색한 동작은 정적인 화면보다 나쁘다.** (2026-11-07 운영자 —
+      "선수 동작 그림을 만들 때 그림이 자연스러워야 한다. 어색한
+       동작이 나오면 안 된다. 꼭!")
+
+      그러니 **한순간을 고른다.** 동작의 가운데가 아니라 멈추는 자리다.
+
+        좋음: 와인드업 꼭대기 · 공을 놓기 직전 · 배트가 공에 닿는 순간 ·
+              2루에 손이 닿는 순간 · 점프의 꼭대기
+        나쁨: 팔다리가 한창 돌아가는 중간 · 공중에서 몸이 꼬인 자세 ·
+              여러 명이 뒤엉킨 장면
+
+      멈춘 자리는 몸이 어떻게 놓여야 하는지가 분명해서 덜 틀린다.
+      한창 움직이는 중간은 모델이 팔을 반대로 꺾어 놓는다.
 
    ⚠️ 그래도 **대본이 말하는 것**과 이어져야 한다. 불펜 이야기에
       홈 쇄도를 넣지 않는다. 움직임을 넣으려고 아무 장면이나 붙이는

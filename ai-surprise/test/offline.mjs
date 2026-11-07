@@ -6088,10 +6088,26 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
   });
 
   assert.equal(out.made.length, 3);
-  assert.equal(calls[0].modelKey, 'schnell', '사람 없는 샷이 참조 모델로 갔습니다');
+  // ⚠️ 2026-11-07 에 바뀌었다. 전에는 'schnell' 이었다.
+  //
+  //    운영자: "선수 사진만 갑자기 캐리커처가 나오니 이상하잖아."
+  //            "전체 그림톤은 통일이다. 지브리다. 달라지면 안 된다."
+  //
+  //    원인이 프롬프트가 아니라 **모델**이었다. 참조 샷은 flux-pulid 가
+  //    그리는데 그건 flux-dev 위에 얹혀 있고, 나머지는 flux-schnell 이
+  //    그렸다. 바탕이 다르니 결이 다르다 — id_weight 를 0.7 에서
+  //    0.35 까지 내려도 안 없어졌던 까닭이 이것이다.
+  //
+  //    그래서 참조 샷이 하나라도 있으면 나머지도 그 바탕으로 그린다.
+  assert.equal(calls[0].modelKey, 'dev', '참조 샷이 있는데 바탕을 안 맞췄습니다');
+  assert.equal(
+    calls[0].modelKey,
+    (await import('../src/assets/replicate.mjs')).modelFor('portrait').baseModel,
+    '참조 모델의 바탕과 다릅니다'
+  );
   assert.equal(calls[1].modelKey, I.REFERENCE_MODEL, '사진 있는 사람이 참조 모델로 안 갔습니다');
   assert.equal(calls[1].ref, 'https://example.com/kim.jpg');
-  assert.equal(calls[2].modelKey, 'schnell', '사진 없는 사람이 참조 모델로 갔습니다');
+  assert.equal(calls[2].modelKey, 'dev', '사진 없는 사람이 참조 모델로 갔습니다');
 
   // 본편은 가로다. 세로로 만들면 16:9 에 넣을 때 위아래가 잘린다.
   for (const c of calls) assert.equal(c.ar, '16:9');
@@ -6167,6 +6183,28 @@ await asyncTest('사진에서 얼굴을 못 찾으면 예비로, 그래도 안 �
   // 사진을 바꿔야 하는 쪽이다.
   assert.ok(I.isFaceFail(new Error('facexlib align face fail')));
   assert.ok(!I.isFaceFail(new Error('Replicate 429: Request was throttled')));
+});
+
+await asyncTest('참조 사진이 하나도 없으면 바탕을 안 바꾼다', async () => {
+  // 바탕을 맞추는 것은 **참조 샷이 있을 때만** 하는 일이다. 사진이
+  // 하나도 없으면 flux-pulid 를 아예 안 부르므로 결이 어긋날 일이
+  // 없고, 그때까지 비싼 모델로 그리면 돈만 더 쓴다.
+  const I = await import('../src/assets/images.mjs');
+  const dir = fs.mkdtempSync(path.join(TMP, 'nobase-'));
+  const calls = [];
+  const client = {
+    generate: async (_p, o) => { calls.push(o.modelKey); return { url: 'http://x/y.png', usdEstimate: 0.003 }; },
+    download: async () => Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.alloc(I.MIN_IMAGE_BYTES || 4096),
+    ]),
+  };
+  await I.generateImages([{ shot_id: 'S01-1', scene_number: 1, image_prompt: 'a field' }], {
+    assetDir: dir, token: 't', client,
+    people: [{ name: '아무개', look: 'a man', photo: '' }],
+    sleep: async () => {},
+  });
+  assert.deepEqual(calls, ['schnell'], '사진이 없는데 비싼 바탕으로 갔습니다');
 });
 
 await asyncTest('참조 샷은 비싼 값으로 상한을 센다', async () => {
