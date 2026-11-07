@@ -285,6 +285,10 @@ export const SPORTS_STYLE_SUFFIX =
   'faces the camera, ' +
   'never twist the neck to show the face against the direction of the body, ' +
   'never a front-facing face on a figure seen from behind, ' +
+  // 2026-11-07 운영자: "선수 동작이 이상하게 팔이 3개인 경우도 있구나."
+  // 움직이는 장면을 늘리면서 생긴 일이다. 팔다리 개수를 못 박는다.
+  'exactly one head, two arms and two legs, no extra or duplicated limbs, ' +
+  'no third arm, no spare hand, five fingers on each hand, ' +
   'anatomically correct neck and shoulders, ' +
   // ── 동작은 자연스러워야 한다 (2026-11-07 운영자) ──
   //
@@ -367,10 +371,30 @@ export const SPORTS_STYLE_SUFFIX =
   // 전에는 'plain unbranded uniform ... no logos or lettering' 이었다.
   // 그래서 어느 팀인지 읽히지 않는 흰 옷만 나왔다. 참조 그림에서는
   // 가슴 글자가 그림의 중심이다 — 글자를 지우면 야구 그림이 아니게 된다.
-  'wearing the South Korea national baseball team uniform: a white or light ' +
-  'grey jersey with KOREA across the chest in navy block letters, navy and ' +
-  'red trim, a navy cap, dark belt, the lettering and seams painted with ' +
-  'the same care as the rest of the picture, ' +
+  // ── 유니폼은 그 선수의 팀 것이어야 한다 (2026-11-07 운영자) ──
+  //
+  //   "그림에 팀 로고와 이름 등번호 등은 진짜 선수 등번호와 구단
+  //    유니폼으로 만들어라. 이 부분이 어색하다.
+  //    갑자기 뉴욕양키즈가 나오는 건 뭐냐?"
+  //   "전혀 팀과 관련이 없는 로고와 유니폼이다"
+  //
+  // 내 탓이다. 2026-11-03 에 "유니폼은 전부 국대 유니폼으로"라고
+  // 적어 뒀는데, 그러면 모델이 **야구 유니폼처럼 생긴 아무것**을
+  // 그린다. 미국 야구 사진을 훨씬 많이 봤으니 양키스 모자가 나온다.
+  //
+  // 이제는 샷마다 **그 선수의 팀 색**을 적는다. 아래 「이 편에 나오는
+  // 사람」의 team_colors 를 프롬프트에 그대로 넣는다.
+  //
+  // ⚠️ 그래도 **미국 구단 표시는 막는다.** 양키스의 겹친 NY, 다저스의
+  //    흘림체, 레드삭스의 B — 이름을 적어 막아야 안 나온다.
+  'wearing a Korean professional baseball uniform in the team colours ' +
+  'named in the scene description, with the cap and jersey in those same ' +
+  'colours and, when the scene description gives one, that exact jersey ' +
+  'number on the back — never an invented number, ' +
+  'the lettering and seams painted with the same care as the rest of ' +
+  'the picture, ' +
+  'never a Major League Baseball team: no interlocking NY, no Dodgers ' +
+  'script, no Boston B, no American team wordmark or cap logo, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
   'no caption text, no watermark, no subtitles, no sponsor logo';
@@ -445,7 +469,12 @@ export const SPORTS_NEGATIVE_EXTRA =
   // ⚠️ 'no team names, no readable jersey text' 가 여기 있었다. 그 두 줄이
   //    가슴 글자를 지웠다. 국대 유니폼을 그리라면서 글자를 막으면 모델은
   //    글자 쪽을 버린다. 뺀다. 구단 로고와 스폰서 글자만 계속 막는다.
-  'no club team logos, no brand marks, no sponsor text on uniforms, ' +
+  // ⚠️ 2026-11-07 에 'no club team logos' 를 뺐다. 그 줄 때문에 모델이
+  //    "야구 유니폼처럼 생긴 아무것"을 그렸고, 거기서 양키스 모자가
+  //    나왔다. 이제는 **한국 구단 색을 적어 주고** 미국 구단만 막는다.
+  'no Major League Baseball logos, no foreign team wordmarks, ' +
+  'no sponsor text on uniforms, ' +
+  'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
   'no photorealistic faces, no photograph, ' +
   // 실행 #65 에서 얼굴만 문질러진 채 나왔다. 이름을 적어 막는다.
   'no airbrushed face, no soft gradient skin shading, no glossy skin, ' +
@@ -701,8 +730,17 @@ D-3. **카드와 자막의 숫자는 숫자로 적는다.** (2026-11-07)
    ⚠️ 큰 돈은 **자릿점을 찍는다.** 1709만이 아니라 1,709만이다.
       숫자가 길수록 자릿점이 있어야 한눈에 읽힌다.
 
-   ⚠️ 적게 세는 것은 한글 그대로 둔다. "세 명", "두 경기", "한 번"은
-      숫자로 쓰면 오히려 어색하다. 열 이하의 사람·경기·횟수가 그렇다.
+   ⚠️ **세는 말도 숫자로 쓴다.** (2026-11-07 운영자 —
+      "다섯 명이면 5명으로 써야지", "한 명은 1명으로 자막에 표기하고")
+
+      처음엔 "적게 세는 것은 한글로 두라"고 적었는데 운영자가 뒤집었다.
+      자막은 **눈에 익은 쪽**이고, 눈에 익은 것은 숫자다.
+
+        자막   5명 · 1명 · 2경기 · 3년
+        읽기   다섯 명 · 한 명 · 두 경기 · 삼 년
+
+      읽기는 numbers.mjs 가 알아서 고유어로 바꾼다(20 이하의 명·개·
+      경기 같은 단위). 그러니 대본에는 숫자만 쓰면 된다.
 
 D-4. **야구가 움직이는 장면을 넣는다.** (2026-11-07)
 

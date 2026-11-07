@@ -4464,10 +4464,17 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
   assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
   assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
-  assert.ok(/no club team logos/.test(jobs[0].prompt));
+  // ⚠️ 2026-11-07 에 바뀌었다. 'no club team logos' 를 뺐다 — 그 줄
+  //    때문에 모델이 "야구 유니폼처럼 생긴 아무것"을 그렸고 거기서
+  //    양키스 모자가 나왔다. 이제는 한국 구단 색을 적어 주고 미국
+  //    구단만 막는다.
+  assert.ok(/no Major League Baseball logos/.test(jobs[0].prompt));
   // 2026-11-03 유니폼을 국대로 바꿨다. 가슴 글자는 **살아야** 한다 —
   // 전에는 금지 목록의 'no readable jersey text' 가 그걸 지웠다.
-  assert.ok(/KOREA across the chest/.test(jobs[0].prompt), '국대 유니폼 지시가 없습니다');
+  // ⚠️ 2026-11-07 에 바뀌었다. 국대 유니폼 고정을 뺐다 — 그 지시가
+  //    모델에게 "야구 유니폼처럼 생긴 아무것"을 그리게 했고 거기서
+  //    양키스 모자가 나왔다. 이제는 샷마다 그 선수의 팀 색을 적는다.
+  assert.ok(/team colours named in the scene/.test(jobs[0].prompt), '팀 색 지시가 없습니다');
   assert.ok(
     !/no readable jersey text/.test(jobs[0].prompt),
     '유니폼 글자를 막는 줄이 되살아났습니다 — 국대 유니폼 지시와 충돌합니다'
@@ -5985,7 +5992,8 @@ await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜�
     const p = V.composeImagePrompt('a pitcher on the mound', null, { kind: 'SPORTS', likeness });
     assert.ok(/no photorealistic faces/.test(p), `실사 얼굴 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no photograph/.test(p), `사진 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no club team logos/.test(p), `구단 로고 금지가 빠졌습니다 (likeness=${likeness})`);
+    assert.ok(/no Major League Baseball logos/.test(p), `미국 구단 금지가 빠졌습니다 (likeness=${likeness})`);
+    assert.ok(/no extra arms/.test(p), `팔 개수 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no sponsor text/.test(p), `스폰서 글자 금지가 빠졌습니다 (likeness=${likeness})`);
   }
 
