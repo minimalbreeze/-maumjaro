@@ -5406,6 +5406,15 @@ await asyncTest('자막은 영어, 읽기는 한글 (2026-11-07 운영자)', asy
   assert.equal(speechText('FA 시장이 열립니다.'), '에프에이 시장이 열립니다.');
   assert.equal(speechText('MLB 와 KBO.'), '메이저리그 와 케이비오.');
 
+  // ⚠️ KIA 가 이 규칙의 본보기다. 2026-11-07 운영자:
+  //    "FA나 KIA 이런 부분은 영문으로 표기하고 에프에이, 기아 이렇게
+  //     읽으라는 이야기다. 영문으로 두면 케이아이에이 이렇게 읽으니."
+  //    철자로 읽으면 안 되는 것이라 그냥 두면 틀린다.
+  assert.equal(speechText('KIA가 삼 위를 했습니다.'), '기아가 삼 위를 했습니다.');
+  assert.ok(!/케이아이에이/.test(speechText('KIA')), 'KIA 를 철자로 읽습니다');
+  // 팀 이름들. KT 는 철자로 읽는 게 맞고, KIA 는 낱말로 읽는 게 맞다.
+  assert.equal(speechText('KT와 LG와 NC와 SSG.'), '케이티와 엘지와 엔씨와 에스에스지.');
+
   // 뜻이 같은지 검사가 이걸 버그로 보면 안 된다.
   for (const line of ['FA 시장이 열립니다.', 'OPS 가 높습니다.', 'MLB 진출입니다.']) {
     assert.ok(sameMeaning(line, speechText(line)), `뜻이 달라졌다고 잡혔습니다: ${line}`);
@@ -5789,6 +5798,43 @@ await asyncTest('쉼이 자리마다 다르다 — 메트로놈처럼 끊지 않
   // 간격이 실제로 흩어져 있어야 귀에 들린다.
   const lo = Math.min(...N.PAUSE_LENGTHS), hi = Math.max(...N.PAUSE_LENGTHS);
   assert.ok(hi / lo >= 3, `쉼 차이가 ${(hi / lo).toFixed(1)}배뿐입니다 — 들리지 않습니다`);
+});
+
+await asyncTest('자막에 영문이 익숙한 이름을 한글로 적으면 알려 준다', async () => {
+  // 2026-11-07 운영자가 방향을 분명히 했다. 전부 영어로 적는 게 아니다.
+  //
+  //   KIA 라고 적으면  → 음성이 "케이 아이 에이"로 읽는다  (PRONOUNCE 가 고친다)
+  //   기아 라고 적으면 → 자막에 낯선 글자가 나간다         (이 검사가 잡는다)
+  //
+  // 두 방향을 다 봐야 한 바퀴가 돈다.
+  const { subtitleSpellingSpots, checkSpoken } = await import('../src/script/spoken.mjs');
+
+  assert.equal(subtitleSpellingSpots(['기아가 삼 위를 했습니다.']).length, 1);
+  assert.equal(subtitleSpellingSpots(['KIA가 삼 위를 했습니다.']).length, 0, '영문은 걸면 안 됩니다');
+  assert.deepEqual(
+    subtitleSpellingSpots(['케이티와 엘지.'])[0].hits.map((h) => h.latin).sort(),
+    ['KT', 'LG']
+  );
+
+  // 한글이 원래 이름인 팀은 건드리지 않는다.
+  assert.equal(subtitleSpellingSpots(['삼성과 롯데와 두산과 한화와 키움.']).length, 0);
+  // '메이저리그'도 자막에 그대로 적어서 낯설지 않다. 안 건다.
+  assert.equal(subtitleSpellingSpots(['메이저리그에 갔습니다.']).length, 0);
+
+  // 9화는 깨끗해야 한다. 이 규칙이 생긴 뒤에 쓴 첫 편이다.
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  const md = fs.readFileSync(path.join(base, '9화-대본.md'), 'utf8');
+  const notes = checkSpoken(md).notes.filter((n) => n.includes('영문'));
+  assert.deepEqual(notes, [], `9화: ${notes[0]}`);
+
+  // ⚠️ 1~8화는 이미 올린 편이라 소급해서 고치지 않는다. 그래서 이
+  //    검사는 **알려 주기만** 하고 실패시키지 않는다. 실제로 걸리는지만
+  //    확인해 둔다 — 안 걸리면 검사가 죽은 것이다.
+  const old = fs.readFileSync(path.join(base, '8화-대본.md'), 'utf8');
+  assert.ok(
+    checkSpoken(old).notes.some((n) => n.includes('영문')),
+    '8화에 한글 팀 이름이 있는데 안 잡혔습니다 — 검사가 죽었습니다'
+  );
 });
 
 await asyncTest('읽을 글에 영어 글자를 넣지 않는다', async () => {

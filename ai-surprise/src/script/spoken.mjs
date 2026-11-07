@@ -1,4 +1,4 @@
-import { PRONOUNCE } from '../audio/speech.mjs';
+import { PRONOUNCE, SUBTITLE_SPELLING } from '../audio/speech.mjs';
 
 // 대본이 **귀로 들을 때** 자연스러운지 본다.
 //
@@ -183,6 +183,37 @@ export function latinSpots(sentences) {
 }
 
 /**
+ * 자막에 **영문으로 적는 쪽이 익숙한데** 한글로 적어 둔 자리.
+ *
+ * 2026-11-07 운영자: "자막을 전부 영어로 하는 게 아니고, FA나 KIA 이런
+ * 부분은 영문으로 표기하고 에프에이·기아 이렇게 읽으라는 이야기다."
+ *
+ * 방향이 둘 다 있다는 게 핵심이다.
+ *
+ *   KIA 라고 적으면  → 음성이 "케이 아이 에이"로 읽는다   (PRONOUNCE 가 고친다)
+ *   기아 라고 적으면 → 자막에 낯선 글자가 나간다          (이 검사가 잡는다)
+ *
+ * 그래서 대본에는 **영문으로 적는다.** 자막은 영문 그대로 나가고,
+ * speechText() 가 읽기만 한글로 바꾼다.
+ *
+ * ⚠️ 자동으로 바꾸지 않고 알려 주기만 한다. 한글 쪽이 맞는 자리가
+ *    있을 수 있어서다 — '기아자동차'를 KIA 로 바꾸면 안 된다.
+ *    사람이 보고 고친다.
+ */
+export function subtitleSpellingSpots(sentences) {
+  const out = [];
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    const hits = [];
+    for (const [hangul, latin] of SUBTITLE_SPELLING) {
+      if (text.includes(hangul)) hits.push({ hangul, latin });
+    }
+    if (hits.length) out.push({ text, hits });
+  }
+  return out;
+}
+
+/**
  * 이름을 쉼표로 줄줄이 이어 놓은 자리.
  *
  * 2026-11-06 운영자: "이재현, 류지혁, 김지찬 이렇게 선수가 연속으로
@@ -313,6 +344,21 @@ export function checkSpoken(markdown) {
         '음성 모델이 철자로 읽습니다 — "OPS" 는 "오 피 에스" 가 됩니다. ' +
         '대본은 영어 그대로 두고(자막에 그대로 나갑니다), ' +
         'src/audio/speech.mjs 의 PRONOUNCE 에 한글 읽기를 등록하세요.'
+    );
+  }
+
+  // 반대 방향. 자막에 영문이 익숙한 것을 한글로 적어 뒀는가.
+  const spelling = subtitleSpellingSpots(sentences);
+  if (spelling.length) {
+    const pairs = [
+      ...new Map(
+        spelling.flatMap((x) => x.hits).map((h) => [h.hangul, `${h.hangul}→${h.latin}`])
+      ).values(),
+    ].join(', ');
+    notes.push(
+      `자막에 영문으로 적는 쪽이 익숙한 이름이 한글로 적혀 있습니다 (${pairs}). ` +
+        '대본에 영문으로 적으면 자막은 영문으로 나가고 읽기만 한글이 됩니다. ' +
+        '(한글이 맞는 자리면 그냥 두세요 — 기아자동차 같은 것.)'
     );
   }
 
