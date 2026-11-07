@@ -1,0 +1,82 @@
+name: 배포 확인
+
+# 왜 있는가
+#   GitHub Pages 배포는 새 푸시가 들어오면 진행 중이던 것을 취소한다. 그 자체는
+#   정상이다 — 더 새로운 커밋이 옛 것의 내용까지 담아 올라가기 때문이고,
+#   cancel-in-progress 를 끄면 배포가 줄을 서서 오히려 느려진다.
+#
+#   진짜 문제는 버스트의 **마지막** 배포가 실패했을 때다(2026-11-06 14:01에
+#   한 건 있었다). 그러면 다음 머지가 들어올 때까지 옛 화면이 그대로 떠 있고
+#   아무도 모른다. 이 워크플로가 그걸 잡는다.
+#
+# 무엇을 하는가
+#   1) 라이브 사이트와 리포의 파일 내용을 비교한다
+#   2) 다르면 Pages 재빌드를 요청하고, 3분 뒤 다시 본다
+#   3) 그래도 다르면 **실패로 끝낸다** — 그래야 알림이 간다
+#
+# ⚠️ 막 들어온 커밋은 건너뛴다. 배포에 4~5분이 걸려서, 방금 머지된 것을 두고
+#    "낡았다"고 하면 매번 헛경보가 난다.
+
+on:
+  schedule:
+    # 매시 23분. 정각은 전 세계가 몰려서 밀린다.
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+concurrency:
+  group: deploy-watchdog
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 방금 들어온 커밋이면 건너뛴다
+        id: fresh
+        run: |
+          pushed=$(git log -1 --format=%ct)
+          age=$(( $(date +%s) - pushed ))
+          echo "마지막 커밋이 ${age}초 전"
+          if [ "$age" -lt 900 ]; then
+            echo "15분이 안 됐다. 배포가 아직 돌고 있을 수 있어 건너뛴다."
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 라이브와 리포를 비교한다
+        id: first
+        if: steps.fresh.outputs.skip == '0'
+        run: |
+          if bash scripts/check-deploy.sh; then
+            echo "stale=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 낡았으면 Pages 재빌드를 요청한다
+        if: steps.first.outputs.stale == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "라이브가 낡았다. Pages 재빌드를 요청한다."
+          gh api --method POST "repos/${{ github.repository }}/pages/builds" \
+            || echo "재빌드 요청이 거절됐다(권한 또는 Pages 설정). 아래 재확인 결과로 판단한다."
+          echo "3분 기다린다"
+          sleep 180
+
+      - name: 다시 확인한다
+        if: steps.first.outputs.stale == '1'
+        run: |
+          if bash scripts/check-deploy.sh; then
+            echo "재빌드로 복구됐다."
+          else
+            echo "::error::라이브가 리포와 다른 상태로 남아 있다. Actions 탭의 'pages build and deployment'에서 마지막 배포가 실패했는지 확인할 것."
+            exit 1
+          fi
