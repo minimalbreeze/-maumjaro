@@ -162,7 +162,56 @@ async function 문장보기(ids) {
   console.log('\n아무것도 바꾸지 않았습니다.\n');
 }
 
+/**
+ * ③ 을 고치려면 **무엇이 어긋났는지** 먼저 봐야 한다.
+ *
+ * "대표 키워드가 첫 문장에 없다"는 560편인데, 고치는 길이 두 가지다.
+ *   ⓐ 첫 문장을 다시 써서 키워드를 넣는다 — 글쓰기다
+ *   ⓑ 키워드를 첫 문장에 있는 말로 바꾼다 — 검색 과녁을 옮기는 일이라
+ *      함부로 못 한다
+ * 어느 쪽인지는 실제 문장과 키워드를 나란히 놓고 봐야 정해진다.
+ */
+async function 첫문장보기(ids) {
+  console.log('\n────────────────────────────────────────────────────────');
+  console.log('🔎 대표 키워드와 첫 문장을 나란히 봅니다 (읽기만 · 비용 0원)');
+  console.log('────────────────────────────────────────────────────────');
+
+  let 대상 = ids;
+  if (!대상.length) {
+    const 목록 = await 발행글전부();
+    대상 = 목록.filter((p) => String(p.focusKeyword || '').trim().length >= 2).map((p) => String(p.id));
+    console.log(`\n발행 ${목록.length}편 중 대표 키워드가 있는 ${대상.length}편을 봅니다…`);
+  }
+
+  let 어긋남 = 0;
+  for (const id of 대상) {
+    let data;
+    try { ({ data } = await wpFetch(`/wp/v2/posts/${id}`, { query: { context: 'edit' } })); }
+    catch (err) { console.log(`\n   ❌ ${id} 못 읽었습니다 — ${err.message}`); continue; }
+    const content = data?.content?.raw ?? data?.content?.rendered ?? '';
+    const kw = String(data?.meta?.rank_math_focus_keyword || '').trim();
+    const post = { focusKeyword: kw, content };
+    if (키워드가첫문장에(post) !== false) continue;
+    어긋남 += 1;
+    const 첫 = 문장들(첫문단(content))[0] || '';
+    const 제목 = data?.title?.raw || data?.title?.rendered || '';
+    console.log(`\n   [${id}] ${제목.slice(0, 60)}`);
+    console.log(`     대표 키워드: ${kw}`);
+    console.log(`     본문에 키워드가 있나: ${글자만(content).includes(kw) ? '있음(뒤쪽)' : '없음'}`);
+    console.log(`     제목에 키워드가 있나: ${제목.includes(kw) ? '있음' : '없음'}`);
+    console.log(`     첫 문장: ${첫.slice(0, 160)}`);
+  }
+  console.log(`\n   ▶ 키워드가 첫 문장에 없는 글 ${어긋남}편`);
+  console.log('\n아무것도 바꾸지 않았습니다.\n');
+}
+
 async function main() {
+  const 첫자리 = process.argv.indexOf('--첫문장');
+  if (첫자리 >= 0) {
+    const ids = String(process.argv[첫자리 + 1] || '').split(/[\s,]+/).filter(Boolean);
+    await 첫문장보기(ids);
+    return;
+  }
   const 문장자리 = process.argv.indexOf('--문장');
   if (문장자리 >= 0) {
     const ids = String(process.argv[문장자리 + 1] || '').split(/[\s,]+/).filter(Boolean);
