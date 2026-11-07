@@ -1,3 +1,5 @@
+import { PRONOUNCE } from '../audio/speech.mjs';
+
 // 대본이 **귀로 들을 때** 자연스러운지 본다.
 //
 // ─────────────────────────────────────────────────────────────
@@ -146,22 +148,35 @@ export function bareQuoteSpots(sentences) {
  * 운영자가 잡았다(2026-11-03) — "영어는 되도록 넣지 말고, 영어
  * 스펠로 읽는 경우가 많더라".
  *
- * 고치는 법은 간단하다. **한글로 적는다.**
+ * ── 2026-11-07 에 고치는 법이 바뀌었다 ──
  *
- *   OPS 팔 할 오 푼   →  오피에스 팔 할 오 푼
- *   FA 시장          →  에프에이 시장
- *   A등급            →  에이등급
- *   MLB              →  메이저리그
- *   KBO              →  케이비오
+ * 전에는 "대본에 한글로 적어라"였다. 그러면 **자막까지 한글**로 나간다.
+ * 운영자가 그걸 뒤집었다.
  *
- * 한글로 적으면 음성 모델이 글자 그대로 읽어서 흐름이 안 끊긴다.
- * 자막에도 한글이 나가는데, 듣는 말과 보이는 말이 같은 편이 낫다.
+ *   "영어가 어색하게 읽히면 한글로 해서 읽는다. 그리고 자막에는 보는
+ *    사람을 위해 익숙한 영어로 적는다."
+ *
+ * 맞는 말이다. 보는 사람에게 익은 글자는 'FA' 지 '에프에이' 가 아니다.
+ * 그래서 이제는 대본에 **영어 그대로 쓰고**, speech.mjs 의 PRONOUNCE 에
+ * 한글 읽기를 등록한다. 자막은 영어, 음성은 한글이 된다.
+ *
+ *   대본·자막:  FA 시장
+ *   읽는 글:    에프에이 시장
+ *
+ * 그래서 이 검사는 **PRONOUNCE 에 등록된 낱말을 걸지 않는다.** 이미
+ * 해결된 것을 계속 지적하면 진짜 문제가 묻힌다.
  */
 export function latinSpots(sentences) {
+  // PRONOUNCE 에 든 낱말은 읽기가 이미 정해져 있다. 대소문자를 가리지
+  // 않고 비교한다 — 대본에 'Fa' 로 적힐 일은 없지만, 검사가 표기에
+  // 흔들려서 통과·실패가 갈리면 안 된다.
+  const known = new Set([...PRONOUNCE.keys()].map((k) => String(k).toLowerCase()));
   const out = [];
   for (const raw of sentences || []) {
     const text = String(raw);
-    const hits = [...new Set((text.match(/[A-Za-z]{1,}/g) || []))];
+    const hits = [
+      ...new Set((text.match(/[A-Za-z]{1,}/g) || []).filter((w) => !known.has(w.toLowerCase()))),
+    ];
     if (hits.length) out.push({ text, hits });
   }
   return out;
@@ -289,13 +304,15 @@ export function checkSpoken(markdown) {
 
 
   // 영어 글자. 음성 모델이 철자로 읽어서 흐름이 끊긴다.
+  // PRONOUNCE 에 등록된 것(FA·MLB·KBO…)은 이미 해결됐으므로 걸지 않는다.
   const latin = latinSpots(sentences);
   if (latin.length) {
     const words = [...new Set(latin.flatMap((x) => x.hits))].join(', ');
     notes.push(
-      `영어 글자가 ${latin.length}개 문장에 있습니다 (${words}). ` +
+      `읽기가 정해지지 않은 영어가 ${latin.length}개 문장에 있습니다 (${words}). ` +
         '음성 모델이 철자로 읽습니다 — "OPS" 는 "오 피 에스" 가 됩니다. ' +
-        '한글로 적어 주세요: OPS→오피에스, FA→에프에이, MLB→메이저리그.'
+        '대본은 영어 그대로 두고(자막에 그대로 나갑니다), ' +
+        'src/audio/speech.mjs 의 PRONOUNCE 에 한글 읽기를 등록하세요.'
     );
   }
 
