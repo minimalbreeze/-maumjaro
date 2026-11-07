@@ -91,42 +91,51 @@
     {
       "name": "네일",
       "role": "KIA 선발투수 (미국) · 1992년생대 · 우완",
-      "look": "a white American right-handed starting pitcher in his early 30s, tall with a solid athletic build, short light brown hair under a cap, a long face with a strong straight nose and a square jaw, light stubble along the jawline, a calm focused look, wearing a KIA Tigers uniform in red and black, red cap, the jersey number 40 on the back, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "183이닝으로 리그 최다이닝 1위. HOOK 과 WHY 에 걸치지만 그림은 한 번만. 투수이므로 **던지는 장면**으로 그린다. ⚠️ 올러와 둘 다 미국 백인 투수라 **서로 섞이기 쉽다** — 네일은 밝은 갈색 머리에 길고 각진 얼굴, 올러는 수염이 짙고 얼굴이 둥글다. 둘을 나란히 쓰지 말고 떨어뜨려 놓는다. 받은 다섯 중 뉴스 사진 둘만 썼다(나머지 셋은 blogfiles 의 image.png). 본은 2026-09-12, 예비는 2026-03-01. 유니폼은 KIA 색으로 그린다 — 참조 모델은 얼굴만 가져오고 옷은 안 가져오므로 글로 적어야 한다. 등번호는 40번이다.",
+      "look": "a white American right-handed starting pitcher in his early 30s, tall with a solid athletic build, short light brown hair under a cap, a long face with a strong straight nose and a square jaw, light stubble along the jawline, a calm focused look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "183이닝으로 리그 최다이닝 1위. HOOK 과 WHY 에 걸치지만 그림은 한 번만. 투수이므로 **던지는 장면**으로 그린다. ⚠️ 올러와 둘 다 미국 백인 투수라 **서로 섞이기 쉽다** — 네일은 밝은 갈색 머리에 길고 각진 얼굴, 올러는 수염이 짙고 얼굴이 둥글다. 둘을 나란히 쓰지 말고 떨어뜨려 놓는다. 받은 다섯 중 뉴스 사진 둘만 썼다(나머지 셋은 blogfiles 의 image.png). 본은 2026-09-12, 예비는 2026-03-01.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F09%2F12%2F0005605373_001_20260912180013567.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F03%2F01%2F0001220681_003_20260301151219063.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F03%2F01%2F0001220681_003_20260301151219063.jpg&type=a340",
+      "team": "KIA",
+      "number": "40"
     },
     {
       "name": "올러",
       "role": "KIA 선발투수 (미국) · 1994년생대 · 우완",
-      "look": "a white American right-handed starting pitcher in his early 30s, a heavy thick build with broad shoulders, short dark hair under a cap, a round full face with a thick dark beard covering the jaw, heavy eyebrows, an intense expression, wearing a KIA Tigers uniform in red and black, red cap, the jersey number 33 on the back, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "178이닝으로 리그 2위, 삼진 180개에 퀄리티스타트 19번. 전반기 ERA 2.36 → 후반기 한때 13.06 이라 RISK 에도 나온다. 그림은 WHY 에서 한 번. ⚠️ 네일과 가르는 것은 **수염과 얼굴형**이다 — 올러가 짙은 수염에 둥근 얼굴, 네일이 수염 거의 없고 긴 얼굴. 받은 다섯 중 둘만 썼다. 본은 311/2026-07-16 뉴스 사진, 예비는 \"20261013_232334.jpg\" 인데 JPEG 라 사진일 가능성이 높다(화면 캡처는 보통 PNG 다). 나머지 셋은 image.png 이고 그중 둘은 같은 주소였다. 유니폼은 KIA 색으로 그린다 — 참조 모델은 얼굴만 가져오고 옷은 안 가져오므로 글로 적어야 한다. 등번호는 33번이다.",
+      "look": "a white American right-handed starting pitcher in his early 30s, a heavy thick build with broad shoulders, short dark hair under a cap, a round full face with a thick dark beard covering the jaw, heavy eyebrows, an intense expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "178이닝으로 리그 2위, 삼진 180개에 퀄리티스타트 19번. 전반기 ERA 2.36 → 후반기 한때 13.06 이라 RISK 에도 나온다. 그림은 WHY 에서 한 번. ⚠️ 네일과 가르는 것은 **수염과 얼굴형**이다 — 올러가 짙은 수염에 둥근 얼굴, 네일이 수염 거의 없고 긴 얼굴. 받은 다섯 중 둘만 썼다. 본은 311/2026-07-16 뉴스 사진, 예비는 \"20261013_232334.jpg\" 인데 JPEG 라 사진일 가능성이 높다(화면 캡처는 보통 PNG 다). 나머지 셋은 image.png 이고 그중 둘은 같은 주소였다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F07%2F16%2F0002034660_001_20260716184619260.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTNfNzEg%2FMDAxNzkxOTAxNDI5MzM1.RosjQj9qkUQEuolt1FJ5ughvP850dUH4QZ_6A832GjEg.KabEygcbQMlSm1UquDbW71Zzv3jZEKBT3v7f-Fy84sIg.JPEG%2F20261013_232334.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTNfNzEg%2FMDAxNzkxOTAxNDI5MzM1.RosjQj9qkUQEuolt1FJ5ughvP850dUH4QZ_6A832GjEg.KabEygcbQMlSm1UquDbW71Zzv3jZEKBT3v7f-Fy84sIg.JPEG%2F20261013_232334.jpg&type=a340",
+      "team": "KIA",
+      "number": "33"
     },
     {
       "name": "시라카와 케이쇼",
       "role": "KIA 아시아쿼터 투수 (일본) · 2001년생 25세 · 우투우타",
-      "look": "a Japanese right-handed pitcher of 25, the youngest here, a lean build with narrow shoulders, short black hair under a cap, a soft youthful face with a rounded chin and no facial hair, a quiet reserved expression, wearing a KIA Tigers uniform in red and black, red cap, the jersey number 63 on the back, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "이 편의 심장. 총액 10만 달러에 와서 83⅓이닝을 던지고 준PO 3차전 선발승. KEY 섹션에서 제대로 보여야 한다. 일본 선수라 서양 투수 둘과 확실히 달라야 하고, 25세로 이 편에서 가장 어리다 — 얼굴이 가장 부드럽다. 투수이므로 던지는 장면으로. 받은 다섯 중 넷이 뉴스 사진이었다. 본은 109/2026-06-27, 예비는 076/2026-06-04. 안 쓴 뉴스 사진 둘(109/2026-06-27 다른 기사, 5244/2026-05-28)도 쓸 만하니 본·예비가 다 죽으면 그쪽으로 간다. image.png 하나만 버렸다. 유니폼은 KIA 색으로 그린다 — 참조 모델은 얼굴만 가져오고 옷은 안 가져오므로 글로 적어야 한다. 등번호는 63번이다.",
+      "look": "a Japanese right-handed pitcher of 25, the youngest here, a lean build with narrow shoulders, short black hair under a cap, a soft youthful face with a rounded chin and no facial hair, a quiet reserved expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "이 편의 심장. 총액 10만 달러에 와서 83⅓이닝을 던지고 준PO 3차전 선발승. KEY 섹션에서 제대로 보여야 한다. 일본 선수라 서양 투수 둘과 확실히 달라야 하고, 25세로 이 편에서 가장 어리다 — 얼굴이 가장 부드럽다. 투수이므로 던지는 장면으로. 받은 다섯 중 넷이 뉴스 사진이었다. 본은 109/2026-06-27, 예비는 076/2026-06-04. 안 쓴 뉴스 사진 둘(109/2026-06-27 다른 기사, 5244/2026-05-28)도 쓸 만하니 본·예비가 다 죽으면 그쪽으로 간다. image.png 하나만 버렸다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F06%2F27%2F0005561776_001_20260627174021595.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F06%2F04%2F2026060401000280700015583_20260604204617560.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F06%2F04%2F2026060401000280700015583_20260604204617560.jpg&type=a340",
+      "team": "KIA",
+      "number": "63"
     },
     {
       "name": "카스트로",
       "role": "KIA 내야수 (베네수엘라) · 1994년생대 · 좌타",
-      "look": "a Venezuelan infielder in his early 30s, a stocky muscular build, short black curly hair under a batting helmet, dark brown skin, a broad face with heavy cheekbones and a thick dark beard, a relaxed easy expression, wearing a KIA Tigers uniform in red and black, red cap, the jersey number 26 on the back, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "햄스트링 부상으로 길게 빠졌다가 돌아와 중심 타선을 맡았다. RISK 에서 한 번. 타자이므로 **치는 장면**으로. ⚠️ 최종 기록은 출처가 갈려서 대본에서 숫자를 말하지 않는다고 밝혔다 — 카드에도 숫자를 넣지 않는다. 라틴계라 미국 투수 둘, 일본 투수 하나와 피부와 머리로 갈린다. 받은 여섯 중 뉴스 사진 셋이 왔고 그중 둘을 썼다(본 2026-06-23, 예비 2026-06-13). 셋째 뉴스 사진(109/2026-03-02)은 안 썼다 — 둘이면 충분하다. 나머지 셋은 blogfiles 의 image.png 다. 유니폼은 KIA 색으로 그린다 — 참조 모델은 얼굴만 가져오고 옷은 안 가져오므로 글로 적어야 한다. 등번호는 26번이다.",
+      "look": "a Venezuelan infielder in his early 30s, a stocky muscular build, short black curly hair under a batting helmet, dark brown skin, a broad face with heavy cheekbones and a thick dark beard, a relaxed easy expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "햄스트링 부상으로 길게 빠졌다가 돌아와 중심 타선을 맡았다. RISK 에서 한 번. 타자이므로 **치는 장면**으로. ⚠️ 최종 기록은 출처가 갈려서 대본에서 숫자를 말하지 않는다고 밝혔다 — 카드에도 숫자를 넣지 않는다. 라틴계라 미국 투수 둘, 일본 투수 하나와 피부와 머리로 갈린다. 받은 여섯 중 뉴스 사진 셋이 왔고 그중 둘을 썼다(본 2026-06-23, 예비 2026-06-13). 셋째 뉴스 사진(109/2026-03-02)은 안 썼다 — 둘이면 충분하다. 나머지 셋은 blogfiles 의 image.png 다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5400%2F2026%2F06%2F23%2F0000252702_001_20260623210212609.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F529%2F2026%2F06%2F13%2F0000077546_003_20260613124310197.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F529%2F2026%2F06%2F13%2F0000077546_003_20260613124310197.jpg&type=a340",
+      "team": "KIA",
+      "number": "26"
     },
     {
       "name": "이범호",
       "role": "KIA 감독 · 1981년생 45세",
-      "look": "a Korean baseball manager of 45, a solid build in a team jacket over a uniform, short black hair under a red cap, a wide round face with full cheeks, light lines across the forehead and from the nose to the mouth, a steady unsmiling look, wearing a KIA Tigers uniform in red and black, red cap, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "5화에 나왔던 사람이라 **그때와 같은 얼굴**로 나와야 한다 — 선수-생김새.md 의 이범호 항목(빨간 모자 + 검정 후드, 둥글고 넓은 얼굴)과 어긋나지 않게 한다. 이 넷을 데리고 내년을 치르는 사람이다. CLOSE 에 한 번. 본은 076/2026-08-25 뉴스 사진이다. 예비 \"4.png\" 는 blogfiles 라 내용을 모르지만 image.png 보다는 낫다고 보고 넣었다 — 틀려도 코드가 참조 없이 그린다. 유니폼은 KIA 색으로 그린다 — 참조 모델은 얼굴만 가져오고 옷은 안 가져오므로 글로 적어야 한다.",
+      "look": "a Korean baseball manager of 45, a solid build in a team jacket over a uniform, short black hair under a red cap, a wide round face with full cheeks, light lines across the forehead and from the nose to the mouth, a steady unsmiling look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "5화에 나왔던 사람이라 **그때와 같은 얼굴**로 나와야 한다 — 선수-생김새.md 의 이범호 항목(빨간 모자 + 검정 후드, 둥글고 넓은 얼굴)과 어긋나지 않게 한다. 이 넷을 데리고 내년을 치르는 사람이다. CLOSE 에 한 번. 본은 076/2026-08-25 뉴스 사진이다. 예비 \"4.png\" 는 blogfiles 라 내용을 모르지만 image.png 보다는 낫다고 보고 넣었다 — 틀려도 코드가 참조 없이 그린다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F08%2F25%2F2026082501001494800095311_20260825191823513.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MDNfMTMy%2FMDAxNzg4NDA4MjY2Nzk5.Ph3HP3WTfyNeLmsqHAcGPEllE0V2ldM4Sx_vzU7cTUwg.ZKRLf6zArfmZgGqBjZCa0Fd1QCbxpBIB-vmVBU4_4wYg.PNG%2F4.png&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MDNfMTMy%2FMDAxNzg4NDA4MjY2Nzk5.Ph3HP3WTfyNeLmsqHAcGPEllE0V2ldM4Sx_vzU7cTUwg.ZKRLf6zArfmZgGqBjZCa0Fd1QCbxpBIB-vmVBU4_4wYg.PNG%2F4.png&type=a340",
+      "team": "KIA"
     }
   ],
   "beats": [

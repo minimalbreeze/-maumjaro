@@ -4471,10 +4471,27 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   assert.ok(/no Major League Baseball logos/.test(jobs[0].prompt));
   // 2026-11-03 유니폼을 국대로 바꿨다. 가슴 글자는 **살아야** 한다 —
   // 전에는 금지 목록의 'no readable jersey text' 가 그걸 지웠다.
-  // ⚠️ 2026-11-07 에 바뀌었다. 국대 유니폼 고정을 뺐다 — 그 지시가
-  //    모델에게 "야구 유니폼처럼 생긴 아무것"을 그리게 했고 거기서
-  //    양키스 모자가 나왔다. 이제는 샷마다 그 선수의 팀 색을 적는다.
-  assert.ok(/team colours named in the scene/.test(jobs[0].prompt), '팀 색 지시가 없습니다');
+  // ⚠️ 2026-11-07 에 **두 번** 바뀌었다.
+  //
+  //    아침: 국대 유니폼 고정을 뺐다 — 그 지시가 모델에게 "야구
+  //          유니폼처럼 생긴 아무것"을 그리게 했고 거기서 양키스 모자가
+  //          나왔다. 샷마다 "장면 설명에 적힌 팀 색"을 쓰게 했다.
+  //    저녁: 그 "장면 설명에 적힌" 이 또 틀렸다. 운영자: "유니폼이
+  //          완전 다른 색상이다." 색을 적는 주체가 설계 AI 였기 때문이다.
+  //          이제 유니폼은 uniforms.mjs 가 만들고 코드가 꽂는다.
+  //
+  //    여기 미리보기는 사람 기록이 없어서(화풍만 보는 자리다) 구단
+  //    문장이 안 붙는다. 그래서 **밑줄**이 남아 있는지만 본다.
+  assert.ok(
+    /the team colours given for this figure/.test(jobs[0].prompt),
+    '팀 색 밑줄이 없습니다'
+  );
+  // 뒤에서도 누구인지 읽혀야 한다 (2026-11-07 운영자: "유니폼과 등번호가
+  // 같아야 선수임을 뒤만 봐도 알 수 있지 않나").
+  assert.ok(
+    /identifiable from behind/.test(jobs[0].prompt),
+    '뒤에서 읽히라는 지시가 없습니다'
+  );
   assert.ok(
     !/no readable jersey text/.test(jobs[0].prompt),
     '유니폼 글자를 막는 줄이 되살아났습니다 — 국대 유니폼 지시와 충돌합니다'
@@ -6559,6 +6576,217 @@ await asyncTest('이름을 쉼표로 셋 이상 이으면 잡는다', async () =
     `알려 주지 않았습니다: ${JSON.stringify(r.notes)}`
   );
 });
+// ════════════════════════════════════════════════════════════
+// 유니폼과 등번호 (2026-11-07)
+// ════════════════════════════════════════════════════════════
+//
+//   "그럼 유니폼은 어떻게 구현을 하나? 유니폼이 완전 다른 색상이다."
+//   "유니폼과 등번호가 같아야 선수임을 뒤만 봐도 알 수 있지 않나.
+//    그래야 팬들이 찾아오지 않겠나."
+//
+// 이 묶음이 지키는 것은 하나다 — **유니폼을 설계 AI 에게 맡기지
+// 않는다.** 전에는 look 문장에 색을 적어 두고 그 AI 가 베껴 주기를
+// 부탁했다. 안 베끼면 색이 사라진다. 그게 "완전 다른 색상"이었다.
+section('4-z. 유니폼은 코드가 적는다');
+
+const U = await import('../src/scenes/uniforms.mjs');
+const UV = await import('../src/scenes/visuals.mjs');
+const UM = await import('../src/model.mjs');
+const 스포츠영상 = (f) =>
+  decodeURIComponent(new URL(`../../스포츠영상/${f}`, import.meta.url).pathname);
+
+test('팀 이름을 어떻게 적어도 찾는다', () => {
+  // 기획 파일에 뭐라고 적힐지 모른다. 대본은 자막용으로 'KIA' 라고
+  // 쓰고 읽기용으로 '기아' 로 바꾸므로(PRONOUNCE) 둘 다 올 수 있다.
+  for (const given of ['KIA', '기아', 'KIA 타이거즈', 'kia tigers', '타이거즈']) {
+    assert.equal(U.teamKey(given), 'KIA', `${given} 를 못 찾았습니다`);
+  }
+  assert.equal(U.teamKey('한화 이글스'), '한화');
+  assert.equal(U.teamKey('두산 베어스'), '두산');
+  // 모르는 팀은 빈 값이다. 지어내지 않는다.
+  assert.equal(U.teamKey('뉴욕 양키스'), '');
+  assert.equal(U.teamKey(''), '');
+  assert.equal(U.teamKey(undefined), '');
+});
+
+test('KBO 열 팀이 다 있고, 어디서 온 값인지 적혀 있다', () => {
+  const keys = Object.keys(U.KBO_UNIFORMS);
+  assert.equal(keys.length, 10, 'KBO 는 열 팀입니다');
+  for (const k of keys) {
+    const u = U.KBO_UNIFORMS[k];
+    assert.ok(u.ko && u.jersey && u.cap && u.numberColour, `${k} 칸이 비었습니다`);
+    // ⚠️ 색을 지어내지 않기 위한 칸이다. 2026-11-07 에 찾아봤더니
+    //    열 팀을 한 번에 정리한 자료가 없었고 위키백과도 막혀 있었다.
+    //    그래서 칸마다 '확인'(출처를 봤다)인지 '통념'(내가 아는 값)인지
+    //    적어 둔다. 틀린 것은 그 줄만 고치면 된다.
+    assert.ok(
+      ['확인', '통념'].includes(u.확실한가),
+      `${k}: 어디서 온 값인지 안 적혀 있습니다`
+    );
+  }
+  // KIA 는 출처를 봤다 — 2021년 현대차그룹 공식 글.
+  assert.equal(U.KBO_UNIFORMS.KIA.확실한가, '확인');
+});
+
+test('등번호를 모르는 사람에게는 번호 얘기를 안 한다', () => {
+  // ⚠️ 이게 이 묶음에서 가장 중요한 줄이다. 빈 칸을 남기면 모델이
+  //    채우려고 **아무 번호나** 그린다. 틀린 번호는 번호가 없는 것보다
+  //    나쁘다 — 팬이 뒤만 봐도 알아보게 하려는 것이 목적인데, 번호가
+  //    틀리면 알아보기는커녕 다른 선수가 된다.
+  const withNumber = U.uniformClause({ team: 'KIA', number: '40' });
+  assert.ok(/number 40/.test(withNumber));
+
+  for (const missing of [undefined, null, '', '   ']) {
+    const c = U.uniformClause({ team: 'KIA', number: missing });
+    assert.ok(c, '팀은 있으니 유니폼 문장은 나와야 합니다');
+    assert.ok(!/number \d/.test(c), `등번호가 없는데 번호를 적었습니다: ${c}`);
+  }
+});
+
+test('감독에게는 등번호를 안 달고 팀 재킷을 입힌다', () => {
+  // 감독은 유니폼 위에 팀 재킷을 입는다. 등번호는 보통 안 보인다.
+  const c = U.uniformClause({ team: 'KIA', number: '77', role: 'KIA 감독' });
+  assert.ok(/team jacket/.test(c), '감독에게 재킷이 없습니다');
+  assert.ok(!/number \d/.test(c), '감독에게 등번호를 달았습니다');
+});
+
+test('표에 없는 팀은 빈 문장이다 — 색을 지어내지 않는다', () => {
+  // 빈 값이면 composeImagePrompt 가 유니폼 문장 없이 그리고, 고정
+  // 문구의 밑줄만 적용된다. 전과 같아질 뿐 더 나빠지지 않는다.
+  assert.equal(U.uniformClause({ team: '뉴욕 양키스', number: '99' }), '');
+  assert.equal(U.uniformClause({}), '');
+});
+
+test('유니폼이 장면 설명 바로 뒤, 고정 문구 앞에 들어간다', () => {
+  // ⚠️ 자리가 중요하다. 고정 스타일 문구가 수백 자다. 그 뒤에 색을
+  //    적으면 그림 모델이 앞쪽만 무겁게 보고 색을 흘린다.
+  const uni = U.uniformClause({ team: 'KIA', number: '40' });
+  const p = UV.composeImagePrompt('a pitcher at the top of his windup', 'present', {
+    kind: 'SPORTS',
+    uniform: uni,
+  });
+  const atUniform = p.indexOf('KIA Tigers');
+  const atStyle = p.indexOf(UV.SPORTS_PAINT.slice(0, 20));
+  assert.ok(atUniform > 0, '유니폼 문장이 프롬프트에 없습니다');
+  assert.ok(atStyle > 0, '화풍 문구가 프롬프트에 없습니다');
+  assert.ok(
+    atUniform < atStyle,
+    '유니폼이 화풍 문구 뒤에 있습니다 — 거기서는 색이 흐려집니다'
+  );
+  assert.ok(p.indexOf('windup') < atUniform, '장면 설명보다 앞에 있습니다');
+  // 점이 두 개 찍히지 않는가.
+  assert.ok(!/\.\./.test(p), `마침표가 겹쳤습니다: ${p.slice(0, 160)}`);
+});
+
+test('샷의 person 으로 그 사람의 유니폼을 찾아 꽂는다', () => {
+  // 설계 AI 가 무엇을 쓰든 유니폼은 프롬프트에 있어야 한다. 그게
+  // 이 바꿈의 전부다.
+  const item = {
+    people: [
+      { name: '네일', role: 'KIA 선발투수', look: 'a tall pitcher', team: 'KIA', number: '40' },
+      { name: '이범호', role: 'KIA 감독', look: 'a manager', team: 'KIA' },
+    ],
+  };
+  const uniforms = UV.uniformsOf(item);
+  assert.equal(uniforms.size, 2);
+  assert.ok(/number 40/.test(uniforms.get('네일')));
+  assert.ok(!/number \d/.test(uniforms.get('이범호')), '감독에게 번호가 붙었습니다');
+
+  const scene = {
+    scene_number: 1,
+    shots: [
+      { shot_id: 's1', seconds: 4 },
+      { shot_id: 's2', seconds: 4 },
+      { shot_id: 's3', seconds: 4 },
+    ],
+  };
+  const design = {
+    mood: 'tension',
+    visual_description: '마운드',
+    shots: [
+      // 설계 AI 가 유니폼을 한 글자도 안 적은 샷이다. 전에는 이러면
+      // 색이 사라졌다.
+      { shot_id: 's1', person: '네일', image_prompt: 'a pitcher releasing the ball', camera: 'zoom in' },
+      { shot_id: 's2', person: '이범호', image_prompt: 'a manager at the dugout rail', camera: 'zoom in' },
+      // 글자 카드에는 사람이 없다. 유니폼이 붙으면 안 된다.
+      { shot_id: 's3', person: '', card_text: '183이닝', image_prompt: '', camera: 'zoom in' },
+    ],
+  };
+  const { scene: merged } = UV.mergeVisuals(scene, design, { kind: 'SPORTS', uniforms });
+  const [s1, s2, s3] = merged.shots;
+  assert.ok(/KIA Tigers/.test(s1.image_prompt), '투수 샷에 유니폼이 안 붙었습니다');
+  assert.ok(/number 40/.test(s1.image_prompt), '투수 샷에 등번호가 안 붙었습니다');
+  assert.ok(/team jacket/.test(s2.image_prompt), '감독 샷에 재킷이 안 붙었습니다');
+  // ⚠️ 'number' 라는 낱말은 고정 문구에도 있다("when a jersey number is
+  //    given..."). 실제 **숫자**가 붙었는지를 봐야 한다.
+  assert.ok(
+    !/number \d/.test(s2.image_prompt),
+    `감독 샷에 번호가 붙었습니다: ${s2.image_prompt.match(/number \d+/)?.[0]}`
+  );
+  // 번호가 없는 사람에게는 "번호를 그리지 마라"가 가 있어야 한다.
+  assert.ok(/no number at all when none is given/.test(s2.image_prompt));
+  assert.equal(s3.image_prompt, '', '카드 샷에 그림 프롬프트가 생겼습니다');
+});
+
+test('기획 파일의 team 과 number 가 소재 레코드까지 간다', () => {
+  // ⚠️ 2026-11-07 에 photo 로 똑같은 일을 겪었다. makeSports 가 photo 를
+  //    떨어뜨려서 **여덟 편 내내 참조 사진이 한 번도 안 쓰였다.** 기획
+  //    파일에 적어도 프롬프트까지 안 가면 적은 적이 없는 것과 같다.
+  const made = UM.makeSports({
+    title: 'x',
+    people: [
+      { name: '네일', role: 'KIA 선발투수', look: 'a tall pitcher', team: 'KIA', number: '40' },
+      { name: '엄상백', role: '한화 투수', look: 'a pitcher', team: '한화' },
+    ],
+  });
+  assert.equal(made.people[0].team, 'KIA');
+  assert.equal(made.people[0].number, '40');
+  assert.equal(made.people[1].team, '한화');
+  // 등번호를 못 찾은 사람에게는 **칸 자체가 없어야** 한다. '' 가 붙으면
+  // uniformClause 가 빈 번호를 적으려 할 수 있다.
+  assert.ok(!('number' in made.people[1]), '빈 등번호 칸이 붙었습니다');
+});
+
+test('9화·10화 사람에게 팀이 다 적혀 있다', () => {
+  // 유니폼은 team 이 있어야 붙는다. 하나라도 비면 그 사람만 색이
+  // 틀린 그림으로 나오고, 영상을 다 만든 뒤에야 보인다.
+  for (const f of ['9화.json', '10화.json']) {
+    const p = 스포츠영상(f);
+    if (!fs.existsSync(p)) continue;
+    const people = JSON.parse(fs.readFileSync(p, 'utf8')).people || [];
+    assert.ok(people.length, `${f}: 사람이 없습니다`);
+    for (const person of people) {
+      assert.ok(person.team, `${f}: ${person.name} 에게 team 이 없습니다`);
+      assert.ok(
+        U.teamKey(person.team),
+        `${f}: ${person.name} 의 팀 '${person.team}' 이 구단 표에 없습니다`
+      );
+      // look 에 유니폼 색을 **다시** 적어 두지 않는다. 둘 다 있으면
+      // "red and black uniform"(look) 과 "white jersey with black
+      // wordmark"(코드) 가 서로 싸워 모델이 하나를 버린다.
+      assert.ok(
+        !/uniform in /.test(person.look),
+        `${f}: ${person.name} 의 look 에 유니폼 색이 남아 있습니다`
+      );
+    }
+  }
+});
+
+test('비율을 재는 자리마다 적는다', () => {
+  // 2026-11-07 운영자: "그림의 비율이 이상하면 안 된다."
+  // 머리 크기만 적어 뒀더니 어깨가 좁고 팔이 짧은 그림이 나왔다.
+  const p = UV.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
+  for (const must of [
+    'one seventh of total height',
+    'two head-widths',
+    'reach mid-thigh',
+    'half the',
+  ]) {
+    assert.ok(p.includes(must), `비율 지시가 빠졌습니다: ${must}`);
+  }
+});
+
+
 
 
 console.log(`\n${'═'.repeat(60)}`);
