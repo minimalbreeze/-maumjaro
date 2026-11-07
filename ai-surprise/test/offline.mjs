@@ -5953,6 +5953,59 @@ await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜�
   assert.ok(!/no real identifiable public figures/.test(on), '닮음 지시와 싸우는 줄이 남아 있습니다');
 });
 
+await asyncTest('기획 파일의 사진 주소가 소재 레코드까지 간다 (실행 #64)', async () => {
+  // ⚠️ 이게 **실제로 돈을 쓰고 나서야** 드러난 버그다.
+  //
+  // 9화에 사진 다섯 장을 다 넣고 완성본을 돌렸는데(실행 #64) 한 장도
+  // 안 쓰였다. 로그에 "생김새만 적힌 사람 5명" 만 찍혔다.
+  //
+  // 원인은 model.mjs 의 makeSports 였다. 기획 파일의 사람을 레코드로
+  // 옮길 때 name·role·look·tell 네 개만 옮기고 **photo 를 버렸다.**
+  // 그래서 뒤에서 사진을 읽는 코드가 늘 빈손이었다.
+  //
+  //   main.mjs: loadContent(id)?.research?.people
+  //             → photo 가 없으니 참조 모델을 한 번도 안 부른다
+  //
+  // 미리보기와 인물 시트는 기획 파일을 **직접** 읽어서 이 map 을 안
+  // 거친다. 그래서 그쪽은 멀쩡해 보였고, 더 늦게 알아챘다.
+  //
+  // 사진을 모으는 일은 사람 손이 많이 간다. 그걸 조용히 버리는 것이
+  // 제일 나쁘다 — 아무도 안 터지고 그림만 안 닮는다.
+  const { makeSports } = await import('../src/model.mjs');
+
+  const item = makeSports({
+    title: 'x',
+    people: [
+      { name: '가', role: '투수', look: 'a pitcher', tell: '', photo: 'https://e.com/a.jpg', photo_예비: 'https://e.com/a2.jpg' },
+      { name: '나', role: '타자', look: 'a batter', tell: '' },
+    ],
+  });
+
+  assert.equal(item.people.length, 2);
+  assert.equal(item.people[0].photo, 'https://e.com/a.jpg', '사진 주소가 레코드까지 안 갑니다');
+  assert.equal(item.people[0].photo_예비, 'https://e.com/a2.jpg', '예비 주소가 레코드까지 안 갑니다');
+
+  // 사진이 없는 사람에게는 빈 photo 를 붙이지 않는다. 붙으면 레코드를
+  // 눈으로 볼 때 "넣었는데 안 됐나" 하고 헷갈린다.
+  assert.ok(!('photo' in item.people[1]), '사진 없는 사람에게 빈 photo 가 붙었습니다');
+
+  // main.mjs 가 쓰는 바로 그 걸러내기로 한 번 더 본다. 이게 0이면
+  // 참조 모델을 안 부른다.
+  const withPhoto = item.people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  assert.equal(withPhoto.length, 1, '참조로 쓸 사람이 안 잡힙니다');
+
+  // 실제 9화 기획 파일로도 본다. 다섯 명 전부 사진이 있어야 한다.
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  const plan = JSON.parse(fs.readFileSync(path.join(base, '9화.json'), 'utf8'));
+  const real = makeSports({ title: plan.title, people: plan.people });
+  const realWithPhoto = real.people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  assert.equal(
+    realWithPhoto.length,
+    5,
+    `9화 사람 ${real.people.length}명 중 사진이 레코드까지 간 사람이 ${realWithPhoto.length}명입니다`
+  );
+});
+
 await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', async () => {
   // 운영자가 "그림이 진짜 선수 같은 느낌이었으면" 한다(2026-11-03).
   // 글로만 생김새를 적으면 "그 조건에 맞는 아무 얼굴"이 나온다.
