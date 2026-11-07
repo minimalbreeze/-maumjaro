@@ -285,6 +285,56 @@ export const SPORTS_STYLE_SUFFIX =
   'drawn as one whole figure from head to feet, the complete body inside ' +
   'the frame with the feet and the ground visible, ' +
   'never a floating head or a face pasted onto a scene, ' +
+  // ── 앞에 둔 물건이 몸을 가리지 않는다 (2026-11-07 운영자) ──
+  //
+  // "이건 왜 목만 둥둥 떠 있나?"
+  //
+  // 실행 #65 의 한 샷에서 클립보드가 화면 아래 절반을 덮어, 머리와
+  // 어깨만 그 위에 떠 있는 그림이 나왔다. 몸이 통째로 가려졌다.
+  //
+  // 원인은 우리가 적은 "앞에 가까이 있는 것 하나"(SPORTS_VISUALS_RULES
+  // E 의 세 층)다. 그 물건을 **사람 앞에** 두라고만 했지 얼마나 크게
+  // 두라고는 안 했다. 모델이 화면 반을 채우는 크기로 그린다.
+  //
+  // 소품은 깊이를 만들라고 넣은 것이지 주인공을 가리라고 넣은 게
+  // 아니다. 크기와 자리를 못 박는다.
+  'any foreground object stays small and to one side, never covering the ' +
+  'body: the torso, arms and legs of the person remain fully visible, ' +
+  'a held object such as a clipboard, ball or glove is held at natural ' +
+  'size in one hand and never enlarged to fill the lower half of the frame, ' +
+  'never a head and shoulders sitting on top of a large object, ' +
+  // ── 앉은 사람도 다리를 그린다 (2026-11-07 운영자) ──
+  //
+  // "다리는 어디 가고? 유니폼이 의자에 걸려 있는 것 같나."
+  //
+  // 실행 #65. 의자에 앉은 뒷모습을 그렸는데 **다리가 통째로 없었다.**
+  // 점퍼만 의자 등받이에 걸쳐 둔 것처럼 보였다.
+  //
+  // 우리가 "머리부터 발끝까지"라고만 적어서 생긴 일이다. 앉으면 발이
+  // 의자에 가려지니, 모델이 둘을 다 맞추려다 사람을 지우고 옷만
+  // 남겼다. 앉은 자세를 따로 적어야 한다.
+  'a seated figure still has legs: thighs, knees and feet are drawn and ' +
+  'the body fills the clothing, ' +
+  'never an empty jacket or uniform draped over a chair in place of a person, ' +
+  // ⚠️ 옷걸이에 걸린 유니폼에 머리만 얹힌 그림도 나왔다(실행 #65,
+  //    라커룸 샷). 사람과 걸어 둔 옷은 **다른 것**이라고 적어야 한다.
+  //    라커룸처럼 옷이 여러 벌 걸린 배경에서 특히 잘 섞인다.
+  'a person and a hanging garment are never merged: if a person stands ' +
+  'among hanging uniforms, he has his own shoulders, arms, torso and legs ' +
+  'in front of them, never a head on top of a jersey on a hanger, ' +
+  // ── 물건은 손에 들거나 바닥에 놓는다 (2026-11-07 운영자) ──
+  //
+  // "이건 왜 등에 걸려 있나?"
+  //
+  // 실행 #65. 뒷모습 샷에서 클립보드가 **점퍼 등판에 붙어** 있었다.
+  // 들고 있는 것도 아니고 걸린 것도 아니고, 그냥 등에 얹혀 있었다.
+  //
+  // 앞의 두 줄이 "앞에 크게 두지 마라"까지만 말해서, 모델이 자리를
+  // 못 찾고 아무 데나 붙였다. **어디에 두는지**를 적어야 한다.
+  'objects are held in a hand, tucked under an arm, or resting on a ' +
+  'surface such as a bench, rail or ground, ' +
+  'never stuck to the back or chest of a jacket, never floating against ' +
+  'the body with nothing holding it, ' +
   'never cropping limbs at an awkward point, ' +
   // ── 유니폼 ──
   // 2026-11-03 운영자: "유니폼은 전부 국대 유니폼으로 바꿔라".
@@ -575,6 +625,29 @@ D-2. **자세와 얼굴 방향을 한 문장 안에서 맞춘다.** (2026-11-07)
    그리고 **머리부터 발끝까지 그린다**(운영자, 같은 날). 얼굴만 크게
    잡은 샷은 쓰지 않는다. 몸 전체가 보여야 자세가 읽히고, 자세가
    읽혀야 얼굴 방향이 맞는지도 보인다.
+
+D-3. **카드와 자막의 숫자는 숫자로 적는다.** (2026-11-07)
+
+   운영자가 잡은 것이다 —
+   "151억 7천 1백 8만원 이렇게 표기 되어야지, 한글로 다 나오잖아."
+   "계약 8년이다. 이것도 다 한글이다."
+   "79승 2무 63패 이런 것도 자막이 숫자로 되어야지."
+   "3위 이런 순위도 숫자로 해야지."
+
+   **눈으로 보는 글자와 귀로 듣는 말은 다르다.**
+
+     카드·자막   151억 1,709만 원 · 8년 · 79승 2무 63패 · 3위 · 5.26
+     읽는 말     백오십일억 천칠백구만 원 · 팔 년 · 칠십구 승 …
+
+   읽는 쪽은 speech.mjs 가 알아서 바꾼다(numbers.mjs). 그러니
+   **card_text 와 대본에는 숫자를 숫자로 적는다.** 한글로 적으면
+   화면에 "백오십일억 천칠백구만 원"이 뜬다 — 읽기 어렵다.
+
+   ⚠️ 큰 돈은 **자릿점을 찍는다.** 1709만이 아니라 1,709만이다.
+      숫자가 길수록 자릿점이 있어야 한눈에 읽힌다.
+
+   ⚠️ 적게 세는 것은 한글 그대로 둔다. "세 명", "두 경기", "한 번"은
+      숫자로 쓰면 오히려 어색하다. 열 이하의 사람·경기·횟수가 그렇다.
 
 E. **화면을 채우되 과하지 않게.**
 

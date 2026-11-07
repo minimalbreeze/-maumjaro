@@ -1,3 +1,5 @@
+import { readNumbers } from './numbers.mjs';
+
 // 읽을 글을 따로 만든다.
 //
 // 자막에 보이는 글과 **읽는 글이 같아야 할 이유가 없다.** 자막은 눈으로
@@ -194,6 +196,19 @@ export function speechText(text) {
   out = out.replace(WRAPPING_SINGLE_QUOTE, '');
   out = out.replace(INNER_SINGLE_QUOTE, '');
 
+  // ── 숫자를 읽는 글로 (2026-11-07 운영자) ──
+  //
+  //   "5.26은 숫자로 적어야지. 읽을 때는 한글로 읽지만."
+  //   "42억 이런 것도 숫자로 자막을 만들어야지."
+  //   "79승 2무 63패 이런 것도 자막이 숫자로 되어야지."
+  //
+  // 그래서 대본에는 숫자를 **숫자로** 쓴다. 자막에 그대로 나가고,
+  // 읽을 글만 여기서 한글이 된다. KIA 와 같은 꼴이다.
+  //
+  // ⚠️ 차례가 중요하다. 숫자를 먼저 풀어야 joinNumberUnits 가
+  //    "2회 말" → "이 회 말" → "이회말" 까지 갈 수 있다.
+  out = readNumbers(out);
+
   out = joinNumberUnits(out);
 
   for (const [from, to] of PRONOUNCE) out = out.split(from).join(to);
@@ -255,11 +270,15 @@ export function softenListCommas(text) {
  */
 export function sameMeaning(original, speech) {
   const strip = (s) => {
-    let t = String(s ?? '');
+    // ⚠️ 숫자는 양쪽 다 **읽는 꼴로 맞춰 놓고** 본다. 자막의 '5.26'과
+    //    읽을 글의 '오 점 이 육'은 글자로는 다르지만 같은 말이다.
+    //    안 맞춰 두면 숫자가 든 문장이 전부 "글자를 건드렸다"로 걸린다.
+    let t = readNumbers(String(s ?? ''));
     for (const [from, to] of PRONOUNCE) {
       t = t.split(from).join('§').split(to).join('§');
     }
     if (SOFTEN_LIST_COMMAS) t = t.replace(/·/g, '');
+    // 단위 붙여 읽기(이 회 말 → 이회말)도 공백만 다르니 같이 지운다.
     return t.replace(/[^가-힣0-9A-Za-z§]/g, '');
   };
   return strip(original) === strip(speech);
