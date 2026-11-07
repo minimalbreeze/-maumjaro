@@ -128,7 +128,11 @@ async function main() {
       log.section(`🔎 "${q}"`);
       let rows = [];
       try {
-        rows = await findPosts(q, { perPage: 5 });
+        // 2026-11-07: 5 였다. 글이 706편이 되면서 **찾는 글이 안 보이는 일이
+        // 네 번 났다** — 안세영 허브를 세 번 못 찾았고 그때마다 범위를
+        // 찍어 보느라 시간을 버렸다. 20 이면 한 화면에 들어오고 느리지도
+        // 않다(한 번의 REST 호출이다).
+        rows = await findPosts(q, { perPage: 20 });
       } catch (err) {
         log.fail(`  "${q}" 조회 실패`, err);
         continue;
