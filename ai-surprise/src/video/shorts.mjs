@@ -210,9 +210,12 @@ export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds
       //
       //    narrate 단계의 applyTimings 가 문단마다 seconds 를 채워 둔다.
       //    목소리를 아직 안 만들었으면 없으니, 그때만 추정으로 돈다.
+      // ⚠️ 2026-11-08. 추정으로 돌 때도 **종류를 넘긴다.** 장면은
+      //    종류별 속도(스포츠 376자/분)로 쟀는데 여기만 기본값(330)으로
+      //    재면 한 실행 안에서 두 자가 섞인다.
       const seconds = Number(p.seconds) > 0
         ? Number(p.seconds)
-        : secondsForChars(countNarrationChars(p.text));
+        : secondsForChars(countNarrationChars(p.text), kind);
       paragraphs.push({
         section: scene.section,
         scene_number: scene.scene_number,
@@ -290,9 +293,30 @@ export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds
   // 그래서 먼저 거의 안 겹치는 것만 고르고(10%), 그래도 수가 모자랄 때만
   // 예전 기준(50%)으로 한 번 더 채운다. 재료가 넉넉하면 서로 다른 구간이
   // 뽑히고, 짧은 편에서는 예전처럼 동작한다.
-  const fill = (limit) => {
+  // ── 시작이 약한 구간은 뒤로 미룬다 (2026-11-08) ──
+  //
+  // openingScore 가 앞말을 가리키는 시작에 -45 를 매긴다. 그런데
+  // **벌점으로는 부족하다.** 후보가 넉넉하지 않으면 벌점을 받고도
+  // 뽑힌다 — 결말 문단에서 이미 겪은 그대로다(위의 usable 주석).
+  //
+  // 2026-11-08 에 나레이션 속도를 330 에서 376 으로 고치자(실행 #70
+  // 에서 재서) 문단 길이가 짧아지고 쇼츠 창이 밀렸다. 그 바람에 3화
+  // 8순위가 "이 군 성적이 일 군 성적을 보장하지 않기 때문입니다" 로
+  // 시작했다. 물음에 대한 **답**에서 시작한 셈이라, 보는 사람은
+  // 무슨 말인지 모른 채 3초를 쓴다.
+  //
+  // 그래서 **먼저 시작이 단단한 것만으로 채우고**, 모자랄 때만 약한
+  // 것을 받는다. 재료가 넉넉하면 약한 시작이 아예 안 올라가고, 짧은
+  // 편에서는 전처럼 채워진다. 개수를 지키면서 질을 먼저 본다.
+  const weakStart = (c) => {
+    const t = String(c.paragraphs?.[0]?.text || '').trim();
+    return BACK_REFERENCE.some((w) => t.startsWith(w));
+  };
+
+  const fill = (limit, { allowWeakStart = true } = {}) => {
     for (const c of candidates) {
       if (picked.length >= want) return;
+      if (!allowWeakStart && weakStart(c)) continue;
       const clash = picked.some((p) => {
         const overlap = Math.min(p.end, c.end) - Math.max(p.start, c.start);
         return overlap > Math.min(p.duration, c.duration) * limit;
@@ -316,7 +340,19 @@ export function pickShorts(scenes, { count = null, minSeconds = null, maxSeconds
     });
   };
 
-  fill(0.1);
+  // 네 번에 걸쳐 채운다. **먼저 시작을 보고, 그다음에 겹침을 본다.**
+  //
+  //   1차  거의 안 겹치고(10%) 시작도 단단한 것
+  //   2차  조금 겹쳐도(15%) 시작이 단단한 것
+  //   3차  거의 안 겹치는데 시작이 약한 것
+  //   4차  조금 겹치고 시작도 약한 것
+  //
+  // 왜 시작을 먼저 보나. 겹치는 것은 **두 편을 본 사람**만 손해지만,
+  // 시작이 약한 것은 **그 한 편을 본 사람 모두**가 손해다. 쇼츠는 3초에
+  // 넘어가므로 첫마디가 무슨 소리인지 모르면 그 편은 거기서 끝난다.
+  fill(0.1, { allowWeakStart: false });
+  if (picked.length < want) fill(0.15, { allowWeakStart: false });
+  if (picked.length < want) fill(0.1);  // 여기부터 약한 시작을 받는다
   // 모자라면 한 번 더 느슨하게 — 다만 **조금만** 느슨하게 한다.
   //
   // 전에는 0.5 였다. 그러면 쓸 재료보다 많이 달라고 했을 때 절반쯤

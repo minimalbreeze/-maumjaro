@@ -6652,6 +6652,126 @@ test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
   }
 });
 
+// ════════════════════════════════════════════════════════════
+// 나레이션 속도를 실제로 재서 고쳤다 (2026-11-08, 실행 #70)
+// ════════════════════════════════════════════════════════════
+section('4-x. 나레이션 속도는 종류마다 다르다');
+
+const NR = await import('../src/narration.mjs');
+
+test('스포츠 속도는 실제로 잰 값이다', () => {
+  // ── 실행 #70 · 11화 한국시리즈에서 쟀다 ──
+  //
+  //   나레이션 글자    2,752자  (태그를 뗀 문단 합계)
+  //   실제 TTS 길이    439.46초
+  //   말하기 속도      1.08     (SPORTS_SPEAKING_RATE)
+  //
+  // 이 테스트가 지키는 것은 **잰 값과 코드가 맞는다**는 것이다.
+  // 숫자를 눈대중으로 바꾸면 여기서 걸린다.
+  const 글자 = 2752;
+  const 실제초 = 439.46;
+  const 잰값 = (글자 / 실제초) * 60;
+  assert.ok(
+    Math.abs(NR.SPORTS_NARRATION_CHARS_PER_MINUTE - 잰값) < 1,
+    `잰 값은 ${잰값.toFixed(1)}자/분인데 코드는 ${NR.SPORTS_NARRATION_CHARS_PER_MINUTE} 입니다`
+  );
+  // 그 값으로 다시 재면 실제와 1초 안쪽으로 맞아야 한다.
+  const 다시 = NR.secondsForChars(글자, 'SPORTS');
+  assert.ok(
+    Math.abs(다시 - 실제초) < 1,
+    `${다시.toFixed(2)}초로 재는데 실제는 ${실제초}초입니다`
+  );
+});
+
+test('종류를 안 넘기면 전과 똑같이 돈다', () => {
+  // kind 를 모르는 자리가 있다. 거기서 동작이 바뀌면 안 된다.
+  assert.equal(NR.charsPerMinuteFor(null), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor(undefined), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor('EVENT'), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor('TALE'), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.secondsForChars(330), 60);
+  assert.equal(NR.charsForMinutes(8), 2640);
+});
+
+test('스포츠는 같은 분량에 글자가 더 들어간다', () => {
+  // 중계 톤으로 빠르게 읽으니 8분에 더 많은 글자가 들어간다.
+  // 이 차이를 안 보면 스포츠 대본을 1.14배로 길게 재고, 그 경고를
+  // 따라 내용을 과하게 깎는다. 11화에서 실제로 그랬다.
+  assert.ok(
+    NR.charsForMinutes(8, 'SPORTS') > NR.charsForMinutes(8),
+    '스포츠가 기본보다 글자를 더 받아야 합니다'
+  );
+  const 배 = NR.SPORTS_NARRATION_CHARS_PER_MINUTE / NR.NARRATION_CHARS_PER_MINUTE;
+  assert.ok(배 > 1.1 && 배 < 1.2, `어긋남이 ${배.toFixed(3)}배입니다 — 다시 재야 합니다`);
+});
+
+await asyncTest('말하기 속도와 글자 속도가 짝으로 움직인다', async () => {
+  // ⚠️ SPORTS_NARRATION_CHARS_PER_MINUTE 는 **말하기 속도 1.08 에
+  //    묶여 있다.** 한쪽만 바꾸면 길이가 다시 어긋난다. 둘이 같이
+  //    움직여야 한다는 것을 여기서 못 박는다.
+  const TTS = await import('../src/audio/tts.mjs');
+  assert.equal(
+    TTS.SPORTS_SPEAKING_RATE,
+    1.08,
+    '말하기 속도가 바뀌었습니다 — 글자/분도 다시 재야 합니다'
+  );
+});
+
+await asyncTest('장면과 문단 길이가 종류별 속도를 쓴다', async () => {
+  // narration.mjs 만 고치고 호출하는 쪽에 kind 를 안 넘기면 아무것도
+  // 바뀌지 않는다. 실제로 흘러가는지 본다.
+  const { splitIntoScenes } = await import('../src/scenes/split.mjs');
+  const p = decodeURIComponent(
+    new URL('../../스포츠영상/11화-대본.md', import.meta.url).pathname
+  );
+  const j = decodeURIComponent(
+    new URL('../../스포츠영상/11화.json', import.meta.url).pathname
+  );
+  if (!fs.existsSync(p) || !fs.existsSync(j)) return;
+  const sections = JSON.parse(fs.readFileSync(j, 'utf8')).sections;
+  const md = fs.readFileSync(p, 'utf8');
+  const sports = splitIntoScenes(md, { kind: 'SPORTS', sections });
+  const plain = splitIntoScenes(md, { sections });
+  assert.ok(
+    sports.stats.totalSeconds < plain.stats.totalSeconds,
+    `종류가 길이에 안 먹습니다 (스포츠 ${sports.stats.totalSeconds} / 기본 ${plain.stats.totalSeconds})`
+  );
+  // 실제 TTS 가 439.46초였다. 10초 안쪽으로 맞아야 한다.
+  assert.ok(
+    Math.abs(sports.stats.totalSeconds - 439.46) < 10,
+    `${sports.stats.totalSeconds}초로 재는데 실제는 439.46초였습니다`
+  );
+});
+
+await asyncTest('시작이 약한 쇼츠보다 조금 겹치는 쇼츠를 먼저 쓴다', async () => {
+  // ⚠️ 속도를 고치니 문단이 짧아지고 쇼츠 창이 밀렸다. 그 바람에
+  //    3화 8순위가 "이 군 성적이 일 군 성적을 보장하지 않기 때문입니다"
+  //    로 시작했다 — 물음에 대한 **답**에서 시작한 셈이다.
+  //
+  // openingScore 의 -45 벌점으로는 부족했다. 후보가 넉넉하지 않으면
+  // 벌점을 받고도 뽑힌다 — 결말 문단에서 이미 겪은 그대로다.
+  //
+  // 그래서 채우는 순서를 바꿨다. **시작을 먼저 보고 겹침을 나중에
+  // 본다.** 겹치는 것은 두 편을 본 사람만 손해지만, 시작이 약한 것은
+  // 그 한 편을 본 사람 모두가 손해다.
+  const S = await import('../src/video/shorts.mjs');
+  const src = fs.readFileSync(
+    decodeURIComponent(new URL('../src/video/shorts.mjs', import.meta.url).pathname),
+    'utf8'
+  );
+  // 단단한 시작을 두 번 먼저 채우고, 그다음에 약한 시작을 받는가.
+  const order = [...src.matchAll(/fill\(([\d.]+)(?:,\s*\{\s*allowWeakStart:\s*(\w+)\s*\})?\)/g)]
+    .map((m) => ({ limit: Number(m[1]), weak: m[2] !== 'false' }));
+  assert.ok(order.length >= 3, `채우는 단계가 ${order.length}개뿐입니다`);
+  assert.equal(order[0].weak, false, '첫 단계가 약한 시작을 받습니다');
+  assert.equal(order[1].weak, false, '둘째 단계가 약한 시작을 받습니다');
+  assert.ok(
+    order.some((x) => x.weak),
+    '약한 시작을 아예 못 받으면 짧은 편에서 개수를 못 채웁니다'
+  );
+  assert.ok(S.BACK_REFERENCE.includes('이 군'));
+});
+
 section('4-y. 야구 대본에서 틀렸던 읽기');
 
 const RN = await import('../src/audio/speech.mjs');
