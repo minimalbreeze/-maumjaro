@@ -269,4 +269,64 @@ check('선수 목록의 사이트 이름이 실제로 설정에 있다', () => {
   });
 }
 
+// ── 글 번호로 못박은 스토어 배너 (2026-11-08) ─────────────────────────
+//
+// 효성님: "야구 각 구단 스토어 글에 URL 주소만 있고, 눌러서 스토어로
+// 넘어가는 배너는 없다. 배너로 만들고 URL 을 그대로 노출하지 마라."
+//
+// 주소가 `ktwizstore.co.kr` 처럼 글자로만 적혀 있어 누를 수 없었다.
+// match 로는 못 푼다 — 본문의 "KT위즈" 로는 구단 공식 홈페이지인지
+// 스토어인지 가릴 수 없다. 그래서 글 번호로 못박는다.
+{
+  const cfg = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'config/official-links.json'), 'utf8')
+  );
+
+  check('못박은 배너가 match 판정보다 앞선다', () => {
+    // 본문에 다른 종목 말이 잔뜩 들어 있어도 못박은 것을 쓴다.
+    const 고른것 = pickOfficial('쇼트트랙 월드컵 BWF 월드투어', cfg, '15793');
+    assert.ok(고른것, '못박은 배너가 나와야 합니다');
+    assert.equal(고른것.url, 'https://www.ktwizstore.co.kr/');
+  });
+
+  check('못박지 않은 글은 예전처럼 match 로 고른다', () => {
+    const 고른것 = pickOfficial('ISU 쇼트트랙 월드투어 2차 대회', cfg, '99999999');
+    assert.ok(!고른것 || 고른것.url !== 'https://www.ktwizstore.co.kr/',
+      '못박지 않은 글에 스토어 배너가 붙으면 안 됩니다');
+  });
+
+  check('스토어 배너는 "공식 홈페이지"라고 적지 않는다', () => {
+    for (const [id, it] of Object.entries(cfg.byPost || {})) {
+      const html = officialBannerHtml(it);
+      assert.ok(html, `${id} 배너 HTML 이 비었습니다`);
+      assert.ok(!html.includes(OFFICIAL_MARK),
+        `${id} 에 "공식 홈페이지" 표식이 들어갔습니다 — 스토어는 다른 것입니다`);
+      assert.ok(html.includes('🛍️'), `${id} 에 스토어 표식이 없습니다`);
+    }
+  });
+
+  // 이 검사가 핵심이다. 주소를 만들어내는 순간 독자를 속이게 된다.
+  check('못박은 주소가 전부 쓸 만한 모양이다', () => {
+    for (const [id, it] of Object.entries(cfg.byPost || {})) {
+      assert.ok(it.url, `${id} 에 주소가 없습니다`);
+      assert.ok(공식주소인가(it.url), `${id} 의 주소 모양이 이상합니다: ${it.url}`);
+      assert.ok(it._출처, `${id} 에 _출처 가 없습니다 — 어디서 받은 주소인지 적어야 합니다`);
+    }
+  });
+
+  check('주소를 확인하지 못한 글은 아예 넣지 않았다', () => {
+    // 롯데자이언츠(15787)는 본문에 "롯데온 안에 있는데 단독 주소는
+    // 확인되지 않았다"고 적었다. 없는 주소로 배너를 걸지 않는다.
+    assert.ok(!(cfg.byPost || {})['15787'],
+      '롯데는 주소를 확인하지 못했습니다 — 배너를 걸면 안 됩니다');
+  });
+
+  check('눌러서 넘어갈 수 있는 링크다 — 글자가 아니다', () => {
+    const html = officialBannerHtml(cfg.byPost['15793']);
+    assert.ok(/<a href="https:\/\/[^"]+"/.test(html), '실제 <a href> 링크여야 합니다');
+    assert.ok(html.includes('rel="nofollow"'), '바깥 링크에는 nofollow 를 답니다');
+    assert.ok(!html.includes('target="_blank"'), '링크는 현재 창에서 엽니다');
+  });
+}
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

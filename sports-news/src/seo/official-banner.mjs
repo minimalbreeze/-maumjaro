@@ -82,7 +82,37 @@ export function 공식주소인가(url) {
  *
  * 횟수가 같으면 설정에 적힌 순서를 따른다 — 예전과 같은 결과다.
  */
-export function pickOfficial(text, cfg = loadOfficialLinks()) {
+/**
+ * **글 번호로 못박은 배너.** 있으면 match 판정을 통째로 건너뛴다.
+ *
+ * 왜 필요한가 (2026-11-08 효성님 지적)
+ *   구단 스토어 글 아홉 편에 주소가 `ktwizstore.co.kr` 처럼 **글자로만**
+ *   적혀 있었다. 누를 수 없다. 쇼핑하러 온 사람에게 주소를 보여 주기만
+ *   하고 길은 안 내준 셈이다.
+ *
+ *   match 로는 풀 수 없다. 스토어 주소는 구단마다 다르고, 본문에 나오는
+ *   말("KT위즈")로는 **구단 공식 홈페이지**인지 **스토어**인지 가릴 수
+ *   없다. 사람이 글마다 못박는 수밖에 없다.
+ *
+ * `watch-links.json` 의 `byPost` 와 같은 철학이다 —
+ * **코드가 고른 것보다 사람이 고른 것이 앞선다.**
+ * 그 글에만 해당하는 사정은 코드가 알 수 없고, 지정한 사람은 알고 지정했다.
+ *
+ * ⚠️ 주소를 만들어내지 않는 원칙은 그대로다. 여기 적는 주소는 효성님이
+ *    주었거나 글 본문에 이미 확인해 적어 둔 것만 쓴다.
+ */
+export function 못박은배너(postId, cfg = loadOfficialLinks()) {
+  if (postId == null) return null;
+  const it = (cfg.byPost || {})[String(postId)];
+  if (!it?.url || !공식주소인가(it.url)) return null;
+  return it;
+}
+
+export function pickOfficial(text, cfg = loadOfficialLinks(), postId = null) {
+  // 못박은 것이 가장 세다. 본문을 보지도 않는다.
+  const 못박은것 = 못박은배너(postId, cfg);
+  if (못박은것) return 못박은것;
+
   const 글 = String(text || '');
   if (!글.trim()) return null;
 
@@ -118,7 +148,10 @@ export function officialBannerHtml(site) {
   if (!site?.url || !공식주소인가(site.url)) return '';
   const 이름 = site.이름 || '공식 홈페이지';
   return 배너카드({
-    표식: OFFICIAL_MARK,
+    // 표식은 "이 글에 배너가 있나"를 찾는 열쇠이기도 하다. 그래서
+    // 기본값(OFFICIAL_MARK)을 두되, 못박은 항목은 제 표식을 쓸 수 있게
+    // 열어 둔다 — 스토어 배너에 "공식 홈페이지"라고 적으면 거짓말이 된다.
+    표식: site.표식 || OFFICIAL_MARK,
     이름,
     cta: site.cta || `${이름} 가기`,
     url: site.url,
@@ -127,8 +160,8 @@ export function officialBannerHtml(site) {
 }
 
 /** 글에 맞는 공식 홈페이지 배너. 설정에 없으면 빈 글. */
-export function officialBannerFor(text) {
-  return officialBannerHtml(pickOfficial(text));
+export function officialBannerFor(text, postId = null) {
+  return officialBannerHtml(pickOfficial(text, loadOfficialLinks(), postId));
 }
 
 /** 설정에 있는데 주소가 없거나 모양이 이상한 것들 — 로그로 알려주기 위한 것. */
