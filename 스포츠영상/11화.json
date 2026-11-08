@@ -214,9 +214,9 @@
       "number": "12",
       "look": "a Korean right-handed relief pitcher of 41, a slight wiry build with narrow shoulders, short black hair thinning at the front under a cap, a long thin face with hollow cheeks and a pointed chin, deep lines from the nose to the mouth, tired heavy eyelids, a quiet resigned look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "KT",
-      "tell": "강민호와 같은 1985년생, 같은 2004년 데뷔. 통산 908경기에 **우승 반지가 없다.** 2차전 구원 등판으로 한국시리즈 투수 최고령 출장 기록을 새로 썼다. 2경기 2⅓이닝 1실점.\nTWO 섹션에서 강민호와 나란히 놓인다 — **체형으로 가른다.** 우규민이 마르고 얼굴이 길고, 강민호가 두껍고 둥글다.\n투수이므로 **던지는 장면**으로. 멈추는 자리는 공을 놓기 직전이다.\n⚠️ 앞머리가 성글다고 적었는데 이건 확인한 값이 아니다 — 41세 투수라 그렇게 적었다. 사진이 오면 그대로 맞춘다.\n⚠️ 이 사람의 그림은 **가라앉아야 한다.** 우승하는 것을 현장에서 지켜본 쪽이다. 환호하는 자세로 그리지 않는다.\n등번호 12번은 thewiki 의 KT 1군 번호 목록으로 확인했다 — 2026년 기준인지는 분명하지 않다.",
-      "photo": "",
-      "photo_예비": ""
+      "tell": "강민호와 같은 1985년생, 같은 2004년 데뷔. 통산 908경기에 **우승 반지가 없다.** 2차전 구원 등판으로 한국시리즈 투수 최고령 출장 기록을 새로 썼다. 2경기 2⅓이닝 1실점.\nTWO 섹션에서 강민호와 나란히 놓인다 — **체형으로 가른다.** 우규민이 마르고 얼굴이 길고, 강민호가 두껍고 둥글다.\n투수이므로 **던지는 장면**으로. 멈추는 자리는 공을 놓기 직전이다.\n⚠️ 앞머리가 성글다고 적었는데 이건 확인한 값이 아니다 — 41세 투수라 그렇게 적었다. 사진이 오면 그대로 맞춘다.\n⚠️ 이 사람의 그림은 **가라앉아야 한다.** 우승하는 것을 현장에서 지켜본 쪽이다. 환호하는 자세로 그리지 않는다.\n등번호 12번은 thewiki 의 KT 1군 번호 목록으로 확인했다 — 2026년 기준인지는 분명하지 않다.\n받은 셋이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 477/2026-11-03, 예비는 311/2026-11-08 — 매체를 다르게 골랐다. 셋 중 둘이 같은 매체(477)라 예비를 311 로 뺐다.\n안 쓴 하나: 477/2026-11-07(0000637808).\n⚠️ 본을 11-03 것으로 골랐다. 한국시리즈 **전**이라 평상시 표정일 가능성이 높다. 이 사람은 그림이 가라앉아야 하는 자리라 (우승을 지켜본 쪽) 우승 직후 사진보다 낫다. 참조 모델은 얼굴 생김새만 가져오고 표정은 프롬프트가 정하지만, 사진 표정이 강하면 거기에 끌린다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F03%2F0000636823_001_20261103180611114.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F08%2F0002078314_001_20261108164114261.jpg&type=a340"
     },
     {
       "name": "원태인",
