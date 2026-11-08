@@ -204,9 +204,9 @@
       "number": "47",
       "look": "a Korean catcher of 41, a heavy thick-set build with broad shoulders, short black hair cropped close, a broad round face with full cheeks and a heavy jaw, short dark stubble around the mouth, creases under both eyes and across the forehead, a warm settled look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "삼성",
-      "tell": "**23년 차에 첫 우승**이다. 통산 2607경기로 KBO 최다 출장. 옆구리 부상을 안고 1·2·3차전과 5차전에 선발 출장했다.\nTWO 섹션에서 우규민과 **나란히 놓인다** — 둘 다 1985년생이고 둘 다 2004년 데뷔인데, 강민호는 포수라 두껍고 둥글고, 우규민은 투수라 호리호리하고 얼굴이 길다. **체형이 둘을 가른다.**\n포수이므로 마스크를 벗고 일어서는 자세나 포구 자세로. 치는 장면도 된다 — 5차전 5회말에 그의 타구가 2루수 실책을 불렀다.\n41세라 눈 아래 주름이 보여야 한다. 등번호 47번은 2017년 삼성 입단식과 영문 위키백과로 확인했다. 롯데 때와 같은 번호다.",
-      "photo": "",
-      "photo_예비": ""
+      "tell": "**23년 차에 첫 우승**이다. 통산 2607경기로 KBO 최다 출장. 옆구리 부상을 안고 1·2·3차전과 5차전에 선발 출장했다.\nTWO 섹션에서 우규민과 **나란히 놓인다** — 둘 다 1985년생이고 둘 다 2004년 데뷔인데, 강민호는 포수라 두껍고 둥글고, 우규민은 투수라 호리호리하고 얼굴이 길다. **체형이 둘을 가른다.**\n포수이므로 마스크를 벗고 일어서는 자세나 포구 자세로. 치는 장면도 된다 — 5차전 5회말에 그의 타구가 2루수 실책을 불렀다.\n41세라 눈 아래 주름이 보여야 한다. 등번호 47번은 2017년 삼성 입단식과 영문 위키백과로 확인했다. 롯데 때와 같은 번호다.\n받은 넷이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 468/2026-11-08(0001279402), 예비는 003/2026-11-08(뉴시스) — 매체를 다르게 골랐다.\n⚠️ 넷 중 둘이 같은 매체(468)의 같은 날 사진이다. 그래서 예비는 일부러 뉴시스로 뺐다 — 468 이 주소 틀을 바꾸면 둘이 같이 죽는다.\n안 쓴 둘: 001/2026-11-08(연합 PYH), 468/2026-11-08(0001279485).\n⚠️ 우승 직후 사진이라 **환호하거나 눈물 흘리는 표정**일 수 있다. 참조 모델은 얼굴 생김새만 가져오고 표정은 프롬프트가 정하므로 문제는 없지만, 포수 마스크를 쓴 사진이면 얼굴을 못 찾을 수 있다. 그러면 예비로 넘어가고, 그것도 안 되면 참조 없이 그린다.",
+      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F11%2F08%2F0001279402_001_20261108160424758.jpg&type=a340",
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F08%2FNISI20261108_0021524814_web_20261108171226_20261108171321749.jpg&type=a340"
     },
     {
       "name": "우규민",
