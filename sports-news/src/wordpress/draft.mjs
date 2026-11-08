@@ -136,14 +136,23 @@ function escapeHtml(s) {
  * seoFields는 wp:check가 "REST로 쓸 수 있다"고 확인한 키만 들어온다.
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
  */
-export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', featuredMediaId = null }) {
+export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', stickyHtml = '', featuredMediaId = null }) {
   // 본문에 자주 묻는 질문이 있으면 구조화 데이터를 끝에 붙인다.
   // 본문에 실제로 적힌 질문과 답만 들어간다 — 없는 내용을 만들어 붙이지 않는다.
   const schema = faqSchemaBlock(body);
 
   const payload = {
     title,
-    content: markdownToBlocks(body, { images, adHtml, watchHtml, appHtml }) + (schema ? `\n\n${schema}` : ''),
+    // stickyHtml(쿠팡 하단 고정 바)은 **맨 끝**에 붙인다. 구조화 데이터보다
+    // 뒤여야 한다 — 그 사이에 끼면 JSON-LD 와 본문 사이가 벌어진다.
+    //
+    // 2026-11-08 에 더했다. 그전에는 파일로 올린 새 글에 바가 **안 들어갔고**,
+    // 나중에 add-sticky 를 따로 돌려야 했다. 구단 스토어 글 9편이 그렇게
+    // 발행돼 광고가 본문 하나뿐이었다(효성님이 화면으로 잡았다). 사람이
+    // 기억해서 돌리는 단계는 언젠가 빠진다.
+    content: markdownToBlocks(body, { images, adHtml, watchHtml, appHtml })
+      + (schema ? `\n\n${schema}` : '')
+      + (stickyHtml ? `\n\n${stickyHtml}` : ''),
     status: DRAFT_STATUS,
     categories: categoryId ? [categoryId] : [],
     tags: tagIds || [],
