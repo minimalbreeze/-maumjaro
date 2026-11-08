@@ -6594,6 +6594,51 @@ await asyncTest('이름을 쉼표로 셋 이상 이으면 잡는다', async () =
 // 한국시리즈 편을 쓰고 대본 전체를 speechText 에 넣어 봤다. 다섯 군데가
 // 틀렸다. 전부 **읽는 쪽**을 고쳤다 — 대본은 안 건드렸다. 자막은 눈에
 // 익은 쪽이고, 어색한 건 읽기니까 고칠 자리도 읽기다.
+const SM = await import('../src/model.mjs');
+
+test('주소 없는 출처를 버리지 않는다', () => {
+  // ⚠️ 2026-11-08. 11화 소재를 검사하다 찾았다. 출처 12개를 적었는데
+  //    4개만 남아 있었다. `sources.filter((x) => x?.url)` 이 주소 없는
+  //    것을 버렸고, **운영자가 기사 본문을 붙여 줄 때는 주소가 없다.**
+  //    날아간 8개가 그 편의 가장 중요한 근거 전부였다.
+  //
+  //    조용히 사라지는 종류라 더 나쁘다. 영상 설명문에 근거를 적을 때
+  //    그 기사들이 없는 채로 올라간다.
+  const m = SM.makeSports({
+    title: 'x',
+    sources: [
+      { name: '운영자가 붙여 준 기사', url: '', note: '본문만 받았다' },
+      { name: '검색으로 찾은 기록', url: 'https://example.com/a' },
+      { name: '', url: '' },
+    ],
+  });
+  assert.equal(m.source_count, 2, '주소 없는 출처가 버려졌습니다');
+  assert.ok(m.sources.some((x) => x.name === '운영자가 붙여 준 기사'));
+  // 이름도 주소도 없는 줄은 버린다. 빈 줄을 세면 출처 수가 거짓이 된다.
+  assert.ok(!m.sources.some((x) => !x.name && !x.url));
+  // 대표 출처는 **주소가 있는 것 중 첫째**다. 주소 없는 것을 대표로
+  // 세우면 설명문에 링크 없는 줄이 올라간다.
+  assert.equal(m.source_url, 'https://example.com/a');
+  assert.equal(m.source_name, '검색으로 찾은 기록');
+});
+
+test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
+  for (const f of ['10화.json', '11화.json']) {
+    const p = decodeURIComponent(
+      new URL(`../../스포츠영상/${f}`, import.meta.url).pathname
+    );
+    if (!fs.existsSync(p)) continue;
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const written = (raw.sources || []).filter((x) => x?.name || x?.url).length;
+    assert.ok(written >= 5, `${f}: 출처를 더 적어야 합니다 (${written}개)`);
+    assert.equal(
+      SM.makeSports(raw).source_count,
+      written,
+      `${f}: 적어 둔 출처가 중간에 사라집니다`
+    );
+  }
+});
+
 section('4-y. 야구 대본에서 틀렸던 읽기');
 
 const RN = await import('../src/audio/speech.mjs');

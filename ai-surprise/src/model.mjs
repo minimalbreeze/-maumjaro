@@ -389,7 +389,29 @@ export function makeTale({ title, premise = '', strange = '', beats = [], lastLi
  * 설명문에도 그대로 들어간다.
  */
 export function makeSports({ title, premise = '', angle = '', beats = [], sources = [], people = [], sections = null } = {}) {
-  const list = (Array.isArray(sources) ? sources : []).filter((x) => x?.url);
+  // ── 주소 없는 출처도 버리지 않는다 (2026-11-08) ──
+  //
+  // 전에는 `.filter((x) => x?.url)` 이었다. 주소가 없으면 출처가
+  // 아니라고 본 것이다. 그런데 **운영자가 기사 본문을 붙여 줄 때는
+  // 주소가 없다.** 그러면 그 편의 가장 중요한 근거들이 통째로 사라진다.
+  //
+  // 11화에서 찾았다. 출처 12개를 적었는데 4개만 남아 있었다 —
+  // 날아간 8개가 운영자가 준 기사 전부다(이강철 일문일답, 박진만
+  // 일문일답, "90승의 KT는 왜 무너졌나" 같은 것들). 10화도 같은 일을
+  // 당했다.
+  //
+  // 조용히 사라지는 종류라 더 나쁘다. 출처 수가 줄어든 것을 보고
+  // 까닭을 찾지 않으면, 영상 설명문에 근거를 적을 때 그 기사들이
+  // 없는 채로 올라간다.
+  //
+  // 이제 **이름이 있으면 남긴다.** 주소는 있으면 좋은 것이지 출처의
+  // 조건이 아니다.
+  const list = (Array.isArray(sources) ? sources : []).filter(
+    (x) => String(x?.name || '').trim() || String(x?.url || '').trim()
+  );
+  // 대표 출처는 **주소가 있는 것 중 첫째**다. 주소 없는 것을 대표로
+  // 세우면 설명문에 링크 없는 줄이 올라간다.
+  const linked = list.find((x) => String(x?.url || '').trim()) || null;
 
   const item = {
     title: String(title || '').trim(),
@@ -398,8 +420,8 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
     date_found: new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10),
 
     sources: list,
-    source_url: list[0]?.url || '',
-    source_name: list[0]?.name || '',
+    source_url: linked?.url || '',
+    source_name: linked?.name || list[0]?.name || '',
     source_count: list.length,
 
     kind: KIND.SPORTS,
