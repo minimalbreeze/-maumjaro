@@ -6620,6 +6620,19 @@ test('주소 없는 출처를 버리지 않는다', () => {
   // 세우면 설명문에 링크 없는 줄이 올라간다.
   assert.equal(m.source_url, 'https://example.com/a');
   assert.equal(m.source_name, '검색으로 찾은 기록');
+
+  // ⚠️ makeItem 은 **일부러 다르다.** 둘을 맞추려 들면 한쪽이 깨진다.
+  //
+  //   makeItem    AI 가 찾아온 소재. 주소가 없으면 확인할 길이 없다.
+  //   makeSports  사람이 쓴 기획. 운영자가 기사를 읽고 직접 적었다.
+  //
+  // 같은 이름의 칸이지만 믿는 근거가 다르다.
+  const ai = makeItem({
+    title: 'x',
+    fact_status: 'CONFIRMED',
+    sources: [{ name: '어디선가 들음' }, { url: 'https://a.example', name: 'A' }],
+  });
+  assert.equal(ai.source_count, 1, 'AI 소재는 주소 없는 출처를 세면 안 됩니다');
 });
 
 test('10화·11화의 출처가 한 줄도 안 사라진다', () => {

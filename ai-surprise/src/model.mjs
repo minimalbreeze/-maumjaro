@@ -406,6 +406,16 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
   //
   // 이제 **이름이 있으면 남긴다.** 주소는 있으면 좋은 것이지 출처의
   // 조건이 아니다.
+  //
+  // ⚠️ makeItem 은 **일부러 다르다.** 거기서는 주소 없는 출처를 세지
+  //    않는다(테스트 "url 없는 출처는 세지 않는다"). 둘을 맞추지 마라.
+  //
+  //      makeItem    AI 가 찾아온 소재다. 주소가 없으면 확인할 길이
+  //                  없으니 출처로 세지 않는 게 맞다.
+  //      makeSports  사람이 쓴 기획이다. 운영자가 기사 본문을 읽고
+  //                  직접 적은 것이라, 주소가 없어도 근거가 있다.
+  //
+  //    같은 이름의 칸이지만 믿는 근거가 다르다.
   const list = (Array.isArray(sources) ? sources : []).filter(
     (x) => String(x?.name || '').trim() || String(x?.url || '').trim()
   );
