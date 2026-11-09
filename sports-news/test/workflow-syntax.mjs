@@ -374,4 +374,23 @@ check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
     assert.deepEqual(겹친것, [], `같은 칸이 두 번 나오는 입력: ${겹친것.join(' / ')}`);
   });
 
+  // ⚠️ run 979 가 이것 때문에 통째로 죽었다. '사이트 조사' 단계에는 `if` 가
+  //    없어 어떤 모드든 돌고, 호스트가 403 을 한 번 주면 **뒤 단계 전부가
+  //    skipped** 가 된다. 읽기만 하는 점검 모드가 아무 일도 하지 못했다.
+  //    이 단계가 만드는 config/site.json 은 커밋돼 있지 않고 읽는 쪽이
+  //    없으면 null 로 넘어가므로, 실패가 결과를 틀리게 만드는 자리가 아니다.
+  check('조건 없이 도는 사이트 조사 단계는 run 을 죽이지 않는다', () => {
+    const wf = fs.readFileSync(sports, 'utf8');
+    const 자리 = wf.indexOf('- name: 사이트 조사');
+    assert.ok(자리 > 0, '사이트 조사 단계를 찾지 못했습니다');
+    const 끝 = wf.indexOf('      - name: ', 자리 + 10);
+    const 덩이 = wf.slice(자리, 끝 > 0 ? 끝 : undefined);
+    assert.ok(
+      /^\s*continue-on-error:\s*true\s*$/m.test(덩이),
+      '사이트 조사 단계에 continue-on-error: true 가 없습니다 — 호스트가 403 을 '
+      + '주면 모드와 무관하게 모든 run 이 죽습니다. 떼려면 왜 모드마다 이 단계가 '
+      + '돌아야 하는지를 먼저 적으세요.',
+    );
+  });
+
 }
