@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-import { 문단으로, raw줄로 } from '../src/wordpress/show-post.mjs';
+import { 문단으로, raw줄로, 소제목들} from '../src/wordpress/show-post.mjs';
 
 let passed = 0;
 const check = (name, fn) => {
@@ -98,6 +98,34 @@ check('raw 는 글자를 하나도 바꾸지 않는다', () => {
 check('raw 가 빈 값에도 던지지 않는다', () => {
   assert.deepEqual(raw줄로(''), []);
   assert.deepEqual(raw줄로(null), []);
+});
+
+check('소제목만 뽑는다 — 레벨과 함께', () => {
+  const h = '<!-- wp:heading --><h2>\ud83d\udcc5 한국시리즈</h2><!-- /wp:heading -->'
+    + '<p>본문</p><h3>김현수</h3><h2>다음 절</h2>';
+  const r = 소제목들(h);
+  assert.deepEqual(r.map((x) => `h${x.level} ${x.글자}`), [
+    'h2 \ud83d\udcc5 한국시리즈', 'h3 김현수', 'h2 다음 절',
+  ]);
+});
+
+check('소제목의 HTML 엔티티를 사람이 읽는 글자로 되돌린다', () => {
+  // --heading= 에 그대로 붙여 쓸 값이라 &quot; 가 남아 있으면 안 맞는다.
+  const r = 소제목들('<h3>김현수 &quot;손가락 부러져도 상관없다&quot;</h3>');
+  assert.equal(r[0].글자, '김현수 "손가락 부러져도 상관없다"');
+});
+
+check('소제목 안의 태그는 걷어낸다', () => {
+  const r = 소제목들('<h2><strong>굵은</strong> 소제목</h2>');
+  assert.equal(r[0].글자, '굵은 소제목');
+});
+
+check('빈 소제목은 세지 않는다', () => {
+  assert.deepEqual(소제목들('<h2></h2><h2>  </h2><h2>있는 것</h2>').map((x) => x.글자), ['있는 것']);
+});
+
+check('소제목이 없으면 빈 배열이다', () => {
+  assert.deepEqual(소제목들('<p>소제목 없는 글</p>'), []);
 });
 
 console.log(`\n  ${passed}개 통과`);

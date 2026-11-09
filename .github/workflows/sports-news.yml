@@ -81,6 +81,7 @@ on:
           - '카드 이미지 다시 굽기 (실제 적용 · 비용 0원)'
           - '글 본문 보기 (고치지 않음 · 비용 0원)'
           - '글 본문 보기 — 저장된 그대로 raw (고치지 않음 · 비용 0원)'
+          - '글 본문 보기 — 소제목만 (섹션 갈아끼우기용 · 비용 0원)'
           - '수명 끝난 글 색인에서 빼기 (미리보기 · 비용 0원)'
           - '수명 끝난 글 색인에서 빼기 (실제 적용 · 비용 0원)'
           - '구글 색인에 다시 들여보내기 (미리보기 · 비용 0원)'
@@ -1332,7 +1333,12 @@ jobs:
           # 정확히 잡아야 할 때 쓴다.
           raw=''
           case "$IN_MODE" in *raw*) raw='--raw' ;; esac
-          node src/wordpress/show-post.mjs $IN_IDS $raw ${IN_FIND:+--찾기="$IN_FIND"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          # 소제목만 보는 모드. 섹션 갈아끼우기의 --heading= 에 줄 값을 받으려고
+          # 쓴다. 글이 길면 로그 끝 60줄에 소제목이 안 들어와 추측하게 되고,
+          # 엉뚱한 소제목에 맞으면 다른 절을 갈아끼운다. 그래서 따로 둔다.
+          headings=''
+          case "$IN_MODE" in *소제목만*) headings='--headings' ;; esac
+          node src/wordpress/show-post.mjs $IN_IDS $raw $headings ${IN_FIND:+--찾기="$IN_FIND"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
       - name: 올해 글 안내 넣기
