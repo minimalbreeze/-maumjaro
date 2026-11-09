@@ -57,6 +57,9 @@ for (const file of files) {
 }
 
 const sports = path.join(WORKFLOWS, 'sports-news.yml');
+// 지시서는 이 검사 파일의 부모(sports-news/) 에 있다.
+// ⚠️ WORKFLOWS 는 **배열**이라 path.join 에 넣으면 안 된다.
+const 새지시서 = new URL('../CLAUDE.md', import.meta.url).pathname;
 if (fs.existsSync(sports)) {
   const text = fs.readFileSync(sports, 'utf8');
   check('sports-news: 자동 실행(cron)이 걸려 있지 않다', () => {
@@ -309,6 +312,29 @@ if (fs.existsSync(sports)) {
 // **362원과 웹검색 3회**를 썼다. 이름이 거짓말을 한 것이다.
 //
 // 사람이 긴 블랙리스트를 손으로 맞추는 한 또 일어난다. 그래서 검사가 맞춘다.
+// ⚠️ 2026-11-09: 지시서(sports-news/CLAUDE.md)에 적어 둔 "모드를 조각으로
+//    찾는 명령" 의 예시 조각이 실제 워크플로에 없으면, 그 명령을 그대로
+//    베껴 쓴 사람이 **빈 mode** 를 보내게 된다. 빈 mode 는 기본값(돈 드는
+//    글쓰기)으로 떨어진다 — 그렇게 311원이 샜다.
+check('지시서가 예시로 든 모드 조각이 실제로 있다', () => {
+  const guide = fs.readFileSync(새지시서, 'utf8');
+  const text = fs.readFileSync(sports, 'utf8');
+  const 조각들 = [...guide.matchAll(/^PIECE='([^']+)'$/gm)].map((m) => m[1]);
+  assert.ok(조각들.length > 0, '지시서에서 PIECE 예시를 못 찾았습니다');
+  for (const 조각 of 조각들) {
+    const 걸린줄 = text.split('\n').filter((l) => l.includes("- '") && l.includes(조각));
+    assert.equal(걸린줄.length, 1,
+      `지시서의 PIECE '${조각}' 가 워크플로에서 ${걸린줄.length}줄에 걸립니다 (1줄이어야 합니다)`);
+  }
+});
+
+// 빈 값이면 멈추는 가드가 예시에 들어 있는가.
+check('지시서의 모드 찾기 예시에 빈값 가드가 있다', () => {
+  const guide = fs.readFileSync(새지시서, 'utf8');
+  assert.ok(guide.includes('[ -n "$M" ]'),
+    '빈 mode 를 보내면 기본값(돈 드는 글쓰기)으로 떨어집니다 — 가드를 지우지 마세요');
+});
+
 check('"비용 0원" 모드는 전부 글쓰기 단계에서 빠져 있다', () => {
   const text = fs.readFileSync(sports, 'utf8');
 
