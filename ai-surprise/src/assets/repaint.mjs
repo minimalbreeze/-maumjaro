@@ -205,7 +205,17 @@ export function repaintJobs(people, { spare = false } = {}) {
     const shots = [];
     for (const row of Array.isArray(p?.photos) ? p.photos : []) {
       const url = String(row?.url || row || '').trim();
-      if (url) shots.push({ url, 쓰임: String(row?.쓰임 || '').trim() });
+      if (url) {
+        shots.push({
+          url,
+          쓰임: String(row?.쓰임 || '').trim(),
+          // 이 사진만 더(또는 덜) 자른다. 워터마크가 큰 사진에 쓴다.
+          //   { "url": "...", "아래": 0.22 }
+          // ⚠️ 재는 쪽이 진짜 사진에서는 잘 못 잡는다(2026-11-09 고영표).
+          //    그래서 **사람이 자른 사진을 보고** 숫자를 적는 길을 둔다.
+          아래: Number(row?.아래) > 0 ? Number(row.아래) : null,
+        });
+      }
     }
     // 옛 모양. photos 가 있으면 본 사진은 이미 거기 있을 테니 더하지 않는다.
     if (!shots.length) {
@@ -228,6 +238,7 @@ export function repaintJobs(people, { spare = false } = {}) {
         쓰임: shot.쓰임,
         file: `${name}${shots.length > 1 || shot.쓰임 ? label : ''}.png`,
         referenceImage: shot.url,
+        아래: shot.아래 ?? null,
         prompt: repaintPrompt(p, shot),
       });
       made += 1;

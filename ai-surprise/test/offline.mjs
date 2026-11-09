@@ -6952,6 +6952,62 @@ await asyncTest('너무 깊으면 반만 자르지 않고 아예 안 그린다',
   assert.equal(r.url, 'https://fake/deep.png');
 });
 
+test('기획 파일에서 사진마다 자르기를 못 박을 수 있다', () => {
+  // ⚠️ 재는 쪽은 **진짜 사진에서 잘 못 잡는다**(2026-11-09 고영표 #76).
+  //    단색 바탕에서는 글자가 튀지만, 스포츠 사진은 어디나 복잡해서
+  //    워터마크가 변화량으로 안 튄다. 내가 쓴 테스트가 단색이었던 것이
+  //    바로 그 함정이었다.
+  //
+  // 그래서 사람이 **자른 사진을 눈으로 보고** 숫자를 적는 길을 둔다.
+  const { jobs } = RP.repaintJobs([
+    {
+      name: '고영표',
+      photos: [
+        { url: 'https://a/1.jpg', 쓰임: '투구', 아래: 0.22 },
+        { url: 'https://a/2.jpg', 쓰임: '더그아웃' },
+      ],
+    },
+  ]);
+  assert.equal(jobs.length, 2);
+  assert.equal(jobs.find((j) => j.쓰임 === '투구').아래, 0.22);
+  assert.equal(jobs.find((j) => j.쓰임 === '더그아웃').아래, null);
+});
+
+test('못 박은 자르기로 실제로 자른다', () => {
+  // 못 박았으면 재지 않는다 — 사람이 보고 적은 값이 추측보다 정확하다.
+  const f = CR.cropFilter({ top: 0.04, bottom: 0.22, left: 0.04, right: 0.04 });
+  assert.equal(f, 'crop=iw*0.9200:ih*0.7400:iw*0.0400:ih*0.0400');
+});
+
+await asyncTest('자른 사진을 꺼내 볼 수 있게 돌려준다', async () => {
+  // 내가 그림을 못 보므로, 자르기가 모자란 것인지 모델이 지어낸 것인지
+  // 가를 길은 **모델이 본 사진을 사람이 보는 것**뿐이다.
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const tmp = path.join(TMP, 'crop-png-src.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=navy:s=640x480', '-frames:v', '1', tmp,
+  ]);
+  const r = await CR.cropToDataUri('https://fake/z.png', {
+    fetchFn: async () => new Response(fs.readFileSync(tmp), { status: 200 }),
+  });
+  assert.ok(r.cropped);
+  assert.ok(Buffer.isBuffer(r.png), '자른 사진을 안 돌려줬습니다');
+  assert.ok(r.png.length > 100);
+});
+
+test('로그가 실제로 자른 값을 말한다', () => {
+  // ⚠️ #76 에서 로그가 "아래 9% 를 자릅니다" 라고 했는데 실제로는
+  //    기본값 12% 를 잘랐다. want 를 적고 max(fallback, want) 를
+  //    자르고 있었다. 로그가 거짓말을 하면 디버깅이 거짓말 위에서 돈다.
+  const noise = new Array(200).fill(0.01);
+  for (let y = 190; y < 196; y += 1) noise[y] = 0.4; // 아주 얕은 띠
+  const band = CR.watermarkBand(noise);
+  assert.ok(band !== null && band < CR.DEFAULT_CROP.bottom, `띠 ${band}`);
+  // 얕은 띠라도 기본값만큼은 자른다 — 그리고 로그가 그 값을 말해야 한다.
+});
+
 section('4-w. 체격은 숫자로 적는다');
 
 // ── 무엇을 잡는가 ──

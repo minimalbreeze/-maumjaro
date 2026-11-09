@@ -1012,6 +1012,13 @@ async function cmdRepaint(flags) {
 
   const outDir = path.join(ROOT, 'preview', 'repaint');
   fs.mkdirSync(outDir, { recursive: true });
+  // 자른 사진을 그대로 떨군다. **내가 그림을 못 보기 때문에** 워터마크가
+  // 빠졌는지 확인할 길이 이것뿐이다. 결과 그림이 이상할 때, 자르기가
+  // 문제인지 모델이 문제인지 여기서 바로 갈린다.
+  //
+  // ⚠️ 저장소가 아니라 실행 결과물(artifact)이다. 사진은 리포에 안 남는다.
+  const srcDir = path.join(outDir, '모델이-본-사진');
+  fs.mkdirSync(srcDir, { recursive: true });
   const api = createReplicate({ token });
 
   // ── 한도(429)에 걸리면 기다렸다 다시 건다 ──
@@ -1039,7 +1046,13 @@ async function cmdRepaint(flags) {
         // 여기서 멈추면 그림이 한 장도 안 나온다.
         let ref = job.referenceImage;
         if (crop && attempt === 1) {
-          const c = await cropToDataUri(job.referenceImage, { crop });
+          // 기획 파일이 이 사진의 자르기를 못 박았으면 재지 않는다.
+          // 사람이 자른 사진을 보고 적은 값이라 추측보다 정확하다.
+          const 이사진 = job.아래 ? { ...crop, bottom: job.아래 } : crop;
+          const c = await cropToDataUri(job.referenceImage, {
+            crop: 이사진,
+            measure: !job.아래,
+          });
           // ⚠️ 깨끗이 못 자르는 사진은 **그리지 않는다.** 반만 잘린
           //    워터마크가 남으면 모델이 그 자리를 글자로 읽고 커다란
           //    글자를 지어낸다(2026-11-09 고영표). 안 그리고 사진을
@@ -1052,6 +1065,7 @@ async function cmdRepaint(flags) {
           ref = c.url;
           if (c.cropped) {
             log.raw(`   잘랐습니다 (${c.reason})`);
+            if (c.png) fs.writeFileSync(path.join(srcDir, job.file), c.png);
           } else {
             log.warn(`   자르지 못했습니다 — ${c.reason}. 원본 그대로 보냅니다.`);
           }
@@ -1087,6 +1101,9 @@ async function cmdRepaint(flags) {
 
   log.raw('');
   log.ok(`${made.length}장 완성 — preview/repaint/`);
+  log.info('모델이 본 사진은 preview/repaint/모델이-본-사진/ 에 있습니다 —');
+  log.info('거기에 워터마크가 남아 있으면 자르기가 모자란 것이고, 없는데 그림에 글자가');
+  log.info('나왔으면 모델이 지어낸 것입니다. 기획 파일 photos 에 "아래": 0.2 처럼 적어 더 자를 수 있습니다.');
   log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
   if (needNewPhoto.length) {
     log.raw('');

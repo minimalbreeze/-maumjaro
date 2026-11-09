@@ -199,7 +199,15 @@ export function measureBottom(file, { fallback = DEFAULT_CROP.bottom } = {}) {
   if (!px) return { bottom: fallback, 잼: false, 띠: null, 까닭: '펴지 못했습니다' };
   const band = watermarkBand(rowNoise(px.gray, px.width, px.height));
   if (band === null) {
-    return { bottom: fallback, 잼: true, 띠: null, 까닭: '아래에 띠가 없습니다' };
+    // ⚠️ "띠가 없다"는 **워터마크가 없다는 뜻이 아니다.** 진짜 사진은
+    //    어디나 복잡해서 글자가 변화량으로 안 튄다(2026-11-09 고영표).
+    //    그래서 기본값만 자르고, 자른 사진을 사람이 보게 한다.
+    return {
+      bottom: fallback,
+      잼: true,
+      띠: null,
+      까닭: `아래에서 띠를 못 찾아 기본값 ${Math.round(fallback * 100)}% 만 자릅니다`,
+    };
   }
   const want = Math.min(0.95, band + 0.02); // 여유 2%
   if (want > MAX_BOTTOM) {
@@ -210,11 +218,16 @@ export function measureBottom(file, { fallback = DEFAULT_CROP.bottom } = {}) {
       까닭: `띠가 아래 ${Math.round(band * 100)}% 까지 올라옵니다 — 너무 깊습니다`,
     };
   }
+  // ⚠️ 실제로 자르는 값을 적는다. 전에는 want 를 적고 실제로는
+  //    Math.max(fallback, want) 를 잘라서 로그가 "9%" 인데 12% 를
+  //    자르고 있었다 (2026-11-09 #76).
+  const bottom = Math.max(fallback, want);
   return {
-    bottom: Math.max(fallback, want),
+    bottom,
     잼: true,
     띠: band,
-    까닭: `아래 ${Math.round(want * 100)}% 를 자릅니다`,
+    까닭:
+      `띠 ${Math.round(band * 100)}% → 아래 ${Math.round(bottom * 100)}% 를 자릅니다`,
   };
 }
 
@@ -291,6 +304,10 @@ export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch,
       url: `data:image/png;base64,${out.toString('base64')}`,
       cropped: true,
       reason: `${buf.length}바이트 → ${out.length}바이트${잰말}`,
+      // 자른 사진 그대로. 부르는 쪽이 preview 에 떨궈서 **사람이 눈으로**
+      // 워터마크가 빠졌는지 보게 한다. 내가 그림을 못 보기 때문에
+      // 이것이 유일하게 확실한 확인 방법이다.
+      png: out,
     };
   } catch (e) {
     return { url, cropped: false, reason: e.message };
