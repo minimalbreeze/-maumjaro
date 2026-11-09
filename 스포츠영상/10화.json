@@ -90,9 +90,9 @@
   "people": [
     {
       "name": "네일",
-      "role": "KIA 선발투수 (미국) · 1992년생대 · 우완",
-      "look": "a white American right-handed starting pitcher in his early 30s, tall with a solid athletic build, short light brown hair under a cap, a long face with a strong straight nose and a square jaw, light stubble along the jawline, a calm focused look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "183이닝으로 리그 최다이닝 1위. HOOK 과 WHY 에 걸치지만 그림은 한 번만. 투수이므로 **던지는 장면**으로 그린다. ⚠️ 올러와 둘 다 미국 백인 투수라 **서로 섞이기 쉽다** — 네일은 밝은 갈색 머리에 길고 각진 얼굴, 올러는 수염이 짙고 얼굴이 둥글다. 둘을 나란히 쓰지 말고 떨어뜨려 놓는다. 받은 다섯 중 뉴스 사진 둘만 썼다(나머지 셋은 blogfiles 의 image.png). 본은 2026-09-12, 예비는 2026-03-01.",
+      "role": "KIA 선발투수 (미국) · 1992년생대 · 193cm 83kg · 우완",
+      "look": "a white American right-handed starting pitcher in his early 30s, 193cm tall and about 83kg, a tall lean athlete with a narrow frame and long limbs, short light brown hair under a cap, a long face with a strong straight nose and a square jaw, light stubble along the jawline, a calm focused look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "183이닝으로 리그 최다이닝 1위. HOOK 과 WHY 에 걸치지만 그림은 한 번만. 투수이므로 **던지는 장면**으로 그린다. ⚠️ 올러와 둘 다 미국 백인 투수라 **서로 섞이기 쉽다.** 그런데 **둘 다 193cm 로 키가 같다** — 키로 가르려 하면 안 된다. 네일 83kg · 올러 102kg 이라 **두께**가 다르고, 네일은 밝은 갈색 머리에 수염이 거의 없고 올러는 짧은 턱수염이 있다. 둘을 나란히 쓰지 말고 떨어뜨려 놓는다. 받은 다섯 중 뉴스 사진 둘만 썼다(나머지 셋은 blogfiles 의 image.png). 본은 2026-09-12, 예비는 2026-03-01.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F09%2F12%2F0005605373_001_20260912180013567.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F03%2F01%2F0001220681_003_20260301151219063.jpg&type=a340",
       "team": "KIA",
@@ -100,9 +100,9 @@
     },
     {
       "name": "올러",
-      "role": "KIA 선발투수 (미국) · 1994년생대 · 우완",
-      "look": "a white American right-handed starting pitcher in his early 30s, a heavy thick build with broad shoulders, short dark hair under a cap, a round full face with a thick dark beard covering the jaw, heavy eyebrows, an intense expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "178이닝으로 리그 2위, 삼진 180개에 퀄리티스타트 19번. 전반기 ERA 2.36 → 후반기 한때 13.06 이라 RISK 에도 나온다. 그림은 WHY 에서 한 번. ⚠️ 네일과 가르는 것은 **수염과 얼굴형**이다 — 올러가 짙은 수염에 둥근 얼굴, 네일이 수염 거의 없고 긴 얼굴. 받은 다섯 중 둘만 썼다. 본은 311/2026-07-16 뉴스 사진, 예비는 \"20261013_232334.jpg\" 인데 JPEG 라 사진일 가능성이 높다(화면 캡처는 보통 PNG 다). 나머지 셋은 image.png 이고 그중 둘은 같은 주소였다.",
+      "role": "KIA 선발투수 (미국) · 1994년생대 · 193cm 102kg · 우완",
+      "look": "a white American right-handed starting pitcher in his early 30s, 193cm tall and about 102kg, a tall big-framed athlete with thick shoulders and a broad chest, a normal athletic waist, short dark hair under a cap, a square face with a short trimmed dark beard along the jawline, heavy eyebrows, an intense expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "178이닝으로 리그 2위, 삼진 180개에 퀄리티스타트 19번. 전반기 ERA 2.36 → 후반기 한때 13.06 이라 RISK 에도 나온다. 그림은 WHY 에서 한 번.\n⚠️⚠️ **2026-11-09 운영자: \"이 돼지는 누구인가? 올러는 이렇게 뚱뚱하지 않다\"**\n실행 #67 에서 **비만 체형에 산적 같은 수염**으로 나왔다. 원인은 모델이 아니라 **내가 쓴 look 문장**이다. 네일과 구분하려고 숫자를 확인하지 않고 `a heavy thick build` 와 `a round full face with a thick dark beard covering the jaw` 를 적었다. 모델은 적힌 대로 그렸다.\n실제는 **193cm 102kg** 이다(baseball-reference 6-4, 225lbs). 그리고 **네일도 193cm** 다(6-4, 185lbs). 둘은 **키가 같고 몸무게만 다르다** — 83kg 과 102kg. 큰 체격이지 비만이 아니다.\n그래서 숫자를 role 과 look 에 박았다. 수염도 `covering the jaw`(턱을 덮는)에서 `short trimmed ... along the jawline`(턱선을 따라 짧게)으로 바꿨다 — 앞의 말이 산적 수염을 만들었다.\n⚠️ 네일과 가르는 것은 **키가 아니라 두께와 수염**이다. 둘 다 193cm 니까 키로 가르려 하면 안 된다. 올러가 어깨와 가슴이 두껍고 수염이 있고, 네일이 마르고 수염이 거의 없다.\n받은 다섯 중 둘만 썼다. 본은 311/2026-07-16 뉴스 사진, 예비는 blogfiles 의 JPEG 다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F07%2F16%2F0002034660_001_20260716184619260.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTNfNzEg%2FMDAxNzkxOTAxNDI5MzM1.RosjQj9qkUQEuolt1FJ5ughvP850dUH4QZ_6A832GjEg.KabEygcbQMlSm1UquDbW71Zzv3jZEKBT3v7f-Fy84sIg.JPEG%2F20261013_232334.jpg&type=a340",
       "team": "KIA",
@@ -111,8 +111,8 @@
     {
       "name": "시라카와 케이쇼",
       "role": "KIA 아시아쿼터 투수 (일본) · 2001년생 25세 · 우투우타",
-      "look": "a Japanese right-handed pitcher of 25, the youngest here, a lean build with narrow shoulders, short black hair under a cap, a soft youthful face with a rounded chin and no facial hair, a quiet reserved expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "이 편의 심장. 총액 10만 달러에 와서 83⅓이닝을 던지고 준PO 3차전 선발승. KEY 섹션에서 제대로 보여야 한다. 일본 선수라 서양 투수 둘과 확실히 달라야 하고, 25세로 이 편에서 가장 어리다 — 얼굴이 가장 부드럽다. 투수이므로 던지는 장면으로. 받은 다섯 중 넷이 뉴스 사진이었다. 본은 109/2026-06-27, 예비는 076/2026-06-04. 안 쓴 뉴스 사진 둘(109/2026-06-27 다른 기사, 5244/2026-05-28)도 쓸 만하니 본·예비가 다 죽으면 그쪽으로 간다. image.png 하나만 버렸다.",
+      "look": "a Japanese right-handed professional pitcher, a grown man of 25 with an adult face and an adult body, an ordinary athletic frame for a starting pitcher with square shoulders, short black hair under a cap, a defined jaw and cheekbones, clean-shaven, a quiet reserved expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "이 편의 심장. 총액 10만 달러에 와서 83⅓이닝을 던지고 준PO 3차전 선발승. KEY 섹션에서 제대로 보여야 한다. 일본 선수라 서양 투수 둘과 확실히 달라야 하고, 25세로 이 편에서 가장 어리다 — 얼굴이 가장 부드럽다. 투수이므로 던지는 장면으로. 받은 다섯 중 넷이 뉴스 사진이었다. 본은 109/2026-06-27, 예비는 076/2026-06-04. 안 쓴 뉴스 사진 둘(109/2026-06-27 다른 기사, 5244/2026-05-28)도 쓸 만하니 본·예비가 다 죽으면 그쪽으로 간다. image.png 하나만 버렸다.\n⚠️⚠️ **2026-11-09 운영자: \"시라카와 갑자기 이 다른 느낌의 이미지는 뭔가? 지브리 스타일이라고 분명히 말했다\"**\n실행 #67 에서 **납작한 벡터 그림에 초등학생 얼굴**로 나왔다. 원인이 둘이다.\n1) 실행 #67 은 11/7 낮 12시 15분이고, **그림톤 통일 고침은 그날 저녁에 머지했다.** 참조 사진이 있으면 나머지 샷도 같은 바탕(dev)으로 그리게 한 그 고침이 10화에는 하나도 안 들어가 있다.\n2) 내가 look 에 `the youngest here`, `a lean build with narrow shoulders`, `a soft youthful face with a rounded chin` 을 적었다. 세 개가 겹쳐서 **중학생**이 됐다. 25세 성인 프로 선수다.\n그래서 '어린' 쪽 말을 다 빼고 **성인임을 못 박았다.** 다른 둘보다 어린 것은 맞지만, 그건 얼굴 주름이 덜한 정도지 소년이 아니다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F06%2F27%2F0005561776_001_20260627174021595.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F06%2F04%2F2026060401000280700015583_20260604204617560.jpg&type=a340",
       "team": "KIA",
@@ -121,8 +121,8 @@
     {
       "name": "카스트로",
       "role": "KIA 내야수 (베네수엘라) · 1994년생대 · 좌타",
-      "look": "a Venezuelan infielder in his early 30s, a stocky muscular build, short black curly hair under a batting helmet, dark brown skin, a broad face with heavy cheekbones and a thick dark beard, a relaxed easy expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
-      "tell": "햄스트링 부상으로 길게 빠졌다가 돌아와 중심 타선을 맡았다. RISK 에서 한 번. 타자이므로 **치는 장면**으로. ⚠️ 최종 기록은 출처가 갈려서 대본에서 숫자를 말하지 않는다고 밝혔다 — 카드에도 숫자를 넣지 않는다. 라틴계라 미국 투수 둘, 일본 투수 하나와 피부와 머리로 갈린다. 받은 여섯 중 뉴스 사진 셋이 왔고 그중 둘을 썼다(본 2026-06-23, 예비 2026-06-13). 셋째 뉴스 사진(109/2026-03-02)은 안 썼다 — 둘이면 충분하다. 나머지 셋은 blogfiles 의 image.png 다.",
+      "look": "a Venezuelan infielder in his early 30s, broad square shoulders and a thick neck on a compact frame, short black curly hair under a batting helmet, dark brown skin, a broad face with heavy cheekbones and a thick dark beard, a relaxed easy expression, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "햄스트링 부상으로 길게 빠졌다가 돌아와 중심 타선을 맡았다. RISK 에서 한 번. 타자이므로 **치는 장면**으로. ⚠️ 최종 기록은 출처가 갈려서 대본에서 숫자를 말하지 않는다고 밝혔다 — 카드에도 숫자를 넣지 않는다. 라틴계라 미국 투수 둘, 일본 투수 하나와 피부와 머리로 갈린다. 받은 여섯 중 뉴스 사진 셋이 왔고 그중 둘을 썼다(본 2026-06-23, 예비 2026-06-13). 셋째 뉴스 사진(109/2026-03-02)은 안 썼다 — 둘이면 충분하다. 나머지 셋은 blogfiles 의 image.png 다.\n⚠️ 2026-11-09. `a stocky muscular build` 를 뺐다. 키·몸무게를 확인하지 못한 채 느낌말로 체격을 적으면 모델이 극단으로 읽는다 — 같은 편의 올러가 그래서 돼지가 됐다. 숫자를 못 찾았으니 **어깨·목처럼 눈에 보이는 것**으로 적었다.",
       "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5400%2F2026%2F06%2F23%2F0000252702_001_20260623210212609.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F529%2F2026%2F06%2F13%2F0000077546_003_20260613124310197.jpg&type=a340",
       "team": "KIA",

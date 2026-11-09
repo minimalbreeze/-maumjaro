@@ -299,6 +299,12 @@ export const SPORTS_STYLE_SUFFIX =
   // 움직이는 장면을 늘리면서 생긴 일이다. 팔다리 개수를 못 박는다.
   'exactly one head, two arms and two legs, no extra or duplicated limbs, ' +
   'no third arm, no spare hand, five fingers on each hand, ' +
+  // ⚠️ 2026-11-09. 여기까지만 적었더니 **팔이 빠진** 그림이 나왔다.
+  //    개수를 못 박는 것과 "빠뜨리지 마라"는 다른 말이다. 둘 다 적는다.
+  //    야구는 특히 그렇다 — 던지는 팔만 그리고 글러브 낀 팔을 잊는다.
+  'and none of them missing: both arms are drawn, the throwing arm and ' +
+  'the glove arm, even when one is turned away from the camera, ' +
+  'a batter holds the bat with both hands, ' +
   'anatomically correct neck and shoulders, ' +
   // ── 동작은 자연스러워야 한다 (2026-11-07 운영자) ──
   //
@@ -316,6 +322,14 @@ export const SPORTS_STYLE_SUFFIX =
   'the arms and legs follow through in the direction of the motion, ' +
   'never a limb bent backwards, never a body twisted past what is possible, ' +
   'never floating above the ground when the pose is a standing or running one, ' +
+  // ⚠️ 2026-11-09. 투수가 **두 발을 다 띄운 채** 공중에 뜬 그림이
+  //    나왔다. 위의 '서 있거나 달리는 자세' 라는 단서가 투구 동작을
+  //    빠져나가게 했다. 야구 동작을 하나씩 적어 못 박는다.
+  //    실제로 투수는 뒷발이 투수판에 닿아 있거나 앞발이 막 닿는다.
+  'a pitcher always keeps contact with the ground: the back foot on the ' +
+  'rubber or the front foot landing on the mound, never both feet in the ' +
+  'air at once, ' +
+  'a batter keeps both feet in the batter box through the swing, ' +
   // ── 프레이밍 ──
   // 벤치에 앉은 샷에서 **다리가 잘려** 나왔다. 어디까지 담을지 못 박는다.
   //
@@ -421,8 +435,34 @@ export const SPORTS_STYLE_SUFFIX =
   'front, ' +
   'the lettering and seams painted with the same care as the rest of ' +
   'the picture, ' +
+  // ── 좌우가 같아야 한다 (2026-11-09 운영자) ──
+  //
+  //   "양말 색이 짝짝이다"
+  //
+  // 뒷모습 샷에서 한쪽 다리는 남색 양말인데 다른 쪽은 빨간 바지가
+  // 그대로 발목까지 내려와 있었다. 유니폼 색은 적어 뒀는데 **양쪽이
+  // 같아야 한다**는 말을 안 적어서, 모델이 다리를 따로 그렸다.
+  //
+  // 야구 유니폼은 좌우 대칭이 눈에 가장 잘 띄는 옷이다 — 양말이
+  // 길고 색이 진해서 한쪽만 달라도 바로 보인다.
+  'left and right match exactly: both socks the same colour and the same ' +
+  'height, both shoes the same colour, both sleeves the same length, ' +
+  'never one leg bare where the other has a sock, ' +
+  // ⚠️ 2026-11-09 운영자: "이건 누구고 모자에 C는 무슨 마크인가?"
+  //    이범호 감독 모자에 **C** 가 붙어 나왔다 — 신시내티나 컵스 마크다.
+  //
+  //    원인은 내가 미국 구단 **셋만 이름으로** 적어 둔 것이다(양키스·
+  //    다저스·보스턴). 모델은 그 셋만 피하고 빨간 모자에 어울리는
+  //    다른 글자를 가져왔다. 금지를 하나씩 세는 방식으로는 못 막는다.
+  //
+  //    그래서 **무엇을 그릴지**로 뒤집는다. 모자에는 그 구단의 표시만
+  //    올라간다. 뜻 모를 알파벳 한 글자는 안 된다.
   'never a Major League Baseball team: no interlocking NY, no Dodgers ' +
-  'script, no Boston B, no American team wordmark or cap logo, ' +
+  'script, no Boston B, no Cincinnati C, no Chicago C, ' +
+  'no American team wordmark or cap logo, ' +
+  'the cap carries only the mark of the Korean team named for this ' +
+  'figure, never a single Latin letter monogram that belongs to another ' +
+  'club, and a plain cap with no mark is better than an invented one, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
   'no caption text, no watermark, no subtitles, no sponsor logo';
@@ -503,6 +543,36 @@ export const SPORTS_NEGATIVE_EXTRA =
   'no Major League Baseball logos, no foreign team wordmarks, ' +
   'no sponsor text on uniforms, ' +
   'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
+  // ── 팔다리가 **빠지는** 것도 막는다 (2026-11-09 운영자) ──
+  //
+  //   "이 장면 무엇인가? 외팔이에 뭔가 이상하다"
+  //
+  // 실행 #67 에서 투수의 **글러브 낀 왼팔이 통째로 없는** 그림이
+  // 나왔다. 그리고 두 발이 다 땅에서 떠 있었다.
+  //
+  // 내가 한쪽만 봤다. 9화에서 팔이 셋 나온 걸 고치면서
+  // `no extra arms`(더 많은 것)만 적고 **빠진 것**은 안 적었다.
+  // 모델은 팔을 더 그리지 않았을 뿐, 덜 그리는 것은 막히지 않았다.
+  'no missing arm, no missing leg, no one-armed figure, ' +
+  'both arms drawn and attached at the shoulders even when one is ' +
+  'behind the body, ' +
+  // ── 선수를 뚱뚱하게 그리지 않는다 (2026-11-09 운영자) ──
+  //
+  //   "이 돼지는 누구인가? 올러는 이렇게 뚱뚱하지 않다"
+  //   "올러가 돼지가 되었다"
+  //
+  // 실행 #67 에서 **193cm 102kg** 인 투수가 비만 체형으로 나왔다.
+  // 원인은 모델이 아니라 **내가 look 에 적은 말**이다 —
+  // `a heavy thick build` 라고만 적고 숫자를 안 적었다. 숫자가 없으면
+  // 'heavy' 는 비만으로 읽힌다.
+  //
+  // look 쪽은 숫자를 박아 고쳤지만, 금지 목록에도 넣는다. 프로 선수는
+  // 어떤 체격이든 **운동선수**다.
+  'no obese or overweight body, no large belly hanging over the belt, ' +
+  'no double chin, a professional athlete body even when heavily built, ' +
+  // 수염도 같은 자리에서 터졌다. look 에 'covering the jaw'(턱을 덮는)라고
+  // 적었더니 가슴까지 내려오는 산적 수염이 나왔다.
+  'no long bushy lumberjack beard reaching the chest, ' +
   'no photorealistic faces, no photograph, ' +
   // 실행 #65 에서 얼굴만 문질러진 채 나왔다. 이름을 적어 막는다.
   'no airbrushed face, no soft gradient skin shading, no glossy skin, ' +
@@ -976,6 +1046,11 @@ export function peopleRules(people) {
     '그리고 생김새 문장 **맨 앞에 적힌 것이 그 사람의 표식**이다.',
     '그 표식을 또렷하게 그린다 — 안경, 아이블랙, 앞머리, 수염처럼',
     '멀리서도 읽히는 것이다. 그것만 살려 주면 사람이 구분된다.',
+    '',
+    '⚠️ **체격을 바꿔 적지 않는다.** 아래 생김새에 키와 몸무게가 숫자로',
+    '적혀 있으면 그 숫자를 **그대로** 넣는다. "덩치 큰", "마른" 같은 말로',
+    '바꾸지 않는다. 숫자가 빠지면 모델이 비만이나 아이 체형으로 그린다 —',
+    '2026-11-09 에 193cm 102kg 투수가 돼지처럼 나왔다.',
     '',
     '⚠️ **과장하지 않는다.** 전에는 exaggerated 같은 말을 붙여 특징을',
     '밀라고 적었는데(사진으로 오해받을까 봐 넣은 장치였다), 그 바람에',

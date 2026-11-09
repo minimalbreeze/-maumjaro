@@ -6655,6 +6655,170 @@ test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
 // ════════════════════════════════════════════════════════════
 // 나레이션 속도를 실제로 재서 고쳤다 (2026-11-08, 실행 #70)
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// 체격을 글로 적다가 두 번 틀렸다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+//   2026-11-07  한승혁(185cm 100kg)을 "lean and wiry" 라고 적었다
+//   2026-11-09  올러(193cm 102kg)를 "a heavy thick build" 라고 적었다
+//               → 운영자: "이 돼지는 누구인가? 올러는 이렇게 뚱뚱하지 않다"
+//
+// 두 번 다 **네일과 구분하려고 숫자 없이 느낌말을 골랐다.** 느낌말은
+// 모델이 제 맘대로 읽는다. 'heavy' 는 비만이 되고 'lean' 은 말라깽이가
+// 된다.
+//
+// 그래서 규칙을 하나로 못 박는다 — **체격을 말하려면 숫자를 적는다.**
+// 숫자를 못 찾으면 체격 말을 쓰지 않고 얼굴·머리·수염으로 가른다.
+section('4-w. 체격은 숫자로 적는다');
+
+// ── 무엇을 잡는가 ──
+//
+// 해로운 것은 **몸 전체를 느낌말 하나로 뭉뚱그리는 것**이다.
+//
+//   ❌ "a heavy thick build"          → 모델이 비만으로 읽는다
+//   ❌ "a lean build with ..."        → 말라깽이가 된다
+//   ✅ "narrow shoulders and thin forearms"   → 부위가 적혀 있다
+//   ✅ "193cm tall and about 102kg"           → 숫자가 있다
+//
+// 부위에 붙은 말은 모델이 그릴 자리가 분명해서 극단으로 안 간다.
+// 그래서 `<느낌말> build/body/frame/physique` 꼴만 잡는다.
+// ⚠️ 목록을 **실제로 터진 말**로만 좁혔다. 'solid build'(감독),
+//    'compact build' 같은 것은 지금까지 문제를 일으킨 적이 없다.
+//    넓게 막으면 걸리는 게 많아져서 결국 목록을 꺼 버리게 된다.
+const 체격말 = [
+  'heavy', 'thick', 'stocky', 'chubby', 'fat', 'obese', 'overweight',
+  'lean', 'wiry', 'skinny', 'slim', 'slender', 'bulky', 'huge', 'massive',
+];
+// 몸 전체를 가리키는 말. 이 앞에 느낌말이 붙으면 잡는다.
+const 전체말 = '(build|body|physique|figure)';
+// 숫자가 붙어 있으면 괜찮다.
+const 숫자있나 = (t) => /\d{2,3}\s?(cm|kg)/.test(t);
+
+test('기획 파일의 체격 말에는 숫자가 붙어 있다', () => {
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  if (!fs.existsSync(base)) return;
+  const files = fs.readdirSync(base).filter((f) => /^\d+화\.json$/.test(f));
+  assert.ok(files.length >= 3, `기획 파일이 ${files.length}개뿐입니다`);
+  const 걸린것 = [];
+  for (const f of files) {
+    const people = JSON.parse(fs.readFileSync(path.join(base, f), 'utf8')).people || [];
+    for (const p of people) {
+      const look = String(p.look || '');
+      // "<느낌말> build/body/frame" 꼴만 잡는다. 사이에 다른 꾸밈말이
+      // 하나쯤 끼는 것도 받는다 — "a heavy thick build" 가 그 꼴이다.
+      const 쓴말 = 체격말.filter((w) =>
+        new RegExp(`\\b${w}\\b(\\s+\\w+)?\\s+${전체말}\\b`, 'i').test(look)
+      );
+      if (!쓴말.length) continue;
+      // 같은 문장 안에 키나 몸무게가 있으면 통과다.
+      if (숫자있나(look) || 숫자있나(String(p.role || ''))) continue;
+      걸린것.push(`${f} ${p.name}: "${쓴말.join(', ')}" 에 숫자가 없습니다`);
+    }
+  }
+  assert.equal(
+    걸린것.length,
+    0,
+    '체격을 느낌말로만 적었습니다. 키·몸무게를 찾아 적거나, 못 찾으면 ' +
+      '체격 말을 빼고 얼굴·머리·수염으로 가르세요:\n  ' + 걸린것.join('\n  ')
+  );
+});
+
+await asyncTest('올러와 네일을 키가 아니라 두께로 가른다', async () => {
+  // ⚠️ 둘 다 **193cm 로 키가 같다**(baseball-reference 6-4).
+  //    네일 83kg(185lbs), 올러 102kg(225lbs). 키로 가르려 하면
+  //    모델이 한 명을 작게 그리거나 한 명을 뚱뚱하게 그린다.
+  const p = decodeURIComponent(
+    new URL('../../스포츠영상/10화.json', import.meta.url).pathname
+  );
+  if (!fs.existsSync(p)) return;
+  const people = JSON.parse(fs.readFileSync(p, 'utf8')).people || [];
+  const 네일 = people.find((x) => x.name === '네일');
+  const 올러 = people.find((x) => x.name === '올러');
+  assert.ok(네일 && 올러, '네일과 올러가 있어야 합니다');
+  for (const [이름, x] of [['네일', 네일], ['올러', 올러]]) {
+    assert.ok(/193cm/.test(x.look), `${이름} 의 look 에 키가 없습니다`);
+    assert.ok(/\d{2,3}kg/.test(x.look), `${이름} 의 look 에 몸무게가 없습니다`);
+  }
+  assert.ok(/83kg/.test(네일.look), '네일은 83kg 입니다');
+  assert.ok(/102kg/.test(올러.look), '올러는 102kg 입니다');
+  // 돼지를 만든 두 문장이 돌아오면 안 된다.
+  assert.ok(!/heavy thick/.test(올러.look), '"heavy thick" 이 돌아왔습니다');
+  assert.ok(
+    !/covering the jaw/.test(올러.look),
+    '"covering the jaw" 가 돌아왔습니다 — 산적 수염이 나옵니다'
+  );
+});
+
+await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
+  // 2026-11-09 운영자가 본 것 둘이다.
+  //   "이 돼지는 누구인가"        → 비만 체형
+  //   "외팔이에 뭔가 이상하다"    → 글러브 낀 팔이 통째로 없다
+  //
+  // ⚠️ 9화에서 팔이 셋 나온 걸 고치면서 `no extra arms`(더 많은 것)만
+  //    적었다. **빠진 것**은 안 막혀 있었다. 한쪽만 본 것이다.
+  const V9 = await import('../src/scenes/visuals.mjs');
+  const p = V9.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
+  for (const must of [
+    'no missing arm',      // 빠진 팔
+    'no one-armed figure', // 외팔이
+    'both arms are drawn', // 둘 다 그린다
+    'the glove arm',       // 야구는 글러브 팔을 잊는다
+    'no obese',            // 비만
+    'no large belly',
+    'no long bushy lumberjack beard', // 산적 수염
+    'never both feet in the', // 두 발이 다 뜨는 것
+  ]) {
+    assert.ok(p.includes(must), `금지·지시가 빠졌습니다: ${must}`);
+  }
+  // 팔이 셋인 것도 그대로 막혀 있어야 한다. 한쪽을 고치다 다른 쪽을
+  // 잃으면 9화의 문제가 돌아온다.
+  assert.ok(p.includes('no third arm'), '팔이 셋인 것을 막던 줄이 사라졌습니다');
+  assert.ok(p.includes('no extra arms'), '팔이 더 많은 것을 막던 줄이 사라졌습니다');
+});
+
+await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async () => {
+  // 2026-11-09 운영자: "이건 누구고 모자에 C는 무슨 마크인가?"
+  //
+  // ⚠️ 미국 구단을 **이름으로 하나씩** 막는 방식은 안 통한다. 셋만
+  //    적어 뒀더니(양키스·다저스·보스턴) 모델이 그 셋을 피하고 C 를
+  //    가져왔다. 금지는 끝이 없다.
+  //
+  // 그래서 "무엇을 그릴지"로 뒤집었다 — 모자에는 그 구단 표시만
+  // 올리고, 모르면 아무것도 안 올린다.
+  const V10 = await import('../src/scenes/visuals.mjs');
+  const p = V10.composeImagePrompt('a manager', 'present', { kind: 'SPORTS' });
+  assert.ok(
+    /single Latin letter monogram/.test(p),
+    '모자에 뜻 모를 알파벳 한 글자를 막는 줄이 없습니다'
+  );
+  assert.ok(
+    /a plain cap with no mark is better than an invented one/.test(p),
+    '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
+  );
+  // 이름으로 막던 것들도 그대로 남아 있어야 한다.
+  for (const w of ['no interlocking NY', 'no Boston B', 'no Cincinnati C']) {
+    assert.ok(p.includes(w), `${w} 가 사라졌습니다`);
+  }
+});
+
+await asyncTest('좌우가 같아야 한다 — 양말 짝짝이', async () => {
+  // 2026-11-09 운영자: "양말 색이 짝짝이다"
+  //
+  // 뒷모습 샷에서 한쪽은 남색 양말인데 다른 쪽은 빨간 바지가 그대로
+  // 발목까지 내려와 있었다. 유니폼 **색**은 적어 뒀는데 **양쪽이
+  // 같아야 한다**는 말이 없어서 다리를 따로 그렸다.
+  const V11 = await import('../src/scenes/visuals.mjs');
+  const p = V11.composeImagePrompt('x', 'present', { kind: 'SPORTS' });
+  for (const must of [
+    'both socks the same colour',
+    'both shoes the same colour',
+    'both sleeves the same length',
+    'never one leg bare where the other has a sock',
+  ]) {
+    assert.ok(p.includes(must), `좌우 대칭 지시가 빠졌습니다: ${must}`);
+  }
+});
+
 section('4-x. 나레이션 속도는 종류마다 다르다');
 
 const NR = await import('../src/narration.mjs');
