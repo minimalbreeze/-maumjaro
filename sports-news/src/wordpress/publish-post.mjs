@@ -182,7 +182,11 @@ async function main() {
     console.log(`📌 ${발행한것.length}편을 발행했습니다. 다음에 할 것:`);
     console.log('   1) **글끼리 링크 걸기** — 구글은 링크로 페이지를 찾습니다.');
     console.log('      가리키는 글이 없으면 사이트맵에 있어도 안 찾습니다(CLAUDE.md ② 절).');
-    console.log('   2) 네이버 수집 요청 — 주소를 `네이버수집요청.md` 에 더해 두세요.');
+    // ⚠️ `네이버수집요청.md` 는 **맘운자로**(maumjaro.minimalbreeze.com) 것이다.
+    //    wiki 글 주소를 거기 적으면 두 사이트가 섞인다. 네이버 서치어드바이저는
+    //    사이트마다 따로이므로 wiki 사이트에서 요청해야 한다.
+    console.log('   2) 네이버 수집 요청 — 서치어드바이저의 **wiki 사이트**에서 넣으세요.');
+    console.log('      (`네이버수집요청.md` 는 맘운자로 것이라 여기 적지 않습니다)');
     for (const g of 발행한것) console.log(`      ${g.link}`);
   }
 }
