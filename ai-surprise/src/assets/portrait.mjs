@@ -89,13 +89,15 @@ export function portraitPrompt(person) {
  * @param people  [{ name, role, tell, photo }] — photo 는 **주소**다
  * @returns { jobs, skipped }
  */
+import { photoOf as mainPhoto } from './photo-of.mjs';
+
 export function portraitJobs(people, { variants = VARIANTS_PER_PERSON } = {}) {
   const jobs = [];
   const skipped = [];
 
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
-    const photo = String(p?.photo || '').trim();
+    const photo = mainPhoto(p);
     if (!name) continue;
     if (!/^https?:\/\//.test(photo)) {
       // 주소가 아니면 건너뛴다. 로컬 경로를 넣었다면 그건 사진을 저장소에

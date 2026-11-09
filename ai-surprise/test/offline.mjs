@@ -7237,6 +7237,55 @@ test('리페인트도 가슴을 민무늬로 다시 그린다', () => {
   }
 });
 
+await asyncTest('photos 만 적힌 사람도 본편에서 얼굴 참조를 잃지 않는다', async () => {
+  // ── 하마터면 조용히 망가질 뻔했다 (2026-11-09) ──
+  //
+  // 기획 파일에 사진을 적는 모양이 둘이다. 옛 모양 `photo` 와, 리페인트를
+  // 만들면서 들인 새 모양 `photos: [{url, 쓰임}]` 이다.
+  //
+  // 그런데 **새 모양은 리페인트만 읽었다.** 본편 그림·인물 시트·화풍
+  // 미리보기·소재 레코드·닮음 판정은 전부 `photo` 만 봤다.
+  //
+  // 11화 사람 다섯의 photo 를 photos 로 바꾸면서 그걸 몰랐다. 그대로
+  // 돌렸으면 그 다섯의 **얼굴 참조가 통째로 사라졌을 것이다.** 그리고
+  // 오류는 안 난다 — 그림은 멀쩡히 나오고 얼굴만 남의 얼굴이 된다.
+  // 그림을 못 보는 나로서는 알아챌 길이 없는 종류의 고장이다.
+  //
+  // 그래서 읽는 자리를 photo-of.mjs 하나로 모았다. 여기서 못 박는다.
+  const PO = await import('../src/assets/photo-of.mjs');
+
+  // 두 모양 다 읽는다.
+  assert.equal(PO.photoOf({ photo: 'https://a/1.jpg' }), 'https://a/1.jpg');
+  assert.equal(PO.photoOf({ photos: [{ url: 'https://b/1.jpg' }] }), 'https://b/1.jpg');
+  assert.equal(PO.photoOf({}), '');
+  // 예비도 마찬가지다.
+  assert.equal(PO.sparePhotoOf({ photo_예비: 'https://a/2.jpg' }), 'https://a/2.jpg');
+  assert.equal(
+    PO.sparePhotoOf({ photos: [{ url: 'https://b/1.jpg' }, { url: 'https://b/2.jpg' }] }),
+    'https://b/2.jpg'
+  );
+
+  // ⚠️ 그리고 **읽는 자리마다** 이걸 쓰는지 본다. 한 군데라도 String(p.photo)
+  //    로 돌아가면 그 경로에서만 조용히 얼굴이 빠진다.
+  const 읽는곳 = [
+    'src/model.mjs', 'src/assets/portrait.mjs', 'src/assets/preview.mjs',
+    'src/assets/images.mjs', 'src/scenes/visuals.mjs', 'src/main.mjs',
+  ];
+  for (const f of 읽는곳) {
+    const code = fs.readFileSync(new URL(`../${f}`, import.meta.url).pathname, 'utf8');
+    // 주석은 뺀다 — 설명에 적힌 것까지 잡으면 못 쓴다.
+    const 알맹이 = code.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+    const 날것 = 알맹이.match(/String\(p[?]?\.photo(_예비)?\s*\|\|/g) || [];
+    assert.deepEqual(
+      날것,
+      [],
+      `${f} 가 photo 를 직접 읽습니다 (${날것.length}군데). ` +
+        'photo-of.mjs 의 photoOf/sparePhotoOf 를 쓰세요 — ' +
+        'photos 로만 적힌 사람의 얼굴이 조용히 빠집니다.'
+    );
+  }
+});
+
 await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
   // uniforms.mjs 의 열 팀이 전부 'white jersey with black lettering'
   // 꼴이었다. 그것도 가슴 글자의 범인이다 — 색으로만 적는다.

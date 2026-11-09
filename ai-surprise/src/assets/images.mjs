@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, modelFor, DEFAULT_IMAGE_MODEL } from './replicate.mjs';
 import { SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE } from '../scenes/visuals.mjs';
+import { photoOf as mainPhoto, sparePhotoOf as sparePhoto } from './photo-of.mjs';
 
 /**
  * 참조 모델이 **사진에서 얼굴을 못 찾았는가.**
@@ -255,9 +256,9 @@ export async function generateImages(prompts, {
   // 나온다. 톤이 튀는 것보다 그 값이 싸다.
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
-    const photo = String(p?.photo || '').trim();
+    const photo = mainPhoto(p);
     if (name && /^https?:\/\//.test(photo)) photoOf.set(name, photo);
-    const spare = String(p?.photo_예비 || '').trim();
+    const spare = sparePhoto(p);
     if (name && /^https?:\/\//.test(spare)) sparePhotoOf.set(name, spare);
   }
 

@@ -24,6 +24,7 @@
 import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
+import { photoOf as mainPhoto } from '../assets/photo-of.mjs';
 import { uniformClause } from './uniforms.mjs';
 
 /**
@@ -1407,7 +1408,7 @@ export function photoNamesOf(item) {
   const people = item?.people || item?.research?.people || [];
   for (const p of people) {
     const name = String(p?.name || '').trim();
-    if (name && /^https?:\/\//.test(String(p?.photo || '').trim())) out.add(name);
+    if (name && /^https?:\/\//.test(mainPhoto(p))) out.add(name);
   }
   return out;
 }

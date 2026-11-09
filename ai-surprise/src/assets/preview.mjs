@@ -21,6 +21,7 @@ import {
   SPORTS_PAINT_KEY,
 } from '../scenes/visuals.mjs';
 import { REFERENCE_MODEL } from './images.mjs';
+import { photoOf as mainPhoto } from './photo-of.mjs';
 import { KIND } from '../model.mjs';
 
 /**
@@ -90,7 +91,7 @@ export function previewJobs(kind, { models = ['schnell'], people = [] } = {}) {
   const withPhoto = photoNamesOf({ people });
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
-    if (withPhoto.has(name)) photoOf.set(name, String(p.photo).trim());
+    if (withPhoto.has(name)) photoOf.set(name, mainPhoto(p));
   }
 
   const jobs = [];
@@ -146,7 +147,7 @@ export function previewStyleJobs(kind, { people = [] } = {}) {
   const withPhoto = photoNamesOf({ people });
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
-    if (withPhoto.has(name)) photoOf.set(name, String(p.photo).trim());
+    if (withPhoto.has(name)) photoOf.set(name, mainPhoto(p));
   }
   const reference = photoOf.get(String(scene.person || '').trim()) || null;
 

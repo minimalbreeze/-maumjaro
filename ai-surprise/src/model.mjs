@@ -1,4 +1,5 @@
 import { usableSections } from './script/sections.mjs';
+import { photoOf, sparePhotoOf } from './assets/photo-of.mjs';
 // 소재 한 건의 데이터 모양과, 자동 제작 여부를 가르는 판정 규칙.
 //
 // 이 파일에 AI 호출이 없는 것은 의도적이다. 전부 순수 함수라서
@@ -510,9 +511,9 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
         if (team) out.team = team;
         const number = String(p.number ?? '').trim();
         if (number) out.number = number;
-        const photo = String(p.photo || '').trim();
+        const photo = photoOf(p);
         if (photo) out.photo = photo;
-        const spare = String(p.photo_예비 || '').trim();
+        const spare = sparePhotoOf(p);
         if (spare) out.photo_예비 = spare;
         return out;
       }),

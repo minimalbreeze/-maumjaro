@@ -18,6 +18,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { log } from './utils/logger.mjs';
+import { photoOf as mainPhoto } from './assets/photo-of.mjs';
 import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
@@ -1558,7 +1559,7 @@ async function cmdImages(flags) {
   // 참조 모델로 그린다 — 글로만 적으면 "그 조건에 맞는 아무 얼굴"이
   // 나오고, 참조를 주면 실제로 닮는다.
   const people = loadContent(id)?.research?.people || [];
-  const withPhoto = people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  const withPhoto = people.filter((p) => /^https?:\/\//.test(mainPhoto(p)));
   if (withPhoto.length) {
     log.info(`사진을 받아 둔 사람 ${withPhoto.length}명: ${withPhoto.map((p) => p.name).join(', ')}`);
     log.info('  이 사람들이 나오는 샷은 사진을 참조로 그립니다 (장당 조금 더 비쌉니다).');
