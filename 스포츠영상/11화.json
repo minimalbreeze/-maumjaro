@@ -185,9 +185,23 @@
       "role": "KT 감독 · 60대 초반",
       "look": "a Korean man in his early 60s, a baseball manager in a team jacket, a solid build with a slight stoop, short greying hair under a cap, a broad face deeply lined across the forehead and around the mouth, heavy eyelids, a calm weathered look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "tell": "패장이다. 경기 직후 \"내 대응이 늦었다. 1차전을 8-0으로 끝내지 못한 점과 2차전을 내준 것이 패인\"이라고 했다 — 이 편의 심장인 BOTH 섹션에서 박진만과 **나란히 놓인다.** 둘이 확실히 달라야 한다: 이강철이 60대로 더 나이 들고 더 두껍다. 9화 사진을 그대로 쓴다 — 새로 받지 않았다. ⚠️ 생년은 확인하지 못했다. 60대 초반으로만 적는다. 9화에서 \"3년 34억, 감독 역대 최고 대우\"로 나온 그 사람이다.\n⭐ **1996년 한국시리즈 MVP** 다. 해태 투수였다. 박진만도 2006년 KS MVP 라, KS MVP 를 받은 두 사람이 감독으로 한국시리즈에서 만난 것은 **이번이 처음**이다. BOTH 섹션에서 둘을 나란히 놓는 까닭이 하나 더 생겼다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F07%2F0000637830_001_20261107170815243.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F04%2F0002076447_001_20261104162020096.jpg&type=a340",
-      "team": "KT"
+      "team": "KT",
+      "number": "71",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MThfNzUg%2FMDAxNzg5NzAwMDgyNjg1.gPDrakg7Nd-388pr7jiOd7phAF3Kb4ginS7i_XA6zJog.xF8sYH3JJ6-dmMmwq3OItnRxgfV-ibwOJN3bFjdIRKEg.PNG%2Fimage.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA1MDhfNDUg%2FMDAxNzc4MjAwMDI0MTEw.ngN3LPWgmEdjq_aehXE3NqYV3il2f2iV48Xz31h_1jog.QVgNRhy-qxE_E-qw6QqUz0aCIfGmGvXIzhRZKLLRQnQg.JPEG%2Fe125ecc9-b42e-4928-8174-27aaec95229a_img_12.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F07%2F0000637830_001_20261107170815243.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "박진만",

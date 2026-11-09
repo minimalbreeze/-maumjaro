@@ -315,3 +315,65 @@ export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch,
     if (dir) fs.rmSync(dir, { recursive: true, force: true });
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// 사진을 글자 그림으로 찍는다 — **내가 보려고** (2026-11-09)
+// ─────────────────────────────────────────────────────────────
+//
+// 고영표 가슴의 글자를 두고 네 번 돌렸다($0.20). 매번 원인을 다르게
+// 짚었는데 **전부 추측이었다.** 내가 그림을 못 보기 때문이다.
+//
+//   · 워터마크다 → 잘랐다 → 그대로
+//   · 재는 게 모자라다 → 재게 했다 → 띠를 못 찾음
+//   · uniforms.mjs 가 범인이다 → 고쳤다 → 그 경로를 안 쓴다
+//   · 리페인트 프롬프트다 → 고쳤다 → 그대로
+//
+// 추측을 한 번 더 하느니 **보는 길**을 만든다. 러너는 사진을 받을 수
+// 있으니(내 프록시만 막혀 있다), 거기서 밝기를 글자로 바꿔 로그에
+// 찍으면 내가 읽는다. 돈이 안 든다.
+//
+// ⚠️ 정밀한 그림이 아니다. 어두운 옷 위의 밝은 글자처럼 **대비가 큰
+//    덩어리**를 찾는 용도다. 그 이상은 사람이 봐야 한다.
+
+/** 어두운 곳부터 밝은 곳까지. 터미널에서 눈에 띄는 순서로 골랐다. */
+const RAMP = ' .:-=+*#%@';
+
+/**
+ * 회색조 픽셀을 글자 그림으로.
+ *
+ * 글자는 세로로 길쭉해서(폭의 두 배쯤) 가로 칸 수의 절반만 세로로 쓴다.
+ * 안 그러면 그림이 세로로 늘어나 글자꼴을 못 알아본다.
+ */
+export function asciiArt(gray, width, height, cols = 110) {
+  const rows = Math.max(1, Math.round((height / width) * cols * 0.5));
+  const lines = [];
+  for (let r = 0; r < rows; r += 1) {
+    let line = '';
+    for (let c = 0; c < cols; c += 1) {
+      // 한 칸이 덮는 네모의 평균을 낸다. 한 점만 찍으면 글자가 끊긴다.
+      const x0 = Math.floor((c / cols) * width);
+      const x1 = Math.max(x0 + 1, Math.floor(((c + 1) / cols) * width));
+      const y0 = Math.floor((r / rows) * height);
+      const y1 = Math.max(y0 + 1, Math.floor(((r + 1) / rows) * height));
+      let sum = 0;
+      let n = 0;
+      for (let y = y0; y < y1 && y < height; y += 1) {
+        for (let x = x0; x < x1 && x < width; x += 1) {
+          sum += gray[y * width + x];
+          n += 1;
+        }
+      }
+      const v = n ? sum / n / 255 : 0;
+      line += RAMP[Math.min(RAMP.length - 1, Math.floor(v * RAMP.length))];
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+/** 파일 하나를 글자 그림으로. 못 하면 null. */
+export function asciiOf(file, cols = 110) {
+  const px = grayPixels(file, 512);
+  if (!px) return null;
+  return asciiArt(px.gray, px.width, px.height, cols);
+}

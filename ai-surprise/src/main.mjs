@@ -15,6 +15,8 @@ import process from 'node:process';
 import fs from 'node:fs';
 import { speechText } from './audio/speech.mjs';
 import path from 'node:path';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { log } from './utils/logger.mjs';
 import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
@@ -33,7 +35,9 @@ import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
 import { repaintJobs, REPAINT_MODEL } from './assets/repaint.mjs';
 import { retryAfterMs } from './assets/images.mjs';
-import { cropToDataUri, hasFfmpeg, DEFAULT_CROP } from './assets/crop.mjs';
+import {
+  cropToDataUri, hasFfmpeg, DEFAULT_CROP, asciiOf, measureBottom, cropFilter,
+} from './assets/crop.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -935,6 +939,97 @@ async function cmdPreview(flags) {
  * 여기서는 **사진 전체**를 바탕으로 화풍만 바꾼다. 그래서 자세가 실제
  * 사람의 자세가 된다.
  */
+/**
+ * 사진을 **보기만** 한다. 돈이 안 든다.
+ *
+ * ── 왜 만들었나 (2026-11-09) ──
+ *
+ * 고영표 가슴의 글자를 두고 네 번 돌렸다($0.20). 매번 원인을 다르게
+ * 짚었는데 **전부 추측이었다.** 내가 그림을 못 보기 때문이다.
+ *
+ * 러너는 사진을 받을 수 있다(막힌 것은 내 프록시뿐이다). 그러니 거기서
+ * 밝기를 글자로 바꿔 로그에 찍으면 **내가 읽는다.** 추측을 한 번 더
+ * 하느니 보는 길을 내는 쪽이 싸다.
+ */
+async function cmdLookPhotos(flags) {
+  const planPath = typeof flags.plan === 'string' ? flags.plan : '';
+  const full = path.isAbsolute(planPath) ? planPath : path.join(ROOT, '..', planPath);
+  if (!planPath || !fs.existsSync(full)) {
+    log.error('어느 편의 사진을 볼지 알려주세요.');
+    log.info('  node src/main.mjs look --plan=스포츠영상/11화.json --only=고영표');
+    process.exit(1);
+  }
+  const plan = JSON.parse(fs.readFileSync(full, 'utf8'));
+  const only = typeof flags.only === 'string' && flags.only.trim()
+    ? new Set(flags.only.split(',').map((x) => x.trim()).filter(Boolean))
+    : null;
+  const people = (plan.people || []).filter(
+    (p) => !only || only.has(String(p?.name || '').trim())
+  );
+  const { jobs } = repaintJobs(people, { spare: true });
+
+  log.section(`👀 사진 살펴보기  |  ${planPath}`);
+  log.info('돈이 안 듭니다. 그림을 만들지 않고 사진만 봅니다.');
+  log.info('밝은 곳이 @ · 어두운 곳이 빈칸입니다. 어두운 옷 위의 밝은 글자가 눈에 띕니다.');
+  if (!jobs.length) {
+    log.error('볼 사진이 없습니다.');
+    process.exit(1);
+  }
+  if (!hasFfmpeg()) {
+    log.error('ffmpeg 가 없어서 볼 수 없습니다.');
+    process.exit(1);
+  }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'look-'));
+  try {
+    for (const job of jobs) {
+      log.raw('');
+      log.step(`${job.file}`);
+      log.raw(`   ${job.referenceImage.slice(0, 110)}`);
+      let buf;
+      try {
+        const res = await fetch(job.referenceImage);
+        if (!res.ok) {
+          log.warn(`   받지 못했습니다 (${res.status})`);
+          continue;
+        }
+        buf = Buffer.from(await res.arrayBuffer());
+      } catch (e) {
+        log.warn(`   받지 못했습니다 — ${e.message}`);
+        continue;
+      }
+      const raw = path.join(dir, 'raw');
+      fs.writeFileSync(raw, buf);
+
+      const m = measureBottom(raw);
+      log.raw(`   ${buf.length}바이트 · ${m.까닭}`);
+
+      // 자르기 전과 후를 둘 다 본다. 자르기가 듣는지 바로 보인다.
+      const cut = path.join(dir, 'cut.png');
+      spawnSync(
+        'ffmpeg',
+        ['-y', '-loglevel', 'error', '-i', raw, '-vf',
+         cropFilter({ ...DEFAULT_CROP, bottom: m.bottom }), cut],
+      );
+      for (const [label, f] of [['원본', raw], ['자른 뒤', cut]]) {
+        if (!fs.existsSync(f)) continue;
+        const art = asciiOf(f, 108);
+        if (!art) {
+          log.warn(`   ${label}: 펴지 못했습니다`);
+          continue;
+        }
+        log.raw('');
+        log.raw(`   ── ${label} ──`);
+        for (const line of art) log.raw(`   ${line}`);
+      }
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  log.raw('');
+  log.ok('다 봤습니다. 돈은 안 썼습니다.');
+}
+
 async function cmdRepaint(flags) {
   const planPath = typeof flags.plan === 'string' ? flags.plan : '';
   if (!planPath) {
@@ -2442,6 +2537,9 @@ async function main() {
       break;
     case 'portrait':
       await cmdPortrait(flags);
+      break;
+    case 'look':
+      await cmdLookPhotos(flags);
       break;
     case 'repaint':
       await cmdRepaint(flags);
