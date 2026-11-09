@@ -1624,12 +1624,22 @@
     </div>`;
   }
   function matchFooterHtml() {
-    return `<p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
+    // 궁합은 "둘이 맞나"까지만 말해준다. 그다음 고민("그래서 어떻게 하나")은
+    // 연애센터에 있으므로 길을 내준다. 양쪽을 서로 가리키게 둔다.
+    return `
+    <button class="rx-friend-quick-btn" id="match-goto-love" type="button" style="width:100%;margin-top:10px;">💘 연애센터에서 더 보기 ›</button>
+    <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
       사주는 일간 오행 관계, 별자리는 원소 관계, 띠는 삼합·육합·충·원진 규칙을 그대로 씁니다. 재미로 봐주세요.
     </p>`;
   }
   function wireMatchCommon(profile, m) {
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
+    const toLove = document.getElementById('match-goto-love');
+    if (toLove) {
+      toLove.addEventListener('click', () => {
+        if (window.MaumjaroLove) window.MaumjaroLove.open();
+      });
+    }
     document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
     document.getElementById('match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
       // 모드를 바꾸면 상대 선택은 비운다(사주·별자리·띠는 서로 다른 입력을 쓴다).
