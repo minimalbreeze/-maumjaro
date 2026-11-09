@@ -1028,6 +1028,9 @@ async function cmdRepaint(flags) {
   const MAX_ATTEMPTS = 3;
   let spent = 0;
   const made = [];
+  // 깨끗이 못 자르는 사진. 끝에 모아서 한 번에 알린다 — 사진을 바꾸는
+  // 것이 유일한 답이라 사람이 봐야 한다.
+  const needNewPhoto = [];
   for (const [i, job] of jobs.entries()) {
     log.step(`${i + 1}/${jobs.length} — ${job.file}`);
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -1037,6 +1040,15 @@ async function cmdRepaint(flags) {
         let ref = job.referenceImage;
         if (crop && attempt === 1) {
           const c = await cropToDataUri(job.referenceImage, { crop });
+          // ⚠️ 깨끗이 못 자르는 사진은 **그리지 않는다.** 반만 잘린
+          //    워터마크가 남으면 모델이 그 자리를 글자로 읽고 커다란
+          //    글자를 지어낸다(2026-11-09 고영표). 안 그리고 사진을
+          //    바꿔 달라고 하는 것이 돈도 덜 쓰고 결과도 낫다.
+          if (c.needsNewPhoto) {
+            log.warn(`   건너뜁니다 — ${c.reason}`);
+            needNewPhoto.push({ file: job.file, reason: c.reason });
+            break;
+          }
           ref = c.url;
           if (c.cropped) {
             log.raw(`   잘랐습니다 (${c.reason})`);
@@ -1076,8 +1088,16 @@ async function cmdRepaint(flags) {
   log.raw('');
   log.ok(`${made.length}장 완성 — preview/repaint/`);
   log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
-  if (made.length < jobs.length) {
-    log.warn(`${jobs.length - made.length}장 실패했습니다. 위의 오류를 보세요.`);
+  if (needNewPhoto.length) {
+    log.raw('');
+    log.warn(`⚠️ 사진 ${needNewPhoto.length}장은 **안 그렸습니다.** 워터마크를 깨끗이 못 자릅니다.`);
+    for (const n of needNewPhoto) log.raw(`   · ${n.file} — ${n.reason}`);
+    log.info('반만 잘린 워터마크가 남으면 모델이 그 자리에 글자를 지어냅니다.');
+    log.info('그래서 안 그리고 멈췄습니다. 워터마크가 아래쪽에 작게 있거나 없는 사진으로 바꿔 주세요.');
+  }
+  const failed = jobs.length - made.length - needNewPhoto.length;
+  if (failed > 0) {
+    log.warn(`${failed}장 실패했습니다. 위의 오류를 보세요.`);
   }
 }
 

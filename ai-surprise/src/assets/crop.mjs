@@ -78,6 +78,147 @@ export function cropFilter({ top, bottom, left, right } = DEFAULT_CROP) {
 }
 
 /**
+ * 아래쪽 띠를 **재서** 자른다.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 왜 재나 — 반만 자르면 안 자른 것보다 나쁘다
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 2026-11-09. 고정 12% 로 잘랐더니 박진만은 깨끗했는데 고영표는
+ * **반만 잘렸다.** 그리고 그 반쪽이 남은 그림에 모델이 커다란 글자를
+ * 지어 넣었다 — 사람이 읽을 수 없는 글자꼴이었다.
+ *
+ * 까닭은 분명하다. 글자 **조각**을 보면 모델은 그것을 글자로 알아보고
+ * "글자를 그려야 하는 자리"로 읽는다. 아예 안 보이면 안 그리지만,
+ * 반쪽이 보이면 제 마음대로 채운다. 모자 마크가 `C` 에서 `STL` 로
+ * 간 것과 같은 성질이다.
+ *
+ * **그래서 반만 자르느니 안 자르는 게 낫고, 자를 거면 끝까지 자른다.**
+ *
+ * ─────────────────────────────────────────────────────────────
+ * 어떻게 재나
+ * ─────────────────────────────────────────────────────────────
+ *
+ * 글자는 **가로 방향 밝기 변화가 많다.** 잔디·하늘·유니폼 같은 면은
+ * 적다. 그래서 줄마다 옆 픽셀과의 차이를 더해 '시끄러운 정도'를 낸다.
+ *
+ *   1. 사진을 가로 256 픽셀 회색조로 줄인다 (빠르고 충분하다)
+ *   2. 줄마다 |p[i+1] - p[i]| 를 더한다
+ *   3. 가운데 절반의 중앙값을 '보통'으로 삼는다
+ *   4. 맨 아래부터 올라가며 '보통'보다 뚜렷이 시끄러운 줄이
+ *      이어지는 곳을 찾는다 — 그게 워터마크 띠다
+ *   5. 그 띠의 **위**까지 자른다 (여유 2% 더)
+ *
+ * ⚠️ 못 하는 것은 그대로다. 사람 몸 위에 걸친 워터마크는 재도 못 자른다.
+ *    그런 것은 띠가 바닥에 안 닿으므로 여기서 안 잡히고, 사진을 바꾸는
+ *    것이 유일한 답이다.
+ */
+
+/** 재서 자를 때 아래를 최대 얼마까지 자를 수 있나. */
+export const MAX_BOTTOM = 0.28;
+
+/**
+ * 회색조 픽셀에서 줄마다 '가로 방향 시끄러움'을 낸다. 0~1.
+ * @param {Uint8Array|Buffer} gray  width*height 바이트
+ */
+export function rowNoise(gray, width, height) {
+  const out = new Array(height).fill(0);
+  for (let y = 0; y < height; y += 1) {
+    let sum = 0;
+    const base = y * width;
+    for (let x = 0; x + 1 < width; x += 1) {
+      sum += Math.abs(gray[base + x + 1] - gray[base + x]);
+    }
+    out[y] = sum / 255 / (width - 1);
+  }
+  return out;
+}
+
+/**
+ * 줄별 시끄러움에서 **바닥에 닿은 시끄러운 띠**의 높이를 비율로 낸다.
+ *
+ * 못 찾으면 null. 찾았는데 MAX_BOTTOM 을 넘으면 그 값을 그대로 돌려준다
+ * — 자를지 말지는 부르는 쪽이 정한다(반만 자르느니 안 자른다).
+ */
+export function watermarkBand(noise, { zone = 0.35 } = {}) {
+  const h = noise.length;
+  if (h < 40) return null;
+
+  // '보통'은 가운데 절반의 중앙값으로 잡는다. 위아래 가장자리에
+  // 워터마크·자막바가 있을 수 있어서 거기는 안 본다.
+  const mid = noise.slice(Math.floor(h * 0.25), Math.floor(h * 0.75)).slice().sort((a, b) => a - b);
+  const baseline = mid[Math.floor(mid.length / 2)] || 0;
+  const loud = (v) => v > baseline * 1.6 + 0.02;
+
+  // ⚠️ "맨 아랫줄이 시끄러운가"로 보면 안 된다. 워터마크 **밑에는 대개
+  //    여백이 있다** — 글자가 사진 테두리에 딱 붙어 있지 않다. 처음에
+  //    그렇게 짰다가 아무것도 못 잡았다.
+  //
+  // 그래서 아래 zone(기본 35%) 안에서 **가장 위에 있는 시끄러운 줄**을
+  // 찾고, 거기서부터 바닥까지를 띠로 본다. 여백은 자동으로 포함된다.
+  const from = Math.floor(h * (1 - zone));
+  let top = -1;
+  for (let y = from; y < h; y += 1) {
+    if (loud(noise[y])) {
+      top = y;
+      break;
+    }
+  }
+  if (top < 0) return null;
+  return (h - top) / h;
+}
+
+/** 사진을 가로 256 회색조로 펴서 돌려준다. 못 하면 null. */
+export function grayPixels(file, width = 256) {
+  const probe = spawnSync(
+    'ffprobe',
+    ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file],
+    { encoding: 'utf8' }
+  );
+  const [w0, h0] = String(probe.stdout || '').trim().split(',').map(Number);
+  if (!w0 || !h0) return null;
+  const height = Math.max(1, Math.round((h0 / w0) * width));
+  const r = spawnSync(
+    'ffmpeg',
+    ['-v', 'error', '-i', file, '-vf', `scale=${width}:${height}`, '-pix_fmt', 'gray',
+     '-f', 'rawvideo', '-'],
+    { maxBuffer: 1 << 28 }
+  );
+  if (r.status !== 0 || !r.stdout || r.stdout.length < width * height) return null;
+  return { gray: r.stdout, width, height };
+}
+
+/**
+ * 이 사진은 아래를 얼마나 잘라야 하나.
+ *
+ * @returns {{ bottom:number, 잼:boolean, 띠:number|null, 까닭:string }}
+ *   잼=false 면 못 쟀다는 뜻이고 bottom 은 기본값이다.
+ */
+export function measureBottom(file, { fallback = DEFAULT_CROP.bottom } = {}) {
+  const px = grayPixels(file);
+  if (!px) return { bottom: fallback, 잼: false, 띠: null, 까닭: '펴지 못했습니다' };
+  const band = watermarkBand(rowNoise(px.gray, px.width, px.height));
+  if (band === null) {
+    return { bottom: fallback, 잼: true, 띠: null, 까닭: '아래에 띠가 없습니다' };
+  }
+  const want = Math.min(0.95, band + 0.02); // 여유 2%
+  if (want > MAX_BOTTOM) {
+    return {
+      bottom: want,
+      잼: true,
+      띠: band,
+      까닭: `띠가 아래 ${Math.round(band * 100)}% 까지 올라옵니다 — 너무 깊습니다`,
+    };
+  }
+  return {
+    bottom: Math.max(fallback, want),
+    잼: true,
+    띠: band,
+    까닭: `아래 ${Math.round(want * 100)}% 를 자릅니다`,
+  };
+}
+
+/**
  * 주소에서 받아 자르고 **data URI** 로 돌려준다.
  *
  * data URI 로 보내는 까닭: Replicate 에 파일을 올리려면 따로 올리는
@@ -90,7 +231,7 @@ export function cropFilter({ top, bottom, left, right } = DEFAULT_CROP) {
  *
  * @returns { url, cropped, reason }
  */
-export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch } = {}) {
+export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch, measure = true } = {}) {
   if (!/^https?:\/\//.test(String(url || ''))) {
     return { url, cropped: false, reason: '주소가 아닙니다' };
   }
@@ -114,9 +255,31 @@ export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch 
     const outFile = path.join(dir, 'out.png');
     fs.writeFileSync(inFile, buf);
 
+    // ── 아래 띠를 재서 자른다 ──
+    //
+    // 고정 비율로 자르면 사진마다 워터마크 크기가 달라 **반만 잘린다.**
+    // 반쪽이 남으면 모델이 그 자리를 글자로 읽고 제 마음대로 채운다
+    // (2026-11-09 고영표). 그래서 재고, 못 재거나 너무 깊으면 **안 자른다.**
+    let use = crop;
+    let 잰말 = '';
+    if (measure) {
+      const m = measureBottom(inFile, { fallback: crop.bottom });
+      잰말 = ` · ${m.까닭}`;
+      if (m.bottom > MAX_BOTTOM) {
+        // 반만 자르느니 안 자른다. 원본을 그대로 보내고 사람에게 알린다.
+        return {
+          url,
+          cropped: false,
+          reason: `${m.까닭}. 반만 자르면 모델이 글자를 지어냅니다 — 다른 사진이 필요합니다`,
+          needsNewPhoto: true,
+        };
+      }
+      use = { ...crop, bottom: m.bottom };
+    }
+
     const r = spawnSync(
       'ffmpeg',
-      ['-y', '-loglevel', 'error', '-i', inFile, '-vf', cropFilter(crop), outFile],
+      ['-y', '-loglevel', 'error', '-i', inFile, '-vf', cropFilter(use), outFile],
       { encoding: 'utf8' }
     );
     if (r.status !== 0 || !fs.existsSync(outFile)) {
@@ -127,7 +290,7 @@ export async function cropToDataUri(url, { crop = DEFAULT_CROP, fetchFn = fetch 
     return {
       url: `data:image/png;base64,${out.toString('base64')}`,
       cropped: true,
-      reason: `${buf.length}바이트 → ${out.length}바이트`,
+      reason: `${buf.length}바이트 → ${out.length}바이트${잰말}`,
     };
   } catch (e) {
     return { url, cropped: false, reason: e.message };

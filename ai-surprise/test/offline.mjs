@@ -6872,6 +6872,86 @@ await asyncTest('자르기가 실패해도 그림은 만든다', async () => {
   assert.equal(notUrl.cropped, false);
 });
 
+// ════════════════════════════════════════════════════════════
+// 반만 자르면 안 자른 것보다 나쁘다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 고정 12% 로 잘랐더니 박진만은 깨끗했는데 고영표는 **반만 잘렸다.**
+// 그 반쪽이 남은 그림에 모델이 커다란 글자를 지어 넣었다.
+//
+// 운영자: "박진만은 잘 잘렸는데, 고영표는 반만 잘렸다 왜 이러나"
+//
+// 글자 조각을 보면 모델은 "글자를 그려야 하는 자리"로 읽는다.
+// 모자 마크가 C → STL 로 간 것과 같은 성질이다.
+section('4-u2. 아래 띠를 재서 자른다');
+
+test('워터마크 밑의 여백 때문에 바닥 줄만 보면 못 잡는다', () => {
+  // ⚠️ 처음에 "맨 아랫줄이 시끄러운가"로 짰다가 **아무것도 못 잡았다.**
+  //    워터마크는 사진 테두리에 딱 붙어 있지 않고 밑에 여백이 있다.
+  const h = 200;
+  const noise = new Array(h).fill(0.01); // 조용한 사진
+  for (let y = 150; y < 170; y += 1) noise[y] = 0.4; // 글자 띠
+  // 170~199 는 여백이라 조용하다 — 바닥 줄은 시끄럽지 않다.
+  const band = CR.watermarkBand(noise);
+  assert.ok(band !== null, '밑에 여백이 있으면 못 잡습니다 — 바닥 줄만 보면 안 됩니다');
+  // 띠 꼭대기(150)부터 바닥까지를 잘라야 한다. (200-150)/200 = 25%
+  assert.ok(band > 0.2 && band < 0.3, `띠가 ${(band * 100).toFixed(0)}% 로 나왔습니다`);
+});
+
+test('조용한 사진에서는 띠를 만들어내지 않는다', () => {
+  assert.equal(CR.watermarkBand(new Array(200).fill(0.01)), null);
+});
+
+await asyncTest('큰 워터마크는 더 깊이, 작은 것은 기본만큼 자른다', async () => {
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const draw = (name, text, size, up) => {
+    const f = path.join(TMP, name);
+    spawnSync('ffmpeg', [
+      '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=#3a6b4a:s=800x600',
+      '-vf', `drawtext=text='${text}':fontsize=${size}:fontcolor=white:x=(w-tw)/2:y=h-${up}`,
+      '-frames:v', '1', f,
+    ]);
+    return f;
+  };
+
+  const big = CR.measureBottom(draw('wm-big.png', 'SPORTS NEWS', 60, 110));
+  const small = CR.measureBottom(draw('wm-small.png', 'news1', 22, 34));
+
+  // 큰 것은 기본값보다 깊이 자른다 — 안 그러면 **반만 잘린다.**
+  assert.ok(
+    big.bottom > CR.DEFAULT_CROP.bottom,
+    `큰 워터마크인데 기본값(${CR.DEFAULT_CROP.bottom})만 잘랐습니다: ${big.bottom}`
+  );
+  // 작은 것도 최소 기본값은 자른다.
+  assert.ok(small.bottom >= CR.DEFAULT_CROP.bottom);
+  // 둘 다 상한 안이라 그릴 수 있다.
+  assert.ok(big.bottom <= CR.MAX_BOTTOM);
+});
+
+await asyncTest('너무 깊으면 반만 자르지 않고 아예 안 그린다', async () => {
+  // ⚠️ 이것이 이 변경의 핵심이다. 깨끗이 못 자를 바에는 **안 그린다.**
+  //    반쪽이 남은 그림을 받느니 사진을 바꾸는 쪽이 싸고 확실하다.
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const f = path.join(TMP, 'wm-deep.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=#3a6b4a:s=800x600',
+    '-vf', "drawtext=text='WATERMARK':fontsize=70:fontcolor=white:x=(w-tw)/2:y=h-220",
+    '-frames:v', '1', f,
+  ]);
+  const m = CR.measureBottom(f);
+  assert.ok(m.bottom > CR.MAX_BOTTOM, `상한(${CR.MAX_BOTTOM})을 안 넘었습니다: ${m.bottom}`);
+
+  const buf = fs.readFileSync(f);
+  const r = await CR.cropToDataUri('https://fake/deep.png', {
+    fetchFn: async () => new Response(buf, { status: 200 }),
+  });
+  assert.equal(r.cropped, false);
+  assert.equal(r.needsNewPhoto, true, '사진을 바꿔 달라고 말하지 않았습니다');
+  assert.equal(r.url, 'https://fake/deep.png');
+});
+
 section('4-w. 체격은 숫자로 적는다');
 
 // ── 무엇을 잡는가 ──
