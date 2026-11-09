@@ -114,4 +114,80 @@ check('예시 표시가 다음 문장에 있으면 가리지 않는다', () => {
   assert.equal(예시인가('a.co.kr 같은 꼴입니다', 0, 7), true);
 });
 
+// ── ② 태그 밖에 글자로 적힌 주소 (2026-11-09) ──────────────────────
+//
+// 전수 점검에서 걸린 150편 중 **대부분이 이쪽**이다. 구단 스토어 글은
+// 주소를 코드로 적어서 ①이 잡지만, 중계 허브·시설 글은 문장 안에 그냥
+// 적혀 있다.
+const 표2 = new Map([
+  ['kovo.co.kr', 'https://www.kovo.co.kr/'],
+  ['ktwizstore.co.kr', 'https://www.ktwizstore.co.kr/'],
+]);
+
+check('문장 안의 http 주소를 링크로 바꾼다', () => {
+  const r = 링크로바꾸기('<p>순위는 https://kovo.co.kr/ 에서 봅니다</p>', 표2);
+  assert.deepEqual(r.바꾼것.map((b) => b.글자), ['https://kovo.co.kr/']);
+  assert.ok(r.html.includes('rel="nofollow"'), r.html);
+});
+
+// ⚠️ 이게 미뤘던 이유였다. 다시 보니 경계 검사가 조사를 호스트의 일부로
+//    보지 않아 `에서` 가 링크 밖에 그대로 남는다. 그게 맞는 결과다.
+check('조사가 붙어 있어도 호스트만 감싼다 (kovo.co.kr에서)', () => {
+  const r = 링크로바꾸기('<p>kovo.co.kr에서 확인하세요</p>', 표2);
+  assert.deepEqual(r.바꾼것.map((b) => b.글자), ['kovo.co.kr']);
+  assert.ok(r.html.includes('</a>에서 확인하세요'), r.html);
+});
+
+check('www 가 붙은 꼴도 잡는다', () => {
+  const r = 링크로바꾸기('<p>www.kovo.co.kr 입니다</p>', 표2);
+  assert.deepEqual(r.바꾼것.map((b) => b.글자), ['www.kovo.co.kr']);
+});
+
+// ⚠️ ① 이 `<code>` 안에 만든 `<a>` 를 ② 가 다시 감싸면 `<a><a>` 가 된다.
+//    그래서 ② 전에 한 번 더 비켜 둔다. 이 검사가 그것을 지킨다.
+check('코드와 맨글자가 섞여도 같은 주소를 두 번 감싸지 않는다', () => {
+  const 본문 = '<p><code>ktwizstore.co.kr</code> 과 https://kovo.co.kr/</p>';
+  const r = 링크로바꾸기(본문, 표2);
+  assert.equal(r.바꾼것.length, 2);
+  assert.ok(!/<a[^>]*>[^<]*<a/.test(r.html), `이중으로 감쌌습니다: ${r.html}`);
+  assert.ok(링크만바뀌었나(본문, r.html));
+});
+
+check('문장 안의 주소도 쿠팡 블록 안이면 건드리지 않는다', () => {
+  const r = 링크로바꾸기('<!-- wp:html --><p>kovo.co.kr</p><!-- /wp:html -->', 표2);
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('문장 안의 주소도 예시로 든 것이면 건드리지 않는다', () => {
+  const r = 링크로바꾸기('<p>kovo.co.kr 같은 꼴</p>', 표2);
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('설정에 없는 호스트는 문장 안에서도 그대로 둔다', () => {
+  const 본문 = '<p>https://sooplive.com/x 에서 봅니다</p>';
+  const r = 링크로바꾸기(본문, 표2);
+  assert.deepEqual(r.바꾼것, []);
+  assert.equal(r.html, 본문);
+});
+
+// ⚠️ 아무 도메인꼴을 긁으면 평균자책점·승률까지 먹는다. 설정에 있는
+//    호스트만 노리므로 숫자는 애초에 후보가 아니다.
+check('숫자를 주소로 잡지 않는다', () => {
+  const 본문 = '<p>평균 3.52 와 승률 0.667 입니다</p>';
+  const r = 링크로바꾸기(본문, 표2);
+  assert.deepEqual(r.바꾼것, []);
+  assert.equal(r.html, 본문);
+});
+
+check('꼬리 부호는 링크 밖에 남는다', () => {
+  const r = 링크로바꾸기('<p>(kovo.co.kr) 참고</p>', 표2);
+  assert.deepEqual(r.바꾼것.map((b) => b.글자), ['kovo.co.kr']);
+  assert.ok(r.html.includes('</a>) 참고'), r.html);
+});
+
+check('KOVO 가 실제 설정에 들어 있다', () => {
+  const 표실제 = 확인된주소표();
+  assert.equal(표실제.get('kovo.co.kr'), 'https://www.kovo.co.kr/');
+});
+
 console.log(`\n  ${passed}개 통과`);
