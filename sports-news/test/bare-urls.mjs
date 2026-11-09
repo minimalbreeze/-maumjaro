@@ -1,6 +1,6 @@
 // 누를 수 없는 주소 세기 검사.
 import assert from 'node:assert/strict';
-import { 맨주소찾기, 셀자리만, 안내인가, 안내문맥, 꼬리떼기 } from '../src/wordpress/bare-urls.mjs';
+import { 맨주소찾기, 셀자리만, 안내인가, 안내문맥, 꼬리떼기, 조사들 } from '../src/wordpress/bare-urls.mjs';
 
 let passed = 0;
 function check(name, fn) {
@@ -110,6 +110,42 @@ check('꼬리떼기() 가 괄호·콜론·따옴표를 뗀다', () => {
 
 check('주소 가운데의 점·슬래시는 지킨다', () => {
   assert.equal(꼬리떼기('https://a.co.kr/b/c?d=1'), 'https://a.co.kr/b/c?d=1');
+});
+
+// ── 주소 뒤에 붙은 한국어 조사 (2026-11-09) ──────────────────────────
+//
+// 점검에서 `https://tvnsports.cjenm.com/ko에서` 와
+// `https://feverapp.com/koreaopen을` 이 **맨글자 주소**로 남아 있었다.
+// 조사가 붙은 채로는 호스트를 읽어도 링크 주소가 틀린다.
+
+check('주소 끝의 조사를 뗀다', () => {
+  assert.equal(꼬리떼기('https://tvnsports.cjenm.com/ko에서'), 'https://tvnsports.cjenm.com/ko');
+  assert.equal(꼬리떼기('https://feverapp.com/koreaopen을'), 'https://feverapp.com/koreaopen');
+  assert.equal(꼬리떼기('https://a.com/x으로'), 'https://a.com/x');
+});
+
+// ⚠️ 한글을 무조건 떼면 주소 안의 한글 경로가 잘린다. 실제로 있는 주소다.
+check('주소 안의 한글 경로는 자르지 않는다', () => {
+  assert.equal(꼬리떼기('interparkmdshop.com/category/키움히어로즈/29/'), 'interparkmdshop.com/category/키움히어로즈/29/');
+  assert.equal(꼬리떼기('https://a.com/길에서'), 'https://a.com/길에서');
+});
+
+check('조사를 뗀 뒤 드러난 문장부호도 뗀다', () => {
+  assert.equal(꼬리떼기('https://a.com/b에서,'), 'https://a.com/b');
+  assert.equal(꼬리떼기('https://a.com/b에서).'), 'https://a.com/b');
+});
+
+// ⚠️ 긴 조사가 목록 앞에 있어야 한다. `에` 가 먼저 걸리면 `서` 가 남는다.
+check('조사 목록은 긴 것이 앞에 있다', () => {
+  const i에 = 조사들.indexOf('에');
+  const i에서 = 조사들.indexOf('에서');
+  assert.ok(i에서 < i에, `에서(${i에서}) 가 에(${i에}) 보다 뒤에 있습니다`);
+  assert.ok(조사들.indexOf('으로') < 조사들.indexOf('로'), '으로 가 로 보다 뒤에 있습니다');
+});
+
+check('꼬리에 아무것도 없으면 그대로 둔다', () => {
+  assert.equal(꼬리떼기('https://www.kovo.co.kr/'), 'https://www.kovo.co.kr/');
+  assert.equal(꼬리떼기('kpga7330.com'), 'kpga7330.com');
 });
 
 console.log(`\n  ${passed}개 통과`);
