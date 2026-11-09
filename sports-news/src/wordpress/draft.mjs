@@ -31,6 +31,24 @@ export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: 
       if (img?.html) out.push(img.html);
       continue;
     }
+    // 이미 워드프레스 블록으로 적힌 덩어리는 **그대로 내보낸다** (2026-11-09).
+    //
+    // 효성님이 기사 이미지를 "그대로 끼워 넣으면 안 되나" 고 물어 `upload-url`
+    // 로 미디어에 올렸는데, 그 블록을 초안에 붙였더니 **글자로 escape 돼서
+    // 본문에 HTML 코드가 그대로 보였다.** 변환기는 모르는 것을 문단으로 싸기
+    // 때문이다.
+    //
+    // 여는 주석과 닫는 주석이 **짝이 맞을 때만** 통과시킨다. 반쪽만 적힌
+    // 덩어리를 그대로 내보내면 뒤 본문까지 그 블록 안으로 빨려 들어간다.
+    if (/^<!--\s*wp:[a-z]/i.test(block)) {
+      const 여는것 = (block.match(/<!--\s*wp:[a-z][\w/-]*/gi) || []).length;
+      const 닫는것 = (block.match(/<!--\s*\/wp:[a-z][\w/-]*\s*-->/gi) || []).length;
+      // 자기완결 블록(`<!-- wp:foo /-->`)은 닫는 주석이 없다. 그것까지 센다.
+      const 혼자 = (block.match(/<!--\s*wp:[^>]*\/-->/gi) || []).length;
+      if (여는것 === 닫는것 + 혼자) { out.push(block); continue; }
+      // 짝이 안 맞으면 통과시키지 않는다 — 아래로 흘러가 문단이 된다.
+      // 글자로 보이는 쪽이 본문이 깨지는 쪽보다 낫고, 눈에 띄어 고쳐진다.
+    }
     if (block === '<!--AD-->') {
       if (ad) out.push(ad);
       continue;
