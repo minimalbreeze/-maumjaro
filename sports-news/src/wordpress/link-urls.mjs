@@ -50,7 +50,7 @@ import { 손대도되는글인가 } from './noindex.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { 링크 } from './draft.mjs';
 import { loadOfficialLinks } from '../seo/official-banner.mjs';
-import { 셀자리만, 안내인가, 예시인가, 꼬리떼기 } from './bare-urls.mjs';
+import { 셀자리만, 안내문맥인가, 예시문맥인가, 꼬리떼기 } from './bare-urls.mjs';
 import { log } from '../utils/logger.mjs';
 import { 발행글전부 } from './index-audit.mjs';
 
@@ -87,6 +87,37 @@ export function 확인된주소표(cfg = loadOfficialLinks()) {
   for (const it of Object.values((cfg && cfg.byPost) || {})) 넣기(it && it.url);
   for (const s of (cfg && cfg.sites) || []) 넣기(s && s.url);
   return 표;
+}
+
+/**
+ * **그 자리**의 앞뒤를 보고 건드리면 안 되는 문맥인지 가린다.
+ *
+ * ⚠️ 2026-11-09 에 이것 때문에 한화 글(15783)의 안전 안내 문장까지
+ *    링크가 됐다. 전에는 이렇게 짰다.
+ *
+ *      안내인가(셀수있는, 셀수있는.indexOf(글자))
+ *
+ *    `indexOf` 는 **첫 번째 자리**만 돌려준다. 한화 글에는 같은 주소가
+ *    여섯 번 나오는데, 첫 자리가 안내 문장이 아니면 **나머지 다섯이
+ *    전부 통과**한다. 전수 점검에서 "안전 안내로 건너뛴 주소 0개" 가
+ *    찍혀서 알았다 — 숫자를 안 봤으면 그냥 끝냈을 자리다.
+ *
+ *    이번 건의 결과는 나쁘지 않았다(그 주소가 가리키는 곳이 맞는 가게다).
+ *    그래도 고치는 이유는, 롯데 글처럼 **예시로 든 주소가 그 글에 두 번
+ *    나오면** 같은 버그가 엉뚱한 가게로 보내기 때문이다.
+ *
+ * 그래서 지금 치환하는 **그 자리**를 기준으로 앞뒤 창을 떠서 본다.
+ * 태그를 걷어낸 글자로 보되, 창 안에서 주소의 자리를 다시 찾는다.
+ */
+export function 건드리면안되는자리인가(html, 자리, 글자) {
+  const 본문 = String(html);
+  // **앞·뒤를 따로 떠서** 넘긴다. 자리를 다시 찾지 않으므로 같은 주소가
+  // 여러 번 나와도 헷갈리지 않는다 — 그게 이 버그의 뿌리였다.
+  const 앞 = 본문.slice(Math.max(0, 자리 - 240), 자리).replace(/<[^>]*>/g, ' ');
+  const 뒤통째 = 본문.slice(자리).replace(/<[^>]*>/g, ' ');
+  const 주소자리 = 뒤통째.indexOf(글자);
+  const 주소뒤 = 주소자리 >= 0 ? 뒤통째.slice(주소자리 + 글자.length) : 뒤통째;
+  return 안내문맥인가(앞) || 예시문맥인가(주소뒤);
 }
 
 /** 코드 태그 안의 글자가 주소 꼴인가. */
@@ -143,16 +174,16 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
   let html = 비켜둔것;
 
   // ① <code>·<kbd> 안의 주소
-  html = html.replace(/<(code|kbd)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (전체, 태그, 속성, 속) => {
+  html = html.replace(/<(code|kbd)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (전체, 태그, 속성, 속, m_index) => {
     const 글자 = 꼬리떼기(속.replace(/<[^>]*>/g, '').trim());
     if (!글자 || !주소꼴(글자)) return 전체;
     const h = 호스트(글자);
     const url = h && 표.get(h);
     if (!url) return 전체;
     // 안내 문맥(가짜 사이트 가르기)이나 **예시로 든 주소**면 건드리지 않는다.
-    const 자리 = 셀수있는.indexOf(글자);
-    if (자리 >= 0 && 안내인가(셀수있는, 자리)) return 전체;
-    if (자리 >= 0 && 예시인가(셀수있는, 자리, 글자.length)) return 전체;
+    // ⚠️ `indexOf` 로 첫 자리만 보면 같은 주소가 여러 번 나오는 글에서
+    //    나머지가 전부 통과한다(한화 글에서 실제로 그랬다). 지금 이 자리를 본다.
+    if (건드리면안되는자리인가(원본, m_index, 글자)) return 전체;
     바꾼것.push({ 글자, url });
     // 코드 모양은 그대로 두고 **그 안을** 링크로 감싼다 — 주소라는 표시가
     // 코드 글꼴이라, 걷어내면 글이 달라 보인다.
@@ -182,9 +213,7 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
     const h = 호스트(깎은것);
     const url = h && 표.get(h);
     if (!url) return null;
-    if (안내인가(셀수있는, 셀수있는.indexOf(깎은것))) return null;
-    const 셀자리 = 셀수있는.indexOf(깎은것);
-    if (셀자리 >= 0 && 예시인가(셀수있는, 셀자리, 깎은것.length)) return null;
+    if (건드리면안되는자리인가(html2, 자리, 깎은것)) return null;
     바꾼것.push({ 글자: 깎은것, url });
     // 꼬리로 떼어낸 부호는 링크 밖에 그대로 남긴다.
     return 링크(깎은것, url) + 전체.slice(깎은것.length);

@@ -66,11 +66,7 @@ export const 안내문맥 = [
 export const 예시표시 = ['같은 꼴', '같은 식', '같은 모양', '같은 경우', '꼴로', '식으로', '처럼'];
 
 export function 예시인가(본문, 자리, 길이) {
-  const 뒤 = 본문.slice(자리 + 길이, 자리 + 길이 + 30);
-  // 문장 끝을 넘어가면 다른 문장의 말이다.
-  const 끊을자리 = 뒤.search(/[.?!\n]/);
-  const 볼것 = 끊을자리 >= 0 ? 뒤.slice(0, 끊을자리) : 뒤;
-  return 예시표시.some((말) => 볼것.includes(말));
+  return 예시문맥인가(String(본문).slice(자리 + 길이, 자리 + 길이 + 30));
 }
 
 /** 끝이 이것이면 주소로 본다. 너무 넓히면 "3.5" 같은 숫자를 먹는다. */
@@ -118,12 +114,34 @@ export function 꼬리떼기(s) {
  *    "깨끗하다"고 거짓 보고하는 꼴이라 가장 나쁜 방향이다.
  *    그래서 문장 끝(. ? ! 。 줄바꿈)에서 끊고, 거기서도 80자까지만 본다.
  */
-export function 안내인가(본문, 자리) {
-  let 앞 = 본문.slice(Math.max(0, 자리 - 80), 자리);
+/**
+ * 주소 **바로 앞의 글자**만 받아 안전 안내인지 가린다.
+ *
+ * ⚠️ 자리(index)를 받던 함수가 문제였다. 같은 주소가 한 글에 여러 번
+ *    나오면 `indexOf` 가 **첫 자리**만 돌려주고, 그 자리의 문맥으로
+ *    나머지 전부를 판정했다. 한화 글(15783)에 같은 주소가 여섯 번
+ *    나와서 안전 안내 문장까지 링크가 됐다.
+ *    앞글자를 직접 받으면 부르는 쪽이 **그 자리**를 떠서 주므로
+ *    헷갈릴 자리가 없다.
+ */
+export function 안내문맥인가(앞글자) {
+  let 앞 = String(앞글자 || '').slice(-80);
   const 끊을자리 = Math.max(앞.lastIndexOf('.'), 앞.lastIndexOf('?'), 앞.lastIndexOf('!'),
     앞.lastIndexOf('。'), 앞.lastIndexOf('\n'));
   if (끊을자리 >= 0) 앞 = 앞.slice(끊을자리 + 1);
   return 안내문맥.some((말) => 앞.includes(말));
+}
+
+/** 주소 **바로 뒤의 글자**만 받아 예시로 든 자리인지 가린다. */
+export function 예시문맥인가(뒤글자) {
+  const 뒤 = String(뒤글자 || '').slice(0, 30);
+  const 끊을자리 = 뒤.search(/[.?!\n]/);
+  const 볼것 = 끊을자리 >= 0 ? 뒤.slice(0, 끊을자리) : 뒤;
+  return 예시표시.some((말) => 볼것.includes(말));
+}
+
+export function 안내인가(본문, 자리) {
+  return 안내문맥인가(String(본문).slice(Math.max(0, 자리 - 80), 자리));
 }
 
 /**

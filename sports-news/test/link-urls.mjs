@@ -190,4 +190,42 @@ check('KOVO 가 실제 설정에 들어 있다', () => {
   assert.equal(표실제.get('kovo.co.kr'), 'https://www.kovo.co.kr/');
 });
 
+// ── 같은 주소가 여러 번 나와도 자리마다 판정한다 (2026-11-09) ─────────
+//
+// ⚠️ 전수 점검 재확인에서 **"안전 안내로 건너뛴 주소 0개"** 가 찍혀서 알았다.
+//    한화 글(15783)의 "주소창 도메인이 … 인지 확인하라" 문장까지 링크가 됐다.
+//
+//    원인은 `안내인가(본문, 본문.indexOf(글자))` 였다. `indexOf` 는
+//    **첫 자리**만 돌려주고, 그 자리의 문맥으로 나머지 전부를 판정한다.
+//    한화 글에 같은 주소가 여섯 번 나와서 다섯이 통과했다.
+//
+//    이번 건의 결과는 나쁘지 않았다 — 그 주소가 가리키는 곳이 맞는 가게다.
+//    고치는 이유는 롯데 글처럼 **예시로 든 주소가 두 번 나오면** 같은
+//    버그가 독자를 엉뚱한 가게로 보내기 때문이다.
+//
+//    숫자를 안 봤으면 그냥 끝냈을 자리다.
+check('같은 주소가 세 번 나오면 안내 문장의 하나만 건너뛴다', () => {
+  const 표3 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
+  const 본문 = '<p>주소: <code>hanwhaeagles.co.kr</code></p>'
+    + '<p>가짜 쇼핑몰 주의 — 주소창 도메인이 <code>hanwhaeagles.co.kr</code> 인지 확인하세요.</p>'
+    + '<p>또 <code>hanwhaeagles.co.kr</code> 입니다</p>';
+  const r = 링크로바꾸기(본문, 표3);
+  assert.equal(r.바꾼것.length, 2, '안내 문장의 주소까지 바꿨습니다');
+  assert.ok(r.html.includes('<code>hanwhaeagles.co.kr</code> 인지'), '안내 문장이 글자로 남지 않았습니다');
+});
+
+check('예시로 든 주소가 두 번 나오면 둘 다 건너뛴다', () => {
+  const r = 링크로바꾸기(
+    '<p>(<code>ktwizstore.co.kr</code> 같은 꼴)</p><p>또 (<code>ktwizstore.co.kr</code> 같은 꼴)</p>',
+    표2,
+  );
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('문장 안의 주소도 안내 문맥이면 건너뛴다', () => {
+  const 표3 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
+  const r = 링크로바꾸기('<p>주소창 도메인이 hanwhaeagles.co.kr 인지 확인</p>', 표3);
+  assert.deepEqual(r.바꾼것, []);
+});
+
 console.log(`\n  ${passed}개 통과`);
