@@ -81,12 +81,38 @@ export const REPAINT_DROP =
   'flat cel-shaded colour with inked linework, the whole frame repainted ' +
   'including the background and the crowd';
 
+/**
+ * 워터마크와 글자를 지운다.
+ *
+ * 2026-11-09 운영자: "다만 워터마크는 꼭! 지워라."
+ *
+ * ⚠️ **따로 지우는 단계가 아니다.** 이 모델은 화면 전체를 다시 그린다.
+ *    제대로 다시 그려지면 워터마크는 애초에 남지 않는다 — 그림에는
+ *    그런 게 없으니까.
+ *
+ *    그래서 워터마크가 **남아 있다면 그건 변환이 약했다는 신호**다.
+ *    사진이 그만큼 그대로 통과했다는 뜻이고, 그러면 "감독 얼굴이 그냥
+ *    얼굴이잖아"(2026-11-04)와 같은 문제가 같이 와 있다.
+ *
+ *    아래 줄은 그래서 "지워라"가 아니라 **"그런 건 그림에 없다"**로
+ *    적는다. 모델에게 지우라고 시키는 것보다 애초에 없는 것으로 두는
+ *    쪽이 잘 먹는다.
+ *
+ * ⚠️ 그리고 애초에 **워터마크가 없는 사진**을 받는 쪽이 낫다. 지우는
+ *    품을 들일 필요가 없고 결과도 깨끗하다.
+ */
+export const REPAINT_CLEAN =
+  'the finished picture is a clean drawing with nothing overlaid on it: ' +
+  'no watermark, no logo stamp, no agency mark, no caption bar, ' +
+  'no date stamp, no text of any kind anywhere in the frame';
+
 /** 한 장에 보낼 지시문. */
-export function repaintPrompt(person) {
+export function repaintPrompt(person, shot = null) {
   const bits = [
     `Turn this photograph into ${SPORTS_PAINT}.`,
     REPAINT_KEEP,
     REPAINT_DROP,
+    REPAINT_CLEAN,
   ];
   // 사람 기록에 팀이 있으면 유니폼 색이 어긋나지 않게 덧붙인다.
   // ⚠️ 다만 **바꾸라고는 하지 않는다.** 사진에 이미 그 팀 유니폼이
@@ -94,7 +120,10 @@ export function repaintPrompt(person) {
   //    "사진에 있는 유니폼을 그대로 두라"가 맞다.
   bits.push('keep the uniform, the cap and the number exactly as they appear in the photograph');
   if (person?.name) bits.push('keep the same person, the same face');
-  return bits.join(' ');
+  // 그 사진을 어디에 쓸지 적어 두면 사람이 결과를 고를 때 편하다.
+  // 모델에게 보내는 글에는 넣지 않는다 — 한국어고, 지시가 아니다.
+  if (shot?.쓰임) bits.push('');
+  return bits.join(' ').trim();
 }
 
 /**
@@ -110,19 +139,51 @@ export function repaintJobs(people, { spare = false } = {}) {
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
     if (!name) continue;
-    // 본 사진을 쓰고, spare 를 켜면 예비도 같이 바꿔 본다. 어느 사진이
-    // 더 잘 나오는지는 돌려 봐야 안다 — 내가 사진을 못 열기 때문이다.
-    const urls = [String(p?.photo || '').trim()];
-    if (spare) urls.push(String(p?.photo_예비 || '').trim());
+
+    // ── 사진을 어디서 읽나 (2026-11-09) ──
+    //
+    // 운영자가 구조를 정했다 — "필요한 중요 사진의 이미지는 내가 url 로
+    // 준다. 사람별로 몇 장이 필요한지 주면 맞춰서 URL 을 주겠다."
+    //
+    // 그래서 **사람당 여러 장**을 받는다. 전에는 photo 와 photo_예비
+    // 둘뿐이었는데, 그건 "얼굴 한 장만 참조한다"는 전제에서 나온 모양이다.
+    // 이제는 샷마다 다른 자세의 사진이 필요하므로 배열로 받는다.
+    //
+    //   photos: [
+    //     { url: '...', 쓰임: '유격수 수비 자세' },
+    //     { url: '...', 쓰임: '타석에서 치는 순간' },
+    //   ]
+    //
+    // ⚠️ 옛 모양(photo / photo_예비)도 그대로 읽는다. 1~11화의 기획
+    //    파일이 그 모양이고, 그걸 한꺼번에 고치면 지금 돌아가는 것을
+    //    깨뜨린다. 둘 다 받아서 이어 붙인다.
+    const shots = [];
+    for (const row of Array.isArray(p?.photos) ? p.photos : []) {
+      const url = String(row?.url || row || '').trim();
+      if (url) shots.push({ url, 쓰임: String(row?.쓰임 || '').trim() });
+    }
+    // 옛 모양. photos 가 있으면 본 사진은 이미 거기 있을 테니 더하지 않는다.
+    if (!shots.length) {
+      const main = String(p?.photo || '').trim();
+      if (main) shots.push({ url: main, 쓰임: '' });
+      if (spare) {
+        const sp = String(p?.photo_예비 || '').trim();
+        if (sp) shots.push({ url: sp, 쓰임: '예비' });
+      }
+    }
 
     let made = 0;
-    for (const [i, url] of urls.entries()) {
-      if (!/^https?:\/\//.test(url)) continue;
+    for (const [i, shot] of shots.entries()) {
+      if (!/^https?:\/\//.test(shot.url)) continue;
+      // 파일 이름에 쓰임을 넣어 둔다. 사람이 결과를 고를 때 어느 것이
+      // 어느 샷인지 알아야 한다 — 나는 그림을 못 보기 때문에 더 그렇다.
+      const label = shot.쓰임 ? `-${shot.쓰임.replace(/[\/\\:*?"<>|]/g, '')}` : `-${i + 1}`;
       jobs.push({
         name,
-        file: `${name}${i ? '-예비' : ''}.png`,
-        referenceImage: url,
-        prompt: repaintPrompt(p),
+        쓰임: shot.쓰임,
+        file: `${name}${shots.length > 1 || shot.쓰임 ? label : ''}.png`,
+        referenceImage: shot.url,
+        prompt: repaintPrompt(p, shot),
       });
       made += 1;
     }

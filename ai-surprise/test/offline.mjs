@@ -6674,6 +6674,102 @@ test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
 //
 // 그래서 규칙을 하나로 못 박는다 — **체격을 말하려면 숫자를 적는다.**
 // 숫자를 못 찾으면 체격 말을 쓰지 않고 얼굴·머리·수염으로 가른다.
+// ════════════════════════════════════════════════════════════
+// 사진을 그대로 지브리로 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 운영자가 구조를 정했다.
+//
+//   "사진을 사용하는 게 아니라 사진을 지브리 스타일로 그려서 사용한다.
+//    그리고 중간 사진은 지금처럼 사용한다."
+//   "필요한 중요 사진의 이미지는 내가 url 로 준다. 사람별로 몇 장이
+//    필요한지 주면 맞춰서 URL 을 주겠다."
+//   "다만 워터마크는 꼭! 지워라."
+section('4-v. 사진을 그대로 지브리로');
+
+const RP = await import('../src/assets/repaint.mjs');
+
+test('사람당 여러 장을 받는다', () => {
+  // 샷마다 다른 자세가 필요하다. 전에는 photo 와 photo_예비 둘뿐이었는데
+  // 그건 "얼굴 한 장만 참조한다"는 전제에서 나온 모양이다.
+  const { jobs } = RP.repaintJobs([
+    {
+      name: '김도영',
+      photos: [
+        { url: 'https://a/1.jpg', 쓰임: '유격수 수비' },
+        { url: 'https://a/2.jpg', 쓰임: '타석' },
+      ],
+    },
+  ]);
+  assert.equal(jobs.length, 2);
+  // 파일 이름에 쓰임이 들어가야 한다. 결과를 고르는 것은 사람이고,
+  // 나는 그림을 못 보기 때문에 더 그렇다.
+  assert.ok(jobs.some((j) => j.file.includes('유격수 수비')));
+  assert.ok(jobs.some((j) => j.file.includes('타석')));
+});
+
+test('옛 모양(photo / photo_예비)도 그대로 돈다', () => {
+  // ⚠️ 1~11화 기획 파일이 전부 옛 모양이다. 한꺼번에 고치면 지금
+  //    돌아가는 것을 깨뜨린다. 둘 다 받는다.
+  const one = RP.repaintJobs([{ name: '구자욱', photo: 'https://b/1.jpg' }]);
+  assert.equal(one.jobs.length, 1);
+  assert.equal(one.jobs[0].file, '구자욱.png');
+
+  const two = RP.repaintJobs(
+    [{ name: '구자욱', photo: 'https://b/1.jpg', photo_예비: 'https://b/2.jpg' }],
+    { spare: true }
+  );
+  assert.equal(two.jobs.length, 2);
+});
+
+test('주소가 아니면 건너뛰고 까닭을 말한다', () => {
+  // 로컬 경로를 넣었다면 그건 사진을 저장소에 들이려는 것이고,
+  // 공개 저장소라 그건 퍼블리싱이다. 그러지 않기로 했다.
+  const { jobs, skipped } = RP.repaintJobs([
+    { name: '없는사람' },
+    { name: '로컬', photo: '스포츠영상/사진/a.jpg' },
+  ]);
+  assert.equal(jobs.length, 0);
+  assert.equal(skipped.length, 2);
+});
+
+test('워터마크를 "지워라"가 아니라 "없다"로 적는다', () => {
+  // 2026-11-09 운영자: "다만 워터마크는 꼭! 지워라."
+  //
+  // ⚠️ 따로 지우는 단계가 아니다. 이 모델은 화면 전체를 다시 그린다.
+  //    제대로 다시 그려지면 워터마크는 애초에 남지 않는다 — 그림에는
+  //    그런 게 없으니까. 그래서 "지워라"보다 **"그런 건 그림에 없다"**로
+  //    적는 쪽이 잘 먹는다.
+  //
+  //    그리고 워터마크가 **남아 있으면 변환이 약했다는 신호**다.
+  //    사진이 그만큼 그대로 통과했다는 뜻이다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  for (const must of ['no watermark', 'no logo stamp', 'no agency mark', 'no text of any kind']) {
+    assert.ok(p.includes(must), `워터마크 지시가 빠졌습니다: ${must}`);
+  }
+});
+
+test('사진의 구도와 자세를 지키라고 적는다', () => {
+  // ⚠️ 이게 이 방식을 쓰는 **까닭 전부**다. 구도를 안 지키면 그냥
+  //    비싼 그림 생성이고, 팔이 셋인 문제가 그대로 돌아온다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  assert.ok(/keep the exact same pose/.test(p));
+  assert.ok(/the same composition as the photograph/.test(p));
+  assert.ok(/keep both arms and both legs exactly where they are/.test(p));
+  // 유니폼은 **바꾸라고 하지 않는다.** 사진에 이미 그 팀 옷이 있다.
+  // 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
+  assert.ok(/keep the uniform, the cap and the number exactly as they appear/.test(p));
+});
+
+test('사진 느낌이 남지 않게 적는다', () => {
+  // 2026-11-04 운영자: "감독 얼굴이 그냥 얼굴이잖아."
+  // 사진 전체를 바탕으로 쓰면 그 함정이 더 크다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  for (const must of ['no photographic texture', 'no skin pores', 'no lens blur', 'repainted']) {
+    assert.ok(p.includes(must), `사진 느낌을 막는 줄이 빠졌습니다: ${must}`);
+  }
+});
+
 section('4-w. 체격은 숫자로 적는다');
 
 // ── 무엇을 잡는가 ──
