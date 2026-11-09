@@ -6798,6 +6798,80 @@ test('사진 느낌이 남지 않게 적는다', () => {
   }
 });
 
+// ════════════════════════════════════════════════════════════
+// 워터마크는 잘라서 없앤다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 운영자: "워터마크는 잘라내라. 100% 나오면 안 된다."
+//
+// 프롬프트로 두 번 해 봤고 두 번 다 더 나빠졌다. 모델은 프롬프트에
+// 나온 낱말을 그린다 — "하지 마라"로 적어도 그렇다.
+//
+// 그래서 방향을 바꿨다. **모델이 못 보게 한다.** 안 보이면 못 그린다.
+section('4-u. 워터마크는 잘라서 없앤다');
+
+const CR = await import('../src/assets/crop.mjs');
+
+test('자르는 식이 비율대로 나온다', () => {
+  // ffmpeg 의 crop 은 `너비:높이:x:y` 다. 입력 크기를 미리 몰라도
+  // 되도록 iw·ih 로 적는다.
+  const f = CR.cropFilter({ top: 0.04, bottom: 0.12, left: 0.04, right: 0.04 });
+  assert.equal(f, 'crop=iw*0.9200:ih*0.8400:iw*0.0400:ih*0.0400');
+  // 아래를 가장 많이 자른다 — 한국 뉴스 사진의 워터마크가 대개 거기다.
+  assert.ok(CR.DEFAULT_CROP.bottom > CR.DEFAULT_CROP.top);
+});
+
+test('너무 많이 자르지 않는다 — 사람이 잘린다', () => {
+  // ⚠️ 야구 사진은 세로로 꽉 찬 것이 많다. 아래를 20% 넘게 자르면
+  //    다리가 날아간다. 워터마크를 지우려다 그림을 버리면 안 된다.
+  const d = CR.DEFAULT_CROP;
+  assert.ok(d.bottom <= 0.2, `아래를 ${d.bottom * 100}% 자르면 다리가 날아갑니다`);
+  const 남는넓이 = (1 - d.left - d.right) * (1 - d.top - d.bottom);
+  assert.ok(남는넓이 > 0.7, `${Math.round(남는넓이 * 100)}% 밖에 안 남습니다`);
+});
+
+await asyncTest('진짜로 잘라서 data URI 로 돌려준다', async () => {
+  // 가짜 사진을 만들어 자르기 자체가 도는지 본다. 네트워크를 안 탄다.
+  if (!CR.hasFfmpeg()) return; // ffmpeg 가 없는 곳에서는 건너뛴다
+  const { spawnSync } = await import('node:child_process');
+  const tmp = path.join(TMP, 'crop-src.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=green:s=600x400', '-frames:v', '1', tmp,
+  ]);
+  const buf = fs.readFileSync(tmp);
+
+  const r = await CR.cropToDataUri('https://fake/x.png', {
+    fetchFn: async () => new Response(buf, { status: 200 }),
+  });
+  assert.ok(r.cropped, `자르지 못했습니다: ${r.reason}`);
+  assert.ok(r.url.startsWith('data:image/png;base64,'), 'data URI 가 아닙니다');
+
+  // 진짜로 잘렸는지 크기를 잰다. 600x400 의 92% x 84% = 552x336.
+  const out = path.join(TMP, 'crop-out.png');
+  fs.writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
+  const p = spawnSync(
+    'ffprobe',
+    ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', out],
+    { encoding: 'utf8' }
+  );
+  assert.equal(p.stdout.trim(), '552,336', `잘린 크기가 다릅니다: ${p.stdout.trim()}`);
+});
+
+await asyncTest('자르기가 실패해도 그림은 만든다', async () => {
+  // ⚠️ 자르기는 **있으면 좋은 것**이다. 여기서 멈추면 그림이 한 장도
+  //    안 나온다. 실패하면 원래 주소를 그대로 돌려준다.
+  const bad = await CR.cropToDataUri('https://fake/x.png', {
+    fetchFn: async () => new Response('', { status: 404 }),
+  });
+  assert.equal(bad.cropped, false);
+  assert.equal(bad.url, 'https://fake/x.png', '실패했는데 원래 주소를 안 돌려줬습니다');
+
+  // 주소가 아니면 아무것도 안 한다.
+  const notUrl = await CR.cropToDataUri('스포츠영상/사진/a.jpg');
+  assert.equal(notUrl.cropped, false);
+});
+
 section('4-w. 체격은 숫자로 적는다');
 
 // ── 무엇을 잡는가 ──

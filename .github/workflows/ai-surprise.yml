@@ -257,7 +257,12 @@ jobs:
         # 똑같이 걸렸다. 이름에 '그림' 이 또 들어갔다. 이 모드도 그림만
         # 저장할 뿐 ffmpeg 를 안 쓴다 — '후보 비교' 도 빼 둔다.
         # 새 모드를 넣을 때마다 이 줄을 먼저 본다.
-        if: ${{ (contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리')) && !contains(inputs.mode, '미리보기') && !contains(inputs.mode, '후보 비교') && !contains(inputs.mode, '인물 시트') }}
+        # 2026-11-09 '사진을 지브리로' 를 넣으면서 **처음으로 그림만
+        # 만드는 모드가 ffmpeg 를 쓰게 됐다.** 워터마크를 자르는 데
+        # 쓴다 — 운영자: "워터마크는 잘라내라. 100% 나오면 안 된다."
+        # 그래서 이 모드는 위의 '미리보기'·'후보 비교' 와 달리 **켠다.**
+        # 이름에 '그림' 이 안 들어가니 따로 적어야 한다.
+        if: ${{ (contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리') || contains(inputs.mode, '지브리로')) && !contains(inputs.mode, '미리보기') && !contains(inputs.mode, '후보 비교') && !contains(inputs.mode, '인물 시트') }}
         # 실측 24초인 단계다. 그런데 패키지 서버가 응답하지 않는 일이
         # 반복됐다 — 실행 #25 와 #26 이 **연달아** 여기서 10분을 꽉 채우고
         # 죽었다. 그대로 두면 6시간을 도므로 시간제한은 유지하되 6분으로

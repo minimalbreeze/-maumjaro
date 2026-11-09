@@ -33,6 +33,7 @@ import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
 import { repaintJobs, REPAINT_MODEL } from './assets/repaint.mjs';
 import { retryAfterMs } from './assets/images.mjs';
+import { cropToDataUri, hasFfmpeg, DEFAULT_CROP } from './assets/crop.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -971,7 +972,28 @@ async function cmdRepaint(flags) {
   const cost = Math.round(jobs.length * per * 10000) / 10000;
   log.info(`${jobs.length}장 — ${[...new Set(jobs.map((j) => j.name))].join(', ')}`);
   log.info(`예상 비용 약 $${cost} (추정치 — 이 모델은 처음 써 봅니다)`);
-  log.info('사진은 저장소에 남지 않습니다. 주소만 넘기고 Replicate 가 직접 받아 갑니다.');
+  // ── 워터마크는 **잘라서** 없앤다 (2026-11-09 운영자) ──
+  //
+  //   "워터마크는 잘라내라. 100% 나오면 안 된다."
+  //
+  // 프롬프트로 두 번 해 봤고 두 번 다 더 나빠졌다. 모델은 프롬프트에
+  // 나온 낱말을 그린다. 그래서 **아예 안 보여준다.**
+  //
+  // --no-crop 으로 끌 수 있다. 자른 자리에 사람이 걸리면 그때 쓴다.
+  const crop = flags['no-crop'] ? null : DEFAULT_CROP;
+  if (crop && !hasFfmpeg()) {
+    log.warn('ffmpeg 가 없어서 자르지 못합니다 — 워터마크가 남을 수 있습니다.');
+  } else if (crop) {
+    const pct = (x) => `${Math.round(x * 100)}%`;
+    log.info(
+      `사진 가장자리를 잘라냅니다 — 위 ${pct(crop.top)} · 아래 ${pct(crop.bottom)} · ` +
+        `좌우 ${pct(crop.left)}. 워터마크를 모델에게 안 보여주려는 것입니다.`
+    );
+    log.info('⚠️ 가운데에 걸친 워터마크는 자를 수 없습니다. 그런 사진은 바꿔야 합니다.');
+  } else {
+    log.info('자르기를 껐습니다(--no-crop).');
+  }
+  log.info('사진은 저장소에 남지 않습니다. 잘라도 그 자리에서 쓰고 버립니다.');
 
   if (flags['dry-run']) {
     log.raw('');
@@ -1010,9 +1032,22 @@ async function cmdRepaint(flags) {
     log.step(`${i + 1}/${jobs.length} — ${job.file}`);
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
+        // 자르기는 **있으면 좋은 것**이다. 실패하면 원래 주소로 간다 —
+        // 여기서 멈추면 그림이 한 장도 안 나온다.
+        let ref = job.referenceImage;
+        if (crop && attempt === 1) {
+          const c = await cropToDataUri(job.referenceImage, { crop });
+          ref = c.url;
+          if (c.cropped) {
+            log.raw(`   잘랐습니다 (${c.reason})`);
+          } else {
+            log.warn(`   자르지 못했습니다 — ${c.reason}. 원본 그대로 보냅니다.`);
+          }
+          job.referenceImage = ref;
+        }
         const r = await api.generate(job.prompt, {
           modelKey: REPAINT_MODEL,
-          referenceImage: job.referenceImage,
+          referenceImage: ref,
           aspectRatio: '16:9',
         });
         spent += r.usdEstimate ?? per;
