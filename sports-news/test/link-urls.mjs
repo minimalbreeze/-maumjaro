@@ -1,7 +1,7 @@
 // 글자로만 적힌 주소를 링크로 바꾸기 검사.
 import assert from 'node:assert/strict';
 import {
-  링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트, 주소맞추기, 우리글주소표, 태그안인가,
+  링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트, 주소맞추기, 우리글주소표, 태그안인가, 경로있나,
 } from '../src/wordpress/link-urls.mjs';
 import { 예시인가 } from '../src/wordpress/bare-urls.mjs';
 
@@ -391,6 +391,45 @@ check('안내 문장 앞에 링크가 많아도 안내로 알아본다 — 자�
     표5,
   );
   assert.deepEqual(r.바꾼것, [], '안내 문장의 주소를 링크로 만들었습니다');
+});
+
+// ── 본문에 경로가 적혀 있으면 설정 주소를 쓰지 않는다 (2026-11-09) ──────
+//
+// 미리보기가 둘을 잡았다. 적용했으면 독자가 엉뚱한 곳으로 갔다.
+//
+//   koreabaseball.com/Schedule/Schedule.aspx  →  https://www.koreabaseball.com/
+//   lpga.or.jp/en/                            →  https://www.lpga.or.jp/
+//
+// 주석에 "호스트만 적힌 자리에 깊은 경로로 보내면 안 된다"고 적어 두고
+// **반대 방향**을 안 막은 자리다.
+
+check('경로있나 — 루트만 있으면 없는 것으로 본다', () => {
+  assert.equal(경로있나('koreabaseball.com'), false);
+  assert.equal(경로있나('kovo.co.kr/'), false);
+  assert.equal(경로있나('https://www.kovo.co.kr/'), false);
+  assert.equal(경로있나('koreabaseball.com/Schedule/Schedule.aspx'), true);
+  assert.equal(경로있나('lpga.or.jp/en/'), true);
+  assert.equal(경로있나('a.com/?x=1'), true);
+});
+
+check('스킴 없이 경로만 적힌 자리는 건드리지 않는다 — https 를 내가 붙이는 꼴이다', () => {
+  const 표6 = new Map([['koreabaseball.com', 'https://www.koreabaseball.com/']]);
+  const r = 링크로바꾸기('<p>일정은 koreabaseball.com/Schedule/Schedule.aspx 에서</p>', 표6);
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('전체 주소로 경로까지 적혀 있으면 그 경로로 간다 — 설정 루트로 덮지 않는다', () => {
+  const 표6 = new Map([['lpga.or.jp', 'https://www.lpga.or.jp/']]);
+  const r = 링크로바꾸기('<p>영어판은 https://lpga.or.jp/en/ 입니다</p>', 표6);
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.equal(r.바꾼것[0].url, 'https://lpga.or.jp/en/');
+});
+
+// ⚠️ 호스트만 적힌 자리에서는 설정의 **깊은 주소**가 맞다. 사람이 고른 것이다.
+check('호스트만 적힌 자리는 설정의 깊은 주소로 보낸다', () => {
+  const 표7 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
+  const r = 링크로바꾸기('<p>구단 샵: <code>hanwhaeagles.co.kr</code></p>', 표7);
+  assert.equal(r.바꾼것[0].url, 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do');
 });
 
 console.log(`\n  ${passed}개 통과`);
