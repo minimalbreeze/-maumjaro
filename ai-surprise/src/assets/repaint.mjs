@@ -164,6 +164,24 @@ export function repaintPrompt(person, shot = null) {
   //    있을 테니, 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
   //    "사진에 있는 유니폼을 그대로 두라"가 맞다.
   bits.push('the same uniform and cap in the same colours, the same jersey number');
+  // ── 가슴은 민무늬로 다시 그린다 (2026-11-09) ──
+  //
+  // 운영자: "아직도 그대로다" — 고영표 가슴에 "읽가ㅅㅍ大".
+  //
+  // 이 경로는 uniforms.mjs 도 스타일 꼬리도 안 쓴다. 그러니 글자를
+  // 그리라고 시킨 적이 없다. 그런데도 나왔다 — **원본 사진 가슴에
+  // 있던 것**(워터마크든 재킷에 박힌 글자든)을 "그대로 두라"는 지시대로
+  // 베낀 것이다. REPAINT_KEEP 이 구도를 지키라고 세게 밀기 때문이다.
+  //
+  // Flux 는 한글을 못 쓰니 베끼면 반드시 글자꼴만 남는다. 그래서
+  // **가슴만 예외로 둔다.** 색은 지키고 무늬는 안 지킨다.
+  //
+  // ⚠️ 긍정문으로 적는다. "글자를 지워라"로 적으면 글자를 그린다 —
+  //    위 REPAINT_CLEAN 주석의 두 번 실패가 그것이다.
+  bits.push(
+    'the front of the jersey and jacket is smooth plain fabric in its own ' +
+      'colour, carrying nothing across the chest'
+  );
   if (person?.name) bits.push('keep the same person, the same face');
   // 그 사진을 어디에 쓸지 적어 두면 사람이 결과를 고를 때 편하다.
   // 모델에게 보내는 글에는 넣지 않는다 — 한국어고, 지시가 아니다.

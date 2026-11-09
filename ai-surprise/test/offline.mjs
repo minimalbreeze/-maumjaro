@@ -7182,6 +7182,32 @@ await asyncTest('모자와 가슴에 글자를 그리라고 하지 않는다', a
   assert.ok(/the number across the back/.test(p), '등번호 지시가 사라졌습니다');
 });
 
+test('리페인트도 가슴을 민무늬로 다시 그린다', () => {
+  // ⚠️ 리페인트는 uniforms.mjs 도 스타일 꼬리도 **안 쓴다.** 그래서
+  //    거기를 고쳐도 이 경로는 안 고쳐진다. 한 번 그렇게 착각해서
+  //    커밋 메시지에 원인을 잘못 적었다(2026-11-09).
+  //
+  // 이 경로에서 글자가 나오는 까닭은 다르다 — REPAINT_KEEP 이 "구도를
+  // 그대로 두라"고 세게 미니까, 원본 사진 가슴에 있던 것(워터마크든
+  // 재킷 글자든)을 모델이 베낀다. Flux 는 한글을 못 쓰니 베끼면 반드시
+  // 글자꼴만 남는다.
+  //
+  // 그래서 가슴만 예외로 둔다. 색은 지키고 무늬는 안 지킨다.
+  const p = RP.repaintPrompt({ name: '고영표' });
+  assert.ok(
+    /the front of the jersey and jacket is smooth plain fabric/.test(p),
+    '가슴 민무늬 지시가 없습니다 — 원본 사진의 가슴 글자를 베낍니다'
+  );
+  assert.ok(/carrying nothing across the chest/.test(p));
+  // 색과 등번호는 지켜야 한다. 그게 선수를 말해 주는 것이다.
+  assert.ok(/the same uniform and cap in the same colours/.test(p));
+  assert.ok(/the same jersey number/.test(p));
+  // ⚠️ 긍정문이어야 한다. 낱말을 부르면 그린다.
+  for (const w of ['watermark', 'logo', 'wordmark', 'lettering']) {
+    assert.ok(!new RegExp(w, 'i').test(p), `"${w}" 가 있습니다 — 부르면 그립니다`);
+  }
+});
+
 await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
   // uniforms.mjs 의 열 팀이 전부 'white jersey with black lettering'
   // 꼴이었다. 그것도 가슴 글자의 범인이다 — 색으로만 적는다.
