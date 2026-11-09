@@ -2202,5 +2202,16 @@
       if (catId === 'random') runRandomPrescription();
       else renderRxList(catId);
     },
+    // 처방 하나로 바로 보낸다(love.js가 쓴다). 카테고리 목록을 한 번 거치지 않는 것은,
+    // 보낸 쪽이 이미 "이 고민에는 이 처방"까지 정해 뒀는데 목록을 보여주면 그 선택이
+    // 버려지기 때문이다. id가 없으면 카테고리 목록으로 떨어진다.
+    goToRx(prescriptionId, fromCatId) {
+      const rxTabBtn = document.querySelector('.tab-btn[data-view="rx"]');
+      if (rxTabBtn) rxTabBtn.click();
+      const cat = fromCatId || null;
+      if (ALL_PRESCRIPTIONS.some((p) => p.id === prescriptionId)) renderRxDetail(prescriptionId, cat);
+      else if (cat) renderRxList(cat);
+      else renderRxGrid();
+    },
   };
 })();
