@@ -6587,6 +6587,487 @@ await asyncTest('이름을 쉼표로 셋 이상 이으면 잡는다', async () =
 // 이 묶음이 지키는 것은 하나다 — **유니폼을 설계 AI 에게 맡기지
 // 않는다.** 전에는 look 문장에 색을 적어 두고 그 AI 가 베껴 주기를
 // 부탁했다. 안 베끼면 색이 사라진다. 그게 "완전 다른 색상"이었다.
+// ════════════════════════════════════════════════════════════
+// 11화 대본을 읽혀 보고 찾은 것들 (2026-11-08)
+// ════════════════════════════════════════════════════════════
+//
+// 한국시리즈 편을 쓰고 대본 전체를 speechText 에 넣어 봤다. 다섯 군데가
+// 틀렸다. 전부 **읽는 쪽**을 고쳤다 — 대본은 안 건드렸다. 자막은 눈에
+// 익은 쪽이고, 어색한 건 읽기니까 고칠 자리도 읽기다.
+const SM = await import('../src/model.mjs');
+
+test('주소 없는 출처를 버리지 않는다', () => {
+  // ⚠️ 2026-11-08. 11화 소재를 검사하다 찾았다. 출처 12개를 적었는데
+  //    4개만 남아 있었다. `sources.filter((x) => x?.url)` 이 주소 없는
+  //    것을 버렸고, **운영자가 기사 본문을 붙여 줄 때는 주소가 없다.**
+  //    날아간 8개가 그 편의 가장 중요한 근거 전부였다.
+  //
+  //    조용히 사라지는 종류라 더 나쁘다. 영상 설명문에 근거를 적을 때
+  //    그 기사들이 없는 채로 올라간다.
+  const m = SM.makeSports({
+    title: 'x',
+    sources: [
+      { name: '운영자가 붙여 준 기사', url: '', note: '본문만 받았다' },
+      { name: '검색으로 찾은 기록', url: 'https://example.com/a' },
+      { name: '', url: '' },
+    ],
+  });
+  assert.equal(m.source_count, 2, '주소 없는 출처가 버려졌습니다');
+  assert.ok(m.sources.some((x) => x.name === '운영자가 붙여 준 기사'));
+  // 이름도 주소도 없는 줄은 버린다. 빈 줄을 세면 출처 수가 거짓이 된다.
+  assert.ok(!m.sources.some((x) => !x.name && !x.url));
+  // 대표 출처는 **주소가 있는 것 중 첫째**다. 주소 없는 것을 대표로
+  // 세우면 설명문에 링크 없는 줄이 올라간다.
+  assert.equal(m.source_url, 'https://example.com/a');
+  assert.equal(m.source_name, '검색으로 찾은 기록');
+
+  // ⚠️ makeItem 은 **일부러 다르다.** 둘을 맞추려 들면 한쪽이 깨진다.
+  //
+  //   makeItem    AI 가 찾아온 소재. 주소가 없으면 확인할 길이 없다.
+  //   makeSports  사람이 쓴 기획. 운영자가 기사를 읽고 직접 적었다.
+  //
+  // 같은 이름의 칸이지만 믿는 근거가 다르다.
+  const ai = makeItem({
+    title: 'x',
+    fact_status: 'CONFIRMED',
+    sources: [{ name: '어디선가 들음' }, { url: 'https://a.example', name: 'A' }],
+  });
+  assert.equal(ai.source_count, 1, 'AI 소재는 주소 없는 출처를 세면 안 됩니다');
+});
+
+test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
+  for (const f of ['10화.json', '11화.json']) {
+    const p = decodeURIComponent(
+      new URL(`../../스포츠영상/${f}`, import.meta.url).pathname
+    );
+    if (!fs.existsSync(p)) continue;
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const written = (raw.sources || []).filter((x) => x?.name || x?.url).length;
+    assert.ok(written >= 5, `${f}: 출처를 더 적어야 합니다 (${written}개)`);
+    assert.equal(
+      SM.makeSports(raw).source_count,
+      written,
+      `${f}: 적어 둔 출처가 중간에 사라집니다`
+    );
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// 나레이션 속도를 실제로 재서 고쳤다 (2026-11-08, 실행 #70)
+// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// 체격을 글로 적다가 두 번 틀렸다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+//   2026-11-07  한승혁(185cm 100kg)을 "lean and wiry" 라고 적었다
+//   2026-11-09  올러(193cm 102kg)를 "a heavy thick build" 라고 적었다
+//               → 운영자: "이 돼지는 누구인가? 올러는 이렇게 뚱뚱하지 않다"
+//
+// 두 번 다 **네일과 구분하려고 숫자 없이 느낌말을 골랐다.** 느낌말은
+// 모델이 제 맘대로 읽는다. 'heavy' 는 비만이 되고 'lean' 은 말라깽이가
+// 된다.
+//
+// 그래서 규칙을 하나로 못 박는다 — **체격을 말하려면 숫자를 적는다.**
+// 숫자를 못 찾으면 체격 말을 쓰지 않고 얼굴·머리·수염으로 가른다.
+section('4-w. 체격은 숫자로 적는다');
+
+// ── 무엇을 잡는가 ──
+//
+// 해로운 것은 **몸 전체를 느낌말 하나로 뭉뚱그리는 것**이다.
+//
+//   ❌ "a heavy thick build"          → 모델이 비만으로 읽는다
+//   ❌ "a lean build with ..."        → 말라깽이가 된다
+//   ✅ "narrow shoulders and thin forearms"   → 부위가 적혀 있다
+//   ✅ "193cm tall and about 102kg"           → 숫자가 있다
+//
+// 부위에 붙은 말은 모델이 그릴 자리가 분명해서 극단으로 안 간다.
+// 그래서 `<느낌말> build/body/frame/physique` 꼴만 잡는다.
+// ⚠️ 목록을 **실제로 터진 말**로만 좁혔다. 'solid build'(감독),
+//    'compact build' 같은 것은 지금까지 문제를 일으킨 적이 없다.
+//    넓게 막으면 걸리는 게 많아져서 결국 목록을 꺼 버리게 된다.
+const 체격말 = [
+  'heavy', 'thick', 'stocky', 'chubby', 'fat', 'obese', 'overweight',
+  'lean', 'wiry', 'skinny', 'slim', 'slender', 'bulky', 'huge', 'massive',
+];
+// 몸 전체를 가리키는 말. 이 앞에 느낌말이 붙으면 잡는다.
+const 전체말 = '(build|body|physique|figure)';
+// 숫자가 붙어 있으면 괜찮다.
+const 숫자있나 = (t) => /\d{2,3}\s?(cm|kg)/.test(t);
+
+test('기획 파일의 체격 말에는 숫자가 붙어 있다', () => {
+  const base = decodeURIComponent(new URL('../../스포츠영상/', import.meta.url).pathname);
+  if (!fs.existsSync(base)) return;
+  const files = fs.readdirSync(base).filter((f) => /^\d+화\.json$/.test(f));
+  assert.ok(files.length >= 3, `기획 파일이 ${files.length}개뿐입니다`);
+  const 걸린것 = [];
+  for (const f of files) {
+    const people = JSON.parse(fs.readFileSync(path.join(base, f), 'utf8')).people || [];
+    for (const p of people) {
+      const look = String(p.look || '');
+      // "<느낌말> build/body/frame" 꼴만 잡는다. 사이에 다른 꾸밈말이
+      // 하나쯤 끼는 것도 받는다 — "a heavy thick build" 가 그 꼴이다.
+      const 쓴말 = 체격말.filter((w) =>
+        new RegExp(`\\b${w}\\b(\\s+\\w+)?\\s+${전체말}\\b`, 'i').test(look)
+      );
+      if (!쓴말.length) continue;
+      // 같은 문장 안에 키나 몸무게가 있으면 통과다.
+      if (숫자있나(look) || 숫자있나(String(p.role || ''))) continue;
+      걸린것.push(`${f} ${p.name}: "${쓴말.join(', ')}" 에 숫자가 없습니다`);
+    }
+  }
+  assert.equal(
+    걸린것.length,
+    0,
+    '체격을 느낌말로만 적었습니다. 키·몸무게를 찾아 적거나, 못 찾으면 ' +
+      '체격 말을 빼고 얼굴·머리·수염으로 가르세요:\n  ' + 걸린것.join('\n  ')
+  );
+});
+
+await asyncTest('올러와 네일을 키가 아니라 두께로 가른다', async () => {
+  // ⚠️ 둘 다 **193cm 로 키가 같다**(baseball-reference 6-4).
+  //    네일 83kg(185lbs), 올러 102kg(225lbs). 키로 가르려 하면
+  //    모델이 한 명을 작게 그리거나 한 명을 뚱뚱하게 그린다.
+  const p = decodeURIComponent(
+    new URL('../../스포츠영상/10화.json', import.meta.url).pathname
+  );
+  if (!fs.existsSync(p)) return;
+  const people = JSON.parse(fs.readFileSync(p, 'utf8')).people || [];
+  const 네일 = people.find((x) => x.name === '네일');
+  const 올러 = people.find((x) => x.name === '올러');
+  assert.ok(네일 && 올러, '네일과 올러가 있어야 합니다');
+  for (const [이름, x] of [['네일', 네일], ['올러', 올러]]) {
+    assert.ok(/193cm/.test(x.look), `${이름} 의 look 에 키가 없습니다`);
+    assert.ok(/\d{2,3}kg/.test(x.look), `${이름} 의 look 에 몸무게가 없습니다`);
+  }
+  assert.ok(/83kg/.test(네일.look), '네일은 83kg 입니다');
+  assert.ok(/102kg/.test(올러.look), '올러는 102kg 입니다');
+  // 돼지를 만든 두 문장이 돌아오면 안 된다.
+  assert.ok(!/heavy thick/.test(올러.look), '"heavy thick" 이 돌아왔습니다');
+  assert.ok(
+    !/covering the jaw/.test(올러.look),
+    '"covering the jaw" 가 돌아왔습니다 — 산적 수염이 나옵니다'
+  );
+});
+
+await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
+  // 2026-11-09 운영자가 본 것 둘이다.
+  //   "이 돼지는 누구인가"        → 비만 체형
+  //   "외팔이에 뭔가 이상하다"    → 글러브 낀 팔이 통째로 없다
+  //
+  // ⚠️ 9화에서 팔이 셋 나온 걸 고치면서 `no extra arms`(더 많은 것)만
+  //    적었다. **빠진 것**은 안 막혀 있었다. 한쪽만 본 것이다.
+  const V9 = await import('../src/scenes/visuals.mjs');
+  const p = V9.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
+  for (const must of [
+    'no missing arm',      // 빠진 팔
+    'no one-armed figure', // 외팔이
+    'both arms are drawn', // 둘 다 그린다
+    'the glove arm',       // 야구는 글러브 팔을 잊는다
+    'no obese',            // 비만
+    'no large belly',
+    'no long bushy lumberjack beard', // 산적 수염
+    'never both feet in the', // 두 발이 다 뜨는 것
+  ]) {
+    assert.ok(p.includes(must), `금지·지시가 빠졌습니다: ${must}`);
+  }
+  // 팔이 셋인 것도 그대로 막혀 있어야 한다. 한쪽을 고치다 다른 쪽을
+  // 잃으면 9화의 문제가 돌아온다.
+  assert.ok(p.includes('no third arm'), '팔이 셋인 것을 막던 줄이 사라졌습니다');
+  assert.ok(p.includes('no extra arms'), '팔이 더 많은 것을 막던 줄이 사라졌습니다');
+});
+
+await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async () => {
+  // 2026-11-09 운영자: "이건 누구고 모자에 C는 무슨 마크인가?"
+  //
+  // ⚠️ 미국 구단을 **이름으로 하나씩** 막는 방식은 안 통한다. 셋만
+  //    적어 뒀더니(양키스·다저스·보스턴) 모델이 그 셋을 피하고 C 를
+  //    가져왔다. 금지는 끝이 없다.
+  //
+  // 그래서 "무엇을 그릴지"로 뒤집었다 — 모자에는 그 구단 표시만
+  // 올리고, 모르면 아무것도 안 올린다.
+  const V10 = await import('../src/scenes/visuals.mjs');
+  const p = V10.composeImagePrompt('a manager', 'present', { kind: 'SPORTS' });
+  // ⚠️ 처음에 "한 글자"만 막았더니 다음 샷에서 **STL** 이 나왔다.
+  //    글자 수를 가리면 안 된다 — 한 글자든 세 글자든 남의 구단이다.
+  assert.ok(
+    /one, two or three Latin letters/.test(p),
+    '모자에 남의 구단 글자를 막는 줄이 없습니다'
+  );
+  assert.ok(/STL/.test(p), 'STL 을 막는 줄이 없습니다');
+  assert.ok(
+    /a plain cap with no mark is better than an invented one/.test(p),
+    '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
+  );
+  // 이름으로 막던 것들도 그대로 남아 있어야 한다.
+  for (const w of ['no interlocking NY', 'no Boston B', 'no Cincinnati C']) {
+    assert.ok(p.includes(w), `${w} 가 사라졌습니다`);
+  }
+});
+
+await asyncTest('상체와 하체가 한 동작이다', async () => {
+  // 2026-11-09 운영자: "동작도 이상한데..."
+  //
+  // 상체는 공을 던지는데 하체는 두 발을 벌리고 **그냥 서 있는** 그림이
+  // 나왔다. '자세'를 한 덩어리로만 적으면 모델이 상체에만 적용한다.
+  const V12 = await import('../src/scenes/visuals.mjs');
+  const p = V12.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
+  assert.ok(/whole body is in one single action/.test(p));
+  assert.ok(
+    /never a throwing upper body on legs that merely stand still/.test(p),
+    '위아래가 따로 노는 것을 막는 줄이 없습니다'
+  );
+});
+
+await asyncTest('어려운 동작보다 사진 자세를 고르라고 적는다', async () => {
+  // 2026-11-09 운영자: "이런 샷이 안 되겠으면 전달해 준 이미지 중에
+  //                     하나를 차라리 워터마크 빼고 지브리로 그려라."
+  //
+  // 한창 돌아가는 중간을 고르면 팔이 꺾이고 하체가 따로 논다.
+  // **정적인 자세라도 어색한 동작보다 낫다.**
+  const V13 = await import('../src/scenes/visuals.mjs');
+  const sys = V13.visualsSystemFor('SPORTS', { people: [{ name: 'a', look: 'b' }] });
+  assert.ok(/워터마크 빼고/.test(sys), '운영자 말이 설계 규칙에 없습니다');
+  assert.ok(/어색한 동작보다/.test(sys), '정적이라도 낫다는 줄이 없습니다');
+  assert.ok(/세트.*포지션|공을 놓기 직전/.test(sys), '고를 자세 예가 없습니다');
+
+  // ⚠️ **반쪽만 들으면 안 된다.** 2026-11-09 운영자의 말은 두 쪽이다.
+  //
+  //   "전달해 준 이미지를 최대한 활용할 수 있는 건 활용해 그리되,
+  //    없는 장면 중에 중요 장면은 그린다."
+  //
+  // 앞쪽만 들으면 영상이 전부 가만히 선 사람이 되고, 뒤쪽만 들으면
+  // 팔이 꺾인다. 둘 다 적혀 있어야 한다.
+  assert.ok(/최대한 활용/.test(sys), '사진을 쓰라는 쪽이 없습니다');
+  assert.ok(
+    /중요 장면은 그린다/.test(sys),
+    '사진에 없어도 중요하면 그리라는 쪽이 없습니다 — 영상이 전부 정적이 됩니다'
+  );
+  assert.ok(/멈추는 자리/.test(sys), '움직임을 그릴 때 멈추는 자리를 고르라는 줄이 없습니다');
+});
+
+await asyncTest('좌우가 같아야 한다 — 양말 짝짝이', async () => {
+  // 2026-11-09 운영자: "양말 색이 짝짝이다"
+  //
+  // 뒷모습 샷에서 한쪽은 남색 양말인데 다른 쪽은 빨간 바지가 그대로
+  // 발목까지 내려와 있었다. 유니폼 **색**은 적어 뒀는데 **양쪽이
+  // 같아야 한다**는 말이 없어서 다리를 따로 그렸다.
+  const V11 = await import('../src/scenes/visuals.mjs');
+  const p = V11.composeImagePrompt('x', 'present', { kind: 'SPORTS' });
+  for (const must of [
+    'both socks the same colour',
+    'both shoes the same colour',
+    'both sleeves the same length',
+    'never one leg bare where the other has a sock',
+  ]) {
+    assert.ok(p.includes(must), `좌우 대칭 지시가 빠졌습니다: ${must}`);
+  }
+});
+
+section('4-x. 나레이션 속도는 종류마다 다르다');
+
+const NR = await import('../src/narration.mjs');
+
+test('스포츠 속도는 실제로 잰 값이다', () => {
+  // ── 실행 #70 · 11화 한국시리즈에서 쟀다 ──
+  //
+  //   나레이션 글자    2,752자  (태그를 뗀 문단 합계)
+  //   실제 TTS 길이    439.46초
+  //   말하기 속도      1.08     (SPORTS_SPEAKING_RATE)
+  //
+  // 이 테스트가 지키는 것은 **잰 값과 코드가 맞는다**는 것이다.
+  // 숫자를 눈대중으로 바꾸면 여기서 걸린다.
+  const 글자 = 2752;
+  const 실제초 = 439.46;
+  const 잰값 = (글자 / 실제초) * 60;
+  assert.ok(
+    Math.abs(NR.SPORTS_NARRATION_CHARS_PER_MINUTE - 잰값) < 1,
+    `잰 값은 ${잰값.toFixed(1)}자/분인데 코드는 ${NR.SPORTS_NARRATION_CHARS_PER_MINUTE} 입니다`
+  );
+  // 그 값으로 다시 재면 실제와 1초 안쪽으로 맞아야 한다.
+  const 다시 = NR.secondsForChars(글자, 'SPORTS');
+  assert.ok(
+    Math.abs(다시 - 실제초) < 1,
+    `${다시.toFixed(2)}초로 재는데 실제는 ${실제초}초입니다`
+  );
+});
+
+test('종류를 안 넘기면 전과 똑같이 돈다', () => {
+  // kind 를 모르는 자리가 있다. 거기서 동작이 바뀌면 안 된다.
+  assert.equal(NR.charsPerMinuteFor(null), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor(undefined), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor('EVENT'), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.charsPerMinuteFor('TALE'), NR.NARRATION_CHARS_PER_MINUTE);
+  assert.equal(NR.secondsForChars(330), 60);
+  assert.equal(NR.charsForMinutes(8), 2640);
+});
+
+test('스포츠는 같은 분량에 글자가 더 들어간다', () => {
+  // 중계 톤으로 빠르게 읽으니 8분에 더 많은 글자가 들어간다.
+  // 이 차이를 안 보면 스포츠 대본을 1.14배로 길게 재고, 그 경고를
+  // 따라 내용을 과하게 깎는다. 11화에서 실제로 그랬다.
+  assert.ok(
+    NR.charsForMinutes(8, 'SPORTS') > NR.charsForMinutes(8),
+    '스포츠가 기본보다 글자를 더 받아야 합니다'
+  );
+  const 배 = NR.SPORTS_NARRATION_CHARS_PER_MINUTE / NR.NARRATION_CHARS_PER_MINUTE;
+  assert.ok(배 > 1.1 && 배 < 1.2, `어긋남이 ${배.toFixed(3)}배입니다 — 다시 재야 합니다`);
+});
+
+await asyncTest('말하기 속도와 글자 속도가 짝으로 움직인다', async () => {
+  // ⚠️ SPORTS_NARRATION_CHARS_PER_MINUTE 는 **말하기 속도 1.08 에
+  //    묶여 있다.** 한쪽만 바꾸면 길이가 다시 어긋난다. 둘이 같이
+  //    움직여야 한다는 것을 여기서 못 박는다.
+  const TTS = await import('../src/audio/tts.mjs');
+  assert.equal(
+    TTS.SPORTS_SPEAKING_RATE,
+    1.08,
+    '말하기 속도가 바뀌었습니다 — 글자/분도 다시 재야 합니다'
+  );
+});
+
+await asyncTest('장면과 문단 길이가 종류별 속도를 쓴다', async () => {
+  // narration.mjs 만 고치고 호출하는 쪽에 kind 를 안 넘기면 아무것도
+  // 바뀌지 않는다. 실제로 흘러가는지 본다.
+  const { splitIntoScenes } = await import('../src/scenes/split.mjs');
+  const p = decodeURIComponent(
+    new URL('../../스포츠영상/11화-대본.md', import.meta.url).pathname
+  );
+  const j = decodeURIComponent(
+    new URL('../../스포츠영상/11화.json', import.meta.url).pathname
+  );
+  if (!fs.existsSync(p) || !fs.existsSync(j)) return;
+  const sections = JSON.parse(fs.readFileSync(j, 'utf8')).sections;
+  const md = fs.readFileSync(p, 'utf8');
+  const sports = splitIntoScenes(md, { kind: 'SPORTS', sections });
+  const plain = splitIntoScenes(md, { sections });
+  assert.ok(
+    sports.stats.totalSeconds < plain.stats.totalSeconds,
+    `종류가 길이에 안 먹습니다 (스포츠 ${sports.stats.totalSeconds} / 기본 ${plain.stats.totalSeconds})`
+  );
+  // 실제 TTS 가 439.46초였다. 10초 안쪽으로 맞아야 한다.
+  assert.ok(
+    Math.abs(sports.stats.totalSeconds - 439.46) < 10,
+    `${sports.stats.totalSeconds}초로 재는데 실제는 439.46초였습니다`
+  );
+});
+
+await asyncTest('시작이 약한 쇼츠보다 조금 겹치는 쇼츠를 먼저 쓴다', async () => {
+  // ⚠️ 속도를 고치니 문단이 짧아지고 쇼츠 창이 밀렸다. 그 바람에
+  //    3화 8순위가 "이 군 성적이 일 군 성적을 보장하지 않기 때문입니다"
+  //    로 시작했다 — 물음에 대한 **답**에서 시작한 셈이다.
+  //
+  // openingScore 의 -45 벌점으로는 부족했다. 후보가 넉넉하지 않으면
+  // 벌점을 받고도 뽑힌다 — 결말 문단에서 이미 겪은 그대로다.
+  //
+  // 그래서 채우는 순서를 바꿨다. **시작을 먼저 보고 겹침을 나중에
+  // 본다.** 겹치는 것은 두 편을 본 사람만 손해지만, 시작이 약한 것은
+  // 그 한 편을 본 사람 모두가 손해다.
+  const S = await import('../src/video/shorts.mjs');
+  const src = fs.readFileSync(
+    decodeURIComponent(new URL('../src/video/shorts.mjs', import.meta.url).pathname),
+    'utf8'
+  );
+  // 단단한 시작을 두 번 먼저 채우고, 그다음에 약한 시작을 받는가.
+  const order = [...src.matchAll(/fill\(([\d.]+)(?:,\s*\{\s*allowWeakStart:\s*(\w+)\s*\})?\)/g)]
+    .map((m) => ({ limit: Number(m[1]), weak: m[2] !== 'false' }));
+  assert.ok(order.length >= 3, `채우는 단계가 ${order.length}개뿐입니다`);
+  assert.equal(order[0].weak, false, '첫 단계가 약한 시작을 받습니다');
+  assert.equal(order[1].weak, false, '둘째 단계가 약한 시작을 받습니다');
+  assert.ok(
+    order.some((x) => x.weak),
+    '약한 시작을 아예 못 받으면 짧은 편에서 개수를 못 채웁니다'
+  );
+  assert.ok(S.BACK_REFERENCE.includes('이 군'));
+});
+
+section('4-y. 야구 대본에서 틀렸던 읽기');
+
+const RN = await import('../src/audio/speech.mjs');
+
+test('점수의 하이픈을 "대" 로 읽는다', () => {
+  // 전에는 "팔-영" 이 돼서 음성이 그 자리를 그냥 지나갔다. 야구 영상은
+  // 점수가 계속 나오니 매 편에서 어색해진다.
+  assert.equal(
+    RN.speechText('1차전은 빠르게 8-0으로 앞섰습니다.'),
+    '일차전은 빠르게 팔 대 영으로 앞섰습니다.'
+  );
+  assert.equal(RN.speechText('삼성이 3-2로 이겼습니다.'), '삼성이 삼 대 이로 이겼습니다.');
+  // 0 이 앞에 와도 읽는다.
+  assert.ok(/영 대 팔/.test(RN.speechText('0-8로 뒤진 7회초')));
+});
+
+test('문장의 쉼표를 숫자로 먹지 않는다', () => {
+  // ⚠️ 이게 이 묶음에서 가장 고약했다. 숫자 꼴이 `\d[\d,]*` 라서
+  //    "5-1," 의 쉼표까지 숫자로 삼켰다. 쉼표가 사라지면 두 경기가
+  //    한 덩어리로 붙어 무슨 말인지 알 수 없게 된다.
+  const out = RN.speechText('3차전 5-1, 4차전 10-5, 5차전 12-1입니다.');
+  assert.equal(out, '삼차전 오 대 일, 사차전 십 대 오, 오차전 십이 대 일입니다.');
+  assert.ok(!/일사차전/.test(out), '쉼표가 사라져 두 경기가 붙었습니다');
+  // 자릿점은 **세 자리 묶음일 때만** 받는다. 이건 그대로 읽어야 한다.
+  assert.ok(
+    /구천칠백이십삼 만/.test(RN.speechText('143억 9,723만 원')),
+    '자릿점이 든 금액을 못 읽습니다'
+  );
+});
+
+test('번을 횟수로도 순번으로도 읽는다', () => {
+  // 야구에서 '번' 은 두 가지로 쓰인다. 바로 뒤에 오는 말이 둘을 가른다.
+  //
+  //   횟수   "3번뿐"    → 세 번뿐      (고유어)
+  //   순번   "1번 타자" → 일번 타자    (한자어)
+  assert.ok(
+    /세 번뿐/.test(RN.speechText('90승을 넘긴 일은 3번뿐이에요.')),
+    '횟수를 고유어로 안 읽습니다'
+  );
+  // ⚠️ 조건 없이 고유어로 넣었다가 되돌렸다 — "1번 타자"가 "한 번
+  //    타자"가 된다. 야구 대본에 자주 나오는 말이라 매 편에서 틀린다.
+  assert.ok(
+    /일번 타자/.test(RN.speechText('1번 타자로 나선 최원준')),
+    '타순을 고유어로 읽었습니다'
+  );
+  assert.ok(!/한 번 타자/.test(RN.speechText('1번 타자로 나선 최원준')));
+  // 서수와 등번호도 한자어다.
+  assert.ok(/삼십팔번째/.test(RN.speechText('역대 38번째 기록입니다.')));
+  assert.ok(/삼십오번/.test(RN.speechText('등번호 35번입니다.')));
+});
+
+test('분수 뒤가 한글이면 띄운다', () => {
+  // "3분의 1이닝" 이 "삼분의 일이닝" 이 되면 음성이 '일이닝' 을 한
+  // 덩어리로 읽는다. ⑤ 정수가 하는 것과 같은 일을 분수에서도 한다.
+  const out = RN.speechText('2와 3분의 1이닝 1실점.');
+  assert.ok(/삼분의 일 이닝/.test(out), `이닝이 붙어 있습니다: ${out}`);
+});
+
+test('MVP 를 한글로 읽는다', () => {
+  // 자막은 MVP 그대로, 읽기는 엠브이피다. 그냥 두면 영어로 읽는다.
+  assert.ok(/엠브이피/.test(RN.speechText('5차전 MVP를 받았습니다.')));
+  // 자막에는 영문이 남아야 한다 — 바꾸는 건 읽기뿐이다.
+  assert.ok(RN.PRONOUNCE.has('MVP'));
+});
+
+test('11화 대본을 다 읽어도 영어 글자가 안 남는다', () => {
+  // 읽을 글에 영어가 남으면 음성이 철자로 읽거나 건너뛴다. 대본
+  // 전체를 넣어 한 줄도 안 남는지 본다 — 새 약어가 나올 때마다
+  // 여기서 잡힌다.
+  const p = decodeURIComponent(
+    new URL('../../스포츠영상/11화-대본.md', import.meta.url).pathname
+  );
+  if (!fs.existsSync(p)) return;
+  const lines = fs
+    .readFileSync(p, 'utf8')
+    .split('\n')
+    .filter((l) => /^\[(FACT|THEORY)\]/.test(l))
+    .map((l) => l.replace(/^\[(FACT|THEORY)\]\s*/, ''));
+  assert.ok(lines.length > 50, '대본이 너무 짧습니다');
+  for (const l of lines) {
+    const spoken = RN.speechText(l);
+    assert.ok(
+      !/[A-Za-z]/.test(spoken),
+      `읽을 글에 영어가 남았습니다: ${spoken.match(/[A-Za-z]+/)?.[0]} — ${l.slice(0, 50)}`
+    );
+  }
+});
+
 section('4-z. 유니폼은 코드가 적는다');
 
 const U = await import('../src/scenes/uniforms.mjs');

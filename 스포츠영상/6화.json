@@ -67,8 +67,8 @@
     {
       "name": "김도영",
       "role": "삼루수",
-      "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, medium eyes, a slim athletic build, wearing a plain white national team uniform with a navy cap",
-      "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. 홈런 뒤에는 양손을 머리 위로 올려 손가락을 펴 보이는 시그니처 세리머니를 한다 — 활약을 말하는 대목에서는 얼굴보다 이 자세가 강하다",
+      "look": "a Korean man in his early 20s with clear black eye-black stripes under both eyes and short black hair swept up with volume on top so the forehead shows - the eye-black and the bare forehead are the defining traits - with a young boyish face, a lean face with a visible jawline, dark straight eyebrows, medium eyes, a narrow shoulders and long legs, wearing a plain white national team uniform with a navy cap",
+      "tell": "경기 중 두 눈 밑 아이블랙, 이마가 드러난 볼륨 있는 머리. 홈런 뒤에는 양손을 머리 위로 올려 손가락을 펴 보이는 시그니처 세리머니를 한다 — 활약을 말하는 대목에서는 얼굴보다 이 자세가 강하다\n⚠️ 2026-11-09. 체격을 느낌말(`slim athletic build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다.",
       "photo": "https://images.khan.co.kr/article/r/700xX/2026/11/02/l_2026110302000007200006041.webp",
       "photo_안되는주소": [
         "https://github.com/user-attachments/assets/71214e7c-71a3-4465-9cfe-2c0ad5e5fca0",
@@ -82,8 +82,8 @@
     {
       "name": "박재현",
       "role": "외야수",
-      "look": "a Korean man in his early 20s with neat straight black bangs falling evenly to the eyebrows and covering the forehead - the fringe is the defining trait - with a strikingly young almost high-school face, a long slender face with a narrow chin and almost no cheek fat, long narrow eyes without pronounced double eyelids, thin straight eyebrows, a small mouth with thin lips, a very slim light build with a thin neck and narrow shoulders, wearing a plain white national team uniform with a navy cap",
-      "tell": "눈썹까지 덮는 가지런한 일자 앞머리. ⚠️ 김도영과 섞이기 쉽다 — 김도영은 이마가 드러나고 박재현은 앞머리가 덮는다",
+      "look": "a Korean man in his early 20s with neat straight black bangs falling evenly to the eyebrows and covering the forehead - the fringe is the defining trait - with a strikingly young almost high-school face, a long slender face with a narrow chin and almost no cheek fat, long narrow eyes without pronounced double eyelids, thin straight eyebrows, a small mouth with thin lips, a very narrow shoulders and a light frame with a thin neck and narrow shoulders, wearing a plain white national team uniform with a navy cap",
+      "tell": "눈썹까지 덮는 가지런한 일자 앞머리. ⚠️ 김도영과 섞이기 쉽다 — 김도영은 이마가 드러나고 박재현은 앞머리가 덮는다\n⚠️ 2026-11-09. 체격을 느낌말(`slim light build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다.",
       "photo": "https://t1.daumcdn.net/media/img-section/sports13/player/1/55636.jpg",
       "photo_안되는주소": [
         "https://github.com/user-attachments/assets/a1144809-a6b9-438d-8a24-39fa694d869c",
