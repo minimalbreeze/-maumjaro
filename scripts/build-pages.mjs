@@ -1173,6 +1173,361 @@ ${fairPlay}
   }
 }
 
+// 궁합 페이지.
+//
+// 2026-11-09. 사이트맵 207장에 궁합 페이지가 **0장**이었다. 앱에는 궁합센터가
+// 있는데(생년월일·띠·별자리 세 가지, 주사를 놓아야 열린다) 바깥에서는 그게
+// 보이지 않았다. "사주 궁합"·"생년월일 궁합" 검색을 받을 그릇이 없었던 셈이다.
+// 연도 페이지를 만들기 전과 같은 상황이고, 그건 통했다.
+//
+// ⚠️ 쌍 조합 페이지는 만들지 않는다. 띠 12×12=78, 별자리 78을 찍으면 유사도가
+// 폭발한다(행운의 숫자 13장이 최대 93.2%였다). 체계마다 허브 한 장씩 다섯 장만
+// 만든다 — 사주·띠·별자리·MBTI는 설명하는 내용이 서로 완전히 달라서 안전하다.
+//
+// 내용은 전부 앱이 실제로 쓰는 데이터다(zodiac-data.js, mbti-data.js).
+// 글과 앱이 다른 말을 하면 글을 보고 들어온 사람이 바로 알아챈다.
+function matchPages(Z, M) {
+  const { SAJU_PAIR_LINES, ANIMAL_PAIR_LINES, ZODIAC_PAIR_LINES, SAJU_ZHI_BONUS,
+          CHINESE_ZODIAC, ZODIAC_SIGNS, SAMHAP, YUKHAP, CHUNG, WONJIN } = Z;
+  const { MBTI_MATCH, MBTI_TYPES } = M;
+
+  const appCta = `
+<h2>맘운자로에서 직접 보기</h2>
+<p>생년월일만 넣으면 아래 계산이 자동으로 됩니다. 태어난 시간은 몰라도 됩니다 — 일간과 연지는 시(時)와 무관하기 때문입니다.</p>
+<p>결과는 <strong>주사를 놓아야 열립니다</strong>. 열고 나면 상대에게 바로 보낼 수 있습니다.</p>`;
+
+  // ---------- 1. 궁합 허브 ----------
+  {
+    const url = '/match/';
+    const body = `
+<div class="card">
+  <p class="k">궁합 보는 법은 하나가 아닙니다</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">무엇을 보느냐에 따라 답이 달라집니다</p>
+</div>
+
+<h2>세 가지를 구분하세요</h2>
+<div class="tw"><table>
+  <thead><tr><th>방식</th><th>보는 것</th><th>정확도</th></tr></thead>
+  <tbody>
+    <tr><td><a href="/match/saju/">생년월일 궁합</a></td><td>태어난 <strong>날</strong>의 천간(일간) 오행</td><td>가장 좁게 본다</td></tr>
+    <tr><td><a href="/match/animal/">띠 궁합</a></td><td>태어난 <strong>해</strong>의 지지</td><td>같은 해면 모두 같다</td></tr>
+    <tr><td><a href="/match/zodiac/">별자리 궁합</a></td><td>태어난 <strong>달·날</strong>의 원소</td><td>12분의 1로 나뉜다</td></tr>
+    <tr><td><a href="/match/mbti/">MBTI 궁합</a></td><td>성격 네 축</td><td>사주와 무관한 별개 체계</td></tr>
+  </tbody>
+</table></div>
+<p><strong>띠 궁합만 보고 "우리는 충이라 안 맞아"라고 단정하지 마세요.</strong> 띠는 태어난 해 하나만 봅니다. 같은 해에 태어난 사람이 수십만 명인데 그들의 궁합이 전부 같을 리 없습니다. 날까지 보는 생년월일 궁합이 더 좁게 봅니다.</p>
+
+<h2>점수보다 중요한 것은 방향입니다</h2>
+<p>대부분의 궁합은 "87점" 같은 숫자로 끝납니다. 그런데 같은 점수라도 <strong>누가 누구를 살리는 관계인지</strong>는 완전히 다릅니다.</p>
+<div class="tw"><table>
+  <thead><tr><th>관계</th><th>무슨 뜻인가</th></tr></thead>
+  <tbody>${['give', 'receive', 'same', 'control', 'pressed'].map((k) => {
+    const d = SAJU_PAIR_LINES[k];
+    return `<tr><td><strong>${esc(d.label)}</strong><br><span class="k">${'★'.repeat(d.stars)}${'☆'.repeat(5 - d.stars)}</span></td><td>${esc(d.line)}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+<p><a href="/match/saju/">이 다섯 가지가 어떻게 나뉘는지 보기 ›</a></p>
+${appCta}`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: '궁합은 보는 방식이 여러 가지입니다. 생년월일 궁합은 태어난 날의 천간(일간) 오행을, 띠 궁합은 태어난 해의 지지를, 별자리 궁합은 태어난 달과 날의 원소를 봅니다. '
+          + '띠 궁합은 같은 해에 태어나면 모두 같은 결과가 나오므로 날까지 보는 생년월일 궁합이 더 좁게 봅니다. '
+          + '또 점수보다 방향이 중요합니다 — 같은 별 개수라도 내가 상대를 살리는 사이인지, 상대가 나를 살리는 사이인지는 완전히 다릅니다.',
+        faq: [
+          { q: '궁합은 어떤 방식으로 보는 게 가장 정확한가요?',
+            a: '보는 범위가 다릅니다. 띠는 태어난 해만, 별자리는 달과 날을, 생년월일 궁합은 태어난 날의 천간까지 봅니다. '
+               + '같은 해에 태어난 사람이 수십만 명이므로 띠만으로는 좁게 보기 어렵습니다. 날까지 보는 쪽이 더 구체적입니다.' },
+          { q: '띠 궁합에서 충이면 만나면 안 되나요?',
+            a: '아닙니다. 충은 정면으로 부딪히는 자리라는 뜻이지 만나면 안 된다는 뜻이 아닙니다. '
+               + '부딪히는 지점이 어디인지 미리 알고 있으면 대부분 넘어갑니다.' },
+          { q: 'MBTI 궁합과 사주 궁합은 같이 봐도 되나요?',
+            a: '서로 다른 체계라 결과가 엇갈릴 수 있습니다. 사주는 태어난 때를, MBTI는 지금의 성격 성향을 봅니다. '
+               + '둘이 다르게 나왔다고 해서 어느 한쪽이 틀린 것은 아닙니다.' },
+        ],
+        title: '궁합 보는 법 — 생년월일·띠·별자리·MBTI 뭐가 다른가 | 맘운자로',
+        desc: '궁합 네 가지 방식의 차이와, 점수보다 중요한 다섯 가지 관계 방향. 무료로 생년월일 궁합까지.',
+        keywords: '궁합, 궁합 보는 법, 사주 궁합, 생년월일 궁합, 띠 궁합, 별자리 궁합, MBTI 궁합, 무료 궁합, 궁합 무료',
+        h1: '💞 궁합 보는 법',
+        sub: '생년월일 · 띠 · 별자리 · MBTI',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › 궁합',
+        body,
+      }),
+    });
+  }
+
+  // ---------- 2. 생년월일(사주) 궁합 — 본편 ----------
+  {
+    const url = '/match/saju/';
+    const GEN = { 목: '화', 화: '토', 토: '금', 금: '수', 수: '목' };
+    const CON = { 목: '토', 토: '수', 수: '화', 화: '금', 금: '목' };
+    const body = `
+<div class="card">
+  <p class="k">태어난 날의 천간(일간) 오행으로 봅니다</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">점수가 아니라 방향이 나옵니다</p>
+</div>
+
+<h2>다섯 가지 관계</h2>
+<p>두 사람의 일간 오행이 어떤 관계인지로 갈립니다. 같은 별 개수라도 뜻이 전혀 다릅니다.</p>
+<div class="tw"><table>
+  <thead><tr><th>관계</th><th>설명</th><th>주의할 점</th></tr></thead>
+  <tbody>${['give', 'receive', 'same', 'control', 'pressed'].map((k) => {
+    const d = SAJU_PAIR_LINES[k];
+    return `<tr><td><strong>${esc(d.label)}</strong><br><span class="k">${'★'.repeat(d.stars)}${'☆'.repeat(5 - d.stars)}</span></td><td>${esc(d.line)}</td><td>${esc(d.caution)}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+
+<h2>오행이 어떻게 이어지는가</h2>
+<p><strong>상생(相生)</strong> — 앞의 것이 뒤의 것을 살립니다. 이 방향이면 "살려주는 사이"입니다.</p>
+<p class="k">${Object.keys(GEN).map((k) => `${k} → ${GEN[k]}`).join(' · ')}</p>
+<p><strong>상극(相剋)</strong> — 앞의 것이 뒤의 것을 누릅니다. 이 방향이면 "끌고 가는 사이"입니다.</p>
+<p class="k">${Object.keys(CON).map((k) => `${k} → ${CON[k]}`).join(' · ')}</p>
+<p>내 오행이 상대를 살리면 <strong>${esc(SAJU_PAIR_LINES.give.label)}</strong>, 상대가 나를 살리면 <strong>${esc(SAJU_PAIR_LINES.receive.label)}</strong>입니다. 같은 관계라도 <strong>누가 주는 쪽인지가 다릅니다</strong>. 점수만 보면 이 차이가 사라집니다.</p>
+
+<h2>띠가 별 개수를 조정합니다</h2>
+<p>일간으로 방향을 정한 뒤, 두 사람의 <strong>연지(띠)</strong> 관계로 별을 더하거나 뺍니다.</p>
+<div class="tw"><table>
+  <thead><tr><th>띠 관계</th><th>조정</th></tr></thead>
+  <tbody>${Object.keys(SAJU_ZHI_BONUS).map((k) => {
+    const b = SAJU_ZHI_BONUS[k];
+    const d = ANIMAL_PAIR_LINES[k];
+    return `<tr><td>${esc(d ? d.label : k)}</td><td>${b > 0 ? `★ +${b}` : (b < 0 ? `★ ${b}` : '그대로')}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+<p><a href="/match/animal/">삼합·육합·충·원진이 무엇인지 ›</a></p>
+
+<h2>태어난 시간은 몰라도 됩니다</h2>
+<p>이 계산에 쓰는 것은 <strong>일간</strong>(태어난 날의 천간)과 <strong>연지</strong>(태어난 해의 지지)입니다. 둘 다 시(時)와 무관하므로 상대의 태어난 시간을 모르더라도 결과가 달라지지 않습니다.</p>
+<p class="k">⚠️ 다만 태어난 <strong>해</strong>는 입춘(양력 2월 4일 전후)에 바뀝니다. 1~2월 초에 태어났다면 앞 해로 계산됩니다. <a href="/animal/years/">입춘 기준 자세히 ›</a></p>
+${appCta}`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: '생년월일 궁합은 두 사람의 일간(태어난 날의 천간) 오행 관계로 봅니다. 오행이 서로를 살리는 상생이면 살려주는 사이, 누르는 상극이면 끌고 가는 사이입니다. '
+          + '내가 상대를 살리는지 상대가 나를 살리는지에 따라 같은 점수라도 뜻이 달라집니다. 여기에 두 사람의 연지(띠) 관계로 별을 더하거나 뺍니다. '
+          + '일간과 연지는 태어난 시간과 무관하므로 상대의 시간은 몰라도 됩니다.',
+        faq: [
+          { q: '생년월일 궁합은 무엇을 보나요?',
+            a: '태어난 날의 천간, 곧 일간의 오행을 둘 비교합니다. 상생이면 한쪽이 다른 쪽을 살리는 사이, 상극이면 한쪽이 다른 쪽을 끌고 가는 사이입니다. '
+               + '여기에 두 사람의 띠(연지) 관계로 별 개수를 조정합니다.' },
+          { q: '상대의 태어난 시간을 몰라도 되나요?',
+            a: '됩니다. 이 계산에 쓰는 일간과 연지는 모두 시(時)와 무관합니다. 생년월일만 있으면 결과가 나옵니다.' },
+          { q: '점수가 같은데 뜻이 다르다는 게 무슨 말인가요?',
+            a: `예를 들어 ${SAJU_PAIR_LINES.give.label}와 ${SAJU_PAIR_LINES.receive.label}는 둘 다 별 다섯입니다. `
+               + '하지만 앞은 내가 주는 쪽, 뒤는 내가 받는 쪽이라 조심할 점이 정반대입니다. 점수만 보면 이 차이가 사라집니다.' },
+        ],
+        title: '생년월일 궁합 — 사주 일간 오행으로 보는 다섯 가지 관계 | 맘운자로',
+        desc: '생년월일로 보는 사주 궁합. 상생·상극으로 갈리는 다섯 방향과 주의할 점. 태어난 시간은 몰라도 됩니다. 무료.',
+        keywords: '생년월일 궁합, 사주 궁합, 무료 사주 궁합, 일간 궁합, 오행 궁합, 상생 상극, 궁합 보는 법, 사주 상성',
+        h1: '🔮 생년월일 궁합',
+        sub: '일간 오행 · 다섯 가지 방향',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/match/">궁합</a> › 생년월일',
+        body,
+      }),
+    });
+  }
+
+  // ---------- 3. 띠 궁합 ----------
+  {
+    const url = '/match/animal/';
+    const nm = (zhi) => (CHINESE_ZODIAC.find((c) => c.zhi === zhi) || {}).name || zhi;
+    const body = `
+<div class="card">
+  <p class="k">태어난 해의 지지로 봅니다</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">삼합 · 육합 · 충 · 원진</p>
+</div>
+
+<h2>네 가지 관계</h2>
+<div class="tw"><table>
+  <thead><tr><th>관계</th><th>설명</th></tr></thead>
+  <tbody>${['samhap', 'yukhap', 'same', 'chung', 'wonjin', 'plain'].map((k) => {
+    const d = ANIMAL_PAIR_LINES[k];
+    return `<tr><td><strong>${esc(d.label)}</strong><br><span class="k">${'★'.repeat(d.stars)}${'☆'.repeat(5 - d.stars)}</span></td><td>${esc(d.line)}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+
+<h2>삼합 — 넷씩 묶은 세 무리</h2>
+<p>열두 지지를 네 칸 간격으로 묶습니다. 같은 무리끼리는 예로부터 최고 궁합으로 봅니다.</p>
+<ul>${SAMHAP.map((g) => `<li>${g.map((z) => `<a href="/animal/${(CHINESE_ZODIAC.find((c) => c.zhi === z) || {}).key}/">${esc(nm(z))}</a>`).join(' · ')}</li>`).join('')}</ul>
+
+<h2>육합 — 둘씩 짝지은 여섯 쌍</h2>
+<p>서로 부족한 자리를 채우는 짝입니다.</p>
+<ul>${YUKHAP.map((pr) => `<li>${esc(nm(pr[0]))} · ${esc(nm(pr[1]))}</li>`).join('')}</ul>
+
+<h2>충 — 정반대 여섯 쌍</h2>
+<p>여섯 칸 차이로 정면에서 부딪힙니다. 끌림이 강한 만큼 다툼도 크게 붙습니다.</p>
+<ul>${CHUNG.map((pr) => `<li>${esc(nm(pr[0]))} · ${esc(nm(pr[1]))}</li>`).join('')}</ul>
+
+<h2>원진 — 까닭 없이 껄끄러운 여섯 쌍</h2>
+<p>큰 이유가 없는데 어딘가 불편하다고 보는 짝입니다. 기대를 낮추면 오히려 편해집니다.</p>
+<ul>${WONJIN.map((pr) => `<li>${esc(nm(pr[0]))} · ${esc(nm(pr[1]))}</li>`).join('')}</ul>
+
+<h2>⚠️ 띠 궁합만으로 단정하지 마세요</h2>
+<p>띠는 태어난 <strong>해</strong> 하나만 봅니다. 같은 해에 태어난 사람이 수십만 명인데 그들의 궁합이 전부 같을 수는 없습니다. 충이나 원진이 나왔다고 만나면 안 된다는 뜻도 아닙니다 — 부딪히는 지점을 미리 알면 대부분 넘어갑니다.</p>
+<p>더 좁게 보려면 태어난 날까지 보는 <a href="/match/saju/">생년월일 궁합</a>을 보세요.</p>
+
+<h2>12띠 전체</h2>
+<div class="grid">${CHINESE_ZODIAC.map((x) => `<a href="/animal/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>
+${appCta}`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: '띠 궁합은 태어난 해의 지지로 봅니다. 삼합은 네 칸 간격으로 묶은 세 무리로 예로부터 최고 궁합으로 보고, 육합은 서로 부족한 자리를 채우는 여섯 쌍입니다. '
+          + '충은 여섯 칸 차이로 정면 충돌하는 쌍, 원진은 까닭 없이 껄끄럽다고 보는 쌍입니다. '
+          + '다만 띠는 태어난 해 하나만 보므로 이것만으로 단정하기 어렵고, 충이나 원진이라고 만나면 안 된다는 뜻도 아닙니다.',
+        faq: [
+          { q: '삼합과 육합은 뭐가 다른가요?',
+            a: '삼합은 열두 지지를 네 칸 간격으로 묶은 세 무리로, 셋이 한 조입니다. 육합은 둘씩 짝지은 여섯 쌍입니다. '
+               + '둘 다 좋은 궁합으로 보지만 삼합은 같이 일을 벌이는 쪽, 육합은 서로 부족한 자리를 채우는 쪽에 가깝습니다.' },
+          { q: '충이면 헤어져야 하나요?',
+            a: '아닙니다. 충은 정면으로 부딪히는 자리라는 뜻입니다. 끌림이 강한 만큼 다툼도 크게 붙을 뿐이고, 부딪히는 지점을 미리 알고 있으면 대부분 넘어갑니다.' },
+          { q: '원진은 무슨 뜻인가요?',
+            a: '큰 이유가 없는데 어딘가 껄끄럽다고 보는 여섯 쌍입니다. 기대를 낮추면 오히려 편해지는 사이로 봅니다.' },
+        ],
+        title: '띠 궁합 — 삼합·육합·충·원진 전부 (12띠 표) | 맘운자로',
+        desc: '띠 궁합의 네 가지 관계를 전통 기준으로 정리했습니다. 삼합 세 무리, 육합·충·원진 각 여섯 쌍. 무료.',
+        keywords: '띠 궁합, 삼합, 육합, 충, 원진, 띠별 궁합, 십이지 궁합, 무료 궁합, 띠 상성',
+        h1: '🐾 띠 궁합',
+        sub: '삼합 · 육합 · 충 · 원진',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/match/">궁합</a> › 띠',
+        body,
+      }),
+    });
+  }
+
+  // ---------- 4. 별자리 궁합 ----------
+  {
+    const url = '/match/zodiac/';
+    const byEl = {};
+    ZODIAC_SIGNS.forEach((s2) => { (byEl[s2.element] = byEl[s2.element] || []).push(s2); });
+    const body = `
+<div class="card">
+  <p class="k">태어난 달과 날의 원소로 봅니다</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">불 · 흙 · 바람 · 물</p>
+</div>
+
+<h2>원소가 같은 별자리끼리</h2>
+<div class="tw"><table>
+  <thead><tr><th>원소</th><th>별자리</th></tr></thead>
+  <tbody>${Object.keys(byEl).map((el) => `<tr><td><strong>${esc(el)}</strong></td><td>${byEl[el].map((x) => `<a href="/zodiac/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join(' · ')}</td></tr>`).join('')}</tbody>
+</table></div>
+<p class="k">12×12 = 144쌍을 다 외울 수는 없습니다. 서양 점성술이 실제로 쓰는 기준이 원소 관계입니다.</p>
+
+<h2>원소 조합 열 가지</h2>
+<div class="tw"><table>
+  <thead><tr><th>조합</th><th>궁합</th><th>설명</th></tr></thead>
+  <tbody>${Object.keys(ZODIAC_PAIR_LINES).map((k) => {
+    const d = ZODIAC_PAIR_LINES[k];
+    return `<tr><td><strong>${esc(k.replace('-', ' · '))}</strong></td><td>${'★'.repeat(d.stars)}${'☆'.repeat(5 - d.stars)}</td><td>${esc(d.line)}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+
+<h2>정리하면</h2>
+<ul>
+  <li><strong>같은 원소</strong> — 말이 통합니다. 대신 약한 지점도 같습니다.</li>
+  <li><strong>불 · 바람</strong>, <strong>흙 · 물</strong> — 서로를 살리는 조합입니다.</li>
+  <li><strong>불 · 물</strong>, <strong>흙 · 바람</strong> — 부딪히는 조합입니다. 서로의 언어를 배우면 깊어집니다.</li>
+</ul>
+
+<h2>⚠️ 별자리와 사주는 다른 체계입니다</h2>
+<p>별자리는 서양 점성술, 띠와 사주는 동양 명리입니다. 두 결과가 엇갈려도 어느 한쪽이 틀린 것은 아닙니다. 더 좁게 보려면 태어난 날까지 쓰는 <a href="/match/saju/">생년월일 궁합</a>을 보세요.</p>
+
+<h2>12별자리 전체</h2>
+<div class="grid">${ZODIAC_SIGNS.map((x) => `<a href="/zodiac/${x.key}/">${esc(x.emoji)} ${esc(x.name)}</a>`).join('')}</div>
+${appCta}`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: '별자리 궁합은 네 원소(불·흙·바람·물)의 관계로 봅니다. 같은 원소끼리는 말이 통하고, 불과 바람 또는 흙과 물은 서로를 살리며, 불과 물 또는 흙과 바람은 부딪힙니다. '
+          + '12×12 = 144쌍을 모두 따로 보지 않고 원소로 묶는 것이 서양 점성술이 실제로 쓰는 방식입니다.',
+        faq: [
+          { q: '별자리 궁합은 무엇으로 보나요?',
+            a: '네 원소의 관계로 봅니다. 불·흙·바람·물에 각각 세 별자리가 들어가고, 원소끼리 어떤 사이인지로 궁합이 갈립니다.' },
+          { q: '어떤 원소끼리 잘 맞나요?',
+            a: '불과 바람, 흙과 물이 서로를 살리는 조합입니다. 같은 원소끼리는 말이 통하지만 약한 지점도 같아 둘 다 같은 자리에서 막힙니다.' },
+          { q: '별자리 궁합과 사주 궁합이 다르게 나오면 어느 쪽이 맞나요?',
+            a: '서양 점성술과 동양 명리는 다른 체계라 결과가 엇갈릴 수 있습니다. 어느 한쪽이 틀린 것은 아닙니다. '
+               + '더 좁게 보고 싶다면 태어난 날까지 쓰는 생년월일 궁합을 보세요.' },
+        ],
+        title: '별자리 궁합 — 원소로 보는 열 가지 조합 (불·흙·바람·물) | 맘운자로',
+        desc: '별자리 궁합을 네 원소 관계로 정리했습니다. 잘 맞는 조합과 부딪히는 조합, 그 이유까지. 무료.',
+        keywords: '별자리 궁합, 별자리 상성, 원소 궁합, 불 흙 바람 물, 12별자리 궁합, 무료 궁합, 점성술 궁합',
+        h1: '✨ 별자리 궁합',
+        sub: '불 · 흙 · 바람 · 물',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/match/">궁합</a> › 별자리',
+        body,
+      }),
+    });
+  }
+
+  // ---------- 5. MBTI 궁합 ----------
+  {
+    const url = '/match/mbti/';
+    const keys = Object.keys(MBTI_MATCH);
+    const body = `
+<div class="card">
+  <p class="k">성격 네 축으로 봅니다</p>
+  <p style="margin:0;font-size:17px;font-weight:700;">잘 맞는 쪽과 배우는 쪽</p>
+</div>
+
+<h2>16유형 전부</h2>
+<p><strong>잘 맞는 쪽</strong>은 결이 비슷해 편한 조합, <strong>배우는 쪽</strong>은 부딪히지만 서로에게 없는 것을 가진 조합입니다.</p>
+<div class="tw"><table>
+  <thead><tr><th>유형</th><th>잘 맞는 쪽</th><th>배우는 쪽</th></tr></thead>
+  <tbody>${keys.map((t) => {
+    const m = MBTI_MATCH[t];
+    const info = MBTI_TYPES[t] || {};
+    return `<tr><td><a href="/mbti/${t.toLowerCase()}/"><strong>${esc(t)}</strong></a>${info.emoji ? ` ${esc(info.emoji)}` : ''}</td>`
+      + `<td>${m.best.map((o) => `<a href="/mbti/${o.toLowerCase()}/">${esc(o)}</a>`).join(' · ')}</td>`
+      + `<td>${m.grow.map((o) => `<a href="/mbti/${o.toLowerCase()}/">${esc(o)}</a>`).join(' · ')}</td></tr>`;
+  }).join('')}</tbody>
+</table></div>
+
+<h2>"안 맞는다"가 아니라 "배운다"입니다</h2>
+<p>MBTI 궁합에서 자주 하는 오해가 "상극이면 피해야 한다"입니다. 네 축이 반대라는 것은 <strong>상대가 내가 못 하는 것을 한다</strong>는 뜻이기도 합니다. 편한 것과 좋은 것은 다릅니다.</p>
+
+<h2>⚠️ MBTI는 사주와 다른 체계입니다</h2>
+<p>MBTI는 지금의 성격 성향을, 사주와 띠는 태어난 때를 봅니다. 두 결과가 엇갈려도 어느 한쪽이 틀린 것은 아닙니다. <a href="/match/saju/">생년월일 궁합</a>도 같이 보세요.</p>
+
+<h2>16유형 전체 보기</h2>
+<div class="grid">${keys.map((t) => `<a href="/mbti/${t.toLowerCase()}/">${esc(t)}</a>`).join('')}</div>
+${appCta}`;
+
+    pages.push({
+      url,
+      html: shell({
+        url,
+        answer: 'MBTI 궁합은 성격 네 축으로 봅니다. 잘 맞는 쪽은 결이 비슷해 편한 조합이고, 배우는 쪽은 부딪히지만 서로에게 없는 것을 가진 조합입니다. '
+          + '네 축이 반대라는 것은 상대가 내가 못 하는 것을 한다는 뜻이기도 하므로, 상극이라고 피해야 하는 것은 아닙니다. '
+          + 'MBTI는 지금의 성격 성향을, 사주와 띠는 태어난 때를 보는 다른 체계입니다.',
+        faq: [
+          { q: 'MBTI 궁합에서 상극이면 피해야 하나요?',
+            a: '아닙니다. 네 축이 반대라는 것은 상대가 내가 못 하는 것을 한다는 뜻이기도 합니다. 편한 것과 좋은 것은 다릅니다.' },
+          { q: '"잘 맞는 쪽"과 "배우는 쪽"은 뭐가 다른가요?',
+            a: '잘 맞는 쪽은 결이 비슷해 설명 없이 통하는 조합이고, 배우는 쪽은 부딪히지만 서로에게 없는 것을 채워 주는 조합입니다.' },
+          { q: 'MBTI 궁합과 사주 궁합이 다르면 어느 쪽을 믿나요?',
+            a: '다른 것을 보는 체계라 엇갈릴 수 있습니다. MBTI는 지금의 성향, 사주는 태어난 때입니다. 둘 다 참고로 보는 쪽이 낫습니다.' },
+        ],
+        title: 'MBTI 궁합 — 16유형 잘 맞는 쪽·배우는 쪽 전체 표 | 맘운자로',
+        desc: 'MBTI 16유형의 궁합을 한 표로. 잘 맞는 조합과 부딪히지만 배우는 조합, 그리고 흔한 오해까지. 무료.',
+        keywords: 'MBTI 궁합, MBTI 상성, 16유형 궁합, mbti 잘 맞는 유형, mbti 상극, 무료 궁합, 성격 궁합',
+        h1: '🧩 MBTI 궁합',
+        sub: '16유형 · 잘 맞는 쪽과 배우는 쪽',
+        breadcrumb: '<a href="/">맘운자로</a> › <a href="/guide/">전체 목록</a> › <a href="/match/">궁합</a> › MBTI',
+        body,
+      }),
+    });
+  }
+}
+
 // 감정 페이지.
 //
 // 왜 필요한가: 생성 페이지 63장이 전부 MBTI·타로·별자리·띠였다. 즉 검색엔진과
@@ -1917,6 +2272,7 @@ async function main() {
   mbtiPages(M);
   tarotPages(T);
   zodiacPages(Z);
+  matchPages(Z, M);
   hubPages(M, T);
   privacyPage();
   aboutPage();

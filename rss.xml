@@ -10,8 +10,43 @@
   <link>https://maumjaro.minimalbreeze.com/</link>
   <description>오늘의 마음에 한 대. 감정을 고르면 용량이 뜨고, 그날 해볼 처방을 하나 알려주는 무료 웹앱입니다.</description>
   <language>ko</language>
-  <lastBuildDate>Fri, 06 Nov 2026 00:00:00 +0900</lastBuildDate>
+  <lastBuildDate>Mon, 09 Nov 2026 00:00:00 +0900</lastBuildDate>
   <atom:link href="https://maumjaro.minimalbreeze.com/rss.xml" rel="self" type="application/rss+xml" />
+  <item>
+    <title>궁합 보는 법 — 생년월일·띠·별자리·MBTI 뭐가 다른가 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/match/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/match/</guid>
+    <pubDate>Mon, 09 Nov 2026 00:00:00 +0900</pubDate>
+    <description>궁합 네 가지 방식의 차이와, 점수보다 중요한 다섯 가지 관계 방향. 무료로 생년월일 궁합까지.</description>
+  </item>
+  <item>
+    <title>띠 궁합 — 삼합·육합·충·원진 전부 (12띠 표) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/match/animal/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/match/animal/</guid>
+    <pubDate>Mon, 09 Nov 2026 00:00:00 +0900</pubDate>
+    <description>띠 궁합의 네 가지 관계를 전통 기준으로 정리했습니다. 삼합 세 무리, 육합·충·원진 각 여섯 쌍. 무료.</description>
+  </item>
+  <item>
+    <title>MBTI 궁합 — 16유형 잘 맞는 쪽·배우는 쪽 전체 표 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/match/mbti/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/match/mbti/</guid>
+    <pubDate>Mon, 09 Nov 2026 00:00:00 +0900</pubDate>
+    <description>MBTI 16유형의 궁합을 한 표로. 잘 맞는 조합과 부딪히지만 배우는 조합, 그리고 흔한 오해까지. 무료.</description>
+  </item>
+  <item>
+    <title>생년월일 궁합 — 사주 일간 오행으로 보는 다섯 가지 관계 | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/match/saju/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/match/saju/</guid>
+    <pubDate>Mon, 09 Nov 2026 00:00:00 +0900</pubDate>
+    <description>생년월일로 보는 사주 궁합. 상생·상극으로 갈리는 다섯 방향과 주의할 점. 태어난 시간은 몰라도 됩니다. 무료.</description>
+  </item>
+  <item>
+    <title>별자리 궁합 — 원소로 보는 열 가지 조합 (불·흙·바람·물) | 맘운자로</title>
+    <link>https://maumjaro.minimalbreeze.com/match/zodiac/</link>
+    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/match/zodiac/</guid>
+    <pubDate>Mon, 09 Nov 2026 00:00:00 +0900</pubDate>
+    <description>별자리 궁합을 네 원소 관계로 정리했습니다. 잘 맞는 조합과 부딪히는 조합, 그 이유까지. 무료.</description>
+  </item>
   <item>
     <title>개띠 행운의 숫자 — 5·10·11·23·35 (오행 토, 색은 노랑) | 맘운자로</title>
     <link>https://maumjaro.minimalbreeze.com/animal/dog/lucky/</link>
@@ -676,41 +711,6 @@
     <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2017/</guid>
     <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
     <description>2017년생은 닭띠. 정유년(丁酉), 붉은 닭의 해입니다. 2026년 기준 만 9세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
-  </item>
-  <item>
-    <title>2018년생은 무슨 띠? 개띠입니다 (무술년) · 2026년 나이 | 맘운자로</title>
-    <link>https://maumjaro.minimalbreeze.com/animal/year/2018/</link>
-    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2018/</guid>
-    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
-    <description>2018년생은 개띠. 무술년(戊戌), 노란 개의 해입니다. 2026년 기준 만 8세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
-  </item>
-  <item>
-    <title>2019년생은 무슨 띠? 돼지띠입니다 (기해년) · 2026년 나이 | 맘운자로</title>
-    <link>https://maumjaro.minimalbreeze.com/animal/year/2019/</link>
-    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2019/</guid>
-    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
-    <description>2019년생은 돼지띠. 기해년(己亥), 노란 돼지의 해입니다. 2026년 기준 만 7세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
-  </item>
-  <item>
-    <title>2020년생은 무슨 띠? 쥐띠입니다 (경자년) · 2026년 나이 | 맘운자로</title>
-    <link>https://maumjaro.minimalbreeze.com/animal/year/2020/</link>
-    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2020/</guid>
-    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
-    <description>2020년생은 쥐띠. 경자년(庚子), 흰 쥐의 해입니다. 2026년 기준 만 6세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
-  </item>
-  <item>
-    <title>2021년생은 무슨 띠? 소띠입니다 (신축년) · 2026년 나이 | 맘운자로</title>
-    <link>https://maumjaro.minimalbreeze.com/animal/year/2021/</link>
-    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2021/</guid>
-    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
-    <description>2021년생은 소띠. 신축년(辛丑), 흰 소의 해입니다. 2026년 기준 만 5세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
-  </item>
-  <item>
-    <title>2022년생은 무슨 띠? 호랑이띠입니다 (임인년) · 2026년 나이 | 맘운자로</title>
-    <link>https://maumjaro.minimalbreeze.com/animal/year/2022/</link>
-    <guid isPermaLink="true">https://maumjaro.minimalbreeze.com/animal/year/2022/</guid>
-    <pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate>
-    <description>2022년생은 호랑이띠. 임인년(壬寅), 검은 호랑이의 해입니다. 2026년 기준 만 4세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.</description>
   </item>
 </channel>
 </rss>
