@@ -74,6 +74,18 @@ export function 셀자리만(html) {
 }
 
 /**
+ * 주소 뒤에 딸려온 문장 부호를 뗀다.
+ *
+ * ⚠️ 2026-11-09 첫 실행에서 `youtube.com/pbatour):` · `tv.kakao.com/pba):`
+ *    가 그대로 찍혔다. 본문이 "(유튜브 youtube.com/pbatour)" 꼴이라 닫는
+ *    괄호와 콜론이 주소에 붙은 것이다. **보고가 틀린 주소를 말하면 사람이
+ *    그걸 찾으러 가서 못 찾는다.** `:` `;` 따옴표까지 뗀다.
+ */
+export function 꼬리떼기(s) {
+  return String(s).replace(/[.,·:;)\]}"'’”]+$/, '');
+}
+
+/**
  * 주소 **바로 앞 문장**을 보고 안전 안내인지 가린다.
  *
  * ⚠️ 처음에는 앞 120자를 통째로 봤다가 **옆 문장이 주소를 가렸다.** 한화 글의
@@ -119,7 +131,7 @@ export function 맨주소찾기(html) {
   // ② http(s):// 로 시작하는 맨 주소
   for (const m of 밖.matchAll(/https?:\/\/[^\s<>()"'\][]+/gi)) {
     if (안내인가(밖, m.index)) { 안내로건너뜀 += 1; continue; }
-    맨글자.push(m[0].replace(/[.,·)\]]+$/, ''));
+    맨글자.push(꼬리떼기(m[0]));
   }
 
   // ③ 스킴 없는 도메인 꼴
@@ -127,7 +139,7 @@ export function 맨주소찾기(html) {
   const 도메인꼴 = new RegExp(`(?<![\\w./@-])([a-z0-9-]+(?:\\.[a-z0-9-]+)*\\.(?:${끝묶음}))(?![\\w.-])(/\\S*)?`, 'gi');
   for (const m of 밖.matchAll(도메인꼴)) {
     if (안내인가(밖, m.index)) { 안내로건너뜀 += 1; continue; }
-    도메인.push((m[1] + (m[2] || '')).replace(/[.,·)\]]+$/, ''));
+    도메인.push(꼬리떼기(m[1] + (m[2] || '')));
   }
 
   return {

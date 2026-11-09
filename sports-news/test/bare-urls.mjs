@@ -1,6 +1,6 @@
 // 누를 수 없는 주소 세기 검사.
 import assert from 'node:assert/strict';
-import { 맨주소찾기, 셀자리만, 안내인가, 안내문맥 } from '../src/wordpress/bare-urls.mjs';
+import { 맨주소찾기, 셀자리만, 안내인가, 안내문맥, 꼬리떼기 } from '../src/wordpress/bare-urls.mjs';
 
 let passed = 0;
 function check(name, fn) {
@@ -92,6 +92,24 @@ check('안내문맥 목록이 비어 있지 않다', () => {
 check('안내인가() 는 문장 끝에서 끊는다', () => {
   assert.equal(안내인가('주소창 도메인이 맞는지 확인하세요. 그리고 ', 30), false);
   assert.equal(안내인가('주소창 도메인이 ', 10), true);
+});
+
+// ⚠️ 첫 실행 보고에 `youtube.com/pbatour):` 가 찍혔다. 보고가 틀린 주소를
+//    말하면 사람이 그걸 찾으러 가서 못 찾는다 — 점검 도구에서는 숫자만큼
+//    **찍히는 주소가 맞는 것**도 중요하다.
+check('주소 뒤에 딸려온 문장 부호를 뗀다', () => {
+  const r = 맨주소찾기('<p>(유튜브 youtube.com/pbatour): 보세요</p>');
+  assert.deepEqual(r.도메인, ['youtube.com/pbatour']);
+});
+
+check('꼬리떼기() 가 괄호·콜론·따옴표를 뗀다', () => {
+  assert.equal(꼬리떼기('store.ncdinos.com):'), 'store.ncdinos.com');
+  assert.equal(꼬리떼기('https://kovo.co.kr/,'), 'https://kovo.co.kr/');
+  assert.equal(꼬리떼기('lpga.com'), 'lpga.com');
+});
+
+check('주소 가운데의 점·슬래시는 지킨다', () => {
+  assert.equal(꼬리떼기('https://a.co.kr/b/c?d=1'), 'https://a.co.kr/b/c?d=1');
 });
 
 console.log(`\n  ${passed}개 통과`);
