@@ -183,9 +183,51 @@ export const IMAGE_MODELS = {
         : { width: 896, height: 1152 }),
       num_steps: 20,
       guidance_scale: 4,
-      // 0 이면 첫 걸음부터 얼굴을 밀어 넣는다 — 제일 닮지만 화풍을 덜
-      // 따른다. 캐리커처로 만들어야 하므로 조금 늦게 넣는다.
-      start_step: 2,
+      // ⚠️ 2026-11-09. 여기 `start_step: 2` 가 **한 줄 더** 있었다.
+      //    JS 객체는 뒤에 쓴 것이 이긴다. 그래서 위의
+      //    PORTRAIT_START_STEP 을 2 → 4 → 6 으로 올린 것이 **한 번도
+      //    먹지 않았다.** 사진 얼굴이 계속 남던 까닭 중 하나다.
+      //
+      //    고친 값을 다른 곳에서 덮어쓰고 있으면 아무리 고쳐도 안 바뀐다.
+      //    같은 이름을 한 객체에 두 번 쓰지 않는다.
+      output_format: 'png',
+    }),
+  },
+  // ── 사진을 통째로 바탕으로 그림을 다시 그리는 모델 ──
+  //
+  // 2026-11-09 운영자: "사진을 그림으로 그대로 지브리 스타일로 하는 건
+  //                     어떤가? 그럼 걸리는 데서 더 많이 벗어날 것 같다."
+  //
+  // 지금까지 쓰던 flux-pulid 는 **얼굴만** 가져온다. 몸·자세·배경은
+  // 글로 적어야 했고, 거기서 돼지·외팔이·짝짝이 양말이 나왔다.
+  //
+  // 이 모델은 사진 전체를 받아 **구도와 자세를 지키면서 화풍만** 바꾼다.
+  // 그러면 포즈가 실제 사람의 포즈다 — 팔이 셋일 수 없고, 글러브 낀
+  // 팔이 빠질 수 없고, 상체와 하체가 따로 놀 수 없다.
+  //
+  // ⚠️ 한 번 겪은 함정이 있다. 2026-11-04 운영자: "감독 얼굴이 그냥
+  //    얼굴이잖아." 사진을 너무 살리면 **사진 느낌이 그대로 남는다.**
+  //    그래서 프롬프트에 "다시 그린 그림"임을 세게 적는다. 변환 강도를
+  //    따로 주는 입력이 있으면 거기서도 조절한다.
+  //
+  // ⚠️ **값과 입력 이름을 확인하지 못했다.** 이 컨테이너에서
+  //    api.replicate.com 이 막혀 모델 설명을 못 읽는다. usdPerImage 는
+  //    상한을 걸기 위한 추정이고, 실제 금액은 첫 실행 뒤 Replicate
+  //    사용량 화면에서 봐야 한다. 입력 이름이 틀리면 filterInput 이
+  //    모델이 선언한 것만 남기므로 조용히 빠진다.
+  kontext: {
+    key: 'kontext',
+    model: 'black-forest-labs/flux-kontext-pro',
+    alsoTry: ['black-forest-labs/flux-kontext-dev'],
+    usdPerImage: 0.05,
+    note: '사진을 받아 구도를 지키면서 화풍만 바꾼다.',
+    needsReference: true,
+    // 바탕이 flux 계열이라 dev 와 결이 맞는다.
+    baseModel: 'dev',
+    input: (prompt, { referenceImage, aspectRatio }) => ({
+      prompt,
+      input_image: referenceImage,
+      ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
       output_format: 'png',
     }),
   },

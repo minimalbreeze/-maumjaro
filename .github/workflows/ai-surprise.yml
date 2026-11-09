@@ -39,6 +39,7 @@ on:
           - '화풍 미리보기 (그림 6장만 · 약 $0.1)'
           - '화풍 후보 비교 (같은 장면 네 그림체 · 약 $0.2)'
           - '인물 시트 만들기 (사진을 참조로 얼굴 · 약 $0.3)'
+          - '사진을 지브리로 (받아 둔 사진을 그대로 바꿔 봅니다 · 장당 약 $0.05)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
@@ -51,6 +52,10 @@ on:
         description: '이미 써 둔 동화 대본 파일. 넣으면 AI가 다시 쓰지 않습니다 (비용 0원). 비우면 AI가 씁니다'
         required: false
         default: '이상한동화/1화-대본.md'
+      repaint_only:
+        description: "'사진을 지브리로' 에서 몇 명만 바꿀 때. 쉼표로 구분 (예: 구자욱,강민호). 비우면 전원"
+        required: false
+        default: ''
       sports_plan:
         description: '스포츠 기획 파일 (예: 스포츠영상/1화.json). 스포츠 방식에서만 씁니다'
         required: false
@@ -311,6 +316,7 @@ jobs:
           IN_TALE_PLAN: ${{ inputs.tale_plan }}
           IN_TALE_SCRIPT: ${{ inputs.tale_script }}
           IN_SPORTS_PLAN: ${{ inputs.sports_plan }}
+          IN_REPAINT_ONLY: ${{ inputs.repaint_only }}
           IN_SPORTS_SCRIPT: ${{ inputs.sports_script }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
@@ -398,6 +404,19 @@ jobs:
               echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
               echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
               node src/main.mjs upload --id="$RESUME_ID"
+              ;;
+            *'사진을 지브리로'*)
+              # 2026-11-09 운영자가 꺼낸 길이다 — "사진을 그림으로 그대로
+              # 지브리 스타일로 하는 건 어떤가? 그럼 걸리는 데서 더 많이
+              # 벗어날 것 같다."
+              #
+              # 얼굴만 가져오는 인물 시트와 다르다. 사진 **전체**를 바탕으로
+              # 구도를 지키면서 화풍만 바꾼다. 그래서 자세가 실제 사람의
+              # 자세가 되고, 팔이 셋이거나 빠질 수가 없다.
+              #
+              # ⚠️ '인물 시트' 분기보다 **앞**에 둔다. 두 이름이 '사진' 을
+              #    같이 쓴다 — 모드 이름이 겹쳐 엉뚱한 분기로 간 적이 있다.
+              node src/main.mjs repaint --plan="$IN_SPORTS_PLAN" ${IN_REPAINT_ONLY:+--only="$IN_REPAINT_ONLY"}
               ;;
             *'인물 시트'*)
               echo "기획 파일의 people 에 적힌 사진 주소를 참조로 얼굴을 만듭니다."

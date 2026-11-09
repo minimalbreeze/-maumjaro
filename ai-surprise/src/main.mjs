@@ -31,6 +31,7 @@ import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
 import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
+import { repaintJobs, REPAINT_MODEL } from './assets/repaint.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -922,6 +923,100 @@ async function cmdPreview(flags) {
  * 퍼블리싱하는 것이 된다. Replicate 가 주소에서 직접 받아 가고 우리
  * 쪽엔 결과물(캐리커처)만 남는다.
  */
+/**
+ * 사진을 그대로 지브리로 바꾼다.
+ *
+ * 2026-11-09 운영자: "사진을 그림으로 그대로 지브리 스타일로 하는 건
+ *                     어떤가? 그럼 걸리는 데서 더 많이 벗어날 것 같다."
+ *
+ * portrait 와 다른 점 — portrait 는 **얼굴만** 가져와 새 그림을 그리고,
+ * 여기서는 **사진 전체**를 바탕으로 화풍만 바꾼다. 그래서 자세가 실제
+ * 사람의 자세가 된다.
+ */
+async function cmdRepaint(flags) {
+  const planPath = typeof flags.plan === 'string' ? flags.plan : '';
+  if (!planPath) {
+    log.error('어느 편의 사진을 바꿀지 알려주세요.');
+    log.info('  node src/main.mjs repaint --plan=스포츠영상/12화.json');
+    process.exit(1);
+  }
+  const full = path.isAbsolute(planPath) ? planPath : path.join(ROOT, '..', planPath);
+  if (!fs.existsSync(full)) {
+    log.error(`${planPath} 이 없습니다.`);
+    process.exit(1);
+  }
+  const plan = JSON.parse(fs.readFileSync(full, 'utf8'));
+
+  // --only=네일,올러 로 몇 명만 돌려 본다. 처음 써 보는 모델이라
+  // 전원을 돌리기 전에 몇 장으로 확인하는 쪽이 싸다.
+  const only = typeof flags.only === 'string' && flags.only.trim()
+    ? new Set(flags.only.split(',').map((x) => x.trim()).filter(Boolean))
+    : null;
+  const people = (plan.people || []).filter(
+    (p) => !only || only.has(String(p?.name || '').trim())
+  );
+
+  const { jobs, skipped } = repaintJobs(people, { spare: Boolean(flags.spare) });
+
+  log.section(`🖼  사진을 지브리로  |  ${planPath}`);
+  for (const sk of skipped) log.warn(`${sk.name}: ${sk.reason}`);
+  if (!jobs.length) {
+    log.error('바꿀 사진이 없습니다.');
+    log.info('기획 파일의 people 에 photo 를 **사진 주소**로 넣어 주세요 (http 로 시작).');
+    process.exit(1);
+  }
+
+  const per = modelFor(REPAINT_MODEL).usdPerImage;
+  const cost = Math.round(jobs.length * per * 10000) / 10000;
+  log.info(`${jobs.length}장 — ${[...new Set(jobs.map((j) => j.name))].join(', ')}`);
+  log.info(`예상 비용 약 $${cost} (추정치 — 이 모델은 처음 써 봅니다)`);
+  log.info('사진은 저장소에 남지 않습니다. 주소만 넘기고 Replicate 가 직접 받아 갑니다.');
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    log.raw(`  ${jobs[0].name}`);
+    log.raw(`  참조: ${jobs[0].referenceImage}`);
+    log.raw(`  지시: ${jobs[0].prompt}`);
+    return;
+  }
+
+  const token = env('REPLICATE_API_TOKEN');
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    process.exit(1);
+  }
+
+  const outDir = path.join(ROOT, 'preview', 'repaint');
+  fs.mkdirSync(outDir, { recursive: true });
+  const api = createReplicate({ token });
+
+  let spent = 0;
+  const made = [];
+  for (const [i, job] of jobs.entries()) {
+    log.step(`${i + 1}/${jobs.length} — ${job.file}`);
+    try {
+      const r = await api.generate(job.prompt, {
+        modelKey: REPAINT_MODEL,
+        referenceImage: job.referenceImage,
+        aspectRatio: '16:9',
+      });
+      spent += r.usdEstimate ?? per;
+      fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+      made.push(job.file);
+    } catch (e) {
+      log.error(`${job.file}: ${e.message}`);
+    }
+  }
+
+  log.raw('');
+  log.ok(`${made.length}장 완성 — preview/repaint/`);
+  log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
+  if (made.length < jobs.length) {
+    log.warn(`${jobs.length - made.length}장 실패했습니다. 위의 오류를 보세요.`);
+  }
+}
+
 async function cmdPortrait(flags) {
   const planPath = typeof flags.plan === 'string' ? flags.plan : '';
   if (!planPath) {
@@ -2246,6 +2341,9 @@ async function main() {
       break;
     case 'portrait':
       await cmdPortrait(flags);
+      break;
+    case 'repaint':
+      await cmdRepaint(flags);
       break;
     case 'upload':
       await cmdUpload(flags);
