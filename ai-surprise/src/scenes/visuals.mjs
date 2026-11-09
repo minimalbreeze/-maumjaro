@@ -445,11 +445,24 @@ export const SPORTS_STYLE_SUFFIX =
   'the team colours given for this figure, and when a jersey number is ' +
   'given for this figure that exact number on the back — never an ' +
   'invented number, and no number at all when none is given, ' +
-  'the team wordmark across the chest and the number across the back both ' +
-  'legible, so the figure is identifiable from behind as well as from the ' +
-  'front, ' +
-  'the lettering and seams painted with the same care as the rest of ' +
+  // ⚠️⚠️ 가슴에 **글자를 그리라고 하지 않는다** (2026-11-09) ⚠️⚠️
+  //
+  // 여기에 'the team wordmark across the chest ... legible' 이라고
+  // 적어 뒀었다. 그래서 모델이 고영표 가슴에 **읽을 수 없는 글자꼴**을
+  // 그렸다 — "읽가ㅅㅍ大". 운영자가 워터마크로 봤고 나도 그렇게 보고
+  // 자르기를 붙들고 한 시간을 썼다. 워터마크가 아니라 **내가 "읽을 수
+  // 있게 써라"고 시킨 글자**였다.
+  //
+  // Flux 는 한글을 못 쓰고 영문도 두세 글자가 한계다. 그런데 글자를
+  // 쓰라고 하면 글자 비슷한 것을 반드시 그린다.
+  //
+  // 뒤에서 알아보게 하는 것은 **등번호**다. 숫자는 한두 자리라 제대로
+  // 나온다. 가슴 글자는 없어도 아무것도 안 잃는다.
+  'the number across the back large and clear, so the figure is ' +
+  'identifiable from behind as well as from the front, ' +
+  'the seams and stitching painted with the same care as the rest of ' +
   'the picture, ' +
+  'the front of the jersey is smooth plain fabric, ' +
   // ── 좌우가 같아야 한다 (2026-11-09 운영자) ──
   //
   //   "양말 색이 짝짝이다"
@@ -472,19 +485,32 @@ export const SPORTS_STYLE_SUFFIX =
   //
   //    그래서 **무엇을 그릴지**로 뒤집는다. 모자에는 그 구단의 표시만
   //    올라간다. 뜻 모를 알파벳 한 글자는 안 된다.
-  'never a Major League Baseball team: no interlocking NY, no Dodgers ' +
-  'script, no Boston B, no Cincinnati C, no Chicago C, ' +
-  'no American team wordmark or cap logo, ' +
+  // ⚠️⚠️ 2026-11-09. 여기 있던 금지 목록을 **전부 들어냈다.** ⚠️⚠️
+  //
+  //    'no interlocking NY, no Dodgers script, no Boston B,
+  //     no Cincinnati C, no Chicago C, no American team wordmark'
+  //
+  //    이 줄들이 금지로 작동한다고 믿었는데 **그런 적이 없다.**
+  //    flux-schnell 과 flux-dev 는 negative_prompt 를 아예 안 받는다.
+  //    그래서 이 말들은 전부 **프롬프트 본문**에 붙어 모델에게 갔다.
+  //    모델이 받은 것은 "NY, Dodgers, Boston B, Cincinnati C, Chicago C"
+  //    라는 **낱말 목록**이었다. 그래서 C 가 나왔고, 한 글자를 막으니
+  //    STL 이 나왔다. 막을수록 목록이 길어지고 목록이 길어질수록 더 나왔다.
+  //
+  //    남기는 것은 **무엇을 그릴지** 한 줄뿐이다.
   'the cap carries only the mark of the Korean team named for this ' +
   // ⚠️ 2026-11-09. 처음에 "한 글자"만 막았는데 다음 샷에서 **STL**
   //    (세인트루이스)이 나왔다. 글자 수를 가리면 안 된다 — 한 글자든
   //    세 글자든 남의 구단 표시다.
-  'figure, never any other club monogram or wordmark of one, two or ' +
-  'three Latin letters such as C, B, NY, LA, STL, SF, KC, ' +
-  'and a plain cap with no mark is better than an invented one, ' +
+  'figure, and a plain unmarked cap is better than an invented mark, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
-  'no caption text, no watermark, no subtitles, no sponsor logo';
+  // ⚠️ 여기 있던 'no caption text, no watermark, no subtitles,
+  //    no sponsor logo' 를 뺐다. 금지가 아니라 **그릴 것의 목록**으로
+  //    모델에게 갔다(위 설명). 대신 "면이 매끈하다"는 긍정문으로 적는다 —
+  //    repaint.mjs 에서 같은 결론에 이미 도달했는데 여기엔 안 옮겼다.
+  'every surface is painted plain and unmarked: the uniform, the wall and ' +
+  'the ground carry colour and texture only';
 
 /**
  * 참조 사진이 **없는** 샷에 붙이는 줄.
@@ -559,8 +585,11 @@ export const SPORTS_NEGATIVE_EXTRA =
   // ⚠️ 2026-11-07 에 'no club team logos' 를 뺐다. 그 줄 때문에 모델이
   //    "야구 유니폼처럼 생긴 아무것"을 그렸고, 거기서 양키스 모자가
   //    나왔다. 이제는 **한국 구단 색을 적어 주고** 미국 구단만 막는다.
-  'no Major League Baseball logos, no foreign team wordmarks, ' +
-  'no sponsor text on uniforms, ' +
+  // ⚠️ 2026-11-09. 'no Major League Baseball logos, no foreign team
+  //    wordmarks, no sponsor text on uniforms' 를 뺐다. flux-schnell·dev
+  //    는 negative_prompt 를 안 받아서 이 말들이 **프롬프트 본문**에
+  //    붙어 갔다. 막으려던 낱말을 모델에게 읽어 준 셈이다.
+  //    유니폼은 uniforms.mjs 가 한국 구단 색으로 적어 준다.
   'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
   // ── 팔다리가 **빠지는** 것도 막는다 (2026-11-09 운영자) ──
   //

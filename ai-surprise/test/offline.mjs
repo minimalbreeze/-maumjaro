@@ -4469,11 +4469,14 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
   assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
   assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
-  // ⚠️ 2026-11-07 에 바뀌었다. 'no club team logos' 를 뺐다 — 그 줄
-  //    때문에 모델이 "야구 유니폼처럼 생긴 아무것"을 그렸고 거기서
-  //    양키스 모자가 나왔다. 이제는 한국 구단 색을 적어 주고 미국
-  //    구단만 막는다.
-  assert.ok(/no Major League Baseball logos/.test(jobs[0].prompt));
+  // ⚠️ 2026-11-09 에 또 바뀌었다. 'no Major League Baseball logos' 도
+  //    **뺐다.** flux-schnell·dev 는 negative_prompt 를 안 받아서
+  //    금지 목록이 프롬프트 **본문**에 붙어 갔다 — 모델이 받은 것은
+  //    금지가 아니라 "Major League Baseball" 이라는 낱말이었다.
+  assert.ok(
+    !/Major League Baseball/.test(jobs[0].prompt),
+    '미국 리그 이름이 프롬프트에 있습니다 — 부르면 그립니다'
+  );
   // 2026-11-03 유니폼을 국대로 바꿨다. 가슴 글자는 **살아야** 한다 —
   // 전에는 금지 목록의 'no readable jersey text' 가 그걸 지웠다.
   // ⚠️ 2026-11-07 에 **두 번** 바뀌었다.
@@ -6014,9 +6017,14 @@ await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜�
     const p = V.composeImagePrompt('a pitcher on the mound', null, { kind: 'SPORTS', likeness });
     assert.ok(/no photorealistic faces/.test(p), `실사 얼굴 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no photograph/.test(p), `사진 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no Major League Baseball logos/.test(p), `미국 구단 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no extra arms/.test(p), `팔 개수 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no sponsor text/.test(p), `스폰서 글자 금지가 빠졌습니다 (likeness=${likeness})`);
+    // ⚠️ 2026-11-09. 구단 이름과 '스폰서 글자' 금지는 **뺐다.**
+    //    flux-schnell·dev 에 negative_prompt 가 없어 본문으로 갔다.
+    //    실사 금지는 남긴다 — 그쪽은 유튜브 정책이고, 화풍을 적는
+    //    긍정문(지브리·수채)이 같이 세게 끌어 준다.
+    for (const w of ['Major League Baseball', 'sponsor text', 'wordmark']) {
+      assert.ok(!new RegExp(w, 'i').test(p), `"${w}" 가 프롬프트에 있습니다 — 부르면 그립니다`);
+    }
   }
 
   // 닮음을 켰을 때만 실존 인물 금지가 빠진다. 끄면 그대로 있어야 한다.
@@ -7115,32 +7123,87 @@ await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
   assert.ok(p.includes('no extra arms'), '팔이 더 많은 것을 막던 줄이 사라졌습니다');
 });
 
-await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async () => {
-  // 2026-11-09 운영자: "이건 누구고 모자에 C는 무슨 마크인가?"
+await asyncTest('모자와 가슴에 글자를 그리라고 하지 않는다', async () => {
+  // ── 세 번 틀렸다. 세 번째에 까닭을 알았다 (2026-11-09) ──
   //
-  // ⚠️ 미국 구단을 **이름으로 하나씩** 막는 방식은 안 통한다. 셋만
-  //    적어 뒀더니(양키스·다저스·보스턴) 모델이 그 셋을 피하고 C 를
-  //    가져왔다. 금지는 끝이 없다.
+  //   1차  미국 구단 셋을 이름으로 막았다 → 모델이 **C** 를 가져왔다
+  //   2차  "한 글자 모노그램 금지" 로 고쳤다 → **STL** 이 나왔다
+  //   3차  운영자: "아직도 그대로다" — 고영표 가슴에 "읽가ㅅㅍ大"
   //
-  // 그래서 "무엇을 그릴지"로 뒤집었다 — 모자에는 그 구단 표시만
-  // 올리고, 모르면 아무것도 안 올린다.
+  // 세 번째에 코드를 읽고 알았다. **flux-schnell 과 flux-dev 는
+  // negative_prompt 를 아예 안 받는다.** replicate.mjs 의 input() 을
+  // 보면 그 칸이 없다. 그래서 composeImagePrompt 가 만든 금지 목록은
+  // 프롬프트 **본문 끝에 그대로 이어 붙어** 모델에게 갔다.
+  //
+  // 모델이 받은 것은 이랬다:
+  //   "... no interlocking NY, no Dodgers script, no Boston B,
+  //    no Cincinnati C, no Chicago C ..."
+  //
+  // 금지로 읽히지 않는다. **낱말 목록으로 읽힌다.** 그래서 막을수록
+  // 더 나왔다. 목록이 길어질수록 더.
+  //
+  // 그리고 가슴은 금지도 아니었다 — 내가 'the team wordmark across the
+  // chest ... legible' 이라고 **그리라고** 적어 뒀다. Flux 는 한글을
+  // 못 쓰니 글자꼴만 나온다.
+  //
+  // 그래서 글자 이야기를 전부 들어냈다. 선수를 알아보게 하는 것은
+  // **색과 등번호**다. 숫자는 한두 자리라 모델이 제대로 그린다.
   const V10 = await import('../src/scenes/visuals.mjs');
   const p = V10.composeImagePrompt('a manager', 'present', { kind: 'SPORTS' });
-  // ⚠️ 처음에 "한 글자"만 막았더니 다음 샷에서 **STL** 이 나왔다.
-  //    글자 수를 가리면 안 된다 — 한 글자든 세 글자든 남의 구단이다.
-  assert.ok(
-    /one, two or three Latin letters/.test(p),
-    '모자에 남의 구단 글자를 막는 줄이 없습니다'
+
+  // ⚠️ 이 목록에 낱말을 **다시 넣지 마라.** 넣으면 그려진다.
+  const 부르면_그리는_낱말 = [
+    'wordmark', 'lettering', 'monogram', 'watermark', 'caption',
+    'subtitle', 'sponsor', 'Major League Baseball',
+    'Dodgers', 'Yankees', 'Boston', 'Cincinnati', 'Chicago', 'STL',
+  ];
+  const 남은것 = 부르면_그리는_낱말.filter((w) => new RegExp(w, 'i').test(p));
+  assert.deepEqual(
+    남은것,
+    [],
+    `프롬프트에 이 낱말이 있으면 모델이 **그립니다**: ${남은것.join(', ')}\n` +
+      'flux-schnell·dev 는 negative_prompt 를 안 받습니다 — "no X" 도 본문으로 갑니다.'
   );
-  assert.ok(/STL/.test(p), 'STL 을 막는 줄이 없습니다');
+
+  // 대신 무엇을 그릴지로 적는다.
   assert.ok(
-    /a plain cap with no mark is better than an invented one/.test(p),
+    /the cap carries only the mark of the Korean team named for this figure/.test(p),
+    '모자에 무엇을 올릴지 적은 줄이 없습니다'
+  );
+  assert.ok(
+    /a plain unmarked cap is better than an invented mark/.test(p),
     '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
   );
-  // 이름으로 막던 것들도 그대로 남아 있어야 한다.
-  for (const w of ['no interlocking NY', 'no Boston B', 'no Cincinnati C']) {
-    assert.ok(p.includes(w), `${w} 가 사라졌습니다`);
+  assert.ok(
+    /the front of the jersey is smooth plain fabric/.test(p),
+    '가슴이 민무늬라고 적은 줄이 없습니다'
+  );
+  // 뒤에서 알아보는 길은 등번호다. 그건 살아 있어야 한다.
+  assert.ok(/the number across the back/.test(p), '등번호 지시가 사라졌습니다');
+});
+
+await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
+  // uniforms.mjs 의 열 팀이 전부 'white jersey with black lettering'
+  // 꼴이었다. 그것도 가슴 글자의 범인이다 — 색으로만 적는다.
+  const U = await import('../src/scenes/uniforms.mjs');
+  for (const [key, u] of Object.entries(U.KBO_UNIFORMS)) {
+    for (const w of ['lettering', 'wordmark', 'logo', 'text']) {
+      assert.ok(
+        !new RegExp(w, 'i').test(`${u.jersey} ${u.cap}`),
+        `${key} 에 "${w}" 가 있습니다 — Flux 는 글자를 못 씁니다. 색으로 적으세요.`
+      );
+    }
+    // 색은 반드시 있어야 한다. 그게 팀을 말해 주는 유일한 수단이다.
+    assert.ok(u.jersey.length > 20 && u.cap, `${key} 의 색 설명이 부실합니다`);
   }
+});
+
+await asyncTest('유니폼 문장이 가슴을 민무늬로 못 박는다', async () => {
+  const U = await import('../src/scenes/uniforms.mjs');
+  const c = U.uniformClause({ team: 'KT', number: '1' });
+  assert.ok(/smooth plain fabric/.test(c), '가슴 민무늬 지시가 없습니다');
+  // 등번호는 살아 있어야 한다 — 뒤에서 선수를 알아보는 유일한 길이다.
+  assert.ok(/the number 1 in large/.test(c), '등번호가 사라졌습니다');
 });
 
 await asyncTest('상체와 하체가 한 동작이다', async () => {

@@ -44,8 +44,8 @@ export const KBO_UNIFORMS = {
   KIA: {
     ko: 'KIA 타이거즈',
     jersey:
-      'a KIA Tigers uniform, a white jersey with the black KIA wordmark ' +
-      'across the chest and red trim on the collar and sleeves',
+      'a KIA Tigers uniform, a plain white jersey with red trim on the ' +
+      'collar and sleeves',
     cap: 'a red cap',
     numberColour: 'black',
     확실한가: '확인',
@@ -55,8 +55,8 @@ export const KBO_UNIFORMS = {
   한화: {
     ko: '한화 이글스',
     jersey:
-      'a Hanwha Eagles uniform, a white jersey with orange lettering and ' +
-      'dark navy trim',
+      'a Hanwha Eagles uniform, a plain white jersey with orange and dark ' +
+      'navy trim on the collar and sleeves',
     cap: 'an orange cap',
     numberColour: 'dark navy',
     확실한가: '통념',
@@ -65,8 +65,9 @@ export const KBO_UNIFORMS = {
   KT: {
     ko: 'KT 위즈',
     jersey:
-      'a KT Wiz uniform, a white jersey with black lettering and red trim',
-    cap: 'a black cap with a red logo',
+      'a KT Wiz uniform, a plain white jersey with black and red trim on ' +
+      'the collar and sleeves',
+    cap: 'a plain black cap',
     numberColour: 'black',
     확실한가: '통념',
   },
@@ -74,8 +75,8 @@ export const KBO_UNIFORMS = {
   삼성: {
     ko: '삼성 라이온즈',
     jersey:
-      'a Samsung Lions uniform, a white jersey with navy blue lettering ' +
-      'and navy piping',
+      'a Samsung Lions uniform, a plain white jersey with navy blue piping ' +
+      'along the collar and sleeves',
     cap: 'a navy blue cap',
     numberColour: 'navy blue',
     확실한가: '통념',
@@ -85,8 +86,8 @@ export const KBO_UNIFORMS = {
     ko: 'LG 트윈스',
     jersey:
       'an LG Twins uniform, a white jersey with black pinstripes and red ' +
-      'lettering',
-    cap: 'a black cap with a red logo',
+      'trim on the collar',
+    cap: 'a plain black cap',
     numberColour: 'red',
     확실한가: '통념',
   },
@@ -94,8 +95,8 @@ export const KBO_UNIFORMS = {
   두산: {
     ko: '두산 베어스',
     jersey:
-      'a Doosan Bears uniform, a white jersey with navy lettering and a ' +
-      'red accent stripe',
+      'a Doosan Bears uniform, a plain white jersey with a navy collar and ' +
+      'a red accent stripe down the sleeve',
     cap: 'a navy cap',
     numberColour: 'navy',
     확실한가: '통념',
@@ -104,8 +105,8 @@ export const KBO_UNIFORMS = {
   SSG: {
     ko: 'SSG 랜더스',
     jersey:
-      'an SSG Landers uniform, a white jersey with red lettering outlined ' +
-      'in gold',
+      'an SSG Landers uniform, a plain white jersey with red and gold trim ' +
+      'on the collar and sleeves',
     cap: 'a red cap',
     numberColour: 'red',
     확실한가: '통념',
@@ -114,7 +115,8 @@ export const KBO_UNIFORMS = {
   NC: {
     ko: 'NC 다이노스',
     jersey:
-      'an NC Dinos uniform, a white jersey with navy lettering and gold trim',
+      'an NC Dinos uniform, a plain white jersey with navy and gold trim ' +
+      'on the collar and sleeves',
     cap: 'a navy cap',
     numberColour: 'navy',
     확실한가: '통념',
@@ -123,7 +125,8 @@ export const KBO_UNIFORMS = {
   롯데: {
     ko: '롯데 자이언츠',
     jersey:
-      'a Lotte Giants uniform, a white jersey with navy lettering and red trim',
+      'a Lotte Giants uniform, a plain white jersey with navy and red trim ' +
+      'on the collar and sleeves',
     cap: 'a navy cap',
     numberColour: 'navy',
     확실한가: '통념',
@@ -132,8 +135,8 @@ export const KBO_UNIFORMS = {
   키움: {
     ko: '키움 히어로즈',
     jersey:
-      'a Kiwoom Heroes uniform, a white jersey with burgundy lettering and ' +
-      'navy trim',
+      'a Kiwoom Heroes uniform, a plain white jersey with burgundy and navy ' +
+      'trim on the collar and sleeves',
     cap: 'a burgundy cap',
     확실한가: '통념',
     numberColour: 'burgundy',
@@ -221,7 +224,29 @@ export function uniformClause({ team, number, role } = {}) {
   // 감독·코치는 유니폼 위에 팀 재킷을 입는다. 등번호는 보통 안 보인다.
   const isStaff = /감독|코치|단장/.test(String(role || ''));
 
-  const parts = [`wearing ${u.jersey}`, u.cap];
+  // ⚠️⚠️ 가슴에 **글자를 적지 않는다.** ⚠️⚠️
+  //
+  // 2026-11-09. 열 팀 전부 'white jersey with black lettering' 처럼
+  // 적어 뒀다. 그랬더니 모델이 고영표의 가슴에 **읽을 수 없는 글자꼴**을
+  // 그렸다 — "읽가ㅅㅍ大". 운영자가 워터마크로 봤고 나도 그렇게 보고
+  // 자르기를 붙들고 한 시간을 썼다. **워터마크가 아니라 내가 그리라고
+  // 시킨 글자였다.**
+  //
+  // Flux 는 한글을 못 쓴다. 영문도 두세 글자가 한계다. 그런데 "글자를
+  // 써라"고 하면 글자 **비슷한 것**을 반드시 그린다.
+  //
+  // 모자 마크에서 이미 배운 것과 같은 자리다 — 거기서는
+  // "그 구단 표시만 올리고 모르면 아무것도 안 올린다. 지어낸 마크보다
+  // 민무늬가 낫다"로 뒤집었는데, 가슴에는 그 교훈을 안 옮겼다.
+  //
+  // 선수를 알아보게 하는 것은 **색과 등번호**다. 숫자는 한두 자리라
+  // 모델이 제대로 그린다. 가슴 글자는 없어도 아무것도 안 잃는다.
+  const parts = [
+    `wearing ${u.jersey}`,
+    u.cap,
+    // 긍정문으로 적는다. "글자를 쓰지 마라"로 적으면 글자를 그린다.
+    'the front of the jersey is smooth plain fabric',
+  ];
   if (isStaff) {
     parts.push(`a team jacket in the same colours over the uniform`);
   }
