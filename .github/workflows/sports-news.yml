@@ -688,18 +688,59 @@ jobs:
           dry=""
           case "$IN_MODE" in *미리보기*) dry="--dry-run" ;; esac
 
+          # ── 제목·설명을 **파일에서** 읽는 길 (2026-11-09) ────────────────
+          #
+          # file_path 에 JSON 파일을 주면 그 안의 글자를 쓴다. 모양은
+          #   { "11802": { "title": "...", "desc": "...", "keyword": "...",
+          #                "seo_title": "..." } }
+          # 글 번호 키가 없으면 "*" 키를 본다.
+          #
+          # ⚠️ **왜 만들었나.** 2026-11-09 에 제목을 손으로 넘기다 한글이
+          #    일곱 번 깨졌다(`16씵`·`신지에`·`평금타수`·`놓쫌`·`추피언십`).
+          #    그중 **두 번이 '실제 적용' 모드**였고, 발행된 글 제목이 깨진
+          #    글자로 바뀔 상황이었다. 둘 다 취소해서 막았지만 막은 것은
+          #    운이 아니라 눈이었고, 눈은 매번 안 걸린다.
+          #
+          #    파일로 쓴 한글은 한 번도 깨지지 않았다. 되돌릴 수 없는 쪽
+          #    (발행된 글의 제목)에 닿는 값은 **파일을 거치게** 한다.
+          #    입력으로 직접 주는 길은 그대로 둔다 — 짧은 값에는 편하다.
+          if [ -n "$IN_FILE" ]; then
+            target="$IN_FILE"
+            if [ ! -f "$target" ] && [ -f "../$IN_FILE" ]; then target="../$IN_FILE"; fi
+            if [ ! -f "$target" ]; then
+              echo "::error::제목 파일을 찾을 수 없습니다: $IN_FILE"
+              echo "제목 파일을 찾을 수 없습니다: $IN_FILE" >> "$RUNNER_TEMP/sn.log"
+              exit 1
+            fi
+            echo "제목·설명을 파일에서 읽습니다: $target" | tee -a "$RUNNER_TEMP/sn.log"
+          fi
+
           for id in $IN_IDS; do
             case "$id" in
               ''|*[!0-9]*) echo "::error::글 번호는 숫자여야 합니다: $id"; exit 1 ;;
             esac
+            # 파일을 줬으면 이 글의 값을 꺼낸다. 없는 칸은 빈 문자열이라
+            # 아래 ${VAR:+...} 가 그대로 걸러 준다.
+            T="$IN_TITLE"; D="$IN_DESC"; K="$IN_KW"; S="$IN_SEO"
+            if [ -n "$IN_FILE" ]; then
+              T=$(node -e 'const f=require(process.argv[1]);const o=f[process.argv[2]]||f["*"]||{};process.stdout.write(o.title||"")' "$PWD/$target" "$id" 2>/dev/null || true)
+              D=$(node -e 'const f=require(process.argv[1]);const o=f[process.argv[2]]||f["*"]||{};process.stdout.write(o.desc||"")' "$PWD/$target" "$id" 2>/dev/null || true)
+              K=$(node -e 'const f=require(process.argv[1]);const o=f[process.argv[2]]||f["*"]||{};process.stdout.write(o.keyword||"")' "$PWD/$target" "$id" 2>/dev/null || true)
+              S=$(node -e 'const f=require(process.argv[1]);const o=f[process.argv[2]]||f["*"]||{};process.stdout.write(o.seo_title||"")' "$PWD/$target" "$id" 2>/dev/null || true)
+              if [ -z "$T$D$K$S" ]; then
+                echo "::error::$id 에 해당하는 값이 파일에 없습니다"
+                echo "$id 에 해당하는 값이 파일에 없습니다 ($target)" >> "$RUNNER_TEMP/sn.log"
+                exit 1
+              fi
+            fi
             # 값에 공백이 들어가므로 셸이 쪼개지 않게 큰따옴표로 넘긴다.
             # 비어 있는 입력은 ${VAR:+...} 로 아예 빼서, 빈 값으로 덮어쓰지 않는다.
             # retitle.mjs 는 set 서브커맨드를 먼저 받는다 (argv[2]=set, argv[3]=글번호).
             node src/wordpress/retitle.mjs set "$id" $dry \
-              ${IN_TITLE:+--title="$IN_TITLE"} \
-              ${IN_DESC:+--desc="$IN_DESC"} \
-              ${IN_KW:+--kw="$IN_KW"} \
-              ${IN_SEO:+--seo="$IN_SEO"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+              ${T:+--title="$T"} \
+              ${D:+--desc="$D"} \
+              ${K:+--kw="$K"} \
+              ${S:+--seo="$S"} 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           done
 
       - name: 중계 배너 넣기
