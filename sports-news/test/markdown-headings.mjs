@@ -64,4 +64,37 @@ check('소제목과 본문이 섞여도 순서를 지킨다', () => {
   assert.ok(순서.every((i) => i >= 0), out);
 });
 
+// ── 이미 워드프레스 블록인 덩어리는 그대로 내보낸다 (2026-11-09) ────────
+//
+// 효성님이 기사 이미지를 "그대로 끼워 넣으면 안 되나" 고 물어 미디어에
+// 올렸는데, 그 블록을 초안에 붙였더니 **글자로 escape 돼 본문에 HTML
+// 코드가 그대로 보였다.**
+
+check('wp:image 블록을 글자로 바꾸지 않고 그대로 내보낸다', () => {
+  const md = '앞\n\n<!-- wp:image {"id":17416} -->\n<figure class="wp-block-image"><img src="https://a.com/x.jpg" alt="설명"/></figure>\n<!-- /wp:image -->\n\n뒤';
+  const out = markdownToBlocks(md);
+  assert.ok(out.includes('<!-- wp:image {"id":17416} -->'), out);
+  assert.ok(out.includes('<img src="https://a.com/x.jpg" alt="설명"/>'), out);
+  assert.ok(!out.includes('&lt;!-- wp:image'), '블록이 글자로 escape 됐습니다');
+});
+
+// ⚠️ 반쪽만 적힌 덩어리를 통과시키면 **뒤 본문까지 그 블록 안으로 빨려
+//    들어간다.** 글자로 보이는 쪽이 본문이 깨지는 쪽보다 낫다.
+check('여는 주석만 있고 닫는 주석이 없으면 통과시키지 않는다', () => {
+  const md = '앞\n\n<!-- wp:image -->\n<figure>깨짐\n\n뒤';
+  const out = markdownToBlocks(md);
+  assert.ok(out.includes('&lt;!-- wp:image --&gt;'), '짝이 안 맞는 블록을 통과시켰습니다');
+  assert.ok(out.includes('<p>뒤</p>'), '뒤 본문이 사라졌습니다');
+});
+
+check('자기완결 블록(/-->)도 통과시킨다', () => {
+  const out = markdownToBlocks('앞\n\n<!-- wp:spacer {"height":"20px"} /-->\n\n뒤');
+  assert.ok(out.includes('<!-- wp:spacer {"height":"20px"} /-->'), out);
+});
+
+check('wp: 로 시작하지 않는 주석은 그냥 글자다', () => {
+  const out = markdownToBlocks('<!-- 그냥 메모 -->');
+  assert.ok(out.includes('&lt;!-- 그냥 메모 --&gt;'), out);
+});
+
 console.log(`\n  ${passed}개 통과`);
