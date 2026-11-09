@@ -15,6 +15,8 @@
   // 닫으면 그 방문 동안 다시 뜨지 않는다. sessionStorage 가 막혀 있어도(사생활
   // 보호 모드 등) 바는 그대로 뜬다 — 광고가 사라지는 쪽보다 낫다.
   try { if (sessionStorage.getItem(KEY)) { bar.style.display = 'none'; return; } } catch (e) {}
+  // 겹쳐서 숨긴 상태인가. 여백() 이 이 값을 보므로 먼저 선언한다.
+  var 숨김 = false;
   var x = document.getElementById('cpst-x');
   if (x) x.addEventListener('click', function () {
     bar.style.display = 'none';
@@ -23,7 +25,13 @@
   });
   // 바가 글 마지막 줄을 덮지 않게 아래 여백을 준다. 캐러셀이 늦게 그려지므로
   // 높이를 한 번 더 잰다 — 처음 잰 값만 쓰면 여백이 모자란다.
-  function 여백() { document.body.style.paddingBottom = (bar.offsetHeight + 12) + 'px'; }
+  // ⚠️ 숨어 있을 때는 여백을 주지 않는다. resize 때 여백() 이 먼저 돌고
+  //    겹침확인() 은 "상태가 그대로면" 아무것도 안 하므로, 이 줄이 없으면
+  //    **숨은 채로 아래 여백만 남는다** — 글 끝에 빈 칸이 생긴다.
+  function 여백() {
+    if (숨김) { document.body.style.paddingBottom = ''; return; }
+    document.body.style.paddingBottom = (bar.offsetHeight + 12) + 'px';
+  }
   여백();
   setTimeout(여백, 1500);
   window.addEventListener('resize', 여백);
@@ -59,7 +67,6 @@
     } catch (e) {}
     return 것들;
   }
-  var 숨김 = false;
   function 겹침확인() {
     try {
       if (bar.style.display === 'none') return;
