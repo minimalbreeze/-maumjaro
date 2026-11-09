@@ -52,6 +52,7 @@ import { 링크 } from './draft.mjs';
 import { loadOfficialLinks } from '../seo/official-banner.mjs';
 import { 셀자리만, 안내인가, 예시인가, 꼬리떼기 } from './bare-urls.mjs';
 import { log } from '../utils/logger.mjs';
+import { 발행글전부 } from './index-audit.mjs';
 
 /** 주소에서 호스트만. 못 읽으면 null. */
 export function 호스트(url) {
@@ -214,13 +215,25 @@ export function 링크만바뀌었나(before, after) {
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
-  const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
+  // 전체는 **--전체 를 분명히 적었을 때만** 돈다. 700편을 실수로 건드리지
+  // 않는다 (add-sticky 와 같은 생각).
+  const 전체 = args.includes('--전체');
+  let ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
   const base = wpConfig().base;
 
   log.section(`🔗 글자로만 적힌 주소를 링크로 바꿉니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
   log.info(`   대상 사이트: ${new URL(base).host}  ← 여기 글만 손댑니다`);
+  if (전체) {
+    // 점검에서 걸린 150편을 번호로 적을 수 없다. 발행글 전체를 돌면서
+    // **바꿀 것이 있는 글만** 건드린다 — 없으면 "바꿀 주소가 없습니다" 로
+    // 넘어가므로 전체를 도는 것이 위험을 늘리지 않는다.
+    const 글 = await 발행글전부();
+    ids = 글.map((p) => p.id);
+    log.info(`   발행 ${ids.length}편을 돕니다`);
+  }
+
   if (!ids.length) {
-    log.warn('글 번호를 적어주세요. 예: 15766 15772');
+    log.warn('글 번호를 적어주세요. 예: 15766 15772   (전부 하려면 --전체)');
     process.exitCode = 1;
     return;
   }

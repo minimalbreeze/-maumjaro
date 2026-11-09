@@ -1264,7 +1264,10 @@ jobs:
             echo "::error::글 번호를 적어주세요 (post_ids)"; exit 1
           fi
           args=()
-          for id in $IN_IDS; do args+=( "$id" ); done
+          case "$IN_IDS" in
+            전체|전부|all) args+=( --전체 ) ;;
+            *) for id in $IN_IDS; do args+=( "$id" ); done ;;
+          esac
           case "$IN_MODE" in *실제\ 적용*) args+=( --apply ) ;; esac
           node src/wordpress/link-urls.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
