@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { 바넣기, 바빼기, 바있나, 바만바뀌었나, 바HTML, 표식 } from '../src/wordpress/add-sticky.mjs';
+import { 바넣기, 바빼기, 바있나, 바만바뀌었나, 바HTML, 바블록, 표식 } from '../src/wordpress/add-sticky.mjs';
 import { ROOT } from '../src/utils/env.mjs';
 
 let passed = 0;
@@ -143,6 +143,52 @@ check('제휴사가 준 쿠팡 코드가 글자 하나까지 그대로다', () =
 // 제휴 공개는 FTC·공정위 기준이기도 하고 애드센스가 요구하는 투명성이기도 하다.
 check('제휴 공개 문구가 그대로 있다', () => {
   assert.ok(바HTML().includes('쿠팡 파트너스 활동의 일환으로'), '제휴 공개 문구가 사라졌습니다');
+});
+
+// ── 옛 바를 한 번에 새 것으로 바꾼다 (2026-11-09) ──────────────────
+//
+// ⚠️ 이 검사가 생긴 이유. 바를 고쳐 애드센스 광고를 덮지 않게 했는데,
+//    바넣기() 가 "이미 있으면 null" 이라 **이미 발행된 글에는 옛 바가
+//    그대로 남았다.** 고친 의미가 없는 상태였다.
+//
+//    빼고 다시 넣는 2단계는 중간에 실패하면 그 글이 **쿠팡 광고를 잃은
+//    채로** 남는다. 그래서 한 번에 바꾼다.
+const 옛바 = 바블록('<div id="cpst" style="position:fixed;bottom:0">옛것<script>x</script>');
+
+check('모양이 다른 바가 있으면 그 자리에서 바꾼다', () => {
+  const before = '<p>글 한 줄</p>\n\n' + 옛바;
+  const after = 바넣기(before);
+  assert.ok(after, '바꾸지 않았습니다');
+  assert.ok(!after.includes('옛것'), '옛 바가 남았습니다');
+  assert.ok(after.includes('겹침확인'), '새 바가 안 들어갔습니다');
+  assert.ok(after.includes('<p>글 한 줄</p>'), '본문이 사라졌습니다');
+});
+
+check('바꿀 때도 바 말고 다른 것이 바뀌지 않는다', () => {
+  const before = '<p>글 한 줄</p>\n\n' + 옛바;
+  assert.ok(바만바뀌었나(before, 바넣기(before)));
+});
+
+check('모양이 같으면 아무것도 하지 않는다 (두 번 돌려도 안전)', () => {
+  const 한번 = 바넣기('<p>글</p>');
+  assert.equal(바넣기(한번), null);
+});
+
+check('바가 없으면 그대로 붙인다 (예전 동작을 잃지 않았다)', () => {
+  const after = 바넣기('<p>글만</p>');
+  assert.ok(after.includes('id="cpst"'));
+  assert.ok(after.includes('<p>글만</p>'));
+});
+
+// ⚠️ 표식은 있는데 덩어리를 못 집는 글은 **건드리지 않는다.** 어림짐작으로
+//    덮어쓰면 본문을 망친다. 그런 글은 사람이 본다.
+check('표식만 있고 덩어리 모양이 다르면 건드리지 않는다', () => {
+  assert.equal(바넣기('<p>글</p> <span id="cpst"></span>'), null);
+});
+
+check('넣기와 빼기가 같은 정규식을 쓴다 — 두 벌을 두지 않는다', () => {
+  const after = 바넣기('<p>글</p>');
+  assert.equal(바빼기(after), '<p>글</p>');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

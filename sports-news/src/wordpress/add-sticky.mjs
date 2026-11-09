@@ -50,20 +50,47 @@ export function 바있나(content) {
   return String(content || '').includes(표식);
 }
 
-/** 본문 끝에 바를 붙인 결과. 이미 있으면 null. */
+/** 본문에 들어 있는 바 덩어리를 찾는 정규식. 빼기와 갈아끼우기가 함께 쓴다. */
+export const 바덩어리 = /<!-- wp:html -->\s*<div id="cpst"[\s\S]*?<\/script>\s*<!-- \/wp:html -->/g;
+
+/**
+ * 본문 끝에 바를 붙인 결과. **이미 있고 모양이 다르면 그 자리에서 바꾼다.**
+ * 이미 있고 모양이 같으면 null (할 일이 없다).
+ *
+ * ⚠️ 2026-11-09 에 바꾸는 길이 없어서 막혔다.
+ *
+ *    `config/ad-coupang-sticky.html` 을 고쳐 **애드센스 광고를 덮지 않게**
+ *    했는데(겹치면 우리 바를 숨긴다), 이 함수가 "이미 있으면 null" 이라
+ *    **이미 발행된 글에는 옛 바가 그대로 남았다.** 고친 의미가 없는 상태다.
+ *
+ *    빼고 다시 넣는 2단계로 할 수도 있었다. 하지만 중간에 실패하면 그 글이
+ *    **쿠팡 광고를 잃은 채로** 남는다. 한 번에 바꾸는 쪽이 안전하다 —
+ *    배너 쪽(`applyBanner`)이 이미 그렇게 하고 있어 생각도 맞춰진다.
+ *
+ * 이렇게 두면 **앞으로 바를 고칠 때마다 '넣기' 를 다시 돌리면 퍼진다.**
+ * 새 모드를 만들지 않는다 — 모드가 늘면 어느 것을 돌려야 할지 헷갈린다.
+ */
 export function 바넣기(content, html = 바HTML()) {
   const s = String(content || '');
-  if (바있나(s)) return null;
-  return `${s.trimEnd()}\n\n${바블록(html)}`;
+  const 넣을것 = 바블록(html);
+  if (바있나(s)) {
+    const 있는것 = s.match(바덩어리);
+    // 덩어리를 못 집으면 건드리지 않는다. 표식은 있는데 모양이 예상과
+    // 다른 것이므로, 어림짐작으로 덮어쓰면 본문을 망친다.
+    if (!있는것 || !있는것.length) return null;
+    if (있는것.every((덩이) => 덩이 === 넣을것)) return null;
+    return s.replace(바덩어리, 넣을것);
+  }
+  return `${s.trimEnd()}\n\n${넣을것}`;
 }
 
 /** 바를 들어낸 결과. 없으면 null. */
 export function 바빼기(content) {
   const s = String(content || '');
   if (!바있나(s)) return null;
-  // wp:html 로 감싼 덩어리째 들어낸다.
-  const 덩어리 = /<!-- wp:html -->\s*<div id="cpst"[\s\S]*?<\/script>\s*<!-- \/wp:html -->/g;
-  const after = s.replace(덩어리, '').trimEnd();
+  // wp:html 로 감싼 덩어리째 들어낸다. 정규식은 넣기와 **같은 것**을 쓴다 —
+  // 두 벌을 두면 한쪽만 고쳐져 넣기와 빼기가 어긋난다.
+  const after = s.replace(바덩어리, '').trimEnd();
   if (바있나(after)) return null;
   return after;
 }
