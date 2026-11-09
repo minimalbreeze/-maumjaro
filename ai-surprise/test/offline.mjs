@@ -6733,45 +6733,43 @@ test('주소가 아니면 건너뛰고 까닭을 말한다', () => {
   assert.equal(skipped.length, 2);
 });
 
-test('워터마크를 "지워라"가 아니라 "없다"로 적는다', () => {
-  // 2026-11-09 운영자: "다만 워터마크는 꼭! 지워라."
+test('워터마크를 프롬프트에서 아예 말하지 않는다', () => {
+  // ── 두 번 틀렸고 두 번 다 더 나빠졌다 (2026-11-09) ──
   //
-  // ⚠️ 따로 지우는 단계가 아니다. 이 모델은 화면 전체를 다시 그린다.
-  //    제대로 다시 그려지면 워터마크는 애초에 남지 않는다 — 그림에는
-  //    그런 게 없으니까. 그래서 "지워라"보다 **"그런 건 그림에 없다"**로
-  //    적는 쪽이 잘 먹는다.
+  //   1차  'no watermark, no logo stamp, no agency mark, ...'
+  //        → 뉴스1, 일간스포츠가 그림 안에 그려져 나왔다
+  //   2차  '사진에 통신사 워터마크가 찍혀 있다. 덮어 칠하고 그 뒤에
+  //        있던 것을 그려라'
+  //        → **더 또렷해졌다.** 일간스포츠, 엑스포츠뉴스
   //
-  //    그리고 워터마크가 **남아 있으면 변환이 약했다는 신호**다.
-  //    사진이 그만큼 그대로 통과했다는 뜻이다.
+  //   운영자: "오히려 워터마크가 더 생겼다. 너 돈만 쓰고 이렇게 할래."
   //
-  // ⚠️ **첫 시도는 실패했다.** "no watermark" 라고만 적었더니 워터마크가
-  //    그대로 그려져 나왔다(뉴스1, 일간스포츠). 운영자: "워터마크는
-  //    빼달라니..."
+  // 그림 모델은 프롬프트에 **나온 낱말을 그리려 든다.** "하지 마라"로
+  // 적어도 그렇다. 모자 마크에서 `no Boston B` 를 적었더니 `C` 가
+  // 나온 것과 같은 성질이다. 거기서 "금지는 끝이 없다"고 적어 두고도
+  // 여기서 또 같은 길을 갔다.
   //
-  //    까닭은 지시가 서로 싸운 것이다 — "구도를 그대로 지켜라"가
-  //    이기고 "얹힌 게 없다"가 졌다. 모델이 워터마크를 장면의 일부로
-  //    보고 같이 그렸다.
-  //
-  //    모자 마크에서 배운 것과 같다. **금지로는 못 막는다.**
-  //    "없다"가 아니라 **"거기에 무엇을 그려라"**로 적어야 한다.
+  // 그래서 이 테스트는 **낱말이 있는지**를 본다. 다음에 누가 좋은
+  // 뜻으로 "워터마크 금지"를 다시 넣으면 여기서 걸린다.
   const p = RP.repaintPrompt({ name: '김도영' });
-
-  // 1) 구도 규칙에 **예외**가 있어야 한다. 이게 빠지면 또 싸운다.
-  assert.ok(
-    /does not carry over/.test(p),
-    '구도를 지키라는 규칙에서 워터마크를 빼 주는 줄이 없습니다 — 또 그려집니다'
+  const 부르면_나오는_낱말 = [
+    'watermark', 'logo', 'stamp', 'agency', 'caption',
+    'overlay', 'credit', 'wordmark', 'lettering',
+  ];
+  const 남은것 = 부르면_나오는_낱말.filter((w) => new RegExp(w, 'i').test(p));
+  assert.deepEqual(
+    남은것,
+    [],
+    `프롬프트에 이 낱말이 있으면 모델이 그것을 **그립니다**: ${남은것.join(', ')}\n` +
+      '2026-11-09 에 두 번 해 보고 두 번 다 더 나빠졌습니다. ' +
+      'repaint.mjs 의 REPAINT_CLEAN 주석을 읽으세요.'
   );
-  // 2) 지우라고 하지 않고 **덮어 칠하라**고 해야 한다.
-  assert.ok(/paint over it completely/.test(p), '덮어 칠하라는 줄이 없습니다');
-  assert.ok(/draw whatever surface lies underneath/.test(p), '뒤에 있던 것을 그리라는 줄이 없습니다');
-  // 3) 옷 위에 찍힌 것을 스폰서 글자로 오해하지 않게. 점퍼 위의
-  //    '일간스포츠' 가 실제로 그대로 그려져 나왔다.
-  assert.ok(/only lettering anywhere on clothing/.test(p), '옷 위 글자를 묶는 줄이 없습니다');
-  // 4) 이름으로 막는 것도 남겨 둔다. 이것만으로는 부족하지만 위와
-  //    같이 쓰면 효과가 있다.
-  for (const must of ['no watermark', 'no agency logo', 'no caption bar']) {
-    assert.ok(p.includes(must), `워터마크 지시가 빠졌습니다: ${must}`);
-  }
+
+  // 대신 "면이 매끈하다"는 **긍정문**으로 적는다.
+  assert.ok(
+    /surfaces are painted smooth and even/.test(p),
+    '매끈한 면을 그리라는 긍정문이 없습니다'
+  );
 });
 
 test('사진의 구도와 자세를 지키라고 적는다', () => {
@@ -6783,7 +6781,12 @@ test('사진의 구도와 자세를 지키라고 적는다', () => {
   assert.ok(/keep both arms and both legs exactly where they are/.test(p));
   // 유니폼은 **바꾸라고 하지 않는다.** 사진에 이미 그 팀 옷이 있다.
   // 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
-  assert.ok(/keep the uniform, the cap and the number exactly as they appear/.test(p));
+  // ⚠️ 전에는 'keep the uniform ... exactly as they appear in the
+  //    photograph' 였다. 그 말이 **사진을 전부 베끼라는 쪽**으로
+  //    민다 — 워터마크까지 '사진에 나타난 것'이기 때문이다.
+  //    유니폼은 지키되 '사진을 베껴라'는 말은 뺐다.
+  assert.ok(/the same uniform and cap in the same colours/.test(p));
+  assert.ok(!/as they appear in the photograph/.test(p), '사진을 베끼라는 말이 돌아왔습니다');
 });
 
 test('사진 느낌이 남지 않게 적는다', () => {

@@ -72,8 +72,7 @@ export const REPAINT_KEEP =
   //    "구도를 그대로 지켜라"와 "완성된 그림에는 얹힌 게 없다"가 싸웠고
   //    앞엣것이 이겼다. 모델이 워터마크를 장면의 일부로 보고 같이 그렸다.
   //    그래서 구도 규칙 **안에서** 예외를 밝힌다.
-  'this applies to the people and the place only - any text stamped over ' +
-  'the photograph is not part of the scene and does not carry over';
+  'this applies to the people and the place only';
 
 /**
  * 사진 느낌을 지우는 줄.
@@ -107,33 +106,50 @@ export const REPAINT_DROP =
  * ⚠️ 그리고 애초에 **워터마크가 없는 사진**을 받는 쪽이 낫다. 지우는
  *    품을 들일 필요가 없고 결과도 깨끗하다.
  */
+/**
+ * ⚠️⚠️ **워터마크를 이 프롬프트에서 말하지 않는다.** ⚠️⚠️
+ *
+ * ── 두 번 틀렸고 두 번 다 더 나빠졌다 (2026-11-09) ──
+ *
+ *   1차  'no watermark, no logo stamp, no agency mark, no caption bar,
+ *         no date stamp, no text of any kind anywhere in the frame'
+ *        → 뉴스1, 일간스포츠가 그림 안에 그려져 나왔다
+ *
+ *   2차  'the source photograph has a news agency watermark stamped
+ *         over it; paint over it completely and draw whatever surface
+ *         lies underneath...'
+ *        → **더 또렷해졌다.** 일간스포츠, 엑스포츠뉴스
+ *
+ *   운영자: "오히려 워터마크가 더 생겼다. 너 돈만 쓰고 이렇게 할래."
+ *
+ * ── 까닭 ──
+ *
+ * 그림 모델은 프롬프트에 **나온 낱말을 그리려 든다.** "하지 마라"로
+ * 적어도 그렇다. 부정은 약하게 먹고 낱말 자체는 세게 먹는다.
+ * 모자 마크에서 `no Boston B` 를 적었더니 `C` 가 나온 것과 같은 성질이고,
+ * 거기서 "금지는 끝이 없다"고 적어 두고도 여기서 또 같은 길을 갔다.
+ *
+ * 더 자세히 적을수록 더 또렷해졌다. 안 해 본 것은 **아예 말하지 않는
+ * 것** 하나뿐이다.
+ *
+ * ── 그래서 ──
+ *
+ * 1. 워터마크·로고·글자 이야기를 이 프롬프트에서 **전부 뺐다.**
+ *    아래 줄은 "면이 매끈하다"는 **긍정문**이고 그 낱말을 쓰지 않는다.
+ *
+ * 2. **가장 확실한 길은 워터마크 없는 사진을 받는 것이다.** 지우는
+ *    품을 들이는 것보다 애초에 없는 것을 받는 쪽이 싸고 확실하다.
+ *
+ * 3. 잘라내는 길은 지금 막혀 있다. 내 프록시가 뉴스 사이트를 막아서
+ *    사진을 열 수가 없고, 자르려면 저장소에 들여야 하는데 그건 안
+ *    하기로 했다.
+ *
+ * ⚠️ 다음에 누가 "워터마크를 막는 줄을 넣자"고 생각하면 이 주석을
+ *    먼저 읽어라. 두 번 해 봤고 두 번 다 더 나빠졌다.
+ */
 export const REPAINT_CLEAN =
-  // ── 지우라고 하지 않는다. **무엇을 그릴지**로 적는다 ──
-  //
-  // 2026-11-09 첫 시도에서 "no watermark" 라고만 적었더니 워터마크가
-  // 그대로 그려져 나왔다(뉴스1, 일간스포츠). 운영자: "워터마크는
-  // 빼달라니..."
-  //
-  // 모자 마크에서 배운 것과 같다 — **금지로는 못 막는다.** 모델에게
-  // "없다"고 말하는 것과 "거기에 무엇이 있어야 하는지" 말하는 것은
-  // 다르다. 뒤엣것이 먹는다.
-  //
-  // 그래서 **덮어 칠하라**고 적는다. 워터마크가 있던 자리에 그 뒤에
-  // 있던 것(잔디·하늘·옷)을 그리라는 말이다.
-  'the source photograph has a news agency watermark stamped over it; ' +
-  'paint over it completely and draw whatever surface lies underneath - ' +
-  'if it sat on grass draw grass, on the sky draw sky, on clothing draw ' +
-  'the plain fabric of that clothing, ' +
-  // 옷 위에 찍힌 워터마크를 스폰서 글자로 오해하는 것을 막는다.
-  // 실제로 점퍼 위의 '일간스포츠' 가 그대로 그려져 나왔다.
-  'the only lettering anywhere on clothing is the team wordmark and the ' +
-  'jersey number, nothing else, ' +
-  'the only lettering anywhere else is what is physically built into the ' +
-  'stadium itself, ' +
-  // 그래도 남는 것들을 이름으로 막는다. 이것만으로는 부족하지만
-  // 위의 "덮어 칠하라"와 같이 쓰면 효과가 있다.
-  'no watermark, no agency logo, no station logo, no caption bar, ' +
-  'no date stamp, no photographer credit, no semi-transparent overlay';
+  'surfaces are painted smooth and even: fabric is plain cloth, grass is ' +
+  'plain grass, the sky is plain sky';
 
 /** 한 장에 보낼 지시문. */
 export function repaintPrompt(person, shot = null) {
@@ -147,7 +163,7 @@ export function repaintPrompt(person, shot = null) {
   // ⚠️ 다만 **바꾸라고는 하지 않는다.** 사진에 이미 그 팀 유니폼이
   //    있을 테니, 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
   //    "사진에 있는 유니폼을 그대로 두라"가 맞다.
-  bits.push('keep the uniform, the cap and the number exactly as they appear in the photograph');
+  bits.push('the same uniform and cap in the same colours, the same jersey number');
   if (person?.name) bits.push('keep the same person, the same face');
   // 그 사진을 어디에 쓸지 적어 두면 사람이 결과를 고를 때 편하다.
   // 모델에게 보내는 글에는 넣지 않는다 — 한국어고, 지시가 아니다.
