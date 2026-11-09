@@ -1,6 +1,7 @@
 // 글자로만 적힌 주소를 링크로 바꾸기 검사.
 import assert from 'node:assert/strict';
 import { 링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트 } from '../src/wordpress/link-urls.mjs';
+import { 예시인가 } from '../src/wordpress/bare-urls.mjs';
 
 let passed = 0;
 function check(name, fn) {
@@ -88,6 +89,29 @@ check('실제 설정에서 주소표를 만들 수 있고 비어 있지 않다',
   for (const [h, url] of 표실제) {
     assert.ok(/^https:\/\//.test(url), `${h} 의 주소가 https 가 아닙니다: ${url}`);
   }
+});
+
+// ⚠️ 미리보기에서 잡힌 실제 자리다. 롯데 굿즈 글(15787)에 이 줄이 있다.
+//      - 전용 주소가 따로 있거나 (`ktwizstore.co.kr` 같은 꼴)
+//    **KT 스토어를 예시로** 든 것이고, 링크로 만들면 롯데 굿즈를 찾는
+//    사람을 KT 로 보낸다. 눌러서 엉뚱한 가게에 도착하는 것은 깨진 링크보다
+//    나쁘다 — 글을 못 믿게 된다.
+check('예시로 든 주소는 링크로 만들지 않는다 (롯데 글의 KT 주소)', () => {
+  const 본문 = '<li>전용 주소가 따로 있거나 (<code>ktwizstore.co.kr</code> 같은 꼴)</li>';
+  const r = 링크로바꾸기(본문, 표);
+  assert.deepEqual(r.바꾼것, []);
+  assert.equal(r.html, 본문);
+});
+
+check('같은 주소가 목적지로 쓰인 글에서는 링크로 만든다', () => {
+  const r = 링크로바꾸기('<p>주소: <code>ktwizstore.co.kr</code></p>', 표);
+  assert.deepEqual(r.바꾼것.map((b) => b.글자), ['ktwizstore.co.kr']);
+});
+
+check('예시 표시가 다음 문장에 있으면 가리지 않는다', () => {
+  // 뒤쪽을 보되 문장 끝을 넘지 않는다. 넘으면 다른 문장의 말이다.
+  assert.equal(예시인가('a.co.kr 입니다. 저것도 같은 꼴', 0, 8), false);
+  assert.equal(예시인가('a.co.kr 같은 꼴입니다', 0, 7), true);
 });
 
 console.log(`\n  ${passed}개 통과`);

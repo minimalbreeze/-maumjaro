@@ -50,7 +50,7 @@ import { 손대도되는글인가 } from './noindex.mjs';
 import { saveContentBackup } from './fix-alt.mjs';
 import { 링크 } from './draft.mjs';
 import { loadOfficialLinks } from '../seo/official-banner.mjs';
-import { 셀자리만, 안내인가, 꼬리떼기 } from './bare-urls.mjs';
+import { 셀자리만, 안내인가, 예시인가, 꼬리떼기 } from './bare-urls.mjs';
 import { log } from '../utils/logger.mjs';
 
 /** 주소에서 호스트만. 못 읽으면 null. */
@@ -148,9 +148,10 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
     const h = 호스트(글자);
     const url = h && 표.get(h);
     if (!url) return 전체;
-    // 안내 문맥이면 건드리지 않는다.
+    // 안내 문맥(가짜 사이트 가르기)이나 **예시로 든 주소**면 건드리지 않는다.
     const 자리 = 셀수있는.indexOf(글자);
     if (자리 >= 0 && 안내인가(셀수있는, 자리)) return 전체;
+    if (자리 >= 0 && 예시인가(셀수있는, 자리, 글자.length)) return 전체;
     바꾼것.push({ 글자, url });
     // 코드 모양은 그대로 두고 **그 안을** 링크로 감싼다 — 주소라는 표시가
     // 코드 글꼴이라, 걷어내면 글이 달라 보인다.
