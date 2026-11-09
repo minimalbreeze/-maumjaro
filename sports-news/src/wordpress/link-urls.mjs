@@ -184,6 +184,28 @@ export function 태그안인가(html, 자리) {
   return s.lastIndexOf('<', 자리) > s.lastIndexOf('>', 자리);
 }
 
+/**
+ * 본문에 적힌 글자에 **경로가 들어 있나**. 루트(`/`)만 있으면 없는 것으로 본다.
+ *
+ * 설정의 주소는 호스트 하나에 하나뿐이다. 본문이 경로까지 적어 둔 자리에
+ * 그 주소를 쓰면 **독자를 엉뚱한 곳으로 보낸다** — 미리보기가 둘을 잡았다
+ * (2026-11-09).
+ *
+ *   koreabaseball.com/Schedule/Schedule.aspx  →  https://www.koreabaseball.com/
+ *   lpga.or.jp/en/                            →  https://www.lpga.or.jp/
+ *
+ * 일정 페이지를 기대한 독자가 홈으로, 영어판을 기대한 독자가 일본어 홈으로
+ * 간다. 주석에 "호스트만 적힌 자리에 깊은 경로로 보내면 안 된다"고 적어
+ * 두고 **반대 방향**을 안 막았다.
+ */
+export function 경로있나(글자) {
+  const s = String(글자 || '');
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+    return u.pathname !== '/' || !!u.search || !!u.hash;
+  } catch { return false; }
+}
+
 /** 코드 태그 안의 글자가 주소 꼴인가. */
 function 주소꼴(글자) {
   return /^(?:https?:\/\/)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?$/i.test(글자);
@@ -252,7 +274,9 @@ export function 링크로바꾸기(content, 표 = 확인된주소표(), 우리�
     const 키 = 주소맞추기(글자);
     if (키 && 우리글.has(키)) return 내주소 && 키 === 내주소 ? null : 우리글.get(키);
     const h = 호스트(글자);
-    const 설정 = h && 표.get(h);
+    // 설정 주소는 **본문이 호스트만 적어 둔 자리**에만 쓴다. 경로가 적혀
+    // 있으면 그 경로가 독자가 가려던 곳이다.
+    const 설정 = h && !경로있나(글자) && 표.get(h);
     if (설정) return 설정;
     // 본문에 **전체 주소로 적혀 있으면 그대로** 쓴다 (2026-11-09).
     //
