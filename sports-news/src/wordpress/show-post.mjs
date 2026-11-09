@@ -73,6 +73,38 @@ export async function 본문읽기(postId) {
 }
 
 /**
+ * 저장된 본문의 **소제목만** 뽑는다. (2026-11-09)
+ *
+ * 왜 필요한가
+ *   섹션을 갈아끼우려면 `--heading=` 에 **그 글에 실제로 적힌 소제목**을
+ *   줘야 한다(`update-section`). 그런데 본문 보기는 글 전체를 찍고,
+ *   워크플로 요약은 로그 **끝 60줄**만 보여 준다. 글이 180줄이면
+ *   소제목은 거의 다 잘려 나간다.
+ *
+ *   2026-11-09 에 5762(KBO 허브)의 한국시리즈 절을 고치려다 여기서 막혔다.
+ *   절 안의 `###` 소제목 둘은 보였는데 **상위 소제목이 끝 60줄 밖**이었다.
+ *   추측해서 `--heading` 을 넘기면, 못 맞히면 아무 일도 안 하고(그건 괜찮다)
+ *   **엉뚱한 소제목에 맞으면 다른 절을 갈아끼운다.** 그쪽이 무섭다.
+ *
+ *   소제목만 찍으면 어떤 글이든 60줄 안에 들어온다.
+ *
+ * 레벨을 함께 찍는다 — `update-section` 이 같은 레벨 소제목 앞까지를 한
+ * 절로 보기 때문에, h2 아래 h3 가 몇 개인지 알아야 무엇이 바뀔지 가늠된다.
+ */
+export function 소제목들(html) {
+  const s = String(html || '');
+  const 결과 = [];
+  for (const m of s.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi)) {
+    const 글자 = m[2].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#8220;|&#8221;/g, '"').replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+    if (글자) 결과.push({ level: Number(m[1]), 글자, 자리: m.index });
+  }
+  return 결과;
+}
+
+/**
  * raw HTML 을 줄 단위로 자른다. 한 줄이 너무 길면 로그에서 못 읽으므로
  * 워드프레스 블록 경계에서도 끊는다. **글자는 하나도 바꾸지 않는다.**
  */
@@ -96,6 +128,8 @@ async function main() {
   // --raw 는 태그를 걷어내지 않고 저장된 그대로 찍는다. 찾아 바꾸기에 쓸
   // 문자열을 정확히 잡아야 할 때 쓴다 — 태그가 어디 끼어 있는지 보인다.
   const raw = args.includes('--raw');
+  // --headings 는 소제목만 찍는다. 로그 끝 60줄 안에 들어오게 하는 것이 목적이다.
+  const 소제목만 = args.includes('--headings');
   const ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
   if (!ids.length) {
@@ -110,9 +144,17 @@ async function main() {
       if (r.skip) { console.log(`[${id}] 건너뜀 — ${r.skip}`); continue; }
       console.log(`[${r.id}] ${r.status} · ${r.title}`);
       console.log(`주소: ${r.slug} · 본문 ${r.글자수.toLocaleString()}자(공백 제외) · 문단 ${r.문단.length}개`);
+      if (소제목만) console.log('소제목만 찍습니다 — 섹션 갈아끼우기의 --heading= 에 쓸 값입니다');
       if (raw) console.log('저장된 그대로(raw HTML)를 찍습니다 — 태그를 걷어내지 않았습니다');
       if (찾기) console.log(`'${찾기}' 가 든 ${raw ? '줄' : '문단'}만 찍습니다`);
       console.log(`────────────────────────────────────────────────────────`);
+      if (소제목만) {
+        const hs = 소제목들(r.raw);
+        if (!hs.length) { console.log('   소제목이 없습니다.'); continue; }
+        hs.forEach((h, i) => console.log(`${String(i + 1).padStart(3)} | h${h.level} | ${h.글자}`));
+        console.log(`\n   소제목 ${hs.length}개. --heading= 에는 위의 글자를 그대로(일부라도) 주세요.`);
+        continue;
+      }
       const 줄들 = raw ? raw줄로(r.raw) : r.문단;
       const 볼것 = 찾기 ? 줄들.filter((p) => p.includes(찾기)) : 줄들;
       if (!볼것.length) {

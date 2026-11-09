@@ -16,19 +16,34 @@ import { applyBanner, bannerOnlyChange, findBanners } from './add-watch.mjs';
 // 백업은 이미 있는 것을 쓴다. 되돌리는 방법이 두 벌이면 한쪽만 고쳐진다.
 import { saveContentBackup } from './fix-alt.mjs';
 import { pickApp, appBannerHtml, APP_MARK } from '../seo/app-banner.mjs';
-import { pickOfficial, officialBannerHtml, OFFICIAL_MARK, 공식배너빼는글인가, 공식배너뺀이유 } from '../seo/official-banner.mjs';
+import { pickOfficial, officialBannerHtml, OFFICIAL_MARK, 공식배너빼는글인가, 공식배너뺀이유, 못박은배너 } from '../seo/official-banner.mjs';
 
 /**
  * 글에 맞는 배너를 고른다. 앱이 먼저다 — 운영자가 만든 앱 글에 구단 링크를
  * 걸 일은 없다. main.mjs 와 같은 순서를 쓴다.
  */
-export function pickBanner(text) {
+export function pickBanner(text, postId = null) {
+  // 글 번호로 못박은 배너가 가장 세다 — 앱 배너보다도 앞이다.
+  // 구단 스토어처럼 **그 글에만 맞는 주소**는 사람만 안다.
+  const 못박은것 = 못박은배너(postId);
+  if (못박은것) {
+    const html = officialBannerHtml(못박은것);
+    if (html) {
+      return {
+        종류: 못박은것.종류 || '스토어',
+        이름: 못박은것.이름,
+        url: 못박은것.url,
+        html,
+        sign: 못박은것.표식 || OFFICIAL_MARK,
+      };
+    }
+  }
   const app = pickApp(text);
   if (app) {
     const html = appBannerHtml(app);
     return html ? { 종류: '앱', 이름: app.이름, url: app.url, html, sign: APP_MARK } : null;
   }
-  const site = pickOfficial(text);
+  const site = pickOfficial(text, undefined, postId);
   if (site) {
     const html = officialBannerHtml(site);
     return html ? { 종류: '공식 홈페이지', 이름: site.이름, url: site.url, html, sign: OFFICIAL_MARK } : null;
@@ -77,7 +92,7 @@ export async function addBannerToPost(postId, { apply = false } = {}) {
     };
   }
 
-  const banner = pickBanner(고르기용글(title, content));
+  const banner = pickBanner(고르기용글(title, content), postId);
   if (!banner) {
     return { ...base, skip: '이 글에 맞는 앱·공식 홈페이지가 설정에 없습니다 (config/app-links.json, config/official-links.json)' };
   }
@@ -110,7 +125,7 @@ export async function showBanners(postId) {
   for (const sign of [APP_MARK, OFFICIAL_MARK]) {
     for (const b of findBanners(content, sign)) 있는것.push({ sign, url: b.url });
   }
-  return { id: postId, title, status: post?.status, 있는것, 넣을것: pickBanner(고르기용글(title, content)) };
+  return { id: postId, title, status: post?.status, 있는것, 넣을것: pickBanner(고르기용글(title, content), postId) };
 }
 
 async function main() {

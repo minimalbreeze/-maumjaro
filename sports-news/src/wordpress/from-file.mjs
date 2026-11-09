@@ -14,6 +14,7 @@ import { log } from '../utils/logger.mjs';
 import { ROOT } from '../utils/env.mjs';
 import { loadSiteCategories, resolveCategory, resolveTagIds, normalizeTags } from './taxonomy.mjs';
 import { saveDraft } from './draft.mjs';
+import { 바블록, 바HTML } from './add-sticky.mjs';
 import { createHeroImage, createSectionImage } from '../images/provider.mjs';
 import { uploadMedia, safeFileName } from '../images/upload.mjs';
 import { planPlacements, insertMarks, imageHtml, adHtml } from '../images/embed.mjs';
@@ -70,6 +71,21 @@ function loadSiteReport() {
 const AD_SNIPPET = (() => {
   const f = path.join(ROOT, 'config', 'ad-coupang.html');
   try { return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : ''; } catch { return ''; }
+})();
+
+/**
+ * 쿠팡 하단 고정 바. 본문 블록(AD_SNIPPET)과 **다른 것**이다 —
+ * 본문 것은 글 중간에 한 번, 이것은 화면 아래에 붙어 따라다닌다.
+ *
+ * 블록을 여기서 다시 만들지 않고 `add-sticky` 의 것을 그대로 쓴다.
+ * 두 벌로 두면 한쪽만 고쳐져 어긋난다 (변환기를 두 벌 뒀다가
+ * 섹션 끼우기에서 표가 글자로 나간 일이 있다).
+ *
+ * 파일이 없거나 못 읽으면 바 없이 간다 — 광고 하나 때문에 글을
+ * 못 올리는 쪽이 더 나쁘다.
+ */
+const STICKY_BLOCK = (() => {
+  try { return 바블록(바HTML()); } catch { return ''; }
 })();
 
 export async function publishFromFile(filePath, { withImages = true } = {}) {
@@ -166,6 +182,7 @@ export async function publishFromFile(filePath, { withImages = true } = {}) {
     seoFields,
     images: blocks,
     adHtml: AD_SNIPPET ? adHtml(AD_SNIPPET) : '',
+    stickyHtml: STICKY_BLOCK,
     watchHtml: watch ? watchBannerHtml(watch) : '',
     appHtml,
     featuredMediaId: featuredId,

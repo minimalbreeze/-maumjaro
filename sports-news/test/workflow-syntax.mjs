@@ -239,7 +239,14 @@ check('잡의 맨 마지막 단계가 도구 출력을 다시 찍는다', () => 
   const 마지막 = 단계들[단계들.length - 1];
   assert.match(마지막, /도구가 찍은 것 다시 보기/,
     `맨 마지막 단계가 요약이 아닙니다: ${마지막}`);
-  assert.match(wf, /tail -60 "\$RUNNER_TEMP\/sn\.log"/, '요약이 로그를 찍지 않습니다');
+  // ⚠️ 2026-11-09 에 60 → 200 으로 늘렸다. '색인이 안 되는 이유 찾기' 의
+  //    ①②③ 이 잘려 효성님이 물어본 noindex 숫자가 안 보였다. 줄 수를
+  //    글자로 박지 않고 **200 이상인지**만 본다 — 지켜야 할 것은 "요약이
+  //    로그를 찍는다" 이고, 몇 줄인지는 도구 출력이 길어지면 또 바뀐다.
+  const 꼬리 = wf.match(/tail -(\d+) "\$RUNNER_TEMP\/sn\.log"/);
+  assert.ok(꼬리, '요약이 로그를 찍지 않습니다');
+  assert.ok(Number(꼬리[1]) >= 200,
+    `요약이 로그 꼬리를 ${꼬리[1]}줄만 찍습니다 — 긴 도구 출력의 앞쪽이 잘립니다`);
   assert.match(wf, /if: always\(\)\n        run: \|\n          echo "════════ 도구 출력 요약/,
     '요약 단계가 실패했을 때도 돌지 않습니다');
 });
@@ -372,6 +379,63 @@ check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
       }
     }
     assert.deepEqual(겹친것, [], `같은 칸이 두 번 나오는 입력: ${겹친것.join(' / ')}`);
+  });
+
+  // ⚠️ run 979 가 이것 때문에 통째로 죽었다. '사이트 조사' 단계에는 `if` 가
+  //    없어 어떤 모드든 돌고, 호스트가 403 을 한 번 주면 **뒤 단계 전부가
+  //    skipped** 가 된다. 읽기만 하는 점검 모드가 아무 일도 하지 못했다.
+  //    이 단계가 만드는 config/site.json 은 커밋돼 있지 않고 읽는 쪽이
+  //    없으면 null 로 넘어가므로, 실패가 결과를 틀리게 만드는 자리가 아니다.
+  check('조건 없이 도는 사이트 조사 단계는 run 을 죽이지 않는다', () => {
+    const wf = fs.readFileSync(sports, 'utf8');
+    const 자리 = wf.indexOf('- name: 사이트 조사');
+    assert.ok(자리 > 0, '사이트 조사 단계를 찾지 못했습니다');
+    const 끝 = wf.indexOf('      - name: ', 자리 + 10);
+    const 덩이 = wf.slice(자리, 끝 > 0 ? 끝 : undefined);
+    assert.ok(
+      /^\s*continue-on-error:\s*true\s*$/m.test(덩이),
+      '사이트 조사 단계에 continue-on-error: true 가 없습니다 — 호스트가 403 을 '
+      + '주면 모드와 무관하게 모든 run 이 죽습니다. 떼려면 왜 모드마다 이 단계가 '
+      + '돌아야 하는지를 먼저 적으세요.',
+    );
+  });
+
+  // ⚠️ 2026-11-09 에 이것 때문에 **조용히 아무 일도 안 했다.**
+  //    제목 고치기 단계의 run 블록에서 `$IN_FILE` 을 썼는데 그 단계 env 에
+  //    IN_FILE 을 안 넣었다. 셸에서 없는 변수는 **빈 문자열**이라
+  //    `if [ -n "$IN_FILE" ]` 가 거짓이 되고, 파일을 읽지도 않고 "값이
+  //    비었다"고 멈추지도 않았다. 미리보기는 "바뀔 내용이 없습니다"로
+  //    성공처럼 끝났고, run 을 한 번 더 돌려야 알았다.
+  //
+  //    셸은 오타난 변수를 에러로 알려 주지 않는다. 그래서 검사가 본다.
+  check('run 블록에서 쓰는 IN_ 변수가 그 단계 env 에 다 있다', () => {
+    const wf = fs.readFileSync(sports, 'utf8');
+    // 단계 단위로 쪼갠다.
+    const 조각 = wf.split(/\n(?=      - name: )/);
+    const 빠진것 = [];
+    for (const 단계 of 조각) {
+      const 이름 = (단계.match(/^ {6}- name: (.+)$/m) || [])[1];
+      if (!이름) continue;
+      const runAt = 단계.indexOf('\n        run: |');
+      if (runAt < 0) continue;
+      const envPart = 단계.slice(0, runAt);
+      const runPart = 단계.slice(runAt);
+      // env 에 적힌 이름 (주석 줄은 뺀다)
+      const 적힌것 = new Set(
+        envPart.split('\n')
+          .filter((l) => !/^\s*#/.test(l))
+          .flatMap((l) => (l.match(/^\s{10}(IN_[A-Z_]+):/) || []).slice(1)),
+      );
+      // run 에서 쓰는 이름 (주석 줄은 뺀다)
+      for (const l of runPart.split('\n')) {
+        if (/^\s*#/.test(l.replace(/^\s{10}/, ''))) continue;
+        for (const m of l.matchAll(/\$\{?(IN_[A-Z_]+)/g)) {
+          if (!적힌것.has(m[1])) 빠진것.push(`${이름} → ${m[1]}`);
+        }
+      }
+    }
+    assert.deepEqual([...new Set(빠진것)], [],
+      `env 에 없는 변수를 run 에서 씁니다 (셸에서는 빈 값이 되어 조용히 틀립니다):\n  ${[...new Set(빠진것)].join('\n  ')}`);
   });
 
 }

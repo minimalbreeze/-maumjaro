@@ -47,14 +47,32 @@ export function markdownToBlocks(md, { images = [], adHtml: ad = '', watchHtml: 
       continue;
     }
 
-    const h2 = /^##\s+(.+)$/.exec(block);
-    if (h2) {
-      out.push(`<!-- wp:heading -->\n<h2>${inline(h2[1])}</h2>\n<!-- /wp:heading -->`);
-      continue;
-    }
-    const h3 = /^###\s+(.+)$/.exec(block);
-    if (h3) {
-      out.push(`<!-- wp:heading {"level":3} -->\n<h3>${inline(h3[1])}</h3>\n<!-- /wp:heading -->`);
+    // 소제목 — `##` 부터 `######` 까지 한 자리에서 다룬다. (2026-11-09)
+    //
+    // 전에는 h2·h3 만 알았다. `#### 소제목` 은 **글자 그대로** 문단으로
+    // 나갔고(`<p>#### 소제목</p>`), 쓰는 초안이 없어서 드러나지 않았다.
+    //
+    // h4 가 필요해진 이유 — **절 안의 소제목이 형제가 되면 다음에 못 고친다.**
+    // 5762(KBO 허브)의 한국시리즈 블록이 그랬다. h3 하나 아래에 `###` 로
+    // 소제목을 더 적었더니 h3 **넷이 나란히** 생겼고, `update-section` 은
+    // 같은 레벨 소제목 앞까지를 한 절로 보기 때문에 첫 h3 를 갈아끼워도
+    // 나머지 셋이 옛 내용으로 남는다. 경기가 끝난 뒤 소제목에 "KT 1승 3패"
+    // 가 그렇게 남아 있었다.
+    //
+    // h5·h6 까지 함께 받는 것은 **같은 종류의 새어나감을 막으려고**다.
+    // 하나만 더하면 그다음 단계에서 또 글자가 새어 나간다.
+    //
+    // `#` 하나(h1)는 일부러 받지 않는다. 글 제목이 h1 이라 본문에 또
+    // 있으면 안 된다. 받지 않으면 문단으로 나가 눈에 바로 띈다.
+    //
+    // ⚠️ h2 에는 `{"level":2}` 를 적지 않는다. 워드프레스 기본값이라
+    //    예전에 저장된 글과 **글자 하나까지 같아야** 하는 자리가 있다
+    //    (배너·섹션 도구가 "배너 말고 바뀐 게 없는지" 를 그렇게 본다).
+    const h = /^(#{2,6})\s+(.+)$/.exec(block);
+    if (h) {
+      const level = h[1].length;
+      const 속성 = level === 2 ? '' : ` {"level":${level}}`;
+      out.push(`<!-- wp:heading${속성} -->\n<h${level}>${inline(h[2])}</h${level}>\n<!-- /wp:heading -->`);
       continue;
     }
 
@@ -136,14 +154,23 @@ function escapeHtml(s) {
  * seoFields는 wp:check가 "REST로 쓸 수 있다"고 확인한 키만 들어온다.
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
  */
-export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', featuredMediaId = null }) {
+export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', stickyHtml = '', featuredMediaId = null }) {
   // 본문에 자주 묻는 질문이 있으면 구조화 데이터를 끝에 붙인다.
   // 본문에 실제로 적힌 질문과 답만 들어간다 — 없는 내용을 만들어 붙이지 않는다.
   const schema = faqSchemaBlock(body);
 
   const payload = {
     title,
-    content: markdownToBlocks(body, { images, adHtml, watchHtml, appHtml }) + (schema ? `\n\n${schema}` : ''),
+    // stickyHtml(쿠팡 하단 고정 바)은 **맨 끝**에 붙인다. 구조화 데이터보다
+    // 뒤여야 한다 — 그 사이에 끼면 JSON-LD 와 본문 사이가 벌어진다.
+    //
+    // 2026-11-08 에 더했다. 그전에는 파일로 올린 새 글에 바가 **안 들어갔고**,
+    // 나중에 add-sticky 를 따로 돌려야 했다. 구단 스토어 글 9편이 그렇게
+    // 발행돼 광고가 본문 하나뿐이었다(효성님이 화면으로 잡았다). 사람이
+    // 기억해서 돌리는 단계는 언젠가 빠진다.
+    content: markdownToBlocks(body, { images, adHtml, watchHtml, appHtml })
+      + (schema ? `\n\n${schema}` : '')
+      + (stickyHtml ? `\n\n${stickyHtml}` : ''),
     status: DRAFT_STATUS,
     categories: categoryId ? [categoryId] : [],
     tags: tagIds || [],

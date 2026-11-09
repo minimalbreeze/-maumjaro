@@ -4,16 +4,38 @@
 // (에러 메시지에도 URL에도 넣지 않는다).
 
 import { env, requireEnv } from '../utils/env.mjs';
-import { withRetry } from '../utils/retry.mjs';
+import { log } from '../utils/logger.mjs';
+import { withRetry, 기본재시도판정 } from '../utils/retry.mjs';
 
 export class WordPressError extends Error {
-  constructor(message, { status, code, endpoint } = {}) {
+  constructor(message, { status, code, endpoint, botBlocked = false } = {}) {
     super(message);
     this.name = 'WordPressError';
     this.status = status;
     this.code = code;
     this.endpoint = endpoint;
+    // 호스팅 봇 차단(Imunify360 등)에 막힌 것인가. 재시도 판정이 이걸 본다 —
+    // 같은 403 이라도 "권한 없음"과는 전혀 다른 일이다.
+    this.botBlocked = botBlocked;
   }
+}
+
+/**
+ * 다시 보낼 것인가.
+ *
+ * 가르는 기준은 **중복이 생길 수 있는가** 하나다.
+ *
+ *   봇 차단   요청이 워드프레스에 **닿기 전에** 막혔다. 글이 저장됐을 리
+ *            없으므로 읽기든 쓰기든 안전하다. 러너 IP 가 바뀌면 풀린다
+ *   읽기(GET) 몇 번을 읽어도 같다. 연결 끊김·429·5xx 전부 다시 보낸다
+ *   쓰기      **다시 보내지 않는다.** 5xx 나 연결 끊김은 요청이 이미
+ *            처리된 뒤 응답만 못 받은 것일 수 있다. 그때 다시 보내면
+ *            같은 글이 두 번 저장된다 — 실패보다 나쁘다
+ */
+export function 다시보낼까(err, method = 'GET') {
+  if (err?.botBlocked) return true;
+  const 읽기 = String(method).toUpperCase() === 'GET';
+  return 읽기 ? 기본재시도판정(err) : false;
 }
 
 // 워드프레스에 보낼 때 쓰는 User-Agent.
@@ -71,16 +93,26 @@ export async function wpFetch(pathOrUrl, { method = 'GET', body, query, timeoutM
       try { json = text ? JSON.parse(text) : null; } catch { /* HTML 에러 페이지인 경우 */ }
 
       if (!res.ok) {
+        // 봇 차단인지는 **상태 코드가 아니라 문구**로 가린다. Imunify360 은
+        // 401·403·406 어디로든 오고, 워드프레스처럼 {message} JSON 을 준다.
+        const botBlocked = Boolean(describeBotProtection(`${json?.message || ''} ${text}`));
         throw new WordPressError(
           wpErrorMessage(res.status, json, text),
-          { status: res.status, code: json?.code, endpoint: url.pathname }
+          { status: res.status, code: json?.code, endpoint: url.pathname, botBlocked }
         );
       }
       return { data: json, headers: res.headers };
     } finally {
       clearTimeout(timer);
     }
-  }, { tries: 3, label: `워드프레스 ${method} ${url.pathname}` });
+  }, {
+    // 봇 차단은 러너가 바뀌어야 풀리는 일이 있어 넉넉히 기다린다 — 2·4·8초.
+    tries: 4,
+    base: 2000,
+    label: `워드프레스 ${method} ${url.pathname}`,
+    retryable: (err) => 다시보낼까(err, method),
+    onRetry: (msg) => log.info(msg),
+  });
 }
 
 /**

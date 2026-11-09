@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { 바넣기, 바빼기, 바있나, 바만바뀌었나, 바HTML, 표식 } from '../src/wordpress/add-sticky.mjs';
+import { 바넣기, 바빼기, 바있나, 바만바뀌었나, 바HTML, 바블록, 표식 } from '../src/wordpress/add-sticky.mjs';
 import { ROOT } from '../src/utils/env.mjs';
 
 let passed = 0;
@@ -101,6 +101,94 @@ check('전체는 --전체 를 적었을 때만 돈다', () => {
 
 check('표식이 넣기·빼기·검사에서 같은 것을 가리킨다', () => {
   assert.ok(바HTML().includes(표식), `바 HTML 에 표식이 없습니다: ${표식}`);
+});
+
+// ── 구글 광고를 덮지 않는다 (2026-11-09) ────────────────────────────
+//
+// 효성님: "구글 기준과 애드센스 기준을 어기면 안 된다."
+//
+// 이 바는 position:fixed; bottom:0; z-index:9999 다. 아래 여백은 **글
+// 마지막 줄**만 지키고, 스크롤 중에 본문 광고가 바 뒤로 지나가면 덮인다.
+// 5762 본문에 adsbygoogle 이 실제로 들어 있어 가정이 아니다.
+check('하단 바가 구글 광고와 겹치는지 재는 코드를 들고 있다', () => {
+  const h = 바HTML();
+  assert.ok(h.includes('adsbygoogle'), '구글 광고를 찾는 코드가 없습니다');
+  assert.ok(h.includes('googlesyndication'), '앵커 광고 iframe 을 찾는 코드가 없습니다');
+  assert.ok(h.includes('getBoundingClientRect'), '겹침을 재는 코드가 없습니다');
+});
+
+check('겹치면 숨기는 쪽이 우리 바다 — 애드센스를 가리지 않는다', () => {
+  const h = 바HTML();
+  assert.ok(/visibility\s*=\s*겹친다\s*\?\s*'hidden'/.test(h), h.slice(0, 200));
+});
+
+// ⚠️ 재는 코드가 틀렸을 때 **모든 글에서 쿠팡 광고가 사라지는** 쪽이 더 나쁘다.
+//    그래서 try/catch 로 감싸고, 실패하면 지금까지의 동작(바가 보임)을 둔다.
+check('재는 데 실패하면 바를 그대로 둔다 (fails open)', () => {
+  const h = 바HTML();
+  const i = h.indexOf('function 겹침확인');
+  assert.ok(i > 0, '겹침확인 함수가 없습니다');
+  const 몸 = h.slice(i, i + 1200);
+  assert.ok(몸.includes('try {') && 몸.includes('catch (e) {}'), '겹침확인이 try/catch 로 감싸여 있지 않습니다');
+});
+
+// ⚠️ 제휴사가 준 코드는 글자 하나도 바꾸지 않는다. 손대면 광고가 동작하지
+//    않을 수 있고, 지시서가 못박아 둔 자리다.
+check('제휴사가 준 쿠팡 코드가 글자 하나까지 그대로다', () => {
+  const h = 바HTML();
+  assert.ok(h.includes('<script src="https://ads-partners.coupang.com/g.js"></script>'), 'g.js 호출이 바뀌었습니다');
+  assert.ok(h.includes('new PartnersCoupang.G({"id":872203,"trackingCode":"AF3646181","subId":null,"template":"carousel","width":"100%","height":"140"});'), 'PartnersCoupang.G 호출이 바뀌었습니다');
+});
+
+// 제휴 공개는 FTC·공정위 기준이기도 하고 애드센스가 요구하는 투명성이기도 하다.
+check('제휴 공개 문구가 그대로 있다', () => {
+  assert.ok(바HTML().includes('쿠팡 파트너스 활동의 일환으로'), '제휴 공개 문구가 사라졌습니다');
+});
+
+// ── 옛 바를 한 번에 새 것으로 바꾼다 (2026-11-09) ──────────────────
+//
+// ⚠️ 이 검사가 생긴 이유. 바를 고쳐 애드센스 광고를 덮지 않게 했는데,
+//    바넣기() 가 "이미 있으면 null" 이라 **이미 발행된 글에는 옛 바가
+//    그대로 남았다.** 고친 의미가 없는 상태였다.
+//
+//    빼고 다시 넣는 2단계는 중간에 실패하면 그 글이 **쿠팡 광고를 잃은
+//    채로** 남는다. 그래서 한 번에 바꾼다.
+const 옛바 = 바블록('<div id="cpst" style="position:fixed;bottom:0">옛것<script>x</script>');
+
+check('모양이 다른 바가 있으면 그 자리에서 바꾼다', () => {
+  const before = '<p>글 한 줄</p>\n\n' + 옛바;
+  const after = 바넣기(before);
+  assert.ok(after, '바꾸지 않았습니다');
+  assert.ok(!after.includes('옛것'), '옛 바가 남았습니다');
+  assert.ok(after.includes('겹침확인'), '새 바가 안 들어갔습니다');
+  assert.ok(after.includes('<p>글 한 줄</p>'), '본문이 사라졌습니다');
+});
+
+check('바꿀 때도 바 말고 다른 것이 바뀌지 않는다', () => {
+  const before = '<p>글 한 줄</p>\n\n' + 옛바;
+  assert.ok(바만바뀌었나(before, 바넣기(before)));
+});
+
+check('모양이 같으면 아무것도 하지 않는다 (두 번 돌려도 안전)', () => {
+  const 한번 = 바넣기('<p>글</p>');
+  assert.equal(바넣기(한번), null);
+});
+
+check('바가 없으면 그대로 붙인다 (예전 동작을 잃지 않았다)', () => {
+  const after = 바넣기('<p>글만</p>');
+  assert.ok(after.includes('id="cpst"'));
+  assert.ok(after.includes('<p>글만</p>'));
+});
+
+// ⚠️ 표식은 있는데 덩어리를 못 집는 글은 **건드리지 않는다.** 어림짐작으로
+//    덮어쓰면 본문을 망친다. 그런 글은 사람이 본다.
+check('표식만 있고 덩어리 모양이 다르면 건드리지 않는다', () => {
+  assert.equal(바넣기('<p>글</p> <span id="cpst"></span>'), null);
+});
+
+check('넣기와 빼기가 같은 정규식을 쓴다 — 두 벌을 두지 않는다', () => {
+  const after = 바넣기('<p>글</p>');
+  assert.equal(바빼기(after), '<p>글</p>');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

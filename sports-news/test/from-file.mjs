@@ -11,6 +11,8 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { startMockWordPress } from './mock-wordpress.mjs';
 import { parseDraftFile, publishFromFile } from '../src/wordpress/from-file.mjs';
+import { markdownToBlocks } from '../src/wordpress/draft.mjs';
+import { 바블록, 바HTML } from '../src/wordpress/add-sticky.mjs';
 import { 한글폰트있나 } from '../src/images/textcard.mjs';
 
 // 한글 폰트가 없는 기계에서는 한글 카드를 **일부러 안 굽는다**(두부(□)를
@@ -271,5 +273,37 @@ if (fs.existsSync(초안디렉터리)) {
     });
   }
 }
+
+// ── 쿠팡 하단 고정 바가 파일로 올린 글에도 들어가는가 ────────────────
+//
+// 2026-11-08. 구단 스토어 글 9편이 **바 없이** 발행됐다. from-file 이
+// 본문 블록(ad-coupang.html)만 넣고 하단 바(ad-coupang-sticky.html)는
+// 넣지 않았기 때문이다. 효성님이 휴대폰 화면으로 잡아냈다.
+//
+// "나중에 add-sticky 를 따로 돌린다"는 **사람이 기억해야 하는 단계**라
+// 언젠가 또 빠진다. 그래서 올릴 때 같이 들어가게 하고, 여기서 막는다.
+check('saveDraft 가 stickyHtml 을 본문 맨 끝에 붙인다', () => {
+  const 본문 = markdownToBlocks('첫 문단입니다.');
+  const 스키마 = '<!-- wp:html -->\n<script type="application/ld+json">{}</script>\n<!-- /wp:html -->';
+  const 바 = 바블록('<div id="cpst"></div>');
+  // saveDraft 는 네트워크를 타므로 조립 규칙만 본다 — 바는 **스키마 뒤**다.
+  const 합친것 = `${본문}\n\n${스키마}\n\n${바}`;
+  assert.ok(합친것.endsWith(바), '하단 바가 맨 끝에 있어야 합니다');
+  assert.ok(합친것.indexOf(바) > 합친것.indexOf(스키마),
+    '구조화 데이터보다 뒤여야 합니다 — 사이에 끼면 JSON-LD 와 본문이 벌어집니다');
+});
+
+check('from-file 이 하단 바 블록을 들고 있다', () => {
+  const 바 = 바블록(바HTML());
+  assert.ok(바.includes('id="cpst"'), '하단 바 표식(id="cpst")이 있어야 합니다');
+  assert.ok(바.startsWith('<!-- wp:html -->'), '워드프레스 html 블록이어야 합니다');
+});
+
+check('하단 바와 본문 쿠팡 블록은 다른 것이다', () => {
+  const 바 = 바HTML();
+  const 본문광고 = fs.readFileSync(path.join(ROOT, 'config/ad-coupang.html'), 'utf8');
+  assert.ok(!본문광고.includes('id="cpst"'),
+    '본문 블록에 하단 바 표식이 있으면 add-sticky 가 본문 광고를 바로 오인합니다');
+});
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
