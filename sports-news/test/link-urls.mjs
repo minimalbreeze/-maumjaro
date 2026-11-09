@@ -379,4 +379,18 @@ check('사진과 본문 주소가 한 글에 있으면 본문만 링크로 만�
   assert.ok(r.html.includes('uploads/a.jpg">'), '사진 주소가 바뀌었습니다');
 });
 
+// ⚠️ 15783 에서 실제로 난 일이다. 안내 문장 **앞에 링크가 있으면** 그 링크가
+//    자리표시자로 비켜 두어지면서 길이가 바뀌고, 원본 기준으로 창을 뜨면
+//    앞 240자가 어긋나 "주소창의 도메인이" 를 놓친다. 손으로 글자로 되돌려
+//    둔 자리를 도구가 다시 링크하려 했다.
+check('안내 문장 앞에 링크가 많아도 안내로 알아본다 — 자리표시자가 길이를 바꾼다', () => {
+  const 표5 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
+  const 앞 = Array.from({ length: 6 }, (_, i) => `<p><a href="https://example.com/${i}" rel="nofollow">아주 긴 링크 글자입니다 ${i}</a></p>`).join('');
+  const r = 링크로바꾸기(
+    `${앞}<p>정식 판매처인지 알 수 없어 주소를 적지 않았습니다. 주소창의 도메인이 <code>hanwhaeagles.co.kr</code> 인지 확인하시는 편이 안전합니다.</p>`,
+    표5,
+  );
+  assert.deepEqual(r.바꾼것, [], '안내 문장의 주소를 링크로 만들었습니다');
+});
+
 console.log(`\n  ${passed}개 통과`);
