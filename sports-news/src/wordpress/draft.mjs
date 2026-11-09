@@ -150,6 +150,60 @@ function escapeHtml(s) {
 }
 
 /**
+ * 같은 글이 이미 있는지 가린다. **막을 것과 알려만 줄 것을 나눈다.**
+ *
+ * 2026-11-09 에 효성님이 잡았다 — **"같은 글을 2번 적었다".**
+ * APBC 글이 16561 과 16574 로 두 벌, FA 글도 두 벌 올라가 있었다.
+ * 효성님이 한 벌을 발행하고 다른 한 벌을 휴지통에 넣어 치웠다.
+ *
+ * `saveDraft` 가 **이미 같은 글이 있는지 묻지 않고** 무조건 새로 만들던 탓이다.
+ * 같은 초안 파일을 두 번 올리면 글이 두 벌 생긴다. 사람이 "아까 올렸던가"를
+ * 기억해서 막는 단계는 언젠가 빠진다 — 쿠팡 하단 바 때와 같은 모양이다.
+ *
+ * ⚠️ 덮어쓰지 않는다. 겹치면 **멈추고 번호를 알려준다.** 덮어쓰기는 발행된
+ *    글을 건드릴 수 있고, 어느 쪽을 남길지는 사람이 정할 일이다.
+ */
+export function 겹친글가리기(목록) {
+  const 막을것 = [];
+  const 알릴것 = [];
+  for (const p of 목록 || []) {
+    const 글 = {
+      id: p?.id,
+      status: p?.status || '',
+      title: p?.title?.raw || p?.title?.rendered || '',
+    };
+    if (!글.id) continue;
+    // 휴지통은 막지 않는다 — 치우고 다시 쓰는 흐름이 있다. 다만 워드프레스가
+    // 그 슬러그를 붙잡고 있어 새 글에 `-2` 가 붙으므로 알려는 준다.
+    if (글.status === 'trash') 알릴것.push(글);
+    else 막을것.push(글);
+  }
+  return { 막을것, 알릴것 };
+}
+
+/** 같은 슬러그의 글을 모두 받는다(발행·임시글·휴지통까지). */
+export async function 같은슬러그글(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return [];
+  try {
+    const { data } = await wpFetch('/wp/v2/posts', {
+      query: {
+        slug: s,
+        status: 'publish,draft,pending,future,private,trash',
+        context: 'edit',
+        per_page: 20,
+      },
+      timeoutMs: 30000,
+    });
+    return Array.isArray(data) ? data : [];
+  } catch {
+    // ⚠️ 못 물어봤다고 저장을 막지 않는다. 겹침 확인은 **덤**이고, 이것 때문에
+    //    글을 못 올리면 원래 하려던 일이 멈춘다.
+    return [];
+  }
+}
+
+/**
  * 임시글로 저장한다.
  * seoFields는 wp:check가 "REST로 쓸 수 있다"고 확인한 키만 들어온다.
  * 확인되지 않은 meta key는 여기까지 오지 않는다.
@@ -157,6 +211,23 @@ function escapeHtml(s) {
 export async function saveDraft({ title, body, categoryId, tagIds, seo, seoFields, images = [], adHtml = '', watchHtml = '', appHtml = '', stickyHtml = '', featuredMediaId = null }) {
   // 본문에 자주 묻는 질문이 있으면 구조화 데이터를 끝에 붙인다.
   // 본문에 실제로 적힌 질문과 답만 들어간다 — 없는 내용을 만들어 붙이지 않는다.
+  // 같은 슬러그의 글이 이미 있으면 **멈춘다.** 두 벌이 올라가면 구글이
+  // 어느 쪽도 색인하지 않는다(7769·7777 이 그랬다).
+  if (seo?.slug) {
+    const { 막을것, 알릴것 } = 겹친글가리기(await 같은슬러그글(seo.slug));
+    for (const g of 알릴것) {
+      console.log(`⚠️  같은 주소(${seo.slug})의 글이 휴지통에 있습니다 — [${g.id}] ${g.title}`);
+      console.log('    워드프레스가 그 주소를 붙잡고 있어 새 글 주소에 -2 가 붙을 수 있습니다.');
+    }
+    if (막을것.length) {
+      const 줄 = 막을것.map((g) => `[${g.id}] ${g.status} · ${g.title}`).join('\n  ');
+      throw new Error(
+        `같은 주소(${seo.slug})의 글이 이미 있습니다. 두 벌을 올리지 않으려고 멈췄습니다.\n  ${줄}\n`
+        + '  고칠 글이면 그 번호로 섹션·제목 모드를 쓰고, 정말 새 글이면 초안의 슬러그를 바꾸세요.',
+      );
+    }
+  }
+
   const schema = faqSchemaBlock(body);
 
   const payload = {
