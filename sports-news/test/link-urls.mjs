@@ -1,6 +1,8 @@
 // 글자로만 적힌 주소를 링크로 바꾸기 검사.
 import assert from 'node:assert/strict';
-import { 링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트 } from '../src/wordpress/link-urls.mjs';
+import {
+  링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트, 주소맞추기, 우리글주소표,
+} from '../src/wordpress/link-urls.mjs';
 import { 예시인가 } from '../src/wordpress/bare-urls.mjs';
 
 let passed = 0;
@@ -226,6 +228,89 @@ check('문장 안의 주소도 안내 문맥이면 건너뛴다', () => {
   const 표3 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
   const r = 링크로바꾸기('<p>주소창 도메인이 hanwhaeagles.co.kr 인지 확인</p>', 표3);
   assert.deepEqual(r.바꾼것, []);
+});
+
+// ── 우리 사이트 안의 주소 (2026-11-09) ──────────────────────────────
+//
+// 전수 점검에서 글자로 남은 주소 330곳 중 **우리 도메인이 57곳**이었다.
+// 가장 값이 큰 자리다 — 우리 글끼리 잇는 링크는 구글이 페이지를 찾는
+// 경로이고(지시서 ② 절), 발행 633편 중 구글이 아는 것이 156편뿐이었던
+// 이유가 거기였다.
+
+const 우리글 = 우리글주소표([
+  { link: 'https://wiki.minimalbreeze.com/2026-kbo-프로야구/' },
+  { link: 'https://wiki.minimalbreeze.com/안세영-중계/' },
+]);
+
+check('우리 글 주소에는 nofollow 를 붙이지 않는다 — 붙이면 구글이 안 따라간다', () => {
+  const r = 링크로바꾸기(
+    '<p>자세한 일정은 https://wiki.minimalbreeze.com/2026-kbo-프로야구/ 에 있습니다.</p>',
+    표, { 우리글 },
+  );
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(r.html.includes('<a href="https://wiki.minimalbreeze.com/2026-kbo-프로야구/">'), r.html);
+  assert.ok(!r.html.includes('nofollow'), 'nofollow 가 붙었습니다');
+});
+
+check('꼬리 슬래시가 없어도 같은 글로 본다', () => {
+  const r = 링크로바꾸기(
+    '<p>→ https://wiki.minimalbreeze.com/안세영-중계 참고</p>', 표, { 우리글 },
+  );
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+});
+
+// ⚠️ 한글 슬러그는 워드프레스가 퍼센트 인코딩으로 돌려주고 본문에는 한글로
+//    적혀 있다. 그냥 글자로 비교하면 실재하는 글을 못 알아본다.
+check('퍼센트 인코딩된 주소와 한글로 적힌 주소를 같은 글로 본다', () => {
+  const 표2 = 우리글주소표([{ link: 'https://wiki.minimalbreeze.com/%EC%95%88%EC%84%B8%EC%98%81-%EC%A4%91%EA%B3%84/' }]);
+  assert.equal(주소맞추기('https://wiki.minimalbreeze.com/안세영-중계/'), 'wiki.minimalbreeze.com/안세영-중계/');
+  const r = 링크로바꾸기('<p>https://wiki.minimalbreeze.com/안세영-중계/</p>', new Map(), { 우리글: 표2 });
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+});
+
+// ⚠️ 여기가 "주소를 만들어내지 않는다" 의 내부 판이다. 외부는 설정에 사람이
+//    적어 둔 주소만 쓰고, 내부는 **실제로 발행된 글인지** 목록과 대조한다.
+check('발행 목록에 없는 우리 호스트 주소는 건드리지 않는다 — 404 로 보내지 않는다', () => {
+  const r = 링크로바꾸기(
+    '<p>https://wiki.minimalbreeze.com/없는글-주소/</p>', 표, { 우리글 },
+  );
+  assert.deepEqual(r.바꾼것, []);
+  assert.ok(!r.html.includes('<a '), r.html);
+});
+
+check('사이트 홈 주소도 건드리지 않는다 — 글 목록에 없다', () => {
+  const r = 링크로바꾸기('<p>https://wiki.minimalbreeze.com/</p>', 표, { 우리글 });
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('자기 자신으로 가는 링크는 걸지 않는다 — 눌러도 같은 자리다', () => {
+  const r = 링크로바꾸기(
+    '<p>이 글 주소: https://wiki.minimalbreeze.com/안세영-중계/</p>',
+    표, { 우리글, 내주소: 'https://wiki.minimalbreeze.com/안세영-중계/' },
+  );
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('우리 주소가 코드 태그 안에 있어도 내부 링크로 만든다', () => {
+  const r = 링크로바꾸기(
+    '<p><code>wiki.minimalbreeze.com/안세영-중계/</code></p>', 표, { 우리글 },
+  );
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(!r.html.includes('nofollow'), r.html);
+});
+
+check('우리 주소도 안내·예시 문맥이면 건너뛴다', () => {
+  const r = 링크로바꾸기(
+    '<p>주소창 도메인이 wiki.minimalbreeze.com/안세영-중계/ 인지 확인하세요</p>',
+    표, { 우리글 },
+  );
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('우리글표를 안 넘기면 전과 똑같이 돈다 — 기존 호출부를 깨지 않는다', () => {
+  const r = 링크로바꾸기('<p><code>ktwizstore.co.kr</code></p>', 표);
+  assert.equal(r.바꾼것.length, 1);
+  assert.ok(r.html.includes('rel="nofollow"'), r.html);
 });
 
 console.log(`\n  ${passed}개 통과`);

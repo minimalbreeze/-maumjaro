@@ -90,6 +90,53 @@ export function 확인된주소표(cfg = loadOfficialLinks()) {
 }
 
 /**
+ * 주소의 꼬리 슬래시와 대소문자를 맞춰 **비교할 수 있는 꼴**로 만든다.
+ *
+ * 본문에는 `.../서교림-4관왕/` 과 `.../서교림-4관왕` 이 섞여 있고,
+ * 워드프레스가 돌려주는 `link` 는 늘 꼬리 슬래시가 붙은 쪽이다.
+ * 둘을 다른 주소로 보면 실재하는 글을 못 알아본다.
+ */
+export function 주소맞추기(url) {
+  const s = String(url || '').trim();
+  if (!s) return '';
+  try {
+    const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+    // 한글 슬러그는 퓨니코드가 아니라 퍼센트 인코딩으로 들어온다.
+    // 비교는 **사람이 적는 꼴**(디코딩된 쪽)로 맞춘다.
+    let path = u.pathname;
+    try { path = decodeURIComponent(path); } catch { /* 망가진 인코딩은 그대로 */ }
+    if (!path.endsWith('/')) path += '/';
+    return `${u.host.replace(/^www\./, '').toLowerCase()}${path}`;
+  } catch { return ''; }
+}
+
+/**
+ * **우리 사이트 안**의 글 주소표. 키는 맞춘 꼴, 값은 워드프레스가 주는 주소.
+ *
+ * 왜 외부 주소와 따로 다루나 (2026-11-09)
+ *   외부 주소는 "설정에 사람이 적어 둔 **그 주소로**" 보낸다. 본문에
+ *   호스트만 적혀 있어도 설정의 전체 주소를 쓴다.
+ *   우리 주소는 그러면 **망가진다.** 호스트가 하나인데 글이 700편이라,
+ *   호스트로 표를 만들면 어느 글 주소든 사이트 **홈으로** 보내 버린다.
+ *
+ * 그래서 우리 주소는 **본문에 적힌 그 주소 그대로** 걸고, 대신
+ * **실제로 발행된 글인지** 목록과 대조한다. 지어내지 않고 404 로도
+ * 보내지 않는다는 선은 외부와 같고, 지키는 방법만 다르다.
+ *
+ * ⚠️ `rel="nofollow"` 가 붙으면 안 되는 자리다. `draft.mjs` 의 `링크()` 가
+ *    이미 우리 도메인을 가려 빼 준다 — 내부 링크에 nofollow 를 달면 구글이
+ *    그 경로를 따라가지 않아서, 이 작업을 하는 이유가 사라진다(지시서 ② 절).
+ */
+export function 우리글주소표(글목록) {
+  const 표 = new Map();
+  for (const p of 글목록 || []) {
+    const 키 = 주소맞추기(p && p.link);
+    if (키) 표.set(키, p.link);
+  }
+  return 표;
+}
+
+/**
  * **그 자리**의 앞뒤를 보고 건드리면 안 되는 문맥인지 가린다.
  *
  * ⚠️ 2026-11-09 에 이것 때문에 한화 글(15783)의 안전 안내 문장까지
@@ -163,9 +210,24 @@ export function 지켜야할자리되돌리기(html, 보관) {
   return String(html).replace(/\u0000지킴(\d+)\u0000/g, (_, i) => 보관[Number(i)]);
 }
 
-export function 링크로바꾸기(content, 표 = 확인된주소표()) {
+export function 링크로바꾸기(content, 표 = 확인된주소표(), 우리것 = {}) {
   const 원본 = String(content || '');
   const 바꾼것 = [];
+  const 우리글 = (우리것 && 우리것.우리글) || new Map();
+  // 자기 자신으로 가는 링크는 걸지 않는다 — 눌러도 같은 자리다
+  // (`add-watch.mjs` 가 중계 배너에서 같은 판단을 한다).
+  const 내주소 = 주소맞추기((우리것 && 우리것.내주소) || '');
+
+  /**
+   * 본문에 적힌 글자를 **어디로 보낼지** 고른다. 우리 글이 먼저다.
+   * 못 고르면 null — 그러면 그 자리는 글자로 남는다.
+   */
+  const 어디로 = (글자) => {
+    const 키 = 주소맞추기(글자);
+    if (키 && 우리글.has(키)) return 내주소 && 키 === 내주소 ? null : 우리글.get(키);
+    const h = 호스트(글자);
+    return (h && 표.get(h)) || null;
+  };
   // 어디를 건드려도 되는지는 bare-urls 와 **같은 기준**으로 가린다.
   const 셀수있는 = 셀자리만(원본);
 
@@ -177,8 +239,7 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
   html = html.replace(/<(code|kbd)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (전체, 태그, 속성, 속, m_index) => {
     const 글자 = 꼬리떼기(속.replace(/<[^>]*>/g, '').trim());
     if (!글자 || !주소꼴(글자)) return 전체;
-    const h = 호스트(글자);
-    const url = h && 표.get(h);
+    const url = 어디로(글자);
     if (!url) return 전체;
     // 안내 문맥(가짜 사이트 가르기)이나 **예시로 든 주소**면 건드리지 않는다.
     // ⚠️ `indexOf` 로 첫 자리만 보면 같은 주소가 여러 번 나오는 글에서
@@ -210,8 +271,7 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
 
   const 감싸기 = (전체, 글자, 자리) => {
     const 깎은것 = 꼬리떼기(글자);
-    const h = 호스트(깎은것);
-    const url = h && 표.get(h);
+    const url = 어디로(깎은것);
     if (!url) return null;
     if (건드리면안되는자리인가(html2, 자리, 깎은것)) return null;
     바꾼것.push({ 글자: 깎은것, url });
@@ -224,7 +284,16 @@ export function 링크로바꾸기(content, 표 = 확인된주소표()) {
 
   // 스킴 없는 도메인 꼴. **설정에 있는 호스트만** 노린다 — 아무 도메인꼴을
   // 긁으면 "3.5" 나 파일 이름까지 먹는다.
-  for (const h of 표.keys()) {
+  // 설정의 호스트 + **우리 호스트**. 우리 주소는 `https://` 가 붙은 꼴로
+  // 적힌 것이 대부분이지만(공유 주소를 그대로 붙인다) 스킴 없이 적힌 것도
+  // 있어서 같이 노린다. 어디로 보낼지는 `어디로()` 가 가리므로, 호스트만
+  // 더해도 없는 글로는 가지 않는다.
+  const 호스트들 = new Set(표.keys());
+  for (const 주소 of 우리글.values()) {
+    const h = 호스트(주소);
+    if (h) 호스트들.add(h);
+  }
+  for (const h of 호스트들) {
     const 안전 = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`(?<![\\w./@-])(?:www\\.)?${안전}(?:/\\S*)?`, 'gi');
     html2 = html2.replace(re, (m, 자리) => 감싸기(m, m, 자리) ?? m);
@@ -248,6 +317,9 @@ async function main() {
   // 않는다 (add-sticky 와 같은 생각).
   const 전체 = args.includes('--전체');
   let ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
+  // `--전체` 가 받은 목록을 우리 글 주소표에 **다시 쓴다**. 같은 목록을
+  // 두 번 받으면 700편 조회가 공짜로 한 번 더 든다.
+  let 발행 = null;
   const base = wpConfig().base;
 
   log.section(`🔗 글자로만 적힌 주소를 링크로 바꿉니다${apply ? '' : ' (미리보기 — 저장하지 않습니다)'}`);
@@ -256,8 +328,8 @@ async function main() {
     // 점검에서 걸린 150편을 번호로 적을 수 없다. 발행글 전체를 돌면서
     // **바꿀 것이 있는 글만** 건드린다 — 없으면 "바꿀 주소가 없습니다" 로
     // 넘어가므로 전체를 도는 것이 위험을 늘리지 않는다.
-    const 글 = await 발행글전부();
-    ids = 글.map((p) => p.id);
+    발행 = await 발행글전부();
+    ids = 발행.map((p) => p.id);
     log.info(`   발행 ${ids.length}편을 돕니다`);
   }
 
@@ -270,6 +342,18 @@ async function main() {
   const 표 = 확인된주소표();
   log.info(`   확인된 주소 ${표.size}곳을 씁니다 (설정에 사람이 적고 _출처를 남긴 것만)`);
 
+  // 우리 글 주소는 **실재하는 발행글만** 링크로 만든다. `--전체` 가 아니어도
+  // 목록이 필요하다 — 번호 몇 편만 돌 때도 그 글 안에 우리 주소가 있다.
+  // 목록을 못 받으면 우리 주소만 건너뛰고 외부 주소는 그대로 간다.
+  let 우리글 = new Map();
+  try {
+    const 글 = 전체 && 발행 ? 발행 : await 발행글전부();
+    우리글 = 우리글주소표(글);
+    log.info(`   우리 글 ${우리글.size}편의 주소를 내부 링크로 만듭니다 (nofollow 없이 — 구글이 따라갈 경로입니다)`);
+  } catch (err) {
+    log.warn(`   발행글 목록을 못 받았습니다 — 우리 주소는 글자로 남깁니다 (${err?.message || err})`);
+  }
+
   let 바꾼글 = 0;
   for (const id of ids) {
     try {
@@ -280,7 +364,7 @@ async function main() {
       }
       const content = post?.content?.raw ?? '';
       const 제목 = String(post?.title?.raw || '').slice(0, 44);
-      const { html, 바꾼것 } = 링크로바꾸기(content, 표);
+      const { html, 바꾼것 } = 링크로바꾸기(content, 표, { 우리글, 내주소: post?.link || '' });
       if (!바꾼것.length) {
         log.info(`[${id}] 바꿀 주소가 없습니다 — ${제목}`);
         continue;
