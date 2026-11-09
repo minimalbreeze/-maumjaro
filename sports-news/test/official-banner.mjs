@@ -221,4 +221,121 @@ check('선수 목록의 사이트 이름이 실제로 설정에 있다', () => {
   }
 });
 
+// ── 여러 종목이 함께 쓰는 말을 match 로 쓰지 않는다 (2026-11-08) ──────
+//
+// 서승재·김원호 글(16530, 배드민턴)에 **대한빙상경기연맹 배너**가 붙었다.
+// 빙상 항목의 match 에 '월드투어' 가 들어 있었고, 본문의 "BWF 월드투어"·
+// "월드투어 파이널" 이 그걸 물었다. 골프 DP 월드투어도 같은 자리였다.
+//
+// 설정 파일의 `_주의` 가 **이미 그 위험을 적어 뒀는데도** 터졌다.
+// 경고는 사람이 읽어야 지켜지고, 사람은 바쁠 때 안 읽는다. 검사로 바꾼다.
+{
+  const 종목을못가리는말 = [
+    '월드투어', '월드 투어', '월드컵', '챔피언십', '오픈',
+    '마스터스', '투어', '연맹', '협회', '선수권',
+  ];
+  const 사이트 = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'config/official-links.json'), 'utf8')
+  ).sites;
+
+  check('공식 홈페이지 match 에 종목을 못 가리는 말을 통째로 넣지 않는다', () => {
+    const 걸린것 = [];
+    for (const s of 사이트) {
+      for (const m of s.match || []) {
+        if (종목을못가리는말.includes(String(m).trim())) 걸린것.push(`${s.이름} ← "${m}"`);
+      }
+    }
+    assert.deepEqual(걸린것, [],
+      `종목을 가리지 못하는 말입니다. 앞에 종목·단체 이름을 붙이세요(예: "ISU 월드투어"):\n     ${걸린것.join('\n     ')}`);
+  });
+
+  check('빙상 항목이 배드민턴·골프 글을 물지 않는다', () => {
+    const 빙상 = 사이트.find((s) => String(s.이름).startsWith('대한빙상경기연맹'));
+    assert.ok(빙상, '빙상 항목이 있어야 합니다');
+    const 배드민턴본문 = 'BWF 월드투어 슈퍼 500 코리아오픈 남자복식 결승. 최종 목표는 연말 월드투어 파이널이다.';
+    const 골프본문 = 'DP 월드투어 최종전은 두바이에서 열린다.';
+    for (const m of 빙상.match) {
+      assert.ok(!배드민턴본문.includes(m), `배드민턴 글이 빙상 match "${m}" 에 걸립니다`);
+      assert.ok(!골프본문.includes(m), `골프 글이 빙상 match "${m}" 에 걸립니다`);
+    }
+  });
+
+  // 좁히다가 범위를 잃으면 그것대로 잘못이다. 실제 글(47 최민정)의 문장을 쓴다.
+  check('빙상 글은 여전히 걸린다 — 범위를 잃지 않았다', () => {
+    const 빙상 = 사이트.find((s) => String(s.이름).startsWith('대한빙상경기연맹'));
+    const 쇼트트랙본문 = '2026~2027 ISU 쇼트트랙 월드투어 2차 대회 여자 1000m 결승입니다.';
+    assert.ok(빙상.match.some((m) => 쇼트트랙본문.includes(m)),
+      '쇼트트랙 글이 하나도 안 걸립니다 — 범위가 줄었습니다');
+  });
+}
+
+// ── 글 번호로 못박은 스토어 배너 (2026-11-08) ─────────────────────────
+//
+// 효성님: "야구 각 구단 스토어 글에 URL 주소만 있고, 눌러서 스토어로
+// 넘어가는 배너는 없다. 배너로 만들고 URL 을 그대로 노출하지 마라."
+//
+// 주소가 `ktwizstore.co.kr` 처럼 글자로만 적혀 있어 누를 수 없었다.
+// match 로는 못 푼다 — 본문의 "KT위즈" 로는 구단 공식 홈페이지인지
+// 스토어인지 가릴 수 없다. 그래서 글 번호로 못박는다.
+{
+  const cfg = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'config/official-links.json'), 'utf8')
+  );
+
+  check('못박은 배너가 match 판정보다 앞선다', () => {
+    // 본문에 다른 종목 말이 잔뜩 들어 있어도 못박은 것을 쓴다.
+    const 고른것 = pickOfficial('쇼트트랙 월드컵 BWF 월드투어', cfg, '15793');
+    assert.ok(고른것, '못박은 배너가 나와야 합니다');
+    assert.equal(고른것.url, 'https://www.ktwizstore.co.kr/');
+  });
+
+  check('못박지 않은 글은 예전처럼 match 로 고른다', () => {
+    const 고른것 = pickOfficial('ISU 쇼트트랙 월드투어 2차 대회', cfg, '99999999');
+    assert.ok(!고른것 || 고른것.url !== 'https://www.ktwizstore.co.kr/',
+      '못박지 않은 글에 스토어 배너가 붙으면 안 됩니다');
+  });
+
+  check('스토어 배너는 "공식 홈페이지"라고 적지 않는다', () => {
+    for (const [id, it] of Object.entries(cfg.byPost || {})) {
+      const html = officialBannerHtml(it);
+      assert.ok(html, `${id} 배너 HTML 이 비었습니다`);
+      assert.ok(!html.includes(OFFICIAL_MARK),
+        `${id} 에 "공식 홈페이지" 표식이 들어갔습니다 — 스토어는 다른 것입니다`);
+      assert.ok(html.includes('🛍️'), `${id} 에 스토어 표식이 없습니다`);
+    }
+  });
+
+  // 이 검사가 핵심이다. 주소를 만들어내는 순간 독자를 속이게 된다.
+  check('못박은 주소가 전부 쓸 만한 모양이다', () => {
+    for (const [id, it] of Object.entries(cfg.byPost || {})) {
+      assert.ok(it.url, `${id} 에 주소가 없습니다`);
+      assert.ok(공식주소인가(it.url), `${id} 의 주소 모양이 이상합니다: ${it.url}`);
+      assert.ok(it._출처, `${id} 에 _출처 가 없습니다 — 어디서 받은 주소인지 적어야 합니다`);
+    }
+  });
+
+  // 이 검사는 한 번 뜻이 바뀌었다. 처음에는 "롯데(15787)가 byPost 에
+  // 없어야 한다"였다 — 그때는 주소를 확인하지 못했기 때문이다.
+  // 2026-11-08 효성님이 롯데온 주소를 줘서 **사실이 바뀌었다.**
+  //
+  // 검사를 지우지 않고 **원칙 쪽으로 올려 적는다.** 지키려던 것은
+  // "롯데를 빼라"가 아니라 **"확인하지 못한 주소로 배너를 걸지 마라"**
+  // 였다. 그 원칙은 `_출처` 가 지킨다 — 어디서 받았는지 못 적으면
+  // 넣을 수 없다.
+  check('주소를 확인하지 못한 글은 아예 넣지 않는다 — 출처 없는 항목이 없다', () => {
+    const 출처없음 = Object.entries(cfg.byPost || {})
+      .filter(([, it]) => !String(it._출처 || '').trim())
+      .map(([id]) => id);
+    assert.deepEqual(출처없음, [],
+      `어디서 받은 주소인지 적지 않은 항목입니다: ${출처없음.join(', ')}`);
+  });
+
+  check('눌러서 넘어갈 수 있는 링크다 — 글자가 아니다', () => {
+    const html = officialBannerHtml(cfg.byPost['15793']);
+    assert.ok(/<a href="https:\/\/[^"]+"/.test(html), '실제 <a href> 링크여야 합니다');
+    assert.ok(html.includes('rel="nofollow"'), '바깥 링크에는 nofollow 를 답니다');
+    assert.ok(!html.includes('target="_blank"'), '링크는 현재 창에서 엽니다');
+  });
+}
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
