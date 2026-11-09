@@ -676,6 +676,11 @@ jobs:
           IN_DESC: ${{ inputs.new_desc }}
           IN_KW: ${{ inputs.new_keyword }}
           IN_SEO: ${{ inputs.new_seo_title }}
+          # ⚠️ 이 줄이 없어서 파일 분기가 통째로 건너뛰어졌다 (2026-11-09).
+          #    run 블록에서 $IN_FILE 을 썼는데 env 에 안 넣으면 **빈 값**이고,
+          #    `if [ -n "$IN_FILE" ]` 가 거짓이 되어 파일을 읽지도, 값이
+          #    비었다고 멈추지도 않는다. 조용히 아무 일도 안 한다.
+          IN_FILE: ${{ inputs.file_path }}
           WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
           WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
           WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}

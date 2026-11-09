@@ -393,4 +393,42 @@ check('test/ 의 모든 검사가 npm test 에 들어 있다', () => {
     );
   });
 
+  // ⚠️ 2026-11-09 에 이것 때문에 **조용히 아무 일도 안 했다.**
+  //    제목 고치기 단계의 run 블록에서 `$IN_FILE` 을 썼는데 그 단계 env 에
+  //    IN_FILE 을 안 넣었다. 셸에서 없는 변수는 **빈 문자열**이라
+  //    `if [ -n "$IN_FILE" ]` 가 거짓이 되고, 파일을 읽지도 않고 "값이
+  //    비었다"고 멈추지도 않았다. 미리보기는 "바뀔 내용이 없습니다"로
+  //    성공처럼 끝났고, run 을 한 번 더 돌려야 알았다.
+  //
+  //    셸은 오타난 변수를 에러로 알려 주지 않는다. 그래서 검사가 본다.
+  check('run 블록에서 쓰는 IN_ 변수가 그 단계 env 에 다 있다', () => {
+    const wf = fs.readFileSync(sports, 'utf8');
+    // 단계 단위로 쪼갠다.
+    const 조각 = wf.split(/\n(?=      - name: )/);
+    const 빠진것 = [];
+    for (const 단계 of 조각) {
+      const 이름 = (단계.match(/^ {6}- name: (.+)$/m) || [])[1];
+      if (!이름) continue;
+      const runAt = 단계.indexOf('\n        run: |');
+      if (runAt < 0) continue;
+      const envPart = 단계.slice(0, runAt);
+      const runPart = 단계.slice(runAt);
+      // env 에 적힌 이름 (주석 줄은 뺀다)
+      const 적힌것 = new Set(
+        envPart.split('\n')
+          .filter((l) => !/^\s*#/.test(l))
+          .flatMap((l) => (l.match(/^\s{10}(IN_[A-Z_]+):/) || []).slice(1)),
+      );
+      // run 에서 쓰는 이름 (주석 줄은 뺀다)
+      for (const l of runPart.split('\n')) {
+        if (/^\s*#/.test(l.replace(/^\s{10}/, ''))) continue;
+        for (const m of l.matchAll(/\$\{?(IN_[A-Z_]+)/g)) {
+          if (!적힌것.has(m[1])) 빠진것.push(`${이름} → ${m[1]}`);
+        }
+      }
+    }
+    assert.deepEqual([...new Set(빠진것)], [],
+      `env 에 없는 변수를 run 에서 씁니다 (셸에서는 빈 값이 되어 조용히 틀립니다):\n  ${[...new Set(빠진것)].join('\n  ')}`);
+  });
+
 }
