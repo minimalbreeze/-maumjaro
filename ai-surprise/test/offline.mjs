@@ -6743,8 +6743,33 @@ test('워터마크를 "지워라"가 아니라 "없다"로 적는다', () => {
   //
   //    그리고 워터마크가 **남아 있으면 변환이 약했다는 신호**다.
   //    사진이 그만큼 그대로 통과했다는 뜻이다.
+  //
+  // ⚠️ **첫 시도는 실패했다.** "no watermark" 라고만 적었더니 워터마크가
+  //    그대로 그려져 나왔다(뉴스1, 일간스포츠). 운영자: "워터마크는
+  //    빼달라니..."
+  //
+  //    까닭은 지시가 서로 싸운 것이다 — "구도를 그대로 지켜라"가
+  //    이기고 "얹힌 게 없다"가 졌다. 모델이 워터마크를 장면의 일부로
+  //    보고 같이 그렸다.
+  //
+  //    모자 마크에서 배운 것과 같다. **금지로는 못 막는다.**
+  //    "없다"가 아니라 **"거기에 무엇을 그려라"**로 적어야 한다.
   const p = RP.repaintPrompt({ name: '김도영' });
-  for (const must of ['no watermark', 'no logo stamp', 'no agency mark', 'no text of any kind']) {
+
+  // 1) 구도 규칙에 **예외**가 있어야 한다. 이게 빠지면 또 싸운다.
+  assert.ok(
+    /does not carry over/.test(p),
+    '구도를 지키라는 규칙에서 워터마크를 빼 주는 줄이 없습니다 — 또 그려집니다'
+  );
+  // 2) 지우라고 하지 않고 **덮어 칠하라**고 해야 한다.
+  assert.ok(/paint over it completely/.test(p), '덮어 칠하라는 줄이 없습니다');
+  assert.ok(/draw whatever surface lies underneath/.test(p), '뒤에 있던 것을 그리라는 줄이 없습니다');
+  // 3) 옷 위에 찍힌 것을 스폰서 글자로 오해하지 않게. 점퍼 위의
+  //    '일간스포츠' 가 실제로 그대로 그려져 나왔다.
+  assert.ok(/only lettering anywhere on clothing/.test(p), '옷 위 글자를 묶는 줄이 없습니다');
+  // 4) 이름으로 막는 것도 남겨 둔다. 이것만으로는 부족하지만 위와
+  //    같이 쓰면 효과가 있다.
+  for (const must of ['no watermark', 'no agency logo', 'no caption bar']) {
     assert.ok(p.includes(must), `워터마크 지시가 빠졌습니다: ${must}`);
   }
 });

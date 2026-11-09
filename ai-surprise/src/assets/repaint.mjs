@@ -67,7 +67,13 @@ export const REPAINT_MODEL = 'kontext';
 export const REPAINT_KEEP =
   'keep the exact same pose, the same camera angle, the same framing and ' +
   'the same composition as the photograph, keep both arms and both legs ' +
-  'exactly where they are, keep the number of people the same';
+  'exactly where they are, keep the number of people the same, ' +
+  // ⚠️ 2026-11-09. 이 예외가 없어서 워터마크가 **그림 안으로 들어갔다.**
+  //    "구도를 그대로 지켜라"와 "완성된 그림에는 얹힌 게 없다"가 싸웠고
+  //    앞엣것이 이겼다. 모델이 워터마크를 장면의 일부로 보고 같이 그렸다.
+  //    그래서 구도 규칙 **안에서** 예외를 밝힌다.
+  'this applies to the people and the place only - any text stamped over ' +
+  'the photograph is not part of the scene and does not carry over';
 
 /**
  * 사진 느낌을 지우는 줄.
@@ -102,9 +108,32 @@ export const REPAINT_DROP =
  *    품을 들일 필요가 없고 결과도 깨끗하다.
  */
 export const REPAINT_CLEAN =
-  'the finished picture is a clean drawing with nothing overlaid on it: ' +
-  'no watermark, no logo stamp, no agency mark, no caption bar, ' +
-  'no date stamp, no text of any kind anywhere in the frame';
+  // ── 지우라고 하지 않는다. **무엇을 그릴지**로 적는다 ──
+  //
+  // 2026-11-09 첫 시도에서 "no watermark" 라고만 적었더니 워터마크가
+  // 그대로 그려져 나왔다(뉴스1, 일간스포츠). 운영자: "워터마크는
+  // 빼달라니..."
+  //
+  // 모자 마크에서 배운 것과 같다 — **금지로는 못 막는다.** 모델에게
+  // "없다"고 말하는 것과 "거기에 무엇이 있어야 하는지" 말하는 것은
+  // 다르다. 뒤엣것이 먹는다.
+  //
+  // 그래서 **덮어 칠하라**고 적는다. 워터마크가 있던 자리에 그 뒤에
+  // 있던 것(잔디·하늘·옷)을 그리라는 말이다.
+  'the source photograph has a news agency watermark stamped over it; ' +
+  'paint over it completely and draw whatever surface lies underneath - ' +
+  'if it sat on grass draw grass, on the sky draw sky, on clothing draw ' +
+  'the plain fabric of that clothing, ' +
+  // 옷 위에 찍힌 워터마크를 스폰서 글자로 오해하는 것을 막는다.
+  // 실제로 점퍼 위의 '일간스포츠' 가 그대로 그려져 나왔다.
+  'the only lettering anywhere on clothing is the team wordmark and the ' +
+  'jersey number, nothing else, ' +
+  'the only lettering anywhere else is what is physically built into the ' +
+  'stadium itself, ' +
+  // 그래도 남는 것들을 이름으로 막는다. 이것만으로는 부족하지만
+  // 위의 "덮어 칠하라"와 같이 쓰면 효과가 있다.
+  'no watermark, no agency logo, no station logo, no caption bar, ' +
+  'no date stamp, no photographer credit, no semi-transparent overlay';
 
 /** 한 장에 보낼 지시문. */
 export function repaintPrompt(person, shot = null) {
