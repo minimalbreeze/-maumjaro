@@ -27,5 +27,73 @@
   여백();
   setTimeout(여백, 1500);
   window.addEventListener('resize', 여백);
+
+  // ── 구글 광고를 덮지 않는다 (2026-11-09) ──────────────────────────
+  //
+  // 이 바는 position:fixed; bottom:0; z-index:9999 다. 위의 여백은 **글
+  // 마지막 줄**만 지킨다 — 스크롤 중에 본문 광고가 바 뒤로 지나가면 덮인다.
+  // 애드센스는 광고가 다른 요소에 가려지는 것을 허용하지 않는다. 자동 광고의
+  // 앵커 광고가 켜져 있으면 그것도 bottom:0 이라 같은 자리에서 겹친다.
+  //
+  // fixed 요소는 z-index 를 낮춰도 본문 광고 위에 그려진다(쌓임 문맥이
+  // 달라서다). 그래서 z-index 를 만지는 것으로는 안 풀린다. 겹치는지
+  // 재서 겹치면 **우리 바를 숨긴다.**
+  //
+  // 숨기는 쪽이 우리 바다. 애드센스가 정책으로 묶인 쪽이고 수익도 크다.
+  // 쿠팡 바는 겹치지 않는 자리에서 다시 보인다.
+  //
+  // ⚠️ 재는 데 실패하면 **지금까지의 동작(바가 보임)을 그대로 둔다.**
+  //    코드 한 줄이 틀렸을 때 모든 글에서 쿠팡 광고가 사라지는 쪽이 더 나쁘다.
+  function 구글광고들() {
+    var 것들 = [];
+    try {
+      var ins = document.querySelectorAll('ins.adsbygoogle');
+      for (var i = 0; i < ins.length; i++) 것들.push(ins[i]);
+      // 앵커 광고는 body 에 붙는 iframe 으로 그려진다.
+      var ifr = document.querySelectorAll('iframe');
+      for (var j = 0; j < ifr.length; j++) {
+        var src = ifr[j].src || '';
+        if (src.indexOf('googlesyndication') >= 0 || src.indexOf('doubleclick') >= 0
+            || src.indexOf('googleads') >= 0) 것들.push(ifr[j]);
+      }
+    } catch (e) {}
+    return 것들;
+  }
+  var 숨김 = false;
+  function 겹침확인() {
+    try {
+      if (bar.style.display === 'none') return;
+      var b = bar.getBoundingClientRect();
+      if (!b.height) return;
+      var 겹친다 = false;
+      var 광고 = 구글광고들();
+      for (var i = 0; i < 광고.length; i++) {
+        var a = 광고[i].getBoundingClientRect();
+        if (!a.width || !a.height) continue;
+        if (a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right) {
+          겹친다 = true;
+          break;
+        }
+      }
+      if (겹친다 !== 숨김) {
+        숨김 = 겹친다;
+        // visibility 를 쓴다 — display 를 건드리면 캐러셀이 다시 그려진다.
+        bar.style.visibility = 겹친다 ? 'hidden' : '';
+        document.body.style.paddingBottom = 겹친다 ? '' : (bar.offsetHeight + 12) + 'px';
+      }
+    } catch (e) {}
+  }
+  var 대기 = false;
+  function 예약() {
+    if (대기) return;
+    대기 = true;
+    requestAnimationFrame(function () { 대기 = false; 겹침확인(); });
+  }
+  window.addEventListener('scroll', 예약, { passive: true });
+  window.addEventListener('resize', 예약);
+  // 광고는 늦게 그려진다. 처음 몇 초만 몇 번 더 본다.
+  setTimeout(겹침확인, 1200);
+  setTimeout(겹침확인, 3000);
+  겹침확인();
 })();
 </script>

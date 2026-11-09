@@ -103,4 +103,46 @@ check('표식이 넣기·빼기·검사에서 같은 것을 가리킨다', () =>
   assert.ok(바HTML().includes(표식), `바 HTML 에 표식이 없습니다: ${표식}`);
 });
 
+// ── 구글 광고를 덮지 않는다 (2026-11-09) ────────────────────────────
+//
+// 효성님: "구글 기준과 애드센스 기준을 어기면 안 된다."
+//
+// 이 바는 position:fixed; bottom:0; z-index:9999 다. 아래 여백은 **글
+// 마지막 줄**만 지키고, 스크롤 중에 본문 광고가 바 뒤로 지나가면 덮인다.
+// 5762 본문에 adsbygoogle 이 실제로 들어 있어 가정이 아니다.
+check('하단 바가 구글 광고와 겹치는지 재는 코드를 들고 있다', () => {
+  const h = 바HTML();
+  assert.ok(h.includes('adsbygoogle'), '구글 광고를 찾는 코드가 없습니다');
+  assert.ok(h.includes('googlesyndication'), '앵커 광고 iframe 을 찾는 코드가 없습니다');
+  assert.ok(h.includes('getBoundingClientRect'), '겹침을 재는 코드가 없습니다');
+});
+
+check('겹치면 숨기는 쪽이 우리 바다 — 애드센스를 가리지 않는다', () => {
+  const h = 바HTML();
+  assert.ok(/visibility\s*=\s*겹친다\s*\?\s*'hidden'/.test(h), h.slice(0, 200));
+});
+
+// ⚠️ 재는 코드가 틀렸을 때 **모든 글에서 쿠팡 광고가 사라지는** 쪽이 더 나쁘다.
+//    그래서 try/catch 로 감싸고, 실패하면 지금까지의 동작(바가 보임)을 둔다.
+check('재는 데 실패하면 바를 그대로 둔다 (fails open)', () => {
+  const h = 바HTML();
+  const i = h.indexOf('function 겹침확인');
+  assert.ok(i > 0, '겹침확인 함수가 없습니다');
+  const 몸 = h.slice(i, i + 1200);
+  assert.ok(몸.includes('try {') && 몸.includes('catch (e) {}'), '겹침확인이 try/catch 로 감싸여 있지 않습니다');
+});
+
+// ⚠️ 제휴사가 준 코드는 글자 하나도 바꾸지 않는다. 손대면 광고가 동작하지
+//    않을 수 있고, 지시서가 못박아 둔 자리다.
+check('제휴사가 준 쿠팡 코드가 글자 하나까지 그대로다', () => {
+  const h = 바HTML();
+  assert.ok(h.includes('<script src="https://ads-partners.coupang.com/g.js"></script>'), 'g.js 호출이 바뀌었습니다');
+  assert.ok(h.includes('new PartnersCoupang.G({"id":872203,"trackingCode":"AF3646181","subId":null,"template":"carousel","width":"100%","height":"140"});'), 'PartnersCoupang.G 호출이 바뀌었습니다');
+});
+
+// 제휴 공개는 FTC·공정위 기준이기도 하고 애드센스가 요구하는 투명성이기도 하다.
+check('제휴 공개 문구가 그대로 있다', () => {
+  assert.ok(바HTML().includes('쿠팡 파트너스 활동의 일환으로'), '제휴 공개 문구가 사라졌습니다');
+});
+
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
