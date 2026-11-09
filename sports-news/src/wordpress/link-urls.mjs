@@ -75,7 +75,7 @@ export function 호스트(url) {
  * 한 호스트에 주소가 둘 이상이면 **더 짧은 것**(대개 루트)을 쓴다.
  * 본문에 호스트만 적혀 있을 때 깊은 경로로 보내면 엉뚱한 자리로 간다.
  */
-export function 확인된주소표(cfg = loadOfficialLinks()) {
+export function 확인된주소표(cfg = loadOfficialLinks(), 글번호 = null) {
   const 표 = new Map();
   const 넣기 = (url) => {
     if (!url || typeof url !== 'string') return;
@@ -84,8 +84,27 @@ export function 확인된주소표(cfg = loadOfficialLinks()) {
     const 전 = 표.get(h);
     if (!전 || url.length < 전.length) 표.set(h, url);
   };
-  for (const it of Object.values((cfg && cfg.byPost) || {})) 넣기(it && it.url);
+  // ⚠️ `sites` 를 **먼저** 넣고 `byPost` 를 뒤에 넣는다. 아래 `넣기` 는 더 짧은
+  //    주소를 남기므로, 같은 호스트에 둘 다 있으면 사람이 그 글에 콕 집어 적은
+  //    `byPost` 가 밀릴 수 있다. 그래서 byPost 는 마지막에 덮어쓴다.
   for (const s of (cfg && cfg.sites) || []) 넣기(s && s.url);
+
+  // **`byPost` 는 그 글에서만 쓴다** (2026-11-09).
+  //
+  // 진주 송백지구 예약 주소(`www.jinju.go.kr/yeyak/...`)를 받았는데, 같은
+  // 호스트가 **와룡지구 글(1119)에도** 있다. 글을 가리지 않고 호스트 표에
+  // 넣으면 와룡지구를 찾아온 독자가 **송백지구 예약 페이지로** 간다.
+  //
+  // 사람이 글 번호를 적어 둔 주소는 그 글의 사정을 알고 적은 것이다.
+  // 옆 글에 번지게 두지 않는다.
+  const byPost = (cfg && cfg.byPost) || {};
+  if (글번호 != null) {
+    const it = byPost[String(글번호)];
+    if (it && it.url) {
+      const h = 호스트(it.url);
+      if (h) 표.set(h, it.url);   // 그 글에서는 byPost 가 이긴다
+    }
+  }
   return 표;
 }
 
@@ -426,8 +445,11 @@ async function main() {
     return;
   }
 
-  const 표 = 확인된주소표();
+  const 설정 = loadOfficialLinks();
+  const 표 = 확인된주소표(설정);
   log.info(`   확인된 주소 ${표.size}곳을 씁니다 (설정에 사람이 적고 _출처를 남긴 것만)`);
+  const byPost수 = Object.keys((설정 && 설정.byPost) || {}).length;
+  if (byPost수) log.info(`   그중 글 번호를 콕 집어 적어 둔 것 ${byPost수}개는 **그 글에서만** 씁니다`);
 
   // 우리 글 주소는 **실재하는 발행글만** 링크로 만든다. `--전체` 가 아니어도
   // 목록이 필요하다 — 번호 몇 편만 돌 때도 그 글 안에 우리 주소가 있다.
@@ -451,7 +473,9 @@ async function main() {
       }
       const content = post?.content?.raw ?? '';
       const 제목 = String(post?.title?.raw || '').slice(0, 44);
-      const { html, 바꾼것 } = 링크로바꾸기(content, 표, { 우리글, 내주소: post?.link || '' });
+      // byPost 주소는 그 글에서만 쓰므로 글마다 표를 다시 만든다.
+      const 이글의표 = 확인된주소표(설정, id);
+      const { html, 바꾼것 } = 링크로바꾸기(content, 이글의표, { 우리글, 내주소: post?.link || '' });
       if (!바꾼것.length) {
         log.info(`[${id}] 바꿀 주소가 없습니다 — ${제목}`);
         continue;

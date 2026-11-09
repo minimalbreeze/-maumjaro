@@ -71,10 +71,22 @@ check('링크 말고 다른 것이 바뀌면 걸러낸다', () => {
   assert.ok(!링크만바뀌었나('<p>글</p>', '<p>다른 글</p>'));
 });
 
-check('표에 같은 호스트가 둘이면 짧은 주소를 쓴다', () => {
+// ⚠️ 2026-11-09 에 뒤집힌 검사다. 전에는 `byPost` 주소도 호스트 표에
+//    들어갔고 그중 짧은 것이 이겼다. 지금은 **byPost 가 글 번호 없이는
+//    표에 들어가지 않는다** — 사람이 그 글에 콕 집어 적은 주소가 옆 글로
+//    번지는 것이 더 나쁘기 때문이다(진주 송백지구 ↔ 와룡지구).
+check('byPost 는 글 번호 없이는 표에 들어가지 않는다', () => {
   const cfg = {
     byPost: { 1: { url: 'https://a.co.kr/deep/path' }, 2: { url: 'https://a.co.kr/' } },
     sites: [],
+  };
+  assert.equal(확인된주소표(cfg).get('a.co.kr'), undefined);
+});
+
+check('sites 안에서 같은 호스트가 둘이면 짧은 주소를 쓴다', () => {
+  const cfg = {
+    byPost: {},
+    sites: [{ url: 'https://a.co.kr/deep/path' }, { url: 'https://a.co.kr/' }],
   };
   assert.equal(확인된주소표(cfg).get('a.co.kr'), 'https://a.co.kr/');
 });
@@ -430,6 +442,47 @@ check('호스트만 적힌 자리는 설정의 깊은 주소로 보낸다', () =
   const 표7 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
   const r = 링크로바꾸기('<p>구단 샵: <code>hanwhaeagles.co.kr</code></p>', 표7);
   assert.equal(r.바꾼것[0].url, 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do');
+});
+
+// ── byPost 주소는 그 글에서만 쓴다 (2026-11-09) ──────────────────────
+//
+// 효성님이 진주 **송백지구** 예약 주소를 줬는데, 같은 호스트
+// (`www.jinju.go.kr`)가 **와룡지구 글(1119)에도** 있다. 글을 가리지 않고
+// 호스트 표에 넣으면 와룡지구를 찾아온 독자가 송백지구 예약 페이지로 간다.
+
+const 설정샘플 = {
+  sites: [{ 이름: '진주시청', match: ['진주시'], url: 'https://www.jinju.go.kr/' }],
+  byPost: { 1533: { url: 'https://www.jinju.go.kr/yeyak/08871/10294/10295.web' } },
+};
+
+check('글 번호를 안 주면 byPost 주소가 표에 안 들어간다', () => {
+  const 표 = 확인된주소표(설정샘플);
+  assert.equal(표.get('jinju.go.kr'), 'https://www.jinju.go.kr/');
+});
+
+check('그 글에서는 byPost 주소가 이긴다', () => {
+  const 표 = 확인된주소표(설정샘플, 1533);
+  assert.equal(표.get('jinju.go.kr'), 'https://www.jinju.go.kr/yeyak/08871/10294/10295.web');
+});
+
+// ⚠️ 이것이 막으려는 사고다.
+check('다른 글에서는 byPost 주소가 안 샌다', () => {
+  const 표 = 확인된주소표(설정샘플, 1119);
+  assert.equal(표.get('jinju.go.kr'), 'https://www.jinju.go.kr/',
+    '와룡지구 글에 송백지구 예약 주소가 샜습니다');
+});
+
+check('문자열 글 번호로도 찾는다', () => {
+  assert.equal(확인된주소표(설정샘플, '1533').get('jinju.go.kr'),
+    'https://www.jinju.go.kr/yeyak/08871/10294/10295.web');
+});
+
+// ⚠️ byPost 가 더 길어도 밀리면 안 된다. `넣기` 는 짧은 주소를 남기므로
+//    byPost 를 마지막에 덮어쓰게 해 뒀다.
+check('byPost 주소가 더 길어도 그 글에서는 이긴다', () => {
+  const 표 = 확인된주소표(설정샘플, 1533);
+  const url = 표.get('jinju.go.kr');
+  assert.ok(url.length > 'https://www.jinju.go.kr/'.length, url);
 });
 
 console.log(`\n  ${passed}개 통과`);
