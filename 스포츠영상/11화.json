@@ -209,18 +209,53 @@
       "look": "a Korean baseball manager of 50, a slim upright frame, narrow through the chest, in a team jacket over a uniform, short black hair with grey coming in at the temples, a long narrow face with high cheekbones and a pointed chin, sharp narrow eyes, light lines across the forehead, a composed unsmiling look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "삼성",
       "tell": "우승 감독. 이 편의 심장인 BOTH 섹션에서 이강철과 **나란히 놓인다** — 박진만이 50세로 더 젊고 더 마르고 얼굴이 길다. 이강철은 60대에 두껍고 얼굴이 넓다. 둘을 가르는 것은 **나이와 얼굴 폭**이다.\n선수 시절 '국민 유격수'로 불렸다. 현대(1996~2004) → 삼성(2005~2010) → SK(2011~2015), 유격수 골든글러브 5회(2000·2001·2004·2006·2007), 우승 반지 6개. 2022년 10월에 삼성 16대 정식 감독이 됐다.\n⚠️ 키·체중은 확인하지 못했다. 선수 시절 유격수였으니 마른 체형으로만 적었다. 감독이므로 **등번호를 달지 않는다** — 코드가 재킷을 입힌다.\nPARK 섹션의 얼굴이고, CLOSE 의 \"샴페인이 눈에 들어가서\"에도 쓸 수 있다.\n받은 넷이 전부 뉴스 사진이다. 본은 311/2026-11-03, 예비는 109/2026-11-07 — 매체를 다르게 골랐다.\n⚠️ 넷 중 하나(468/2026-11-06)는 주소 끝이 **type=l340_165** 다. 340×165 짜리 가로로 긴 틀이라 얼굴이 잘려 있을 수 있다. 참조 모델은 얼굴을 못 찾으면 그냥 실패하므로(facexlib align face fail) 본도 예비도 거기에 쓰지 않았다. 다른 셋은 type=a340 으로 정사각에 가깝다.\n안 쓴 둘: 108/2026-11-07(a340), 468/2026-11-06(l340_165, 위 까닭으로 맨 뒤).\n⭐ **2006년 한국시리즈 MVP** 다. 당시 삼성 유격수, 30세. 유효투표 53표 중 36표(2위 배영수). 3차전 연장 12회 결승타점, 시리즈 25타수 7안타. 선수로 그 트로피를 받은 게 2006년이고 감독으로 우승한 게 2026년 — 20년이다.\n⚠️ 부임은 2022년 10월(감독 대행 → 정식)이고 **첫 시즌은 2023년**이다. 우승까지 4시즌 걸렸다: 2023년 8위 → 2024 KS 준우승 → 2025 PO 최종전 탈락 → 2026 우승.\n⚠️ 2026-11-09. 체격을 느낌말(`a lean trim build`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002075904_001_20261103173914764.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F07%2F0005636533_001_20261107175220049.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F07%2F0005636533_001_20261107175220049.jpg&type=a340",
+      "number": "70",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F03%2F0005633630_001_20261103172110963.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F06%2F0002077672_001_20261106211709736.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F09%2F2026110901000596900057161_20261109091715486.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002075904_001_20261103173914764.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "최형우",
       "role": "삼성 지명타자 · 1983년생 43세 · 180cm 106kg · 우투좌타",
       "look": "a Korean man of 42, by far the oldest player here, a veteran designated hitter, 180cm and about 106kg with a thick solid torso, short black hair with grey showing at the sides, a full weathered face with deep lines from the nose to the mouth and lines across the forehead, a calm veteran look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "tell": "9화에서 \"KIA가 2년 26억에 삼성으로 보낸 선수\"로 나왔다. 그 최형우가 **7번째 반지**를 꼈다. 박진만 감독이 부상을 안고 뛴 선수로 꼽은 셋 중 하나다(골반). 2차전부터 좌익수 수비까지 나갔다. PARK 과 CLOSE 에 걸치지만 그림은 한 번만. 43세라 **주름이 뚜렷해야 한다** — 선으로 그릴 게 많은 얼굴이라 잘 나올 자리다. 타자이므로 치는 장면으로. 9화 사진을 그대로 쓴다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F06%2FNISI20261106_0021522431_web_20261106185750_20261106185917209.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F01%2F2026110101000057500002832_20261101162514186.jpg&type=a340",
       "team": "삼성",
-      "number": "34"
+      "number": "34",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F08%2F0003485785_002_20261108155815770.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F06%2F0000760169_006_20261106060414263.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F08%2FAKR20261108049300007_01_i_P4_20261108192216823.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F06%2FNISI20261106_0021522431_web_20261106185750_20261106185917209.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "구자욱",
