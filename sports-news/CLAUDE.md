@@ -691,8 +691,15 @@ Opus 5와 Sonnet 5로 각각 뽑아 비교했을 때 **양식 준수와 사실 �
 # ⚠️ 줄 번호로 집지 않는다 — 모드를 하나 더하면 번호가 밀린다.
 #    모드 이름의 **알아볼 수 있는 조각**으로 찾고, 하나만 걸리는지 세어 본다.
 # ⚠️ bash 는 한글 변수명을 못 쓴다(`조각=...` 은 command not found 다).
+# ⚠️ **줄 시작(`- '`)에 조각을 붙이지 않는다.** 모드 이름의 앞부분을 모르면
+#    안 걸린다. 2026-11-09 에 `- '적힌 주소를 링크로` 로 찾았는데 실제 이름이
+#    `글자로만 적힌 주소를 링크로` 라서 **0건**이 나왔고, 빈 mode 가 넘어가
+#    워크플로가 **기본값인 글쓰기 모드**로 떨어졌다. 311원이 샜다.
+#    따옴표 줄만 먼저 거르고, 조각은 **그 안에서** 찾는다.
 PIECE='누를 수 없는 주소 세기'
-M=$(grep -F -- "- '$PIECE" .github/workflows/sports-news.yml | sed "s/^ *- *'//; s/'$//")
+M=$(grep -F -- "- '" .github/workflows/sports-news.yml | grep -F -- "$PIECE" | sed "s/^ *- *'//; s/'$//")
+# ⚠️ **빈 값이면 반드시 멈춘다.** 빈 mode 를 보내면 기본값(돈 드는 글쓰기)으로 간다.
+[ -n "$M" ] || { echo "그런 모드가 없습니다: $PIECE"; exit 1; }
 [ "$(printf '%s' "$M" | grep -c '')" = 1 ] || { echo "조각이 여러 줄에 걸립니다 — 더 길게 적으세요"; exit 1; }
 python3 -c "import json,sys; print(json.dumps({'ref':'main','inputs':{'mode':sys.argv[1]}}, ensure_ascii=False))" "$M" > /tmp/body.json
 curl -sS -w '%{http_code}\n' -X POST \
