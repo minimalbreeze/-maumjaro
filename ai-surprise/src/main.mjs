@@ -32,6 +32,7 @@ import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_US
 import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
 import { repaintJobs, REPAINT_MODEL } from './assets/repaint.mjs';
+import { retryAfterMs } from './assets/images.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -991,22 +992,50 @@ async function cmdRepaint(flags) {
   fs.mkdirSync(outDir, { recursive: true });
   const api = createReplicate({ token });
 
+  // ── 한도(429)에 걸리면 기다렸다 다시 건다 ──
+  //
+  // ⚠️ 2026-11-09 첫 실행(#71)에서 네 장 중 **세 장을 이것 때문에
+  //    잃었다.** 본편 그림(images.mjs)에는 이 재시도가 있는데 여기만
+  //    없었다. 새 길을 내면서 있던 안전장치를 안 가져온 것이다.
+  //
+  //    Replicate 는 잔액이 $5 아래로 내려가면 **분당 6회, 버스트 1회**로
+  //    묶는다. 지금이 그 상태라 연달아 걸면 거의 다 막힌다.
+  //
+  //    메시지에 "resets in ~4s" 처럼 얼마나 기다리라는지 적혀 오므로
+  //    그만큼 쉰다. 모르면 점점 늘려 가며 쉰다.
+  const MAX_ATTEMPTS = 3;
   let spent = 0;
   const made = [];
   for (const [i, job] of jobs.entries()) {
     log.step(`${i + 1}/${jobs.length} — ${job.file}`);
-    try {
-      const r = await api.generate(job.prompt, {
-        modelKey: REPAINT_MODEL,
-        referenceImage: job.referenceImage,
-        aspectRatio: '16:9',
-      });
-      spent += r.usdEstimate ?? per;
-      fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
-      made.push(job.file);
-    } catch (e) {
-      log.error(`${job.file}: ${e.message}`);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const r = await api.generate(job.prompt, {
+          modelKey: REPAINT_MODEL,
+          referenceImage: job.referenceImage,
+          aspectRatio: '16:9',
+        });
+        spent += r.usdEstimate ?? per;
+        fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+        made.push(job.file);
+        break;
+      } catch (e) {
+        const canRetry = e?.retryable !== false && attempt < MAX_ATTEMPTS;
+        if (!canRetry) {
+          log.error(`${job.file}: ${e.message}`);
+          break;
+        }
+        const wait = retryAfterMs(e) ?? 2000 * attempt;
+        log.warn(
+          `${job.file} 실패 (${attempt}/${MAX_ATTEMPTS}) — ${e.message} ` +
+            `${Math.round(wait / 1000)}초 쉬었다 다시 겁니다.`
+        );
+        await new Promise((r) => setTimeout(r, wait));
+      }
     }
+    // 잔액이 적으면 분당 6회로 묶인다. 연달아 걸면 다음 장이 바로
+    // 막히므로, 장과 장 사이에도 한 박자 쉰다. 네 장이면 40초다.
+    if (i < jobs.length - 1) await new Promise((r) => setTimeout(r, 10000));
   }
 
   log.raw('');
