@@ -73,7 +73,7 @@ export const SHOT_SECONDS_MIN = 2.5;
  *     자르면 "…했다. 그런데" 같은 데서 어색하게 끊긴다. 긴 문단은
  *     장면 하나로 두고 샷으로 나누는 쪽이 안전하다.
  */
-export function groupIntoScenes(parsed, { targetScenes = null } = {}) {
+export function groupIntoScenes(parsed, { targetScenes = null, kind = null } = {}) {
   const paragraphs = parsed?.paragraphs || [];
   if (!paragraphs.length) return [];
 
@@ -109,7 +109,7 @@ export function groupIntoScenes(parsed, { targetScenes = null } = {}) {
     groups.push(...splitRun(run.paragraphs, quotas[i]));
   }
 
-  return groups.map((group, i) => makeScene(group, i + 1));
+  return groups.map((group, i) => makeScene(group, i + 1, kind));
 }
 
 /** 섹션마다 장면 몇 개씩. 합계가 정확히 wanted가 되게 한다. */
@@ -195,10 +195,12 @@ function splitRun(paragraphs, k) {
   return groups;
 }
 
-function makeScene(paragraphs, sceneNumber) {
+// kind 를 받는 까닭: 종류마다 말하기 속도가 달라서 같은 글자 수가
+// 다른 시간이 된다 (2026-11-08, narration.mjs 의 charsPerMinuteFor).
+function makeScene(paragraphs, sceneNumber, kind = null) {
   const narration = paragraphs.map((p) => p.text).join(' ');
   const chars = paragraphs.reduce((s, p) => s + p.chars, 0);
-  const seconds = round2(secondsForChars(chars));
+  const seconds = round2(secondsForChars(chars, kind));
   const tags = [...new Set(paragraphs.map((p) => p.tag))];
 
   return {
@@ -259,7 +261,9 @@ export function splitIntoScenes(markdown, { targetScenes = null, kind = undefine
     return { scenes: [], stats: emptyStats(), problems };
   }
 
-  const scenes = groupIntoScenes(parsed, { targetScenes });
+  // kind 를 내려 준다. 장면 길이가 글자/분으로 나오고, 그 값이
+  // 종류마다 다르다 (2026-11-08, narration.mjs 의 charsPerMinuteFor).
+  const scenes = groupIntoScenes(parsed, { targetScenes, kind });
 
   // 약속 확인: 쪼갠 뒤에도 나레이션이 원문과 같은가.
   // 같지 않으면 버그다. 조용히 넘기지 않고 멈춘다.

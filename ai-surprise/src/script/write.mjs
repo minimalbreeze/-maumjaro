@@ -457,7 +457,9 @@ export function buildTalePrompt(item, { targetMinutes = TALE_MINUTES } = {}) {
 export function buildScriptPrompt(item, { targetMinutes = DEFAULT_MINUTES } = {}) {
   const isLegend = item?.kind === KIND.LEGEND;
   // 나레이션 속도는 narration.mjs 한 곳에만 둔다. 장면 분할도 같은 값을 쓴다.
-  const target = charsForMinutes(targetMinutes);
+  // ⚠️ 종류를 넘긴다 — 스포츠는 중계 톤이라 같은 분량에 글자가 더 들어간다
+  //    (2026-11-08 실행 #70 에서 재서 376자/분으로 고쳤다).
+  const target = charsForMinutes(targetMinutes, item?.kind);
 
   const lines = [];
 
@@ -786,7 +788,9 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
   // 5) 분량 — 태그와 제목을 뺀 실제 나레이션 글자 수
   const narration = narrationOnly(bodyLines).replace(/\n/g, ' ');
   const chars = countNarrationChars(narration);
-  const estMinutes = minutesForChars(chars);
+  // ⚠️ 종류를 넘긴다. 안 넘기면 스포츠 편 길이를 1.14배로 재고,
+  //    그 경고를 따라 내용을 과하게 깎는다 (2026-11-08).
+  const estMinutes = minutesForChars(chars, kind);
   // 목표 길이에서 얼마나 벗어났는지로 본다. 예전에는 2.5분·6분으로 숫자를
   // 박아놨는데, 기본 길이를 8분으로 올리면서 8분짜리가 전부 "깁니다" 경고를
   // 달고 나왔다. 고정 숫자는 기본값이 바뀌는 순간 틀린다.
@@ -853,9 +857,9 @@ export function validateScript(markdown, { targetMinutes = DEFAULT_MINUTES, kind
     errors.push('HOOK 섹션에 나레이션이 없습니다. 첫 10초가 이 채널에서 가장 중요합니다.');
   } else if (hookChars > hookMaxFor(kind)) {
     const maxChars = hookMaxFor(kind);
-    const maxSeconds = (minutesForChars(maxChars) * 60).toFixed(0);
+    const maxSeconds = (minutesForChars(maxChars, kind) * 60).toFixed(0);
     warnings.push(
-      `HOOK이 ${hookChars}자입니다 (약 ${(minutesForChars(hookChars) * 60).toFixed(0)}초). ` +
+      `HOOK이 ${hookChars}자입니다 (약 ${(minutesForChars(hookChars, kind) * 60).toFixed(0)}초). ` +
         `이 종류는 ${maxChars}자(약 ${maxSeconds}초)를 넘기지 않습니다. 뒷이야기는 다음 섹션으로 넘기세요.`
     );
   }

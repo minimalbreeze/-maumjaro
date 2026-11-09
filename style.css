@@ -5399,3 +5399,43 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   resize: vertical;
   word-break: break-all;
 }
+
+/* ---------- 연애센터 (love.js) ---------- */
+/* 새 팔레트를 만들지 않는다. 체크된 신호는 기존 보라~핑크 CTA 그라디언트,
+   호감지수 숫자는 주사기 코랄~옐로를 그대로 쓴다. */
+.love-signal-list {
+  display: flex; flex-direction: column; gap: 6px; margin-top: 8px;
+}
+.love-signal {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 11px; border-radius: 12px; cursor: pointer; text-align: left;
+  border: 1px solid var(--card-border); background: var(--card);
+  color: var(--text); font-size: 13.5px; font-weight: 600; line-height: 1.35;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, border-color .18s ease, background .18s ease;
+}
+.love-signal:active { transform: scale(0.98); }
+.love-signal.on {
+  border-color: transparent; color: #fff;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  box-shadow: 0 5px 14px rgba(183,121,239,0.30);
+}
+.love-signal-box {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--card-border); background: transparent;
+  font-size: 12px; font-weight: 900; line-height: 1;
+}
+.love-signal.on .love-signal-box {
+  border-color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.22); color: #fff;
+}
+.love-signal-label { flex: 1; word-break: keep-all; }
+/* 숫자는 크게. 다만 이건 확률이 아니라 셈이라, 아래 고지 문구를 늘 같이 둔다. */
+.love-score {
+  font-size: 46px; font-weight: 900; line-height: 1.05; letter-spacing: -1px;
+  margin: 2px 0 4px;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-variant-numeric: tabular-nums;
+}

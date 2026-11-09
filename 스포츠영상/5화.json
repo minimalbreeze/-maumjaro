@@ -98,8 +98,8 @@
     {
       "name": "양현종",
       "role": "투수",
-      "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait, exaggerate them - with short black hair under a cap, a thick sturdy build with broad shoulders and a thick neck, pitching left-handed",
-      "tell": "안경, 빨간 소매가 달린 검정 유니폼, 민트색 글러브. ⚠️ 얼굴형은 사진에서 못 읽어 일부러 비웠다"
+      "look": "a Korean man in his late 30s wearing unmistakably prominent eyeglasses - the glasses are the defining trait, exaggerate them - with short black hair under a cap, a square shoulders and strong legs with broad shoulders and a thick neck, pitching left-handed",
+      "tell": "안경, 빨간 소매가 달린 검정 유니폼, 민트색 글러브. ⚠️ 얼굴형은 사진에서 못 읽어 일부러 비웠다\n⚠️ 2026-11-09. 체격을 느낌말(`thick sturdy build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다."
     },
     {
       "name": "이범호",
@@ -116,20 +116,20 @@
     {
       "name": "김도영",
       "role": "삼루수",
-      "look": "a Korean man in his early 20s with unmistakably long black eye-black stripes smeared under both eyes - the eye-black is the defining trait, exaggerate it - with a strikingly young boyish face, a lean narrow face with a narrow chin and little cheek fat, dark straight eyebrows, messy black hair with volume on top, a slim build with a thin neck",
-      "tell": "두 눈 밑의 긴 아이블랙, 흰색 홈 유니폼"
+      "look": "a Korean man in his early 20s with unmistakably long black eye-black stripes smeared under both eyes - the eye-black is the defining trait, exaggerate it - with a strikingly young boyish face, a lean narrow face with a narrow chin and little cheek fat, dark straight eyebrows, messy black hair with volume on top, a narrow shoulders and a light frame with a thin neck",
+      "tell": "두 눈 밑의 긴 아이블랙, 흰색 홈 유니폼\n⚠️ 2026-11-09. 체격을 느낌말(`slim build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다."
     },
     {
       "name": "해럴드 카스트로",
       "role": "내야수",
-      "look": "a Venezuelan man in his 30s with an unmistakably thick full dark beard covering the whole jaw - the beard is the defining trait, exaggerate it - connected to a heavy mustache, with tan brown skin, a round broad face, thick dark eyebrows, short black hair cropped close at the sides, a heavy thick build with broad shoulders and thick arms, dark tattoos on both forearms",
-      "tell": "짙은 턱수염과 양팔 문신. ⚠️ 실책 장면(END)에서는 얼굴을 그리지 않는다 — 부상 복귀 뒤 홈런 스무 개를 친 대목(CLIMB)에서만 그린다"
+      "look": "a Venezuelan man in his 30s with an unmistakably thick full dark beard covering the whole jaw - the beard is the defining trait, exaggerate it - connected to a heavy mustache, with tan brown skin, a round broad face, thick dark eyebrows, short black hair cropped close at the sides, a broad shoulders and a thick neck with broad shoulders and thick arms, dark tattoos on both forearms",
+      "tell": "짙은 턱수염과 양팔 문신. ⚠️ 실책 장면(END)에서는 얼굴을 그리지 않는다 — 부상 복귀 뒤 홈런 스무 개를 친 대목(CLIMB)에서만 그린다\n⚠️ 2026-11-09. 체격을 느낌말(`heavy thick build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다."
     },
     {
       "name": "김호령",
       "role": "중견수",
-      "look": "a Korean man in his mid-30s with a lean wiry athletic build, not thick, long legs, short black hair, wearing a red batting helmet and a black away uniform with white pants",
-      "tell": "빨간 헬멧, 등번호 27, 날렵한 몸. ⚠️ 타격 부진을 말하는 문장에는 얼굴을 그리지 않는다 — 한화 신인이 그의 수비를 보고 배웠다는 문장에 그린다"
+      "look": "a Korean man in his mid-30s with a lean narrow shoulders and lean forearms, not thick, long legs, short black hair, wearing a red batting helmet and a black away uniform with white pants",
+      "tell": "빨간 헬멧, 등번호 27, 날렵한 몸. ⚠️ 타격 부진을 말하는 문장에는 얼굴을 그리지 않는다 — 한화 신인이 그의 수비를 보고 배웠다는 문장에 그린다\n⚠️ 2026-11-09. 체격을 느낌말(`wiry athletic build`)로만 적었던 것을 **눈에 보이는 부위**로 바꿨다. 같은 날 10화의 올러가 `a heavy thick build` 때문에 비만으로 나왔다 — 운영자: \"이 돼지는 누구인가\". 숫자를 못 찾으면 어깨·목·팔·허리로 적는다."
     }
   ],
   "beats": [

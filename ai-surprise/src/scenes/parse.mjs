@@ -115,7 +115,8 @@ export function parseScript(markdown, { kind = KIND.EVENT, sections: givenSectio
       tag,
       text,
       chars: countNarrationChars(text),
-      seconds: round2(secondsForText(text)),
+      // 종류마다 말하기 속도가 달라서 글자/분도 다르다 (2026-11-08).
+      seconds: round2(secondsForText(text, kind)),
     };
     paragraphs.push(paragraph);
     current.paragraphs.push(paragraph);
