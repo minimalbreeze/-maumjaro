@@ -317,6 +317,21 @@ export const SPORTS_STYLE_SUFFIX =
   //
   // **어색한 동작은 정적인 화면보다 나쁘다.** 보는 사람이 거기서
   // 멈춘다. 그래서 움직임을 요구한 만큼 자연스러움도 요구한다.
+  // ── 상체와 하체가 **한 동작**이다 (2026-11-09 운영자) ──
+  //
+  //   "동작도 이상한데..."
+  //
+  // 상체는 공을 던지는 자세인데 하체는 두 발을 벌리고 **그냥 서 있는**
+  // 그림이 나왔다. 위아래가 따로 논다.
+  //
+  // 우리가 '자세'를 한 덩어리로만 적어서다. 모델은 읽은 동작을 상체에
+  // 적용하고 다리는 기본 자세로 둔다. **온몸이 같은 동작에 참여한다**고
+  // 따로 적어야 한다.
+  'the whole body is in one single action: hips, legs and feet take part ' +
+  'in the same motion as the arms and shoulders, never a throwing upper ' +
+  'body on legs that merely stand still, ' +
+  'a pitcher strides toward the plate with the front leg while the arm ' +
+  'comes through, a batter rotates the hips and back foot with the swing, ' +
   'the pose is a real moment a human body can hold: joints bend the way ' +
   'they actually bend, the weight is on a foot that touches the ground, ' +
   'the arms and legs follow through in the direction of the motion, ' +
@@ -461,8 +476,12 @@ export const SPORTS_STYLE_SUFFIX =
   'script, no Boston B, no Cincinnati C, no Chicago C, ' +
   'no American team wordmark or cap logo, ' +
   'the cap carries only the mark of the Korean team named for this ' +
-  'figure, never a single Latin letter monogram that belongs to another ' +
-  'club, and a plain cap with no mark is better than an invented one, ' +
+  // ⚠️ 2026-11-09. 처음에 "한 글자"만 막았는데 다음 샷에서 **STL**
+  //    (세인트루이스)이 나왔다. 글자 수를 가리면 안 된다 — 한 글자든
+  //    세 글자든 남의 구단 표시다.
+  'figure, never any other club monogram or wordmark of one, two or ' +
+  'three Latin letters such as C, B, NY, LA, STL, SF, KC, ' +
+  'and a plain cap with no mark is better than an invented one, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
   'no caption text, no watermark, no subtitles, no sponsor logo';
@@ -1046,6 +1065,15 @@ export function peopleRules(people) {
     '그리고 생김새 문장 **맨 앞에 적힌 것이 그 사람의 표식**이다.',
     '그 표식을 또렷하게 그린다 — 안경, 아이블랙, 앞머리, 수염처럼',
     '멀리서도 읽히는 것이다. 그것만 살려 주면 사람이 구분된다.',
+    '',
+    '⚠️ **어려운 동작보다 사진에 있는 자세가 낫다**(2026-11-09 운영자).',
+    '   "이런 샷이 안 되겠으면 전달해 준 이미지 중에 하나를 차라리',
+    '    워터마크 빼고 지브리 스타일로 그려라."',
+    '   한창 돌아가는 투구·타격 중간을 고르면 팔이 꺾이거나 하체가 따로',
+    '   논다. 그럴 바에는 **사진에 흔히 있는 자세**를 고른다 — 세트',
+    '   포지션, 공을 놓기 직전, 타격 직후 배트를 든 채, 더그아웃 난간에',
+    '   선 모습. 받아 둔 참조 사진이 대개 그런 자세다.',
+    '   정적인 자세라도 **어색한 동작보다 낫다.**',
     '',
     '⚠️ **체격을 바꿔 적지 않는다.** 아래 생김새에 키와 몸무게가 숫자로',
     '적혀 있으면 그 숫자를 **그대로** 넣는다. "덩치 큰", "마른" 같은 말로',

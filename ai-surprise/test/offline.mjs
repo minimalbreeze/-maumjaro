@@ -6787,10 +6787,13 @@ await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async (
   // 올리고, 모르면 아무것도 안 올린다.
   const V10 = await import('../src/scenes/visuals.mjs');
   const p = V10.composeImagePrompt('a manager', 'present', { kind: 'SPORTS' });
+  // ⚠️ 처음에 "한 글자"만 막았더니 다음 샷에서 **STL** 이 나왔다.
+  //    글자 수를 가리면 안 된다 — 한 글자든 세 글자든 남의 구단이다.
   assert.ok(
-    /single Latin letter monogram/.test(p),
-    '모자에 뜻 모를 알파벳 한 글자를 막는 줄이 없습니다'
+    /one, two or three Latin letters/.test(p),
+    '모자에 남의 구단 글자를 막는 줄이 없습니다'
   );
+  assert.ok(/STL/.test(p), 'STL 을 막는 줄이 없습니다');
   assert.ok(
     /a plain cap with no mark is better than an invented one/.test(p),
     '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
@@ -6799,6 +6802,33 @@ await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async (
   for (const w of ['no interlocking NY', 'no Boston B', 'no Cincinnati C']) {
     assert.ok(p.includes(w), `${w} 가 사라졌습니다`);
   }
+});
+
+await asyncTest('상체와 하체가 한 동작이다', async () => {
+  // 2026-11-09 운영자: "동작도 이상한데..."
+  //
+  // 상체는 공을 던지는데 하체는 두 발을 벌리고 **그냥 서 있는** 그림이
+  // 나왔다. '자세'를 한 덩어리로만 적으면 모델이 상체에만 적용한다.
+  const V12 = await import('../src/scenes/visuals.mjs');
+  const p = V12.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
+  assert.ok(/whole body is in one single action/.test(p));
+  assert.ok(
+    /never a throwing upper body on legs that merely stand still/.test(p),
+    '위아래가 따로 노는 것을 막는 줄이 없습니다'
+  );
+});
+
+await asyncTest('어려운 동작보다 사진 자세를 고르라고 적는다', async () => {
+  // 2026-11-09 운영자: "이런 샷이 안 되겠으면 전달해 준 이미지 중에
+  //                     하나를 차라리 워터마크 빼고 지브리로 그려라."
+  //
+  // 한창 돌아가는 중간을 고르면 팔이 꺾이고 하체가 따로 논다.
+  // **정적인 자세라도 어색한 동작보다 낫다.**
+  const V13 = await import('../src/scenes/visuals.mjs');
+  const sys = V13.visualsSystemFor('SPORTS', { people: [{ name: 'a', look: 'b' }] });
+  assert.ok(/워터마크 빼고/.test(sys), '운영자 말이 설계 규칙에 없습니다');
+  assert.ok(/어색한 동작보다/.test(sys), '정적이라도 낫다는 줄이 없습니다');
+  assert.ok(/세트.*포지션|공을 놓기 직전/.test(sys), '고를 자세 예가 없습니다');
 });
 
 await asyncTest('좌우가 같아야 한다 — 양말 짝짝이', async () => {
