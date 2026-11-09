@@ -1,7 +1,7 @@
 // 글자로만 적힌 주소를 링크로 바꾸기 검사.
 import assert from 'node:assert/strict';
 import {
-  링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트, 주소맞추기, 우리글주소표,
+  링크로바꾸기, 링크만바뀌었나, 확인된주소표, 호스트, 주소맞추기, 우리글주소표, 태그안인가,
 } from '../src/wordpress/link-urls.mjs';
 import { 예시인가 } from '../src/wordpress/bare-urls.mjs';
 
@@ -165,11 +165,14 @@ check('문장 안의 주소도 예시로 든 것이면 건드리지 않는다', 
   assert.deepEqual(r.바꾼것, []);
 });
 
-check('설정에 없는 호스트는 문장 안에서도 그대로 둔다', () => {
-  const 본문 = '<p>https://sooplive.com/x 에서 봅니다</p>';
-  const r = 링크로바꾸기(본문, 표2);
-  assert.deepEqual(r.바꾼것, []);
-  assert.equal(r.html, 본문);
+// ⚠️ 2026-11-09 에 뒤집힌 검사다. 전에는 "설정에 없으면 그대로 둔다" 였다.
+//    선을 다시 그었다 — 막아야 할 것은 **내가 주소를 만드는 것**이고, 글에
+//    전체로 적힌 주소를 href 로 옮기는 것은 그에 해당하지 않는다. 호스트만
+//    적힌 자리는 여전히 그대로 둔다(바로 아래 검사).
+check('설정에 없어도 문장 안의 전체 주소는 링크로 만든다 (전에는 그대로 뒀다)', () => {
+  const r = 링크로바꾸기('<p>https://sooplive.com/x 에서 봅니다</p>', 표2);
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(r.html.includes('<a href="https://sooplive.com/x" rel="nofollow">'), r.html);
 });
 
 // ⚠️ 아무 도메인꼴을 긁으면 평균자책점·승률까지 먹는다. 설정에 있는
@@ -278,8 +281,17 @@ check('발행 목록에 없는 우리 호스트 주소는 건드리지 않는다
   assert.ok(!r.html.includes('<a '), r.html);
 });
 
-check('사이트 홈 주소도 건드리지 않는다 — 글 목록에 없다', () => {
+// 홈은 글 목록에 없지만 **실재하는 페이지**다. 404 로 보내지 않는다.
+check('사이트 홈 주소는 링크로 만든다 — 실재하는 페이지다', () => {
   const r = 링크로바꾸기('<p>https://wiki.minimalbreeze.com/</p>', 표, { 우리글 });
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(!r.html.includes('nofollow'), r.html);
+});
+
+// ⚠️ 전체 주소 폴백이 우리 호스트까지 덮으면 **없는 글로 보낸다.** 외부와
+//    달리 우리 글은 실재하는지 확인할 수 있으므로 기준을 느슨하게 하지 않는다.
+check('우리 호스트의 없는 글 주소는 전체로 적혀 있어도 링크하지 않는다', () => {
+  const r = 링크로바꾸기('<p>https://wiki.minimalbreeze.com/없는글-주소/</p>', 표, { 우리글 });
   assert.deepEqual(r.바꾼것, []);
 });
 
@@ -311,6 +323,60 @@ check('우리글표를 안 넘기면 전과 똑같이 돈다 — 기존 호출�
   const r = 링크로바꾸기('<p><code>ktwizstore.co.kr</code></p>', 표);
   assert.equal(r.바꾼것.length, 1);
   assert.ok(r.html.includes('rel="nofollow"'), r.html);
+});
+
+// ── 설정에 없어도 본문에 전체 주소로 적혀 있으면 쓴다 (2026-11-09) ──────
+//
+// 글자로 남은 330곳 중 **273곳이 설정에 없는 호스트**다. 호스트만 적힌
+// 자리에 `https://` 를 붙이는 것은 내가 주소를 만드는 일이지만, 글에 이미
+// 전체로 적힌 주소를 href 로 옮기는 것은 그렇지 않다.
+
+check('설정에 없어도 본문에 전체 주소로 적혀 있으면 링크로 만든다', () => {
+  const r = 링크로바꾸기('<p>영상: https://www.youtube.com/@kovolove 에서 봅니다.</p>', new Map());
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(r.html.includes('<a href="https://www.youtube.com/@kovolove" rel="nofollow">'), r.html);
+});
+
+// ⚠️ 여기가 선이다. 호스트만 적힌 자리에 스킴을 붙이지 않는다.
+check('호스트만 적혀 있고 설정에 없으면 여전히 글자로 남긴다', () => {
+  const r = 링크로바꾸기('<p>kpga7330.com 에서 봅니다.</p>', new Map());
+  assert.deepEqual(r.바꾼것, []);
+});
+
+check('설정에 있으면 본문 주소보다 설정 주소가 앞선다 — 사람이 고른 것이 먼저다', () => {
+  const 표4 = new Map([['hanwhaeagles.co.kr', 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do']]);
+  const r = 링크로바꾸기('<p>보기: https://www.hanwhaeagles.co.kr/ 입니다.</p>', 표4);
+  assert.equal(r.바꾼것[0].url, 'https://www.hanwhaeagles.co.kr/SH/PCSH01.do');
+});
+
+// ⚠️ 이것이 전체 주소 폴백을 넣으면서 같이 막아야 했던 자리다. 막지 않으면
+//    본문 사진이 전부 깨진다 — `링크만바뀌었나` 가 저장을 멈추므로 사이트가
+//    상하지는 않지만, 그러면 아무 글도 못 고친다.
+check('img src 안의 주소는 건드리지 않는다 — 감싸면 사진이 깨진다', () => {
+  const 본문 = '<figure><img src="https://wiki.minimalbreeze.com/wp-content/uploads/a.jpg" alt="x"></figure>';
+  const r = 링크로바꾸기(본문, new Map());
+  assert.deepEqual(r.바꾼것, []);
+  assert.equal(r.html, 본문);
+});
+
+check('태그 속성 안의 주소는 어떤 속성이든 건드리지 않는다', () => {
+  const 본문 = '<p><span data-url="https://www.kovo.co.kr/">배구</span></p>';
+  const r = 링크로바꾸기(본문, new Map());
+  assert.equal(r.html, 본문);
+});
+
+check('태그안인가 — 열린 태그 안쪽과 본문을 가린다', () => {
+  const s = '<img src="https://a.com/b.jpg"> 그리고 https://c.com/d';
+  assert.equal(태그안인가(s, s.indexOf('https://a.com')), true);
+  assert.equal(태그안인가(s, s.indexOf('https://c.com')), false);
+});
+
+check('사진과 본문 주소가 한 글에 있으면 본문만 링크로 만든다', () => {
+  const 본문 = '<img src="https://wiki.minimalbreeze.com/wp-content/uploads/a.jpg">'
+    + '<p>중계는 https://www.kovo.co.kr/ 에서 봅니다.</p>';
+  const r = 링크로바꾸기(본문, new Map());
+  assert.equal(r.바꾼것.length, 1, JSON.stringify(r.바꾼것));
+  assert.ok(r.html.includes('uploads/a.jpg">'), '사진 주소가 바뀌었습니다');
 });
 
 console.log(`\n  ${passed}개 통과`);
