@@ -36,6 +36,16 @@ const LOOK = {
   logo: 'm i n i m a l b r e e z e',
   // 글자 뒤에만 깔리는 그늘. 그림 전체를 어둡게 하면 그림이 흐려진다.
   scrim: 0.34,
+  /* 진행선이 매 프레임 자라게 할 것인가.
+   *
+   * true  로 하면 구간 전체를 다시 인코딩해야 한다. 글자는 곡 안에서 안 바뀌는데
+   *       진행선만 시간에 따라 달라지기 때문이다. 1시간에 15분 넘게 걸린다.
+   * false 면 짧은 루프에 그 곡의 글자를 한 번만 구워 넣고 재인코딩 없이 늘린다.
+   *       진행선은 곡이 바뀔 때마다 한 칸씩 간다. 1시간이 2분 남짓이면 끝난다.
+   *
+   * BGM 영상에서 진행선이 매끄럽게 자라는 것을 볼 사람은 거의 없고,
+   * 유튜브에 자기 재생바가 이미 있다. 그래서 기본값은 false 다. */
+  smoothProgress: false,
   // 서로소 주기. 겹쳐서 전체 패턴이 7*11*13 = 1001초(16.7분)마다 반복한다.
   period: { lp: 7, drift: 11, dust: 13 },
 };
@@ -185,7 +195,10 @@ function baseLoop(art, seconds) {
   ].join(',');
 
   ff([...src, '-vf', vf, '-r', String(fps),
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-g', String(fps), '-an', loop]);
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21',
+    // 루프 전체에 키프레임 하나. 이어붙이려면 맨 앞에만 있으면 된다.
+    '-g', String(Math.round(seconds * fps)), '-keyint_min', String(Math.round(seconds * fps)),
+    '-sc_threshold', '0', '-an', loop]);
   return loop;
 }
 
@@ -202,7 +215,9 @@ function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, second
     `drawtext=fontfile=${FONT.light}:text='${esc(`${t.artist}  ·  ${t.recorded}`)}':fontcolor=${LOOK.ink}@0.62:fontsize=27:x=(w-text_w)/2:y=${cy + 78}`,
     // 진행선 — 전체 중 어디쯤인지. 구간 안에서 계속 차오른다.
     `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 148}:w=600:h=1:color=${LOOK.ink}@0.22:t=fill`,
-    `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w='600*(${startSec}+t)/${totalSec}':h=3:color=${LOOK.accent}@0.85:t=fill`,
+    LOOK.smoothProgress
+      ? `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w='600*(${startSec}+t)/${totalSec}':h=3:color=${LOOK.accent}@0.85:t=fill`
+      : `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w=${Math.max(2, Math.round(600 * (startSec + seconds / 2) / totalSec))}:h=3:color=${LOOK.accent}@0.85:t=fill`,
     // 몇 번째 곡인지
     `drawtext=fontfile=${FONT.light}:text='${String(idx + 1).padStart(2, '0')} / ${String(nTracks).padStart(2, '0')}':fontcolor=${LOOK.ink}@0.40:fontsize=20:x=(w-text_w)/2:y=${cy + 192}`,
     // 워드마크 (마크는 아래에서 그림으로 얹는다)
@@ -213,16 +228,29 @@ function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, second
   // 그늘을 글자 아래에만 깔아야 그림이 안 흐려진다.
   const SCRIM_TOP = Math.round(h * 0.40);
   const LOGO_W = 150;
-  ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', loop,
-    '-i', scrim, '-i', logo,
-    '-t', String(seconds),
-    '-filter_complex',
-      `[0:v][1:v]overlay=0:${SCRIM_TOP}[s];`
-      + `[s]${draw}[d];`
-      + `[2:v]scale=${LOGO_W}:-1[lg];`
-      + `[d][lg]overlay=(W-w)/2:${cy + 218}[v]`,
-    '-map', '[v]',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-an', titled]);
+  const fc = `[0:v][1:v]overlay=0:${SCRIM_TOP}[s];`
+    + `[s]${draw}[d];`
+    + `[2:v]scale=${LOGO_W}:-1[lg];`
+    + `[d][lg]overlay=(W-w)/2:${cy + 218}[v]`;
+
+  if (LOOK.smoothProgress) {
+    // 느린 길: 구간 전체를 다시 인코딩한다(진행선이 매 프레임 자란다).
+    ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', loop,
+      '-i', scrim, '-i', logo, '-t', String(seconds),
+      '-filter_complex', fc, '-map', '[v]',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-an', titled]);
+    return titled;
+  }
+
+  // 빠른 길: 루프 한 바퀴에만 글자를 굽고, 늘리는 건 재인코딩 없이 한다.
+  const stamped = join(WORK, `v${idx}_s.mp4`);
+  ff(['-i', loop, '-i', scrim, '-i', logo, '-t', String(loopSec),
+    '-filter_complex', fc, '-map', '[v]',
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21',
+    '-g', String(Math.round(loopSec * LOOK.fps)), '-keyint_min', String(Math.round(loopSec * LOOK.fps)),
+    '-sc_threshold', '0', '-an', stamped]);
+  ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', stamped,
+    '-t', String(seconds), '-c', 'copy', titled]);
   return titled;
 }
 
