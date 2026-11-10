@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="80" viewBox="0 0 520 80">
+  <!-- 마크 + 워드마크를 가로로 묶은 한 덩이. 세로로 쌓는 층을 하나 줄인다. -->
+  <g transform="translate(40,40)" fill="none" stroke="#14100e" stroke-width="2.1" opacity="0.85">
+    <circle r="22"/>
+    <line x1="-38" y1="0" x2="-29" y2="0" stroke-linecap="round"/>
+    <line x1="29" y1="0" x2="38" y2="0" stroke-linecap="round"/>
+  </g>
+  <circle cx="40" cy="40" r="2.6" fill="#14100e" opacity="0.85"/>
+  <text x="96" y="49" font-family="Inter" font-weight="300" font-size="27"
+        letter-spacing="7.5" fill="#14100e" opacity="0.85">minimalbreeze</text>
+</svg>

@@ -32,22 +32,18 @@ const FONT = {
 const LOOK = {
   w: 1920, h: 1080, fps: 24,
   ink: '0xf2efe9',          // 글자
-  accent: '0xffc66b',       // 강조 (진행선·바늘)
-  logo: 'm i n i m a l b r e e z e',
+  accent: '0xffc66b',       // 이퀄라이저
   // 글자 뒤에만 깔리는 그늘. 그림 전체를 어둡게 하면 그림이 흐려진다.
-  scrim: 0.34,
-  /* 진행선이 매 프레임 자라게 할 것인가.
-   *
-   * true  로 하면 구간 전체를 다시 인코딩해야 한다. 글자는 곡 안에서 안 바뀌는데
-   *       진행선만 시간에 따라 달라지기 때문이다. 1시간에 15분 넘게 걸린다.
-   * false 면 짧은 루프에 그 곡의 글자를 한 번만 구워 넣고 재인코딩 없이 늘린다.
-   *       진행선은 곡이 바뀔 때마다 한 칸씩 간다. 1시간이 2분 남짓이면 끝난다.
-   *
-   * BGM 영상에서 진행선이 매끄럽게 자라는 것을 볼 사람은 거의 없고,
-   * 유튜브에 자기 재생바가 이미 있다. 그래서 기본값은 false 다. */
-  smoothProgress: false,
+  scrim: 0.30,
   // 서로소 주기. 겹쳐서 전체 패턴이 7*11*13 = 1001초(16.7분)마다 반복한다.
   period: { lp: 7, drift: 11, dust: 13 },
+  /* 화면에 올리는 것은 네 층뿐이다.
+   *   이퀄라이저 · 곡 제목 · 아티스트 · 로고(마크+채널명 한 덩이)
+   * 진행선과 곡 번호는 뺐다 — 유튜브에 자기 재생바가 이미 있고,
+   * minimal 이라는 이름을 달고 여섯 층을 쌓을 수는 없다. */
+  eq: { w: 520, h: 52, alpha: 0.70 },
+  lockupW: 360,
+  y: { scrim: 590, scrimH: 350, eq: 626, title: 700, artist: 772, lockup: 862 },
 };
 
 const args = process.argv.slice(2);
@@ -139,55 +135,23 @@ function buildAudio(tracks) {
   return { file: final, total: probe(final) };
 }
 
-/* 글자 뒤에만 까는 그늘.
- * 그림 전체에 어두운 상자를 덮으면 그림이 통째로 흐려진다. 글자가 앉는 띠에만,
- * 위아래로 서서히 사라지게 깔아서 경계가 안 보이게 한다. */
-function makeScrim(h0, h1) {
-  const file = join(WORK, 'scrim.png');
-  const { w } = LOOK;
-  const H = h1 - h0;
-  const rows = [];
-  for (let y = 0; y < H; y++) {
-    const t = y / (H - 1);
-    // 가운데가 가장 진하고 양끝이 0 이 되는 곡선
-    const a = Math.round(255 * LOOK.scrim * Math.sin(Math.PI * t) ** 1.4);
-    rows.push(Buffer.concat([Buffer.from([0]), Buffer.alloc(w * 4).fill(0).map((_, i) => (i % 4 === 3 ? a : 0x10))]));
-  }
-  const raw = Buffer.concat(rows);
-  const zlib = require('node:zlib');
-  const crc = (buf) => { let c = ~0; for (const b of buf) { c ^= b; for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1)); } return ~c >>> 0; };
-  const chunk = (type, data) => {
-    const t = Buffer.from(type); const body = Buffer.concat([t, data]);
-    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
-    const c = Buffer.alloc(4); c.writeUInt32BE(crc(body));
-    return Buffer.concat([len, body, c]);
-  };
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(H, 4);
-  ihdr[8] = 8; ihdr[9] = 6;
-  const png = Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-    chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0)),
-  ]);
-  writeFileSync(file, png);
-  return file;
-}
-
-/* ── 영상 ─────────────────────────────────────────────────── */
+/* ── 배경 루프 ─────────────────────────────────────────────
+ * 짧은 루프를 한 번만 렌더하고 통 렌더에서 무한 반복시킨다.
+ * 움직이는 요소의 주기를 서로소(7·11·13초)로 두어 겹친 패턴이
+ * 1001초(16.7분)마다 반복한다 — 그 정도면 눈에 안 걸린다.
+ */
 function baseLoop(art, seconds) {
   const loop = join(WORK, 'loop_base.mp4');
   const { w, h, fps } = LOOK;
   const p = LOOK.period;
 
-  // 배경: 그림이 있으면 쓰고, 없으면 임시 그라디언트.
   const src = art
     ? ['-loop', '1', '-t', String(seconds), '-i', art]
     : ['-f', 'lavfi', '-t', String(seconds), '-i', `gradients=s=${w}x${h}:c0=0x1b2430:c1=0x4a3b2e:n=2`];
 
-  // 빛이 아주 느리게 흔들리고(11초), 먼지 두 점이 떠다닌다(7·13초).
-  // 주기가 서로소라 겹친 패턴은 1001초마다 반복한다.
   const vf = [
     `scale=${w}:${h}:force_original_aspect_ratio=increase,crop=${w}:${h}`,
+    // 빛이 아주 느리게 흔들린다. 그림을 흐리지 않게 폭을 1.2% 로 묶는다.
     `eq=eval=frame:brightness='0.012*sin(2*PI*t/${p.drift})'`,
     `drawbox=x='${Math.round(w * 0.30)}+140*cos(2*PI*t/${p.lp})':y='${Math.round(h * 0.42)}+70*sin(2*PI*t/${p.lp})':w=5:h=5:color=${LOOK.ink}@0.16:t=fill`,
     `drawbox=x='${Math.round(w * 0.68)}+200*cos(2*PI*t/${p.dust})':y='${Math.round(h * 0.34)}+90*sin(2*PI*t/${p.dust})':w=4:h=4:color=${LOOK.accent}@0.18:t=fill`,
@@ -202,56 +166,45 @@ function baseLoop(art, seconds) {
   return loop;
 }
 
-/* 곡 하나짜리 구간. 루프를 필요한 만큼 늘리고 그 곡의 글자를 얹는다. */
-function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, seconds, scrim, logo) {
-  const { w, h } = LOOK;
-  const titled = join(WORK, `v${idx}_t.mp4`);
-  const cy = Math.round(h * 0.56);
+/* ── 한 번에 통으로 렌더한다 ──────────────────────────────────
+ *
+ * 왜 구간을 나누지 않는가
+ *   이퀄라이저는 소리를 봐야 그릴 수 있다. 구간을 따로 만들어 이어 붙이면
+ *   그 구간의 소리를 모르므로 막대가 안 움직인다. 그래서 배경 루프와 오디오를
+ *   한 번에 물려 통으로 뽑는다.
+ *   대신 느리다 — 1시간에 30분쯤. AI 호출은 없으므로 돈은 안 든다.
+ *
+ * 곡 제목은 enable=between(t,…) 으로 때맞춰 나타났다 사라진다.
+ */
+function render(loop, audio, tracks, marks, out) {
+  const { w, fps, y } = LOOK;
+  const lockup = join(BRAND, 'lockup-light.png');
+  if (!existsSync(lockup)) fail(`로고가 없습니다: ${lockup}`);
 
-  const draw = [
-    // 곡 제목
-    `drawtext=fontfile=${FONT.medium}:text='${esc(t.title)}':fontcolor=${LOOK.ink}:fontsize=56:x=(w-text_w)/2:y=${cy}`,
-    // 아티스트 · 녹음 연도
-    `drawtext=fontfile=${FONT.light}:text='${esc(`${t.artist}  ·  ${t.recorded}`)}':fontcolor=${LOOK.ink}@0.62:fontsize=27:x=(w-text_w)/2:y=${cy + 78}`,
-    // 진행선 — 전체 중 어디쯤인지. 구간 안에서 계속 차오른다.
-    `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 148}:w=600:h=1:color=${LOOK.ink}@0.22:t=fill`,
-    LOOK.smoothProgress
-      ? `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w='600*(${startSec}+t)/${totalSec}':h=3:color=${LOOK.accent}@0.85:t=fill`
-      : `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w=${Math.max(2, Math.round(600 * (startSec + seconds / 2) / totalSec))}:h=3:color=${LOOK.accent}@0.85:t=fill`,
-    // 몇 번째 곡인지
-    `drawtext=fontfile=${FONT.light}:text='${String(idx + 1).padStart(2, '0')} / ${String(nTracks).padStart(2, '0')}':fontcolor=${LOOK.ink}@0.40:fontsize=20:x=(w-text_w)/2:y=${cy + 192}`,
-    // 워드마크 (마크는 아래에서 그림으로 얹는다)
-    `drawtext=fontfile=${FONT.light}:text='${esc(LOOK.logo)}':fontcolor=${LOOK.ink}@0.72:fontsize=23:x=(w-text_w)/2:y=${cy + 300}`,
-  ].join(',');
+  const texts = [];
+  tracks.forEach((t, i) => {
+    const [a, b] = marks[i];
+    const on = `:enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'`;
+    texts.push(`drawtext=fontfile=${FONT.medium}:text='${esc(t.title)}':fontcolor=${LOOK.ink}`
+      + `:fontsize=54:x=(w-text_w)/2:y=${y.title}${on}`);
+    texts.push(`drawtext=fontfile=${FONT.light}:text='${esc(`${t.artist}  ·  ${t.recorded || ''}`.trim())}'`
+      + `:fontcolor=${LOOK.ink}@0.60:fontsize=26:x=(w-text_w)/2:y=${y.artist}${on}`);
+  });
 
-  // 그늘 → 글자 → 로고 마크 순으로 쌓는다.
-  // 그늘을 글자 아래에만 깔아야 그림이 안 흐려진다.
-  const SCRIM_TOP = Math.round(h * 0.40);
-  const LOGO_W = 150;
-  const fc = `[0:v][1:v]overlay=0:${SCRIM_TOP}[s];`
-    + `[s]${draw}[d];`
-    + `[2:v]scale=${LOGO_W}:-1[lg];`
-    + `[d][lg]overlay=(W-w)/2:${cy + 218}[v]`;
+  const fc = [
+    `[1:a]showfreqs=mode=bar:ascale=sqrt:fscale=log:win_size=1024:colors=${LOOK.accent}`
+      + `:size=${LOOK.eq.w}x${LOOK.eq.h},format=rgba,colorchannelmixer=aa=${LOOK.eq.alpha}[eq]`,
+    `[0:v]drawbox=x=0:y=${y.scrim}:w=${w}:h=${y.scrimH}:color=0x101010@${LOOK.scrim}:t=fill[bg]`,
+    `[bg][eq]overlay=(W-w)/2:${y.eq}[a]`,
+    `[a]${texts.join(',')}[t]`,
+    `[2:v]scale=${LOOK.lockupW}:-1[lk]`,
+    `[t][lk]overlay=(W-w)/2:${y.lockup}[v]`,
+  ].join(';');
 
-  if (LOOK.smoothProgress) {
-    // 느린 길: 구간 전체를 다시 인코딩한다(진행선이 매 프레임 자란다).
-    ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', loop,
-      '-i', scrim, '-i', logo, '-t', String(seconds),
-      '-filter_complex', fc, '-map', '[v]',
-      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-an', titled]);
-    return titled;
-  }
-
-  // 빠른 길: 루프 한 바퀴에만 글자를 굽고, 늘리는 건 재인코딩 없이 한다.
-  const stamped = join(WORK, `v${idx}_s.mp4`);
-  ff(['-i', loop, '-i', scrim, '-i', logo, '-t', String(loopSec),
-    '-filter_complex', fc, '-map', '[v]',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21',
-    '-g', String(Math.round(loopSec * LOOK.fps)), '-keyint_min', String(Math.round(loopSec * LOOK.fps)),
-    '-sc_threshold', '0', '-an', stamped]);
-  ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', stamped,
-    '-t', String(seconds), '-c', 'copy', titled]);
-  return titled;
+  ff(['-stream_loop', '-1', '-i', loop, '-i', audio, '-i', lockup,
+    '-filter_complex', fc, '-map', '[v]', '-map', '1:a', '-shortest',
+    '-r', String(fps), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21',
+    '-pix_fmt', 'yuv420p', '-c:a', 'copy', '-movflags', '+faststart', out]);
 }
 
 /* ── 메인 ───────────────────────────────────────────────── */
@@ -279,37 +232,26 @@ function main() {
   const audio = buildAudio(tracks);
   console.log(`   합계 ${mmss(audio.total)}`);
 
-  console.log('\n🎬 영상 — 루프 한 번만 렌더하고 이어 붙입니다');
-  const loopSec = 30;
-  const loop = baseLoop(art, loopSec);
+  console.log('\n🎬 영상 — 이퀄라이저가 소리를 따라가므로 통으로 렌더합니다');
+  const loop = baseLoop(art, 30);
 
-  const scrim = makeScrim(Math.round(LOOK.h * 0.40), Math.round(LOOK.h * 0.96));
-  const logo = join(BRAND, 'logo-mark-light.png');
-  if (!existsSync(logo)) fail(`로고가 없습니다: ${logo}`);
-
-  const segs = [];
+  // 곡이 화면에 떠 있을 구간. 곡 사이 빈틈에는 글자를 안 띄운다.
+  const marks = [];
   const chapters = [];
   let at = 0;
   tracks.forEach((t, i) => {
-    const seconds = LIMIT_MIN ? Math.min(t._sec, (LIMIT_MIN * 60) / tracks.length) : t._sec + (i < tracks.length - 1 ? GAP_SEC : 0);
+    marks.push([at, at + t._sec]);
     chapters.push(`${mmss(at)} ${String(i + 1).padStart(2, '0')}. ${t.title} — ${t.artist}`);
-    segs.push(trackSegment(loop, loopSec, t, i, tracks.length, at, audio.total, seconds, scrim, logo));
-    at += seconds;
-    process.stdout.write(`   ${i + 1}/${tracks.length}\r`);
+    at += t._sec + (i < tracks.length - 1 ? GAP_SEC : 0);
   });
 
-  const vlist = join(WORK, 'video.txt');
-  writeFileSync(vlist, segs.map((p) => `file '${p}'`).join('\n'));
-  const videoOnly = join(WORK, 'video.mp4');
-  ff(['-f', 'concat', '-safe', '0', '-i', vlist, '-c', 'copy', videoOnly]);
-
   const out = join(OUT, 'minimalbreeze.mp4');
-  ff(['-i', videoOnly, '-i', audio.file, '-c', 'copy', '-shortest', '-movflags', '+faststart', out]);
+  render(loop, audio.file, tracks, marks, out);
 
   const chapFile = join(OUT, '챕터.txt');
   writeFileSync(chapFile, `${chapters.join('\n')}\n`);
 
-  console.log(`\n\n✅ ${out.replace(ROOT, 'playlist')}  (${mmss(probe(out))})`);
+  console.log(`\n✅ ${out.replace(ROOT, 'playlist')}  (${mmss(probe(out))})`);
   console.log(`✅ ${chapFile.replace(ROOT, 'playlist')}  — 유튜브 설명란에 그대로 붙여넣으세요`);
   console.log('\n' + chapters.join('\n'));
 }
