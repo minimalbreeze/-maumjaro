@@ -2,15 +2,6 @@
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
   "tracks": [
     {
-      "file": "jamendo-137050.mp3",
-      "title": "Thomas Attwood - Blues Riffs",
-      "artist": "Thomas Attwood",
-      "recorded": "2014",
-      "license": "CC BY",
-      "credit": "Thomas Attwood - Blues Riffs — Thomas Attwood (CC BY) · archive.org/details/jamendo-137050",
-      "source": "https://archive.org/details/jamendo-137050"
-    },
-    {
       "file": "jamendo-161690.mp3",
       "title": "Rhyvee - Monolith",
       "artist": "Rhyvee",
@@ -18,15 +9,6 @@
       "license": "CC BY",
       "credit": "Rhyvee - Monolith — Rhyvee (CC BY) · archive.org/details/jamendo-161690",
       "source": "https://archive.org/details/jamendo-161690"
-    },
-    {
-      "file": "jamendo-182000.mp3",
-      "title": "Ambient Samurai - Ichiro NAKAGAWA - Song for Self-Breaking Man(ぼくが壊れていく・・という歌）2018/12/02　part 2",
-      "artist": "Ambient Samurai - Ichiro NAKAGAWA",
-      "recorded": "2019",
-      "license": "CC BY",
-      "credit": "Ambient Samurai - Ichiro NAKAGAWA - Song for Self-Breaking Man(ぼくが壊れていく・・という歌）2018/12/02　part 2 — Ambient Samurai - Ichiro NAKAGAWA (CC BY) · archive.org/details/jamendo-182000",
-      "source": "https://archive.org/details/jamendo-182000"
     },
     {
       "file": "jamendo-245999.mp3",
@@ -47,40 +29,22 @@
       "source": "https://archive.org/details/jamendo-249717"
     },
     {
-      "file": "jamendo-149651.mp3",
-      "title": "Gijom Armide-Mankas vi",
-      "artist": "Gijom' Armide",
-      "recorded": "2015",
+      "file": "jamendo-461419.mp3",
+      "title": "Abstract Melody",
+      "artist": "Sevennotes",
+      "recorded": "2021",
       "license": "CC BY",
-      "credit": "Gijom Armide-Mankas vi — Gijom' Armide (CC BY) · archive.org/details/jamendo-149651",
-      "source": "https://archive.org/details/jamendo-149651"
+      "credit": "Abstract Melody — Sevennotes (CC BY) · archive.org/details/jamendo-461419",
+      "source": "https://archive.org/details/jamendo-461419"
     },
     {
-      "file": "jamendo-357401.mp3",
-      "title": "Demon mix #13",
-      "artist": "Demon",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Demon mix #13 — Demon (CC BY) · archive.org/details/jamendo-357401",
-      "source": "https://archive.org/details/jamendo-357401"
-    },
-    {
-      "file": "jamendo-330060.mp3",
-      "title": "Christmas event",
-      "artist": "Lfete",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Christmas event — Lfete (CC BY) · archive.org/details/jamendo-330060",
-      "source": "https://archive.org/details/jamendo-330060"
-    },
-    {
-      "file": "jamendo-355218.mp3",
-      "title": "Serene and Cool Jazz",
-      "artist": "Nerevarin",
+      "file": "jamendo-386084.mp3",
+      "title": "just like a lizard",
+      "artist": "MRS.THIBEDAUX",
       "recorded": "2017",
       "license": "CC BY",
-      "credit": "Serene and Cool Jazz — Nerevarin (CC BY) · archive.org/details/jamendo-355218",
-      "source": "https://archive.org/details/jamendo-355218"
+      "credit": "just like a lizard — MRS.THIBEDAUX (CC BY) · archive.org/details/jamendo-386084",
+      "source": "https://archive.org/details/jamendo-386084"
     },
     {
       "file": "jamendo-374078.mp3",
@@ -90,6 +54,78 @@
       "license": "CC BY",
       "credit": "SALUT A TOI — PELIKAN (CC BY) · archive.org/details/jamendo-374078",
       "source": "https://archive.org/details/jamendo-374078"
+    },
+    {
+      "file": "jamendo-592163.mp3",
+      "title": "Soul Ambient",
+      "artist": "Sevennotes",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Soul Ambient — Sevennotes (CC BY) · archive.org/details/jamendo-592163",
+      "source": "https://archive.org/details/jamendo-592163"
+    },
+    {
+      "file": "jamendo-218930.mp3",
+      "title": "Endless Theme",
+      "artist": "subtopialimburg",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Endless Theme — subtopialimburg (CC BY) · archive.org/details/jamendo-218930",
+      "source": "https://archive.org/details/jamendo-218930"
+    },
+    {
+      "file": "jamendo-182000.mp3",
+      "title": "Ambient Samurai - Ichiro NAKAGAWA - Song…",
+      "artist": "Ambient Samurai - Ichiro NAKAGAWA",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Ambient Samurai - Ichiro NAKAGAWA - Song… — Ambient Samurai - Ichiro NAKAGAWA (CC BY) · archive.org/details/jamendo-182000",
+      "source": "https://archive.org/details/jamendo-182000"
+    },
+    {
+      "file": "jamendo-512900.mp3",
+      "title": "Micha Ja ochowski-Canon For Piano No.2",
+      "artist": "Michał Jałochowski",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Micha Ja ochowski-Canon For Piano No.2 — Michał Jałochowski (CC BY) · archive.org/details/jamendo-512900",
+      "source": "https://archive.org/details/jamendo-512900"
+    },
+    {
+      "file": "jamendo-256313.mp3",
+      "title": "midnight lullaby song",
+      "artist": "DeMeo",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "midnight lullaby song — DeMeo (CC BY) · archive.org/details/jamendo-256313",
+      "source": "https://archive.org/details/jamendo-256313"
+    },
+    {
+      "file": "jamendo-257167.mp3",
+      "title": "Tino Gomez-Crazy Blues",
+      "artist": "Tino Gómez",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Tino Gomez-Crazy Blues — Tino Gómez (CC BY) · archive.org/details/jamendo-257167",
+      "source": "https://archive.org/details/jamendo-257167"
+    },
+    {
+      "file": "jamendo-257427.mp3",
+      "title": "Allan Krauter-Full Moon Dub",
+      "artist": "Allan Kräuter",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Allan Krauter-Full Moon Dub — Allan Kräuter (CC BY) · archive.org/details/jamendo-257427",
+      "source": "https://archive.org/details/jamendo-257427"
+    },
+    {
+      "file": "jamendo-287680.mp3",
+      "title": "Michael FEIST-Feel free",
+      "artist": "Michaël FEIST",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Michael FEIST-Feel free — Michaël FEIST (CC BY) · archive.org/details/jamendo-287680",
+      "source": "https://archive.org/details/jamendo-287680"
     }
   ]
 }
