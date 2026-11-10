@@ -1,11 +1,13 @@
 <div id="cpst" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;border-top:1px solid #e5e7eb;padding:4px 8px 6px;box-shadow:0 -2px 10px rgba(0,0,0,.08)">
-<button id="cpst-x" type="button" aria-label="닫기" style="position:absolute;top:-13px;right:10px;width:26px;height:26px;border-radius:13px;border:1px solid #e5e7eb;background:#fff;color:#555;font-size:15px;line-height:1;cursor:pointer;z-index:1">×</button>
+<div id="cpst-in" style="position:relative;z-index:0">
 <script src="https://ads-partners.coupang.com/g.js"></script>
 <script>
     new PartnersCoupang.G({"id":872203,"trackingCode":"AF3646181","subId":null,"template":"carousel","width":"100%","height":"140"});
 </script>
 <div style="font-size:10px;color:#888;margin:2px 0 3px">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</div>
 <iframe src="https://coupa.ng/ciwQYr" width="100%" height="44" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" browsingtopics></iframe>
+</div>
+<button id="cpst-x" type="button" aria-label="닫기" style="position:absolute;top:-17px;right:8px;width:34px;height:34px;border-radius:17px;border:1px solid #e5e7eb;background:#fff;color:#555;font-size:19px;line-height:1;cursor:pointer;z-index:2147483647;pointer-events:auto;touch-action:manipulation;box-shadow:0 1px 4px rgba(0,0,0,.18);padding:0">×</button>
 </div>
 <script>
 (function(){
@@ -18,11 +20,19 @@
   // 겹쳐서 숨긴 상태인가. 여백() 이 이 값을 보므로 먼저 선언한다.
   var 숨김 = false;
   var x = document.getElementById('cpst-x');
-  if (x) x.addEventListener('click', function () {
+  // 닫기는 click 만으로 모자랐다(2026-11-10 운영자: "오른쪽 위 X가 안 눌린다").
+  // pointerdown 은 쿠팡 위젯이 뒤늦게 가로채도 먼저 들어온다. 둘 다 받되
+  // 한 번만 닫는다.
+  function 닫기(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     bar.style.display = 'none';
     document.body.style.paddingBottom = '';
-    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
-  });
+    try { sessionStorage.setItem(KEY, '1'); } catch (e2) {}
+  }
+  if (x) {
+    x.addEventListener('pointerdown', 닫기);
+    x.addEventListener('click', 닫기);
+  }
   // 바가 글 마지막 줄을 덮지 않게 아래 여백을 준다. 캐러셀이 늦게 그려지므로
   // 높이를 한 번 더 잰다 — 처음 잰 값만 쓰면 여백이 모자란다.
   // ⚠️ 숨어 있을 때는 여백을 주지 않는다. resize 때 여백() 이 먼저 돌고
