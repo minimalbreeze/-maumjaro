@@ -2356,6 +2356,43 @@ export const 바로잡기 = [
     맞는: 'nolmdshop.com',
     이유: '글 15766 의 남은 세 자리(설명 문장·FAQ 본문·구조화 데이터). 구조화 데이터는 JSON 이라 태그를 넣지 않는다',
     글: [15766],
+  },
+  // ── 올려 둔 사진에 페이드캠 링크를 건다 (2026-11-10) ─────────────────
+  //
+  // 효성님: "앞으로 사진업로드 요청에는 사진 클릭 URL 에 페이드캠을 넣자.
+  //          페이드 캠도 다운로드 및 홍보가 되어야 한다."
+  //          "과거 요청한 사진 업로드 건부터 반영 부탁한다."
+  //
+  // `upload-url.mjs` 는 앞으로 올리는 사진에 링크를 건다. 이미 **발행된
+  // 본문**에 들어간 사진은 여기서 고친다.
+  //
+  // ⚠️ 여는 `<a>` 와 닫는 `</a>` 를 **두 항목으로 나눈다.** 한 덩어리로
+  //    치환하려면 `<img>` 전체를 적어야 하는데, alt 가 길어 글자 하나만
+  //    달라도 0곳이 된다. 여는 쪽은 `src` 까지, 닫는 쪽은 캡션으로 잡는다.
+  // ⚠️ **캡션에 "내가 만든" 을 적는다.** 공정위 추천·보증 심사지침이다.
+  {
+    틀린: '<figure class="wp-block-image size-large"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/by-1-c2czuq-mw9b01od.jpg"',
+    맞는: '<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/by-1-c2czuq-mw9b01od.jpg"',
+    이유: '글 10725 의 미디어 17416. 사진을 누르면 페이드캠으로 가게 한다 (2026-11-10 효성님 지시)',
+    글: [10725],
+  },
+  {
+    틀린: '<figcaption class="wp-element-caption">잠실 더 라스트 이닝 by 르노 (사진: 일구회)</figcaption></figure>',
+    맞는: '</a><figcaption class="wp-element-caption">잠실 더 라스트 이닝 by 르노 (사진: 일구회) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>',
+    이유: '글 10725 의 미디어 17416. 여는 <a> 를 닫고 캡션에 안내를 더한다 — 사진 출처와 링크 대상이 다르다는 것을 밝힌다',
+    글: [10725],
+  },
+  {
+    틀린: '<figure class="wp-block-image size-large"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/by-2-c2czvl-mw9b05il.jpg"',
+    맞는: '<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/by-2-c2czvl-mw9b05il.jpg"',
+    이유: '글 10725 의 미디어 17417. 사진을 누르면 페이드캠으로 가게 한다 (2026-11-10 효성님 지시)',
+    글: [10725],
+  },
+  {
+    틀린: '<figcaption class="wp-element-caption">출전 선수 최종 명단 (사진: 일구회)</figcaption></figure>',
+    맞는: '</a><figcaption class="wp-element-caption">출전 선수 최종 명단 (사진: 일구회) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>',
+    이유: '글 10725 의 미디어 17417. 여는 <a> 를 닫고 캡션에 안내를 더한다 — 사진 출처와 링크 대상이 다르다는 것을 밝힌다',
+    글: [10725],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
