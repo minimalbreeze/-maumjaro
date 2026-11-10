@@ -70,10 +70,21 @@ function jget(path, params) {
 }
 
 function search() {
+  /* 자유 라이선스 모드는 jamendo-albums 만 본다.
+   *
+   * 처음엔 mediatype:audio 전체를 뒤졌는데 팟캐스트·라디오 녹음이 대부분이라
+   * BGM 으로 쓸 게 거의 없었다. jamendo-albums 는 실제 음악가가 올린 앨범이다.
+   *
+   * 라이선스를 쿼리에서 정확히 지정한다. 와일드카드로 'by' 를 찾으면
+   * by-nc-nd 까지 걸린다 — 표본 200곡 중 146곡이 NC-ND 였다.
+   * 쓸 수 있는 CC BY 는 2% 뿐이라, 거르는 게 아니라 처음부터 그것만 찾는다. */
+  const CC_BY = 'licenseurl:("http://creativecommons.org/licenses/by/3.0/" '
+    + 'OR "https://creativecommons.org/licenses/by/4.0/" '
+    + 'OR "http://creativecommons.org/publicdomain/zero/1.0/")';
   const q = MODE === 'pd'
     // 1923~1925 발행만. 미국은 이 해까지 음반이 퍼블릭 도메인이다(2026 기준).
     ? `collection:georgeblood AND date:[1923-01-01 TO 1925-12-31] AND (${QUERY})`
-    : `mediatype:audio AND licenseurl:[* TO *] AND (${QUERY})`;
+    : `collection:jamendo-albums AND ${CC_BY} AND (${QUERY})`;
   const d = jget('/advancedsearch.php', {
     q, 'fl[]': ['identifier', 'title', 'creator', 'date', 'licenseurl'],
     rows: String(WANT * 5), output: 'json',
@@ -96,6 +107,24 @@ function download(id, name, to) {
   if (buf.length < 10000) throw new Error(`너무 작습니다 (${buf.length}B) — 받지 못했습니다`);
   writeFileSync(to, buf);
   return buf.length;
+}
+
+/* 파일 이름에서 진짜 제목만 꺼낸다.
+ *   "02-1277237-Joel Dos Santos-Great.mp3"           → "Great"
+ *   "1610710-Ambient Samurai-___________181202-2-1"  → (쓰레기라 빈 문자열)
+ */
+function cleanTitle(fileName, artist) {
+  let t = String(fileName).replace(/\.[^.]+$/, '');
+  t = t.replace(/^\d{1,3}\s*[-._]\s*/, '');        // 앞의 트랙 번호
+  t = t.replace(/^\d{5,}\s*[-._]\s*/, '');         // Jamendo 내부 ID
+  if (artist) {                                     // 앞에 붙은 아티스트 이름
+    const a = String(artist).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`^${a}\\s*[-._]\\s*`, 'i'), '');
+  }
+  t = t.replace(/_{3,}/g, ' ').replace(/[_]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  // 숫자와 기호만 남았으면 제목으로 못 쓴다
+  if (!/[A-Za-z가-힣]/.test(t)) return '';
+  return t;
 }
 
 async function main() {
@@ -132,7 +161,9 @@ async function main() {
     if (already.has(safe)) continue;
 
     const artist = Array.isArray(doc.creator) ? doc.creator[0] : (doc.creator || info.meta.creator || '미상');
-    const title = String(f.name).replace(/\.mp3$/i, '').replace(/^\d+\s*[-.]\s*/, '').trim() || String(doc.title);
+    // Jamendo 파일 이름은 "02-1277237-Joel Dos Santos-Great.mp3" 꼴이다.
+    // 트랙번호·내부ID·아티스트가 앞에 붙어 있어 그대로 쓰면 제목이 쓰레기가 된다.
+    const title = cleanTitle(f.name, artist) || String(doc.title);
 
     console.log(`  ${String(got + 1).padStart(2, '0')}. ${title.slice(0, 44)}`);
     console.log(`      ${String(artist).slice(0, 40)} · ${lic.name}`);

@@ -62,8 +62,16 @@ function probe(file) {
     { encoding: 'utf8' }).trim());
 }
 const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-// drawtext 는 콜론과 작은따옴표를 구분자로 쓴다. 곡 제목에 들어가면 필터가 깨진다.
-const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
+/* drawtext 는 콜론과 작은따옴표를 구분자로 쓴다. 곡 제목에 "Gijom' Armide" 처럼
+ * 따옴표가 들어가면 필터 문자열이 거기서 끊겨 버린다(실제로 깨졌다).
+ * 이스케이프를 겹겹이 쌓는 대신 텍스트를 파일로 빼고 textfile= 로 읽힌다.
+ * 그러면 안에 무엇이 들어 있든 상관이 없다. */
+let textSeq = 0;
+function textFile(str) {
+  const f = join(WORK, `t${textSeq++}.txt`);
+  writeFileSync(f, String(str));
+  return f;
+}
 
 /* ── 소재 읽기 ──────────────────────────────────────────── */
 /* bgm/ 에 있는데 목록.json 에 없는 파일을 주워서 등록한다.
@@ -229,9 +237,10 @@ function render(loop, audio, tracks, marks, out) {
   tracks.forEach((t, i) => {
     const [a, b] = marks[i];
     const on = `:enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'`;
-    texts.push(`drawtext=fontfile=${FONT.medium}:text='${esc(t.title)}':fontcolor=${LOOK.ink}`
+    const sub = `${t.artist}${t.recorded ? `  ·  ${t.recorded}` : ''}`.trim();
+    texts.push(`drawtext=fontfile=${FONT.medium}:textfile=${textFile(t.title)}:fontcolor=${LOOK.ink}`
       + `:fontsize=54:x=(w-text_w)/2:y=${y.title}${on}`);
-    texts.push(`drawtext=fontfile=${FONT.light}:text='${esc(`${t.artist}  ·  ${t.recorded || ''}`.trim())}'`
+    texts.push(`drawtext=fontfile=${FONT.light}:textfile=${textFile(sub)}`
       + `:fontcolor=${LOOK.ink}@0.60:fontsize=26:x=(w-text_w)/2:y=${y.artist}${on}`);
   });
 
