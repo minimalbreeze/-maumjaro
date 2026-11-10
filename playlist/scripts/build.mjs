@@ -66,6 +66,48 @@ const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart
 const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, "\\'");
 
 /* ── 소재 읽기 ──────────────────────────────────────────── */
+/* bgm/ 에 있는데 목록.json 에 없는 파일을 주워서 등록한다.
+ *
+ * 유튜브 오디오 보관함에서 받으면 파일 이름이 "Track Name.mp3" 이고 태그에
+ * 제목·아티스트가 들어 있다. 그걸 읽어 넣으면 손으로 JSON 을 고칠 일이 없다.
+ * 태그가 비어 있으면 파일 이름을 제목으로 쓴다.
+ */
+function tagOf(file) {
+  try {
+    const out = execFileSync('ffprobe', ['-v', 'error', '-show_entries',
+      'format_tags=title,artist,album,date', '-of', 'json', file], { encoding: 'utf8' });
+    const t = (JSON.parse(out).format || {}).tags || {};
+    // 태그 키는 대소문자가 섞여 온다
+    const pick = (k) => Object.entries(t).find(([n]) => n.toLowerCase() === k)?.[1] || '';
+    return { title: pick('title'), artist: pick('artist'), date: pick('date') };
+  } catch { return { title: '', artist: '', date: '' }; }
+}
+
+function adoptNewFiles(list) {
+  const known = new Set((list.tracks || []).map((t) => t.file));
+  const found = readdirSync(BGM)
+    .filter((f) => /\.(mp3|m4a|wav|flac|ogg|aac)$/i.test(f) && !known.has(f))
+    .sort();
+  if (!found.length) return 0;
+
+  console.log(`\n📥 ${BGM.replace(ROOT, 'playlist')} 에서 새 파일 ${found.length}개를 주웠습니다`);
+  found.forEach((f) => {
+    const tag = tagOf(join(BGM, f));
+    const title = tag.title || f.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+    const artist = tag.artist || '미상';
+    list.tracks.push({
+      file: f, title, artist,
+      recorded: (tag.date || '').slice(0, 4),
+      license: '',   // ← 출처를 적어 두세요. 나중에 분쟁이 나면 이게 증거가 됩니다
+      credit: '',
+      source: '',
+    });
+    console.log(`   + ${title} — ${artist}`);
+  });
+  console.log('   목록.json 에 적었습니다. license / source 칸은 직접 채워 주세요.');
+  return found.length;
+}
+
 function loadTracks() {
   if (TONE) {
     // 음원 없이 파이프라인만 확인할 때. 길이가 제각각이어야 의미가 있다.
@@ -78,7 +120,9 @@ function loadTracks() {
   const listFile = join(BGM, '목록.json');
   if (!existsSync(listFile)) fail(`${listFile} 가 없습니다.`);
   const list = JSON.parse(readFileSync(listFile, 'utf8'));
-  const tracks = (list.tracks || []).filter((t) => t.file && existsSync(join(BGM, t.file)));
+  list.tracks = list.tracks || [];
+  if (adoptNewFiles(list)) writeFileSync(listFile, `${JSON.stringify(list, null, 2)}\n`);
+  const tracks = list.tracks.filter((t) => t.file && existsSync(join(BGM, t.file)));
   if (!tracks.length) {
     fail('쓸 수 있는 음원이 없습니다.\n'
       + `   ${BGM} 에 파일을 넣고 목록.json 에 적어 주세요.\n`
