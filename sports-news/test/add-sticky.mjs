@@ -68,6 +68,41 @@ check('닫기 버튼이 있고 그 방문 동안 기억한다', () => {
   assert.match(html, /try\s*\{[\s\S]*sessionStorage[\s\S]*catch/, 'sessionStorage 가 막혀도 견디게 감싸지 않았습니다');
 });
 
+// ── 닫기 버튼이 쿠팡 위젯에 덮이지 않는다 (2026-11-10) ────────────────
+//
+// 운영자: "쿠팡 광고 아래 배너에 에러가 있다. 오른쪽 위 X가 안 눌린다."
+//
+// 원인은 **쌓임 순서**였다. 닫기 버튼이 바의 첫 자식이고 쿠팡 캐러셀 iframe 이
+// 그 뒤에 왔다. 버튼은 top:-13px 라 아래 절반이 캐러셀과 겹치는데, 위젯이
+// 제 iframe 에 z-index 를 얹으면 그 절반이 통째로 가려진다. 보이기는 보이니
+// 눌렀다고 생각하는데 클릭은 광고가 먹는다.
+//
+// 브라우저로 재 봤다(390x844, 캐러셀 자리에 z-index:99999 iframe 을 둠).
+//   예전: 가운데 cpst-x · 아래쪽 **캐러셀**   ← 절반이 안 눌린다
+//   지금: 위·가운데·아래 전부 cpst-x
+//
+// 그래서 셋을 바꿨고, 아래 검사가 셋을 지킨다.
+//   1. 쿠팡 코드를 `#cpst-in` 으로 감싸 **쌓임 문맥을 따로 만든다**(z-index:0)
+//   2. 닫기 버튼을 **맨 마지막 자식**으로 옮기고 z-index 를 최대로 준다
+//   3. click 만이 아니라 pointerdown 도 받는다
+//
+// ⚠️ 쿠팡 코드 자체는 한 글자도 안 바꿨다. 감싸는 상자와 닫기 버튼만 우리 것이다.
+check('닫기 버튼이 쿠팡 영역보다 위에 그려진다', () => {
+  const html = 바HTML();
+  assert.match(html, /id="cpst-in"[^>]*z-index:0/, '쿠팡 영역을 z-index:0 상자로 감싸지 않았습니다');
+  const 안쪽끝 = html.indexOf('</div>', html.indexOf('id="cpst-in"'));
+  const 버튼 = html.indexOf('id="cpst-x"');
+  assert.ok(안쪽끝 > 0 && 버튼 > 안쪽끝, '닫기 버튼이 쿠팡 영역보다 앞에 있습니다 (뒤에 와야 위에 그려집니다)');
+  const m = html.match(/id="cpst-x"[\s\S]*?z-index:(\d+)/);
+  assert.ok(m && Number(m[1]) >= 2147483647, '닫기 버튼 z-index 가 최대가 아닙니다');
+});
+
+check('닫기는 click 과 pointerdown 을 모두 받는다', () => {
+  const html = 바HTML();
+  assert.match(html, /addEventListener\('pointerdown'/, 'pointerdown 을 받지 않습니다');
+  assert.match(html, /addEventListener\('click'/, 'click 을 받지 않습니다');
+});
+
 check('본문 마지막 줄을 덮지 않게 여백을 준다', () => {
   assert.match(바HTML(), /paddingBottom/, '아래 여백을 주지 않습니다');
 });
