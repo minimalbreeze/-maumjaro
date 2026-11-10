@@ -22,19 +22,26 @@
   // 닫기 버튼이 바 위로 솟아 있는 높이. 여백과 겹침 검사가 함께 쓴다.
   var 솟은높이 = 44;
   var x = document.getElementById('cpst-x');
-  // 닫기는 click 만으로 모자랐다(2026-11-10 운영자: "오른쪽 위 X가 안 눌린다").
-  // pointerdown 은 쿠팡 위젯이 뒤늦게 가로채도 먼저 들어온다. 둘 다 받되
-  // 한 번만 닫는다.
-  function 닫기(e) {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
+  // **click 하나만 받는다.** (2026-11-10, 두 번째 손질)
+  //
+  // 한때 pointerdown 도 함께 받았다. 버튼 아래 절반이 쿠팡 캐러셀에 덮여 있던
+  // 시절, 위젯이 클릭을 가로채도 먼저 들어오라고 넣은 보조 장치였다.
+  //
+  // ⚠️ 그런데 pointerdown 에서 바를 숨기면 **버튼이 그 자리에서 사라진다.**
+  //    뒤이어 오는 click 은 그 지점에 새로 온 것 위로 떨어진다 — 클릭이 아래로
+  //    새는 것이다. 처음에 고쳤던 버그와 **같은 종류**이고, 그 아래가 광고였다면
+  //    다시 실수 클릭이 된다.
+  //
+  // 지금은 버튼이 광고 영역 바깥에 있어 가로채일 일이 없다. 보조 장치를 둘
+  // 이유가 사라졌으므로 **클릭이 끝난 뒤에 숨기는 쪽**으로 되돌린다.
+  // click 은 버튼 위에서 눌렀다 뗐을 때만 오고, 그때 대상은 이미 정해져 있다.
+  if (x) x.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
     bar.style.display = 'none';
     document.body.style.paddingBottom = '';
     try { sessionStorage.setItem(KEY, '1'); } catch (e2) {}
-  }
-  if (x) {
-    x.addEventListener('pointerdown', 닫기);
-    x.addEventListener('click', 닫기);
-  }
+  });
   // 바가 글 마지막 줄을 덮지 않게 아래 여백을 준다. 캐러셀이 늦게 그려지므로
   // 높이를 한 번 더 잰다 — 처음 잰 값만 쓰면 여백이 모자란다.
   // ⚠️ 숨어 있을 때는 여백을 주지 않는다. resize 때 여백() 이 먼저 돌고

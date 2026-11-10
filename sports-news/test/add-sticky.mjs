@@ -178,12 +178,16 @@ check('닫기 버튼이 쿠팡 영역보다 위에 그려진다', () => {
   assert.ok(m && Number(m[1]) >= 2147483647, '닫기 버튼 z-index 가 최대가 아닙니다');
 });
 
-check('닫기는 click 과 pointerdown 을 모두 받는다', () => {
+check('닫기는 click 하나만 받는다 — pointerdown 으로 숨기지 않는다', () => {
   const html = 바HTML();
-  assert.match(html, /addEventListener\('pointerdown'/, 'pointerdown 을 받지 않습니다');
   assert.match(html, /addEventListener\('click'/, 'click 을 받지 않습니다');
+  // ⚠️ pointerdown 에서 숨기면 **버튼이 그 자리에서 사라져** 뒤이은 click 이
+  //    아래에 새로 온 것 위로 떨어진다. 2026-11-10 에 효성님이 닫기를 누르자
+  //    본문 쪽 "Content is protected !!" 안내가 뜬 일이 있었고, 그 통로가
+  //    이것이다. 아래가 광고였다면 다시 실수 클릭이 된다.
+  assert.ok(!/addEventListener\('pointerdown'/.test(html),
+    'pointerdown 으로 숨기면 클릭이 아래로 샙니다 — click 하나만 받으세요');
 });
-
 check('본문 마지막 줄을 덮지 않게 여백을 준다', () => {
   assert.match(바HTML(), /paddingBottom/, '아래 여백을 주지 않습니다');
 });
