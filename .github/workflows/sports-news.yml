@@ -1180,13 +1180,17 @@ jobs:
           WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
         run: |
           if [ -z "$IN_IDS" ]; then
-            echo "::error::글 번호를 적어주세요 (post_ids). 전부 하려면 '전체' 라고 적으세요"; exit 1
+            echo "::error::글 번호를 적어주세요 (post_ids). 전부 하려면 all, 바를 가진 글만 고치려면 refresh 라고 적으세요"; exit 1
           fi
           args=()
           case "$IN_MODE" in *실제\ 적용*) args+=( --apply ) ;; esac
           case "$IN_MODE" in *빼기*) args+=( --빼기 ) ;; esac
           case "$IN_IDS" in
             전체|전부|all) args+=( --전체 ) ;;
+            # 바를 **이미 가진 글만** 고친다. 바 모양을 바꿀 때 쓴다 —
+            # all 은 바가 없는 글에 새로 깔기까지 한다(2026-11-09 결정).
+            # ⚠️ 한글을 입력칸에 적으면 깨지므로 영문 낱말로 둔다.
+            refresh|update) args+=( --전체 --갱신만 ) ;;
             *) for id in $IN_IDS; do args+=( "$id" ); done ;;
           esac
           node src/wordpress/add-sticky.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"

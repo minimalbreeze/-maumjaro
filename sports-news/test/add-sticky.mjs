@@ -87,6 +87,15 @@ check('닫기 버튼이 있고 그 방문 동안 기억한다', () => {
 //   3. click 만이 아니라 pointerdown 도 받는다
 //
 // ⚠️ 쿠팡 코드 자체는 한 글자도 안 바꿨다. 감싸는 상자와 닫기 버튼만 우리 것이다.
+// --갱신만 은 바를 이미 가진 글만 고친다. 바 모양을 바꿀 때 필요한 것은
+// 교체뿐인데, --전체 는 교체와 신규 설치를 같이 한다(2026-11-09 "719편 전체
+// 배포는 하지 않는다").
+check('--갱신만 손잡이가 있다', () => {
+  const src = fs.readFileSync(new URL('../src/wordpress/add-sticky.mjs', import.meta.url), 'utf8');
+  assert.match(src, /--갱신만/, '--갱신만 손잡이가 없습니다');
+  assert.match(src, /갱신만 && !빼기 && !바있나\(content\)/, '--갱신만 이 바 없는 글을 건너뛰지 않습니다');
+});
+
 check('닫기 버튼이 쿠팡 영역보다 위에 그려진다', () => {
   const html = 바HTML();
   assert.match(html, /id="cpst-in"[^>]*z-index:0/, '쿠팡 영역을 z-index:0 상자로 감싸지 않았습니다');

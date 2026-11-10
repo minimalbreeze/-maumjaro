@@ -114,6 +114,12 @@ async function main() {
   const apply = args.includes('--apply');
   const 빼기 = args.includes('--빼기');
   const 전체 = args.includes('--전체');
+  // 바를 **이미 가진 글만** 고친다. 바가 없는 글에는 새로 깔지 않는다.
+  //
+  // 2026-11-09 에 "719편 전체 배포는 하지 않는다"로 정리했다. 바 모양을
+  // 고칠 때(오늘처럼 닫기 버튼을 고칠 때) 필요한 것은 **교체**뿐인데,
+  // --전체 는 교체와 신규 설치를 같이 한다. 그 둘을 가르는 손잡이다.
+  const 갱신만 = args.includes('--갱신만');
   let ids = args.filter((a) => /^\d+$/.test(a)).map(Number);
 
   log.section(`${빼기 ? '🧹 쿠팡 하단 고정 바를 뺍니다' : '📌 쿠팡 하단 고정 바를 넣습니다'}${apply ? '' : ' (미리보기 · 저장하지 않습니다)'}`);
@@ -156,6 +162,7 @@ async function main() {
       continue;
     }
     const content = post.content?.raw ?? '';
+    if (갱신만 && !빼기 && !바있나(content)) continue;
     const after = 빼기 ? 바빼기(content) : 바넣기(content, html);
     const 제목 = String(post.title?.raw || '').slice(0, 40);
     if (after === null) {
