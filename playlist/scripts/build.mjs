@@ -10,12 +10,15 @@
 //   node playlist/scripts/build.mjs --tone         음원 없이 테스트 톤으로
 
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ART = join(ROOT, 'art');
+const BRAND = join(ROOT, 'brand');
 const BGM = join(ROOT, 'bgm');
 const OUT = join(ROOT, 'out');
 const WORK = join(OUT, 'work');
@@ -31,6 +34,8 @@ const LOOK = {
   ink: '0xf2efe9',          // 글자
   accent: '0xffc66b',       // 강조 (진행선·바늘)
   logo: 'm i n i m a l b r e e z e',
+  // 글자 뒤에만 깔리는 그늘. 그림 전체를 어둡게 하면 그림이 흐려진다.
+  scrim: 0.34,
   // 서로소 주기. 겹쳐서 전체 패턴이 7*11*13 = 1001초(16.7분)마다 반복한다.
   period: { lp: 7, drift: 11, dust: 13 },
 };
@@ -124,6 +129,40 @@ function buildAudio(tracks) {
   return { file: final, total: probe(final) };
 }
 
+/* 글자 뒤에만 까는 그늘.
+ * 그림 전체에 어두운 상자를 덮으면 그림이 통째로 흐려진다. 글자가 앉는 띠에만,
+ * 위아래로 서서히 사라지게 깔아서 경계가 안 보이게 한다. */
+function makeScrim(h0, h1) {
+  const file = join(WORK, 'scrim.png');
+  const { w } = LOOK;
+  const H = h1 - h0;
+  const rows = [];
+  for (let y = 0; y < H; y++) {
+    const t = y / (H - 1);
+    // 가운데가 가장 진하고 양끝이 0 이 되는 곡선
+    const a = Math.round(255 * LOOK.scrim * Math.sin(Math.PI * t) ** 1.4);
+    rows.push(Buffer.concat([Buffer.from([0]), Buffer.alloc(w * 4).fill(0).map((_, i) => (i % 4 === 3 ? a : 0x10))]));
+  }
+  const raw = Buffer.concat(rows);
+  const zlib = require('node:zlib');
+  const crc = (buf) => { let c = ~0; for (const b of buf) { c ^= b; for (let i = 0; i < 8; i++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1)); } return ~c >>> 0; };
+  const chunk = (type, data) => {
+    const t = Buffer.from(type); const body = Buffer.concat([t, data]);
+    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+    const c = Buffer.alloc(4); c.writeUInt32BE(crc(body));
+    return Buffer.concat([len, body, c]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(H, 4);
+  ihdr[8] = 8; ihdr[9] = 6;
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+    chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0)),
+  ]);
+  writeFileSync(file, png);
+  return file;
+}
+
 /* ── 영상 ─────────────────────────────────────────────────── */
 function baseLoop(art, seconds) {
   const loop = join(WORK, 'loop_base.mp4');
@@ -151,7 +190,7 @@ function baseLoop(art, seconds) {
 }
 
 /* 곡 하나짜리 구간. 루프를 필요한 만큼 늘리고 그 곡의 글자를 얹는다. */
-function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, seconds) {
+function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, seconds, scrim, logo) {
   const { w, h } = LOOK;
   const titled = join(WORK, `v${idx}_t.mp4`);
   const cy = Math.round(h * 0.56);
@@ -166,12 +205,23 @@ function trackSegment(loop, loopSec, t, idx, nTracks, startSec, totalSec, second
     `drawbox=x=${Math.round(w / 2 - 300)}:y=${cy + 147}:w='600*(${startSec}+t)/${totalSec}':h=3:color=${LOOK.accent}@0.85:t=fill`,
     // 몇 번째 곡인지
     `drawtext=fontfile=${FONT.light}:text='${String(idx + 1).padStart(2, '0')} / ${String(nTracks).padStart(2, '0')}':fontcolor=${LOOK.ink}@0.40:fontsize=20:x=(w-text_w)/2:y=${cy + 192}`,
-    // 로고
-    `drawtext=fontfile=${FONT.light}:text='${esc(LOOK.logo)}':fontcolor=${LOOK.ink}@0.78:fontsize=25:x=(w-text_w)/2:y=${cy + 238}`,
+    // 워드마크 (마크는 아래에서 그림으로 얹는다)
+    `drawtext=fontfile=${FONT.light}:text='${esc(LOOK.logo)}':fontcolor=${LOOK.ink}@0.72:fontsize=23:x=(w-text_w)/2:y=${cy + 300}`,
   ].join(',');
 
+  // 그늘 → 글자 → 로고 마크 순으로 쌓는다.
+  // 그늘을 글자 아래에만 깔아야 그림이 안 흐려진다.
+  const SCRIM_TOP = Math.round(h * 0.40);
+  const LOGO_W = 150;
   ff(['-stream_loop', String(Math.ceil(seconds / loopSec)), '-i', loop,
-    '-t', String(seconds), '-vf', draw,
+    '-i', scrim, '-i', logo,
+    '-t', String(seconds),
+    '-filter_complex',
+      `[0:v][1:v]overlay=0:${SCRIM_TOP}[s];`
+      + `[s]${draw}[d];`
+      + `[2:v]scale=${LOGO_W}:-1[lg];`
+      + `[d][lg]overlay=(W-w)/2:${cy + 218}[v]`,
+    '-map', '[v]',
     '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-an', titled]);
   return titled;
 }
@@ -205,13 +255,17 @@ function main() {
   const loopSec = 30;
   const loop = baseLoop(art, loopSec);
 
+  const scrim = makeScrim(Math.round(LOOK.h * 0.40), Math.round(LOOK.h * 0.96));
+  const logo = join(BRAND, 'logo-mark-light.png');
+  if (!existsSync(logo)) fail(`로고가 없습니다: ${logo}`);
+
   const segs = [];
   const chapters = [];
   let at = 0;
   tracks.forEach((t, i) => {
     const seconds = LIMIT_MIN ? Math.min(t._sec, (LIMIT_MIN * 60) / tracks.length) : t._sec + (i < tracks.length - 1 ? GAP_SEC : 0);
     chapters.push(`${mmss(at)} ${String(i + 1).padStart(2, '0')}. ${t.title} — ${t.artist}`);
-    segs.push(trackSegment(loop, loopSec, t, i, tracks.length, at, audio.total, seconds));
+    segs.push(trackSegment(loop, loopSec, t, i, tracks.length, at, audio.total, seconds, scrim, logo));
     at += seconds;
     process.stdout.write(`   ${i + 1}/${tracks.length}\r`);
   });
