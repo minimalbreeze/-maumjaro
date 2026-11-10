@@ -25,8 +25,49 @@
 //   - 한 번에 5개까지. 되돌리려면 워드프레스 미디어에서 지운다.
 //   - 받는 쪽은 **읽기만** 한다. 남의 서버에 아무것도 보내지 않는다.
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { uploadMedia, safeFileName } from '../images/upload.mjs';
 import { log } from '../utils/logger.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/**
+ * 사진을 누르면 갈 곳. **페이드캠 앱스토어**다 (2026-11-10 효성님 지시).
+ *
+ *   "앞으로 사진업로드 요청에는 사진 클릭 URL 에 페이드캠을 넣자.
+ *    페이드캠도 다운로드 및 홍보가 되어야 한다."
+ *
+ * ⚠️ 주소를 여기 적지 않는다. `config/app-links.json` 에서 읽는다 —
+ *    앱 주소는 사람이 적고 `_출처` 를 남긴 것만 쓴다는 원칙이 있고,
+ *    주소가 바뀌면 설정 한 곳만 고치면 된다.
+ *
+ * ⚠️ `ct=wiki-photo` 라 본문 배너(`ct=wiki`)와 **따로 센다.** 사진을 눌러
+ *    들어온 다운로드가 몇인지 알아야 이 방식이 먹히는지 판단할 수 있다.
+ */
+export function 사진링크() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'app-links.json'), 'utf8'));
+    const app = (cfg.apps || []).find((a) => a && a.이름 === '페이드캠');
+    return (app && (app.사진링크 || app.url)) || '';
+  } catch {
+    // 설정을 못 읽으면 링크 없이 간다. 사진은 올라가야 한다.
+    return '';
+  }
+}
+
+/**
+ * 캡션에 붙일 안내.
+ *
+ * ⚠️ **"내가 만든" 을 반드시 적는다.** 공정위 추천·보증 심사지침 —
+ *    자기 앱을 남의 추천처럼 보이게 쓰면 표시광고법 문제가 된다
+ *    (루트 지시서, 스레드 댓글에도 같은 문구를 넣는다).
+ *
+ * ⚠️ 사진 출처와 링크 대상이 다르다는 것도 밝힌다. 선수 사진을 눌렀는데
+ *    앱스토어로 가면 독자가 당황한다. 미리 알려 주는 쪽이 정직하다.
+ */
+export const 사진링크안내 = '누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다';
 
 /** 한 번에 받는 이미지 수의 상한. */
 export const 한번에최대 = 5;
@@ -135,8 +176,12 @@ async function main() {
     log.raw('본문에 넣을 블록:');
     for (const up of 올린것) {
       log.raw('');
-      log.raw(`<!-- wp:image {"id":${up.id},"sizeSlug":"large"} -->`);
-      log.raw(`<figure class="wp-block-image size-large"><img src="${up.url}" alt="${alt}" class="wp-image-${up.id}"/></figure>`);
+      const 링크 = 사진링크();
+      const 그림 = `<img src="${up.url}" alt="${alt}" class="wp-image-${up.id}"/>`;
+      const 속 = 링크 ? `<a href="${링크}" rel="nofollow">${그림}</a>` : 그림;
+      const 캡션 = 링크 ? `<figcaption class="wp-element-caption">${사진링크안내}</figcaption>` : '';
+      log.raw(`<!-- wp:image {"id":${up.id},"sizeSlug":"large"${링크 ? ',"linkDestination":"custom"' : ''}} -->`);
+      log.raw(`<figure class="wp-block-image size-large">${속}${캡션}</figure>`);
       log.raw('<!-- /wp:image -->');
     }
   }

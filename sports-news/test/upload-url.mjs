@@ -1,6 +1,8 @@
 // 주소의 이미지를 우리 미디어에 올리기 — 검사.
 import assert from 'node:assert/strict';
-import { 그림인가, 한번에최대, 그림종류 } from '../src/wordpress/upload-url.mjs';
+import {
+  그림인가, 한번에최대, 그림종류, 사진링크, 사진링크안내,
+} from '../src/wordpress/upload-url.mjs';
 
 let passed = 0;
 function check(name, fn) {
@@ -53,6 +55,35 @@ check('올릴 수 있는 종류에 그림만 있다', () => {
     assert.ok(mime.startsWith('image/'), `${mime} 는 그림이 아닙니다`);
     assert.ok(/^(jpg|png|gif|webp)$/.test(ext), `${ext} 는 모르는 확장자입니다`);
   }
+});
+
+// ── 사진을 누르면 페이드캠으로 (2026-11-10 효성님 지시) ──────────────
+//
+// "앞으로 사진업로드 요청에는 사진 클릭 URL 에 페이드캠을 넣자.
+//  페이드 캠도 다운로드 및 홍보가 되어야 한다."
+
+check('사진 링크를 설정에서 읽는다 — 코드에 주소를 박지 않는다', () => {
+  const u = 사진링크();
+  assert.ok(u.startsWith('https://apps.apple.com/'), u);
+  assert.ok(u.includes('id6818920687'), `페이드캠 앱 ID 가 아닙니다: ${u}`);
+});
+
+// ⚠️ 본문 배너(ct=wiki)와 섞이면 **사진을 눌러 들어온 수**를 가릴 수 없다.
+check('사진 링크는 ct 를 따로 둔다 — 본문 배너와 섞이지 않게', () => {
+  assert.ok(사진링크().includes('ct=wiki-photo'), 사진링크());
+});
+
+// ⚠️ 공정위 추천·보증 심사지침. 자기 앱을 남의 추천처럼 보이게 쓰면
+//    표시광고법 문제가 된다(루트 지시서).
+check('캡션 안내에 "내가 만든" 이 들어 있다', () => {
+  assert.ok(사진링크안내.includes('내가 만든'),
+    `자기 앱임을 밝혀야 합니다: ${사진링크안내}`);
+});
+
+// ⚠️ 선수 사진을 눌렀는데 앱스토어로 가면 독자가 당황한다.
+check('캡션 안내가 어디로 가는지 말해 준다', () => {
+  assert.ok(사진링크안내.includes('누르면'), 사진링크안내);
+  assert.ok(사진링크안내.includes('페이드캠'), 사진링크안내);
 });
 
 console.log(`\n  ${passed}개 통과`);
