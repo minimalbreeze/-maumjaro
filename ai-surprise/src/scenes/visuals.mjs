@@ -25,7 +25,7 @@ import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
 import { photoOf as mainPhoto } from '../assets/photo-of.mjs';
-import { uniformClause } from './uniforms.mjs';
+import { uniformClause, teamKey } from './uniforms.mjs';
 
 /**
  * 이 채널의 고정 화면 스타일 (기획서 10번).
@@ -1446,6 +1446,35 @@ export function photoNamesOf(item) {
  * composeImagePrompt 가 유니폼 문장 없이 그리고, 고정 문구의 밑줄만
  * 적용된다 — 지금과 같아진다.
  */
+/**
+ * 이 편에 팀이 **하나뿐이면** 그 팀의 유니폼 문장.
+ *
+ * ── 왜 필요한가 (2026-11-11) ──
+ *
+ * 사람 이름이 아예 안 붙은 샷이 있다. 3:47 의 "안에서 누구를 어디에
+ * 세우나" 샷이 그랬다 — 야구 선수가 나오는데 누구인지는 안 적혀 있다.
+ * 그러면 유니폼 문장이 안 붙고, 모델이 **노란 유니폼**을 지어냈다.
+ *
+ * 운영자: "동작이 어색하다. 이건 무슨 동작인가?"
+ *
+ * 12화처럼 나오는 사람이 전부 한 팀이면 답은 분명하다. 그 팀으로
+ * 입힌다. 두 팀 이상이면 알 수 없으므로 아무것도 하지 않는다 —
+ * 틀린 유니폼은 유니폼이 없는 것보다 나쁘다.
+ */
+export function soleTeamUniform(item) {
+  const people = item?.people || item?.research?.people || [];
+  const teams = new Set();
+  let clause = '';
+  for (const p of people) {
+    const key = teamKey(p?.team);
+    if (!key) continue;
+    teams.add(key);
+    // 등번호는 넣지 않는다. 누구인지 모르는 샷이라 번호를 달면 거짓이 된다.
+    if (!clause) clause = uniformClause({ team: p.team });
+  }
+  return teams.size === 1 ? clause : '';
+}
+
 export function uniformsOf(item) {
   const out = new Map();
   const people = item?.people || item?.research?.people || [];
@@ -1481,6 +1510,34 @@ export function uniformsOf(item) {
  * 그래서 person 칸이 비면 **샷의 글에서 이름을 찾는다.** 설계 AI 가
  * 화면 설명에 "김도영이 유격수 자리에 선다" 라고 썼다면 거기서 집는다.
  */
+/**
+ * 이 샷에 **얼굴이 보이는가**.
+ *
+ * ── 왜 보나 (2026-11-11) ──
+ *
+ * 12화에서 실사로 나온 샷이 셋 있었는데 **전부 뒷모습**이었다.
+ * 하주석 뒷모습, 김도영 등번호 5 뒷모습, 슬라이딩 뒷모습.
+ *
+ * 운영자: "그림톤이 왜 또 안 맞나" / "이것도 톤이 안 맞다"
+ *
+ * 까닭이 분명하다. 화풍을 붙잡는 문구(SPORTS_LIKENESS_CLAUSE)가
+ * **거의 전부 얼굴 이야기**다 — 납작하게 칠한 살갗, 눈과 눈썹의
+ * 잉크 선, 턱선의 윤곽. 뒷모습에는 얼굴이 없으니 그 문구가 하나도
+ * 안 걸린다. 그런데 사진 참조는 그대로 들어간다. 붙잡는 것 없이
+ * 사진만 보여 주니 사진 쪽으로 끌려간 것이다.
+ *
+ * 그리고 뒷모습에는 참조가 **필요 없다.** 거기서 사람을 말해 주는
+ * 것은 등번호와 유니폼 색뿐이고, 그 둘은 코드가 적는다.
+ * (2026-11-07 운영자: "유니폼과 등번호가 같아야 뒤만 봐도 알 수 있다")
+ *
+ * 돈도 덜 든다 — 참조 모델은 장당 $0.05, 보통 모델은 $0.025 다.
+ */
+export function facesCamera(d) {
+  const t = `${d?.image_prompt || ''} ${d?.video_prompt || ''}`.toLowerCase();
+  // 뒤에서 본다고 적혀 있으면 얼굴이 없다.
+  return !/(from behind|seen from the back|back view|rear view|facing away|over the shoulder from behind|뒷모습)/.test(t);
+}
+
 export function personOfShot(d, names) {
   const direct = String(d?.person || '').trim();
   if (direct && names.has(direct)) return direct;
@@ -1492,7 +1549,11 @@ export function personOfShot(d, names) {
   return direct;
 }
 
-export function mergeVisuals(scene, design, { kind = null, photoNames = null, uniforms = null } = {}) {
+export function mergeVisuals(
+  scene,
+  design,
+  { kind = null, photoNames = null, uniforms = null, fallbackUniform = '' } = {}
+) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
   );
@@ -1519,11 +1580,13 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
         ? ''
         : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
             kind,
-            likeness: Boolean(photoNames && photoNames.has(who)),
+            // ⚠️ 뒷모습이면 참조를 쓰지 않는다. 붙잡을 얼굴이 없어서
+            //    화풍이 사진 쪽으로 끌려간다(2026-11-11).
+            likeness: Boolean(photoNames && photoNames.has(who)) && facesCamera(d),
             // 이 샷에 누가 나오는지는 person 칸을 **먼저** 보고, 비어
             // 있으면 샷의 글에서 이름을 찾는다(personOfShot). 그 이름으로
             // 구단 표를 찾아 유니폼과 등번호를 **코드가** 적는다.
-            uniform: (uniforms && uniforms.get(who)) || '',
+            uniform: (uniforms && uniforms.get(who)) || fallbackUniform || '',
           }),
       image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
@@ -1531,7 +1594,9 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
       motion_need: clampInt(d.motion_need, 0, 10),
       depicts_real_person: Boolean(d.depicts_real_person),
       // 누구인지. 사진을 받아 둔 사람이면 그 사진을 참조로 그린다.
-      person: who || String(d.person || '').trim(),
+      // ⚠️ 뒷모습 샷은 사람 이름을 비운다 — images.mjs 가 이 칸을 보고
+      //    참조 모델을 고르기 때문이다. 유니폼·등번호는 그대로 붙는다.
+      person: facesCamera(d) ? who || String(d.person || '').trim() : '',
     };
   });
 
@@ -1675,6 +1740,8 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
     kind: item?.kind,
     photoNames: photoNamesOf(item),
     uniforms: uniformsOf(item),
+    // 이름이 안 붙은 샷에도 유니폼을 입힌다 — 편에 팀이 하나뿐일 때만.
+    fallbackUniform: soleTeamUniform(item),
   });
   const problems = [...merged.problems];
   if (!check.ok) {
