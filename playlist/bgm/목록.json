@@ -2,15 +2,6 @@
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
   "tracks": [
     {
-      "file": "jamendo-161690.mp3",
-      "title": "Rhyvee - Monolith",
-      "artist": "Rhyvee",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Rhyvee - Monolith — Rhyvee (CC BY) · archive.org/details/jamendo-161690",
-      "source": "https://archive.org/details/jamendo-161690"
-    },
-    {
       "file": "jamendo-245999.mp3",
       "title": "Crying Shadows",
       "artist": "Postorius",
@@ -18,69 +9,6 @@
       "license": "CC BY",
       "credit": "Crying Shadows — Postorius (CC BY) · archive.org/details/jamendo-245999",
       "source": "https://archive.org/details/jamendo-245999"
-    },
-    {
-      "file": "jamendo-249717.mp3",
-      "title": "Mystical joyful progression",
-      "artist": "bestmade",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "Mystical joyful progression — bestmade (CC BY) · archive.org/details/jamendo-249717",
-      "source": "https://archive.org/details/jamendo-249717"
-    },
-    {
-      "file": "jamendo-461419.mp3",
-      "title": "Abstract Melody",
-      "artist": "Sevennotes",
-      "recorded": "2021",
-      "license": "CC BY",
-      "credit": "Abstract Melody — Sevennotes (CC BY) · archive.org/details/jamendo-461419",
-      "source": "https://archive.org/details/jamendo-461419"
-    },
-    {
-      "file": "jamendo-386084.mp3",
-      "title": "just like a lizard",
-      "artist": "MRS.THIBEDAUX",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "just like a lizard — MRS.THIBEDAUX (CC BY) · archive.org/details/jamendo-386084",
-      "source": "https://archive.org/details/jamendo-386084"
-    },
-    {
-      "file": "jamendo-374078.mp3",
-      "title": "SALUT A TOI",
-      "artist": "PELIKAN",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "SALUT A TOI — PELIKAN (CC BY) · archive.org/details/jamendo-374078",
-      "source": "https://archive.org/details/jamendo-374078"
-    },
-    {
-      "file": "jamendo-592163.mp3",
-      "title": "Soul Ambient",
-      "artist": "Sevennotes",
-      "recorded": "2025",
-      "license": "CC BY",
-      "credit": "Soul Ambient — Sevennotes (CC BY) · archive.org/details/jamendo-592163",
-      "source": "https://archive.org/details/jamendo-592163"
-    },
-    {
-      "file": "jamendo-218930.mp3",
-      "title": "Endless Theme",
-      "artist": "subtopialimburg",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "Endless Theme — subtopialimburg (CC BY) · archive.org/details/jamendo-218930",
-      "source": "https://archive.org/details/jamendo-218930"
-    },
-    {
-      "file": "jamendo-182000.mp3",
-      "title": "Ambient Samurai - Ichiro NAKAGAWA - Song…",
-      "artist": "Ambient Samurai - Ichiro NAKAGAWA",
-      "recorded": "2019",
-      "license": "CC BY",
-      "credit": "Ambient Samurai - Ichiro NAKAGAWA - Song… — Ambient Samurai - Ichiro NAKAGAWA (CC BY) · archive.org/details/jamendo-182000",
-      "source": "https://archive.org/details/jamendo-182000"
     },
     {
       "file": "jamendo-512900.mp3",
@@ -92,15 +20,6 @@
       "source": "https://archive.org/details/jamendo-512900"
     },
     {
-      "file": "jamendo-256313.mp3",
-      "title": "midnight lullaby song",
-      "artist": "DeMeo",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "midnight lullaby song — DeMeo (CC BY) · archive.org/details/jamendo-256313",
-      "source": "https://archive.org/details/jamendo-256313"
-    },
-    {
       "file": "jamendo-257167.mp3",
       "title": "Tino Gomez-Crazy Blues",
       "artist": "Tino Gómez",
@@ -110,22 +29,103 @@
       "source": "https://archive.org/details/jamendo-257167"
     },
     {
-      "file": "jamendo-257427.mp3",
-      "title": "Allan Krauter-Full Moon Dub",
-      "artist": "Allan Kräuter",
+      "file": "jamendo-236019.mp3",
+      "title": "Wien",
+      "artist": "jean",
       "recorded": "2017",
       "license": "CC BY",
-      "credit": "Allan Krauter-Full Moon Dub — Allan Kräuter (CC BY) · archive.org/details/jamendo-257427",
-      "source": "https://archive.org/details/jamendo-257427"
+      "credit": "Wien — jean (CC BY) · archive.org/details/jamendo-236019",
+      "source": "https://archive.org/details/jamendo-236019"
     },
     {
-      "file": "jamendo-287680.mp3",
-      "title": "Michael FEIST-Feel free",
-      "artist": "Michaël FEIST",
+      "file": "jamendo-308091.mp3",
+      "title": "BAILARINA",
+      "artist": "Miro Silveira",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "BAILARINA — Miro Silveira (CC BY) · archive.org/details/jamendo-308091",
+      "source": "https://archive.org/details/jamendo-308091"
+    },
+    {
+      "file": "jamendo-322624.mp3",
+      "title": "jazz Eastern",
+      "artist": "Giocol",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "jazz Eastern — Giocol (CC BY) · archive.org/details/jamendo-322624",
+      "source": "https://archive.org/details/jamendo-322624"
+    },
+    {
+      "file": "jamendo-353535.mp3",
+      "title": "Funeral piano melody",
+      "artist": "Nerevarin",
       "recorded": "2017",
       "license": "CC BY",
-      "credit": "Michael FEIST-Feel free — Michaël FEIST (CC BY) · archive.org/details/jamendo-287680",
-      "source": "https://archive.org/details/jamendo-287680"
+      "credit": "Funeral piano melody — Nerevarin (CC BY) · archive.org/details/jamendo-353535",
+      "source": "https://archive.org/details/jamendo-353535"
+    },
+    {
+      "file": "jamendo-139353.mp3",
+      "title": "Words Fall Apart",
+      "artist": "Josh Woodward",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Words Fall Apart — Josh Woodward (CC BY) · archive.org/details/jamendo-139353",
+      "source": "https://archive.org/details/jamendo-139353"
+    },
+    {
+      "file": "jamendo-254274.mp3",
+      "title": "La Impresion de la Guerra",
+      "artist": "Kubi",
+      "recorded": "2011",
+      "license": "CC BY",
+      "credit": "La Impresion de la Guerra — Kubi (CC BY) · archive.org/details/jamendo-254274",
+      "source": "https://archive.org/details/jamendo-254274"
+    },
+    {
+      "file": "jamendo-302354.mp3",
+      "title": "Liquid Body",
+      "artist": "Evgeny Teilor",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Liquid Body — Evgeny Teilor (CC BY) · archive.org/details/jamendo-302354",
+      "source": "https://archive.org/details/jamendo-302354"
+    },
+    {
+      "file": "jamendo-638963.mp3",
+      "title": "Learning to Drive",
+      "artist": "Helen Langfort",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Learning to Drive — Helen Langfort (CC BY) · archive.org/details/jamendo-638963",
+      "source": "https://archive.org/details/jamendo-638963"
+    },
+    {
+      "file": "jamendo-623764.mp3",
+      "title": "Schumann Traumerei Dreaming",
+      "artist": "Steve Zwart",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Schumann Traumerei Dreaming — Steve Zwart (CC BY) · archive.org/details/jamendo-623764",
+      "source": "https://archive.org/details/jamendo-623764"
+    },
+    {
+      "file": "jamendo-346502.mp3",
+      "title": "Corporate Tech",
+      "artist": "Sevennotes",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Corporate Tech — Sevennotes (CC BY) · archive.org/details/jamendo-346502",
+      "source": "https://archive.org/details/jamendo-346502"
+    },
+    {
+      "file": "jamendo-388660.mp3",
+      "title": "Jazz Piano",
+      "artist": "Nerevarin",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Jazz Piano — Nerevarin (CC BY) · archive.org/details/jamendo-388660",
+      "source": "https://archive.org/details/jamendo-388660"
     }
   ]
 }

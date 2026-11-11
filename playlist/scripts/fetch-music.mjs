@@ -33,6 +33,16 @@ const val = (f, d) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] 
  * 소리는 코드가 못 듣지만 길이와 제목은 볼 수 있으므로 그걸로 거른다. */
 const MIN_SEC = Number(val('--min', '90'));    // 이보다 짧으면 곡이 아니라 조각
 const MAX_SEC = Number(val('--max', '480'));   // 이보다 길면 믹스·라이브 세트
+/* 조용한 사무실·카페에 틀어놓을 음악이다. EDM 계열은 BGM 이 안 된다.
+ * 태그에 이 중 하나라도 있으면 받지 않는다. 'chillout' 같은 말은 전자음악
+ * 쪽에도 붙어 있어서, 장르를 넓게 잡는 대신 이쪽을 확실히 막는다. */
+const BAD_SUBJECTS = [
+  'electro', 'electronic', 'techno', 'house', 'trance', 'dubstep', 'dub',
+  'drum and bass', 'dnb', 'edm', 'dance', 'club', 'rave', 'synthwave',
+  'industrial', 'metal', 'rock', 'punk', 'hardcore', 'rap', 'hip hop',
+  'hiphop', 'reggae', 'breakbeat', 'trap', 'psytrance', 'goa',
+];
+
 const BAD_WORDS = [
   'mix', 'remix', 'megamix', 'dj set', 'live', 'concert', 'interview',
   'podcast', 'radio show', 'christmas', 'xmas', 'intro', 'outro',
@@ -97,7 +107,7 @@ function search() {
     ? `collection:georgeblood AND date:[1923-01-01 TO 1925-12-31] AND (${QUERY})`
     : `collection:jamendo-albums AND ${CC_BY} AND (${QUERY})`;
   const d = jget('/advancedsearch.php', {
-    q, 'fl[]': ['identifier', 'title', 'creator', 'date', 'licenseurl'],
+    q, 'fl[]': ['identifier', 'title', 'creator', 'date', 'licenseurl', 'subject'],
     rows: String(WANT * 5), output: 'json',
   });
   return d.response.docs || [];
@@ -211,6 +221,13 @@ async function main() {
 
     const bad = badTitle(title);
     if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 36)} ("${bad}")`); skipped++; continue; }
+
+    // 태그로 EDM 계열을 막는다. 제목만 봐서는 알 수 없다 — "Full Moon Dub" 이
+    // 그렇게 들어왔다.
+    const subs = (Array.isArray(doc.subject) ? doc.subject : [doc.subject || ''])
+      .map((x) => String(x).toLowerCase());
+    const hitSub = BAD_SUBJECTS.find((b) => subs.some((x) => x === b || x.includes(b)));
+    if (hitSub) { console.log(`  — 건너뜀: ${title.slice(0, 34)} (태그 "${hitSub}")`); skipped++; continue; }
 
     console.log(`  ${String(got + 1).padStart(2, '0')}. ${title}  (${Math.floor(sized[0].sec / 60)}:${String(Math.round(sized[0].sec % 60)).padStart(2, '0')})`);
     console.log(`      ${String(artist).slice(0, 40)} · ${lic.name}`);

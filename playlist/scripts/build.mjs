@@ -42,8 +42,8 @@ const LOOK = {
    * 진행선과 곡 번호는 뺐다 — 유튜브에 자기 재생바가 이미 있고,
    * minimal 이라는 이름을 달고 여섯 층을 쌓을 수는 없다. */
   eq: { w: 520, h: 52, alpha: 0.70 },
-  lockupW: 360,
-  y: { scrim: 590, scrimH: 350, eq: 626, title: 700, artist: 772, lockup: 862 },
+  lockupW: 560,   // 줄이면 선과 글자가 가늘어져 사라진다. 원본 크기에 가깝게 쓴다.
+  y: { scrim: 586, scrimH: 364, eq: 626, title: 700, artist: 772, lockup: 858 },
 };
 
 const args = process.argv.slice(2);
@@ -149,7 +149,27 @@ function pickArt() {
  * 곡을 자르지 않는다. 음량만 맞춘다(길이 불변 — 실측 20.000초 → 20.000초).
  * 곡 사이에는 크래클만 넣어 LP 한 면처럼 잇는다.
  */
-const GAP_SEC = 1.2;   // 곡 사이. 0 으로 두면 뚝 끊겨 LP 느낌이 깨진다
+const GAP_SEC = 1.5;   // 곡 사이. 0 으로 두면 뚝 끊겨 LP 느낌이 깨진다
+
+/* ── LP 색깔 ───────────────────────────────────────────────────
+ * 크래클(잡음)은 LP 느낌이 아니다. 진짜 느낌은 소리의 결에서 온다.
+ *
+ * 앞서 "LP 효과를 덧씌우지 말라"고 적었던 것은 1923년 78rpm 전사본 얘기였다.
+ * 그건 이미 잡음투성이라 더 얹으면 지저분해진다. 지금 쓰는 것은 현대 디지털
+ * 녹음이라 정반대다 — 색깔이 없어 밋밋하다. 그래서 색깔을 입힌다.
+ *
+ * 화이트노이즈로 잰 실제 응답:
+ *    80Hz +4.1dB · 1kHz +1.9dB · 8kHz -4.5dB · 12kHz -4.1dB
+ * 저역이 차고 고역이 부드러워지는 전형적인 바이닐 곡선이다.
+ */
+const LP_CHAIN = [
+  'bass=g=2.5:f=110:w=0.8',        // 따뜻한 저역
+  'treble=g=-4.5:f=7000:w=0.7',    // 날카로운 고역을 깎는다
+  'lowpass=f=16000',               // 바이닐에 없는 초고역을 자른다
+  'acompressor=threshold=-18dB:ratio=2:attack=25:release=250:makeup=1.5',  // 여린 압축
+  'vibrato=f=0.33:d=0.012',        // wow — 턴테이블의 미세한 피치 흔들림
+  'extrastereo=m=0.82',            // 바이닐은 디지털보다 스테레오가 좁다
+].join(',');
 
 function buildAudio(tracks) {
   const parts = [];
@@ -175,14 +195,18 @@ function buildAudio(tracks) {
   const joined = join(WORK, 'joined.wav');
   ff(['-f', 'concat', '-safe', '0', '-i', listFile, '-c', 'copy', joined]);
 
-  // 전체에 아주 얇은 크래클. 원본 78 잡음보다 한참 아래로 둔다 —
-  // 원본이 이미 지직거리므로 더 얹으면 LP 느낌이 아니라 지저분해진다.
+  // LP 색깔을 입히고, 크래클은 아주 얇게만 깐다.
+  // 크래클을 세게 깔면 조용한 사무실에서 틀어놨을 때 그게 먼저 들린다.
   const total = probe(joined);
   const final = join(WORK, 'audio.m4a');
   ff(['-i', joined,
-    '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.010:r=44100',
-    '-filter_complex', '[1:a]highpass=f=2000,alimiter=limit=0.07,aformat=channel_layouts=stereo[crk];'
-      + '[0:a][crk]amix=inputs=2:weights=1 0.85:normalize=0[a]',
+    '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.0035:r=44100',
+    '-filter_complex',
+      `[0:a]${LP_CHAIN}[warm];`
+      + '[1:a]highpass=f=2500,lowpass=f=9000,alimiter=limit=0.03,aformat=channel_layouts=stereo[crk];'
+      + '[warm][crk]amix=inputs=2:weights=1 0.35:normalize=0,'
+      // 색깔을 입히며 음량이 움직였으므로 마지막에 한 번 더 맞춘다
+      + 'loudnorm=I=-16:TP=-1.5:LRA=11[a]',
     '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', final]);
   return { file: final, total: probe(final) };
 }
