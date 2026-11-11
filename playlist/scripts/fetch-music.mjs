@@ -15,18 +15,23 @@
 //   NC 음원은 쓰면 안 된다. ND(변경금지) 도 거른다 — 음량 평준화가 변경에
 //   해당하는지 다툼의 여지가 있어 아예 피한다.
 
-import { writeFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const BGM = join(ROOT, 'bgm');
+const BGM_ROOT = join(ROOT, 'bgm');
 const API = 'https://archive.org';
 
 const args = process.argv.slice(2);
 const has = (f) => args.includes(f);
 const val = (f, d) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
+
+/* 집(volume)마다 폴더를 나눈다 — --vol 002 면 bgm/002/ 에 받는다.
+ * 1집은 bgm/ 바로 아래였다. --vol 을 안 주면 예전과 같다. */
+const VOL = val('--vol', '').replace(/[^\w-]/g, '');
+const BGM = VOL ? join(BGM_ROOT, VOL) : BGM_ROOT;
 
 /* 태그만 믿고 받았더니 9초짜리 리프 조각, 13분짜리 DJ 믹스, 크리스마스 곡이
  * 섞여 들어왔다. 태그는 "piano/jazz/chillout" 인데 실제 내용은 달랐다.
@@ -41,6 +46,11 @@ const BAD_SUBJECTS = [
   'drum and bass', 'dnb', 'edm', 'dance', 'club', 'rave', 'synthwave',
   'industrial', 'metal', 'rock', 'punk', 'hardcore', 'rap', 'hip hop',
   'hiphop', 'reggae', 'breakbeat', 'trap', 'psytrance', 'goa',
+  /* 2집에서 추가(2026-11-11). 1집 뒤 "더 서정적으로" 라는 말을 듣고
+   * 2집 후보를 보니 게임·예고편용 음악이 꽤 섞여 있었다. 장르는 맞는데
+   * 쓰임이 다르다 — 장면을 띄우려고 만든 곡이라 BGM 으로 깔면 거슬린다. */
+  'game', 'videogame', 'video game', 'chiptune', '8bit', 'chip music',
+  'trailer', 'horror', 'noise', 'funk', 'disco', 'latin', 'salsa', 'percussion',
 ];
 
 const BAD_WORDS = [
@@ -50,6 +60,19 @@ const BAD_WORDS = [
   // 기능성·광고용 음악. 제목에서 티가 난다. 서정적인 것과 정반대다.
   'corporate', 'business', 'motivational', 'upbeat', 'energetic',
   'advertising', 'commercial', 'tutorial', 'background music',
+  /* 2집에서 추가. 제목만 봐도 '장면에 붙이는 음악' 인 것들. */
+  'documentary', 'epic', 'cinematic', 'trailer', 'soundtrack',
+  'battle', 'siege', 'dungeon', 'cursed', 'horror', 'chiptune',
+  'logo', 'jingle', 'ident', 'stinger', 'fanfare',
+  'wav', 'mp3', 'flac',                       // "SWEET FRANCE wav" 같은 꼬리
+  /* 공포·죽음 쪽. 2집 1차에 "Night Of The Living Dead", "Dissection",
+   * "Dark Life Note" 가 서정 태그를 달고 들어왔다. 일하면서 트는 음악이다. */
+  'dead', 'death', 'zombie', 'blood', 'grave', 'ghost', 'nightmare',
+  'doom', 'evil', 'demon', 'dissection', 'corpse',
+  /* 명상·수면용. 음악이라기보다 소리라서 BGM 으로 깔면 멍해진다.
+   * 효성님: "너무 쳐지는 식의 음악이 아닌 음악으로". */
+  'ambient', 'drone', 'meditation', 'sleep', 'healing', 'yoga', 'spa',
+  'hypnosis', 'binaural', 'relaxation',
 ];
 
 /* 무드 프리셋.
@@ -66,6 +89,14 @@ const MOODS = {
   서정: 'subject:(piano OR jazz OR acoustic OR guitar OR strings) '
       + 'AND subject:(melancholic OR emotional OR nostalgic OR sad OR tender '
       + 'OR romantic OR dreamy OR melodic OR sentimental OR soft)',
+  /* 2026-11-11 효성님: "너무 쳐지는 식의 음악이 아닌 음악으로".
+   *
+   * '서정' 은 sad·melancholic 을 요구해서 처지는 쪽으로 쏠린다.
+   * 이쪽은 감정은 살리되 가라앉는 말을 빼고, 움직임이 있는 장르
+   * (보사·스윙·라운지)를 같이 잡는다. 1집 다음으로 쓸 기본값이다. */
+  늦가을: 'subject:(jazz OR piano OR acoustic OR guitar OR bossa OR swing OR lounge) '
+      + 'AND subject:(warm OR gentle OR mellow OR smooth OR romantic '
+      + 'OR nostalgic OR melodic OR tender OR hopeful OR uplifting)',
   재즈: 'subject:jazz OR subject:swing OR subject:bossa OR subject:blues',
   피아노: 'subject:piano AND subject:(calm OR peaceful OR slow OR soft)',
   차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
@@ -157,18 +188,49 @@ function download(id, name, to) {
   return buf.length;
 }
 
+/* 파일 이름 앞에 붙은 아티스트 이름을 떼어낸다.
+ *
+ * 글자를 그대로 맞추면 안 떨어진다. archive.org 가 파일 이름의 비ASCII
+ * 글자를 '_' 로 바꿔 두기 때문이다.
+ *   creator "Michal Jalochowski"(l 은 획 그은 l) → 파일 "Micha_Ja_ochowski-Canon For Piano No.2"
+ *   creator "Tino Gomez"(o 는 악센트)            → 파일 "Tino Gomez-Crazy Blues"
+ * 1집에서 이 두 곡이 아티스트 이름을 제목에 달고 화면에 나왔다.
+ *
+ * 그래서 이름을 '영문·숫자 토막'으로 쪼갠 뒤 토막 사이를 '글자 아닌 것
+ * 아무거나(없어도 됨)'로 맞춘다. 악센트는 NFD 로 떼고 비교하되,
+ * 몇 글자를 자를지는 원본 기준으로 센다. */
+/* archive.org 메타데이터에는 "Anima &amp; Animus" 처럼 HTML 엔티티가 그대로
+ * 들어 있다. 그냥 두면 파일 이름의 "Anima & Animus" 와 안 맞아서 아티스트
+ * 이름이 제목에 남는다 — 2집 1차에 "Anima amp Animus-A Melody..." 로 나왔다. */
+function unent(x) {
+  return String(x || '')
+    .replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&apos;/gi, "'")
+    .replace(/&#0*39;/g, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&nbsp;/gi, ' ');
+}
+
+function stripArtist(title, artist) {
+  const parts = unent(artist).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .split(/[^A-Za-z0-9]+/).filter(Boolean);
+  if (!parts.length) return title;
+  const re = new RegExp(`^${parts.join('[^A-Za-z0-9]*')}\\s*[-._]\\s*`, 'i');
+  const flat = [...title].map((ch) => ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  const m = flat.join('').match(re);
+  if (!m) return title;
+  let n = 0, cut = 0;
+  while (cut < flat.length && n < m[0].length) { n += flat[cut].length; cut++; }
+  return title.slice(cut);
+}
+
 /* 파일 이름에서 진짜 제목만 꺼낸다.
  *   "02-1277237-Joel Dos Santos-Great.mp3"           → "Great"
  *   "1610710-Ambient Samurai-___________181202-2-1"  → (쓰레기라 빈 문자열)
  */
 function cleanTitle(fileName, artist) {
-  let t = String(fileName).replace(/\.[^.]+$/, '');
+  let t = unent(fileName).replace(/\.[^.]+$/, '');
   t = t.replace(/^\d{1,3}\s*[-._]\s*/, '');        // 앞의 트랙 번호
   t = t.replace(/^\d{5,}\s*[-._]\s*/, '');         // Jamendo 내부 ID
-  if (artist) {                                     // 앞에 붙은 아티스트 이름
-    const a = String(artist).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    t = t.replace(new RegExp(`^${a}\\s*[-._]\\s*`, 'i'), '');
-  }
+  if (artist) t = stripArtist(t, artist);           // 앞에 붙은 아티스트 이름
   t = t.replace(/_{3,}/g, ' ').replace(/[_]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
   // 괄호 안 설명과 날짜를 떼어낸다. 화면을 넘치게 만드는 주범이다.
   //   "Song for Self-Breaking Man(ぼくが…という歌）2018/12/02 part 2" → "Song for Self-Breaking Man"
@@ -182,19 +244,71 @@ function cleanTitle(fileName, artist) {
  * 전에는 정리에 실패하면 원본 앨범 제목으로 되돌아가면서 이 단계를 통째로
  * 건너뛰었다 — 그래서 일본어와 날짜가 붙은 긴 제목이 화면을 넘쳤다. */
 function finalize(raw) {
-  let t = String(raw || '');
+  let t = unent(raw);
+  // "Young Jazzmans Grin CC0", "... CC BY" 처럼 라이선스가 제목에 붙어 온다.
+  t = t.replace(/[\s._-]*\bCC\s*(0|BY(\s*-?\s*SA)?)\b[\s._-]*$/i, ' ');
   // 화면에 쓰는 Inter 는 한자·가나·키릴을 못 그린다. 빈칸으로 나오므로 떼어낸다.
   t = t.replace(/[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef\u0400-\u04ff]/g, ' ');
   t = t.replace(/\s{2,}/g, ' ').replace(/[\s\-–—_·]+$/, '').replace(/^[\s\-–—_·]+/, '').trim();
+  // "SWEET FRANCE wav" 처럼 확장자가 제목에 남아 오는 것이 있다.
+  t = t.replace(/[\s._-]+(wav|mp3|flac|ogg|aiff?)$/i, '').trim();
   if (!/[A-Za-z]/.test(t)) return '';          // 쓸 글자가 안 남았다
+  // "I 2018" 처럼 글자 한두 개에 숫자만 붙은 것은 제목이 아니다.
+  if (t.replace(/[^A-Za-z]/g, '').length < 3) return '';
   if (t.length > 42) t = `${t.slice(0, 41).trimEnd()}…`;
   return t;
+}
+
+/* 받아 놓고 소리를 재 본다.
+ *
+ * 태그와 제목으로는 타악기가 센 곡을 못 거른다. 1집 14곡을 재 보니
+ * 3kHz 위쪽 에너지가 전체보다 13.4dB 낮은 BAILARINA 가 가장 밝았고,
+ * 피아노·재즈 쪽은 -17 ~ -30dB 였다. 그래서 -14dB 를 선으로 잡는다.
+ * 이보다 밝으면 드럼이 앞에 나와 있다는 뜻이고, 조용한 사무실에 깔기 어렵다.
+ *
+ * ⚠️ 다이내믹 레인지(LRA)로는 거르지 않는다. 처음엔 "큰 곡 = 영화음악"
+ * 이라 보고 상한을 두려 했는데, 1집에서 LRA 가 가장 큰 곡(17.3)이
+ * 하필 제일 서정적인 Funeral piano melody 였다. 솔로 피아노가 원래 그렇다. */
+const MAX_BRIGHT = Number(val('--bright', '-14'));
+
+function rmsOf(file, af) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-ss', '20', '-t', '90',
+    '-i', file, '-af', `${af ? `${af},` : ''}astats=measure_perchannel=none`, '-f', 'null', '-'],
+    { encoding: 'utf8', maxBuffer: 1 << 26 });
+  const m = `${r.stdout || ''}${r.stderr || ''}`.match(/RMS level dB:\s*(-?[\d.]+|-?inf)/);
+  return m ? (/inf/.test(m[1]) ? -120 : Number(m[1])) : null;
+}
+
+/* 고역이 전체보다 몇 dB 낮은가. 낮을수록 어둡고 차분하다. */
+function brightness(file) {
+  const full = rmsOf(file, null);
+  const hi = rmsOf(file, 'highpass=f=3000');
+  return (full === null || hi === null) ? null : hi - full;
 }
 
 /* 제목에 걸러야 할 말이 있나 */
 function badTitle(t) {
   const low = ` ${String(t).toLowerCase()} `;
   return BAD_WORDS.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
+}
+
+/* 다른 집에서 이미 쓴 곡은 또 받지 않는다. bgm/ 아래 모든 목록.json 을 본다.
+ * 2집에 1집 곡이 다시 들어오면 구독자가 바로 알아챈다. */
+function usedElsewhere() {
+  const seen = new Set();
+  if (!existsSync(BGM_ROOT)) return seen;
+  const dirs = [BGM_ROOT, ...readdirSync(BGM_ROOT, { withFileTypes: true })
+    .filter((d) => d.isDirectory()).map((d) => join(BGM_ROOT, d.name))];
+  for (const d of dirs) {
+    const f = join(d, '목록.json');
+    if (!existsSync(f)) continue;
+    try {
+      (JSON.parse(readFileSync(f, 'utf8')).tracks || []).forEach((t) => {
+        if (t.source) seen.add(String(t.source).split('/').pop());
+      });
+    } catch { /* 읽히지 않으면 없는 셈 친다 */ }
+  }
+  return seen;
 }
 
 async function main() {
@@ -212,6 +326,7 @@ async function main() {
   list.note = '자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.';
   list.tracks = list.tracks || [];
   const already = new Set(list.tracks.map((t) => t.file));
+  const used = usedElsewhere();
 
   let got = 0, skipped = 0;
   for (const doc of docs) {
@@ -221,6 +336,7 @@ async function main() {
       ? { ok: true, name: `퍼블릭 도메인 (${String(doc.date || '').slice(0, 4)} 발행)`, credit: false }
       : licenseOK(doc.licenseurl);
     if (!lic.ok) { skipped++; continue; }
+    if (used.has(doc.identifier)) { skipped++; continue; }   // 다른 집에 이미 있다
 
     let info;
     try { info = filesOf(doc.identifier); } catch { skipped++; continue; }
@@ -243,8 +359,18 @@ async function main() {
     // Jamendo 파일 이름은 "02-1277237-Joel Dos Santos-Great.mp3" 꼴이다.
     // 트랙번호·내부ID·아티스트가 앞에 붙어 있어 그대로 쓰면 제목이 쓰레기가 된다.
     // 파일 이름에서 못 건지면 앨범 제목으로 가되, 그것도 반드시 finalize 를 지난다.
-    const title = cleanTitle(f.name, artist) || finalize(doc.title);
+    // 앨범 제목으로 되돌아갈 때도 아티스트 이름을 뗀다.
+    // 안 떼면 "Dave Lockyer - New Love" 처럼 이름이 제목에 남는다.
+    const title = cleanTitle(f.name, artist) || finalize(stripArtist(unent(doc.title), artist));
     if (!title) { console.log(`  — 건너뜀: 화면에 쓸 수 있는 제목이 없음 (${doc.identifier})`); skipped++; continue; }
+
+    /* 제목이 아티스트 이름과 같으면 제목이 아니다 — 앨범 제목이 사람 이름인
+     * 경우가 있다("Svetlana Sorokina"). 화면에 두 줄 같은 이름이 뜬다. */
+    const same = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (same(title) === same(artist)) {
+      console.log(`  — 건너뜀: 제목이 아티스트 이름과 같음 (${title.slice(0, 30)})`);
+      skipped++; continue;
+    }
 
     const bad = badTitle(title);
     if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 36)} ("${bad}")`); skipped++; continue; }
@@ -260,10 +386,19 @@ async function main() {
     console.log(`      ${String(artist).slice(0, 40)} · ${lic.name}`);
 
     if (!DRY) {
+      const to = join(BGM, safe);
       try {
-        const n = download(doc.identifier, f.name, join(BGM, safe));
+        const n = download(doc.identifier, f.name, to);
         console.log(`      ↓ ${(n / 1048576).toFixed(1)} MB`);
       } catch (e) { console.log(`      ✗ 실패: ${e.message}`); skipped++; continue; }
+
+      const br = brightness(to);
+      if (br !== null && br > MAX_BRIGHT) {
+        console.log(`      ✗ 너무 밝습니다 (고역 ${br.toFixed(1)}dB > ${MAX_BRIGHT}) — 지웁니다`);
+        try { unlinkSync(to); } catch { /* 이미 없으면 그만 */ }
+        skipped++; continue;
+      }
+      if (br !== null) console.log(`      고역 ${br.toFixed(1)}dB`);
     }
 
     list.tracks.push({
@@ -280,7 +415,7 @@ async function main() {
   if (!DRY) writeFileSync(listFile, `${JSON.stringify(list, null, 2)}\n`);
   console.log('─'.repeat(60));
   console.log(`✅ ${got}곡${DRY ? ' (dry — 받지 않음)' : ' 받음'} · 거름 ${skipped}곡`);
-  console.log(`   목록: playlist/bgm/목록.json (현재 ${list.tracks.length}곡)`);
+  console.log(`   목록: ${listFile.replace(ROOT, 'playlist')} (현재 ${list.tracks.length}곡)`);
   if (list.tracks.some((t) => t.credit)) {
     console.log('\n⚠️ CC BY 곡이 있습니다. 유튜브 설명란에 아래를 넣어야 합니다:');
     list.tracks.filter((t) => t.credit).forEach((t) => console.log(`   ${t.credit}`));

@@ -40,8 +40,8 @@ playlist/out/
 
 # 음원 파일은 커밋하지 않는다. 편마다 수십 MB 라 리포가 금세 무거워진다.
 # 목록.json 에 출처가 적혀 있어 fetch-music.mjs 로 다시 받을 수 있다.
-playlist/bgm/*.mp3
-playlist/bgm/*.m4a
-playlist/bgm/*.wav
-playlist/bgm/*.flac
-playlist/bgm/*.ogg
+playlist/bgm/**/*.mp3
+playlist/bgm/**/*.m4a
+playlist/bgm/**/*.wav
+playlist/bgm/**/*.flac
+playlist/bgm/**/*.ogg

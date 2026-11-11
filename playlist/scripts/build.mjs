@@ -9,7 +9,7 @@
 //   node playlist/scripts/build.mjs --minutes 2    2분짜리로 빨리 확인
 //   node playlist/scripts/build.mjs --tone         음원 없이 테스트 톤으로
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -17,9 +17,20 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/* 집(volume) 번호. --vol 002 를 주면
+ *   bgm/002/ 에서 곡을 읽고, art/002-*.png 를 쓰고,
+ *   out/minimalbreeze-002.mp4 로 뽑는다.
+ * 1집은 폴더 없이 bgm/ 바로 아래였다. --vol 을 안 주면 그대로 동작한다.
+ * 폴더를 먼저 정해야 해서 여기서만 argv 를 직접 읽는다. */
+const VOL = (() => {
+  const a = process.argv.slice(2); const i = a.indexOf('--vol');
+  return i >= 0 && a[i + 1] ? a[i + 1].replace(/[^\w-]/g, '') : '';
+})();
+
 const ART = join(ROOT, 'art');
 const BRAND = join(ROOT, 'brand');
-const BGM = join(ROOT, 'bgm');
+const BGM = VOL ? join(ROOT, 'bgm', VOL) : join(ROOT, 'bgm');
 const OUT = join(ROOT, 'out');
 const WORK = join(OUT, 'work');
 
@@ -34,7 +45,10 @@ const LOOK = {
   ink: '0xf2efe9',          // 글자
   accent: '0xffc66b',       // 이퀄라이저
   // 글자 뒤에만 깔리는 그늘. 그림 전체를 어둡게 하면 그림이 흐려진다.
+  /* 자막 띠를 덮는 검정 막의 세기. 그림마다 다르게 잡는다 — 아래 scrimFor 참고.
+   * 0.30 은 1집(띠 평균 밝기 105)에서 쓴 값이고, 그보다 밝은 그림이면 올린다. */
   scrim: 0.30,
+  scrimTargetY: 105,            // 막을 씌운 뒤 띠가 가야 할 밝기 (1집 기준)
   // 서로소 주기. 겹쳐서 전체 패턴이 7*11*13 = 1001초(16.7분)마다 반복한다.
   period: { lp: 7, drift: 11, dust: 13 },
   /* 화면에 올리는 것은 네 층뿐이다.
@@ -141,7 +155,13 @@ function loadTracks() {
 
 function pickArt() {
   if (!existsSync(ART)) return null;
-  const png = readdirSync(ART).filter((f) => /\.(png|jpg|jpeg)$/i.test(f)).sort();
+  let png = readdirSync(ART).filter((f) => /\.(png|jpg|jpeg)$/i.test(f)).sort();
+  // 집마다 풍경이 다르다. art/002-*.png 가 있으면 그것만 쓴다.
+  if (VOL) {
+    const mine = png.filter((f) => f.startsWith(`${VOL}-`));
+    if (!mine.length) fail(`${VOL}집 그림이 없습니다 — playlist/art/${VOL}-*.png 를 넣어 주세요`);
+    png = mine;
+  }
   return png.length ? join(ART, png[0]) : null;
 }
 
@@ -244,6 +264,27 @@ function baseLoop(art, seconds) {
   return loop;
 }
 
+/* 자막 띠 자리의 그림이 얼마나 밝은지 재서, 막의 세기를 정한다.
+ *
+ * 1집은 저녁 로비라 그 자리가 어두웠고(평균 105) 0.30 으로 충분했다.
+ * 2집은 해 지기 직전이라 바닥이 환하다(평균 191). 같은 0.30 을 쓰면
+ * 흰 글씨와 배경의 명암비가 3.2 까지 떨어진다 — 읽히는 선(4.5)보다 낮다.
+ * 그래서 재서 맞춘다. 1집 그림에 돌리면 그대로 0.30 이 나온다.
+ */
+function scrimFor(art) {
+  const { w, y } = LOOK;
+  const r = spawnSync('ffmpeg', ['-v', 'info', '-i', art,
+    '-vf', `crop=${w}:${y.scrimH}:0:${y.scrim},format=gray,signalstats,metadata=print`,
+    '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  const m = `${r.stdout || ''}${r.stderr || ''}`.match(/lavfi\.signalstats\.YAVG=([\d.]+)/);
+  if (!m) { console.log('   (띠 밝기를 못 재서 기본값을 씁니다)'); return LOOK.scrim; }
+  const avg = Number(m[1]);
+  const need = Math.max(LOOK.scrim, 1 - (LOOK.scrimTargetY / avg));
+  const got = Math.min(0.62, need);          // 너무 세면 띠가 검은 판처럼 보인다
+  console.log(`   자막 띠 밝기 ${avg.toFixed(0)} → 막 ${got.toFixed(2)}`);
+  return got;
+}
+
 /* ── 한 번에 통으로 렌더한다 ──────────────────────────────────
  *
  * 왜 구간을 나누지 않는가
@@ -254,7 +295,7 @@ function baseLoop(art, seconds) {
  *
  * 곡 제목은 enable=between(t,…) 으로 때맞춰 나타났다 사라진다.
  */
-function render(loop, audio, tracks, marks, out) {
+function render(loop, audio, tracks, marks, out, scrim) {
   const { w, fps, y } = LOOK;
   const lockup = join(BRAND, 'lockup-light.png');
   if (!existsSync(lockup)) fail(`로고가 없습니다: ${lockup}`);
@@ -273,7 +314,7 @@ function render(loop, audio, tracks, marks, out) {
   const fc = [
     `[1:a]showfreqs=mode=bar:ascale=sqrt:fscale=log:win_size=1024:colors=${LOOK.accent}`
       + `:size=${LOOK.eq.w}x${LOOK.eq.h},format=rgba,colorchannelmixer=aa=${LOOK.eq.alpha}[eq]`,
-    `[0:v]drawbox=x=0:y=${y.scrim}:w=${w}:h=${y.scrimH}:color=0x101010@${LOOK.scrim}:t=fill[bg]`,
+    `[0:v]drawbox=x=0:y=${y.scrim}:w=${w}:h=${y.scrimH}:color=0x101010@${scrim}:t=fill[bg]`,
     `[bg][eq]overlay=(W-w)/2:${y.eq}[a]`,
     `[a]${texts.join(',')}[t]`,
     `[2:v]scale=${LOOK.lockupW}:-1[lk]`,
@@ -324,10 +365,10 @@ function main() {
     at += t._sec + (i < tracks.length - 1 ? GAP_SEC : 0);
   });
 
-  const out = join(OUT, 'minimalbreeze.mp4');
-  render(loop, audio.file, tracks, marks, out);
+  const out = join(OUT, VOL ? `minimalbreeze-${VOL}.mp4` : 'minimalbreeze.mp4');
+  render(loop, audio.file, tracks, marks, out, scrimFor(art));
 
-  const chapFile = join(OUT, '챕터.txt');
+  const chapFile = join(OUT, VOL ? `챕터-${VOL}.txt` : '챕터.txt');
   writeFileSync(chapFile, `${chapters.join('\n')}\n`);
 
   console.log(`\n✅ ${out.replace(ROOT, 'playlist')}  (${mmss(probe(out))})`);
