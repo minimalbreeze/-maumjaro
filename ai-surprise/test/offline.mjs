@@ -4305,9 +4305,20 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
     assert.ok(!p.includes(bad), `"${bad}" 가 되살아났습니다`);
   }
   // 금지 목록에도 이름을 적어 둔다.
-  for (const no of ['no 3D render', 'no chibi', 'no bald head', 'no cropped legs']) {
+  for (const no of ['no 3D render', 'no bald head', 'no cropped legs']) {
     assert.ok(p.includes(no), `금지 목록에 "${no}" 가 없습니다`);
   }
+  // ⚠️ 2026-11-11. 'no chibi, no baby face, no toddler' 를 **뺐다.**
+  //    그 줄이 있는데도 김도영(24세)·하주석(32세)이 아이로 나왔다.
+  //    금지로 적은 낱말이 오히려 그쪽으로 끈다 — 모자 마크와 같은 성질이다.
+  //    이제 그릴 것을 적는다.
+  for (const w of ['chibi', 'baby face', 'toddler']) {
+    assert.ok(!p.includes(w), `"${w}" 가 프롬프트에 있습니다 — 부르면 그립니다`);
+  }
+  assert.ok(
+    /adult body proportions with an adult neck and shoulders/.test(p),
+    '어른으로 그리라는 줄이 없습니다'
+  );
   // 특정인을 닮히는 것은 여전히 막는다.
   assert.ok(/not resembling any specific real person/.test(p));
   assert.ok(/no real identifiable public figures/.test(p));
@@ -7313,14 +7324,14 @@ await asyncTest('모자와 가슴에 글자를 그리라고 하지 않는다', a
   );
 
   // 대신 무엇을 그릴지로 적는다.
+  // ⚠️ 2026-11-11. 전에는 "그 구단의 마크를 올려라" 였다. 모델은 KIA 를
+  //    **모르므로** 아는 것을 가져왔다 — 모자에 B, K, R 이 차례로 나왔다.
+  //    마크 이야기를 아예 안 한다. 모자는 한 색으로 칠한 천이다.
   assert.ok(
-    /the cap carries only the mark of the Korean team named for this figure/.test(p),
-    '모자에 무엇을 올릴지 적은 줄이 없습니다'
+    /the cap is plain fabric in one solid colour all over/.test(p),
+    '모자를 민무늬로 적은 줄이 없습니다'
   );
-  assert.ok(
-    /a plain unmarked cap is better than an invented mark/.test(p),
-    '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
-  );
+  assert.ok(!/mark of the Korean/.test(p), '아직 마크를 그리라고 시키고 있습니다');
   assert.ok(
     /the front of the jersey is smooth plain fabric/.test(p),
     '가슴이 민무늬라고 적은 줄이 없습니다'
@@ -7772,7 +7783,9 @@ test('유니폼이 장면 설명 바로 뒤, 고정 문구 앞에 들어간다',
     kind: 'SPORTS',
     uniform: uni,
   });
-  const atUniform = p.indexOf('KIA Tigers');
+  // ⚠️ 2026-11-11. 구단 이름을 프롬프트에서 뺐다 — 모델이 모르는 이름을
+  //    아는 구단으로 바꿔 그렸다(모자에 B·K·R). 이제 색으로 찾는다.
+  const atUniform = p.indexOf('bright red piping');
   const atStyle = p.indexOf(UV.SPORTS_PAINT.slice(0, 20));
   assert.ok(atUniform > 0, '유니폼 문장이 프롬프트에 없습니다');
   assert.ok(atStyle > 0, '화풍 문구가 프롬프트에 없습니다');
@@ -7821,7 +7834,11 @@ test('샷의 person 으로 그 사람의 유니폼을 찾아 꽂는다', () => {
   };
   const { scene: merged } = UV.mergeVisuals(scene, design, { kind: 'SPORTS', uniforms });
   const [s1, s2, s3] = merged.shots;
-  assert.ok(/KIA Tigers/.test(s1.image_prompt), '투수 샷에 유니폼이 안 붙었습니다');
+  assert.ok(/bright red piping/.test(s1.image_prompt), '투수 샷에 유니폼이 안 붙었습니다');
+  assert.ok(
+    !/KIA|Tigers|타이거즈/.test(s1.image_prompt),
+    '구단 이름이 프롬프트에 있습니다 — 모델이 아는 구단으로 바꿔 그립니다'
+  );
   assert.ok(/number 40/.test(s1.image_prompt), '투수 샷에 등번호가 안 붙었습니다');
   assert.ok(/team jacket/.test(s2.image_prompt), '감독 샷에 재킷이 안 붙었습니다');
   // ⚠️ 'number' 라는 낱말은 고정 문구에도 있다("when a jersey number is

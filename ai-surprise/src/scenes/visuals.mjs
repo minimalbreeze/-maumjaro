@@ -259,7 +259,7 @@ export const SPORTS_STYLE_SUFFIX =
   'fingertips reach mid-thigh when they hang down, the legs about half the ' +
   'total height, hands and feet sized to the body, ' +
   'an adult athlete in his twenties or thirties, never a child, ' +
-  'never chibi, never a toddler or baby face, ' +
+  'a grown adult face with a defined jawline, ' +
   'never a small head on a huge body or a huge head on a small body, ' +
   'never arms shorter than the torso, never a torso longer than the legs, ' +
   // ── 머리카락 ──
@@ -474,6 +474,17 @@ export const SPORTS_STYLE_SUFFIX =
   //
   // 야구 유니폼은 좌우 대칭이 눈에 가장 잘 띄는 옷이다 — 양말이
   // 길고 색이 진해서 한쪽만 달라도 바로 보인다.
+  // ── 자세가 자리와 맞아야 한다 (2026-11-11 운영자) ──
+  //
+  //   "홈베이스에서 도루 자세는 또 무엇인가?"
+  //
+  // 홈플레이트를 밟고 선 선수가 리드오프 자세를 하고 있었다. 야구에서
+  // 일어날 수 없는 그림이다. 자세만 적고 **어디서** 하는지를 안 적으면
+  // 모델이 둘을 아무렇게나 붙인다.
+  'the stance matches the place: a lead-off crouch happens off first, ' +
+  'second or third base and never on home plate, a batter stands in the ' +
+  'batter box beside home plate, a fielder stands on the dirt or grass ' +
+  'of his position, ' +
   'left and right match exactly: both socks the same colour and the same ' +
   'height, both shoes the same colour, both sleeves the same length, ' +
   'never one leg bare where the other has a sock, ' +
@@ -499,11 +510,17 @@ export const SPORTS_STYLE_SUFFIX =
   //    STL 이 나왔다. 막을수록 목록이 길어지고 목록이 길어질수록 더 나왔다.
   //
   //    남기는 것은 **무엇을 그릴지** 한 줄뿐이다.
-  'the cap carries only the mark of the Korean team named for this ' +
-  // ⚠️ 2026-11-09. 처음에 "한 글자"만 막았는데 다음 샷에서 **STL**
-  //    (세인트루이스)이 나왔다. 글자 수를 가리면 안 된다 — 한 글자든
-  //    세 글자든 남의 구단 표시다.
-  'figure, and a plain unmarked cap is better than an invented mark, ' +
+  // ⚠️⚠️ 2026-11-11. 여기 "그 구단의 마크를 올려라" 라고 적혀 있었다.
+  //    모델은 KIA 마크를 **모른다.** 그래서 아는 것을 가져왔다 —
+  //    김도영 모자에 보스턴 **B** 가 나왔다. 금지 목록을 지웠는데도
+  //    나온 까닭이 이것이다. 지우는 것만으로는 모자랐다. 여전히
+  //    **마크를 그리라고 시키고 있었다.**
+  //
+  //    운영자: "모자와 가슴에 로고, 유니폼이 해당 소속 팀 같지 않다"
+  //
+  //    그래서 마크 이야기를 아예 안 한다. 모자는 **한 색으로 칠한 천**이다.
+  'the cap is plain fabric in one solid colour all over, the front and ' +
+  'the sides the same, nothing printed or stitched on it, ' +
   'unhurried composition with room around the subject, ' +
   'soft depth, stadium or dugout background painted with care, ' +
   // ⚠️ 여기 있던 'no caption text, no watermark, no subtitles,
@@ -635,7 +652,10 @@ export const SPORTS_NEGATIVE_EXTRA =
   'no video game cutscene, no game engine render, no Unreal Engine, ' +
   'no realistic 3D character model, no motion capture figure, ' +
   'no live-action footage, no photographic person, ' +
-  'no chibi, no oversized head, no baby face, no toddler, ' +
+  // ⚠️ 2026-11-11. 'no chibi, no oversized head, no baby face, no toddler'
+  //    가 있었는데도 김도영(24세)이 **중학생**으로 나왔다. 시라카와 때와
+  //    같다. 금지로 적은 낱말이 오히려 그쪽으로 끈다.
+  'adult body proportions with an adult neck and shoulders, ' +
   'no bald head, no hairless character, ' +
   'no cropped legs, no cut-off limbs';
 
@@ -1438,6 +1458,40 @@ export function uniformsOf(item) {
   return out;
 }
 
+/**
+ * 이 샷에 **누가 나오는가**.
+ *
+ * ── 왜 person 칸만 믿으면 안 되나 (2026-11-11) ──
+ *
+ * 유니폼과 등번호는 코드가 적는다. 그런데 **어느 표를 찾을지는**
+ * 설계 AI 가 적어 준 `person` 칸에 달려 있었다. 그 칸이 비면 구단을
+ * 못 찾고, 못 찾으면 모델이 아무 유니폼이나 그린다.
+ *
+ * 12화에서 그 일이 났다 —
+ *   · 김도영 모자에 보스턴 **B**
+ *   · 등번호가 **1** (김도영은 5다)
+ *   · 유니폼이 남색·금색 (KIA 는 빨강·검정이다)
+ *
+ * 운영자: "이게 어디가 김도영인가?" / "김도영 등번호가 틀리다"
+ *
+ * CLAUDE.md 에 **"유니폼과 등번호는 코드가 적는다. 설계 AI 에게
+ * 맡기지 않는다"** 고 적어 두고, 어느 사람인지는 아직 맡기고 있었다.
+ * 부탁으로 지켜지는 규칙이 아니라는 것을 또 확인한 셈이다.
+ *
+ * 그래서 person 칸이 비면 **샷의 글에서 이름을 찾는다.** 설계 AI 가
+ * 화면 설명에 "김도영이 유격수 자리에 선다" 라고 썼다면 거기서 집는다.
+ */
+export function personOfShot(d, names) {
+  const direct = String(d?.person || '').trim();
+  if (direct && names.has(direct)) return direct;
+  const text = `${d?.image_prompt || ''} ${d?.card_text || ''} ${d?.video_prompt || ''}`;
+  // 긴 이름부터 본다 — 짧은 이름이 긴 이름 안에 들어 있을 수 있다.
+  for (const n of [...names].sort((a, b) => b.length - a.length)) {
+    if (n && text.includes(n)) return n;
+  }
+  return direct;
+}
+
 export function mergeVisuals(scene, design, { kind = null, photoNames = null, uniforms = null } = {}) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
@@ -1451,6 +1505,8 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
       return shot;
     }
     byId.delete(shot.shot_id);
+    // ⚠️ 유니폼·등번호를 찾을 이름. person 칸이 비어도 글에서 집는다.
+    const who = personOfShot(d, new Set([...(uniforms?.keys() || []), ...(photoNames || [])]));
     // 카드 샷은 이미지 모델을 부르지 않는다. 그래서 image_prompt 를
     // **비워 둔다** — 채워 두면 나중에 누가 그걸로 그림을 만들어서 돈이
     // 나가고, 화면에는 카드가 올라가 그림은 버려진다.
@@ -1463,10 +1519,11 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
         ? ''
         : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
             kind,
-            likeness: Boolean(photoNames && photoNames.has(String(d.person || '').trim())),
-            // 이 샷에 누가 나오는지는 설계 AI 가 person 칸에 적어 준다.
-            // 그 이름으로 구단 표를 찾아 유니폼을 **코드가** 적는다.
-            uniform: (uniforms && uniforms.get(String(d.person || '').trim())) || '',
+            likeness: Boolean(photoNames && photoNames.has(who)),
+            // 이 샷에 누가 나오는지는 person 칸을 **먼저** 보고, 비어
+            // 있으면 샷의 글에서 이름을 찾는다(personOfShot). 그 이름으로
+            // 구단 표를 찾아 유니폼과 등번호를 **코드가** 적는다.
+            uniform: (uniforms && uniforms.get(who)) || '',
           }),
       image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
@@ -1474,7 +1531,7 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
       motion_need: clampInt(d.motion_need, 0, 10),
       depicts_real_person: Boolean(d.depicts_real_person),
       // 누구인지. 사진을 받아 둔 사람이면 그 사진을 참조로 그린다.
-      person: String(d.person || '').trim(),
+      person: who || String(d.person || '').trim(),
     };
   });
 

@@ -38,108 +38,110 @@
 // ⚠️ 모르는 팀을 지어내 채우지 않는다. 표에 없는 팀은 아래 uniformClause
 //    가 빈 값을 돌려주고, 그러면 전처럼 장면 설명에 적힌 색을 쓴다.
 //    지금과 같아질 뿐 더 나빠지지는 않는다.
+// ⚠️⚠️ 구단 이름을 프롬프트에 **적지 않는다** (2026-11-11) ⚠️⚠️
+//
+// 전에는 'a KIA Tigers uniform, ...' 으로 시작했다. 그랬더니 모델이
+// 아는 구단으로 바꿔 그렸다 — 김도영 모자에 **B**(보스턴), 다음 샷에
+// **K**, 가슴에 또 **B**. 유니폼 색도 남색·금색이 나왔다.
+//
+// 모델은 KIA 를 **모른다.** 그런데 "KIA Tigers 유니폼" 이라고 하면
+// 모르는 채로 비슷한 무언가를 지어낸다. 모자 마크에서 배운 것과 같다 —
+// 이름을 부르면 그리려 든다.
+//
+// 그래서 **색과 무늬만** 적는다. 구단 이름도, 마크도, 글자도 없다.
+// 선수를 알아보게 하는 것은 색과 등번호다.
+//
+// 아래 `ko` 는 사람이 읽는 이름이고 **프롬프트에 안 들어간다.**
 export const KBO_UNIFORMS = {
-  // 확인 — 2021년 현대차그룹 공식 글: 빨강과 검정의 대비가 팀 상징이고,
-  // 홈 유니폼의 워드마크는 검정, 원정은 검정과 빨강을 흰 V선으로 가른다.
   KIA: {
     ko: 'KIA 타이거즈',
     jersey:
-      'a KIA Tigers uniform, a plain white jersey with red trim on the ' +
-      'collar and sleeves',
-    cap: 'a red cap',
+      'a white baseball jersey with bright red piping along the button placket and red trim on the collar and sleeves, black undershirt sleeves',
+    cap: 'a solid red cap',
     numberColour: 'black',
+    jacketColours: 'red and black',
     확실한가: '확인',
   },
-  // 통념 — 주황이 팀 색인 것은 확실하다. 같이 쓰는 어두운 색이 남색인지
-  // 검정인지는 해에 따라 달라서 '어두운 남색'으로 적었다.
   한화: {
     ko: '한화 이글스',
     jersey:
-      'a Hanwha Eagles uniform, a plain white jersey with orange and dark ' +
-      'navy trim on the collar and sleeves',
-    cap: 'an orange cap',
+      'a white baseball jersey with bright orange piping and dark navy trim on the collar and sleeves',
+    cap: 'a solid orange cap',
     numberColour: 'dark navy',
+    jacketColours: 'orange and dark navy',
     확실한가: '통념',
   },
-  // 통념 — 검정과 빨강. 검색에서 KT 볼캡이 검정으로 팔리는 것은 봤다.
   KT: {
     ko: 'KT 위즈',
     jersey:
-      'a KT Wiz uniform, a plain white jersey with black and red trim on ' +
-      'the collar and sleeves',
-    cap: 'a plain black cap',
+      'a white baseball jersey with black piping and red trim on the collar and sleeves',
+    cap: 'a solid black cap',
     numberColour: 'black',
+    jacketColours: 'black and red',
     확실한가: '통념',
   },
-  // 통념 — 파랑(남색)과 흰색. KBO 에서 가장 오래 안 바뀐 색 조합이다.
   삼성: {
     ko: '삼성 라이온즈',
     jersey:
-      'a Samsung Lions uniform, a plain white jersey with navy blue piping ' +
-      'along the collar and sleeves',
-    cap: 'a navy blue cap',
+      'a white baseball jersey with navy blue piping along the placket and navy trim on the collar and sleeves',
+    cap: 'a solid navy blue cap',
     numberColour: 'navy blue',
+    jacketColours: 'navy blue and white',
     확실한가: '통념',
   },
-  // 통념 — 빨강과 검정에 세로 줄무늬.
   LG: {
     ko: 'LG 트윈스',
     jersey:
-      'an LG Twins uniform, a white jersey with black pinstripes and red ' +
-      'trim on the collar',
-    cap: 'a plain black cap',
+      'a white baseball jersey with thin black pinstripes and red trim on the collar',
+    cap: 'a solid black cap',
     numberColour: 'red',
+    jacketColours: 'black and red',
     확실한가: '통념',
   },
-  // 통념 — 남색과 흰색에 빨강이 조금.
   두산: {
     ko: '두산 베어스',
     jersey:
-      'a Doosan Bears uniform, a plain white jersey with a navy collar and ' +
-      'a red accent stripe down the sleeve',
-    cap: 'a navy cap',
+      'a white baseball jersey with navy piping and a red accent stripe down the sleeve',
+    cap: 'a solid navy cap',
     numberColour: 'navy',
+    jacketColours: 'navy and red',
     확실한가: '통념',
   },
-  // 통념 — 빨강에 금색.
   SSG: {
     ko: 'SSG 랜더스',
     jersey:
-      'an SSG Landers uniform, a plain white jersey with red and gold trim ' +
-      'on the collar and sleeves',
-    cap: 'a red cap',
+      'a white baseball jersey with red piping outlined in gold on the collar and sleeves',
+    cap: 'a solid red cap',
     numberColour: 'red',
+    jacketColours: 'red and gold',
     확실한가: '통념',
   },
-  // 통념 — 남색에 금색.
   NC: {
     ko: 'NC 다이노스',
     jersey:
-      'an NC Dinos uniform, a plain white jersey with navy and gold trim ' +
-      'on the collar and sleeves',
-    cap: 'a navy cap',
+      'a white baseball jersey with navy piping and gold trim on the collar and sleeves',
+    cap: 'a solid navy cap',
     numberColour: 'navy',
+    jacketColours: 'navy and gold',
     확실한가: '통념',
   },
-  // 통념 — 남색과 빨강.
   롯데: {
     ko: '롯데 자이언츠',
     jersey:
-      'a Lotte Giants uniform, a plain white jersey with navy and red trim ' +
-      'on the collar and sleeves',
-    cap: 'a navy cap',
+      'a white baseball jersey with navy piping and red trim on the collar and sleeves',
+    cap: 'a solid navy cap',
     numberColour: 'navy',
+    jacketColours: 'navy and red',
     확실한가: '통념',
   },
-  // 통념 — 버건디(짙은 자주)에 남색.
   키움: {
     ko: '키움 히어로즈',
     jersey:
-      'a Kiwoom Heroes uniform, a plain white jersey with burgundy and navy ' +
-      'trim on the collar and sleeves',
-    cap: 'a burgundy cap',
-    확실한가: '통념',
+      'a white baseball jersey with burgundy piping and navy trim on the collar and sleeves',
+    cap: 'a solid burgundy cap',
     numberColour: 'burgundy',
+    jacketColours: 'burgundy and navy',
+    확실한가: '통념',
   },
 };
 
@@ -241,15 +243,30 @@ export function uniformClause({ team, number, role } = {}) {
   //
   // 선수를 알아보게 하는 것은 **색과 등번호**다. 숫자는 한두 자리라
   // 모델이 제대로 그린다. 가슴 글자는 없어도 아무것도 안 잃는다.
-  const parts = [
-    `wearing ${u.jersey}`,
-    u.cap,
-    // 긍정문으로 적는다. "글자를 쓰지 마라"로 적으면 글자를 그린다.
-    'the front of the jersey is smooth plain fabric',
-  ];
+  // ⚠️⚠️ 차례가 중요하다 (2026-11-11) ⚠️⚠️
+  //
+  // 전에는 이 차례였다 —
+  //   유니폼 → 모자 → "가슴은 민무늬" → (감독이면) 재킷
+  //
+  // 그래서 **재킷이 민무늬 규칙 밖에 있었다.** 이범호 감독 그림에
+  // 재킷 가슴 한가운데 빨간 마크가 그려져 나왔다. 규칙은 '유니폼'
+  // 가슴만 말하고 있었고, 그 사람은 재킷을 입고 있었다.
+  //
+  // 운영자: "모자와 가슴에 로고, 유니폼이 해당 소속 팀 같지 않다"
+  //
+  // 그래서 **입는 것을 전부 먼저 적고, 민무늬 규칙을 맨 뒤에** 둔다.
+  const parts = [`wearing ${u.jersey}`, u.cap];
   if (isStaff) {
-    parts.push(`a team jacket in the same colours over the uniform`);
+    // ⚠️ "같은 색" 으로 적었더니 회색 재킷이 나왔다. 색을 다시 적는다.
+    // ⚠️ 구단 이름(u.ko)을 넣지 않는다. 색만 적는다.
+    parts.push(`a team jacket in ${u.jacketColours} over the uniform`);
   }
+  // 입는 것을 다 적은 **뒤에** 민무늬를 말한다. 재킷까지 덮는다.
+  parts.push(
+    isStaff
+      ? 'the front of the jacket and the jersey is smooth plain fabric in one solid colour'
+      : 'the front of the jersey is smooth plain fabric'
+  );
 
   const n = String(number ?? '').trim();
   if (n && !isStaff) {
