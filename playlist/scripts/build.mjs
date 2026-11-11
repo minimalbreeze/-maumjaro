@@ -48,7 +48,10 @@ const LOOK = {
   /* 자막 띠를 덮는 검정 막의 세기. 그림마다 다르게 잡는다 — 아래 scrimFor 참고.
    * 0.30 은 1집(띠 평균 밝기 105)에서 쓴 값이고, 그보다 밝은 그림이면 올린다. */
   scrim: 0.30,
-  scrimTargetY: 105,            // 막을 씌운 뒤 띠가 가야 할 밝기 (1집 기준)
+  /* 막을 씌운 뒤 띠가 가야 할 밝기. 흰 글씨(242)와 명암비 4.5 를 넘기려면
+   * 111 아래여야 한다. 여유를 두고 95 로 잡는다.
+   * 1집 그림(원래 105)에 돌리면 0.30 이 나와서 1집 결과는 그대로다. */
+  scrimTargetY: 95,
   // 서로소 주기. 겹쳐서 전체 패턴이 7*11*13 = 1001초(16.7분)마다 반복한다.
   period: { lp: 7, drift: 11, dust: 13 },
   /* 화면에 올리는 것은 네 층뿐이다.
@@ -57,7 +60,15 @@ const LOOK = {
    * minimal 이라는 이름을 달고 여섯 층을 쌓을 수는 없다. */
   eq: { w: 520, h: 52, alpha: 0.70 },
   lockupW: 560,   // 줄이면 선과 글자가 가늘어져 사라진다. 원본 크기에 가깝게 쓴다.
-  y: { scrim: 586, scrimH: 364, eq: 626, title: 700, artist: 772, lockup: 858 },
+  /* 자막 띠는 586 에서 시작해 화면 바닥까지 간다.
+   * 전에는 364px 짜리 상자였는데, 밝은 그림(2집) 위에서는 위아래 경계선이
+   * 그대로 보였다 — 회색 판을 얹은 것처럼 됐다. 바닥까지 끌어내려 아래
+   * 경계를 없애고, 위쪽만 scrimFade 만큼 서서히 번지게 한다. */
+  y: { scrim: 586, eq: 626, title: 700, artist: 772, lockup: 858 },
+  /* 번지는 구간은 제목이 앉는 y=700 보다 위에서 끝나야 한다.
+   * 132 로 뒀더니 586+132=718 이라 제목이 아직 옅은 자리에 걸쳤고
+   * 명암비가 3.3 까지 떨어졌다. 90 이면 676 에서 끝난다. */
+  scrimFade: 90,
 };
 
 const args = process.argv.slice(2);
@@ -274,7 +285,7 @@ function baseLoop(art, seconds) {
 function scrimFor(art) {
   const { w, y } = LOOK;
   const r = spawnSync('ffmpeg', ['-v', 'info', '-i', art,
-    '-vf', `crop=${w}:${y.scrimH}:0:${y.scrim},format=gray,signalstats,metadata=print`,
+    '-vf', `crop=${w}:${LOOK.h - y.scrim}:0:${y.scrim},format=gray,signalstats,metadata=print`,
     '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 1 << 26 });
   const m = `${r.stdout || ''}${r.stderr || ''}`.match(/lavfi\.signalstats\.YAVG=([\d.]+)/);
   if (!m) { console.log('   (띠 밝기를 못 재서 기본값을 씁니다)'); return LOOK.scrim; }
@@ -283,6 +294,26 @@ function scrimFor(art) {
   const got = Math.min(0.62, need);          // 너무 세면 띠가 검은 판처럼 보인다
   console.log(`   자막 띠 밝기 ${avg.toFixed(0)} → 막 ${got.toFixed(2)}`);
   return got;
+}
+
+/* 위쪽이 서서히 번져 들어가는 자막 띠.
+ *
+ * drawbox 는 경계가 칼같이 떨어진다. 얇은 상자를 알파를 조금씩 올리며
+ * 쌓아서 번지는 효과를 낸다. 한 칸이 3px, 알파 차이는 1/44 라 눈에 안 띈다.
+ * 아래쪽은 화면 바닥까지 가므로 경계 자체가 없다. */
+function scrimBoxes(scrim) {
+  const { w, h, y, scrimFade } = LOOK;
+  const step = 3;
+  const steps = Math.round(scrimFade / step);
+  const out = [];
+  for (let i = 0; i < steps; i++) {
+    const a = (scrim * (i + 1)) / steps;
+    out.push(`drawbox=x=0:y=${y.scrim + i * step}:w=${w}:h=${step}`
+      + `:color=0x101010@${a.toFixed(4)}:t=fill`);
+  }
+  const top = y.scrim + steps * step;
+  out.push(`drawbox=x=0:y=${top}:w=${w}:h=${h - top}:color=0x101010@${scrim}:t=fill`);
+  return out;
 }
 
 /* ── 한 번에 통으로 렌더한다 ──────────────────────────────────
@@ -305,16 +336,19 @@ function render(loop, audio, tracks, marks, out, scrim) {
     const [a, b] = marks[i];
     const on = `:enable='between(t,${a.toFixed(2)},${b.toFixed(2)})'`;
     const sub = `${t.artist}${t.recorded ? `  ·  ${t.recorded}` : ''}`.trim();
+    /* 밝은 그림 위에서는 막만으로 아슬아슬하다. 글자 바로 밑에 옅은 그림자를
+     * 깔면 막을 더 세게 올리지 않고도 글자가 또렷하게 떨어진다. */
+    const shadow = ':shadowcolor=0x101010@0.55:shadowx=0:shadowy=2';
     texts.push(`drawtext=fontfile=${FONT.medium}:textfile=${textFile(t.title)}:fontcolor=${LOOK.ink}`
-      + `:fontsize=54:x=(w-text_w)/2:y=${y.title}${on}`);
+      + `:fontsize=54:x=(w-text_w)/2:y=${y.title}${shadow}${on}`);
     texts.push(`drawtext=fontfile=${FONT.light}:textfile=${textFile(sub)}`
-      + `:fontcolor=${LOOK.ink}@0.60:fontsize=26:x=(w-text_w)/2:y=${y.artist}${on}`);
+      + `:fontcolor=${LOOK.ink}@0.60:fontsize=26:x=(w-text_w)/2:y=${y.artist}${shadow}${on}`);
   });
 
   const fc = [
     `[1:a]showfreqs=mode=bar:ascale=sqrt:fscale=log:win_size=1024:colors=${LOOK.accent}`
       + `:size=${LOOK.eq.w}x${LOOK.eq.h},format=rgba,colorchannelmixer=aa=${LOOK.eq.alpha}[eq]`,
-    `[0:v]drawbox=x=0:y=${y.scrim}:w=${w}:h=${y.scrimH}:color=0x101010@${scrim}:t=fill[bg]`,
+    `[0:v]${scrimBoxes(scrim).join(',')}[bg]`,
     `[bg][eq]overlay=(W-w)/2:${y.eq}[a]`,
     `[a]${texts.join(',')}[t]`,
     `[2:v]scale=${LOOK.lockupW}:-1[lk]`,
