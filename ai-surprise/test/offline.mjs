@@ -6057,7 +6057,14 @@ await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜�
     const p = V.composeImagePrompt('a pitcher on the mound', null, { kind: 'SPORTS', likeness });
     assert.ok(/no photorealistic faces/.test(p), `실사 얼굴 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no photograph/.test(p), `사진 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no extra arms/.test(p), `팔 개수 금지가 빠졌습니다 (likeness=${likeness})`);
+    // ⚠️ 2026-11-11. 팔 개수를 **금지로** 막던 것을 뺐다. 'no third arm'
+    //    이 있는데도 팔이 셋 나왔다(9화에 이어 두 번째). 이제 어깨에
+    //    하나씩 붙어 있다는 **긍정문**이 맡는다.
+    assert.ok(
+      /one left arm attached at the left shoulder/.test(p),
+      `팔이 어디 붙는지 적은 줄이 빠졌습니다 (likeness=${likeness})`
+    );
+    assert.ok(!/third arm|extra arms/.test(p), '팔 금지 낱말이 돌아왔습니다 — 부르면 그립니다');
     // ⚠️ 2026-11-09. 구단 이름과 '스폰서 글자' 금지는 **뺐다.**
     //    flux-schnell·dev 에 negative_prompt 가 없어 본문으로 갔다.
     //    실사 금지는 남긴다 — 그쪽은 유튜브 정책이고, 화풍을 적는
@@ -7264,8 +7271,9 @@ await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
   const V9 = await import('../src/scenes/visuals.mjs');
   const p = V9.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
   for (const must of [
-    'no missing arm',      // 빠진 팔
-    'no one-armed figure', // 외팔이
+    'both arms drawn and attached at the shoulders',      // 빠진 팔
+    // ⚠️ 2026-11-11. 'no one-armed figure' 를 뺐다 — 금지 낱말이 오히려
+    //    그쪽으로 끈다. 위의 '어깨에 하나씩' 긍정문이 맡는다.
     'both arms are drawn', // 둘 다 그린다
     'the glove arm',       // 야구는 글러브 팔을 잊는다
     'no obese',            // 비만
@@ -7275,10 +7283,26 @@ await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
   ]) {
     assert.ok(p.includes(must), `금지·지시가 빠졌습니다: ${must}`);
   }
-  // 팔이 셋인 것도 그대로 막혀 있어야 한다. 한쪽을 고치다 다른 쪽을
-  // 잃으면 9화의 문제가 돌아온다.
-  assert.ok(p.includes('no third arm'), '팔이 셋인 것을 막던 줄이 사라졌습니다');
-  assert.ok(p.includes('no extra arms'), '팔이 더 많은 것을 막던 줄이 사라졌습니다');
+  // ── 팔 개수는 **금지가 아니라 긍정문**이 맡는다 (2026-11-11) ──
+  //
+  // 'no third arm, no spare hand, no extra arms' 를 다 적어 뒀는데도
+  // 12화에서 **또 팔이 셋** 나왔다. 9화에 이어 두 번째다.
+  //   운영자: "그림도 어색한데 팔이 3개다"
+  //
+  // 금지 낱말이 오히려 그쪽으로 끈다 — 모자 마크(B→C→STL)와
+  // 아기 얼굴에서 이미 두 번 겪은 성질이다.
+  // 이제 **어디에 몇 개가 붙는지**를 적는다.
+  assert.ok(
+    p.includes('one left arm attached at the left shoulder'),
+    '팔이 어디 붙는지 적은 줄이 사라졌습니다'
+  );
+  assert.ok(
+    p.includes('nothing else growing from the torso'),
+    '몸통에서 다른 게 자라지 않는다는 줄이 사라졌습니다'
+  );
+  for (const w of ['no third arm', 'no spare hand', 'no extra arms', 'no one-armed']) {
+    assert.ok(!p.includes(w), `"${w}" 가 돌아왔습니다 — 부르면 그립니다`);
+  }
 });
 
 await asyncTest('모자와 가슴에 글자를 그리라고 하지 않는다', async () => {

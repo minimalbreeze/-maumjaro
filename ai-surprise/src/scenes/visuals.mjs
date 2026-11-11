@@ -298,8 +298,18 @@ export const SPORTS_STYLE_SUFFIX =
   'never a front-facing face on a figure seen from behind, ' +
   // 2026-11-07 운영자: "선수 동작이 이상하게 팔이 3개인 경우도 있구나."
   // 움직이는 장면을 늘리면서 생긴 일이다. 팔다리 개수를 못 박는다.
-  'exactly one head, two arms and two legs, no extra or duplicated limbs, ' +
-  'no third arm, no spare hand, five fingers on each hand, ' +
+  // ⚠️⚠️ 2026-11-11. 여기 'no third arm, no spare hand' 가 있었는데도
+  //    또 **팔이 셋** 나왔다(5:43 샷). 9화에 이어 두 번째다.
+  //
+  //    운영자: "그림도 어색한데 팔이 3개다"
+  //
+  //    금지로는 개수를 못 막는다. 모자 마크·아기 얼굴에서 배운 것과
+  //    같다 — 'third arm' 이라고 적으면 그 낱말이 모델에게 간다.
+  //    **어디에 몇 개가 붙어 있는지를 그릴 것으로 적는다.**
+  'one head on one neck, one left arm attached at the left shoulder and ' +
+  'one right arm attached at the right shoulder and nothing else growing ' +
+  'from the torso, each arm ending in one hand of five fingers, ' +
+  'one left leg and one right leg attached at the hips, ' +
   // ⚠️ 2026-11-09. 여기까지만 적었더니 **팔이 빠진** 그림이 나왔다.
   //    개수를 못 박는 것과 "빠뜨리지 마라"는 다른 말이다. 둘 다 적는다.
   //    야구는 특히 그렇다 — 던지는 팔만 그리고 글러브 낀 팔을 잊는다.
@@ -608,7 +618,10 @@ export const SPORTS_NEGATIVE_EXTRA =
   //    는 negative_prompt 를 안 받아서 이 말들이 **프롬프트 본문**에
   //    붙어 갔다. 막으려던 낱말을 모델에게 읽어 준 셈이다.
   //    유니폼은 uniforms.mjs 가 한국 구단 색으로 적어 준다.
-  'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
+  // ⚠️ 2026-11-11. 'no extra arms, no extra legs, no duplicated limbs' 를
+  //    뺐다. 그 줄이 있는데도 팔이 셋 나왔다. 팔다리 개수는 위의
+  //    **긍정문**(어깨에 하나씩, 엉덩이에 하나씩)이 맡는다.
+  'no malformed hands, ' +
   // ── 팔다리가 **빠지는** 것도 막는다 (2026-11-09 운영자) ──
   //
   //   "이 장면 무엇인가? 외팔이에 뭔가 이상하다"
@@ -619,7 +632,8 @@ export const SPORTS_NEGATIVE_EXTRA =
   // 내가 한쪽만 봤다. 9화에서 팔이 셋 나온 걸 고치면서
   // `no extra arms`(더 많은 것)만 적고 **빠진 것**은 안 적었다.
   // 모델은 팔을 더 그리지 않았을 뿐, 덜 그리는 것은 막히지 않았다.
-  'no missing arm, no missing leg, no one-armed figure, ' +
+  // ⚠️ 2026-11-11. 'no missing arm, no one-armed figure' 도 뺐다.
+  //    같은 까닭이다. 아래 긍정문만 남긴다.
   'both arms drawn and attached at the shoulders even when one is ' +
   'behind the body, ' +
   // ── 선수를 뚱뚱하게 그리지 않는다 (2026-11-09 운영자) ──
