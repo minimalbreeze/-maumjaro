@@ -160,9 +160,20 @@ export const SPORTS_PAINT_CANDIDATES = {
       'crowds and distant background painted as loose soft dabs, ' +
       // 층이 셋이어야 썰렁하지 않다 (2026-11-04 운영자 요청).
       // 앞을 흐리게 두는 것이 깊이를 만든다.
-      'composed in three layers - a soft out-of-focus object close to the ' +
-      'camera, the subject sharp in the middle, and a loosely painted ' +
-      'background behind - with gentle atmosphere such as light haze, ' +
+      // ── 사진 말을 그림 말로 바꾼다 (2026-11-11) ──
+      //
+      //   운영자: "그림 많이 좋아졌다. 나중에 이 그림 톤만 맞추면
+      //            될 것 같다"
+      //
+      // 사진에서 그린 샷은 수채 느낌인데 글로 그린 샷만 배경이
+      // **사진처럼 뿌옇게** 나왔다. 까닭이 이 줄이다 — 'out-of-focus'
+      // 는 렌즈 말이다. **그림에는 초점이 없다.** 붓질이 성근 것뿐이다.
+      //
+      // 세 겹으로 짜는 것 자체는 좋으니 남기고 말만 바꾼다.
+      'composed in three layers - a shape close to the camera painted in ' +
+      'a few broad strokes, the subject drawn with the cleanest linework ' +
+      'in the middle, and a background washed in with thin flat colour ' +
+      'behind - with gentle atmosphere such as light haze, ' +
       'drifting dust or low sun, ' +
       'drawn artwork, never a 3D render, never CGI, never a photograph',
   },
@@ -532,7 +543,9 @@ export const SPORTS_STYLE_SUFFIX =
   'the cap is plain fabric in one solid colour all over, the front and ' +
   'the sides the same, nothing printed or stitched on it, ' +
   'unhurried composition with room around the subject, ' +
-  'soft depth, stadium or dugout background painted with care, ' +
+  // ⚠️ 'soft depth' 도 렌즈 말이다. 같이 바꾼다.
+  'the stadium or dugout behind painted with care in flatter colour than ' +
+  'the subject, ' +
   // ⚠️ 여기 있던 'no caption text, no watermark, no subtitles,
   //    no sponsor logo' 를 뺐다. 금지가 아니라 **그릴 것의 목록**으로
   //    모델에게 갔다(위 설명). 대신 "면이 매끈하다"는 긍정문으로 적는다 —

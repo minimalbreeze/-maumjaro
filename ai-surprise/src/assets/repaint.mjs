@@ -72,7 +72,24 @@ export const REPAINT_KEEP =
   //    "구도를 그대로 지켜라"와 "완성된 그림에는 얹힌 게 없다"가 싸웠고
   //    앞엣것이 이겼다. 모델이 워터마크를 장면의 일부로 보고 같이 그렸다.
   //    그래서 구도 규칙 **안에서** 예외를 밝힌다.
-  'this applies to the people and the place only';
+  'this applies to the people and the place only, ' +
+  // ── 가슴만은 **예외**다 (2026-11-11) ──
+  //
+  //   운영자: "그림 가슴에 로고가 아직도 이상하다.
+  //            로고가 이상할 것 같으면 넣지 마라"
+  //
+  // 전에는 이 문장 **뒤에** 따로 "가슴은 민무늬" 를 붙였다. 그런데
+  // "구도를 그대로 두라" 가 워낙 세서 그 지시를 이겼다. 뒤에 붙인
+  // 말은 앞말을 못 이긴다.
+  //
+  // 그래서 예외를 **이 문장 안에** 박는다. 무엇을 지킬지 말하는 바로
+  // 그 자리에서 "가슴은 빼고" 라고 적어야 한다.
+  //
+  // 글자를 지우라고는 하지 않는다 — 그 낱말을 부르면 그린다.
+  // **다시 칠하라**고만 한다.
+  'with one exception: the front of the jersey is repainted as smooth ' +
+  'plain fabric in the jersey colour, whatever was there before is not ' +
+  'carried over';
 
 /**
  * 사진 느낌을 지우는 줄.

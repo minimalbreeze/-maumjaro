@@ -6441,7 +6441,16 @@ await asyncTest('화면을 층으로 채우되 요란하게 하지 않는다', a
   // 그림 모델이 읽는다. 한쪽에만 적으면 다른 쪽이 모른다.
   const p = V.composeImagePrompt('a batter', null, { kind: 'SPORTS' });
   assert.ok(/three layers/.test(p), '그림 모델에게 가는 글에 층 지시가 없습니다');
-  assert.ok(/out-of-focus/.test(p), '앞을 흐리게 하라는 말이 없습니다');
+  // ⚠️ 2026-11-11. 'out-of-focus' 를 뺐다. **렌즈 말**이라 글로 그린
+  //    샷의 배경이 사진처럼 뿌옇게 나왔다 — 사진에서 그린 샷과 톤이
+  //    어긋난 까닭이 이것이다. 그림에는 초점이 없고 붓질이 성글 뿐이다.
+  assert.ok(
+    /painted in a few broad strokes/.test(p),
+    '앞을 성글게 칠하라는 말이 없습니다'
+  );
+  for (const w of ['out-of-focus', 'soft depth', 'depth of field']) {
+    assert.ok(!p.includes(w), `"${w}" 는 렌즈 말입니다 — 배경이 사진처럼 나옵니다`);
+  }
 });
 
 
