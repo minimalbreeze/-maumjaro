@@ -21,7 +21,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, modelFor, DEFAULT_IMAGE_MODEL } from './replicate.mjs';
 import { SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE } from '../scenes/visuals.mjs';
-import { photoOf as mainPhoto, sparePhotoOf as sparePhoto } from './photo-of.mjs';
+import { photoOf as mainPhoto, sparePhotoOf as sparePhoto, allPhotosOf } from './photo-of.mjs';
+import { repaintPrompt, REPAINT_MODEL } from './repaint.mjs';
+import { cropToDataUri, DEFAULT_CROP } from './crop.mjs';
 
 /**
  * 참조 모델이 **사진에서 얼굴을 못 찾았는가.**
@@ -222,6 +224,12 @@ export async function generateImages(prompts, {
      맞는 아무 얼굴"이 나오고, 참조를 주면 실제로 닮는다.
      운영자 요청(2026-11-03): "그림이 진짜 선수 같은 느낌이었으면". */
   people = [],
+  /* 사람이 나오는 샷을 **받은 사진을 그림으로 바꿔** 만들지.
+     2026-11-11 운영자: "전달해준 사진을 지브리 스타일로 그려서
+     사용한다. 워터마크만 나오지 않게 한다. 그리고 나머지 설명의
+     그림은 해당 팀 유니폼 색상을 맞춰서 그려진 그림으로 사용한다."
+     끄면 전처럼 글로 그린다(화풍 비교용). */
+  usePhotos = true,
   maxUsd = DEFAULT_MAX_USD,
   force = false,
   client = null,
@@ -277,6 +285,32 @@ export async function generateImages(prompts, {
     );
   }
 
+  // ── 사람 샷은 **받은 사진을 그림으로 바꿔** 쓴다 (2026-11-11) ──
+  //
+  // 운영자: "준 이미지 중에 차라리 하나씩 골라서 그대로 그려서 써라.
+  //          등번호 이런 거 맞추면 뭐하나, 그림이 어색하기만 하다."
+  //
+  // 맞는 말이다. 글로 그리면 지어내야 할 것이 너무 많다 — 얼굴, 몸,
+  // 자세, 유니폼 색, 모자 마크, 팔 개수. 12화에서 그 전부가 틀렸다.
+  // 사진에서 그리면 **지어낼 것이 없다.** 닮음도 비율도 자세도
+  // 유니폼도 등번호도 사진에 이미 들어 있다.
+  //
+  // 그래서 사람이 나오는 샷은 그 사람의 사진 하나를 골라 화풍만
+  // 바꾼다. 사람이 없는 샷(빈 구장, 물건, 글자 카드)은 그대로 둔다 —
+  // 운영자가 "중간 그림은 좋다" 고 한 그쪽이다.
+  //
+  // 한 사람에게 사진이 여러 장이면 샷마다 **돌려 쓴다.** 같은 사진이
+  // 연달아 나오면 영상이 멈춰 보인다.
+  const photosOf = new Map();
+  if (usePhotos) {
+    for (const p of people || []) {
+      const name = String(p?.name || '').trim();
+      const list = allPhotosOf(p);
+      if (name && list.length) photosOf.set(name, list);
+    }
+  }
+  const photoTurn = new Map(); // 사람마다 몇 번째 사진을 쓸 차례인가
+
   const made = [];
   const failed = [];
   let spentUsd = 0;
@@ -293,9 +327,12 @@ export async function generateImages(prompts, {
     // 상한을 넘기 **전에** 멈춘다. 넘은 다음에 세면 이미 쓴 뒤다.
     // ⚠️ 참조 모델이 더 비싸므로 **그 샷의 값**으로 센다. 싼 값으로
     //    세면 상한을 넘겨 놓고 넘은 줄 모른다.
-    const nextCost = photoOf.get(String(shot.person || '').trim())
-      ? modelFor(REFERENCE_MODEL).usdPerImage
-      : perImage;
+    const whoNext = String(shot.person || '').trim();
+    const nextCost = photosOf.has(whoNext)
+      ? modelFor(REPAINT_MODEL).usdPerImage
+      : photoOf.get(whoNext)
+        ? modelFor(REFERENCE_MODEL).usdPerImage
+        : perImage;
     if (spentUsd + nextCost > maxUsd) {
       stoppedBy = 'budget';
       for (const rest of todo.slice(i)) {
@@ -332,14 +369,23 @@ export async function generateImages(prompts, {
     // 마지막 단은 참조 없이. 사진을 안 받아 둔 사람은 처음부터 여기다.
     refChain.push({ url: null, label: null });
 
+    // 받아 둔 사진이 있는 사람이면 **그 사진을 그림으로 바꾼다.**
+    const pool = photosOf.get(who) || null;
+    let fromPhoto = pool && pool.length ? pool[(photoTurn.get(who) || 0) % pool.length] : null;
+    if (fromPhoto) photoTurn.set(who, (photoTurn.get(who) || 0) + 1);
+
     let refStep = 0;
-    let reference = refChain[0].url;
-    let useKey = reference ? REFERENCE_MODEL : modelKey;
+    let reference = fromPhoto || refChain[0].url;
+    let useKey = fromPhoto ? REPAINT_MODEL : reference ? REFERENCE_MODEL : modelKey;
     let shotCost = modelFor(useKey).usdPerImage;
 
     onProgress?.(
       `이미지 ${i + 1}/${todo.length} — ${shot.shot_id} (장면 ${shot.scene_number})` +
-        (reference ? `  👤 ${shot.person} ${refChain[refStep].label}` : '')
+        (fromPhoto
+          ? `  🖼 ${who} 사진을 그림으로`
+          : reference
+            ? `  👤 ${shot.person} ${refChain[refStep].label}`
+            : '')
     );
 
     let lastError = null;
@@ -347,10 +393,27 @@ export async function generateImages(prompts, {
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
       try {
-        const result = await api.generate(shot.image_prompt, {
+        // 사진에서 그리는 샷은 **지시문도 다르다.** 화면을 설명하는
+        // 글이 아니라 "이 사진을 그림으로 바꿔라" 다.
+        let prompt = shot.image_prompt;
+        let ref = reference;
+        if (fromPhoto && attempt === 1) {
+          // 워터마크는 잘라서 안 보여준다. 실패하면 원래 주소 그대로.
+          const c = await cropToDataUri(fromPhoto, { crop: DEFAULT_CROP });
+          if (c.needsNewPhoto) {
+            onProgress?.(`  ${shot.shot_id} — ${c.reason}`);
+          } else {
+            ref = c.url;
+          }
+        }
+        if (fromPhoto) {
+          prompt = repaintPrompt({ name: who });
+          reference = ref;
+        }
+        const result = await api.generate(prompt, {
           modelKey: useKey,
           aspectRatio: ASPECT_RATIO,
-          referenceImage: reference,
+          referenceImage: ref,
         });
         // 호출이 성공한 시점에 돈이 나갔다. 내려받기가 실패해도 쓴 건 쓴 거다.
         spentUsd += result.usdEstimate ?? shotCost;
@@ -375,6 +438,20 @@ export async function generateImages(prompts, {
           stoppedBy = 'credit';
           onProgress?.(`  ${shot.shot_id} — 잔액이 떨어졌습니다. 남은 샷은 걸지 않습니다.`);
           break;
+        }
+        // ⚠️ 사진에서 그리다 막히면 **글로 그리는 쪽으로 내려간다.**
+        //    12화에서 55장이 통째로 자리표시가 된 적이 있다. 한 길이
+        //    막혔을 때 빈 화면을 남기는 것이 가장 나쁘다.
+        if (fromPhoto && !isOutOfCredit(err)) {
+          fromPhoto = null;
+          reference = refChain[refStep].url;
+          useKey = reference ? REFERENCE_MODEL : modelKey;
+          shotCost = modelFor(useKey).usdPerImage;
+          onProgress?.(
+            `  ${shot.shot_id} — 사진에서 못 그렸습니다(${err.message?.slice(0, 60)}). 글로 그립니다.`
+          );
+          attempt -= 1;
+          continue;
         }
         // 얼굴을 못 찾은 것은 다시 걸어도 똑같다. 사진이 문제라
         // 사진을 바꿔야 한다. 다음 단으로 내려간다.

@@ -41,3 +41,24 @@ export function sparePhotoOf(p) {
   // 대표가 photos[0] 이면 예비는 photos[1] 이다.
   return String(p?.photo || '').trim() ? rows[0] || '' : rows[1] || '';
 }
+
+/**
+ * 이 사람에게 받아 둔 **사진 전부**. 주소만 추린다.
+ *
+ * 2026-11-11 운영자: "준 이미지 중에 차라리 하나씩 골라서 그대로
+ * 그려서 써라. 등번호 이런 거 맞추면 뭐하나, 그림이 어색하기만 하다."
+ *
+ * 사람 샷을 글로 그리지 않고 **받은 사진을 그림으로 바꿔** 쓰려면
+ * 한 사람의 사진을 여러 장 알아야 한다. 샷마다 다른 사진을 돌려 쓴다.
+ */
+export function allPhotosOf(p) {
+  const out = [];
+  const push = (u) => {
+    const url = String(u || '').trim();
+    if (/^https?:\/\//.test(url) && !out.includes(url)) out.push(url);
+  };
+  push(p?.photo);
+  for (const row of Array.isArray(p?.photos) ? p.photos : []) push(row?.url || row);
+  push(p?.photo_예비);
+  return out;
+}

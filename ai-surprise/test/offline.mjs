@@ -6190,8 +6190,21 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
     (await import('../src/assets/replicate.mjs')).modelFor('portrait').baseModel,
     '참조 모델의 바탕과 다릅니다'
   );
-  assert.equal(calls[1].modelKey, I.REFERENCE_MODEL, '사진 있는 사람이 참조 모델로 안 갔습니다');
-  assert.equal(calls[1].ref, 'https://example.com/kim.jpg');
+  // ── 2026-11-11. 사람 샷은 **사진을 그림으로 바꾼다** ──
+  //
+  // 운영자: "전달해준 사진을 지브리 스타일로 그려서 사용한다.
+  //          워터마크만 나오지 않게 한다. 그리고 나머지 설명의 그림은
+  //          해당 팀 유니폼 색상을 맞춰서 그려진 그림으로 사용한다."
+  //
+  // 글로 그리면 지어낼 것이 너무 많다 — 얼굴, 몸, 자세, 유니폼 색,
+  // 모자 마크, 팔 개수. 12화에서 그 전부가 틀렸다. 사진에서 그리면
+  // 지어낼 것이 없다.
+  assert.equal(calls[1].modelKey, 'kontext', '사람 샷이 사진에서 그려지지 않았습니다');
+  assert.ok(
+    calls[1].ref === 'https://example.com/kim.jpg' ||
+      String(calls[1].ref).startsWith('data:image/'),
+    '사진을 참조로 안 보냈습니다 (자른 사진은 data URI 로 갑니다)'
+  );
   assert.equal(calls[2].modelKey, 'dev', '사진 없는 사람이 참조 모델로 갔습니다');
 
   // 본편은 가로다. 세로로 만들면 16:9 에 넣을 때 위아래가 잘린다.
@@ -6243,6 +6256,10 @@ await asyncTest('사진에서 얼굴을 못 찾으면 예비로, 그래도 안 �
       token: 't',
       client,
       people: [{ name: '류현진', photo: 'https://e.com/main.jpg', photo_예비: 'https://e.com/spare.jpg' }],
+      // ⚠️ 이 검사는 **옛 경로**(flux-pulid 가 사진에서 얼굴을 못 찾는
+      //    경우)를 본다. 2026-11-11 부터 사람 샷은 기본이 '사진을
+      //    그림으로 바꾸기' 라 얼굴 정렬을 안 한다. 그래서 여기서만 끈다.
+      usePhotos: false,
       sleep: async () => {},
     }
   );
@@ -7437,6 +7454,28 @@ await asyncTest('photos 만 적힌 사람도 본편에서 얼굴 참조를 잃�
         'photos 로만 적힌 사람의 얼굴이 조용히 빠집니다.'
     );
   }
+});
+
+await asyncTest('사람 샷은 받은 사진을 돌려 쓴다 — 같은 사진이 연달아 안 나온다', async () => {
+  // 2026-11-11 운영자: "준 이미지 중에 차라리 하나씩 골라서 그대로
+  // 그려서 써라" / "전달해준 사진을 지브리 스타일로 그려서 사용한다"
+  //
+  // 한 사람에게 사진이 여러 장이면 샷마다 돌려 쓴다. 같은 사진이
+  // 연달아 나오면 영상이 멈춰 보인다.
+  const PO2 = await import('../src/assets/photo-of.mjs');
+  const list = PO2.allPhotosOf({
+    photo: 'https://a/1.jpg',
+    photos: [{ url: 'https://a/2.jpg' }, { url: 'https://a/3.jpg' }],
+    photo_예비: 'https://a/4.jpg',
+  });
+  assert.deepEqual(list, ['https://a/1.jpg', 'https://a/2.jpg', 'https://a/3.jpg', 'https://a/4.jpg']);
+  // 같은 주소가 두 번 들어가지 않는다.
+  assert.deepEqual(
+    PO2.allPhotosOf({ photo: 'https://a/1.jpg', photos: [{ url: 'https://a/1.jpg' }] }),
+    ['https://a/1.jpg']
+  );
+  // 주소가 아닌 것은 안 받는다 — 저장소 안 파일을 쓰지 않기로 했다.
+  assert.deepEqual(PO2.allPhotosOf({ photo: '스포츠영상/사진/a.jpg' }), []);
 });
 
 await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
