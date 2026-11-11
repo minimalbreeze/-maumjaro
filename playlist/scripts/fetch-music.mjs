@@ -47,12 +47,39 @@ const BAD_WORDS = [
   'mix', 'remix', 'megamix', 'dj set', 'live', 'concert', 'interview',
   'podcast', 'radio show', 'christmas', 'xmas', 'intro', 'outro',
   'demo', 'sketch', 'riff', 'loop', 'test', 'untitled',
+  // 기능성·광고용 음악. 제목에서 티가 난다. 서정적인 것과 정반대다.
+  'corporate', 'business', 'motivational', 'upbeat', 'energetic',
+  'advertising', 'commercial', 'tutorial', 'background music',
 ];
+
+/* 무드 프리셋.
+ *
+ * 매번 검색어를 손으로 쓰면 지난번에 뭐가 좋았는지가 날아간다.
+ * 들어보고 "이쪽이 좋더라" 한 것을 여기에 남긴다.
+ *
+ *   node playlist/scripts/fetch-music.mjs --mood 서정
+ */
+const MOODS = {
+  // 2026-11-11 효성님: "다음엔 더 서정적이었으면 좋겠다"
+  // 재즈·피아노만 잡으면 Corporate Tech 같은 밋밋한 것이 섞인다.
+  // 감정이 실린 태그를 같이 요구한다.
+  서정: 'subject:(piano OR jazz OR acoustic OR guitar OR strings) '
+      + 'AND subject:(melancholic OR emotional OR nostalgic OR sad OR tender '
+      + 'OR romantic OR dreamy OR melodic OR sentimental OR soft)',
+  재즈: 'subject:jazz OR subject:swing OR subject:bossa OR subject:blues',
+  피아노: 'subject:piano AND subject:(calm OR peaceful OR slow OR soft)',
+  차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
+};
 
 const MODE = has('--pd') ? 'pd' : 'cc';
 const WANT = Math.max(1, Math.min(40, Number(val('--n', '8'))));
 const DRY = has('--dry');
-const QUERY = val('--q', MODE === 'pd' ? 'piano' : 'lofi jazz piano');
+const MOOD = val('--mood', '');
+if (MOOD && !MOODS[MOOD]) {
+  console.error(`\n❌ 모르는 무드: ${MOOD}\n   고를 수 있는 것: ${Object.keys(MOODS).join(' / ')}\n`);
+  process.exit(1);
+}
+const QUERY = MOOD ? MOODS[MOOD] : val('--q', MODE === 'pd' ? 'piano' : MOODS.서정);
 
 function fail(m) { console.error(`\n❌ ${m}\n`); process.exit(1); }
 
@@ -173,7 +200,7 @@ function badTitle(t) {
 async function main() {
   console.log('─'.repeat(60));
   console.log(`archive.org 에서 음원 찾기 — ${MODE === 'pd' ? '1923~1925 퍼블릭 도메인' : '자유 라이선스'}`);
-  console.log(`검색어: ${QUERY} · 목표 ${WANT}곡`);
+  console.log(`${MOOD ? `무드: ${MOOD}` : `검색어: ${QUERY.slice(0, 60)}`} · 목표 ${WANT}곡`);
   console.log('─'.repeat(60));
 
   const docs = search();
