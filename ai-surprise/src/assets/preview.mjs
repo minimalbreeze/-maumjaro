@@ -20,7 +20,9 @@ import {
   SPORTS_PAINT_CANDIDATES,
   SPORTS_PAINT_KEY,
 } from '../scenes/visuals.mjs';
-import { REFERENCE_MODEL } from './images.mjs';
+// ⚠️ 2026-11-11. REFERENCE_MODEL(flux-pulid)을 버렸다. 미리보기도
+//    본편과 같은 길로 간다 — 사진에서 그릴 때는 kontext 다.
+import { REPAINT_MODEL, repaintPrompt } from './repaint.mjs';
 import { photoOf as mainPhoto } from './photo-of.mjs';
 import { KIND } from '../model.mjs';
 
@@ -103,12 +105,14 @@ export function previewJobs(kind, { models = ['schnell'], people = [] } = {}) {
     });
     if (reference) {
       jobs.push({
-        model: REFERENCE_MODEL,
+        model: REPAINT_MODEL,
         key: scene.key,
         why: scene.why,
         reference,
-        file: `${REFERENCE_MODEL}-${scene.key}.png`,
-        prompt,
+        file: `${REPAINT_MODEL}-${scene.key}.png`,
+        // 사진에서 그리는 샷은 지시문도 다르다 — 화면 설명이 아니라
+        // "이 사진을 그림으로 바꿔라" 다.
+        prompt: repaintPrompt({ name: String(scene.person || '').trim() }),
       });
       continue;
     }
@@ -154,7 +158,7 @@ export function previewStyleJobs(kind, { people = [] } = {}) {
   const jobs = [];
   for (const [key, cand] of Object.entries(SPORTS_PAINT_CANDIDATES)) {
     jobs.push({
-      model: reference ? REFERENCE_MODEL : 'dev',
+      model: reference ? REPAINT_MODEL : 'dev',
       key,
       why: `${cand.label} — ${cand.why}`,
       reference,

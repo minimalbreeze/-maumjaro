@@ -6214,78 +6214,19 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
   assert.equal(out.spentUsd, 0.1, `쓴 돈이 $${out.spentUsd} 입니다 (0.025+0.05+0.025 여야 합니다)`);
 });
 
-await asyncTest('사진에서 얼굴을 못 찾으면 예비로, 그래도 안 되면 참조 없이 그린다 (실행 #65)', async () => {
-  // 실행 #65 에서 류현진 사진으로 건 두 샷이 이렇게 죽었다.
-  //
-  //     facexlib align face fail
-  //
-  // 참조 모델이 사진에서 얼굴을 못 찾은 것이다. 투구 동작 사진이라
-  // 얼굴이 작거나 글러브에 가렸을 것이다.
-  //
-  // 문제는 그 둘이 **자리표시 화면**으로 영상에 남았다는 것이다.
-  // 7분짜리에 빈 화면 두 장은 눈에 띈다. 안 닮은 그림이 빈 화면보다
-  // 백 배 낫다.
-  const I = await import('../src/assets/images.mjs');
-  const V = await import('../src/scenes/visuals.mjs');
-  const dir = fs.mkdtempSync(path.join(TMP, 'face-'));
-
-  const calls = [];
-  const client = {
-    generate: async (prompt, o) => {
-      calls.push({ ref: o.referenceImage, prompt });
-      // 본 사진과 예비 사진 둘 다 얼굴을 못 찾는다고 해 본다.
-      if (o.referenceImage) {
-        const err = new Error('이미지 생성 실패 (failed): facexlib align face fail');
-        throw err;
-      }
-      return { url: 'http://x/y.png', usdEstimate: 0.025 };
-    },
-    // PNG 머리 + 넉넉한 길이. 짧으면 looksLikeImage 가 거른다.
-    download: async () =>
-      Buffer.concat([
-        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        Buffer.alloc(I.MIN_IMAGE_BYTES || 4096),
-      ]),
-  };
-
-  const prompt = V.composeImagePrompt('a pitcher', null, { kind: 'SPORTS', likeness: true });
-  const out = await I.generateImages(
-    [{ shot_id: 'S05-2', scene_number: 5, person: '류현진', image_prompt: prompt }],
-    {
-      assetDir: dir,
-      token: 't',
-      client,
-      people: [{ name: '류현진', photo: 'https://e.com/main.jpg', photo_예비: 'https://e.com/spare.jpg' }],
-      // ⚠️ 이 검사는 **옛 경로**(flux-pulid 가 사진에서 얼굴을 못 찾는
-      //    경우)를 본다. 2026-11-11 부터 사람 샷은 기본이 '사진을
-      //    그림으로 바꾸기' 라 얼굴 정렬을 안 한다. 그래서 여기서만 끈다.
-      usePhotos: false,
-      sleep: async () => {},
-    }
-  );
-
-  // 세 번 걸었어야 한다: 본 사진 → 예비 사진 → 참조 없이.
-  assert.deepEqual(
-    calls.map((c) => c.ref),
-    ['https://e.com/main.jpg', 'https://e.com/spare.jpg', null],
-    '세 단으로 안 내려갑니다'
-  );
-
-  // 그리고 **그림은 나와야 한다.** 자리표시 화면이 아니다.
-  assert.equal(out.failed.length, 0, `실패로 남았습니다: ${JSON.stringify(out.failed)}`);
-  assert.equal(out.made.length, 1, '그림이 안 나왔습니다');
-
-  // 참조를 뗀 마지막 호출은 "사진과 같은 얼굴" 지시도 떼야 한다.
-  // 안 떼면 모델이 있지도 않은 사진을 찾느라 얼굴이 더 이상해진다.
-  const last = calls[calls.length - 1];
-  assert.ok(!last.prompt.includes(V.SPORTS_LIKENESS_CLAUSE), '닮음 지시가 남아 있습니다');
-  assert.ok(last.prompt.includes(V.SPORTS_INVENTED_CLAUSE), '지어낸 인물 지시가 안 붙었습니다');
-
-  // 얼굴 못 찾음을 보통 실패와 갈라 보는가. 다시 걸어도 똑같은 실패라
-  // 사진을 바꿔야 하는 쪽이다.
-  assert.ok(I.isFaceFail(new Error('facexlib align face fail')));
-  assert.ok(!I.isFaceFail(new Error('Replicate 429: Request was throttled')));
-});
+// ⚠️⚠️ 여기 있던 검사를 **버렸다** (2026-11-11) ⚠️⚠️
+//
+//   '사진에서 얼굴을 못 찾으면 예비로, 그래도 안 되면 참조 없이 그린다'
+//
+// flux-pulid(참조 모델)가 사진에서 얼굴을 못 찾을 때 세 단으로 내려가는
+// 길을 지키던 검사다. **그 모델을 통째로 버렸으므로 이 검사도 버린다.**
+//
+// 운영자: "변경이 된 이후 과거가 문제가 되면 과감히 남겨두지 말고 버려라"
+//         "그걸 계속 남겨 두니 이상한 그림과 영상이 된다"
+//
+// 지금은 사람 샷을 '사진을 그림으로 바꾸기'(kontext)로 그린다. 거기는
+// 얼굴 정렬을 안 하므로 얼굴을 못 찾는 실패 자체가 없다. 그래도 막히면
+// 글로 그리는 쪽으로 한 번 내려가고, 그 길은 아래 검사가 지킨다.
 
 await asyncTest('참조 사진이 하나도 없으면 바탕을 안 바꾼다', async () => {
   // 바탕을 맞추는 것은 **참조 샷이 있을 때만** 하는 일이다. 사진이
