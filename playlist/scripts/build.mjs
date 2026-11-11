@@ -203,7 +203,9 @@ function buildAudio(tracks) {
     '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.0035:r=44100',
     '-filter_complex',
       `[0:a]${LP_CHAIN}[warm];`
-      + '[1:a]highpass=f=2500,lowpass=f=9000,alimiter=limit=0.03,aformat=channel_layouts=stereo[crk];'
+            // alimiter 의 limit 은 0.0625 미만을 안 받는다. 더 줄이는 일은 volume 이 한다.
+      + '[1:a]highpass=f=2500,lowpass=f=9000,volume=0.4,alimiter=limit=0.0625,'
+      + 'aformat=channel_layouts=stereo[crk];'
       + '[warm][crk]amix=inputs=2:weights=1 0.35:normalize=0,'
       // 색깔을 입히며 음량이 움직였으므로 마지막에 한 번 더 맞춘다
       + 'loudnorm=I=-16:TP=-1.5:LRA=11[a]',
