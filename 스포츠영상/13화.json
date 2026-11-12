@@ -147,6 +147,10 @@
         {
           "url": "https://search.pstatic.net/common?type=b&size=3000&quality=100&direct=true&src=http%3A%2F%2Fsstatic.naver.net%2Fpeople%2Fportrait%2F201801%2F2018010414395047-9019415.jpg",
           "쓰임": "프로필"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2024%2F10%2F19%2FNISI20241019_0020564206_web_20241019174146_20241019174218777.jpg&type=sc960_832",
+          "쓰임": "현장"
         }
       ]
     }
