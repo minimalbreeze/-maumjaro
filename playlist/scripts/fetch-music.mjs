@@ -97,6 +97,11 @@ const MOODS = {
   늦가을: 'subject:(jazz OR piano OR acoustic OR guitar OR bossa OR swing OR lounge) '
       + 'AND subject:(warm OR gentle OR mellow OR smooth OR romantic '
       + 'OR nostalgic OR melodic OR tender OR hopeful OR uplifting)',
+  /* 3집(초겨울). 늦가을보다 조금 더 조용하고 맑은 쪽으로 가되,
+   * 가라앉는 말(sad·melancholic)은 여전히 안 쓴다. 현악을 더 잡는다. */
+  초겨울: 'subject:(piano OR jazz OR strings OR acoustic OR guitar OR bossa OR harp) '
+      + 'AND subject:(calm OR gentle OR warm OR tender OR peaceful '
+      + 'OR nostalgic OR melodic OR soft OR dreamy OR beautiful)',
   재즈: 'subject:jazz OR subject:swing OR subject:bossa OR subject:blues',
   피아노: 'subject:piano AND subject:(calm OR peaceful OR slow OR soft)',
   차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
