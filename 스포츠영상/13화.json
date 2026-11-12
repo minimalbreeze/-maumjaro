@@ -1,0 +1,134 @@
+{
+  "kind": "SPORTS",
+  "title": "말은 하루를 못 버텼다",
+  "premise": "삼성 유정근 사장이 \"우승하면 뭐든 받아오겠다\"고 했다. 구자욱과 원태인이 우승했다. 그리고 우승 당일인 11월 8일, 원태인이 해외 에이전트 선임을 공개했다. 이 편은 금액을 맞히는 편이 아니라 금액이 정해지는 틀 — 보상 규정, 샐러리캡, 그리고 이미 나온 말 — 을 보는 편이다.",
+  "angle": "다른 채널은 \"구자욱 몸값 얼마\", \"원태인 메이저 간다\", \"삼성 250억 실탄\" 으로 간다. 전부 추측이다. 야포츠가 설 자리는 **이미 나온 말과 이미 정해진 규정**이다. 특히 보상 규정이 원태인을 밖으로 민다 — A등급 연봉 10억이라 국내 구단은 30억을 삼성에 줘야 하고, 해외는 0원이다. 국내에서 그를 부를 수 있는 팀이 사실상 삼성뿐이라는 뜻이다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "하루",
+      "value": 100,
+      "note": "사장이 \"우승하면 뭐든 받아오겠다\"고 했다. 둘이 우승했다. 그리고 11월 8일 우승 당일, 원태인이 해외 에이전트 선임을 공개했다."
+    },
+    {
+      "key": "WORD",
+      "label": "먼저 있던 말",
+      "value": 92,
+      "note": "두 사람이 각자 사장의 말을 먼저 꺼냈다. 원태인 \"사장님이 '우승하면 뭐든 받아오겠다'고 하셨다\". 구자욱 \"사장님이 '우승만 하면 된다'고 말씀하셨으니 기다려 보겠다\"."
+    },
+    {
+      "key": "EARNED",
+      "label": "조건을 채웠다",
+      "value": 88,
+      "note": "구자욱 정규시즌 타율 .371 생애 첫 타격왕, 출루율 .458 로 두 부문 1위. 9월 30일 대구 한화전 허벅지 부상을 안고 KS 5경기 20타수 10안타, 1홈런 6타점, 출루율 .565, MVP. 원태인 정규시즌은 부상 여파로 주춤했지만 PS 에서 선발과 불펜을 오갔고 KS 2경기 1승 무패 ERA 1.35, 5차전 선발 5이닝 1실점."
+    },
+    {
+      "key": "ALONE",
+      "label": "혼자 앉는다",
+      "value": 90,
+      "note": "구자욱 33세(내년 34세). 2022시즌 앞서 맺은 5년 총액 120억 비FA 다년계약이 올 시즌으로 끝났다. 에이전트가 없어 혼자 협상한다. 기사가 짚은 관심 구단은 타선이 약했던 두산·롯데."
+    },
+    {
+      "key": "GRADE",
+      "label": "30억이라는 문",
+      "value": 98,
+      "note": "⚠️ 이 편의 심장. 원태인은 A등급, 연봉 10억원. A등급은 보상선수 1명(20인 보호 외) + 연봉 200%, 또는 연봉 300%. 연봉 10억이니 30억이다. 국내 다른 구단은 보상선수 1명+20억 또는 30억, 삼성 잔류는 0원, 해외는 0원. 병역을 마쳤고 MLB·NPB 도전 의사를 밝혀 왔다. ⚠️ \"해외로 간다\"고 말하지 않는다 — 규정과 그가 한 일까지만."
+    },
+    {
+      "key": "CAP",
+      "label": "250억을 만드는 법",
+      "value": 84,
+      "note": "삼성은 상향된 샐러리캡 상한과 프랜차이즈 선수 연봉 50% 감면 제도를 활용해 250억원 이상을 써서 둘 다 잡겠다는 계획. 내야수 전병우(C등급)도 잡아야 한다. ⚠️ 250억이 충분한지 부족한지 판정하지 않는다."
+    },
+    {
+      "key": "REST",
+      "label": "나머지 시장",
+      "value": 74,
+      "note": "최지훈(SSG 중견수, 대졸 7시즌, 20대 후반), 홍창기(LG, 최근 2년 부진, 신청 여부 관심), 김호령(KIA), 김민혁·배정대(kt). 정수빈·한유섬·권희동은 잔류 쪽. 포수 박동원(LG)·김태군(KIA)·최재훈(한화). 양의지는 옵트아웃 권한이 생겼지만 남은 2년 42억과 상징성으로 잔류 유력. 노시환 MLB 포스팅 결과에 따라 한화 행보가 갈린다(4화)."
+    },
+    {
+      "key": "DATE",
+      "label": "13일과 16일",
+      "value": 80,
+      "note": "KBO 는 13일 FA 자격 선수를 공시하고, 16일 신청 선수를 승인해 협상이 시작된다. 등급별 보상 — A: 보상선수 1명(20인 보호 외)+연봉 200% 또는 300%, B: 보상선수 1명(25인 보호 외)+100% 또는 200%, C: 연봉 150%만."
+    },
+    {
+      "key": "CLOSE",
+      "label": "남은 것",
+      "value": 78,
+      "note": "결과는 모른다. 말은 남았다. ⚠️ 금액을 예측하지 않는다."
+    }
+  ],
+  "sources": [
+    {
+      "name": "스포츠동아 (2026-11-09)",
+      "url": "",
+      "note": "구자욱 타율 .371 · 출루율 .458 두 부문 1위, 5년 120억 비FA 계약 종료, 에이전트 없음, 9월 30일 대구 한화전 햄스트링, KS 20타수 10안타 출루율 .565, 원태인 KS 2경기 1승 ERA 1.35 · 5차전 선발 5이닝 1실점, 유정근 사장의 말 둘, KBO 13일 공시."
+    },
+    {
+      "name": "마니아타임즈 진병두 (2026-11-09 16:51)",
+      "url": "",
+      "note": "⚠️ 이 편의 핵심이 여기 있다 — 원태인 11월 8일 우승 뒤 해외 에이전트 선임 공개, A등급 연봉 10억원, 국내 영입 시 보상선수 1명+20억 또는 30억. 삼성 250억 이상 계획(상향된 샐러리캡 + 프랜차이즈 선수 연봉 50% 감면), 전병우 C등급, 구자욱 생애 첫 타격왕 · 내년 34세 · 두산·롯데 관심 예상, 13일 공시 16일 승인, 등급별 보상 규정, 나머지 FA 시장(최지훈·홍창기·박동원·양의지·노시환 포스팅)."
+    }
+  ],
+  "people": [
+    {
+      "name": "구자욱",
+      "role": "삼성 외야수 · 주장 · 33세 · 좌타",
+      "team": "삼성",
+      "number": "5",
+      "look": "a Korean outfielder in his early 30s, tall with long arms and legs and a narrow waist, short black hair under a batting helmet, a long angular face with a square jaw and a straight nose, thick dark eyebrows, dark eye black smeared under each eye, an intense focused look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "11화에서 KS MVP 로 나온 사람이다. 그때와 같은 얼굴로 나와야 한다. 이 편에서는 \"혼자 앉는 FA\" 다 — 5년 120억이 끝났고 에이전트가 없다. ⚠️ 금액을 예측하지 않는다. ⚠️ 타율은 최종 .371 이다(9월 기사의 .361 은 그 시점 값).",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F421%2F2026%2F11%2F08%2F0009276994_001_20261108150424943.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2025%2F03%2F11%2F0001131305_003_20250311170012085.jpg&type=a340",
+          "쓰임": "타석"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2020%2F10%2F03%2F0000858968_001_20201003182138451.jpg&type=a340",
+          "쓰임": "스윙직후"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F119%2F2026%2F10%2F25%2F0003146643_002_20261025070308111.jpg&type=a340",
+          "쓰임": "수비"
+        }
+      ]
+    },
+    {
+      "name": "원태인",
+      "role": "삼성 선발투수 · 26세 · 우완",
+      "team": "삼성",
+      "number": "18",
+      "look": "a Korean right-handed starting pitcher in his late 20s, square shoulders and strong thighs on a compact frame, short black hair under a cap, a round youthful face with full cheeks and a soft jawline, no facial hair, wide bright eyes, a determined open look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "이 편의 반전을 만든 사람이다 — 사장의 말을 꺼낸 바로 그날 해외 에이전트를 선임했다. A등급 연봉 10억. ⚠️ \"해외로 간다\"고 단정하지 않는다. 규정과 그가 한 일까지만 말한다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F04%2F0005634804_001_20261104213917300.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147694_003_20261102155112728.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
+    },
+    {
+      "name": "유정근",
+      "role": "삼성 라이온즈 대표이사 사장 · 선수 아님",
+      "team": "삼성",
+      "number": "",
+      "look": "a Korean man in his fifties in a business suit or a team jacket, short greying hair, a broad calm face with light lines across the forehead, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
+      "tell": "⚠️ 선수가 아니다. 유니폼을 입히지 않는다 — 정장이나 구단 재킷이다. 등번호도 없다. 이 편에서 \"우승하면 뭐든 받아오겠다\" 고 말한 사람이고, 두 선수가 각자 그 말을 인용했다. ⚠️ 네이버 인물 프로필 사진이라 정면 증명사진일 가능성이 높다 — 한 샷뿐이니 그 구도가 오히려 맞다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common?type=b&size=3000&quality=100&direct=true&src=http%3A%2F%2Fsstatic.naver.net%2Fpeople%2Fportrait%2F201801%2F2018010414395047-9019415.jpg",
+          "쓰임": "프로필"
+        }
+      ]
+    }
+  ]
+}

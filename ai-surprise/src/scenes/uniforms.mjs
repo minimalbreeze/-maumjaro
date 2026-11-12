@@ -226,6 +226,22 @@ export function uniformClause({ team, number, role } = {}) {
   // 감독·코치는 유니폼 위에 팀 재킷을 입는다. 등번호는 보통 안 보인다.
   const isStaff = /감독|코치|단장/.test(String(role || ''));
 
+  // ── 구단 사람은 **유니폼을 안 입는다** (2026-11-12) ──
+  //
+  // 13화에 삼성 유정근 사장이 나오는데, 야구 유니폼이 붙어 나왔다.
+  // `role` 에서 감독·코치·단장만 보고 있었기 때문이다.
+  //
+  // 사장·단장·구단주·대표는 **정장이나 구단 재킷**이다. 유니폼을
+  // 입히면 그 순간 선수가 된다. 등번호도 당연히 없다.
+  //
+  // ⚠️ 여기도 '야구 유니폼처럼 생긴 아무것' 을 그리지 않게 색만 적는다.
+  const isFrontOffice = /사장|대표|구단주|회장|단장/.test(String(role || ''));
+  if (isFrontOffice) {
+    return `wearing a business suit or a team jacket in ${u.jacketColours}, ` +
+      'the front of the jacket is smooth plain fabric in one solid colour, ' +
+      'no baseball uniform and no cap';
+  }
+
   // ⚠️⚠️ 가슴에 **글자를 적지 않는다.** ⚠️⚠️
   //
   // 2026-11-09. 열 팀 전부 'white jersey with black lettering' 처럼
