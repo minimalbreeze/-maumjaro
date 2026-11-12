@@ -5646,6 +5646,66 @@ await asyncTest('발음 사전에는 영어 약어만, 한글 읽기로 넣는�
 });
 
 
+await asyncTest('사진만 있는 사람도 레코드에 싣는다', async () => {
+  // 2026-11-12. makeSports 의 filter 가 `p.name && p.look` 이었다.
+  // 같은 날 "생김새 글로 적는 건 아예 삭제해라"는 지시로 기획 파일의
+  // look 을 비웠더니, 이 한 줄이 사람을 **통째로** 버렸다 — 사진도
+  // team 도 number 도 파이프라인에 안 갔다. 오류는 안 난다.
+  // 그림만 전부 글로 그려진다. 그게 12화에서 $1.95 를 버린 그 길이다.
+  const { makeSports } = await import('../src/model.mjs');
+  const item = makeSports({
+    title: 'ㅌ',
+    people: [
+      { name: '사진만', team: 'KIA', number: '5', photos: ['https://a/1.jpg', 'https://a/2.jpg'] },
+      { name: '생김새만', look: 'narrow shoulders' },
+      { name: '둘다없음' },
+    ],
+  });
+  const names = item.people.map((p) => p.name);
+  assert.deepEqual(names, ['사진만', '생김새만'], '사진만 있는 사람이 빠졌습니다');
+
+  const [withPhoto] = item.people;
+  assert.equal(withPhoto.photo, 'https://a/1.jpg', '대표 사진이 안 실렸습니다');
+  assert.deepEqual(withPhoto.photos, ['https://a/1.jpg', 'https://a/2.jpg'], '사진 목록이 안 실렸습니다');
+  assert.equal(withPhoto.team, 'KIA');
+  assert.equal(withPhoto.number, '5');
+  // ⚠️ 빈 문자열을 넣지 않는다. 뒤에서 `p.look &&` 로 보는 곳이 있다.
+  assert.equal('look' in withPhoto, false, '사진 있는 사람에게 생김새 칸이 붙었습니다');
+
+  assert.equal(item.people[1].look, 'narrow shoulders', '사진 없는 사람은 글로 적는다');
+});
+
+
+await asyncTest('FA 등급은 자막에 A·B·C, 읽기는 에이·비·씨', async () => {
+  // 2026-11-12. 13화(구자욱·원태인 FA)에서 처음 걸렸다. 'A등급' 을
+  // 그냥 두면 음성 모델이 영어 글자로 읽는다. 자막은 KBO 표기대로
+  // A·B·C 가 눈에 익으니 글은 그대로 두고 읽기만 바꾼다.
+  const { speechText, FA_GRADE } = await import('../src/audio/speech.mjs');
+  const { latinSpots } = await import('../src/script/spoken.mjs');
+
+  assert.equal(
+    speechText('원태인은 A등급입니다.'),
+    '원태인은 에이등급입니다.',
+    'A등급 읽기가 안 바뀌었습니다'
+  );
+  assert.equal(speechText('B등급과 C등급'), '비등급과 씨등급');
+
+  // ⚠️ 'A' 한 글자를 아는 낱말로 등록하면 이 검사가 뚫린다.
+  //    등급 덩어리만 덜어내는지 확인한다.
+  assert.deepEqual(latinSpots(['A등급 선수입니다.']), [], '등급을 아직 거는군요');
+  const [spot] = latinSpots(['A등급이지만 WAR 는 모릅니다.']);
+  assert.ok(spot, '등급을 덜어내면서 다른 영어까지 덜어냈습니다');
+  assert.deepEqual(spot.hits, ['WAR']);
+  assert.equal(spot.text, 'A등급이지만 WAR 는 모릅니다.', '알려 줄 때 원문이 아닙니다');
+
+  // 표가 커질 때를 위해. 글자 바꿔치기라 긴 것이 먼저여야 한다.
+  const keys = [...FA_GRADE.keys()];
+  for (let i = 1; i < keys.length; i += 1) {
+    assert.ok(keys[i].length <= keys[i - 1].length, `차례가 뒤집혔습니다: ${keys[i]}`);
+  }
+});
+
+
 await asyncTest('따옴표가 눈으로만 되는 자리를 잡는다', async () => {
   // 듣는 사람은 따옴표를 못 본다. 따옴표 안이 문장인데 조사가 바로
   // 붙으면 귀로는 엉킨다. 3화·4화에서 다섯 줄이 그랬다.

@@ -202,6 +202,25 @@ const JOIN_UNITS = ['회', '차전', '번', '루', '강', '위권', '연승', '�
  * ⚠️ "그 + 아무 명사" 를 전부 붙이지 않는다. 귀로 걸린 자리만 하나씩
  *    넣는다. 넓게 잡으면 엉뚱한 데가 붙는다.
  */
+/**
+ * FA 보상 등급 (2026-11-12).
+ *
+ * 13화에서 처음 걸렸다. 대본에 'A등급' 이라고 적으면 음성 모델이
+ * 영어 글자로 읽어 버린다. 자막에는 A·B·C 가 눈에 익으니(KBO 가
+ * 그렇게 쓴다) 글은 그대로 두고 **읽기만** 한글로 바꾼다.
+ * KIA·FA 와 같은 꼴이다.
+ *
+ * ⚠️ PRONOUNCE 에 넣을 수 없다. 거기는 두 글자 이상 영어 약어만
+ *    받고(테스트가 /^[A-Z]{2,5}$/ 로 지킨다), 'A' 한 글자를 넣으면
+ *    문장 속 모든 A 를 바꿔 버린다. '등급' 까지 묶어야 안전하다.
+ * ⚠️ 글자 바꿔치기라 긴 것부터 적는다 — 지금은 길이가 같아 상관없다.
+ */
+export const FA_GRADE = new Map([
+  ['A등급', '에이등급'],
+  ['B등급', '비등급'],
+  ['C등급', '씨등급'],
+]);
+
 const READ_AS_ONE = new Map([
   ['그 경기를', '그경기를'],
   ['그 경기에', '그경기에'],
@@ -272,6 +291,7 @@ export function speechText(text) {
 
   out = joinNumberUnits(out);
 
+  for (const [from, to] of FA_GRADE) out = out.split(from).join(to);
   for (const [from, to] of PRONOUNCE) out = out.split(from).join(to);
   for (const [from, to] of READ_AS_ONE) out = out.split(from).join(to);
   for (const [from, to] of READ_BREAK) out = out.split(from).join(to);

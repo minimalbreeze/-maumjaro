@@ -18,7 +18,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { log } from './utils/logger.mjs';
-import { photoOf as mainPhoto } from './assets/photo-of.mjs';
+import { photoOf as mainPhoto, allPhotosOf } from './assets/photo-of.mjs';
 import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
@@ -713,11 +713,23 @@ async function cmdSports(flags) {
   if (item.sections?.length) {
     log.info(`이 편의 단락 ${item.sections.length}개: ${item.sections.map((x) => x.key).join(' → ')}`);
   }
-  if (item.people?.length) {
-    log.info(`생김새를 적어 둔 사람 ${item.people.length}명: ${item.people.map((p) => p.name).join(', ')}`);
-  } else {
-    log.warn('생김새를 적어 둔 사람이 없습니다 — 그림의 인물이 샷마다 다른 얼굴로 나옵니다.');
-    log.info('기획 파일에 people 을 넣어 주세요 (스포츠영상/선수-생김새.md 참고).');
+  // 2026-11-12. 전에는 생김새(look)만 세고, 없으면 경고했다. 그런데
+  // 사람 샷을 **사진에서** 그리기로 한 뒤에는 사진이 있으면 생김새를
+  // 글로 적지 않는다(운영자 지시). 그 상태를 경고로 찍으면, 제대로
+  // 해 둔 기획 파일이 매번 틀린 것처럼 보인다.
+  const people = item.people || [];
+  const withPhotos = people.filter((p) => allPhotosOf(p).length);
+  const onlyLook = people.filter((p) => !allPhotosOf(p).length && p.look);
+  if (withPhotos.length) {
+    const sheets = withPhotos.map((p) => `${p.name} ${allPhotosOf(p).length}장`);
+    log.info(`사진을 받아 둔 사람 ${withPhotos.length}명: ${sheets.join(', ')}`);
+  }
+  if (onlyLook.length) {
+    log.info(`사진 없이 생김새만 적은 사람 ${onlyLook.length}명: ${onlyLook.map((p) => p.name).join(', ')}`);
+  }
+  if (!people.length) {
+    log.warn('사진도 생김새도 없습니다 — 그림의 인물이 샷마다 다른 얼굴로 나옵니다.');
+    log.info('기획 파일에 people 을 넣고 사람마다 사진 7~8장을 적어 주세요.');
   }
   if (!item.source_count) {
     log.warn('출처가 없습니다. 설명문에 적을 근거가 없다는 뜻입니다 — 기획 파일에 sources 를 넣어 주세요.');
