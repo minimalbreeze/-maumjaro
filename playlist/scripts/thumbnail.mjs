@@ -1,18 +1,34 @@
 // 유튜브 썸네일을 만든다
 //
-//   node playlist/scripts/thumbnail.mjs --vol 002 \
-//     --top "가을의 끝" --sub "창이 큰 로비에서" --tag "작업할 때 듣는 재즈 · 61분"
+//   node playlist/scripts/thumbnail.mjs --vol 002
 //
 // 왜 필요한가
 //   유튜브가 자동으로 뽑는 썸네일은 영상의 한 프레임일 뿐이라 검색 결과에서
 //   아무 말도 못 한다. 제목이 좋아도 썸네일에서 걸러진다.
 //
+// ⚠️ 썸네일에는 로고만 올린다 (2026-11-12 효성님)
+//   "우리는 계절감을 창문과 로비의 그림으로 표현한다."
+//   "최초 우리가 계획한 글씨 이외에는 다른 거 넣지 마라.
+//    나머지는 그림으로 표현한다. 로고 아이덴티티가 명확해야 한다."
+//
+//   그래서 계절도, 장르도, 길이도 글자로 쓰지 않는다. 창밖 풍경이 계절을
+//   말하고, 로비가 분위기를 말한다. 글자를 얹으면 그림이 할 말을 뺏는다.
+//   처음엔 "가을의 끝"을 크게 넣었다가, "late autumn" 으로 바꿨다가,
+//   둘 다 뺐다. 남는 것은 minimalbreeze 로고 하나뿐이다.
+//
+//   영상 안에서 쓰는 글자(곡 제목·아티스트·로고)가 처음 정한 전부다.
+//   여기에 더하지 않는다.
+//
+// ⚠️ 한글을 쓰지 않는다
+//   브랜드가 영문 레터스페이싱(minimalbreeze)이라 굵은 한글 고딕과 따로
+//   논다. 처음에 한글로 크게 넣어 봤다가 뺐다. 영상 안 곡 제목도 Inter 다.
+//
 // 크기
-//   1280x720 으로 뽑는다. 검색 결과에서는 가로 210px 쯤으로 줄어드니까,
-//   글자가 그 크기에서도 읽혀야 한다. 큰 줄을 120px 로 잡은 이유다
-//   (210px 로 줄면 약 20px — 읽히는 하한).
+//   1280x720 으로 뽑는다. 검색 결과에서는 가로 210px 쯤으로 줄어든다.
+//   로고를 가로 720px(화면의 56%)로 크게 쓴다. 그 크기로 줄어도 동그라미와
+//   양옆 선의 윤곽이 남아서 어느 채널인지 알아볼 수 있다.
 
-import { existsSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,40 +43,27 @@ const argv = process.argv.slice(2);
 const val = (f, d) => { const i = argv.indexOf(f); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 
 const VOL = val('--vol', '').replace(/[^\w-]/g, '');
-const TOP = val('--top', '');
-const SUB = val('--sub', '');
-const TAG = val('--tag', '');
-
-/* Inter 는 한글을 못 그린다. 설치한 Noto Sans CJK 를 쓴다.
- * .ttc 는 여러 글꼴이 든 묶음이라 index 를 줘야 한다. 한글만 쓸 때는
- * JP/KR/SC 어느 쪽을 골라도 한글 글자꼴은 같다. */
-const KR = {
-  bold: '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
-  regular: '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
-};
 
 const W = 1280, H = 720;
-const X = 92;                     // 글자 블록 왼쪽 여백
-const INK_DARK = '0x14100e';      // 밝은 그림 위
-const INK_LIGHT = '0xf2efe9';     // 어두운 그림 위
+const LOCKUP_W = 720;
+const X = Math.round((W - LOCKUP_W) / 2);
+const INK_DARK = '0x14100e';                // 밝은 그림 위
+const INK_LIGHT = '0xf2efe9';               // 어두운 그림 위
 
 function fail(m) { console.error(`\n❌ ${m}\n`); process.exit(1); }
 function ff(a) { return execFileSync('ffmpeg', ['-v', 'error', '-y', ...a], { encoding: 'utf8' }); }
 
 if (!VOL) fail('--vol 을 주세요 (예: --vol 002)');
-if (!TOP) fail('--top 을 주세요 (썸네일의 큰 글자)');
-for (const f of Object.values(KR)) if (!existsSync(f)) fail(`한글 글꼴이 없습니다: ${f}\n   apt-get install -y fonts-noto-cjk`);
 
 mkdirSync(WORK, { recursive: true });
 
-/* 그림 고르기 */
 const pngs = existsSync(ART)
   ? readdirSync(ART).filter((f) => /\.(png|jpg|jpeg)$/i.test(f) && f.startsWith(`${VOL}-`)).sort()
   : [];
 if (!pngs.length) fail(`${VOL}집 그림이 없습니다 — playlist/art/${VOL}-*.png`);
 const art = join(ART, pngs[0]);
 
-/* 글자가 앉을 자리(왼쪽 절반)가 밝은지 어두운지 재서 글자색을 고른다.
+/* 로고가 앉을 자리가 밝은지 어두운지 재서 밝은 로고와 어두운 로고 중 고른다.
  * build.mjs 가 자막 띠에서 하는 것과 같은 방법이다. */
 function brightness(file, crop) {
   const r = spawnSync('ffmpeg', ['-v', 'info', '-i', file,
@@ -70,46 +73,27 @@ function brightness(file, crop) {
   return m ? Number(m[1]) : null;
 }
 
-const avg = brightness(art, `700:420:40:170`);
+const avg = brightness(art, `${LOCKUP_W}:200:${X}:${Math.round(H / 2) - 100}`);
 if (avg === null) fail('그림 밝기를 재지 못했습니다');
 const bright = avg > 140;
 const ink = bright ? INK_DARK : INK_LIGHT;
-const lockup = join(BRAND, bright ? 'logo-mark-dark.svg' : 'logo-mark-light.png');
-console.log(`글자 자리 밝기 ${avg.toFixed(0)} → ${bright ? '어두운 글자' : '밝은 글자'}`);
+const lockup = join(BRAND, bright ? 'lockup-dark.svg' : 'lockup-light.png');
+if (!existsSync(lockup)) fail(`로고가 없습니다: ${lockup}`);
+console.log(`로고 자리 밝기 ${avg.toFixed(0)} → ${bright ? '어두운 로고' : '밝은 로고'}`);
 
-/* 글자는 파일로 넘긴다. 따옴표·쉼표가 filter 문법을 깨뜨리기 때문이다. */
-let seq = 0;
-const tf = (s) => { const f = join(WORK, `th${seq++}.txt`); writeFileSync(f, String(s)); return f; };
-
-/* 밝은 그림 위의 어두운 글자는 그림자가 필요 없다. 반대는 필요하다. */
-const shade = bright
-  ? ':shadowcolor=0xf2efe9@0.45:shadowx=0:shadowy=2'
-  : ':shadowcolor=0x14100e@0.55:shadowx=0:shadowy=2';
-
+/* 그림 전체를 아주 살짝 눌러 로고가 뜨게 한다. 띠는 만들지 않는다 —
+ * 썸네일에 경계선이 보이면 싸구려로 보인다. */
 const parts = [
   `scale=${W}:${H}`,
-  /* 글자 쪽을 살짝 눌러 대비를 준다. 밝은 그림이면 하얗게, 어두우면 검게.
-   * 세기를 낮게 잡은 건 썸네일에서 띠가 보이면 싸구려로 보이기 때문이다. */
-  `drawbox=x=0:y=0:w=760:h=${H}:color=${bright ? '0xffffff' : '0x101010'}@0.18:t=fill`,
-  `drawtext=fontfile=${KR.bold}:textfile=${tf(TOP)}:fontcolor=${ink}`
-    + `:fontsize=120:x=${X}:y=236${shade}`,
+  `drawbox=x=0:y=0:w=${W}:h=${H}:color=${bright ? '0xffffff' : '0x101010'}@0.14:t=fill`,
 ];
-if (SUB) {
-  parts.push(`drawtext=fontfile=${KR.regular}:textfile=${tf(SUB)}:fontcolor=${ink}@0.88`
-    + `:fontsize=56:x=${X}:y=388${shade}`);
-}
-if (TAG) {
-  parts.push(`drawbox=x=${X}:y=486:w=96:h=3:color=${ink}@0.7:t=fill`);
-  parts.push(`drawtext=fontfile=${KR.regular}:textfile=${tf(TAG)}:fontcolor=${ink}@0.75`
-    + `:fontsize=34:x=${X}:y=520${shade}`);
-}
 
 const out = join(OUT, `썸네일-${VOL}.png`);
 ff(['-i', art, '-i', lockup,
   '-filter_complex',
     `[0:v]${parts.join(',')}[bg];`
-    + `[1:v]scale=96:-1[lk];`
-    + `[bg][lk]overlay=${X}:600[v]`,
+    + `[1:v]scale=${LOCKUP_W}:-1[lk];`
+    + `[bg][lk]overlay=(W-w)/2:(H-h)/2[v]`,
   '-map', '[v]', '-frames:v', '1', out]);
 
 const size = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height',

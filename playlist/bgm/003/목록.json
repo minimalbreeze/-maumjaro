@@ -1,0 +1,145 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-591085.mp3",
+      "title": "Yellow Wind",
+      "artist": "Christian Zell",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Yellow Wind — Christian Zell (CC BY) · archive.org/details/jamendo-591085",
+      "source": "https://archive.org/details/jamendo-591085"
+    },
+    {
+      "file": "jamendo-160719.mp3",
+      "title": "The Rampart",
+      "artist": "Blue Dot Sessions",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "The Rampart — Blue Dot Sessions (CC BY) · archive.org/details/jamendo-160719",
+      "source": "https://archive.org/details/jamendo-160719"
+    },
+    {
+      "file": "jamendo-144713.mp3",
+      "title": "Tu m'oublies",
+      "artist": "jacky.daniel",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Tu m'oublies — jacky.daniel (CC BY) · archive.org/details/jamendo-144713",
+      "source": "https://archive.org/details/jamendo-144713"
+    },
+    {
+      "file": "jamendo-248699.mp3",
+      "title": "Flujo constante",
+      "artist": "Jorge Gabriel Millán Páez",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Flujo constante — Jorge Gabriel Millán Páez (CC BY) · archive.org/details/jamendo-248699",
+      "source": "https://archive.org/details/jamendo-248699"
+    },
+    {
+      "file": "jamendo-220258.mp3",
+      "title": "remembering",
+      "artist": "mirko",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "remembering — mirko (CC BY) · archive.org/details/jamendo-220258",
+      "source": "https://archive.org/details/jamendo-220258"
+    },
+    {
+      "file": "jamendo-638533.mp3",
+      "title": "Harp in the Park",
+      "artist": "KonstantinPazuzuStudio",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Harp in the Park — KonstantinPazuzuStudio (CC BY) · archive.org/details/jamendo-638533",
+      "source": "https://archive.org/details/jamendo-638533"
+    },
+    {
+      "file": "jamendo-461720.mp3",
+      "title": "River of Dreams",
+      "artist": "Dan Falvey",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "River of Dreams — Dan Falvey (CC BY) · archive.org/details/jamendo-461720",
+      "source": "https://archive.org/details/jamendo-461720"
+    },
+    {
+      "file": "jamendo-117652.mp3",
+      "title": "I Will Not Let You Let Me Down",
+      "artist": "Josh Woodward",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "I Will Not Let You Let Me Down — Josh Woodward (Instrumental Versions) (CC BY) · archive.org/details/jamendo-117652",
+      "source": "https://archive.org/details/jamendo-117652"
+    },
+    {
+      "file": "jamendo-109284.mp3",
+      "title": "Lovers Again",
+      "artist": "Leandro Perpiñán",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Lovers Again — Leandro Perpiñán (CC BY) · archive.org/details/jamendo-109284",
+      "source": "https://archive.org/details/jamendo-109284"
+    },
+    {
+      "file": "jamendo-318931.mp3",
+      "title": "An ojos celestes",
+      "artist": "UnderBlow",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "An ojos celestes — UnderBlow (CC BY) · archive.org/details/jamendo-318931",
+      "source": "https://archive.org/details/jamendo-318931"
+    },
+    {
+      "file": "jamendo-182600.mp3",
+      "title": "Luces",
+      "artist": "See What You Saw",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Luces — See What You Saw (CC BY) · archive.org/details/jamendo-182600",
+      "source": "https://archive.org/details/jamendo-182600"
+    },
+    {
+      "file": "jamendo-531009.mp3",
+      "title": "Flying",
+      "artist": "Christian Zell",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Flying — Christian Zell (CC BY) · archive.org/details/jamendo-531009",
+      "source": "https://archive.org/details/jamendo-531009"
+    },
+    {
+      "file": "jamendo-639398.mp3",
+      "title": "Silent Weave",
+      "artist": "Konstantin Feltman",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Silent Weave — Konstantin Feltman (CC BY) · archive.org/details/jamendo-639398",
+      "source": "https://archive.org/details/jamendo-639398"
+    },
+    {
+      "file": "jamendo-639401.mp3",
+      "title": "Frozen Archive",
+      "artist": "Konstantin Feltman",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Frozen Archive — Konstantin Feltman (CC BY) · archive.org/details/jamendo-639401",
+      "source": "https://archive.org/details/jamendo-639401"
+    },
+    {
+      "file": "jamendo-624399.mp3",
+      "title": "Fantasia on a Haydn Air",
+      "artist": "Steve Zwart",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Fantasia on a Haydn Air — Steve Zwart (CC BY) · archive.org/details/jamendo-624399",
+      "source": "https://archive.org/details/jamendo-624399"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    "jamendo-626817",
+    "jamendo-526058",
+    "jamendo-054224"
+  ]
+}

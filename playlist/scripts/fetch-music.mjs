@@ -218,13 +218,26 @@ function stripArtist(title, artist) {
   const parts = unent(artist).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .split(/[^A-Za-z0-9]+/).filter(Boolean);
   if (!parts.length) return title;
-  const re = new RegExp(`^${parts.join('[^A-Za-z0-9]*')}\\s*[-._]\\s*`, 'i');
+  const body = parts.join('[^A-Za-z0-9]*');
   const flat = [...title].map((ch) => ch.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
-  const m = flat.join('').match(re);
-  if (!m) return title;
-  let n = 0, cut = 0;
-  while (cut < flat.length && n < m[0].length) { n += flat[cut].length; cut++; }
-  return title.slice(cut);
+  const joined = flat.join('');
+
+  // 앞에 붙은 경우: "Dave Lockyer - New Love"
+  const head = joined.match(new RegExp(`^${body}\\s*[-._]\\s*`, 'i'));
+  if (head) {
+    let n = 0, cut = 0;
+    while (cut < flat.length && n < head[0].length) { n += flat[cut].length; cut++; }
+    return title.slice(cut);
+  }
+  // 뒤에 붙은 경우: "Tu m oublies-Jacky Daniel" (3집에서 나왔다)
+  const tail = joined.match(new RegExp(`\\s*[-._]\\s*${body}\\s*$`, 'i'));
+  if (tail) {
+    const keep = joined.length - tail[0].length;
+    let n = 0, cut = 0;
+    while (cut < flat.length && n < keep) { n += flat[cut].length; cut++; }
+    return title.slice(0, cut);
+  }
+  return title;
 }
 
 /* 파일 이름에서 진짜 제목만 꺼낸다.
@@ -260,6 +273,12 @@ function finalize(raw) {
   if (!/[A-Za-z]/.test(t)) return '';          // 쓸 글자가 안 남았다
   // "I 2018" 처럼 글자 한두 개에 숫자만 붙은 것은 제목이 아니다.
   if (t.replace(/[^A-Za-z]/g, '').length < 3) return '';
+  /* 전부 대문자인 긴 제목은 화면에서 소리 지르는 것처럼 보인다.
+   * "LAS FLORES LLORAN UNA CANCION DE AMOR" 가 그렇게 들어왔다.
+   * 짧은 것(NEW VIP)은 약자일 수 있으니 그냥 둔다. */
+  if (t.length > 15 && t === t.toUpperCase() && /[A-Z]/.test(t)) {
+    t = t.toLowerCase().replace(/(^|[\s(\[-])([a-z])/g, (_, a, b) => a + b.toUpperCase());
+  }
   if (t.length > 42) t = `${t.slice(0, 41).trimEnd()}…`;
   return t;
 }
@@ -297,8 +316,12 @@ function badTitle(t) {
   return BAD_WORDS.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
 }
 
-/* 다른 집에서 이미 쓴 곡은 또 받지 않는다. bgm/ 아래 모든 목록.json 을 본다.
- * 2집에 1집 곡이 다시 들어오면 구독자가 바로 알아챈다. */
+/* 이미 쓴 곡과 한 번 뺀 곡은 또 받지 않는다. bgm/ 아래 모든 목록.json 을 본다.
+ *
+ * 2집에 1집 곡이 다시 들어오면 구독자가 바로 알아챈다.
+ * rejected 도 같이 보는 이유: 3집에서 합창곡 두 개를 목록에서 지웠더니,
+ * '쓴 곡' 명단에서도 같이 빠져서 다음 내려받기에 그대로 다시 들어왔다.
+ * 뺀 것은 뺐다고 적어 둬야 한다. */
 function usedElsewhere() {
   const seen = new Set();
   if (!existsSync(BGM_ROOT)) return seen;
@@ -308,9 +331,11 @@ function usedElsewhere() {
     const f = join(d, '목록.json');
     if (!existsSync(f)) continue;
     try {
-      (JSON.parse(readFileSync(f, 'utf8')).tracks || []).forEach((t) => {
+      const j = JSON.parse(readFileSync(f, 'utf8'));
+      (j.tracks || []).forEach((t) => {
         if (t.source) seen.add(String(t.source).split('/').pop());
       });
+      (j.rejected || []).forEach((id) => seen.add(String(id)));
     } catch { /* 읽히지 않으면 없는 셈 친다 */ }
   }
   return seen;
@@ -332,6 +357,16 @@ async function main() {
   list.tracks = list.tracks || [];
   const already = new Set(list.tracks.map((t) => t.file));
   const used = usedElsewhere();
+
+  /* 같은 사람 곡이 세 곡씩 들어오면 플레이리스트가 얇아 보인다.
+   * 3집 1차에 Christian Zell 이 3곡이었다. 한 집에 둘까지만 받는다. */
+  const perArtist = new Map();
+  const seenBy = (a) => perArtist.get(String(a).toLowerCase().trim()) || 0;
+  list.tracks.forEach((t) => {
+    const k = String(t.artist).toLowerCase().trim();
+    perArtist.set(k, (perArtist.get(k) || 0) + 1);
+  });
+  const MAX_PER_ARTIST = Number(val('--per-artist', '2'));
 
   let got = 0, skipped = 0;
   for (const doc of docs) {
@@ -377,6 +412,11 @@ async function main() {
       skipped++; continue;
     }
 
+    if (seenBy(artist) >= MAX_PER_ARTIST) {
+      console.log(`  — 건너뜀: ${title.slice(0, 30)} (${String(artist).slice(0, 20)} 곡이 이미 ${MAX_PER_ARTIST}개)`);
+      skipped++; continue;
+    }
+
     const bad = badTitle(title);
     if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 36)} ("${bad}")`); skipped++; continue; }
 
@@ -414,6 +454,7 @@ async function main() {
       credit: lic.credit ? `${title} — ${artist} (${lic.name}) · archive.org/details/${doc.identifier}` : '',
       source: `https://archive.org/details/${doc.identifier}`,
     });
+    perArtist.set(String(artist).toLowerCase().trim(), seenBy(artist) + 1);
     got++;
   }
 
