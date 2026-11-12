@@ -6925,7 +6925,20 @@ test('사진의 구도와 자세를 지키라고 적는다', () => {
   //    photograph' 였다. 그 말이 **사진을 전부 베끼라는 쪽**으로
   //    민다 — 워터마크까지 '사진에 나타난 것'이기 때문이다.
   //    유니폼은 지키되 '사진을 베껴라'는 말은 뺐다.
-  assert.ok(/the same uniform and cap in the same colours/.test(p));
+  // ⚠️ 2026-11-12. '사진에 있는 유니폼을 그대로 두라' 를 **뺐다.**
+  //    운영자: "유니폼은 해당 팀의 상징색을 넣어서 한다. 똑같이
+  //            어차피 못 그리잖아."
+  //    베끼려다 모자 마크와 가슴 글자만 글자꼴로 남았다. 이제 유니폼은
+  //    코드가 적는 팀 색으로 다시 칠한다.
+  assert.ok(!/the same uniform and cap in the same colours/.test(p));
+  assert.ok(
+    /a solid navy blue cap/.test(
+      RP.repaintPrompt({ name: '원태인' }, null, {
+        uniform: 'wearing a white baseball jersey with navy blue piping, a solid navy blue cap',
+      })
+    ),
+    '팀 색 유니폼이 안 들어갔습니다'
+  );
   assert.ok(!/as they appear in the photograph/.test(p), '사진을 베끼라는 말이 돌아왔습니다');
 });
 
@@ -7343,14 +7356,28 @@ test('리페인트도 가슴을 민무늬로 다시 그린다', () => {
   //
   // 그래서 가슴만 예외로 둔다. 색은 지키고 무늬는 안 지킨다.
   const p = RP.repaintPrompt({ name: '고영표' });
+  // ⚠️ 2026-11-12. 가슴 민무늬를 맡는 자리가 둘로 바뀌었다 —
+  //    (1) REPAINT_KEEP 안의 예외, (2) 유니폼 문장(uniforms.mjs).
+  //    뒤에 따로 붙이던 줄은 앞말에 밀려서 안 통했다.
   assert.ok(
-    /the front of the jersey and jacket is smooth plain fabric/.test(p),
-    '가슴 민무늬 지시가 없습니다 — 원본 사진의 가슴 글자를 베낍니다'
+    /the front of the jersey is repainted as smooth plain fabric/.test(p),
+    '구도 지시 **안에** 가슴 예외가 없습니다 — 뒤에 붙이면 앞말에 밀립니다'
   );
-  assert.ok(/carrying nothing across the chest/.test(p));
+  // 팀을 모를 때도 적어도 마크는 안 그린다.
+  assert.ok(
+    /the cap is plain fabric in one solid colour with nothing on it/.test(p),
+    '팀을 모를 때 모자를 민무늬로 두는 줄이 없습니다'
+  );
   // 색과 등번호는 지켜야 한다. 그게 선수를 말해 주는 것이다.
-  assert.ok(/the same uniform and cap in the same colours/.test(p));
-  assert.ok(/the same jersey number/.test(p));
+  assert.ok(
+    /a solid black cap/.test(
+      RP.repaintPrompt({ name: '고영표' }, null, {
+        uniform: 'wearing a white baseball jersey with black piping, a solid black cap, the number 1',
+      })
+    ),
+    '팀 색이 안 들어갔습니다'
+  );
+  // 등번호는 유니폼 문장이 들고 온다(uniforms.mjs). 여기선 안 본다.
   // ⚠️ 긍정문이어야 한다. 낱말을 부르면 그린다.
   for (const w of ['watermark', 'logo', 'wordmark', 'lettering']) {
     assert.ok(!new RegExp(w, 'i').test(p), `"${w}" 가 있습니다 — 부르면 그립니다`);
@@ -7426,6 +7453,40 @@ await asyncTest('사람 샷은 받은 사진을 돌려 쓴다 — 같은 사진�
   );
   // 주소가 아닌 것은 안 받는다 — 저장소 안 파일을 쓰지 않기로 했다.
   assert.deepEqual(PO2.allPhotosOf({ photo: '스포츠영상/사진/a.jpg' }), []);
+});
+
+await asyncTest('사진이 있는 사람은 생김새를 글로 적지 않는다', async () => {
+  // ── 2026-11-12 운영자 ──
+  //
+  //   "자꾸 생김새로 만들지 마라"
+  //   "생김새 글로 적는 건 **아예 삭제해라. 또 할 것 같다**"
+  //
+  // 사진이 있는데 얼굴을 글로 또 적으면 둘이 싸운다. 글이 이기면
+  // 사진 속 사람이 아닌 사람이 나오고, 사진이 이기면 글이 낭비된다.
+  // 12화에서 셋이 전부 안 닮게 나온 까닭 중 하나다.
+  //
+  // "또 할 것 같다" 는 말이 맞다. 그래서 코드로 막고 여기서 지킨다.
+  const V = await import('../src/scenes/visuals.mjs');
+
+  const 사진있음 = {
+    name: '김도영',
+    look: 'a Korean player of 24, a slim oval face with a sharp jawline',
+    photos: [{ url: 'https://a/1.jpg' }],
+  };
+  const 사진없음 = { name: '양현종', look: 'a Korean pitcher in his thirties' };
+
+  // 사진이 있으면 한 글자도 안 나간다.
+  assert.equal(V.peopleRules([사진있음]), '', '사진이 있는데 생김새가 나갔습니다');
+  // 옛 모양(photo)도 같다.
+  assert.equal(V.peopleRules([{ ...사진있음, photos: [], photo: 'https://a/1.jpg' }]), '');
+
+  // 사진이 없는 사람은 글 말고 기댈 데가 없으니 적는다.
+  assert.ok(V.peopleRules([사진없음]).includes('양현종'), '사진 없는 사람까지 지웠습니다');
+
+  // 섞여 있어도 사진 있는 쪽만 빠진다.
+  const 섞임 = V.peopleRules([사진있음, 사진없음]);
+  assert.ok(!섞임.includes('김도영'), '사진 있는 사람이 섞여 들어갔습니다');
+  assert.ok(섞임.includes('양현종'));
 });
 
 await asyncTest('구단 표에도 글자 이야기가 없다', async () => {

@@ -24,7 +24,7 @@
 import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
-import { photoOf as mainPhoto } from '../assets/photo-of.mjs';
+import { photoOf as mainPhoto, allPhotosOf } from '../assets/photo-of.mjs';
 import { uniformClause, teamKey } from './uniforms.mjs';
 
 /**
@@ -1100,7 +1100,20 @@ D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_
  * 채우려고 엉뚱한 말을 지어낸다.
  */
 export function peopleRules(people) {
-  const list = (Array.isArray(people) ? people : []).filter((p) => p?.name && p?.look);
+  // ── 사진이 있는 사람은 생김새를 **글로 적지 않는다** (2026-11-12) ──
+  //
+  //   운영자: "자꾸 생김새로 만들지 마라"
+  //           "생김새 글로 적는 건 아예 삭제해라. 또 할 것 같다"
+  //
+  // 사진이 있는데 얼굴을 글로 또 적으면 둘이 싸운다. 글이 이기면
+  // 사진 속 사람이 아닌 사람이 나오고, 사진이 이기면 글이 낭비된다.
+  // 12화에서 김도영·하주석·이범호가 전부 안 닮게 나온 까닭 중 하나다.
+  //
+  // **사진이 있으면 얼굴은 사진이 말한다.** 여기서는 아예 뺀다.
+  // 사진이 없는 사람만 글로 적는다 — 그 사람은 글 말고 기댈 데가 없다.
+  const list = (Array.isArray(people) ? people : []).filter(
+    (p) => p?.name && p?.look && !allPhotosOf(p).length
+  );
   if (!list.length) return '';
 
   const lines = list.map((p) => {

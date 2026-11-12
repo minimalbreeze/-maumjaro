@@ -169,38 +169,50 @@ export const REPAINT_CLEAN =
   'plain grass, the sky is plain sky';
 
 /** 한 장에 보낼 지시문. */
-export function repaintPrompt(person, shot = null) {
+export function repaintPrompt(person, shot = null, { uniform = '' } = {}) {
   const bits = [
     `Turn this photograph into ${SPORTS_PAINT}.`,
     REPAINT_KEEP,
     REPAINT_DROP,
     REPAINT_CLEAN,
   ];
-  // 사람 기록에 팀이 있으면 유니폼 색이 어긋나지 않게 덧붙인다.
-  // ⚠️ 다만 **바꾸라고는 하지 않는다.** 사진에 이미 그 팀 유니폼이
-  //    있을 테니, 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
-  //    "사진에 있는 유니폼을 그대로 두라"가 맞다.
-  bits.push('the same uniform and cap in the same colours, the same jersey number');
-  // ── 가슴은 민무늬로 다시 그린다 (2026-11-09) ──
+
+  // ── 유니폼은 **팀 상징색**으로 통일한다 (2026-11-12 운영자) ──
   //
-  // 운영자: "아직도 그대로다" — 고영표 가슴에 "읽가ㅅㅍ大".
+  //   "보내준 사진은 그대로 톤을 맞춰서 그린다. 톤을 맞추는 게 중요하다.
+  //    다만 모자랑 가슴의 로고는 빼고, 유니폼은 해당 팀의 상징색을
+  //    넣어서 한다. 똑같이 어차피 못 그리잖아."
   //
-  // 이 경로는 uniforms.mjs 도 스타일 꼬리도 안 쓴다. 그러니 글자를
-  // 그리라고 시킨 적이 없다. 그런데도 나왔다 — **원본 사진 가슴에
-  // 있던 것**(워터마크든 재킷에 박힌 글자든)을 "그대로 두라"는 지시대로
-  // 베낀 것이다. REPAINT_KEEP 이 구도를 지키라고 세게 밀기 때문이다.
+  // 맞는 말이다. 전에는 '사진에 있는 유니폼을 그대로 두라' 였는데,
+  // 모델이 유니폼을 똑같이 못 그린다. 베끼려다 **모자 마크와 가슴
+  // 글자만 글자꼴로 남았다.**
   //
-  // Flux 는 한글을 못 쓰니 베끼면 반드시 글자꼴만 남는다. 그래서
-  // **가슴만 예외로 둔다.** 색은 지키고 무늬는 안 지킨다.
+  // 그래서 베끼지 않는다. 지킬 것은 **사람과 자세와 구도**이고,
+  // 유니폼은 코드가 적는 팀 색으로 다시 칠한다. 그 문장에는 마크도
+  // 글자도 없다(uniforms.mjs).
   //
-  // ⚠️ 긍정문으로 적는다. "글자를 지워라"로 적으면 글자를 그린다 —
-  //    위 REPAINT_CLEAN 주석의 두 번 실패가 그것이다.
-  bits.push(
-    'the front of the jersey and jacket is smooth plain fabric in its own ' +
-      'colour, carrying nothing across the chest'
-  );
+  // ⚠️ 이 덕에 시기가 안 맞는 사진도 쓸 수 있다 — 옛 팀 사진이라도
+  //    지금 팀 색으로 칠해진다.
+  if (uniform) {
+    bits.push(uniform);
+  } else {
+    // 팀을 모르면 색까지는 못 정한다. 적어도 마크는 안 그리게 한다.
+    bits.push(
+      'the cap is plain fabric in one solid colour with nothing on it, ' +
+        'the front of the jersey is smooth plain fabric'
+    );
+  }
+
+  // ── 얼굴은 **사진이 말한다. 글로 적지 않는다** (2026-11-12 운영자) ──
+  //
+  //   "자꾸 생김새로 만들지 마라"
+  //
+  // 사진이 있는데 생김새를 글로 또 적으면 둘이 싸운다. 글이 이기면
+  // 사진 속 사람이 아닌 사람이 나오고, 사진이 이기면 글이 낭비된다.
+  // **사진이 있으면 얼굴은 사진에 맡긴다.**
   if (person?.name) bits.push('keep the same person, the same face');
-  // 그 사진을 어디에 쓸지 적어 두면 사람이 결과를 고를 때 편하다.
+
+  // 그 사진을 어디에 쓸지는 사람이 결과를 고를 때 쓰는 꼬리표다.
   // 모델에게 보내는 글에는 넣지 않는다 — 한국어고, 지시가 아니다.
   if (shot?.쓰임) bits.push('');
   return bits.join(' ').trim();

@@ -23,6 +23,7 @@ import { createClient, modelFor, DEFAULT_IMAGE_MODEL } from './replicate.mjs';
 import { SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE } from '../scenes/visuals.mjs';
 import { photoOf as mainPhoto, sparePhotoOf as sparePhoto, allPhotosOf } from './photo-of.mjs';
 import { repaintPrompt, REPAINT_MODEL } from './repaint.mjs';
+import { uniformClause } from '../scenes/uniforms.mjs';
 import { cropToDataUri, DEFAULT_CROP } from './crop.mjs';
 
 
@@ -264,11 +265,17 @@ export async function generateImages(prompts, {
   // 한 사람에게 사진이 여러 장이면 샷마다 **돌려 쓴다.** 같은 사진이
   // 연달아 나오면 영상이 멈춰 보인다.
   const photosOf = new Map();
+  // 사람마다 **팀 색 유니폼 문장**도 같이 들고 있는다. 사진을 그대로
+  // 베끼지 않고 이 색으로 다시 칠한다 (2026-11-12 운영자).
+  const uniformOf = new Map();
   if (usePhotos) {
     for (const p of people || []) {
       const name = String(p?.name || '').trim();
       const list = allPhotosOf(p);
-      if (name && list.length) photosOf.set(name, list);
+      if (name && list.length) {
+        photosOf.set(name, list);
+        uniformOf.set(name, uniformClause({ team: p?.team, number: p?.number, role: p?.role }));
+      }
     }
   }
   const photoTurn = new Map(); // 사람마다 몇 번째 사진을 쓸 차례인가
@@ -366,7 +373,7 @@ export async function generateImages(prompts, {
           }
         }
         if (fromPhoto) {
-          prompt = repaintPrompt({ name: who });
+          prompt = repaintPrompt({ name: who }, null, { uniform: uniformOf.get(who) || '' });
           reference = ref;
         }
         const result = await api.generate(prompt, {
