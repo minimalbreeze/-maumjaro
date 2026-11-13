@@ -1,39 +1,12 @@
 {
   "tracks": [
     {
-      "file": "jamendo-128423.mp3",
-      "title": "minuit chretien",
-      "artist": "Adragante",
-      "recorded": "2013",
-      "license": "CC BY",
-      "credit": "minuit chretien — Adragante (CC BY) · archive.org/details/jamendo-128423",
-      "source": "https://archive.org/details/jamendo-128423"
-    },
-    {
-      "file": "jamendo-144181.mp3",
-      "title": "The First Noel",
-      "artist": "Gerry Baird",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "The First Noel — Gerry Baird (CC BY) · archive.org/details/jamendo-144181",
-      "source": "https://archive.org/details/jamendo-144181"
-    },
-    {
-      "file": "jamendo-172609.mp3",
-      "title": "Reindeer Sleigh Ride With Vixen - Lenny W…",
-      "artist": "Lenny Wiles Lionstar GALAXY BANDSTAND",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "Reindeer Sleigh Ride With Vixen - Lenny W… — Lenny Wiles Lionstar GALAXY BANDSTAND (CC BY) · archive.org/details/jamendo-172609",
-      "source": "https://archive.org/details/jamendo-172609"
-    },
-    {
       "file": "jamendo-140829.mp3",
-      "title": "It s beginning to look a lot like Christm…",
+      "title": "It's Beginning to Look a Lot Like Christmas",
       "artist": "MonacoLorenzo",
       "recorded": "2014",
       "license": "CC BY",
-      "credit": "It s beginning to look a lot like Christm… — MonacoLorenzo (CC BY) · archive.org/details/jamendo-140829",
+      "credit": "It's Beginning to Look a Lot Like Christmas — MonacoLorenzo (CC BY) · archive.org/details/jamendo-140829",
       "source": "https://archive.org/details/jamendo-140829"
     },
     {
@@ -46,31 +19,13 @@
       "source": "https://archive.org/details/jamendo-275504"
     },
     {
-      "file": "jamendo-156594.mp3",
-      "title": "Away In A Manger",
-      "artist": "Ryan Sheeler",
-      "recorded": "2015",
+      "file": "jamendo-172609.mp3",
+      "title": "Reindeer Sleigh Ride With Vixen",
+      "artist": "Lenny Wiles Lionstar GALAXY BANDSTAND",
+      "recorded": "2017",
       "license": "CC BY",
-      "credit": "Away In A Manger — Ryan Sheeler (CC BY) · archive.org/details/jamendo-156594",
-      "source": "https://archive.org/details/jamendo-156594"
-    },
-    {
-      "file": "jamendo-185313.mp3",
-      "title": "Summer breeze feat. Dia Yiannopoulou",
-      "artist": "zero-project",
-      "recorded": "2019",
-      "license": "CC BY",
-      "credit": "Summer breeze feat. Dia Yiannopoulou — zero-project (CC BY) · archive.org/details/jamendo-185313",
-      "source": "https://archive.org/details/jamendo-185313"
-    },
-    {
-      "file": "jamendo-147151.mp3",
-      "title": "Winter Love Song",
-      "artist": "VITNE",
-      "recorded": "2014",
-      "license": "CC BY",
-      "credit": "Winter Love Song — VITNE (CC BY) · archive.org/details/jamendo-147151",
-      "source": "https://archive.org/details/jamendo-147151"
+      "credit": "Reindeer Sleigh Ride With Vixen — Lenny Wiles Lionstar GALAXY BANDSTAND (CC BY) · archive.org/details/jamendo-172609",
+      "source": "https://archive.org/details/jamendo-172609"
     },
     {
       "file": "jamendo-163793.mp3",
@@ -82,15 +37,6 @@
       "source": "https://archive.org/details/jamendo-163793"
     },
     {
-      "file": "jamendo-208296.mp3",
-      "title": "Christmas Avec Toi",
-      "artist": "I'M FRESH! YOU'RE PRETTY!",
-      "recorded": "2013",
-      "license": "CC BY",
-      "credit": "Christmas Avec Toi — I'M FRESH! YOU'RE PRETTY! (CC BY) · archive.org/details/jamendo-208296",
-      "source": "https://archive.org/details/jamendo-208296"
-    },
-    {
       "file": "jamendo-128608.mp3",
       "title": "Christmas Songs - Holly Jolly",
       "artist": "Roman Ram Lobashkov",
@@ -100,14 +46,110 @@
       "source": "https://archive.org/details/jamendo-128608"
     },
     {
-      "file": "jamendo-185035.mp3",
-      "title": "Higher feat. Dia Yiannopoulou",
-      "artist": "zero-project",
-      "recorded": "2019",
+      "file": "jamendo-208296.mp3",
+      "title": "Christmas Avec Toi",
+      "artist": "I'M FRESH! YOU'RE PRETTY!",
+      "recorded": "2013",
       "license": "CC BY",
-      "credit": "Higher feat. Dia Yiannopoulou — zero-project (CC BY) · archive.org/details/jamendo-185035",
-      "source": "https://archive.org/details/jamendo-185035"
+      "credit": "Christmas Avec Toi — I'M FRESH! YOU'RE PRETTY! (CC BY) · archive.org/details/jamendo-208296",
+      "source": "https://archive.org/details/jamendo-208296"
+    },
+    {
+      "file": "jamendo-147151.mp3",
+      "title": "Winter Love Song",
+      "artist": "VITNE",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Winter Love Song — VITNE (CC BY) · archive.org/details/jamendo-147151",
+      "source": "https://archive.org/details/jamendo-147151"
+    },
+    {
+      "file": "jamendo-638545.mp3",
+      "title": "Firelight",
+      "artist": "KonstantinPazuzuStudio",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Firelight — KonstantinPazuzuStudio (CC BY) · archive.org/details/jamendo-638545",
+      "source": "https://archive.org/details/jamendo-638545"
+    },
+    {
+      "file": "jamendo-233426.mp3",
+      "title": "Three Letters of Happiness",
+      "artist": "Billie",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Three Letters of Happiness — Billie (CC BY) · archive.org/details/jamendo-233426",
+      "source": "https://archive.org/details/jamendo-233426"
+    },
+    {
+      "file": "jamendo-162209.mp3",
+      "title": "Recordando lo que fui",
+      "artist": "Roxana Contreras",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Recordando lo que fui — Roxana Contreras (CC BY) · archive.org/details/jamendo-162209",
+      "source": "https://archive.org/details/jamendo-162209"
+    },
+    {
+      "file": "jamendo-148756.mp3",
+      "title": "Inner parts",
+      "artist": "The Dream Pop Project",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Inner parts — The Dream Pop Project (CC BY) · archive.org/details/jamendo-148756",
+      "source": "https://archive.org/details/jamendo-148756"
+    },
+    {
+      "file": "jamendo-545338.mp3",
+      "title": "Thinking",
+      "artist": "Christian Zell",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Thinking — Christian Zell (CC BY) · archive.org/details/jamendo-545338",
+      "source": "https://archive.org/details/jamendo-545338"
+    },
+    {
+      "file": "jamendo-166468.mp3",
+      "title": "Classic Guitare",
+      "artist": "dj davidson",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Classic Guitare — dj davidson (CC BY) · archive.org/details/jamendo-166468",
+      "source": "https://archive.org/details/jamendo-166468"
+    },
+    {
+      "file": "jamendo-144181.mp3",
+      "title": "The First Noel",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "The First Noel — Gerry Baird (CC BY) · archive.org/details/jamendo-144181",
+      "source": "https://archive.org/details/jamendo-144181"
+    },
+    {
+      "file": "jamendo-156594.mp3",
+      "title": "Away In A Manger",
+      "artist": "Ryan Sheeler",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Away In A Manger — Ryan Sheeler (CC BY) · archive.org/details/jamendo-156594",
+      "source": "https://archive.org/details/jamendo-156594"
+    },
+    {
+      "file": "jamendo-128423.mp3",
+      "title": "minuit chretien",
+      "artist": "Adragante",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "minuit chretien — Adragante (CC BY) · archive.org/details/jamendo-128423",
+      "source": "https://archive.org/details/jamendo-128423"
     }
   ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    "jamendo-185313",
+    "jamendo-185035",
+    "jamendo-520932",
+    "jamendo-231929"
+  ]
 }
