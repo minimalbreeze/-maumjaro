@@ -1066,7 +1066,26 @@ async function cmdRepaint(flags) {
     (p) => !only || only.has(String(p?.name || '').trim())
   );
 
-  const { jobs, skipped } = repaintJobs(people, { spare: Boolean(flags.spare) });
+  // --per=1 로 **사람당 한 장만** 돌린다 (2026-11-12 규칙 15).
+  //
+  // 12화에서 55장을 아무것도 안 보고 걸었다가 $1.95 를 버렸다. 같은
+  // 실수가 55장에 전부 복사됐기 때문이다. 사람당 한 장이면 세 장에
+  // $0.15 다 — 그걸로 막을 수 있는 것을 $1.95 로 배우지 않는다.
+  //
+  // ⚠️ --only 와 다르다. --only 는 **사람**을 줄이고, 이건 사람마다
+  //    **장수**를 줄인다. 셋을 한 장씩 보는 것이 한 사람을 일곱 장
+  //    보는 것보다 낫다 — 사람이 달라지면 사진도 달라지니까.
+  const perPerson = Number(flags.per) > 0 ? Math.floor(Number(flags.per)) : 0;
+  const { jobs: allJobs, skipped } = repaintJobs(people, { spare: Boolean(flags.spare) });
+  let jobs = allJobs;
+  if (perPerson) {
+    const seen = new Map();
+    jobs = allJobs.filter((j) => {
+      const n = (seen.get(j.name) || 0) + 1;
+      seen.set(j.name, n);
+      return n <= perPerson;
+    });
+  }
 
   log.section(`🖼  사진을 지브리로  |  ${planPath}`);
   for (const sk of skipped) log.warn(`${sk.name}: ${sk.reason}`);
@@ -1079,6 +1098,9 @@ async function cmdRepaint(flags) {
   const per = modelFor(REPAINT_MODEL).usdPerImage;
   const cost = Math.round(jobs.length * per * 10000) / 10000;
   log.info(`${jobs.length}장 — ${[...new Set(jobs.map((j) => j.name))].join(', ')}`);
+  if (perPerson) {
+    log.info(`사람당 ${perPerson}장만 돌립니다 (--per=${perPerson}). 받아 둔 사진은 ${allJobs.length}장입니다.`);
+  }
   log.info(`예상 비용 약 $${cost} (추정치 — 이 모델은 처음 써 봅니다)`);
   // ── 워터마크는 **잘라서** 없앤다 (2026-11-09 운영자) ──
   //

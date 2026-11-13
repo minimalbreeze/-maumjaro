@@ -3298,6 +3298,32 @@ test('올릴 때 쓸 파일들을 한 폴더에 저장한다', () => {
 });
 
 
+test('워크플로 입력이 코드까지 이어진다 — repaint_per', () => {
+  // 2026-11-12 규칙 15. 55장을 걸기 전에 사람당 한 장만 보려고 넣었다.
+  // 입력을 추가할 때 **env 로 넘기는 줄을 빼먹는 것**이 이 리포의 단골
+  // 사고다(ffmpeg 를 세 번 빼먹었다). 세 자리를 다 본다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  assert.ok(/^      repaint_per:$/m.test(yml), '입력 칸이 없습니다');
+  assert.ok(
+    /IN_REPAINT_PER: \$\{\{ inputs\.repaint_per \}\}/.test(yml),
+    'env 로 넘기는 줄이 없습니다 — 입력만 있고 코드엔 안 갑니다'
+  );
+  assert.ok(
+    /repaint --plan=[^\n]*--per="\$IN_REPAINT_PER"/.test(yml),
+    'repaint 명령에 --per 가 안 붙었습니다'
+  );
+  // 비우면 안 붙어야 한다. `--per=` 로 빈 값이 가면 Number('') 가 0 이라
+  // 조용히 전부 돌아간다 — 비싸지는 쪽으로 틀린다.
+  assert.ok(
+    /\$\{IN_REPAINT_PER:\+--per="\$IN_REPAINT_PER"\}/.test(yml),
+    '빈 값일 때 --per 를 떼는 꼴이 아닙니다'
+  );
+});
+
+
 test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
   // 모드를 하나 늘릴 때 case 에 안 적으면, 셸은 오류를 내지 않고 맨 끝
   // *) 로 떨어진다. 그러면 "올릴 거리를 만들어 줘"를 눌렀는데 소재만

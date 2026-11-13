@@ -57,6 +57,10 @@ on:
         description: "'사진을 지브리로' 에서 몇 명만 바꿀 때. 쉼표로 구분 (예: 구자욱,강민호). 비우면 전원"
         required: false
         default: ''
+      repaint_per:
+        description: "'사진을 지브리로' 에서 사람당 몇 장만 볼 때 (예: 1). 55장을 걸기 전에 먼저 봅니다. 비우면 받아 둔 전부"
+        required: false
+        default: ''
       sports_plan:
         description: '스포츠 기획 파일 (예: 스포츠영상/1화.json). 스포츠 방식에서만 씁니다'
         required: false
@@ -329,6 +333,7 @@ jobs:
           IN_TALE_SCRIPT: ${{ inputs.tale_script }}
           IN_SPORTS_PLAN: ${{ inputs.sports_plan }}
           IN_REPAINT_ONLY: ${{ inputs.repaint_only }}
+          IN_REPAINT_PER: ${{ inputs.repaint_per }}
           IN_SPORTS_SCRIPT: ${{ inputs.sports_script }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
@@ -440,7 +445,9 @@ jobs:
               #
               # ⚠️ '인물 시트' 분기보다 **앞**에 둔다. 두 이름이 '사진' 을
               #    같이 쓴다 — 모드 이름이 겹쳐 엉뚱한 분기로 간 적이 있다.
-              node src/main.mjs repaint --plan="$IN_SPORTS_PLAN" ${IN_REPAINT_ONLY:+--only="$IN_REPAINT_ONLY"}
+              # ⚠️ repaint_per 로 먼저 몇 장만 본다 (규칙 15). 12화에서
+              #    55장을 아무것도 안 보고 걸어 $1.95 를 버렸다.
+              node src/main.mjs repaint --plan="$IN_SPORTS_PLAN" ${IN_REPAINT_ONLY:+--only="$IN_REPAINT_ONLY"} ${IN_REPAINT_PER:+--per="$IN_REPAINT_PER"}
               ;;
             *'인물 시트'*)
               echo "기획 파일의 people 에 적힌 사진 주소를 참조로 얼굴을 만듭니다."
