@@ -53,9 +53,21 @@ const BAD_SUBJECTS = [
   'trailer', 'horror', 'noise', 'funk', 'disco', 'latin', 'salsa', 'percussion',
 ];
 
+/* 크리스마스는 평소엔 거른다 — 철 지난 캐럴이 섞이면 사계절 플레이리스트가
+ * 망가진다. 다만 크리스마스 집을 만들 때는 풀어야 한다(--mood 크리스마스).
+ * 그래서 목록에서 빼내 따로 둔다. */
+const XMAS_WORDS = ['christmas', 'xmas', 'carol', 'noel', 'santa', 'jingle bell'];
+
+/* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
+const XMAS_BAD_SUBJECTS = [
+  'techno', 'trance', 'dubstep', 'drum and bass', 'dnb', 'edm', 'rave',
+  'metal', 'punk', 'hardcore', 'rap', 'hip hop', 'hiphop', 'trap',
+  'psytrance', 'goa', 'industrial', 'noise',
+];
+
 const BAD_WORDS = [
   'mix', 'remix', 'megamix', 'dj set', 'live', 'concert', 'interview',
-  'podcast', 'radio show', 'christmas', 'xmas', 'intro', 'outro',
+  'podcast', 'radio show', 'intro', 'outro',
   'demo', 'sketch', 'riff', 'loop', 'test', 'untitled',
   // 기능성·광고용 음악. 제목에서 티가 난다. 서정적인 것과 정반대다.
   'corporate', 'business', 'motivational', 'upbeat', 'energetic',
@@ -63,7 +75,7 @@ const BAD_WORDS = [
   /* 2집에서 추가. 제목만 봐도 '장면에 붙이는 음악' 인 것들. */
   'documentary', 'epic', 'cinematic', 'trailer', 'soundtrack',
   'battle', 'siege', 'dungeon', 'cursed', 'horror', 'chiptune',
-  'logo', 'jingle', 'ident', 'stinger', 'fanfare',
+  'logo', 'ident', 'stinger', 'fanfare',
   'wav', 'mp3', 'flac',                       // "SWEET FRANCE wav" 같은 꼬리
   /* 공포·죽음 쪽. 2집 1차에 "Night Of The Living Dead", "Dissection",
    * "Dark Life Note" 가 서정 태그를 달고 들어왔다. 일하면서 트는 음악이다. */
@@ -102,6 +114,10 @@ const MOODS = {
   초겨울: 'subject:(piano OR jazz OR strings OR acoustic OR guitar OR bossa OR harp) '
       + 'AND subject:(calm OR gentle OR warm OR tender OR peaceful '
       + 'OR nostalgic OR melodic OR soft OR dreamy OR beautiful)',
+  /* 4집(크리스마스). 이 무드에서만 christmas 계열 단어를 거르지 않는다.
+   * 캐럴 원곡은 대부분 퍼블릭 도메인이지만 녹음은 아니므로, 라이선스는
+   * 평소와 똑같이 CC BY / CC0 만 받는다. */
+  크리스마스: 'subject:(christmas OR xmas OR carol OR noel OR holiday)',
   재즈: 'subject:jazz OR subject:swing OR subject:bossa OR subject:blues',
   피아노: 'subject:piano AND subject:(calm OR peaceful OR slow OR soft)',
   차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
@@ -293,7 +309,11 @@ function finalize(raw) {
  * ⚠️ 다이내믹 레인지(LRA)로는 거르지 않는다. 처음엔 "큰 곡 = 영화음악"
  * 이라 보고 상한을 두려 했는데, 1집에서 LRA 가 가장 큰 곡(17.3)이
  * 하필 제일 서정적인 Funeral piano melody 였다. 솔로 피아노가 원래 그렇다. */
-const MAX_BRIGHT = Number(val('--bright', '-14'));
+/* 크리스마스 집은 기준을 낮춘다.
+ * 캐럴에는 종·글로켄슈필·탬버린이 들어가서 고역이 원래 밝다. -14 로 재면
+ * 19곡 중 15곡이 "너무 밝다"로 지워진다 — 거르려던 것은 EDM 이지 종이
+ * 아니다. -9 로 두면 종은 통과하고 드럼이 앞에 선 곡은 여전히 걸린다. */
+const MAX_BRIGHT = Number(val('--bright', MOOD === '크리스마스' ? '-9' : '-14'));
 
 function rmsOf(file, af) {
   const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-ss', '20', '-t', '90',
@@ -310,10 +330,12 @@ function brightness(file) {
   return (full === null || hi === null) ? null : hi - full;
 }
 
-/* 제목에 걸러야 할 말이 있나 */
+/* 제목에 걸러야 할 말이 있나.
+ * 크리스마스 집에서는 캐럴 단어를 통과시킨다. */
 function badTitle(t) {
   const low = ` ${String(t).toLowerCase()} `;
-  return BAD_WORDS.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
+  const words = MOOD === '크리스마스' ? BAD_WORDS : [...BAD_WORDS, ...XMAS_WORDS];
+  return words.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
 }
 
 /* 이미 쓴 곡과 한 번 뺀 곡은 또 받지 않는다. bgm/ 아래 모든 목록.json 을 본다.
@@ -424,7 +446,12 @@ async function main() {
     // 그렇게 들어왔다.
     const subs = (Array.isArray(doc.subject) ? doc.subject : [doc.subject || ''])
       .map((x) => String(x).toLowerCase());
-    const hitSub = BAD_SUBJECTS.find((b) => subs.some((x) => x === b || x.includes(b)));
+    /* 크리스마스 집에서는 장르 태그를 느슨하게 본다.
+     * Jamendo 는 캐럴에 rock 태그를 헐겁게 붙여 놔서, 평소 목록 그대로
+     * 쓰면 18곡 중 2곡만 남는다. 대신 확실히 아닌 것만 막고, 타악기가
+     * 센 곡은 받아서 소리를 재는 쪽(고역 -14dB)으로 거른다. */
+    const subjectBlock = MOOD === '크리스마스' ? XMAS_BAD_SUBJECTS : BAD_SUBJECTS;
+    const hitSub = subjectBlock.find((b) => subs.some((x) => x === b || x.includes(b)));
     if (hitSub) { console.log(`  — 건너뜀: ${title.slice(0, 34)} (태그 "${hitSub}")`); skipped++; continue; }
 
     console.log(`  ${String(got + 1).padStart(2, '0')}. ${title}  (${Math.floor(sized[0].sec / 60)}:${String(Math.round(sized[0].sec % 60)).padStart(2, '0')})`);
