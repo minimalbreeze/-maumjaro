@@ -44,7 +44,7 @@
       "key": "MVP",
       "label": "12주 진단을 받고 돌아왔습니다",
       "value": 96,
-      "note": "구자욱 햄스트링 12주 진단. 23타석 20타수 10안타 타율 .500, 1홈런 6타점 OPS 1.415. 97표 중 72표(박승규 19, 원태인 2, 이승민 2, 강민호 1, 후라도 1). 1차전 0-8 7회초 2점 홈런이 그였다 — 양쪽 감독이 짚은 그 자리에 MVP 가 있었다. 2015년 데뷔, 11년 만의 KS. 내부 FA. ⚠️ FA 결과는 예측하지 않는다. 2015 신인왕인데 그해 왕조가 막을 내려 \"왕조의 막내\"로 남았다. 2021 20홈런-20도루+골든글러브, FA 1년 전에 비FA 다년계약, 올해 타격왕(9월 초 .361 단독 1위). \"신인 때는 우승이 당연한 줄 알았지만 팀이 하위권에 머물면서 가슴이 무너졌다\", \"정상으로 돌아오기까지 오래 걸려 팬들께 죄송하다\"."
+      "note": "구자욱 햄스트링 12주 진단. 23타석 20타수 10안타 타율 .500, 1홈런 6타점 OPS 1.415. 97표 중 72표(박승규 19, 원태인 2, 이승민 2, 강민호 1, 후라도 1). 1차전 0-8 7회초 2점 홈런이 그였다 — 양쪽 감독이 짚은 그 자리에 MVP 가 있었다. 2015년 데뷔, 11년 만의 KS. 내부 FA. ⚠️ FA 결과는 예측하지 않는다. 2015 신인왕인데 그해 왕조가 막을 내려 \"왕조의 막내\"로 남았다. 2021 20홈런-20도루+골든글러브, FA 1년 전에 비FA 다년계약, 올해 타율 .371 · 출루율 .458 두 부문 1위(⚠️ 9월 7일 기사의 .361 은 그 시점 수치다. 최종은 .371 — 2026-11-09 스포츠동아). \"신인 때는 우승이 당연한 줄 알았지만 팀이 하위권에 머물면서 가슴이 무너졌다\", \"정상으로 돌아오기까지 오래 걸려 팬들께 죄송하다\"."
     },
     {
       "key": "TWO",
@@ -161,7 +161,7 @@
     {
       "name": "박진만·구자욱 KS 우승 — \"선수 때와 비교할 수 없을 정도로 힘들었다\" (2026-11-08)",
       "url": "",
-      "note": "운영자 전달. 박진만 2023년 부임 첫해 8위 → 2024 KS 준우승 → 2025 WC~PO 최종전 → 2026 우승(4시즌). 20년 전 선수로 KS MVP. 삼성 최소 실책 1위. 구자욱 2015 신인왕·왕조의 막내, 2021 20홈런-20도루+골든글러브, 비FA 다년계약, 올해 타격왕. ⚠️ \"최소 실책 1위\"는 이 기사에만 있고 KBO 공식 기록으로 확인하지 못했다 — 대본에 \"기사에 따르면\"을 붙였다."
+      "note": "운영자 전달. 박진만 2023년 부임 첫해 8위 → 2024 KS 준우승 → 2025 WC~PO 최종전 → 2026 우승(4시즌). 20년 전 선수로 KS MVP. 삼성 최소 실책 1위. 구자욱 2015 신인왕·왕조의 막내, 2021 20홈런-20도루+골든글러브, 비FA 다년계약, 올해 타율 .371 · 출루율 .458 1위. ⚠️ \"최소 실책 1위\"는 이 기사에만 있고 KBO 공식 기록으로 확인하지 못했다 — 대본에 \"기사에 따르면\"을 붙였다."
     },
     {
       "name": "박진만 2006 한국시리즈 MVP — 유효투표 53표 중 36표, 2위 배영수",
@@ -174,7 +174,7 @@
       "note": "이강철은 해태 투수로 1996년 KS MVP. **KS MVP 를 받은 두 사람이 감독으로 한국시리즈에서 만난 것은 이번이 처음**이다. 이 편 BOTH 섹션의 뼈대다."
     },
     {
-      "name": "구자욱 타율 .361 리그 단독 1위 (2026-09-07) / 왼쪽 햄스트링 0.5~1cm 손상 (2026-10-01)",
+      "name": "구자욱 타율 .361 리그 단독 1위 — 9월 7일 시점 (최종 .371) / 왼쪽 햄스트링 0.5~1cm 손상 (2026-10-01)",
       "url": "https://www.mt.co.kr/sports/2026/09/07/2026090710555812543",
       "note": "9월 초 기준 .361 단독 1위. 10월 1일 구단 발표로 왼쪽 햄스트링 0.5~1cm 손상, 사실상 남은 정규시즌 출전 어렵다고 했다. 그 뒤 PO 를 앞두고 복귀했다."
     }
@@ -185,9 +185,23 @@
       "role": "KT 감독 · 60대 초반",
       "look": "a Korean man in his early 60s, a baseball manager in a team jacket, a solid build with a slight stoop, short greying hair under a cap, a broad face deeply lined across the forehead and around the mouth, heavy eyelids, a calm weathered look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "tell": "패장이다. 경기 직후 \"내 대응이 늦었다. 1차전을 8-0으로 끝내지 못한 점과 2차전을 내준 것이 패인\"이라고 했다 — 이 편의 심장인 BOTH 섹션에서 박진만과 **나란히 놓인다.** 둘이 확실히 달라야 한다: 이강철이 60대로 더 나이 들고 더 두껍다. 9화 사진을 그대로 쓴다 — 새로 받지 않았다. ⚠️ 생년은 확인하지 못했다. 60대 초반으로만 적는다. 9화에서 \"3년 34억, 감독 역대 최고 대우\"로 나온 그 사람이다.\n⭐ **1996년 한국시리즈 MVP** 다. 해태 투수였다. 박진만도 2006년 KS MVP 라, KS MVP 를 받은 두 사람이 감독으로 한국시리즈에서 만난 것은 **이번이 처음**이다. BOTH 섹션에서 둘을 나란히 놓는 까닭이 하나 더 생겼다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F07%2F0000637830_001_20261107170815243.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F04%2F0002076447_001_20261104162020096.jpg&type=a340",
-      "team": "KT"
+      "team": "KT",
+      "number": "71",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MThfNzUg%2FMDAxNzg5NzAwMDgyNjg1.gPDrakg7Nd-388pr7jiOd7phAF3Kb4ginS7i_XA6zJog.xF8sYH3JJ6-dmMmwq3OItnRxgfV-ibwOJN3bFjdIRKEg.PNG%2Fimage.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA1MDhfNDUg%2FMDAxNzc4MjAwMDI0MTEw.ngN3LPWgmEdjq_aehXE3NqYV3il2f2iV48Xz31h_1jog.QVgNRhy-qxE_E-qw6QqUz0aCIfGmGvXIzhRZKLLRQnQg.JPEG%2Fe125ecc9-b42e-4928-8174-27aaec95229a_img_12.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2026%2F11%2F07%2F0000637830_001_20261107170815243.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "박진만",
@@ -195,18 +209,53 @@
       "look": "a Korean baseball manager of 50, a slim upright frame, narrow through the chest, in a team jacket over a uniform, short black hair with grey coming in at the temples, a long narrow face with high cheekbones and a pointed chin, sharp narrow eyes, light lines across the forehead, a composed unsmiling look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "삼성",
       "tell": "우승 감독. 이 편의 심장인 BOTH 섹션에서 이강철과 **나란히 놓인다** — 박진만이 50세로 더 젊고 더 마르고 얼굴이 길다. 이강철은 60대에 두껍고 얼굴이 넓다. 둘을 가르는 것은 **나이와 얼굴 폭**이다.\n선수 시절 '국민 유격수'로 불렸다. 현대(1996~2004) → 삼성(2005~2010) → SK(2011~2015), 유격수 골든글러브 5회(2000·2001·2004·2006·2007), 우승 반지 6개. 2022년 10월에 삼성 16대 정식 감독이 됐다.\n⚠️ 키·체중은 확인하지 못했다. 선수 시절 유격수였으니 마른 체형으로만 적었다. 감독이므로 **등번호를 달지 않는다** — 코드가 재킷을 입힌다.\nPARK 섹션의 얼굴이고, CLOSE 의 \"샴페인이 눈에 들어가서\"에도 쓸 수 있다.\n받은 넷이 전부 뉴스 사진이다. 본은 311/2026-11-03, 예비는 109/2026-11-07 — 매체를 다르게 골랐다.\n⚠️ 넷 중 하나(468/2026-11-06)는 주소 끝이 **type=l340_165** 다. 340×165 짜리 가로로 긴 틀이라 얼굴이 잘려 있을 수 있다. 참조 모델은 얼굴을 못 찾으면 그냥 실패하므로(facexlib align face fail) 본도 예비도 거기에 쓰지 않았다. 다른 셋은 type=a340 으로 정사각에 가깝다.\n안 쓴 둘: 108/2026-11-07(a340), 468/2026-11-06(l340_165, 위 까닭으로 맨 뒤).\n⭐ **2006년 한국시리즈 MVP** 다. 당시 삼성 유격수, 30세. 유효투표 53표 중 36표(2위 배영수). 3차전 연장 12회 결승타점, 시리즈 25타수 7안타. 선수로 그 트로피를 받은 게 2006년이고 감독으로 우승한 게 2026년 — 20년이다.\n⚠️ 부임은 2022년 10월(감독 대행 → 정식)이고 **첫 시즌은 2023년**이다. 우승까지 4시즌 걸렸다: 2023년 8위 → 2024 KS 준우승 → 2025 PO 최종전 탈락 → 2026 우승.\n⚠️ 2026-11-09. 체격을 느낌말(`a lean trim build`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002075904_001_20261103173914764.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F07%2F0005636533_001_20261107175220049.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F07%2F0005636533_001_20261107175220049.jpg&type=a340",
+      "number": "70",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F03%2F0005633630_001_20261103172110963.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F06%2F0002077672_001_20261106211709736.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F09%2F2026110901000596900057161_20261109091715486.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002075904_001_20261103173914764.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "최형우",
       "role": "삼성 지명타자 · 1983년생 43세 · 180cm 106kg · 우투좌타",
       "look": "a Korean man of 42, by far the oldest player here, a veteran designated hitter, 180cm and about 106kg with a thick solid torso, short black hair with grey showing at the sides, a full weathered face with deep lines from the nose to the mouth and lines across the forehead, a calm veteran look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "tell": "9화에서 \"KIA가 2년 26억에 삼성으로 보낸 선수\"로 나왔다. 그 최형우가 **7번째 반지**를 꼈다. 박진만 감독이 부상을 안고 뛴 선수로 꼽은 셋 중 하나다(골반). 2차전부터 좌익수 수비까지 나갔다. PARK 과 CLOSE 에 걸치지만 그림은 한 번만. 43세라 **주름이 뚜렷해야 한다** — 선으로 그릴 게 많은 얼굴이라 잘 나올 자리다. 타자이므로 치는 장면으로. 9화 사진을 그대로 쓴다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F06%2FNISI20261106_0021522431_web_20261106185750_20261106185917209.jpg&type=a340",
       "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F01%2F2026110101000057500002832_20261101162514186.jpg&type=a340",
       "team": "삼성",
-      "number": "34"
+      "number": "34",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F08%2F0003485785_002_20261108155815770.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F06%2F0000760169_006_20261106060414263.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F08%2FAKR20261108049300007_01_i_P4_20261108192216823.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F06%2FNISI20261106_0021522431_web_20261106185750_20261106185917209.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "구자욱",
@@ -244,8 +293,18 @@
       "look": "a Korean right-handed starting pitcher in his late 20s, square shoulders and strong thighs on a compact frame, short black hair under a cap, a round youthful face with full cheeks and a soft jawline, no facial hair, wide bright eyes, a determined open look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "삼성",
       "tell": "5차전 선발로 5이닝 1실점, 5차전 MVP. 포스트시즌 동안 불펜으로 돌려졌다가 선발로 복귀한 사람이다 — PARK 섹션의 '변칙'을 가장 잘 보여주는 얼굴이다. 내부 FA 이기도 하다.\n투수이므로 **던지는 장면**으로. 와인드업 꼭대기나 공을 놓기 직전.\n⚠️ **등번호를 비웠다.** 2022년 기사에 46번에서 18번으로 바꿨다고 나오는데, 그게 2026년에도 그대로인지는 확인하지 못했다. 네 해가 지났다. 틀린 번호는 번호가 없는 것보다 나쁘다.\n⚠️ 생년도 확인하지 못했다. 20대 후반으로만 적는다. 자막에 나이를 쓰지 않는다.\n삼성 투수 둘(원태인·페덱) 중 페덱은 그림에 안 넣는다 — 한 편에 사람이 아홉이라 더 늘리지 않는다.\n받은 다섯이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 144/2026-11-02, 예비는 003/2026-11-08(뉴시스) — 매체를 다르게 골랐다. 다섯 중 둘이 같은 매체(468)라 둘 다 비켰다.\n안 쓴 셋: 468/2026-11-08(0001279270), 468/2026-11-08(0001279355), 117/2026-11-08.\n⚠️ 본을 11-02 것으로 골랐다. 한국시리즈 전이라 **마운드에서 던지는 평상시 얼굴**일 가능성이 높다. 이 사람 그림은 던지는 장면이라 그쪽이 맞다 — 우승 직후 사진은 모자를 벗거나 고개를 젖힌 자세가 많아 얼굴을 찾기 어려울 때가 있다.\n⚠️ 2026-11-09. 체격을 느낌말(`a sturdy compact build with thick thighs`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147694_003_20261102155112728.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F08%2FNISI20261108_0021524578_web_20261108155352_20261108155422071.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F08%2FNISI20261108_0021524578_web_20261108155352_20261108155422071.jpg&type=a340",
+      "number": "18",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F04%2F0005634804_001_20261104213917300.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147694_003_20261102155112728.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     },
     {
       "name": "고영표",
@@ -253,9 +312,29 @@
       "number": "1",
       "look": "a Korean right-handed starting pitcher in his mid 30s, long arms and a narrow waist, tall for a pitcher, short black hair under a cap, a long narrow face with a high forehead and a thin straight nose, deep-set eyes under level brows, a calm unreadable look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "KT",
-      "tell": "**15승 다승왕**이고 KT 창단 멤버다. 그런데 5차전에 1⅔이닝 8실점을 했고 **자책은 2점**이다 — CLOSE 섹션의 그 숫자다. 4차전부터 중간 대기했다.\n그림이 CLOSE 에 한 번. 8실점의 얼굴이니 **가라앉아야 한다.**\n투수이므로 던지는 장면으로. 언더핸드에 가까운 투구폼으로 알려져 있는데, ⚠️ 그 폼은 모델이 자연스럽게 그리기 어렵다 — 팔을 아래에서 올리는 자세는 **공을 놓기 직전**으로만 잡고, 한창 돌아가는 중간은 피한다. 팔이 셋 나온 적이 있는 자리다.\n같은 편에 KT 투수가 둘이다(고영표·우규민). 고영표가 더 젊고 키가 크고, 우규민이 마르고 지쳐 보인다.\n등번호 1번은 thewiki 의 KT 1군 번호 목록으로 확인했다.\n받은 넷이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 241/2026-11-06, 예비는 311/2026-11-08 — 매체를 다르게 골랐다. 넷 중 둘이 같은 매체(001 연합 PYH)라 둘 다 비켰다.\n안 쓴 둘: 001/2026-11-08(PYH), 001/2026-11-04(PYH).\n⚠️ 본을 5차전 **전**인 11-06 것으로 골랐다. 11-08 사진들은 1⅔이닝 8실점으로 내려오는 장면일 수 있는데, 고개를 숙이거나 모자로 얼굴을 가린 자세면 참조 모델이 얼굴을 못 찾는다. 예비로 11-08 하나를 남겨 뒀다 — 본이 죽으면 그쪽으로 간다.\n⚠️ 2026-11-09. 체격을 느낌말(`a tall lean build with long arms`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F241%2F2026%2F11%2F06%2F0003539554_001_20261106181218570.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F08%2F0002078221_001_20261108152228110.jpg&type=a340"
+      "tell": "**15승 다승왕**이고 KT 창단 멤버다. 그런데 5차전에 1⅔이닝 8실점을 했고 **자책은 2점**이다 — CLOSE 섹션의 그 숫자다. 4차전부터 중간 대기했다.\n그림이 CLOSE 에 한 번. 8실점의 얼굴이니 **가라앉아야 한다.**\n투수이므로 던지는 장면으로. 언더핸드에 가까운 투구폼으로 알려져 있는데, ⚠️ 그 폼은 모델이 자연스럽게 그리기 어렵다 — 팔을 아래에서 올리는 자세는 **공을 놓기 직전**으로만 잡고, 한창 돌아가는 중간은 피한다. 팔이 셋 나온 적이 있는 자리다.\n같은 편에 KT 투수가 둘이다(고영표·우규민). 고영표가 더 젊고 키가 크고, 우규민이 마르고 지쳐 보인다.\n등번호 1번은 thewiki 의 KT 1군 번호 목록으로 확인했다.\n받은 넷이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 241/2026-11-06, 예비는 311/2026-11-08 — 매체를 다르게 골랐다. 넷 중 둘이 같은 매체(001 연합 PYH)라 둘 다 비켰다.\n안 쓴 둘: 001/2026-11-08(PYH), 001/2026-11-04(PYH).\n⚠️ 본을 5차전 **전**인 11-06 것으로 골랐다. 11-08 사진들은 1⅔이닝 8실점으로 내려오는 장면일 수 있는데, 고개를 숙이거나 모자로 얼굴을 가린 자세면 참조 모델이 얼굴을 못 찾는다. 예비로 11-08 하나를 남겨 뒀다 — 본이 죽으면 그쪽으로 간다.\n⚠️ 2026-11-09. 체격을 느낌말(`a tall lean build with long arms`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다. ⚠️ 2026-11-09 사진을 통째로 바꿨다 — 예전 사진은 가슴에 읽을 수 없는 글자가 네 번 나왔다. 되돌리지 않는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F06%2F0001148423_001_20261106172817357.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F04%2F0003484598_001_20261104184813518.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F04%2F0002076592_001_20261104191611944.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F06%2FAKR20261106156900007_01_i_P4_20261106171123929.jpg&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F05%2F2026110401000325500033803_20261105050113488.jpg&type=a340",
+          "쓰임": "5"
+        }
+      ]
     },
     {
       "name": "최원준",
@@ -263,8 +342,22 @@
       "look": "a Korean outfielder in his late 20s, narrow shoulders and a short compact frame, short black hair under a batting helmet, a small sharp face with a narrow jaw and prominent cheekbones, quick alert eyes, no facial hair, a tense concentrated look, the face built from ink lines rather than shading: a drawn jawline, a lid line over each eye, two short lines at the nose, a flat matte skin tone with no gloss",
       "team": "KT",
       "tell": "리드오프로 **208안타**를 쳤다. HOW 섹션에서 KT 90승을 만든 숫자의 얼굴이다. 그리고 2차전 수비 중에 펜스와 부딪혀 왼손 엄지를 다쳐 3차전에서 빠졌다 — HURT 섹션에 다시 나온다.\n그림은 HOW 에 한 번, **치는 장면**으로. 208안타의 얼굴이다.\n⚠️ HURT 섹션의 부상은 **사람 없이** 그린다. 다친 선수를 그리지 않는다 — 비어 있는 타석, 라인업 카드, 더그아웃 쪽으로 간다.\n⚠️ **등번호를 비웠다.** 못 찾았다. 지어내지 않는다.\n⚠️ 생년도 확인하지 못했다. 나이를 자막에 쓰지 않는다.\n같은 편에 KIA 출신 '최형우'와 이름이 비슷하다. 섞이지 않게 **나이와 체형으로 갈린다** — 최형우는 43세에 106kg, 최원준은 20대 후반에 작고 가볍다.\n받은 다섯이 전부 뉴스 사진이고 전부 type=a340 이다. 본은 109/2026-11-03, 예비는 311/2026-11-03 — 매체를 다르게 골랐다. 다섯 중 둘이 같은 매체(421)라 둘 다 비켰다.\n안 쓴 셋: 421/2026-11-04, 421/2026-11-07, 117/2026-11-04.\n⚠️ 본·예비를 둘 다 **11-03** 것으로 골랐다. 2차전(11-05 무렵) 펜스 충돌로 왼손 엄지를 다쳤고 3차전부터 빠졌으니, 그 뒤 사진은 더그아웃이나 치료 장면일 수 있다. 11-03 은 다치기 전이라 타석 얼굴이 나올 쪽이다 — 이 사람 그림은 208안타의 얼굴로 치는 장면이다.\n⚠️ 2026-11-09. 체격을 느낌말(`a small compact build with a light frame`)로 적었던 것을 **눈에 보이는 것**으로 바꿨다. 키·몸무게를 확인하지 못한 사람이라 숫자를 못 박는 대신 어깨·팔·허리로 적는다 — 같은 날 올러가 `a heavy thick build` 때문에 돼지로 나왔다.",
-      "photo": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F03%2F0005633720_001_20261103184419824.jpg&type=a340",
-      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002076066_001_20261103194715959.jpg&type=a340"
+      "photo_예비": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002076066_001_20261103194715959.jpg&type=a340",
+      "number": "3",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDZfMjg0%2FMDAxNzkzOTU4MTA0OTY3.sjPfznIV3sPkIuq16JKA99salrvDv7hiMxsgOBRNhAYg.ho9AZN9wBlr__Pivwf35t0z944Is8cw6B86YXxWMI9sg.PNG%2F4.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F03%2F0002076066_001_20261103194715959.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F03%2F0005633720_001_20261103184419824.jpg&type=a340",
+          "쓰임": "예전"
+        }
+      ]
     }
   ]
 }

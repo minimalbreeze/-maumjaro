@@ -24,7 +24,8 @@
 import { callForJson, MODELS, isFatalApiError } from '../ai/client.mjs';
 import { IMAGE_CAMERA_MOVES, MOODS } from './assets.mjs';
 import { KIND } from '../model.mjs';
-import { uniformClause } from './uniforms.mjs';
+import { photoOf as mainPhoto, allPhotosOf } from '../assets/photo-of.mjs';
+import { uniformClause, teamKey } from './uniforms.mjs';
 
 /**
  * 이 채널의 고정 화면 스타일 (기획서 10번).
@@ -159,9 +160,20 @@ export const SPORTS_PAINT_CANDIDATES = {
       'crowds and distant background painted as loose soft dabs, ' +
       // 층이 셋이어야 썰렁하지 않다 (2026-11-04 운영자 요청).
       // 앞을 흐리게 두는 것이 깊이를 만든다.
-      'composed in three layers - a soft out-of-focus object close to the ' +
-      'camera, the subject sharp in the middle, and a loosely painted ' +
-      'background behind - with gentle atmosphere such as light haze, ' +
+      // ── 사진 말을 그림 말로 바꾼다 (2026-11-11) ──
+      //
+      //   운영자: "그림 많이 좋아졌다. 나중에 이 그림 톤만 맞추면
+      //            될 것 같다"
+      //
+      // 사진에서 그린 샷은 수채 느낌인데 글로 그린 샷만 배경이
+      // **사진처럼 뿌옇게** 나왔다. 까닭이 이 줄이다 — 'out-of-focus'
+      // 는 렌즈 말이다. **그림에는 초점이 없다.** 붓질이 성근 것뿐이다.
+      //
+      // 세 겹으로 짜는 것 자체는 좋으니 남기고 말만 바꾼다.
+      'composed in three layers - a shape close to the camera painted in ' +
+      'a few broad strokes, the subject drawn with the cleanest linework ' +
+      'in the middle, and a background washed in with thin flat colour ' +
+      'behind - with gentle atmosphere such as light haze, ' +
       'drifting dust or low sun, ' +
       'drawn artwork, never a 3D render, never CGI, never a photograph',
   },
@@ -258,7 +270,7 @@ export const SPORTS_STYLE_SUFFIX =
   'fingertips reach mid-thigh when they hang down, the legs about half the ' +
   'total height, hands and feet sized to the body, ' +
   'an adult athlete in his twenties or thirties, never a child, ' +
-  'never chibi, never a toddler or baby face, ' +
+  'a grown adult face with a defined jawline, ' +
   'never a small head on a huge body or a huge head on a small body, ' +
   'never arms shorter than the torso, never a torso longer than the legs, ' +
   // ── 머리카락 ──
@@ -297,8 +309,18 @@ export const SPORTS_STYLE_SUFFIX =
   'never a front-facing face on a figure seen from behind, ' +
   // 2026-11-07 운영자: "선수 동작이 이상하게 팔이 3개인 경우도 있구나."
   // 움직이는 장면을 늘리면서 생긴 일이다. 팔다리 개수를 못 박는다.
-  'exactly one head, two arms and two legs, no extra or duplicated limbs, ' +
-  'no third arm, no spare hand, five fingers on each hand, ' +
+  // ⚠️⚠️ 2026-11-11. 여기 'no third arm, no spare hand' 가 있었는데도
+  //    또 **팔이 셋** 나왔다(5:43 샷). 9화에 이어 두 번째다.
+  //
+  //    운영자: "그림도 어색한데 팔이 3개다"
+  //
+  //    금지로는 개수를 못 막는다. 모자 마크·아기 얼굴에서 배운 것과
+  //    같다 — 'third arm' 이라고 적으면 그 낱말이 모델에게 간다.
+  //    **어디에 몇 개가 붙어 있는지를 그릴 것으로 적는다.**
+  'one head on one neck, one left arm attached at the left shoulder and ' +
+  'one right arm attached at the right shoulder and nothing else growing ' +
+  'from the torso, each arm ending in one hand of five fingers, ' +
+  'one left leg and one right leg attached at the hips, ' +
   // ⚠️ 2026-11-09. 여기까지만 적었더니 **팔이 빠진** 그림이 나왔다.
   //    개수를 못 박는 것과 "빠뜨리지 마라"는 다른 말이다. 둘 다 적는다.
   //    야구는 특히 그렇다 — 던지는 팔만 그리고 글러브 낀 팔을 잊는다.
@@ -445,11 +467,24 @@ export const SPORTS_STYLE_SUFFIX =
   'the team colours given for this figure, and when a jersey number is ' +
   'given for this figure that exact number on the back — never an ' +
   'invented number, and no number at all when none is given, ' +
-  'the team wordmark across the chest and the number across the back both ' +
-  'legible, so the figure is identifiable from behind as well as from the ' +
-  'front, ' +
-  'the lettering and seams painted with the same care as the rest of ' +
+  // ⚠️⚠️ 가슴에 **글자를 그리라고 하지 않는다** (2026-11-09) ⚠️⚠️
+  //
+  // 여기에 'the team wordmark across the chest ... legible' 이라고
+  // 적어 뒀었다. 그래서 모델이 고영표 가슴에 **읽을 수 없는 글자꼴**을
+  // 그렸다 — "읽가ㅅㅍ大". 운영자가 워터마크로 봤고 나도 그렇게 보고
+  // 자르기를 붙들고 한 시간을 썼다. 워터마크가 아니라 **내가 "읽을 수
+  // 있게 써라"고 시킨 글자**였다.
+  //
+  // Flux 는 한글을 못 쓰고 영문도 두세 글자가 한계다. 그런데 글자를
+  // 쓰라고 하면 글자 비슷한 것을 반드시 그린다.
+  //
+  // 뒤에서 알아보게 하는 것은 **등번호**다. 숫자는 한두 자리라 제대로
+  // 나온다. 가슴 글자는 없어도 아무것도 안 잃는다.
+  'the number across the back large and clear, so the figure is ' +
+  'identifiable from behind as well as from the front, ' +
+  'the seams and stitching painted with the same care as the rest of ' +
   'the picture, ' +
+  'the front of the jersey is smooth plain fabric, ' +
   // ── 좌우가 같아야 한다 (2026-11-09 운영자) ──
   //
   //   "양말 색이 짝짝이다"
@@ -460,6 +495,17 @@ export const SPORTS_STYLE_SUFFIX =
   //
   // 야구 유니폼은 좌우 대칭이 눈에 가장 잘 띄는 옷이다 — 양말이
   // 길고 색이 진해서 한쪽만 달라도 바로 보인다.
+  // ── 자세가 자리와 맞아야 한다 (2026-11-11 운영자) ──
+  //
+  //   "홈베이스에서 도루 자세는 또 무엇인가?"
+  //
+  // 홈플레이트를 밟고 선 선수가 리드오프 자세를 하고 있었다. 야구에서
+  // 일어날 수 없는 그림이다. 자세만 적고 **어디서** 하는지를 안 적으면
+  // 모델이 둘을 아무렇게나 붙인다.
+  'the stance matches the place: a lead-off crouch happens off first, ' +
+  'second or third base and never on home plate, a batter stands in the ' +
+  'batter box beside home plate, a fielder stands on the dirt or grass ' +
+  'of his position, ' +
   'left and right match exactly: both socks the same colour and the same ' +
   'height, both shoes the same colour, both sleeves the same length, ' +
   'never one leg bare where the other has a sock, ' +
@@ -472,19 +518,40 @@ export const SPORTS_STYLE_SUFFIX =
   //
   //    그래서 **무엇을 그릴지**로 뒤집는다. 모자에는 그 구단의 표시만
   //    올라간다. 뜻 모를 알파벳 한 글자는 안 된다.
-  'never a Major League Baseball team: no interlocking NY, no Dodgers ' +
-  'script, no Boston B, no Cincinnati C, no Chicago C, ' +
-  'no American team wordmark or cap logo, ' +
-  'the cap carries only the mark of the Korean team named for this ' +
-  // ⚠️ 2026-11-09. 처음에 "한 글자"만 막았는데 다음 샷에서 **STL**
-  //    (세인트루이스)이 나왔다. 글자 수를 가리면 안 된다 — 한 글자든
-  //    세 글자든 남의 구단 표시다.
-  'figure, never any other club monogram or wordmark of one, two or ' +
-  'three Latin letters such as C, B, NY, LA, STL, SF, KC, ' +
-  'and a plain cap with no mark is better than an invented one, ' +
+  // ⚠️⚠️ 2026-11-09. 여기 있던 금지 목록을 **전부 들어냈다.** ⚠️⚠️
+  //
+  //    'no interlocking NY, no Dodgers script, no Boston B,
+  //     no Cincinnati C, no Chicago C, no American team wordmark'
+  //
+  //    이 줄들이 금지로 작동한다고 믿었는데 **그런 적이 없다.**
+  //    flux-schnell 과 flux-dev 는 negative_prompt 를 아예 안 받는다.
+  //    그래서 이 말들은 전부 **프롬프트 본문**에 붙어 모델에게 갔다.
+  //    모델이 받은 것은 "NY, Dodgers, Boston B, Cincinnati C, Chicago C"
+  //    라는 **낱말 목록**이었다. 그래서 C 가 나왔고, 한 글자를 막으니
+  //    STL 이 나왔다. 막을수록 목록이 길어지고 목록이 길어질수록 더 나왔다.
+  //
+  //    남기는 것은 **무엇을 그릴지** 한 줄뿐이다.
+  // ⚠️⚠️ 2026-11-11. 여기 "그 구단의 마크를 올려라" 라고 적혀 있었다.
+  //    모델은 KIA 마크를 **모른다.** 그래서 아는 것을 가져왔다 —
+  //    김도영 모자에 보스턴 **B** 가 나왔다. 금지 목록을 지웠는데도
+  //    나온 까닭이 이것이다. 지우는 것만으로는 모자랐다. 여전히
+  //    **마크를 그리라고 시키고 있었다.**
+  //
+  //    운영자: "모자와 가슴에 로고, 유니폼이 해당 소속 팀 같지 않다"
+  //
+  //    그래서 마크 이야기를 아예 안 한다. 모자는 **한 색으로 칠한 천**이다.
+  'the cap is plain fabric in one solid colour all over, the front and ' +
+  'the sides the same, nothing printed or stitched on it, ' +
   'unhurried composition with room around the subject, ' +
-  'soft depth, stadium or dugout background painted with care, ' +
-  'no caption text, no watermark, no subtitles, no sponsor logo';
+  // ⚠️ 'soft depth' 도 렌즈 말이다. 같이 바꾼다.
+  'the stadium or dugout behind painted with care in flatter colour than ' +
+  'the subject, ' +
+  // ⚠️ 여기 있던 'no caption text, no watermark, no subtitles,
+  //    no sponsor logo' 를 뺐다. 금지가 아니라 **그릴 것의 목록**으로
+  //    모델에게 갔다(위 설명). 대신 "면이 매끈하다"는 긍정문으로 적는다 —
+  //    repaint.mjs 에서 같은 결론에 이미 도달했는데 여기엔 안 옮겼다.
+  'every surface is painted plain and unmarked: the uniform, the wall and ' +
+  'the ground carry colour and texture only';
 
 /**
  * 참조 사진이 **없는** 샷에 붙이는 줄.
@@ -559,9 +626,15 @@ export const SPORTS_NEGATIVE_EXTRA =
   // ⚠️ 2026-11-07 에 'no club team logos' 를 뺐다. 그 줄 때문에 모델이
   //    "야구 유니폼처럼 생긴 아무것"을 그렸고, 거기서 양키스 모자가
   //    나왔다. 이제는 **한국 구단 색을 적어 주고** 미국 구단만 막는다.
-  'no Major League Baseball logos, no foreign team wordmarks, ' +
-  'no sponsor text on uniforms, ' +
-  'no extra arms, no extra legs, no duplicated limbs, no malformed hands, ' +
+  // ⚠️ 2026-11-09. 'no Major League Baseball logos, no foreign team
+  //    wordmarks, no sponsor text on uniforms' 를 뺐다. flux-schnell·dev
+  //    는 negative_prompt 를 안 받아서 이 말들이 **프롬프트 본문**에
+  //    붙어 갔다. 막으려던 낱말을 모델에게 읽어 준 셈이다.
+  //    유니폼은 uniforms.mjs 가 한국 구단 색으로 적어 준다.
+  // ⚠️ 2026-11-11. 'no extra arms, no extra legs, no duplicated limbs' 를
+  //    뺐다. 그 줄이 있는데도 팔이 셋 나왔다. 팔다리 개수는 위의
+  //    **긍정문**(어깨에 하나씩, 엉덩이에 하나씩)이 맡는다.
+  'no malformed hands, ' +
   // ── 팔다리가 **빠지는** 것도 막는다 (2026-11-09 운영자) ──
   //
   //   "이 장면 무엇인가? 외팔이에 뭔가 이상하다"
@@ -572,7 +645,8 @@ export const SPORTS_NEGATIVE_EXTRA =
   // 내가 한쪽만 봤다. 9화에서 팔이 셋 나온 걸 고치면서
   // `no extra arms`(더 많은 것)만 적고 **빠진 것**은 안 적었다.
   // 모델은 팔을 더 그리지 않았을 뿐, 덜 그리는 것은 막히지 않았다.
-  'no missing arm, no missing leg, no one-armed figure, ' +
+  // ⚠️ 2026-11-11. 'no missing arm, no one-armed figure' 도 뺐다.
+  //    같은 까닭이다. 아래 긍정문만 남긴다.
   'both arms drawn and attached at the shoulders even when one is ' +
   'behind the body, ' +
   // ── 선수를 뚱뚱하게 그리지 않는다 (2026-11-09 운영자) ──
@@ -605,7 +679,10 @@ export const SPORTS_NEGATIVE_EXTRA =
   'no video game cutscene, no game engine render, no Unreal Engine, ' +
   'no realistic 3D character model, no motion capture figure, ' +
   'no live-action footage, no photographic person, ' +
-  'no chibi, no oversized head, no baby face, no toddler, ' +
+  // ⚠️ 2026-11-11. 'no chibi, no oversized head, no baby face, no toddler'
+  //    가 있었는데도 김도영(24세)이 **중학생**으로 나왔다. 시라카와 때와
+  //    같다. 금지로 적은 낱말이 오히려 그쪽으로 끈다.
+  'adult body proportions with an adult neck and shoulders, ' +
   'no bald head, no hairless character, ' +
   'no cropped legs, no cut-off limbs';
 
@@ -1023,7 +1100,20 @@ D. 표와 숫자는 그림으로 그리지 말고 **카드로 넘긴다** (card_
  * 채우려고 엉뚱한 말을 지어낸다.
  */
 export function peopleRules(people) {
-  const list = (Array.isArray(people) ? people : []).filter((p) => p?.name && p?.look);
+  // ── 사진이 있는 사람은 생김새를 **글로 적지 않는다** (2026-11-12) ──
+  //
+  //   운영자: "자꾸 생김새로 만들지 마라"
+  //           "생김새 글로 적는 건 아예 삭제해라. 또 할 것 같다"
+  //
+  // 사진이 있는데 얼굴을 글로 또 적으면 둘이 싸운다. 글이 이기면
+  // 사진 속 사람이 아닌 사람이 나오고, 사진이 이기면 글이 낭비된다.
+  // 12화에서 김도영·하주석·이범호가 전부 안 닮게 나온 까닭 중 하나다.
+  //
+  // **사진이 있으면 얼굴은 사진이 말한다.** 여기서는 아예 뺀다.
+  // 사진이 없는 사람만 글로 적는다 — 그 사람은 글 말고 기댈 데가 없다.
+  const list = (Array.isArray(people) ? people : []).filter(
+    (p) => p?.name && p?.look && !allPhotosOf(p).length
+  );
   if (!list.length) return '';
 
   const lines = list.map((p) => {
@@ -1378,7 +1468,7 @@ export function photoNamesOf(item) {
   const people = item?.people || item?.research?.people || [];
   for (const p of people) {
     const name = String(p?.name || '').trim();
-    if (name && /^https?:\/\//.test(String(p?.photo || '').trim())) out.add(name);
+    if (name && /^https?:\/\//.test(mainPhoto(p))) out.add(name);
   }
   return out;
 }
@@ -1396,6 +1486,35 @@ export function photoNamesOf(item) {
  * composeImagePrompt 가 유니폼 문장 없이 그리고, 고정 문구의 밑줄만
  * 적용된다 — 지금과 같아진다.
  */
+/**
+ * 이 편에 팀이 **하나뿐이면** 그 팀의 유니폼 문장.
+ *
+ * ── 왜 필요한가 (2026-11-11) ──
+ *
+ * 사람 이름이 아예 안 붙은 샷이 있다. 3:47 의 "안에서 누구를 어디에
+ * 세우나" 샷이 그랬다 — 야구 선수가 나오는데 누구인지는 안 적혀 있다.
+ * 그러면 유니폼 문장이 안 붙고, 모델이 **노란 유니폼**을 지어냈다.
+ *
+ * 운영자: "동작이 어색하다. 이건 무슨 동작인가?"
+ *
+ * 12화처럼 나오는 사람이 전부 한 팀이면 답은 분명하다. 그 팀으로
+ * 입힌다. 두 팀 이상이면 알 수 없으므로 아무것도 하지 않는다 —
+ * 틀린 유니폼은 유니폼이 없는 것보다 나쁘다.
+ */
+export function soleTeamUniform(item) {
+  const people = item?.people || item?.research?.people || [];
+  const teams = new Set();
+  let clause = '';
+  for (const p of people) {
+    const key = teamKey(p?.team);
+    if (!key) continue;
+    teams.add(key);
+    // 등번호는 넣지 않는다. 누구인지 모르는 샷이라 번호를 달면 거짓이 된다.
+    if (!clause) clause = uniformClause({ team: p.team });
+  }
+  return teams.size === 1 ? clause : '';
+}
+
 export function uniformsOf(item) {
   const out = new Map();
   const people = item?.people || item?.research?.people || [];
@@ -1408,7 +1527,73 @@ export function uniformsOf(item) {
   return out;
 }
 
-export function mergeVisuals(scene, design, { kind = null, photoNames = null, uniforms = null } = {}) {
+/**
+ * 이 샷에 **누가 나오는가**.
+ *
+ * ── 왜 person 칸만 믿으면 안 되나 (2026-11-11) ──
+ *
+ * 유니폼과 등번호는 코드가 적는다. 그런데 **어느 표를 찾을지는**
+ * 설계 AI 가 적어 준 `person` 칸에 달려 있었다. 그 칸이 비면 구단을
+ * 못 찾고, 못 찾으면 모델이 아무 유니폼이나 그린다.
+ *
+ * 12화에서 그 일이 났다 —
+ *   · 김도영 모자에 보스턴 **B**
+ *   · 등번호가 **1** (김도영은 5다)
+ *   · 유니폼이 남색·금색 (KIA 는 빨강·검정이다)
+ *
+ * 운영자: "이게 어디가 김도영인가?" / "김도영 등번호가 틀리다"
+ *
+ * CLAUDE.md 에 **"유니폼과 등번호는 코드가 적는다. 설계 AI 에게
+ * 맡기지 않는다"** 고 적어 두고, 어느 사람인지는 아직 맡기고 있었다.
+ * 부탁으로 지켜지는 규칙이 아니라는 것을 또 확인한 셈이다.
+ *
+ * 그래서 person 칸이 비면 **샷의 글에서 이름을 찾는다.** 설계 AI 가
+ * 화면 설명에 "김도영이 유격수 자리에 선다" 라고 썼다면 거기서 집는다.
+ */
+/**
+ * 이 샷에 **얼굴이 보이는가**.
+ *
+ * ── 왜 보나 (2026-11-11) ──
+ *
+ * 12화에서 실사로 나온 샷이 셋 있었는데 **전부 뒷모습**이었다.
+ * 하주석 뒷모습, 김도영 등번호 5 뒷모습, 슬라이딩 뒷모습.
+ *
+ * 운영자: "그림톤이 왜 또 안 맞나" / "이것도 톤이 안 맞다"
+ *
+ * 까닭이 분명하다. 화풍을 붙잡는 문구(SPORTS_LIKENESS_CLAUSE)가
+ * **거의 전부 얼굴 이야기**다 — 납작하게 칠한 살갗, 눈과 눈썹의
+ * 잉크 선, 턱선의 윤곽. 뒷모습에는 얼굴이 없으니 그 문구가 하나도
+ * 안 걸린다. 그런데 사진 참조는 그대로 들어간다. 붙잡는 것 없이
+ * 사진만 보여 주니 사진 쪽으로 끌려간 것이다.
+ *
+ * 그리고 뒷모습에는 참조가 **필요 없다.** 거기서 사람을 말해 주는
+ * 것은 등번호와 유니폼 색뿐이고, 그 둘은 코드가 적는다.
+ * (2026-11-07 운영자: "유니폼과 등번호가 같아야 뒤만 봐도 알 수 있다")
+ *
+ * 돈도 덜 든다 — 참조 모델은 장당 $0.05, 보통 모델은 $0.025 다.
+ */
+export function facesCamera(d) {
+  const t = `${d?.image_prompt || ''} ${d?.video_prompt || ''}`.toLowerCase();
+  // 뒤에서 본다고 적혀 있으면 얼굴이 없다.
+  return !/(from behind|seen from the back|back view|rear view|facing away|over the shoulder from behind|뒷모습)/.test(t);
+}
+
+export function personOfShot(d, names) {
+  const direct = String(d?.person || '').trim();
+  if (direct && names.has(direct)) return direct;
+  const text = `${d?.image_prompt || ''} ${d?.card_text || ''} ${d?.video_prompt || ''}`;
+  // 긴 이름부터 본다 — 짧은 이름이 긴 이름 안에 들어 있을 수 있다.
+  for (const n of [...names].sort((a, b) => b.length - a.length)) {
+    if (n && text.includes(n)) return n;
+  }
+  return direct;
+}
+
+export function mergeVisuals(
+  scene,
+  design,
+  { kind = null, photoNames = null, uniforms = null, fallbackUniform = '' } = {}
+) {
   const byId = new Map(
     (design?.shots || []).filter((s) => s?.shot_id).map((s) => [s.shot_id, s])
   );
@@ -1421,6 +1606,8 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
       return shot;
     }
     byId.delete(shot.shot_id);
+    // ⚠️ 유니폼·등번호를 찾을 이름. person 칸이 비어도 글에서 집는다.
+    const who = personOfShot(d, new Set([...(uniforms?.keys() || []), ...(photoNames || [])]));
     // 카드 샷은 이미지 모델을 부르지 않는다. 그래서 image_prompt 를
     // **비워 둔다** — 채워 두면 나중에 누가 그걸로 그림을 만들어서 돈이
     // 나가고, 화면에는 카드가 올라가 그림은 버려진다.
@@ -1433,10 +1620,13 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
         ? ''
         : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
             kind,
-            likeness: Boolean(photoNames && photoNames.has(String(d.person || '').trim())),
-            // 이 샷에 누가 나오는지는 설계 AI 가 person 칸에 적어 준다.
-            // 그 이름으로 구단 표를 찾아 유니폼을 **코드가** 적는다.
-            uniform: (uniforms && uniforms.get(String(d.person || '').trim())) || '',
+            // ⚠️ 뒷모습이면 참조를 쓰지 않는다. 붙잡을 얼굴이 없어서
+            //    화풍이 사진 쪽으로 끌려간다(2026-11-11).
+            likeness: Boolean(photoNames && photoNames.has(who)) && facesCamera(d),
+            // 이 샷에 누가 나오는지는 person 칸을 **먼저** 보고, 비어
+            // 있으면 샷의 글에서 이름을 찾는다(personOfShot). 그 이름으로
+            // 구단 표를 찾아 유니폼과 등번호를 **코드가** 적는다.
+            uniform: (uniforms && uniforms.get(who)) || fallbackUniform || '',
           }),
       image_prompt_content: cardText ? '' : d.image_prompt,
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
@@ -1444,7 +1634,9 @@ export function mergeVisuals(scene, design, { kind = null, photoNames = null, un
       motion_need: clampInt(d.motion_need, 0, 10),
       depicts_real_person: Boolean(d.depicts_real_person),
       // 누구인지. 사진을 받아 둔 사람이면 그 사진을 참조로 그린다.
-      person: String(d.person || '').trim(),
+      // ⚠️ 뒷모습 샷은 사람 이름을 비운다 — images.mjs 가 이 칸을 보고
+      //    참조 모델을 고르기 때문이다. 유니폼·등번호는 그대로 붙는다.
+      person: facesCamera(d) ? who || String(d.person || '').trim() : '',
     };
   });
 
@@ -1588,6 +1780,8 @@ export async function designScene(scene, { item = null, totalScenes = 0, model =
     kind: item?.kind,
     photoNames: photoNamesOf(item),
     uniforms: uniformsOf(item),
+    // 이름이 안 붙은 샷에도 유니폼을 입힌다 — 편에 팀이 하나뿐일 때만.
+    fallbackUniform: soleTeamUniform(item),
   });
   const problems = [...merged.problems];
   if (!check.ok) {

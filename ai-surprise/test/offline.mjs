@@ -3298,6 +3298,32 @@ test('올릴 때 쓸 파일들을 한 폴더에 저장한다', () => {
 });
 
 
+test('워크플로 입력이 코드까지 이어진다 — repaint_per', () => {
+  // 2026-11-12 규칙 15. 55장을 걸기 전에 사람당 한 장만 보려고 넣었다.
+  // 입력을 추가할 때 **env 로 넘기는 줄을 빼먹는 것**이 이 리포의 단골
+  // 사고다(ffmpeg 를 세 번 빼먹었다). 세 자리를 다 본다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  assert.ok(/^      repaint_per:$/m.test(yml), '입력 칸이 없습니다');
+  assert.ok(
+    /IN_REPAINT_PER: \$\{\{ inputs\.repaint_per \}\}/.test(yml),
+    'env 로 넘기는 줄이 없습니다 — 입력만 있고 코드엔 안 갑니다'
+  );
+  assert.ok(
+    /repaint --plan=[^\n]*--per="\$IN_REPAINT_PER"/.test(yml),
+    'repaint 명령에 --per 가 안 붙었습니다'
+  );
+  // 비우면 안 붙어야 한다. `--per=` 로 빈 값이 가면 Number('') 가 0 이라
+  // 조용히 전부 돌아간다 — 비싸지는 쪽으로 틀린다.
+  assert.ok(
+    /\$\{IN_REPAINT_PER:\+--per="\$IN_REPAINT_PER"\}/.test(yml),
+    '빈 값일 때 --per 를 떼는 꼴이 아닙니다'
+  );
+});
+
+
 test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
   // 모드를 하나 늘릴 때 case 에 안 적으면, 셸은 오류를 내지 않고 맨 끝
   // *) 로 떨어진다. 그러면 "올릴 거리를 만들어 줘"를 눌렀는데 소재만
@@ -3334,6 +3360,17 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     '동화': '동화',
     // '스포츠 분석 — 완성본' 도 마찬가지다. '완성본' 보다 **먼저** 와야 한다.
     '스포츠': '스포츠',
+    // '사진을 지브리로 (받아 둔 **사진**을 …)' 와 '인물 시트 만들기
+    // (**사진**을 참조로 얼굴 …)' 가 '사진' 을 같이 쓴다. 지브리 쪽이
+    // 분기에서 먼저이므로 표에서도 먼저 둔다 — 2026-11-09 에 넣으면서
+    // 이 검사가 바로 잡았다.
+    '사진을 지브리로': '사진을 지브리로',
+    // ⚠️ 이름에 '그림' 을 넣었다가 `*'그림'*` 분기로 샜다 (2026-11-09).
+    //    이 테스트가 바로 잡았다. 모드 이름은 다른 모드의 낱말을 품으면
+    //    안 된다 — '사진 살펴보기' 는 '사진을 지브리로' 를 안 품는다.
+    '사진 살펴보기': '사진 살펴보기',
+
+
     // '인물 시트 만들기 (사진을 참조로 얼굴 …)' 는 다른 낱말과 겹치지
     // 않지만, 분기를 '화풍 미리보기' 보다 먼저 두었으므로 표에서도 먼저
     // 둔다. 표 차례와 분기 차례가 어긋나면 이 검사가 거짓으로 통과한다.
@@ -3353,6 +3390,29 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     '소재만': null, // 기본 분기 = 소재만 찾기
     '테스트만': null, // 이 단계 자체가 건너뛰어진다
   };
+  // ── ffmpeg 를 쓰는 모드는 설치도 켜져 있어야 한다 (2026-11-09) ──
+  //
+  // 세 번째로 같은 함정에 걸렸다(실행 #79). 워크플로 주석에 "새 모드를
+  // 넣을 때마다 이 줄을 먼저 본다"고 적혀 있는데도 안 봤다. 사람이
+  // 기억하기로 막는 규칙은 안 지켜진다. 테스트로 막는다.
+  //
+  // ffmpeg 를 쓰는 모드: 영상·완성본·올릴 거리처럼 렌더를 하는 것,
+  // 그리고 사진을 다루는 '지브리로'(워터마크 자르기)와
+  // '살펴보기'(글자 그림으로 펴기).
+  const FFMPEG_필요 = ['지브리로', '살펴보기'];
+  const 설치줄 = yml.split('\n').find((l) => l.includes("name: ffmpeg와 한글 글꼴 설치"));
+  const 설치if = yml.split('\n').find(
+    (l) => l.trim().startsWith('if:') && l.includes("contains(inputs.mode, '영상')")
+  );
+  assert.ok(설치줄 && 설치if, 'ffmpeg 설치 단계를 못 찾았습니다');
+  for (const w of FFMPEG_필요) {
+    assert.ok(
+      설치if.includes(`contains(inputs.mode, '${w}')`),
+      `'${w}' 모드는 ffmpeg 를 쓰는데 설치 조건에 없습니다 — 실행이 "ffmpeg 가 없어서" 로 죽습니다`
+    );
+  }
+
+
   for (const mode of modes) {
     const key = Object.keys(expected).find((k) => mode.includes(k));
     assert.ok(key, `"${mode}" 가 어디로 가야 하는지 이 테스트가 모릅니다. 표를 고쳐 주세요`);
@@ -4271,9 +4331,20 @@ await asyncTest('스포츠 캐리커처는 얼굴을 그리되 아껴 쓰게 한
     assert.ok(!p.includes(bad), `"${bad}" 가 되살아났습니다`);
   }
   // 금지 목록에도 이름을 적어 둔다.
-  for (const no of ['no 3D render', 'no chibi', 'no bald head', 'no cropped legs']) {
+  for (const no of ['no 3D render', 'no bald head', 'no cropped legs']) {
     assert.ok(p.includes(no), `금지 목록에 "${no}" 가 없습니다`);
   }
+  // ⚠️ 2026-11-11. 'no chibi, no baby face, no toddler' 를 **뺐다.**
+  //    그 줄이 있는데도 김도영(24세)·하주석(32세)이 아이로 나왔다.
+  //    금지로 적은 낱말이 오히려 그쪽으로 끈다 — 모자 마크와 같은 성질이다.
+  //    이제 그릴 것을 적는다.
+  for (const w of ['chibi', 'baby face', 'toddler']) {
+    assert.ok(!p.includes(w), `"${w}" 가 프롬프트에 있습니다 — 부르면 그립니다`);
+  }
+  assert.ok(
+    /adult body proportions with an adult neck and shoulders/.test(p),
+    '어른으로 그리라는 줄이 없습니다'
+  );
   // 특정인을 닮히는 것은 여전히 막는다.
   assert.ok(/not resembling any specific real person/.test(p));
   assert.ok(/no real identifiable public figures/.test(p));
@@ -4464,11 +4535,14 @@ await asyncTest('화풍 미리보기가 깨졌던 장면을 본다', async () =>
   // 여기만 옛 문구를 보고 있으면 둘이 갈라진 것을 못 잡는다.
   assert.ok(/manga|anime/.test(jobs[0].prompt), '미리보기가 본편 화풍과 다릅니다');
   assert.ok(/never bald/.test(jobs[0].prompt), '미리보기에 머리카락 지시가 없습니다');
-  // ⚠️ 2026-11-07 에 바뀌었다. 'no club team logos' 를 뺐다 — 그 줄
-  //    때문에 모델이 "야구 유니폼처럼 생긴 아무것"을 그렸고 거기서
-  //    양키스 모자가 나왔다. 이제는 한국 구단 색을 적어 주고 미국
-  //    구단만 막는다.
-  assert.ok(/no Major League Baseball logos/.test(jobs[0].prompt));
+  // ⚠️ 2026-11-09 에 또 바뀌었다. 'no Major League Baseball logos' 도
+  //    **뺐다.** flux-schnell·dev 는 negative_prompt 를 안 받아서
+  //    금지 목록이 프롬프트 **본문**에 붙어 갔다 — 모델이 받은 것은
+  //    금지가 아니라 "Major League Baseball" 이라는 낱말이었다.
+  assert.ok(
+    !/Major League Baseball/.test(jobs[0].prompt),
+    '미국 리그 이름이 프롬프트에 있습니다 — 부르면 그립니다'
+  );
   // 2026-11-03 유니폼을 국대로 바꿨다. 가슴 글자는 **살아야** 한다 —
   // 전에는 금지 목록의 'no readable jersey text' 가 그걸 지웠다.
   // ⚠️ 2026-11-07 에 **두 번** 바뀌었다.
@@ -5598,6 +5672,66 @@ await asyncTest('발음 사전에는 영어 약어만, 한글 읽기로 넣는�
 });
 
 
+await asyncTest('사진만 있는 사람도 레코드에 싣는다', async () => {
+  // 2026-11-12. makeSports 의 filter 가 `p.name && p.look` 이었다.
+  // 같은 날 "생김새 글로 적는 건 아예 삭제해라"는 지시로 기획 파일의
+  // look 을 비웠더니, 이 한 줄이 사람을 **통째로** 버렸다 — 사진도
+  // team 도 number 도 파이프라인에 안 갔다. 오류는 안 난다.
+  // 그림만 전부 글로 그려진다. 그게 12화에서 $1.95 를 버린 그 길이다.
+  const { makeSports } = await import('../src/model.mjs');
+  const item = makeSports({
+    title: 'ㅌ',
+    people: [
+      { name: '사진만', team: 'KIA', number: '5', photos: ['https://a/1.jpg', 'https://a/2.jpg'] },
+      { name: '생김새만', look: 'narrow shoulders' },
+      { name: '둘다없음' },
+    ],
+  });
+  const names = item.people.map((p) => p.name);
+  assert.deepEqual(names, ['사진만', '생김새만'], '사진만 있는 사람이 빠졌습니다');
+
+  const [withPhoto] = item.people;
+  assert.equal(withPhoto.photo, 'https://a/1.jpg', '대표 사진이 안 실렸습니다');
+  assert.deepEqual(withPhoto.photos, ['https://a/1.jpg', 'https://a/2.jpg'], '사진 목록이 안 실렸습니다');
+  assert.equal(withPhoto.team, 'KIA');
+  assert.equal(withPhoto.number, '5');
+  // ⚠️ 빈 문자열을 넣지 않는다. 뒤에서 `p.look &&` 로 보는 곳이 있다.
+  assert.equal('look' in withPhoto, false, '사진 있는 사람에게 생김새 칸이 붙었습니다');
+
+  assert.equal(item.people[1].look, 'narrow shoulders', '사진 없는 사람은 글로 적는다');
+});
+
+
+await asyncTest('FA 등급은 자막에 A·B·C, 읽기는 에이·비·씨', async () => {
+  // 2026-11-12. 13화(구자욱·원태인 FA)에서 처음 걸렸다. 'A등급' 을
+  // 그냥 두면 음성 모델이 영어 글자로 읽는다. 자막은 KBO 표기대로
+  // A·B·C 가 눈에 익으니 글은 그대로 두고 읽기만 바꾼다.
+  const { speechText, FA_GRADE } = await import('../src/audio/speech.mjs');
+  const { latinSpots } = await import('../src/script/spoken.mjs');
+
+  assert.equal(
+    speechText('원태인은 A등급입니다.'),
+    '원태인은 에이등급입니다.',
+    'A등급 읽기가 안 바뀌었습니다'
+  );
+  assert.equal(speechText('B등급과 C등급'), '비등급과 씨등급');
+
+  // ⚠️ 'A' 한 글자를 아는 낱말로 등록하면 이 검사가 뚫린다.
+  //    등급 덩어리만 덜어내는지 확인한다.
+  assert.deepEqual(latinSpots(['A등급 선수입니다.']), [], '등급을 아직 거는군요');
+  const [spot] = latinSpots(['A등급이지만 WAR 는 모릅니다.']);
+  assert.ok(spot, '등급을 덜어내면서 다른 영어까지 덜어냈습니다');
+  assert.deepEqual(spot.hits, ['WAR']);
+  assert.equal(spot.text, 'A등급이지만 WAR 는 모릅니다.', '알려 줄 때 원문이 아닙니다');
+
+  // 표가 커질 때를 위해. 글자 바꿔치기라 긴 것이 먼저여야 한다.
+  const keys = [...FA_GRADE.keys()];
+  for (let i = 1; i < keys.length; i += 1) {
+    assert.ok(keys[i].length <= keys[i - 1].length, `차례가 뒤집혔습니다: ${keys[i]}`);
+  }
+});
+
+
 await asyncTest('따옴표가 눈으로만 되는 자리를 잡는다', async () => {
   // 듣는 사람은 따옴표를 못 본다. 따옴표 안이 문장인데 조사가 바로
   // 붙으면 귀로는 엉킨다. 3화·4화에서 다섯 줄이 그랬다.
@@ -6009,9 +6143,21 @@ await asyncTest('닮게 그리는 샷에서도 실사는 막혀 있다 (유튜�
     const p = V.composeImagePrompt('a pitcher on the mound', null, { kind: 'SPORTS', likeness });
     assert.ok(/no photorealistic faces/.test(p), `실사 얼굴 금지가 빠졌습니다 (likeness=${likeness})`);
     assert.ok(/no photograph/.test(p), `사진 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no Major League Baseball logos/.test(p), `미국 구단 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no extra arms/.test(p), `팔 개수 금지가 빠졌습니다 (likeness=${likeness})`);
-    assert.ok(/no sponsor text/.test(p), `스폰서 글자 금지가 빠졌습니다 (likeness=${likeness})`);
+    // ⚠️ 2026-11-11. 팔 개수를 **금지로** 막던 것을 뺐다. 'no third arm'
+    //    이 있는데도 팔이 셋 나왔다(9화에 이어 두 번째). 이제 어깨에
+    //    하나씩 붙어 있다는 **긍정문**이 맡는다.
+    assert.ok(
+      /one left arm attached at the left shoulder/.test(p),
+      `팔이 어디 붙는지 적은 줄이 빠졌습니다 (likeness=${likeness})`
+    );
+    assert.ok(!/third arm|extra arms/.test(p), '팔 금지 낱말이 돌아왔습니다 — 부르면 그립니다');
+    // ⚠️ 2026-11-09. 구단 이름과 '스폰서 글자' 금지는 **뺐다.**
+    //    flux-schnell·dev 에 negative_prompt 가 없어 본문으로 갔다.
+    //    실사 금지는 남긴다 — 그쪽은 유튜브 정책이고, 화풍을 적는
+    //    긍정문(지브리·수채)이 같이 세게 끌어 준다.
+    for (const w of ['Major League Baseball', 'sponsor text', 'wordmark']) {
+      assert.ok(!new RegExp(w, 'i').test(p), `"${w}" 가 프롬프트에 있습니다 — 부르면 그립니다`);
+    }
   }
 
   // 닮음을 켰을 때만 실존 인물 금지가 빠진다. 끄면 그대로 있어야 한다.
@@ -6130,8 +6276,21 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
     (await import('../src/assets/replicate.mjs')).modelFor('portrait').baseModel,
     '참조 모델의 바탕과 다릅니다'
   );
-  assert.equal(calls[1].modelKey, I.REFERENCE_MODEL, '사진 있는 사람이 참조 모델로 안 갔습니다');
-  assert.equal(calls[1].ref, 'https://example.com/kim.jpg');
+  // ── 2026-11-11. 사람 샷은 **사진을 그림으로 바꾼다** ──
+  //
+  // 운영자: "전달해준 사진을 지브리 스타일로 그려서 사용한다.
+  //          워터마크만 나오지 않게 한다. 그리고 나머지 설명의 그림은
+  //          해당 팀 유니폼 색상을 맞춰서 그려진 그림으로 사용한다."
+  //
+  // 글로 그리면 지어낼 것이 너무 많다 — 얼굴, 몸, 자세, 유니폼 색,
+  // 모자 마크, 팔 개수. 12화에서 그 전부가 틀렸다. 사진에서 그리면
+  // 지어낼 것이 없다.
+  assert.equal(calls[1].modelKey, 'kontext', '사람 샷이 사진에서 그려지지 않았습니다');
+  assert.ok(
+    calls[1].ref === 'https://example.com/kim.jpg' ||
+      String(calls[1].ref).startsWith('data:image/'),
+    '사진을 참조로 안 보냈습니다 (자른 사진은 data URI 로 갑니다)'
+  );
   assert.equal(calls[2].modelKey, 'dev', '사진 없는 사람이 참조 모델로 갔습니다');
 
   // 본편은 가로다. 세로로 만들면 16:9 에 넣을 때 위아래가 잘린다.
@@ -6141,74 +6300,19 @@ await asyncTest('사진이 있는 사람의 샷만 참조 모델로 그린다', 
   assert.equal(out.spentUsd, 0.1, `쓴 돈이 $${out.spentUsd} 입니다 (0.025+0.05+0.025 여야 합니다)`);
 });
 
-await asyncTest('사진에서 얼굴을 못 찾으면 예비로, 그래도 안 되면 참조 없이 그린다 (실행 #65)', async () => {
-  // 실행 #65 에서 류현진 사진으로 건 두 샷이 이렇게 죽었다.
-  //
-  //     facexlib align face fail
-  //
-  // 참조 모델이 사진에서 얼굴을 못 찾은 것이다. 투구 동작 사진이라
-  // 얼굴이 작거나 글러브에 가렸을 것이다.
-  //
-  // 문제는 그 둘이 **자리표시 화면**으로 영상에 남았다는 것이다.
-  // 7분짜리에 빈 화면 두 장은 눈에 띈다. 안 닮은 그림이 빈 화면보다
-  // 백 배 낫다.
-  const I = await import('../src/assets/images.mjs');
-  const V = await import('../src/scenes/visuals.mjs');
-  const dir = fs.mkdtempSync(path.join(TMP, 'face-'));
-
-  const calls = [];
-  const client = {
-    generate: async (prompt, o) => {
-      calls.push({ ref: o.referenceImage, prompt });
-      // 본 사진과 예비 사진 둘 다 얼굴을 못 찾는다고 해 본다.
-      if (o.referenceImage) {
-        const err = new Error('이미지 생성 실패 (failed): facexlib align face fail');
-        throw err;
-      }
-      return { url: 'http://x/y.png', usdEstimate: 0.025 };
-    },
-    // PNG 머리 + 넉넉한 길이. 짧으면 looksLikeImage 가 거른다.
-    download: async () =>
-      Buffer.concat([
-        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        Buffer.alloc(I.MIN_IMAGE_BYTES || 4096),
-      ]),
-  };
-
-  const prompt = V.composeImagePrompt('a pitcher', null, { kind: 'SPORTS', likeness: true });
-  const out = await I.generateImages(
-    [{ shot_id: 'S05-2', scene_number: 5, person: '류현진', image_prompt: prompt }],
-    {
-      assetDir: dir,
-      token: 't',
-      client,
-      people: [{ name: '류현진', photo: 'https://e.com/main.jpg', photo_예비: 'https://e.com/spare.jpg' }],
-      sleep: async () => {},
-    }
-  );
-
-  // 세 번 걸었어야 한다: 본 사진 → 예비 사진 → 참조 없이.
-  assert.deepEqual(
-    calls.map((c) => c.ref),
-    ['https://e.com/main.jpg', 'https://e.com/spare.jpg', null],
-    '세 단으로 안 내려갑니다'
-  );
-
-  // 그리고 **그림은 나와야 한다.** 자리표시 화면이 아니다.
-  assert.equal(out.failed.length, 0, `실패로 남았습니다: ${JSON.stringify(out.failed)}`);
-  assert.equal(out.made.length, 1, '그림이 안 나왔습니다');
-
-  // 참조를 뗀 마지막 호출은 "사진과 같은 얼굴" 지시도 떼야 한다.
-  // 안 떼면 모델이 있지도 않은 사진을 찾느라 얼굴이 더 이상해진다.
-  const last = calls[calls.length - 1];
-  assert.ok(!last.prompt.includes(V.SPORTS_LIKENESS_CLAUSE), '닮음 지시가 남아 있습니다');
-  assert.ok(last.prompt.includes(V.SPORTS_INVENTED_CLAUSE), '지어낸 인물 지시가 안 붙었습니다');
-
-  // 얼굴 못 찾음을 보통 실패와 갈라 보는가. 다시 걸어도 똑같은 실패라
-  // 사진을 바꿔야 하는 쪽이다.
-  assert.ok(I.isFaceFail(new Error('facexlib align face fail')));
-  assert.ok(!I.isFaceFail(new Error('Replicate 429: Request was throttled')));
-});
+// ⚠️⚠️ 여기 있던 검사를 **버렸다** (2026-11-11) ⚠️⚠️
+//
+//   '사진에서 얼굴을 못 찾으면 예비로, 그래도 안 되면 참조 없이 그린다'
+//
+// flux-pulid(참조 모델)가 사진에서 얼굴을 못 찾을 때 세 단으로 내려가는
+// 길을 지키던 검사다. **그 모델을 통째로 버렸으므로 이 검사도 버린다.**
+//
+// 운영자: "변경이 된 이후 과거가 문제가 되면 과감히 남겨두지 말고 버려라"
+//         "그걸 계속 남겨 두니 이상한 그림과 영상이 된다"
+//
+// 지금은 사람 샷을 '사진을 그림으로 바꾸기'(kontext)로 그린다. 거기는
+// 얼굴 정렬을 안 하므로 얼굴을 못 찾는 실패 자체가 없다. 그래도 막히면
+// 글로 그리는 쪽으로 한 번 내려가고, 그 길은 아래 검사가 지킨다.
 
 await asyncTest('참조 사진이 하나도 없으면 바탕을 안 바꾼다', async () => {
   // 바탕을 맞추는 것은 **참조 샷이 있을 때만** 하는 일이다. 사진이
@@ -6423,7 +6527,16 @@ await asyncTest('화면을 층으로 채우되 요란하게 하지 않는다', a
   // 그림 모델이 읽는다. 한쪽에만 적으면 다른 쪽이 모른다.
   const p = V.composeImagePrompt('a batter', null, { kind: 'SPORTS' });
   assert.ok(/three layers/.test(p), '그림 모델에게 가는 글에 층 지시가 없습니다');
-  assert.ok(/out-of-focus/.test(p), '앞을 흐리게 하라는 말이 없습니다');
+  // ⚠️ 2026-11-11. 'out-of-focus' 를 뺐다. **렌즈 말**이라 글로 그린
+  //    샷의 배경이 사진처럼 뿌옇게 나왔다 — 사진에서 그린 샷과 톤이
+  //    어긋난 까닭이 이것이다. 그림에는 초점이 없고 붓질이 성글 뿐이다.
+  assert.ok(
+    /painted in a few broad strokes/.test(p),
+    '앞을 성글게 칠하라는 말이 없습니다'
+  );
+  for (const w of ['out-of-focus', 'soft depth', 'depth of field']) {
+    assert.ok(!p.includes(w), `"${w}" 는 렌즈 말입니다 — 배경이 사진처럼 나옵니다`);
+  }
 });
 
 
@@ -6517,6 +6630,124 @@ await asyncTest('정말 크게 어긋나면 그대로 실패시킨다', async ()
   );
 });
 
+
+await asyncTest('번째는 고유어로 읽는다 — 일곱 번째', async () => {
+  // 2026-11-10 운영자: "칠번째 반지가 아니라 일곱번째 반지다"
+  //
+  // 11화에 "7번째 반지를 꼈습니다" 가 있는데 **"칠번째"** 로 읽혔다.
+  //
+  // 까닭은 예외 표에 있었다. '번' 의 예외 정규식이
+  //   /^(째|\s*(타자|타순|타|지명|선발|홈런|투수))/
+  // 였다. 맨 앞 '째' 때문에 **번째가 한자어로 빠졌다.**
+  //
+  // 거꾸로다. 번째는 언제나 고유어고, 한자어인 것은 **타순의 번**이다 —
+  // 4번 타자는 "사번 타자"가 맞다. 그 둘을 한 줄에 묶는 바람에
+  // 지켜야 할 쪽이 막혔다.
+  const SP = await import('../src/audio/speech.mjs');
+  const r = (t) => SP.speechText(t);
+
+  assert.equal(r('7번째 반지'), '일곱 번째 반지');
+  assert.equal(r('2번째'), '두 번째');
+  assert.equal(r('3번째'), '세 번째');
+  assert.equal(r('20번째'), '스무 번째');
+
+  // 1번째만 '한 번째' 가 아니라 **첫 번째**다. 차례를 셀 때만 바뀐다.
+  assert.equal(r('1번째'), '첫 번째');
+
+  // ⚠️ 타순의 '번' 은 그대로 한자어여야 한다. 이쪽을 깨뜨리면 안 된다.
+  assert.equal(r('4번 타자'), '사번 타자');
+  assert.equal(r('1번 타순'), '일번 타순');
+});
+
+await asyncTest('한자어 수는 붙여 읽는 것이 기본이다', async () => {
+  // ── 2026-11-10. 구조를 뒤집었다 ──
+  //
+  // 운영자가 하루에 여섯 번을 짚었다 —
+  //   "칠번째가 아니라 일곱번째" / "오~강권이 아니라 오강권"
+  //   "십 연승이 아니라 십연승" / "그 경기를 두고에 텀이 너무 길다"
+  //   "유격수였 고유효 튜표가 아니라 유격수였고, 유효투표"
+  //   "7 전 4선승이 아니라 7전 4선승이다. **띄어읽기 오류가 너무 많다**"
+  //
+  // 고칠 때마다 '붙여 읽을 단위' 목록에 한 줄씩 더하고 있었다.
+  // 그 구조로는 목록이 영영 안 찬다 — 단위가 끝이 없기 때문이다.
+  // 모자 마크에서 "금지는 끝이 없다" 고 배운 것과 같은 모양이다.
+  //
+  // 그래서 **기본을 뒤집었다.** 한자어 수는 뒤 단위에 붙인다.
+  // 띄우는 것은 SPLIT_AFTER 에 적은 '월'·'일' 뿐이다. 날짜가 이어지면
+  // "십일월일일" 이 되어 '매일' 처럼 들리기 때문이다.
+  //
+  // 11화·12화 대본 전체를 훑으니 띄어 읽는 자리가 111곳에서 9곳으로
+  // 줄었고, 남은 9곳은 전부 고유어 수사라 띄우는 게 맞다.
+  const SP4 = await import('../src/audio/speech.mjs');
+  const r = (t) => SP4.speechText(t);
+
+  // 붙는다 — 이게 기본이다.
+  assert.equal(r('7전 4선승제'), '칠전 사선승제');
+  assert.equal(r('208안타'), '이백팔안타');
+  assert.equal(r('90승'), '구십승');
+  assert.equal(r('97표 중 72표'), '구십칠표 중 칠십이표');
+  assert.equal(r('2607경기'), '이천육백칠경기');
+  assert.equal(r('2006년'), '이천육년');
+
+  // ⚠️ 날짜만 띄운다. 안 그러면 "십일월일일" 이 '매일' 처럼 들린다.
+  assert.ok(/십일월 /.test(r('11월 1일')), '월 뒤를 안 띄웠습니다');
+
+  // ⚠️ 고유어 수사는 띄운 그대로다. 이쪽을 붙이면 안 된다.
+  assert.equal(r('10개 구단'), '열 개 구단');
+  assert.equal(r('5경기에'), '다섯 경기에');
+  assert.equal(r('4번 타자'), '사번 타자'); // 타순의 번만 한자어다
+  assert.equal(r('7번째'), '일곱 번째');
+});
+
+await asyncTest('같은 날 걸린 띄어 읽기 넷을 한꺼번에 막는다', async () => {
+  // 2026-11-10 에 운영자가 11화를 들으며 네 번 짚었다. 전부 **읽는
+  // 쪽** 문제고 대본은 멀쩡하다. 한 번에 걸어 둔다.
+  //
+  //   "칠번째 반지가 아니라 일곱번째 반지다"
+  //   "오~강권이 아니라 오강권이다"
+  //   "십 연승이 아니라 십연승이다"
+  //   "'그 경기를 두고' 에 텀이 너무 길다"
+  //
+  // ⚠️ 한 번에 하나씩 짚어 받는 대신, 11화·12화 대본 전체를 훑어
+  //    같은 모양을 한꺼번에 찾았다. 거기서 '만원'·'백만'·'일과' 도
+  //    같이 나왔다 — 운영자는 아직 안 짚었지만 같은 고장이다.
+  const SP3 = await import('../src/audio/speech.mjs');
+  const r = (t) => SP3.speechText(t);
+
+  assert.equal(r('창단 최초 10연승'), '창단 최초 십연승');
+  assert.equal(r('3연패에 빠졌다'), '삼연패에 빠졌다');
+  // 숫자 글자인 '만' 이 뒤에 오면 떨어져 읽혔다.
+  assert.equal(r('홈 100만 관중'), '홈 백만 관중');
+  assert.equal(r('계약금은 3억 5,000만원입니다.'), '계약금은 삼억 오천만원입니다.');
+  // '과' 는 조사다. "1과 3분의 2이닝" 이 "일 과" 로 끊겼다.
+  assert.ok(/일과 삼분의/.test(r('고영표가 1과 3분의 2이닝 8실점을')));
+  // 지시어가 뒤 낱말과 떨어져 읽히던 자리.
+  assert.ok(/그경기를 두고/.test(r('감독이 그 경기를 두고 말했죠')));
+
+  // ⚠️ 이미 맞던 것이 깨지지 않았는지 같이 본다.
+  assert.equal(r('2회 말에 3차전 1루까지'), '이회말에 삼차전 일루까지');
+  assert.equal(r('경기는 8-7로 끝났어요.'), '경기는 팔 대 칠로 끝났어요.');
+  assert.equal(r('4번 타자'), '사번 타자');
+});
+
+await asyncTest('순위를 묶어 부르는 말은 붙여 읽는다 — 오강권', async () => {
+  // 2026-11-10 운영자: "오~강권이 아니라 오강권이다"
+  //
+  // 11화의 "5강권 정도로 봤어요" 가 "오 강권" 으로 띄어 나갔고, 읽는
+  // 쪽이 그 사이를 쉬었다. 듣기에는 **'오강권' 이라는 사람 이름**처럼
+  // 들린다. 야구 중계에서 순위를 묶어 부르는 말은 한 덩어리다.
+  const SP2 = await import('../src/audio/speech.mjs');
+  const r = (t) => SP2.speechText(t);
+
+  assert.equal(r('5강권 정도로 봤어요'), '오강권 정도로 봤어요');
+  assert.equal(r('3강 체제'), '삼강 체제');
+  assert.equal(r('5위권'), '오위권');
+
+  // ⚠️ 단위를 넓게 잡지 않는다. 이미 맞던 것들이 그대로여야 한다.
+  assert.equal(r('2회 말'), '이회말');
+  assert.equal(r('3차전'), '삼차전');
+  assert.equal(r('1루에서'), '일루에서');
+});
 
 await asyncTest('숫자와 단위를 붙여 읽는다 — 이회말', async () => {
   // 2026-11-06 운영자: "2회 말 이런 부분도 어색하다. 2회말 이렇게
@@ -6669,6 +6900,353 @@ test('10화·11화의 출처가 한 줄도 안 사라진다', () => {
 //
 // 그래서 규칙을 하나로 못 박는다 — **체격을 말하려면 숫자를 적는다.**
 // 숫자를 못 찾으면 체격 말을 쓰지 않고 얼굴·머리·수염으로 가른다.
+// ════════════════════════════════════════════════════════════
+// 사진을 그대로 지브리로 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 운영자가 구조를 정했다.
+//
+//   "사진을 사용하는 게 아니라 사진을 지브리 스타일로 그려서 사용한다.
+//    그리고 중간 사진은 지금처럼 사용한다."
+//   "필요한 중요 사진의 이미지는 내가 url 로 준다. 사람별로 몇 장이
+//    필요한지 주면 맞춰서 URL 을 주겠다."
+//   "다만 워터마크는 꼭! 지워라."
+section('4-v. 사진을 그대로 지브리로');
+
+const RP = await import('../src/assets/repaint.mjs');
+
+test('사람당 여러 장을 받는다', () => {
+  // 샷마다 다른 자세가 필요하다. 전에는 photo 와 photo_예비 둘뿐이었는데
+  // 그건 "얼굴 한 장만 참조한다"는 전제에서 나온 모양이다.
+  const { jobs } = RP.repaintJobs([
+    {
+      name: '김도영',
+      photos: [
+        { url: 'https://a/1.jpg', 쓰임: '유격수 수비' },
+        { url: 'https://a/2.jpg', 쓰임: '타석' },
+      ],
+    },
+  ]);
+  assert.equal(jobs.length, 2);
+  // 파일 이름에 쓰임이 들어가야 한다. 결과를 고르는 것은 사람이고,
+  // 나는 그림을 못 보기 때문에 더 그렇다.
+  assert.ok(jobs.some((j) => j.file.includes('유격수 수비')));
+  assert.ok(jobs.some((j) => j.file.includes('타석')));
+});
+
+test('옛 모양(photo / photo_예비)도 그대로 돈다', () => {
+  // ⚠️ 1~11화 기획 파일이 전부 옛 모양이다. 한꺼번에 고치면 지금
+  //    돌아가는 것을 깨뜨린다. 둘 다 받는다.
+  const one = RP.repaintJobs([{ name: '구자욱', photo: 'https://b/1.jpg' }]);
+  assert.equal(one.jobs.length, 1);
+  assert.equal(one.jobs[0].file, '구자욱.png');
+
+  const two = RP.repaintJobs(
+    [{ name: '구자욱', photo: 'https://b/1.jpg', photo_예비: 'https://b/2.jpg' }],
+    { spare: true }
+  );
+  assert.equal(two.jobs.length, 2);
+});
+
+test('주소가 아니면 건너뛰고 까닭을 말한다', () => {
+  // 로컬 경로를 넣었다면 그건 사진을 저장소에 들이려는 것이고,
+  // 공개 저장소라 그건 퍼블리싱이다. 그러지 않기로 했다.
+  const { jobs, skipped } = RP.repaintJobs([
+    { name: '없는사람' },
+    { name: '로컬', photo: '스포츠영상/사진/a.jpg' },
+  ]);
+  assert.equal(jobs.length, 0);
+  assert.equal(skipped.length, 2);
+});
+
+test('워터마크를 프롬프트에서 아예 말하지 않는다', () => {
+  // ── 두 번 틀렸고 두 번 다 더 나빠졌다 (2026-11-09) ──
+  //
+  //   1차  'no watermark, no logo stamp, no agency mark, ...'
+  //        → 뉴스1, 일간스포츠가 그림 안에 그려져 나왔다
+  //   2차  '사진에 통신사 워터마크가 찍혀 있다. 덮어 칠하고 그 뒤에
+  //        있던 것을 그려라'
+  //        → **더 또렷해졌다.** 일간스포츠, 엑스포츠뉴스
+  //
+  //   운영자: "오히려 워터마크가 더 생겼다. 너 돈만 쓰고 이렇게 할래."
+  //
+  // 그림 모델은 프롬프트에 **나온 낱말을 그리려 든다.** "하지 마라"로
+  // 적어도 그렇다. 모자 마크에서 `no Boston B` 를 적었더니 `C` 가
+  // 나온 것과 같은 성질이다. 거기서 "금지는 끝이 없다"고 적어 두고도
+  // 여기서 또 같은 길을 갔다.
+  //
+  // 그래서 이 테스트는 **낱말이 있는지**를 본다. 다음에 누가 좋은
+  // 뜻으로 "워터마크 금지"를 다시 넣으면 여기서 걸린다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  const 부르면_나오는_낱말 = [
+    'watermark', 'logo', 'stamp', 'agency', 'caption',
+    'overlay', 'credit', 'wordmark', 'lettering',
+  ];
+  const 남은것 = 부르면_나오는_낱말.filter((w) => new RegExp(w, 'i').test(p));
+  assert.deepEqual(
+    남은것,
+    [],
+    `프롬프트에 이 낱말이 있으면 모델이 그것을 **그립니다**: ${남은것.join(', ')}\n` +
+      '2026-11-09 에 두 번 해 보고 두 번 다 더 나빠졌습니다. ' +
+      'repaint.mjs 의 REPAINT_CLEAN 주석을 읽으세요.'
+  );
+
+  // 대신 "면이 매끈하다"는 **긍정문**으로 적는다.
+  assert.ok(
+    /surfaces are painted smooth and even/.test(p),
+    '매끈한 면을 그리라는 긍정문이 없습니다'
+  );
+});
+
+test('사진의 구도와 자세를 지키라고 적는다', () => {
+  // ⚠️ 이게 이 방식을 쓰는 **까닭 전부**다. 구도를 안 지키면 그냥
+  //    비싼 그림 생성이고, 팔이 셋인 문제가 그대로 돌아온다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  assert.ok(/keep the exact same pose/.test(p));
+  assert.ok(/the same composition as the photograph/.test(p));
+  assert.ok(/keep both arms and both legs exactly where they are/.test(p));
+  // 유니폼은 **바꾸라고 하지 않는다.** 사진에 이미 그 팀 옷이 있다.
+  // 색을 바꾸라고 적으면 모델이 엉뚱한 것을 칠한다.
+  // ⚠️ 전에는 'keep the uniform ... exactly as they appear in the
+  //    photograph' 였다. 그 말이 **사진을 전부 베끼라는 쪽**으로
+  //    민다 — 워터마크까지 '사진에 나타난 것'이기 때문이다.
+  //    유니폼은 지키되 '사진을 베껴라'는 말은 뺐다.
+  // ⚠️ 2026-11-12. '사진에 있는 유니폼을 그대로 두라' 를 **뺐다.**
+  //    운영자: "유니폼은 해당 팀의 상징색을 넣어서 한다. 똑같이
+  //            어차피 못 그리잖아."
+  //    베끼려다 모자 마크와 가슴 글자만 글자꼴로 남았다. 이제 유니폼은
+  //    코드가 적는 팀 색으로 다시 칠한다.
+  assert.ok(!/the same uniform and cap in the same colours/.test(p));
+  assert.ok(
+    /a solid navy blue cap/.test(
+      RP.repaintPrompt({ name: '원태인' }, null, {
+        uniform: 'wearing a white baseball jersey with navy blue piping, a solid navy blue cap',
+      })
+    ),
+    '팀 색 유니폼이 안 들어갔습니다'
+  );
+  assert.ok(!/as they appear in the photograph/.test(p), '사진을 베끼라는 말이 돌아왔습니다');
+});
+
+test('사진 느낌이 남지 않게 적는다', () => {
+  // 2026-11-04 운영자: "감독 얼굴이 그냥 얼굴이잖아."
+  // 사진 전체를 바탕으로 쓰면 그 함정이 더 크다.
+  const p = RP.repaintPrompt({ name: '김도영' });
+  for (const must of ['no photographic texture', 'no skin pores', 'no lens blur', 'repainted']) {
+    assert.ok(p.includes(must), `사진 느낌을 막는 줄이 빠졌습니다: ${must}`);
+  }
+});
+
+// ════════════════════════════════════════════════════════════
+// 워터마크는 잘라서 없앤다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 운영자: "워터마크는 잘라내라. 100% 나오면 안 된다."
+//
+// 프롬프트로 두 번 해 봤고 두 번 다 더 나빠졌다. 모델은 프롬프트에
+// 나온 낱말을 그린다 — "하지 마라"로 적어도 그렇다.
+//
+// 그래서 방향을 바꿨다. **모델이 못 보게 한다.** 안 보이면 못 그린다.
+section('4-u. 워터마크는 잘라서 없앤다');
+
+const CR = await import('../src/assets/crop.mjs');
+
+test('자르는 식이 비율대로 나온다', () => {
+  // ffmpeg 의 crop 은 `너비:높이:x:y` 다. 입력 크기를 미리 몰라도
+  // 되도록 iw·ih 로 적는다.
+  const f = CR.cropFilter({ top: 0.04, bottom: 0.12, left: 0.04, right: 0.04 });
+  assert.equal(f, 'crop=iw*0.9200:ih*0.8400:iw*0.0400:ih*0.0400');
+  // 아래를 가장 많이 자른다 — 한국 뉴스 사진의 워터마크가 대개 거기다.
+  assert.ok(CR.DEFAULT_CROP.bottom > CR.DEFAULT_CROP.top);
+});
+
+test('너무 많이 자르지 않는다 — 사람이 잘린다', () => {
+  // ⚠️ 야구 사진은 세로로 꽉 찬 것이 많다. 아래를 20% 넘게 자르면
+  //    다리가 날아간다. 워터마크를 지우려다 그림을 버리면 안 된다.
+  const d = CR.DEFAULT_CROP;
+  assert.ok(d.bottom <= 0.2, `아래를 ${d.bottom * 100}% 자르면 다리가 날아갑니다`);
+  const 남는넓이 = (1 - d.left - d.right) * (1 - d.top - d.bottom);
+  assert.ok(남는넓이 > 0.7, `${Math.round(남는넓이 * 100)}% 밖에 안 남습니다`);
+});
+
+await asyncTest('진짜로 잘라서 data URI 로 돌려준다', async () => {
+  // 가짜 사진을 만들어 자르기 자체가 도는지 본다. 네트워크를 안 탄다.
+  if (!CR.hasFfmpeg()) return; // ffmpeg 가 없는 곳에서는 건너뛴다
+  const { spawnSync } = await import('node:child_process');
+  const tmp = path.join(TMP, 'crop-src.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=green:s=600x400', '-frames:v', '1', tmp,
+  ]);
+  const buf = fs.readFileSync(tmp);
+
+  const r = await CR.cropToDataUri('https://fake/x.png', {
+    fetchFn: async () => new Response(buf, { status: 200 }),
+  });
+  assert.ok(r.cropped, `자르지 못했습니다: ${r.reason}`);
+  assert.ok(r.url.startsWith('data:image/png;base64,'), 'data URI 가 아닙니다');
+
+  // 진짜로 잘렸는지 크기를 잰다. 600x400 의 92% x 84% = 552x336.
+  const out = path.join(TMP, 'crop-out.png');
+  fs.writeFileSync(out, Buffer.from(r.url.split(',')[1], 'base64'));
+  const p = spawnSync(
+    'ffprobe',
+    ['-v', 'error', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', out],
+    { encoding: 'utf8' }
+  );
+  assert.equal(p.stdout.trim(), '552,336', `잘린 크기가 다릅니다: ${p.stdout.trim()}`);
+});
+
+await asyncTest('자르기가 실패해도 그림은 만든다', async () => {
+  // ⚠️ 자르기는 **있으면 좋은 것**이다. 여기서 멈추면 그림이 한 장도
+  //    안 나온다. 실패하면 원래 주소를 그대로 돌려준다.
+  const bad = await CR.cropToDataUri('https://fake/x.png', {
+    fetchFn: async () => new Response('', { status: 404 }),
+  });
+  assert.equal(bad.cropped, false);
+  assert.equal(bad.url, 'https://fake/x.png', '실패했는데 원래 주소를 안 돌려줬습니다');
+
+  // 주소가 아니면 아무것도 안 한다.
+  const notUrl = await CR.cropToDataUri('스포츠영상/사진/a.jpg');
+  assert.equal(notUrl.cropped, false);
+});
+
+// ════════════════════════════════════════════════════════════
+// 반만 자르면 안 자른 것보다 나쁘다 (2026-11-09)
+// ════════════════════════════════════════════════════════════
+//
+// 고정 12% 로 잘랐더니 박진만은 깨끗했는데 고영표는 **반만 잘렸다.**
+// 그 반쪽이 남은 그림에 모델이 커다란 글자를 지어 넣었다.
+//
+// 운영자: "박진만은 잘 잘렸는데, 고영표는 반만 잘렸다 왜 이러나"
+//
+// 글자 조각을 보면 모델은 "글자를 그려야 하는 자리"로 읽는다.
+// 모자 마크가 C → STL 로 간 것과 같은 성질이다.
+section('4-u2. 아래 띠를 재서 자른다');
+
+test('워터마크 밑의 여백 때문에 바닥 줄만 보면 못 잡는다', () => {
+  // ⚠️ 처음에 "맨 아랫줄이 시끄러운가"로 짰다가 **아무것도 못 잡았다.**
+  //    워터마크는 사진 테두리에 딱 붙어 있지 않고 밑에 여백이 있다.
+  const h = 200;
+  const noise = new Array(h).fill(0.01); // 조용한 사진
+  for (let y = 150; y < 170; y += 1) noise[y] = 0.4; // 글자 띠
+  // 170~199 는 여백이라 조용하다 — 바닥 줄은 시끄럽지 않다.
+  const band = CR.watermarkBand(noise);
+  assert.ok(band !== null, '밑에 여백이 있으면 못 잡습니다 — 바닥 줄만 보면 안 됩니다');
+  // 띠 꼭대기(150)부터 바닥까지를 잘라야 한다. (200-150)/200 = 25%
+  assert.ok(band > 0.2 && band < 0.3, `띠가 ${(band * 100).toFixed(0)}% 로 나왔습니다`);
+});
+
+test('조용한 사진에서는 띠를 만들어내지 않는다', () => {
+  assert.equal(CR.watermarkBand(new Array(200).fill(0.01)), null);
+});
+
+await asyncTest('큰 워터마크는 더 깊이, 작은 것은 기본만큼 자른다', async () => {
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const draw = (name, text, size, up) => {
+    const f = path.join(TMP, name);
+    spawnSync('ffmpeg', [
+      '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=#3a6b4a:s=800x600',
+      '-vf', `drawtext=text='${text}':fontsize=${size}:fontcolor=white:x=(w-tw)/2:y=h-${up}`,
+      '-frames:v', '1', f,
+    ]);
+    return f;
+  };
+
+  const big = CR.measureBottom(draw('wm-big.png', 'SPORTS NEWS', 60, 110));
+  const small = CR.measureBottom(draw('wm-small.png', 'news1', 22, 34));
+
+  // 큰 것은 기본값보다 깊이 자른다 — 안 그러면 **반만 잘린다.**
+  assert.ok(
+    big.bottom > CR.DEFAULT_CROP.bottom,
+    `큰 워터마크인데 기본값(${CR.DEFAULT_CROP.bottom})만 잘랐습니다: ${big.bottom}`
+  );
+  // 작은 것도 최소 기본값은 자른다.
+  assert.ok(small.bottom >= CR.DEFAULT_CROP.bottom);
+  // 둘 다 상한 안이라 그릴 수 있다.
+  assert.ok(big.bottom <= CR.MAX_BOTTOM);
+});
+
+await asyncTest('너무 깊으면 반만 자르지 않고 아예 안 그린다', async () => {
+  // ⚠️ 이것이 이 변경의 핵심이다. 깨끗이 못 자를 바에는 **안 그린다.**
+  //    반쪽이 남은 그림을 받느니 사진을 바꾸는 쪽이 싸고 확실하다.
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const f = path.join(TMP, 'wm-deep.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=#3a6b4a:s=800x600',
+    '-vf', "drawtext=text='WATERMARK':fontsize=70:fontcolor=white:x=(w-tw)/2:y=h-220",
+    '-frames:v', '1', f,
+  ]);
+  const m = CR.measureBottom(f);
+  assert.ok(m.bottom > CR.MAX_BOTTOM, `상한(${CR.MAX_BOTTOM})을 안 넘었습니다: ${m.bottom}`);
+
+  const buf = fs.readFileSync(f);
+  const r = await CR.cropToDataUri('https://fake/deep.png', {
+    fetchFn: async () => new Response(buf, { status: 200 }),
+  });
+  assert.equal(r.cropped, false);
+  assert.equal(r.needsNewPhoto, true, '사진을 바꿔 달라고 말하지 않았습니다');
+  assert.equal(r.url, 'https://fake/deep.png');
+});
+
+test('기획 파일에서 사진마다 자르기를 못 박을 수 있다', () => {
+  // ⚠️ 재는 쪽은 **진짜 사진에서 잘 못 잡는다**(2026-11-09 고영표 #76).
+  //    단색 바탕에서는 글자가 튀지만, 스포츠 사진은 어디나 복잡해서
+  //    워터마크가 변화량으로 안 튄다. 내가 쓴 테스트가 단색이었던 것이
+  //    바로 그 함정이었다.
+  //
+  // 그래서 사람이 **자른 사진을 눈으로 보고** 숫자를 적는 길을 둔다.
+  const { jobs } = RP.repaintJobs([
+    {
+      name: '고영표',
+      photos: [
+        { url: 'https://a/1.jpg', 쓰임: '투구', 아래: 0.22 },
+        { url: 'https://a/2.jpg', 쓰임: '더그아웃' },
+      ],
+    },
+  ]);
+  assert.equal(jobs.length, 2);
+  assert.equal(jobs.find((j) => j.쓰임 === '투구').아래, 0.22);
+  assert.equal(jobs.find((j) => j.쓰임 === '더그아웃').아래, null);
+});
+
+test('못 박은 자르기로 실제로 자른다', () => {
+  // 못 박았으면 재지 않는다 — 사람이 보고 적은 값이 추측보다 정확하다.
+  const f = CR.cropFilter({ top: 0.04, bottom: 0.22, left: 0.04, right: 0.04 });
+  assert.equal(f, 'crop=iw*0.9200:ih*0.7400:iw*0.0400:ih*0.0400');
+});
+
+await asyncTest('자른 사진을 꺼내 볼 수 있게 돌려준다', async () => {
+  // 내가 그림을 못 보므로, 자르기가 모자란 것인지 모델이 지어낸 것인지
+  // 가를 길은 **모델이 본 사진을 사람이 보는 것**뿐이다.
+  if (!CR.hasFfmpeg()) return;
+  const { spawnSync } = await import('node:child_process');
+  const tmp = path.join(TMP, 'crop-png-src.png');
+  spawnSync('ffmpeg', [
+    '-y', '-loglevel', 'error', '-f', 'lavfi',
+    '-i', 'color=c=navy:s=640x480', '-frames:v', '1', tmp,
+  ]);
+  const r = await CR.cropToDataUri('https://fake/z.png', {
+    fetchFn: async () => new Response(fs.readFileSync(tmp), { status: 200 }),
+  });
+  assert.ok(r.cropped);
+  assert.ok(Buffer.isBuffer(r.png), '자른 사진을 안 돌려줬습니다');
+  assert.ok(r.png.length > 100);
+});
+
+test('로그가 실제로 자른 값을 말한다', () => {
+  // ⚠️ #76 에서 로그가 "아래 9% 를 자릅니다" 라고 했는데 실제로는
+  //    기본값 12% 를 잘랐다. want 를 적고 max(fallback, want) 를
+  //    자르고 있었다. 로그가 거짓말을 하면 디버깅이 거짓말 위에서 돈다.
+  const noise = new Array(200).fill(0.01);
+  for (let y = 190; y < 196; y += 1) noise[y] = 0.4; // 아주 얕은 띠
+  const band = CR.watermarkBand(noise);
+  assert.ok(band !== null && band < CR.DEFAULT_CROP.bottom, `띠 ${band}`);
+  // 얕은 띠라도 기본값만큼은 자른다 — 그리고 로그가 그 값을 말해야 한다.
+});
+
 section('4-w. 체격은 숫자로 적는다');
 
 // ── 무엇을 잡는가 ──
@@ -6759,8 +7337,9 @@ await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
   const V9 = await import('../src/scenes/visuals.mjs');
   const p = V9.composeImagePrompt('a pitcher', 'present', { kind: 'SPORTS' });
   for (const must of [
-    'no missing arm',      // 빠진 팔
-    'no one-armed figure', // 외팔이
+    'both arms drawn and attached at the shoulders',      // 빠진 팔
+    // ⚠️ 2026-11-11. 'no one-armed figure' 를 뺐다 — 금지 낱말이 오히려
+    //    그쪽으로 끈다. 위의 '어깨에 하나씩' 긍정문이 맡는다.
     'both arms are drawn', // 둘 다 그린다
     'the glove arm',       // 야구는 글러브 팔을 잊는다
     'no obese',            // 비만
@@ -6770,38 +7349,254 @@ await asyncTest('빠진 팔다리와 비만을 막는다', async () => {
   ]) {
     assert.ok(p.includes(must), `금지·지시가 빠졌습니다: ${must}`);
   }
-  // 팔이 셋인 것도 그대로 막혀 있어야 한다. 한쪽을 고치다 다른 쪽을
-  // 잃으면 9화의 문제가 돌아온다.
-  assert.ok(p.includes('no third arm'), '팔이 셋인 것을 막던 줄이 사라졌습니다');
-  assert.ok(p.includes('no extra arms'), '팔이 더 많은 것을 막던 줄이 사라졌습니다');
+  // ── 팔 개수는 **금지가 아니라 긍정문**이 맡는다 (2026-11-11) ──
+  //
+  // 'no third arm, no spare hand, no extra arms' 를 다 적어 뒀는데도
+  // 12화에서 **또 팔이 셋** 나왔다. 9화에 이어 두 번째다.
+  //   운영자: "그림도 어색한데 팔이 3개다"
+  //
+  // 금지 낱말이 오히려 그쪽으로 끈다 — 모자 마크(B→C→STL)와
+  // 아기 얼굴에서 이미 두 번 겪은 성질이다.
+  // 이제 **어디에 몇 개가 붙는지**를 적는다.
+  assert.ok(
+    p.includes('one left arm attached at the left shoulder'),
+    '팔이 어디 붙는지 적은 줄이 사라졌습니다'
+  );
+  assert.ok(
+    p.includes('nothing else growing from the torso'),
+    '몸통에서 다른 게 자라지 않는다는 줄이 사라졌습니다'
+  );
+  for (const w of ['no third arm', 'no spare hand', 'no extra arms', 'no one-armed']) {
+    assert.ok(!p.includes(w), `"${w}" 가 돌아왔습니다 — 부르면 그립니다`);
+  }
 });
 
-await asyncTest('모자에 남의 구단 글자를 붙이지 않는다', async () => {
-  // 2026-11-09 운영자: "이건 누구고 모자에 C는 무슨 마크인가?"
+await asyncTest('모자와 가슴에 글자를 그리라고 하지 않는다', async () => {
+  // ── 세 번 틀렸다. 세 번째에 까닭을 알았다 (2026-11-09) ──
   //
-  // ⚠️ 미국 구단을 **이름으로 하나씩** 막는 방식은 안 통한다. 셋만
-  //    적어 뒀더니(양키스·다저스·보스턴) 모델이 그 셋을 피하고 C 를
-  //    가져왔다. 금지는 끝이 없다.
+  //   1차  미국 구단 셋을 이름으로 막았다 → 모델이 **C** 를 가져왔다
+  //   2차  "한 글자 모노그램 금지" 로 고쳤다 → **STL** 이 나왔다
+  //   3차  운영자: "아직도 그대로다" — 고영표 가슴에 "읽가ㅅㅍ大"
   //
-  // 그래서 "무엇을 그릴지"로 뒤집었다 — 모자에는 그 구단 표시만
-  // 올리고, 모르면 아무것도 안 올린다.
+  // 세 번째에 코드를 읽고 알았다. **flux-schnell 과 flux-dev 는
+  // negative_prompt 를 아예 안 받는다.** replicate.mjs 의 input() 을
+  // 보면 그 칸이 없다. 그래서 composeImagePrompt 가 만든 금지 목록은
+  // 프롬프트 **본문 끝에 그대로 이어 붙어** 모델에게 갔다.
+  //
+  // 모델이 받은 것은 이랬다:
+  //   "... no interlocking NY, no Dodgers script, no Boston B,
+  //    no Cincinnati C, no Chicago C ..."
+  //
+  // 금지로 읽히지 않는다. **낱말 목록으로 읽힌다.** 그래서 막을수록
+  // 더 나왔다. 목록이 길어질수록 더.
+  //
+  // 그리고 가슴은 금지도 아니었다 — 내가 'the team wordmark across the
+  // chest ... legible' 이라고 **그리라고** 적어 뒀다. Flux 는 한글을
+  // 못 쓰니 글자꼴만 나온다.
+  //
+  // 그래서 글자 이야기를 전부 들어냈다. 선수를 알아보게 하는 것은
+  // **색과 등번호**다. 숫자는 한두 자리라 모델이 제대로 그린다.
   const V10 = await import('../src/scenes/visuals.mjs');
   const p = V10.composeImagePrompt('a manager', 'present', { kind: 'SPORTS' });
-  // ⚠️ 처음에 "한 글자"만 막았더니 다음 샷에서 **STL** 이 나왔다.
-  //    글자 수를 가리면 안 된다 — 한 글자든 세 글자든 남의 구단이다.
-  assert.ok(
-    /one, two or three Latin letters/.test(p),
-    '모자에 남의 구단 글자를 막는 줄이 없습니다'
+
+  // ⚠️ 이 목록에 낱말을 **다시 넣지 마라.** 넣으면 그려진다.
+  const 부르면_그리는_낱말 = [
+    'wordmark', 'lettering', 'monogram', 'watermark', 'caption',
+    'subtitle', 'sponsor', 'Major League Baseball',
+    'Dodgers', 'Yankees', 'Boston', 'Cincinnati', 'Chicago', 'STL',
+  ];
+  const 남은것 = 부르면_그리는_낱말.filter((w) => new RegExp(w, 'i').test(p));
+  assert.deepEqual(
+    남은것,
+    [],
+    `프롬프트에 이 낱말이 있으면 모델이 **그립니다**: ${남은것.join(', ')}\n` +
+      'flux-schnell·dev 는 negative_prompt 를 안 받습니다 — "no X" 도 본문으로 갑니다.'
   );
-  assert.ok(/STL/.test(p), 'STL 을 막는 줄이 없습니다');
+
+  // 대신 무엇을 그릴지로 적는다.
+  // ⚠️ 2026-11-11. 전에는 "그 구단의 마크를 올려라" 였다. 모델은 KIA 를
+  //    **모르므로** 아는 것을 가져왔다 — 모자에 B, K, R 이 차례로 나왔다.
+  //    마크 이야기를 아예 안 한다. 모자는 한 색으로 칠한 천이다.
   assert.ok(
-    /a plain cap with no mark is better than an invented one/.test(p),
-    '모르면 비워 두라는 줄이 없습니다 — 지어낸 마크가 나옵니다'
+    /the cap is plain fabric in one solid colour all over/.test(p),
+    '모자를 민무늬로 적은 줄이 없습니다'
   );
-  // 이름으로 막던 것들도 그대로 남아 있어야 한다.
-  for (const w of ['no interlocking NY', 'no Boston B', 'no Cincinnati C']) {
-    assert.ok(p.includes(w), `${w} 가 사라졌습니다`);
+  assert.ok(!/mark of the Korean/.test(p), '아직 마크를 그리라고 시키고 있습니다');
+  assert.ok(
+    /the front of the jersey is smooth plain fabric/.test(p),
+    '가슴이 민무늬라고 적은 줄이 없습니다'
+  );
+  // 뒤에서 알아보는 길은 등번호다. 그건 살아 있어야 한다.
+  assert.ok(/the number across the back/.test(p), '등번호 지시가 사라졌습니다');
+});
+
+test('리페인트도 가슴을 민무늬로 다시 그린다', () => {
+  // ⚠️ 리페인트는 uniforms.mjs 도 스타일 꼬리도 **안 쓴다.** 그래서
+  //    거기를 고쳐도 이 경로는 안 고쳐진다. 한 번 그렇게 착각해서
+  //    커밋 메시지에 원인을 잘못 적었다(2026-11-09).
+  //
+  // 이 경로에서 글자가 나오는 까닭은 다르다 — REPAINT_KEEP 이 "구도를
+  // 그대로 두라"고 세게 미니까, 원본 사진 가슴에 있던 것(워터마크든
+  // 재킷 글자든)을 모델이 베낀다. Flux 는 한글을 못 쓰니 베끼면 반드시
+  // 글자꼴만 남는다.
+  //
+  // 그래서 가슴만 예외로 둔다. 색은 지키고 무늬는 안 지킨다.
+  const p = RP.repaintPrompt({ name: '고영표' });
+  // ⚠️ 2026-11-12. 가슴 민무늬를 맡는 자리가 둘로 바뀌었다 —
+  //    (1) REPAINT_KEEP 안의 예외, (2) 유니폼 문장(uniforms.mjs).
+  //    뒤에 따로 붙이던 줄은 앞말에 밀려서 안 통했다.
+  assert.ok(
+    /the front of the jersey is repainted as smooth plain fabric/.test(p),
+    '구도 지시 **안에** 가슴 예외가 없습니다 — 뒤에 붙이면 앞말에 밀립니다'
+  );
+  // 팀을 모를 때도 적어도 마크는 안 그린다.
+  assert.ok(
+    /the cap is plain fabric in one solid colour with nothing on it/.test(p),
+    '팀을 모를 때 모자를 민무늬로 두는 줄이 없습니다'
+  );
+  // 색과 등번호는 지켜야 한다. 그게 선수를 말해 주는 것이다.
+  assert.ok(
+    /a solid black cap/.test(
+      RP.repaintPrompt({ name: '고영표' }, null, {
+        uniform: 'wearing a white baseball jersey with black piping, a solid black cap, the number 1',
+      })
+    ),
+    '팀 색이 안 들어갔습니다'
+  );
+  // 등번호는 유니폼 문장이 들고 온다(uniforms.mjs). 여기선 안 본다.
+  // ⚠️ 긍정문이어야 한다. 낱말을 부르면 그린다.
+  for (const w of ['watermark', 'logo', 'wordmark', 'lettering']) {
+    assert.ok(!new RegExp(w, 'i').test(p), `"${w}" 가 있습니다 — 부르면 그립니다`);
   }
+});
+
+await asyncTest('photos 만 적힌 사람도 본편에서 얼굴 참조를 잃지 않는다', async () => {
+  // ── 하마터면 조용히 망가질 뻔했다 (2026-11-09) ──
+  //
+  // 기획 파일에 사진을 적는 모양이 둘이다. 옛 모양 `photo` 와, 리페인트를
+  // 만들면서 들인 새 모양 `photos: [{url, 쓰임}]` 이다.
+  //
+  // 그런데 **새 모양은 리페인트만 읽었다.** 본편 그림·인물 시트·화풍
+  // 미리보기·소재 레코드·닮음 판정은 전부 `photo` 만 봤다.
+  //
+  // 11화 사람 다섯의 photo 를 photos 로 바꾸면서 그걸 몰랐다. 그대로
+  // 돌렸으면 그 다섯의 **얼굴 참조가 통째로 사라졌을 것이다.** 그리고
+  // 오류는 안 난다 — 그림은 멀쩡히 나오고 얼굴만 남의 얼굴이 된다.
+  // 그림을 못 보는 나로서는 알아챌 길이 없는 종류의 고장이다.
+  //
+  // 그래서 읽는 자리를 photo-of.mjs 하나로 모았다. 여기서 못 박는다.
+  const PO = await import('../src/assets/photo-of.mjs');
+
+  // 두 모양 다 읽는다.
+  assert.equal(PO.photoOf({ photo: 'https://a/1.jpg' }), 'https://a/1.jpg');
+  assert.equal(PO.photoOf({ photos: [{ url: 'https://b/1.jpg' }] }), 'https://b/1.jpg');
+  assert.equal(PO.photoOf({}), '');
+  // 예비도 마찬가지다.
+  assert.equal(PO.sparePhotoOf({ photo_예비: 'https://a/2.jpg' }), 'https://a/2.jpg');
+  assert.equal(
+    PO.sparePhotoOf({ photos: [{ url: 'https://b/1.jpg' }, { url: 'https://b/2.jpg' }] }),
+    'https://b/2.jpg'
+  );
+
+  // ⚠️ 그리고 **읽는 자리마다** 이걸 쓰는지 본다. 한 군데라도 String(p.photo)
+  //    로 돌아가면 그 경로에서만 조용히 얼굴이 빠진다.
+  const 읽는곳 = [
+    'src/model.mjs', 'src/assets/portrait.mjs', 'src/assets/preview.mjs',
+    'src/assets/images.mjs', 'src/scenes/visuals.mjs', 'src/main.mjs',
+  ];
+  for (const f of 읽는곳) {
+    const code = fs.readFileSync(new URL(`../${f}`, import.meta.url).pathname, 'utf8');
+    // 주석은 뺀다 — 설명에 적힌 것까지 잡으면 못 쓴다.
+    const 알맹이 = code.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+    const 날것 = 알맹이.match(/String\(p[?]?\.photo(_예비)?\s*\|\|/g) || [];
+    assert.deepEqual(
+      날것,
+      [],
+      `${f} 가 photo 를 직접 읽습니다 (${날것.length}군데). ` +
+        'photo-of.mjs 의 photoOf/sparePhotoOf 를 쓰세요 — ' +
+        'photos 로만 적힌 사람의 얼굴이 조용히 빠집니다.'
+    );
+  }
+});
+
+await asyncTest('사람 샷은 받은 사진을 돌려 쓴다 — 같은 사진이 연달아 안 나온다', async () => {
+  // 2026-11-11 운영자: "준 이미지 중에 차라리 하나씩 골라서 그대로
+  // 그려서 써라" / "전달해준 사진을 지브리 스타일로 그려서 사용한다"
+  //
+  // 한 사람에게 사진이 여러 장이면 샷마다 돌려 쓴다. 같은 사진이
+  // 연달아 나오면 영상이 멈춰 보인다.
+  const PO2 = await import('../src/assets/photo-of.mjs');
+  const list = PO2.allPhotosOf({
+    photo: 'https://a/1.jpg',
+    photos: [{ url: 'https://a/2.jpg' }, { url: 'https://a/3.jpg' }],
+    photo_예비: 'https://a/4.jpg',
+  });
+  assert.deepEqual(list, ['https://a/1.jpg', 'https://a/2.jpg', 'https://a/3.jpg', 'https://a/4.jpg']);
+  // 같은 주소가 두 번 들어가지 않는다.
+  assert.deepEqual(
+    PO2.allPhotosOf({ photo: 'https://a/1.jpg', photos: [{ url: 'https://a/1.jpg' }] }),
+    ['https://a/1.jpg']
+  );
+  // 주소가 아닌 것은 안 받는다 — 저장소 안 파일을 쓰지 않기로 했다.
+  assert.deepEqual(PO2.allPhotosOf({ photo: '스포츠영상/사진/a.jpg' }), []);
+});
+
+await asyncTest('사진이 있는 사람은 생김새를 글로 적지 않는다', async () => {
+  // ── 2026-11-12 운영자 ──
+  //
+  //   "자꾸 생김새로 만들지 마라"
+  //   "생김새 글로 적는 건 **아예 삭제해라. 또 할 것 같다**"
+  //
+  // 사진이 있는데 얼굴을 글로 또 적으면 둘이 싸운다. 글이 이기면
+  // 사진 속 사람이 아닌 사람이 나오고, 사진이 이기면 글이 낭비된다.
+  // 12화에서 셋이 전부 안 닮게 나온 까닭 중 하나다.
+  //
+  // "또 할 것 같다" 는 말이 맞다. 그래서 코드로 막고 여기서 지킨다.
+  const V = await import('../src/scenes/visuals.mjs');
+
+  const 사진있음 = {
+    name: '김도영',
+    look: 'a Korean player of 24, a slim oval face with a sharp jawline',
+    photos: [{ url: 'https://a/1.jpg' }],
+  };
+  const 사진없음 = { name: '양현종', look: 'a Korean pitcher in his thirties' };
+
+  // 사진이 있으면 한 글자도 안 나간다.
+  assert.equal(V.peopleRules([사진있음]), '', '사진이 있는데 생김새가 나갔습니다');
+  // 옛 모양(photo)도 같다.
+  assert.equal(V.peopleRules([{ ...사진있음, photos: [], photo: 'https://a/1.jpg' }]), '');
+
+  // 사진이 없는 사람은 글 말고 기댈 데가 없으니 적는다.
+  assert.ok(V.peopleRules([사진없음]).includes('양현종'), '사진 없는 사람까지 지웠습니다');
+
+  // 섞여 있어도 사진 있는 쪽만 빠진다.
+  const 섞임 = V.peopleRules([사진있음, 사진없음]);
+  assert.ok(!섞임.includes('김도영'), '사진 있는 사람이 섞여 들어갔습니다');
+  assert.ok(섞임.includes('양현종'));
+});
+
+await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
+  // uniforms.mjs 의 열 팀이 전부 'white jersey with black lettering'
+  // 꼴이었다. 그것도 가슴 글자의 범인이다 — 색으로만 적는다.
+  const U = await import('../src/scenes/uniforms.mjs');
+  for (const [key, u] of Object.entries(U.KBO_UNIFORMS)) {
+    for (const w of ['lettering', 'wordmark', 'logo', 'text']) {
+      assert.ok(
+        !new RegExp(w, 'i').test(`${u.jersey} ${u.cap}`),
+        `${key} 에 "${w}" 가 있습니다 — Flux 는 글자를 못 씁니다. 색으로 적으세요.`
+      );
+    }
+    // 색은 반드시 있어야 한다. 그게 팀을 말해 주는 유일한 수단이다.
+    assert.ok(u.jersey.length > 20 && u.cap, `${key} 의 색 설명이 부실합니다`);
+  }
+});
+
+await asyncTest('유니폼 문장이 가슴을 민무늬로 못 박는다', async () => {
+  const U = await import('../src/scenes/uniforms.mjs');
+  const c = U.uniformClause({ team: 'KT', number: '1' });
+  assert.ok(/smooth plain fabric/.test(c), '가슴 민무늬 지시가 없습니다');
+  // 등번호는 살아 있어야 한다 — 뒤에서 선수를 알아보는 유일한 길이다.
+  assert.ok(/the number 1 in large/.test(c), '등번호가 사라졌습니다');
 });
 
 await asyncTest('상체와 하체가 한 동작이다', async () => {
@@ -7005,7 +7800,9 @@ test('문장의 쉼표를 숫자로 먹지 않는다', () => {
   assert.ok(!/일사차전/.test(out), '쉼표가 사라져 두 경기가 붙었습니다');
   // 자릿점은 **세 자리 묶음일 때만** 받는다. 이건 그대로 읽어야 한다.
   assert.ok(
-    /구천칠백이십삼 만/.test(RN.speechText('143억 9,723만 원')),
+    // ⚠️ 2026-11-10 에 '만' 을 붙여 읽게 바꿨다("백 만 관중" → "백만 관중").
+    //    그래서 여기도 "구천칠백이십삼 만" 이 아니라 붙은 꼴이 맞다.
+    /구천칠백이십삼만/.test(RN.speechText('143억 9,723만 원')),
     '자릿점이 든 금액을 못 읽습니다'
   );
 });
@@ -7146,7 +7943,9 @@ test('유니폼이 장면 설명 바로 뒤, 고정 문구 앞에 들어간다',
     kind: 'SPORTS',
     uniform: uni,
   });
-  const atUniform = p.indexOf('KIA Tigers');
+  // ⚠️ 2026-11-11. 구단 이름을 프롬프트에서 뺐다 — 모델이 모르는 이름을
+  //    아는 구단으로 바꿔 그렸다(모자에 B·K·R). 이제 색으로 찾는다.
+  const atUniform = p.indexOf('bright red piping');
   const atStyle = p.indexOf(UV.SPORTS_PAINT.slice(0, 20));
   assert.ok(atUniform > 0, '유니폼 문장이 프롬프트에 없습니다');
   assert.ok(atStyle > 0, '화풍 문구가 프롬프트에 없습니다');
@@ -7195,7 +7994,11 @@ test('샷의 person 으로 그 사람의 유니폼을 찾아 꽂는다', () => {
   };
   const { scene: merged } = UV.mergeVisuals(scene, design, { kind: 'SPORTS', uniforms });
   const [s1, s2, s3] = merged.shots;
-  assert.ok(/KIA Tigers/.test(s1.image_prompt), '투수 샷에 유니폼이 안 붙었습니다');
+  assert.ok(/bright red piping/.test(s1.image_prompt), '투수 샷에 유니폼이 안 붙었습니다');
+  assert.ok(
+    !/KIA|Tigers|타이거즈/.test(s1.image_prompt),
+    '구단 이름이 프롬프트에 있습니다 — 모델이 아는 구단으로 바꿔 그립니다'
+  );
   assert.ok(/number 40/.test(s1.image_prompt), '투수 샷에 등번호가 안 붙었습니다');
   assert.ok(/team jacket/.test(s2.image_prompt), '감독 샷에 재킷이 안 붙었습니다');
   // ⚠️ 'number' 라는 낱말은 고정 문구에도 있다("when a jersey number is

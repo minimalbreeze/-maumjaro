@@ -1,4 +1,5 @@
 import { usableSections } from './script/sections.mjs';
+import { photoOf, sparePhotoOf, allPhotosOf } from './assets/photo-of.mjs';
 // 소재 한 건의 데이터 모양과, 자동 제작 여부를 가르는 판정 규칙.
 //
 // 이 파일에 AI 호출이 없는 것은 의도적이다. 전부 순수 함수라서
@@ -480,15 +481,27 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
     //    photo_예비 도 같이 옮긴다. 뉴스 사진 주소는 자주 죽어서 기획
     //    파일에 예비를 하나씩 적어 두는데, 레코드에 없으면 갈아 끼울
     //    때 기획 파일을 다시 열어야 한다.
+    // ⚠️ 2026-11-12. 여기서 **사진 있는 사람을 통째로 떨어뜨리고 있었다.**
+    //
+    //    원래 조건이 `p.name && p.look` 이었다. 그런데 같은 날 운영자가
+    //    "생김새 글로 적는 건 아예 삭제해라"고 해서 기획 파일의 look 을
+    //    비웠다. 그러자 이 filter 가 세 사람을 다 버렸다 — 사진도,
+    //    team 도, number 도 파이프라인에 하나도 안 갔다.
+    //
+    //    그림을 사진에서 그리기로 한 뒤라 **사진만 있으면 충분하다.**
+    //    둘 중 하나라도 있으면 싣는다.
     people: (Array.isArray(people) ? people : [])
-      .filter((p) => p?.name && p?.look)
+      .filter((p) => p?.name && (p?.look || allPhotosOf(p).length))
       .map((p) => {
         const out = {
           name: String(p.name).trim(),
           role: String(p.role || '').trim(),
-          look: String(p.look).trim(),
           tell: String(p.tell || '').trim(),
         };
+        // 사진이 있는 사람은 생김새를 글로 적지 않는다(운영자 지시).
+        // 빈 문자열도 넣지 않는다 — 뒤에서 `p.look &&` 로 보는 곳이 있다.
+        const look = String(p.look || '').trim();
+        if (look) out.look = look;
         // 빈 값을 넣지 않는다. 사진이 없는 사람에게 photo: '' 가 붙으면
         // 레코드를 눈으로 볼 때 "넣었는데 안 됐나" 하고 헷갈린다.
         // ── 구단과 등번호 (2026-11-07) ──
@@ -510,10 +523,17 @@ export function makeSports({ title, premise = '', angle = '', beats = [], source
         if (team) out.team = team;
         const number = String(p.number ?? '').trim();
         if (number) out.number = number;
-        const photo = String(p.photo || '').trim();
+        const photo = photoOf(p);
         if (photo) out.photo = photo;
-        const spare = String(p.photo_예비 || '').trim();
+        const spare = sparePhotoOf(p);
         if (spare) out.photo_예비 = spare;
+        // ⚠️ 2026-11-12. photo 와 photo_예비 **둘만** 옮기고 있었다.
+        //    사람마다 7~8장을 받아 샷마다 돌려 쓰기로 했는데(운영자
+        //    지시), 레코드에 두 장만 실리면 나머지는 쓰이지 않는다.
+        //    allPhotosOf 가 photo·photos·photo_예비 를 한 줄로 모아
+        //    중복을 뺀 목록을 준다.
+        const all = allPhotosOf(p);
+        if (all.length > 1) out.photos = all;
         return out;
       }),
     beats: (Array.isArray(beats) ? beats : [])

@@ -15,7 +15,10 @@ import process from 'node:process';
 import fs from 'node:fs';
 import { speechText } from './audio/speech.mjs';
 import path from 'node:path';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { log } from './utils/logger.mjs';
+import { photoOf as mainPhoto, allPhotosOf } from './assets/photo-of.mjs';
 import { missingKeys, env, ROOT } from './utils/env.mjs';
 import { usageSummary, MODELS } from './ai/client.mjs';
 import { collect } from './research/collect.mjs';
@@ -31,6 +34,11 @@ import { spawn } from 'node:child_process';
 import { generateImages, shotsToGenerate, cardShots, estimateUsd, DEFAULT_MAX_USD } from './assets/images.mjs';
 import { renderCardImage } from './video/card.mjs';
 import { previewJobs, previewScenesFor, previewStyleJobs } from './assets/preview.mjs';
+import { repaintJobs, REPAINT_MODEL } from './assets/repaint.mjs';
+import { retryAfterMs } from './assets/images.mjs';
+import {
+  cropToDataUri, hasFfmpeg, DEFAULT_CROP, asciiOf, measureBottom, cropFilter,
+} from './assets/crop.mjs';
 import { portraitJobs, PORTRAIT_NEGATIVE, VARIANTS_PER_PERSON } from './assets/portrait.mjs';
 import {
   narrate,
@@ -705,11 +713,23 @@ async function cmdSports(flags) {
   if (item.sections?.length) {
     log.info(`이 편의 단락 ${item.sections.length}개: ${item.sections.map((x) => x.key).join(' → ')}`);
   }
-  if (item.people?.length) {
-    log.info(`생김새를 적어 둔 사람 ${item.people.length}명: ${item.people.map((p) => p.name).join(', ')}`);
-  } else {
-    log.warn('생김새를 적어 둔 사람이 없습니다 — 그림의 인물이 샷마다 다른 얼굴로 나옵니다.');
-    log.info('기획 파일에 people 을 넣어 주세요 (스포츠영상/선수-생김새.md 참고).');
+  // 2026-11-12. 전에는 생김새(look)만 세고, 없으면 경고했다. 그런데
+  // 사람 샷을 **사진에서** 그리기로 한 뒤에는 사진이 있으면 생김새를
+  // 글로 적지 않는다(운영자 지시). 그 상태를 경고로 찍으면, 제대로
+  // 해 둔 기획 파일이 매번 틀린 것처럼 보인다.
+  const people = item.people || [];
+  const withPhotos = people.filter((p) => allPhotosOf(p).length);
+  const onlyLook = people.filter((p) => !allPhotosOf(p).length && p.look);
+  if (withPhotos.length) {
+    const sheets = withPhotos.map((p) => `${p.name} ${allPhotosOf(p).length}장`);
+    log.info(`사진을 받아 둔 사람 ${withPhotos.length}명: ${sheets.join(', ')}`);
+  }
+  if (onlyLook.length) {
+    log.info(`사진 없이 생김새만 적은 사람 ${onlyLook.length}명: ${onlyLook.map((p) => p.name).join(', ')}`);
+  }
+  if (!people.length) {
+    log.warn('사진도 생김새도 없습니다 — 그림의 인물이 샷마다 다른 얼굴로 나옵니다.');
+    log.info('기획 파일에 people 을 넣고 사람마다 사진 7~8장을 적어 주세요.');
   }
   if (!item.source_count) {
     log.warn('출처가 없습니다. 설명문에 적을 근거가 없다는 뜻입니다 — 기획 파일에 sources 를 넣어 주세요.');
@@ -922,6 +942,312 @@ async function cmdPreview(flags) {
  * 퍼블리싱하는 것이 된다. Replicate 가 주소에서 직접 받아 가고 우리
  * 쪽엔 결과물(캐리커처)만 남는다.
  */
+/**
+ * 사진을 그대로 지브리로 바꾼다.
+ *
+ * 2026-11-09 운영자: "사진을 그림으로 그대로 지브리 스타일로 하는 건
+ *                     어떤가? 그럼 걸리는 데서 더 많이 벗어날 것 같다."
+ *
+ * portrait 와 다른 점 — portrait 는 **얼굴만** 가져와 새 그림을 그리고,
+ * 여기서는 **사진 전체**를 바탕으로 화풍만 바꾼다. 그래서 자세가 실제
+ * 사람의 자세가 된다.
+ */
+/**
+ * 사진을 **보기만** 한다. 돈이 안 든다.
+ *
+ * ── 왜 만들었나 (2026-11-09) ──
+ *
+ * 고영표 가슴의 글자를 두고 네 번 돌렸다($0.20). 매번 원인을 다르게
+ * 짚었는데 **전부 추측이었다.** 내가 그림을 못 보기 때문이다.
+ *
+ * 러너는 사진을 받을 수 있다(막힌 것은 내 프록시뿐이다). 그러니 거기서
+ * 밝기를 글자로 바꿔 로그에 찍으면 **내가 읽는다.** 추측을 한 번 더
+ * 하느니 보는 길을 내는 쪽이 싸다.
+ */
+async function cmdLookPhotos(flags) {
+  const planPath = typeof flags.plan === 'string' ? flags.plan : '';
+  const full = path.isAbsolute(planPath) ? planPath : path.join(ROOT, '..', planPath);
+  if (!planPath || !fs.existsSync(full)) {
+    log.error('어느 편의 사진을 볼지 알려주세요.');
+    log.info('  node src/main.mjs look --plan=스포츠영상/11화.json --only=고영표');
+    process.exit(1);
+  }
+  const plan = JSON.parse(fs.readFileSync(full, 'utf8'));
+  const only = typeof flags.only === 'string' && flags.only.trim()
+    ? new Set(flags.only.split(',').map((x) => x.trim()).filter(Boolean))
+    : null;
+  const people = (plan.people || []).filter(
+    (p) => !only || only.has(String(p?.name || '').trim())
+  );
+  const { jobs } = repaintJobs(people, { spare: true });
+
+  log.section(`👀 사진 살펴보기  |  ${planPath}`);
+  log.info('돈이 안 듭니다. 그림을 만들지 않고 사진만 봅니다.');
+  log.info('밝은 곳이 @ · 어두운 곳이 빈칸입니다. 어두운 옷 위의 밝은 글자가 눈에 띕니다.');
+  if (!jobs.length) {
+    log.error('볼 사진이 없습니다.');
+    process.exit(1);
+  }
+  if (!hasFfmpeg()) {
+    log.error('ffmpeg 가 없어서 볼 수 없습니다.');
+    process.exit(1);
+  }
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'look-'));
+  try {
+    for (const job of jobs) {
+      log.raw('');
+      log.step(`${job.file}`);
+      log.raw(`   ${job.referenceImage.slice(0, 110)}`);
+      let buf;
+      try {
+        const res = await fetch(job.referenceImage);
+        if (!res.ok) {
+          log.warn(`   받지 못했습니다 (${res.status})`);
+          continue;
+        }
+        buf = Buffer.from(await res.arrayBuffer());
+      } catch (e) {
+        log.warn(`   받지 못했습니다 — ${e.message}`);
+        continue;
+      }
+      const raw = path.join(dir, 'raw');
+      fs.writeFileSync(raw, buf);
+
+      const m = measureBottom(raw);
+      log.raw(`   ${buf.length}바이트 · ${m.까닭}`);
+
+      // 자르기 전과 후를 둘 다 본다. 자르기가 듣는지 바로 보인다.
+      const cut = path.join(dir, 'cut.png');
+      spawnSync(
+        'ffmpeg',
+        ['-y', '-loglevel', 'error', '-i', raw, '-vf',
+         cropFilter({ ...DEFAULT_CROP, bottom: m.bottom }), cut],
+      );
+      for (const [label, f] of [['원본', raw], ['자른 뒤', cut]]) {
+        if (!fs.existsSync(f)) continue;
+        const art = asciiOf(f, 108);
+        if (!art) {
+          log.warn(`   ${label}: 펴지 못했습니다`);
+          continue;
+        }
+        log.raw('');
+        log.raw(`   ── ${label} ──`);
+        for (const line of art) log.raw(`   ${line}`);
+      }
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  log.raw('');
+  log.ok('다 봤습니다. 돈은 안 썼습니다.');
+}
+
+async function cmdRepaint(flags) {
+  const planPath = typeof flags.plan === 'string' ? flags.plan : '';
+  if (!planPath) {
+    log.error('어느 편의 사진을 바꿀지 알려주세요.');
+    log.info('  node src/main.mjs repaint --plan=스포츠영상/12화.json');
+    process.exit(1);
+  }
+  const full = path.isAbsolute(planPath) ? planPath : path.join(ROOT, '..', planPath);
+  if (!fs.existsSync(full)) {
+    log.error(`${planPath} 이 없습니다.`);
+    process.exit(1);
+  }
+  const plan = JSON.parse(fs.readFileSync(full, 'utf8'));
+
+  // --only=네일,올러 로 몇 명만 돌려 본다. 처음 써 보는 모델이라
+  // 전원을 돌리기 전에 몇 장으로 확인하는 쪽이 싸다.
+  const only = typeof flags.only === 'string' && flags.only.trim()
+    ? new Set(flags.only.split(',').map((x) => x.trim()).filter(Boolean))
+    : null;
+  const people = (plan.people || []).filter(
+    (p) => !only || only.has(String(p?.name || '').trim())
+  );
+
+  // --per=1 로 **사람당 한 장만** 돌린다 (2026-11-12 규칙 15).
+  //
+  // 12화에서 55장을 아무것도 안 보고 걸었다가 $1.95 를 버렸다. 같은
+  // 실수가 55장에 전부 복사됐기 때문이다. 사람당 한 장이면 세 장에
+  // $0.15 다 — 그걸로 막을 수 있는 것을 $1.95 로 배우지 않는다.
+  //
+  // ⚠️ --only 와 다르다. --only 는 **사람**을 줄이고, 이건 사람마다
+  //    **장수**를 줄인다. 셋을 한 장씩 보는 것이 한 사람을 일곱 장
+  //    보는 것보다 낫다 — 사람이 달라지면 사진도 달라지니까.
+  const perPerson = Number(flags.per) > 0 ? Math.floor(Number(flags.per)) : 0;
+  const { jobs: allJobs, skipped } = repaintJobs(people, { spare: Boolean(flags.spare) });
+  let jobs = allJobs;
+  if (perPerson) {
+    const seen = new Map();
+    jobs = allJobs.filter((j) => {
+      const n = (seen.get(j.name) || 0) + 1;
+      seen.set(j.name, n);
+      return n <= perPerson;
+    });
+  }
+
+  log.section(`🖼  사진을 지브리로  |  ${planPath}`);
+  for (const sk of skipped) log.warn(`${sk.name}: ${sk.reason}`);
+  if (!jobs.length) {
+    log.error('바꿀 사진이 없습니다.');
+    log.info('기획 파일의 people 에 photo 를 **사진 주소**로 넣어 주세요 (http 로 시작).');
+    process.exit(1);
+  }
+
+  const per = modelFor(REPAINT_MODEL).usdPerImage;
+  const cost = Math.round(jobs.length * per * 10000) / 10000;
+  log.info(`${jobs.length}장 — ${[...new Set(jobs.map((j) => j.name))].join(', ')}`);
+  if (perPerson) {
+    log.info(`사람당 ${perPerson}장만 돌립니다 (--per=${perPerson}). 받아 둔 사진은 ${allJobs.length}장입니다.`);
+  }
+  log.info(`예상 비용 약 $${cost} (추정치 — 이 모델은 처음 써 봅니다)`);
+  // ── 워터마크는 **잘라서** 없앤다 (2026-11-09 운영자) ──
+  //
+  //   "워터마크는 잘라내라. 100% 나오면 안 된다."
+  //
+  // 프롬프트로 두 번 해 봤고 두 번 다 더 나빠졌다. 모델은 프롬프트에
+  // 나온 낱말을 그린다. 그래서 **아예 안 보여준다.**
+  //
+  // --no-crop 으로 끌 수 있다. 자른 자리에 사람이 걸리면 그때 쓴다.
+  const crop = flags['no-crop'] ? null : DEFAULT_CROP;
+  if (crop && !hasFfmpeg()) {
+    log.warn('ffmpeg 가 없어서 자르지 못합니다 — 워터마크가 남을 수 있습니다.');
+  } else if (crop) {
+    const pct = (x) => `${Math.round(x * 100)}%`;
+    log.info(
+      `사진 가장자리를 잘라냅니다 — 위 ${pct(crop.top)} · 아래 ${pct(crop.bottom)} · ` +
+        `좌우 ${pct(crop.left)}. 워터마크를 모델에게 안 보여주려는 것입니다.`
+    );
+    log.info('⚠️ 가운데에 걸친 워터마크는 자를 수 없습니다. 그런 사진은 바꿔야 합니다.');
+  } else {
+    log.info('자르기를 껐습니다(--no-crop).');
+  }
+  log.info('사진은 저장소에 남지 않습니다. 잘라도 그 자리에서 쓰고 버립니다.');
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    log.raw(`  ${jobs[0].name}`);
+    log.raw(`  참조: ${jobs[0].referenceImage}`);
+    log.raw(`  지시: ${jobs[0].prompt}`);
+    return;
+  }
+
+  const token = env('REPLICATE_API_TOKEN');
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    process.exit(1);
+  }
+
+  const outDir = path.join(ROOT, 'preview', 'repaint');
+  fs.mkdirSync(outDir, { recursive: true });
+  // 자른 사진을 그대로 떨군다. **내가 그림을 못 보기 때문에** 워터마크가
+  // 빠졌는지 확인할 길이 이것뿐이다. 결과 그림이 이상할 때, 자르기가
+  // 문제인지 모델이 문제인지 여기서 바로 갈린다.
+  //
+  // ⚠️ 저장소가 아니라 실행 결과물(artifact)이다. 사진은 리포에 안 남는다.
+  const srcDir = path.join(outDir, '모델이-본-사진');
+  fs.mkdirSync(srcDir, { recursive: true });
+  const api = createReplicate({ token });
+
+  // ── 한도(429)에 걸리면 기다렸다 다시 건다 ──
+  //
+  // ⚠️ 2026-11-09 첫 실행(#71)에서 네 장 중 **세 장을 이것 때문에
+  //    잃었다.** 본편 그림(images.mjs)에는 이 재시도가 있는데 여기만
+  //    없었다. 새 길을 내면서 있던 안전장치를 안 가져온 것이다.
+  //
+  //    Replicate 는 잔액이 $5 아래로 내려가면 **분당 6회, 버스트 1회**로
+  //    묶는다. 지금이 그 상태라 연달아 걸면 거의 다 막힌다.
+  //
+  //    메시지에 "resets in ~4s" 처럼 얼마나 기다리라는지 적혀 오므로
+  //    그만큼 쉰다. 모르면 점점 늘려 가며 쉰다.
+  const MAX_ATTEMPTS = 3;
+  let spent = 0;
+  const made = [];
+  // 깨끗이 못 자르는 사진. 끝에 모아서 한 번에 알린다 — 사진을 바꾸는
+  // 것이 유일한 답이라 사람이 봐야 한다.
+  const needNewPhoto = [];
+  for (const [i, job] of jobs.entries()) {
+    log.step(`${i + 1}/${jobs.length} — ${job.file}`);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        // 자르기는 **있으면 좋은 것**이다. 실패하면 원래 주소로 간다 —
+        // 여기서 멈추면 그림이 한 장도 안 나온다.
+        let ref = job.referenceImage;
+        if (crop && attempt === 1) {
+          // 기획 파일이 이 사진의 자르기를 못 박았으면 재지 않는다.
+          // 사람이 자른 사진을 보고 적은 값이라 추측보다 정확하다.
+          const 이사진 = job.아래 ? { ...crop, bottom: job.아래 } : crop;
+          const c = await cropToDataUri(job.referenceImage, {
+            crop: 이사진,
+            measure: !job.아래,
+          });
+          // ⚠️ 깨끗이 못 자르는 사진은 **그리지 않는다.** 반만 잘린
+          //    워터마크가 남으면 모델이 그 자리를 글자로 읽고 커다란
+          //    글자를 지어낸다(2026-11-09 고영표). 안 그리고 사진을
+          //    바꿔 달라고 하는 것이 돈도 덜 쓰고 결과도 낫다.
+          if (c.needsNewPhoto) {
+            log.warn(`   건너뜁니다 — ${c.reason}`);
+            needNewPhoto.push({ file: job.file, reason: c.reason });
+            break;
+          }
+          ref = c.url;
+          if (c.cropped) {
+            log.raw(`   잘랐습니다 (${c.reason})`);
+            if (c.png) fs.writeFileSync(path.join(srcDir, job.file), c.png);
+          } else {
+            log.warn(`   자르지 못했습니다 — ${c.reason}. 원본 그대로 보냅니다.`);
+          }
+          job.referenceImage = ref;
+        }
+        const r = await api.generate(job.prompt, {
+          modelKey: REPAINT_MODEL,
+          referenceImage: ref,
+          aspectRatio: '16:9',
+        });
+        spent += r.usdEstimate ?? per;
+        fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+        made.push(job.file);
+        break;
+      } catch (e) {
+        const canRetry = e?.retryable !== false && attempt < MAX_ATTEMPTS;
+        if (!canRetry) {
+          log.error(`${job.file}: ${e.message}`);
+          break;
+        }
+        const wait = retryAfterMs(e) ?? 2000 * attempt;
+        log.warn(
+          `${job.file} 실패 (${attempt}/${MAX_ATTEMPTS}) — ${e.message} ` +
+            `${Math.round(wait / 1000)}초 쉬었다 다시 겁니다.`
+        );
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+    // 잔액이 적으면 분당 6회로 묶인다. 연달아 걸면 다음 장이 바로
+    // 막히므로, 장과 장 사이에도 한 박자 쉰다. 네 장이면 40초다.
+    if (i < jobs.length - 1) await new Promise((r) => setTimeout(r, 10000));
+  }
+
+  log.raw('');
+  log.ok(`${made.length}장 완성 — preview/repaint/`);
+  log.info('모델이 본 사진은 preview/repaint/모델이-본-사진/ 에 있습니다 —');
+  log.info('거기에 워터마크가 남아 있으면 자르기가 모자란 것이고, 없는데 그림에 글자가');
+  log.info('나왔으면 모델이 지어낸 것입니다. 기획 파일 photos 에 "아래": 0.2 처럼 적어 더 자를 수 있습니다.');
+  log.info(`쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`);
+  if (needNewPhoto.length) {
+    log.raw('');
+    log.warn(`⚠️ 사진 ${needNewPhoto.length}장은 **안 그렸습니다.** 워터마크를 깨끗이 못 자릅니다.`);
+    for (const n of needNewPhoto) log.raw(`   · ${n.file} — ${n.reason}`);
+    log.info('반만 잘린 워터마크가 남으면 모델이 그 자리에 글자를 지어냅니다.');
+    log.info('그래서 안 그리고 멈췄습니다. 워터마크가 아래쪽에 작게 있거나 없는 사진으로 바꿔 주세요.');
+  }
+  const failed = jobs.length - made.length - needNewPhoto.length;
+  if (failed > 0) {
+    log.warn(`${failed}장 실패했습니다. 위의 오류를 보세요.`);
+  }
+}
+
 async function cmdPortrait(flags) {
   const planPath = typeof flags.plan === 'string' ? flags.plan : '';
   if (!planPath) {
@@ -1267,7 +1593,7 @@ async function cmdImages(flags) {
   // 참조 모델로 그린다 — 글로만 적으면 "그 조건에 맞는 아무 얼굴"이
   // 나오고, 참조를 주면 실제로 닮는다.
   const people = loadContent(id)?.research?.people || [];
-  const withPhoto = people.filter((p) => /^https?:\/\//.test(String(p?.photo || '')));
+  const withPhoto = people.filter((p) => /^https?:\/\//.test(mainPhoto(p)));
   if (withPhoto.length) {
     log.info(`사진을 받아 둔 사람 ${withPhoto.length}명: ${withPhoto.map((p) => p.name).join(', ')}`);
     log.info('  이 사람들이 나오는 샷은 사진을 참조로 그립니다 (장당 조금 더 비쌉니다).');
@@ -2246,6 +2572,12 @@ async function main() {
       break;
     case 'portrait':
       await cmdPortrait(flags);
+      break;
+    case 'look':
+      await cmdLookPhotos(flags);
+      break;
+    case 'repaint':
+      await cmdRepaint(flags);
       break;
     case 'upload':
       await cmdUpload(flags);

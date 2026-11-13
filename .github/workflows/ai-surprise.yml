@@ -39,6 +39,8 @@ on:
           - '화풍 미리보기 (그림 6장만 · 약 $0.1)'
           - '화풍 후보 비교 (같은 장면 네 그림체 · 약 $0.2)'
           - '인물 시트 만들기 (사진을 참조로 얼굴 · 약 $0.3)'
+          - '사진을 지브리로 (받아 둔 사진을 그대로 바꿔 봅니다 · 장당 약 $0.05)'
+          - '사진 살펴보기 (워터마크가 있는지 눈으로 봅니다 · 돈 안 듦)'
       resume_run:
         description: '이어하기 — 앞 실행 번호 (예: 11). 그 실행의 결과를 받아 남은 것만 만듭니다. 비우면 새로 시작'
         required: false
@@ -51,6 +53,14 @@ on:
         description: '이미 써 둔 동화 대본 파일. 넣으면 AI가 다시 쓰지 않습니다 (비용 0원). 비우면 AI가 씁니다'
         required: false
         default: '이상한동화/1화-대본.md'
+      repaint_only:
+        description: "'사진을 지브리로' 에서 몇 명만 바꿀 때. 쉼표로 구분 (예: 구자욱,강민호). 비우면 전원"
+        required: false
+        default: ''
+      repaint_per:
+        description: "'사진을 지브리로' 에서 사람당 몇 장만 볼 때 (예: 1). 55장을 걸기 전에 먼저 봅니다. 비우면 받아 둔 전부"
+        required: false
+        default: ''
       sports_plan:
         description: '스포츠 기획 파일 (예: 스포츠영상/1화.json). 스포츠 방식에서만 씁니다'
         required: false
@@ -252,7 +262,18 @@ jobs:
         # 똑같이 걸렸다. 이름에 '그림' 이 또 들어갔다. 이 모드도 그림만
         # 저장할 뿐 ffmpeg 를 안 쓴다 — '후보 비교' 도 빼 둔다.
         # 새 모드를 넣을 때마다 이 줄을 먼저 본다.
-        if: ${{ (contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리')) && !contains(inputs.mode, '미리보기') && !contains(inputs.mode, '후보 비교') && !contains(inputs.mode, '인물 시트') }}
+        # 2026-11-09 '사진을 지브리로' 를 넣으면서 **처음으로 그림만
+        # 만드는 모드가 ffmpeg 를 쓰게 됐다.** 워터마크를 자르는 데
+        # 쓴다 — 운영자: "워터마크는 잘라내라. 100% 나오면 안 된다."
+        # 그래서 이 모드는 위의 '미리보기'·'후보 비교' 와 달리 **켠다.**
+        # 이름에 '그림' 이 안 들어가니 따로 적어야 한다.
+        #
+        # 2026-11-09 '사진 살펴보기' 를 넣으면서 **또 걸렸다**(실행 #79).
+        # 바로 위에 "새 모드를 넣을 때마다 이 줄을 먼저 본다"고 적어
+        # 뒀는데 안 봤다. 이 모드는 사진을 받아 ffmpeg 로 펴서 글자
+        # 그림으로 찍는 것이 하는 일의 전부라, ffmpeg 가 없으면 아무것도
+        # 못 한다. '살펴보기' 를 켜는 쪽에 적는다.
+        if: ${{ (contains(inputs.mode, '영상') || contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '올릴 거리') || contains(inputs.mode, '지브리로') || contains(inputs.mode, '살펴보기')) && !contains(inputs.mode, '미리보기') && !contains(inputs.mode, '후보 비교') && !contains(inputs.mode, '인물 시트') }}
         # 실측 24초인 단계다. 그런데 패키지 서버가 응답하지 않는 일이
         # 반복됐다 — 실행 #25 와 #26 이 **연달아** 여기서 10분을 꽉 채우고
         # 죽었다. 그대로 두면 6시간을 도므로 시간제한은 유지하되 6분으로
@@ -311,6 +332,8 @@ jobs:
           IN_TALE_PLAN: ${{ inputs.tale_plan }}
           IN_TALE_SCRIPT: ${{ inputs.tale_script }}
           IN_SPORTS_PLAN: ${{ inputs.sports_plan }}
+          IN_REPAINT_ONLY: ${{ inputs.repaint_only }}
+          IN_REPAINT_PER: ${{ inputs.repaint_per }}
           IN_SPORTS_SCRIPT: ${{ inputs.sports_script }}
           IN_LEGEND: ${{ inputs.legend }}
           IN_VIDEO_RATIO: ${{ inputs.video_ratio }}
@@ -398,6 +421,33 @@ jobs:
               echo "content/$RESUME_ID 의 제목·썸네일·설명문·태그를 만듭니다."
               echo "썸네일은 완성된 영상에서 떼어냅니다. 영상을 새로 만들지 않으므로 렌더링 비용이 없습니다."
               node src/main.mjs upload --id="$RESUME_ID"
+              ;;
+            *'사진 살펴보기'*)
+              # ── 왜 있나 (2026-11-09) ──
+              #
+              # 고영표 가슴의 글자를 두고 네 번 돌렸다($0.20). 매번 원인을
+              # 다르게 짚었는데 **전부 추측이었다.** 내가 그림을 못 보기
+              # 때문이다. 러너는 사진을 받을 수 있으니, 거기서 밝기를
+              # 글자로 바꿔 로그에 찍으면 내가 읽는다. 돈이 안 든다.
+              #
+              # ⚠️ '사진을 지브리로' 분기보다 **앞**에 둔다. 둘 다 '사진'
+              #    으로 시작해서, 뒤에 두면 여기로 못 온다.
+              node src/main.mjs look --plan="$IN_SPORTS_PLAN" ${IN_REPAINT_ONLY:+--only="$IN_REPAINT_ONLY"}
+              ;;
+            *'사진을 지브리로'*)
+              # 2026-11-09 운영자가 꺼낸 길이다 — "사진을 그림으로 그대로
+              # 지브리 스타일로 하는 건 어떤가? 그럼 걸리는 데서 더 많이
+              # 벗어날 것 같다."
+              #
+              # 얼굴만 가져오는 인물 시트와 다르다. 사진 **전체**를 바탕으로
+              # 구도를 지키면서 화풍만 바꾼다. 그래서 자세가 실제 사람의
+              # 자세가 되고, 팔이 셋이거나 빠질 수가 없다.
+              #
+              # ⚠️ '인물 시트' 분기보다 **앞**에 둔다. 두 이름이 '사진' 을
+              #    같이 쓴다 — 모드 이름이 겹쳐 엉뚱한 분기로 간 적이 있다.
+              # ⚠️ repaint_per 로 먼저 몇 장만 본다 (규칙 15). 12화에서
+              #    55장을 아무것도 안 보고 걸어 $1.95 를 버렸다.
+              node src/main.mjs repaint --plan="$IN_SPORTS_PLAN" ${IN_REPAINT_ONLY:+--only="$IN_REPAINT_ONLY"} ${IN_REPAINT_PER:+--per="$IN_REPAINT_PER"}
               ;;
             *'인물 시트'*)
               echo "기획 파일의 people 에 적힌 사진 주소를 참조로 얼굴을 만듭니다."

@@ -21,37 +21,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, modelFor, DEFAULT_IMAGE_MODEL } from './replicate.mjs';
 import { SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE } from '../scenes/visuals.mjs';
+import { photoOf as mainPhoto, sparePhotoOf as sparePhoto, allPhotosOf } from './photo-of.mjs';
+import { repaintPrompt, REPAINT_MODEL } from './repaint.mjs';
+import { uniformClause } from '../scenes/uniforms.mjs';
+import { cropToDataUri, DEFAULT_CROP } from './crop.mjs';
 
-/**
- * 참조 모델이 **사진에서 얼굴을 못 찾았는가.**
- *
- * 2026-11-07 실행 #65. 류현진 사진으로 건 두 샷이 이렇게 죽었다.
- *
- *     facexlib align face fail
- *
- * facexlib 는 참조 모델이 얼굴을 떼어낼 때 쓰는 것이다. 투구 동작처럼
- * 얼굴이 작거나 가린 사진이면 못 찾는다.
- *
- * ⚠️ 이건 **다시 걸어도 똑같다.** 사진이 문제라 사진을 바꿔야 한다.
- *    그래서 보통 실패와 갈라서 본다.
- */
-export function isFaceFail(err) {
-  const m = String(err?.message || '').toLowerCase();
-  return m.includes('align face fail') || m.includes('no face') || m.includes('face not found');
-}
 
-/**
- * 프롬프트에서 "사진과 같은 얼굴" 지시를 뺀다.
- *
- * 참조 사진을 못 쓰게 됐을 때 쓴다. 참조 없이 보내면서 닮게 그리라고
- * 하면, 모델이 있지도 않은 사진을 찾느라 얼굴이 더 이상해진다.
- * 대신 "지어낸 인물" 쪽으로 바꿔 단다.
- */
-export function withoutLikeness(prompt) {
-  const t = String(prompt ?? '');
-  if (!t.includes(SPORTS_LIKENESS_CLAUSE)) return t;
-  return t.replace(SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE);
-}
 
 /** 기본 비용 상한(달러). 1편 기준. 넘으면 멈춘다. */
 export const DEFAULT_MAX_USD = 3;
@@ -59,8 +34,14 @@ export const DEFAULT_MAX_USD = 3;
 /** 한 샷당 다시 걸어보는 횟수. */
 export const MAX_ATTEMPTS = 3;
 
-/** 참조 사진이 있는 샷에 쓰는 모델. 사진에서 얼굴을 가져온다. */
-export const REFERENCE_MODEL = 'portrait';
+// ⚠️ REFERENCE_MODEL(flux-pulid)을 **버렸다** (2026-11-11).
+//
+// 운영자: "변경이 된 이후 과거가 문제가 되면 과감히 남겨두지 말고 버려라"
+//         "그걸 계속 남겨 두니 이상한 그림과 영상이 된다"
+//
+// 그 경로가 12화에서 두 가지를 망쳤다 — 뒷모습 샷이 실사로 나왔고,
+// 얼굴이 나오는 샷도 안 닮았다. 닮게 그리는 일은 이제 '사진을 그림으로
+// 바꾸기'(kontext)가 한다. 중간에 낀 길을 남겨 둘 까닭이 없다.
 
 /**
  * 잔액이 없어 **더 해 봐야 소용없는** 오류인가.
@@ -221,6 +202,12 @@ export async function generateImages(prompts, {
      맞는 아무 얼굴"이 나오고, 참조를 주면 실제로 닮는다.
      운영자 요청(2026-11-03): "그림이 진짜 선수 같은 느낌이었으면". */
   people = [],
+  /* 사람이 나오는 샷을 **받은 사진을 그림으로 바꿔** 만들지.
+     2026-11-11 운영자: "전달해준 사진을 지브리 스타일로 그려서
+     사용한다. 워터마크만 나오지 않게 한다. 그리고 나머지 설명의
+     그림은 해당 팀 유니폼 색상을 맞춰서 그려진 그림으로 사용한다."
+     끄면 전처럼 글로 그린다(화풍 비교용). */
+  usePhotos = true,
   maxUsd = DEFAULT_MAX_USD,
   force = false,
   client = null,
@@ -255,26 +242,59 @@ export async function generateImages(prompts, {
   // 나온다. 톤이 튀는 것보다 그 값이 싸다.
   for (const p of people || []) {
     const name = String(p?.name || '').trim();
-    const photo = String(p?.photo || '').trim();
+    const photo = mainPhoto(p);
     if (name && /^https?:\/\//.test(photo)) photoOf.set(name, photo);
-    const spare = String(p?.photo_예비 || '').trim();
+    const spare = sparePhoto(p);
     if (name && /^https?:\/\//.test(spare)) sparePhotoOf.set(name, spare);
   }
 
-  // 참조 샷이 있으면 나머지도 그 바탕으로 맞춘다.
+  // ── 사람 샷은 **받은 사진을 그림으로 바꿔** 쓴다 (2026-11-11) ──
+  //
+  // 운영자: "준 이미지 중에 차라리 하나씩 골라서 그대로 그려서 써라.
+  //          등번호 이런 거 맞추면 뭐하나, 그림이 어색하기만 하다."
+  //
+  // 맞는 말이다. 글로 그리면 지어내야 할 것이 너무 많다 — 얼굴, 몸,
+  // 자세, 유니폼 색, 모자 마크, 팔 개수. 12화에서 그 전부가 틀렸다.
+  // 사진에서 그리면 **지어낼 것이 없다.** 닮음도 비율도 자세도
+  // 유니폼도 등번호도 사진에 이미 들어 있다.
+  //
+  // 그래서 사람이 나오는 샷은 그 사람의 사진 하나를 골라 화풍만
+  // 바꾼다. 사람이 없는 샷(빈 구장, 물건, 글자 카드)은 그대로 둔다 —
+  // 운영자가 "중간 그림은 좋다" 고 한 그쪽이다.
+  //
+  // 한 사람에게 사진이 여러 장이면 샷마다 **돌려 쓴다.** 같은 사진이
+  // 연달아 나오면 영상이 멈춰 보인다.
+  const photosOf = new Map();
+  // 사람마다 **팀 색 유니폼 문장**도 같이 들고 있는다. 사진을 그대로
+  // 베끼지 않고 이 색으로 다시 칠한다 (2026-11-12 운영자).
+  const uniformOf = new Map();
+  if (usePhotos) {
+    for (const p of people || []) {
+      const name = String(p?.name || '').trim();
+      const list = allPhotosOf(p);
+      if (name && list.length) {
+        photosOf.set(name, list);
+        uniformOf.set(name, uniformClause({ team: p?.team, number: p?.number, role: p?.role }));
+      }
+    }
+  }
+  const photoTurn = new Map(); // 사람마다 몇 번째 사진을 쓸 차례인가
+
+  // 사진에서 그리는 샷이 있으면 나머지도 그 바탕으로 맞춘다.
   //
   // ⚠️ 사람이 모델을 **직접 골랐으면 그 말을 따른다.** 화풍을 비교해
   //    보려고 일부러 schnell 을 고르는 일이 있다.
-  const refBase = modelFor(REFERENCE_MODEL).baseModel;
+  const refBase = modelFor(REPAINT_MODEL).baseModel;
   // 기본값 그대로 들어왔으면 "사람이 안 골랐다"로 본다. 호출하는 쪽이
   // 늘 값을 채워 보내서 "안 줬다"를 따로 알 수가 없다.
   const modelGiven = modelKey !== DEFAULT_IMAGE_MODEL;
-  if (photoOf.size && refBase && !modelGiven) {
+  if (photosOf.size && refBase && !modelGiven) {
     modelKey = refBase;
     onProgress?.(
-      `참조 사진이 있어서 나머지 샷도 ${refBase} 로 그립니다 — 한 편의 그림 결을 맞춥니다.`
+      `사진에서 그리는 샷이 있어서 나머지도 ${refBase} 로 그립니다 — 한 편의 결을 맞춥니다.`
     );
   }
+
 
   const made = [];
   const failed = [];
@@ -292,8 +312,9 @@ export async function generateImages(prompts, {
     // 상한을 넘기 **전에** 멈춘다. 넘은 다음에 세면 이미 쓴 뒤다.
     // ⚠️ 참조 모델이 더 비싸므로 **그 샷의 값**으로 센다. 싼 값으로
     //    세면 상한을 넘겨 놓고 넘은 줄 모른다.
-    const nextCost = photoOf.get(String(shot.person || '').trim())
-      ? modelFor(REFERENCE_MODEL).usdPerImage
+    const whoNext = String(shot.person || '').trim();
+    const nextCost = photosOf.has(whoNext)
+      ? modelFor(REPAINT_MODEL).usdPerImage
       : perImage;
     if (spentUsd + nextCost > maxUsd) {
       stoppedBy = 'budget';
@@ -303,42 +324,34 @@ export async function generateImages(prompts, {
       break;
     }
 
-    // 이 샷에 사진을 받아 둔 사람이 나오면 참조 모델로 그린다.
     const who = String(shot.person || '').trim();
-    // ── 참조 사진이 안 될 때 돌아갈 길 (2026-11-07, 실행 #65) ──
-    //
-    // 류현진 사진 두 샷이 `facexlib align face fail` 로 죽었다. 참조
-    // 모델이 사진에서 얼굴을 못 찾은 것이다. 투구 동작 사진이라 얼굴이
-    // 작거나 글러브에 가렸을 것이다.
-    //
-    // 그런데 그 둘이 **자리표시 화면**으로 영상에 남았다. 7분짜리
-    // 영상에 빈 화면 두 장은 눈에 띈다. 닮지 않은 그림이 빈 화면보다
-    // 백 배 낫다.
-    //
-    // 그래서 세 단으로 내려간다.
-    //   ① 본 사진으로 참조
-    //   ② 얼굴을 못 찾으면 예비 사진으로 참조
-    //   ③ 그것도 안 되면 참조 없이 그린다 (안 닮지만 그림은 나온다)
-    //
-    // ⚠️ ③ 으로 내려갈 때는 프롬프트도 같이 바꿔야 한다. "사진과 같은
-    //    얼굴"이라고 적힌 채로 참조 없이 보내면 모델이 없는 사진을
-    //    찾는다. composeImagePrompt 가 likeness 로 가르는 그 문장이다.
-    const refChain = [];
-    const mainPhoto = photoOf.get(who) || null;
-    if (mainPhoto) refChain.push({ url: mainPhoto, label: '사진 참조' });
-    const sparePhoto = sparePhotoOf.get(who) || null;
-    if (mainPhoto && sparePhoto) refChain.push({ url: sparePhoto, label: '예비 사진 참조' });
-    // 마지막 단은 참조 없이. 사진을 안 받아 둔 사람은 처음부터 여기다.
-    refChain.push({ url: null, label: null });
 
-    let refStep = 0;
-    let reference = refChain[0].url;
-    let useKey = reference ? REFERENCE_MODEL : modelKey;
+    // 받아 둔 사진이 있는 사람이면 **그 사진을 그림으로 바꾼다.**
+    const pool = photosOf.get(who) || null;
+    let fromPhoto = pool && pool.length ? pool[(photoTurn.get(who) || 0) % pool.length] : null;
+    if (fromPhoto) photoTurn.set(who, (photoTurn.get(who) || 0) + 1);
+
+    // ── flux-pulid(참조 모델)를 **버렸다** (2026-11-11) ──
+    //
+    // 운영자: "옛 경로로 인하여 문제가 된다면 옛 경로를 버리거나
+    //          규칙을 바꿔라"
+    //
+    // 그 경로가 12화에서 두 가지를 망쳤다.
+    //   · 뒷모습 샷이 **실사**로 나왔다 — 화풍을 붙잡는 문구가 거의
+    //     전부 얼굴 이야기인데 뒷모습엔 얼굴이 없다
+    //   · 얼굴이 나오는 샷도 **안 닮았다** — id_weight 를 0.35 까지
+    //     내려 둔 터라 닮음이 거의 안 남는다
+    //
+    // 닮게 그리는 일은 이제 '사진을 그림으로 바꾸기'(kontext)가 한다.
+    // 거기서는 사진이 그대로 바탕이라 닮음·비율·유니폼·등번호가
+    // 전부 따라온다. 중간에 낀 길을 둘 까닭이 없다.
+    let reference = fromPhoto;
+    let useKey = fromPhoto ? REPAINT_MODEL : modelKey;
     let shotCost = modelFor(useKey).usdPerImage;
 
     onProgress?.(
       `이미지 ${i + 1}/${todo.length} — ${shot.shot_id} (장면 ${shot.scene_number})` +
-        (reference ? `  👤 ${shot.person} ${refChain[refStep].label}` : '')
+        (fromPhoto ? `  🖼 ${who} 사진을 그림으로` : '')
     );
 
     let lastError = null;
@@ -346,10 +359,27 @@ export async function generateImages(prompts, {
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && !done; attempt++) {
       try {
-        const result = await api.generate(shot.image_prompt, {
+        // 사진에서 그리는 샷은 **지시문도 다르다.** 화면을 설명하는
+        // 글이 아니라 "이 사진을 그림으로 바꿔라" 다.
+        let prompt = shot.image_prompt;
+        let ref = reference;
+        if (fromPhoto && attempt === 1) {
+          // 워터마크는 잘라서 안 보여준다. 실패하면 원래 주소 그대로.
+          const c = await cropToDataUri(fromPhoto, { crop: DEFAULT_CROP });
+          if (c.needsNewPhoto) {
+            onProgress?.(`  ${shot.shot_id} — ${c.reason}`);
+          } else {
+            ref = c.url;
+          }
+        }
+        if (fromPhoto) {
+          prompt = repaintPrompt({ name: who }, null, { uniform: uniformOf.get(who) || '' });
+          reference = ref;
+        }
+        const result = await api.generate(prompt, {
           modelKey: useKey,
           aspectRatio: ASPECT_RATIO,
-          referenceImage: reference,
+          referenceImage: ref,
         });
         // 호출이 성공한 시점에 돈이 나갔다. 내려받기가 실패해도 쓴 건 쓴 거다.
         spentUsd += result.usdEstimate ?? shotCost;
@@ -375,20 +405,17 @@ export async function generateImages(prompts, {
           onProgress?.(`  ${shot.shot_id} — 잔액이 떨어졌습니다. 남은 샷은 걸지 않습니다.`);
           break;
         }
-        // 얼굴을 못 찾은 것은 다시 걸어도 똑같다. 사진이 문제라
-        // 사진을 바꿔야 한다. 다음 단으로 내려간다.
-        if (reference && isFaceFail(err) && refStep + 1 < refChain.length) {
-          refStep += 1;
-          reference = refChain[refStep].url;
-          useKey = reference ? REFERENCE_MODEL : modelKey;
+        // ⚠️ 사진에서 그리다 막히면 **글로 그리는 쪽으로 내려간다.**
+        //    12화에서 55장이 통째로 자리표시가 된 적이 있다. 한 길이
+        //    막혔을 때 빈 화면을 남기는 것이 가장 나쁘다.
+        if (fromPhoto && !isOutOfCredit(err)) {
+          fromPhoto = null;
+          reference = null;
+          useKey = modelKey;
           shotCost = modelFor(useKey).usdPerImage;
-          // 참조를 뗐으면 프롬프트의 "사진과 같은 얼굴"도 떼야 한다.
-          if (!reference) shot.image_prompt = withoutLikeness(shot.image_prompt);
           onProgress?.(
-            `  ${shot.shot_id} — 사진에서 얼굴을 못 찾았습니다. ` +
-              (reference ? `${refChain[refStep].label}로 다시 겁니다.` : '참조 없이 그립니다.')
+            `  ${shot.shot_id} — 사진에서 못 그렸습니다(${err.message?.slice(0, 60)}). 글로 그립니다.`
           );
-          // 이 시도는 안 센다. 사진을 바꿨으니 처음부터 다시다.
           attempt -= 1;
           continue;
         }

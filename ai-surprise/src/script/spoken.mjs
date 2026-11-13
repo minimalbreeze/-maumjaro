@@ -1,4 +1,4 @@
-import { PRONOUNCE, SUBTITLE_SPELLING } from '../audio/speech.mjs';
+import { PRONOUNCE, SUBTITLE_SPELLING, FA_GRADE } from '../audio/speech.mjs';
 
 // 대본이 **귀로 들을 때** 자연스러운지 본다.
 //
@@ -173,10 +173,18 @@ export function latinSpots(sentences) {
   const known = new Set([...PRONOUNCE.keys()].map((k) => String(k).toLowerCase()));
   const out = [];
   for (const raw of sentences || []) {
+    // FA 등급(A등급·B등급·C등급)은 읽기가 이미 정해져 있다
+    // (speech.mjs 의 FA_GRADE). 다만 'A' 한 글자를 아는 낱말로
+    // 등록하면 문장 속 아무 A 까지 통과해 버린다. 그래서 낱말이
+    // 아니라 **'A등급' 이라는 덩어리만** 문장에서 덜어내고 본다.
     const text = String(raw);
+    let look = text;
+    for (const k of FA_GRADE.keys()) look = look.split(k).join('');
     const hits = [
-      ...new Set((text.match(/[A-Za-z]{1,}/g) || []).filter((w) => !known.has(w.toLowerCase()))),
+      ...new Set((look.match(/[A-Za-z]{1,}/g) || []).filter((w) => !known.has(w.toLowerCase()))),
     ];
+    // 알려 줄 때는 원문을 그대로 보여 준다 — 덜어낸 글을 보여 주면
+    // 운영자가 자기 대본에서 그 문장을 못 찾는다.
     if (hits.length) out.push({ text, hits });
   }
   return out;
