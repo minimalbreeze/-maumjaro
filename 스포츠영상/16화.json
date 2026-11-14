@@ -112,7 +112,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ team 을 비웠다 — 이번 대회 대표팀 사진을 쓴다. 소속 팀 사진을 쓰면 유니폼이 이 편과 안 맞는다. ⚠️ 등번호 미확인이라 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747830_web_20261114200841_20261114200915509.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-14 대만전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747839_web_20261114200940_20261114201022178.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-14 대만전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F14%2F0005640581_001_20261114195713163.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-14 대만전)"
+    }
+   ]
   },
   {
    "name": "한동희",
