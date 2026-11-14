@@ -105,7 +105,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ team·number 를 비운 이유는 한동희와 같다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005640042_001_20261113220114813.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F12%2F0005639311_001_20261112143623255.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-12 호주전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F12%2FNISI20261112_0001741209_web_20261112142927_20261112143026205.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-12 호주전)"
+    }
+   ]
   },
   {
    "name": "김진욱",
