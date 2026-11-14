@@ -73,6 +73,33 @@ const BAD_SUBJECTS = [
  * 그래서 목록에서 빼내 따로 둔다. */
 const XMAS_WORDS = ['christmas', 'xmas', 'carol', 'noel', 'santa', 'jingle bell'];
 
+/* 저작권이 살아 있는 '남의 노래' 는 제목으로 막는다.
+ *
+ * 2026-11-14 에 4집이 It's Beginning to Look a Lot Like Christmas 로
+ * 멜로디 주장을 받았다. CC BY 는 '녹음' 을 덮지 녹음한 '곡' 을 덮지 않는다.
+ * 연주자는 자기 연주를 자유롭게 풀 수 있어도 남이 쓴 노래를 풀 권한이 없다.
+ * 그래서 CC BY 커버곡이라도 작곡자 쪽이 Content ID 로 주장한다.
+ *
+ * 같은 4집의 The First Noel · Away in a Manger · minuit chretien 은
+ * 멜로디 주장이 안 걸렸다. 19세기 이전 캐럴이라 곡 자체가 퍼블릭
+ * 도메인이기 때문이다. 정확히 갈렸다.
+ *
+ * 그래서 20세기에 쓰인 유명 곡의 제목을 막는다. 캐럴이 제일 위험하다 —
+ * 크리스마스 집은 이런 제목이 잔뜩 나온다. */
+const COPYRIGHTED_SONGS = [
+  // 20세기 크리스마스 표준곡. 전부 아직 저작권이 살아 있다.
+  'beginning to look a lot like christmas', 'white christmas', 'winter wonderland',
+  'rudolph', 'frosty the snowman', 'jingle bell rock', 'rockin around the christmas tree',
+  'have yourself a merry little christmas', 'santa claus is coming', 'santa claus is comin',
+  'let it snow', 'the christmas song', 'chestnuts roasting', 'silver bells',
+  'blue christmas', 'feliz navidad', 'last christmas', 'all i want for christmas',
+  'sleigh ride', 'holly jolly christmas', 'little drummer boy', 'do you hear what i hear',
+  "it's the most wonderful time", 'its the most wonderful time', 'mary did you know',
+  // 그 밖의 유명 표준곡
+  'somewhere over the rainbow', 'fly me to the moon', 'autumn leaves',
+  'what a wonderful world', 'my way', 'moon river', 'take five',
+];
+
 /* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
 const XMAS_BAD_SUBJECTS = [
   'techno', 'trance', 'dubstep', 'drum and bass', 'dnb', 'edm', 'rave',
@@ -381,6 +408,12 @@ function brightness(file) {
  * 크리스마스 집에서는 캐럴 단어를 통과시킨다. */
 function badTitle(t) {
   const low = ` ${String(t).toLowerCase()} `;
+  /* 저작권 살아 있는 곡의 제목은 무드와 상관없이 막는다.
+   * 구두점을 빼고 견준다 — "It's" 와 "Its" 가 둘 다 온다. */
+  const flat = String(t).toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ');
+  const song = COPYRIGHTED_SONGS.find((x) => flat.includes(x.replace(/[^a-z0-9 ]/g, '')));
+  if (song) return `저작권 살아 있는 곡: ${song}`;
+
   const words = MOOD === '크리스마스' ? BAD_WORDS : [...BAD_WORDS, ...XMAS_WORDS];
   return words.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
 }
