@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-130 -60 260 120" width="260" height="120">
+  <!-- minimalbreeze 마크: 얇은 원(레코드)을 가로선(바람)이 지나가다 끊긴다.
+       끊긴 자리가 이 로고의 전부다. 단색이라 어느 바탕에도 올라간다. -->
+  <g fill="none" stroke="currentColor" stroke-width="2.4">
+    <circle r="46"/>
+    <line x1="-118" y1="0" x2="-60" y2="0" stroke-linecap="round"/>
+    <line x1="60" y1="0" x2="118" y2="0" stroke-linecap="round"/>
+  </g>
+  <circle r="4.6" fill="currentColor"/>
+</svg>
