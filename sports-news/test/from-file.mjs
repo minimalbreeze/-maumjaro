@@ -299,11 +299,22 @@ check('from-file 이 하단 바 블록을 들고 있다', () => {
   assert.ok(바.startsWith('<!-- wp:html -->'), '워드프레스 html 블록이어야 합니다');
 });
 
-check('하단 바와 본문 쿠팡 블록은 다른 것이다', () => {
+check('새 글에 옛 본문 쿠팡 블록을 넣지 않는다', () => {
+  // ⚠️ 2026-11-14 운영자 지시로 글 중간 쿠팡 블록을 없앴다.
+  //    "블프가 들어가면 글 중간에 광고는 제외해야 하는 거 아냐?
+  //     하단 광고랑 중복이 되는 것 같다."
+  //
+  //    한 글에 쿠팡 광고가 셋이었고 글 중간 것과 하단 고정 바는 **내용이
+  //    똑같았다.** 중복은 클릭을 늘리지 않고 광고 밀도만 올려 애드센스
+  //    쪽을 위험하게 만든다. 본문 자리는 블프 배너(cppd)가 가진다.
+  //
+  //    main.mjs·from-file.mjs 가 `fs.existsSync` 로 보므로 **파일이 없으면
+  //    새 글에 안 들어간다.** 되살리려면 .bak 을 원래 이름으로 되돌린다.
+  assert.ok(!fs.existsSync(path.join(ROOT, 'config/ad-coupang.html')),
+    'config/ad-coupang.html 이 되살아났습니다 — 새 글에 하단 바와 같은 광고가 또 들어갑니다');
+  // 바는 그대로 있어야 한다. 둘을 같이 지우면 쿠팡 광고가 통째로 사라진다.
   const 바 = 바HTML();
-  const 본문광고 = fs.readFileSync(path.join(ROOT, 'config/ad-coupang.html'), 'utf8');
-  assert.ok(!본문광고.includes('id="cpst"'),
-    '본문 블록에 하단 바 표식이 있으면 add-sticky 가 본문 광고를 바로 오인합니다');
+  assert.ok(바.includes('id="cpst"'), '하단 바가 사라졌습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);

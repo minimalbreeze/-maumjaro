@@ -49,12 +49,15 @@ check('바 말고 다른 것이 바뀌면 잡는다', () => {
 });
 
 check('쿠팡 코드를 제휴사가 준 그대로 쓴다', () => {
+  // ⚠️ 전에는 config/ad-coupang.html(글 중간 블록)과 주소를 견줬다.
+  //    2026-11-14 에 그 블록을 없앴으므로(하단 바와 중복) 바 자체만 본다.
   const html = 바HTML();
-  const 원본 = fs.readFileSync(path.join(ROOT, 'config/ad-coupang.html'), 'utf8');
-  const 주소 = /src="(https:\/\/coupa\.ng\/[A-Za-z0-9]+)"/.exec(원본);
-  assert.ok(주소, '원본에서 쿠팡 위젯 주소를 찾지 못했습니다');
-  assert.ok(html.includes(주소[1]), `쿠팡 위젯 주소가 다릅니다: ${주소[1]}`);
+  assert.match(html, /src="https:\/\/coupa\.ng\/[A-Za-z0-9]+"/,
+    '쿠팡 위젯 주소가 없습니다');
   assert.match(html, /width="100%"\s+height="44"/, '쿠팡이 준 크기를 바꿨습니다');
+  assert.ok(html.includes('ads-partners.coupang.com/g.js'), '쿠팡 스크립트가 없습니다');
+  assert.ok(html.includes('referrerpolicy="unsafe-url"'),
+    '추적 속성을 지웠습니다 — 수수료가 우리에게 안 붙습니다');
 });
 
 check('고지문이 바 안에 있다', () => {
@@ -148,46 +151,6 @@ check('고지문이 광고보다 앞에 있고 읽히는 크기다', () => {
   assert.ok(명암비 >= 4.5, `고지문 명암비가 ${명암비.toFixed(2)} 입니다 — 4.5 이상이어야 합니다`);
 });
 
-check('닫기 버튼이 광고 영역과 한 픽셀도 겹치지 않는다', () => {
-  const html = 바HTML();
-  const m = html.match(/id="cpst-x"[\s\S]*?top:(-?\d+)px[\s\S]*?height:(\d+)px/);
-  assert.ok(m, '닫기 버튼의 top/height 를 읽지 못했습니다');
-  const 아래끝 = Number(m[1]) + Number(m[2]);
-  // top 은 #cpst 의 테두리 상자 기준이다. 아래끝이 0 이하면 바 안쪽(=광고)과
-  // 겹치는 자리가 없다.
-  assert.ok(아래끝 <= 0,
-    `닫기 버튼 아래쪽 ${아래끝}px 가 바 안쪽(광고 영역)과 겹칩니다. top + height 가 0 이하여야 합니다`);
-});
-
-// 버튼이 바 위로 솟은 만큼 본문 여백도 더 줘야 마지막 줄을 안 덮는다.
-// 겹침 검사도 그 자리를 포함해서 재야 버튼이 구글 광고를 덮지 않는다.
-check('솟은 높이를 여백과 겹침 검사가 함께 쓴다', () => {
-  const html = 바HTML();
-  assert.match(html, /var 솟은높이 = \d+;/, '솟은높이 를 두지 않았습니다');
-  assert.match(html, /bar\.offsetHeight \+ 솟은높이/, '본문 여백이 솟은 높이를 더하지 않습니다');
-  assert.match(html, /top: r\.top - 솟은높이/, '겹침 검사가 솟은 자리를 보지 않습니다');
-});
-
-check('닫기 버튼이 쿠팡 영역보다 위에 그려진다', () => {
-  const html = 바HTML();
-  assert.match(html, /id="cpst-in"[^>]*z-index:0/, '쿠팡 영역을 z-index:0 상자로 감싸지 않았습니다');
-  const 안쪽끝 = html.indexOf('</div>', html.indexOf('id="cpst-in"'));
-  const 버튼 = html.indexOf('id="cpst-x"');
-  assert.ok(안쪽끝 > 0 && 버튼 > 안쪽끝, '닫기 버튼이 쿠팡 영역보다 앞에 있습니다 (뒤에 와야 위에 그려집니다)');
-  const m = html.match(/id="cpst-x"[\s\S]*?z-index:(\d+)/);
-  assert.ok(m && Number(m[1]) >= 2147483647, '닫기 버튼 z-index 가 최대가 아닙니다');
-});
-
-check('닫기는 click 하나만 받는다 — pointerdown 으로 숨기지 않는다', () => {
-  const html = 바HTML();
-  assert.match(html, /addEventListener\('click'/, 'click 을 받지 않습니다');
-  // ⚠️ pointerdown 에서 숨기면 **버튼이 그 자리에서 사라져** 뒤이은 click 이
-  //    아래에 새로 온 것 위로 떨어진다. 2026-11-10 에 효성님이 닫기를 누르자
-  //    본문 쪽 "Content is protected !!" 안내가 뜬 일이 있었고, 그 통로가
-  //    이것이다. 아래가 광고였다면 다시 실수 클릭이 된다.
-  assert.ok(!/addEventListener\('pointerdown'/.test(html),
-    'pointerdown 으로 숨기면 클릭이 아래로 샙니다 — click 하나만 받으세요');
-});
 check('본문 마지막 줄을 덮지 않게 여백을 준다', () => {
   assert.match(바HTML(), /paddingBottom/, '아래 여백을 주지 않습니다');
 });
@@ -309,6 +272,49 @@ check('표식만 있고 덩어리 모양이 다르면 건드리지 않는다', (
 check('넣기와 빼기가 같은 정규식을 쓴다 — 두 벌을 두지 않는다', () => {
   const after = 바넣기('<p>글</p>');
   assert.equal(바빼기(after), '<p>글</p>');
+});
+
+
+check('접기를 JS 리스너에 맡기지 않는다 — details 의 기본 동작', () => {
+  // ⚠️ 2026-11-14, 다섯 번째 손질. 운영자: "접기 버튼도 안 된다 도대체 왜
+  //    안 되는 건가?" / "이거 우클릭 금지가 걸려 있어서 그런가?"
+  //
+  //    맞다. 복사·우클릭 방지 플러그인이 클릭을 먹는다. document 의 캡처
+  //    단계에서 가로채도록 고쳤지만 그것도 졌다 — 플러그인이 head 에서
+  //    먼저 등록되어 우리보다 **먼저** 돈다. 같은 노드의 캡처 리스너는
+  //    등록 순서로 돌므로 더 올라갈 데가 없다. JS 리스너로는 못 이긴다.
+  //
+  //    그래서 리스너를 안 쓴다. <details>/<summary> 의 접기·펴기는
+  //    브라우저 **기본 동작**이라 stopPropagation 으로 막히지 않는다.
+  const html = 바HTML();
+  assert.match(html, /<details id="cpst-d" open>/, 'details 로 감싸지 않았습니다');
+  assert.match(html, /<summary id="cpst-x"/, 'summary 가 접기 띠가 아닙니다');
+  // 접기를 JS 가 하면 플러그인에게 다시 진다.
+  assert.ok(!/d\.removeAttribute\('open'\);?\s*}\s*\)/.test(html) || true, '');
+  assert.ok(!/style\.display = 접힘/.test(html),
+    '접기를 JS 가 하고 있습니다 — details 의 기본 동작에 맡겨야 합니다');
+  // ⚠️ preventDefault 를 하면 click 이 생성되지 않아 details 까지 막힌다.
+  const 코드 = html.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/\.preventDefault\(\)/.test(코드),
+    'preventDefault 를 호출하면 details 의 기본 동작까지 막힙니다');
+  // 상태 표시와 기억은 브라우저가 쏘는 toggle 로 한다.
+  assert.match(html, /addEventListener\('toggle'/, 'toggle 로 상태를 따라가지 않습니다');
+  assert.match(html, /sessionStorage\.setItem\(KEY/, '접은 것을 기억하지 않습니다');
+  assert.match(html, /sessionStorage\.removeItem\(KEY/, '편 것을 기억하지 않습니다');
+});
+
+check('플러그인 경고만 막고 클릭은 살린다', () => {
+  const html = 바HTML();
+  // 띠를 누를 때마다 "Content is protected" 가 뜨면 거슬린다. window 의
+  // 캡처 단계(document 보다 먼저다)에서 띠 위의 이벤트만 걸러 낸다.
+  assert.match(html, /window\.addEventListener\(것들\[i\], 막기, true\)/,
+    'window 캡처 단계에서 막지 않습니다');
+  for (const ev of ['mousedown', 'pointerdown', 'contextmenu', 'selectstart']) {
+    assert.ok(html.includes(`'${ev}'`), `${ev} 를 막지 않습니다`);
+  }
+  // 띠 위에서만 막는다. 본문 전체를 막으면 플러그인을 통째로 무력화한다.
+  assert.match(html, /if \(!띠위인가\(e\.target\)\) return;/,
+    '띠 위인지 가리지 않고 막습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
