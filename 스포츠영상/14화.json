@@ -71,7 +71,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ team 을 **일부러 비웠다.** 편이 SK·KIA·SSG 세 시기를 오가는데, team 을 적으면 코드가 모든 샷을 그 팀 색으로 다시 칠한다(2026-11-12 규칙). 비워 두면 리페인트가 **사진 원본의 유니폼 색을 그대로** 가져가므로, 2017년 단락에는 KIA 시절 사진을, 2022년 이후에는 SSG 사진을 쓰면 시기가 맞는다. ⚠️ 등번호도 비웠다 — 확인하지 못했다. 빈 칸을 남기면 모델이 아무 번호나 그린다. ⚠️ 은퇴한다고 쓰지 않는다. ⚠️ 2026 성적(14경기 28타수)으로 깎지 않는다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi.namu.wiki%2Fi%2F_UN0rQp0-valX-mOopziBVZODD2vzUOQ1jbFJhT8CXZgekm3_MP_5ierEQJWJ14392LO4K744jY-wcgz1yCZPQ.webp&type=a340",
+     "쓰임": "KIA시절 1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2017%2F04%2F18%2F0000557962_002_20170418053017926.jpg&type=a340",
+     "쓰임": "KIA시절 2 (2017-04)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAzMjRfMjcz%2FMDAxNzc0MzE3OTg3ODU1.wJMgcjWx1JzVefHFzFop-MOz8My25DqFes-FBKVzcB4g.vvkkXiUjfjjCeKXTQLAf9cidPrFU7x8-u6h4LshRBwEg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-03-24_104045.png&type=a340",
+     "쓰임": "KIA시절 3"
+    }
+   ]
   },
   {
    "name": "류효승",
