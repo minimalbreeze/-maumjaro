@@ -7,7 +7,7 @@
 </script>
 <iframe src="https://coupa.ng/ciwQYr" width="100%" height="44" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" browsingtopics></iframe>
 </div>
-<button id="cpst-x" type="button" aria-label="닫기" style="position:absolute;top:-40px;right:8px;width:36px;height:36px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;color:#555;font-size:19px;line-height:1;cursor:pointer;z-index:2147483647;pointer-events:auto;touch-action:manipulation;box-shadow:0 1px 4px rgba(0,0,0,.18);padding:0">×</button>
+<button id="cpst-x" type="button" aria-label="닫기" style="position:fixed;right:8px;width:36px;height:36px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;color:#555;font-size:19px;line-height:1;cursor:pointer;z-index:2147483647;pointer-events:auto;touch-action:manipulation;box-shadow:0 1px 4px rgba(0,0,0,.18);padding:0">×</button>
 </div>
 <script>
 (function(){
@@ -22,6 +22,23 @@
   // 닫기 버튼이 바 위로 솟아 있는 높이. 여백과 겹침 검사가 함께 쓴다.
   var 솟은높이 = 44;
   var x = document.getElementById('cpst-x');
+  // ── 닫기 버튼을 body 직속으로 옮긴다 (2026-11-14, 세 번째 손질) ──────
+  //
+  // 또 "닫기가 안 눌린다" 가 나왔다. 이번 원인은 쌓임 문맥이다.
+  //
+  // `#cpst` 는 z-index:9999 라 **스스로 쌓임 문맥을 만든다.** 그 안에 있는
+  // 버튼의 z-index:2147483647 은 **그 문맥 안에서만** 뜻이 있고, 페이지
+  // 전체에서는 9999 로 묶인다. 쿠팡 캐러셀이 자체 레이어를 더 높게 띄우면
+  // 버튼이 그 아래로 깔린다 — 보이기는 하는데 눌리지 않는다.
+  //
+  // 운영자 캡처에서 **고지문과 상품 사진이 같은 줄에 겹쳐** 있었다.
+  // 캐러셀이 제자리를 벗어나 위로 솟았다는 뜻이고, 그 레이어가 버튼을 덮었다.
+  //
+  // z-index 를 더 올려도 소용없다. 문맥 밖으로 나가야 한다.
+  // body 직속이면 2147483647 이 페이지 전체에서 먹는다.
+  if (x && document.body && x.parentNode !== document.body) {
+    try { document.body.appendChild(x); } catch (e) {}
+  }
   // **click 하나만 받는다.** (2026-11-10, 두 번째 손질)
   //
   // 한때 pointerdown 도 함께 받았다. 버튼 아래 절반이 쿠팡 캐러셀에 덮여 있던
@@ -35,21 +52,67 @@
   // 지금은 버튼이 광고 영역 바깥에 있어 가로채일 일이 없다. 보조 장치를 둘
   // 이유가 사라졌으므로 **클릭이 끝난 뒤에 숨기는 쪽**으로 되돌린다.
   // click 은 버튼 위에서 눌렀다 뗐을 때만 오고, 그때 대상은 이미 정해져 있다.
-  if (x) x.addEventListener('click', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
+  function 닫기(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     bar.style.display = 'none';
+    if (x) x.style.display = 'none';
     document.body.style.paddingBottom = '';
     try { sessionStorage.setItem(KEY, '1'); } catch (e2) {}
-  });
+  }
+  if (x) x.addEventListener('click', 닫기);
+
+  // ── 콘텐츠 보호 플러그인이 클릭을 가로챈다 (2026-11-14, 네 번째 손질) ──
+  //
+  // 운영자 캡처에 **"ALERT: Content is protected !!"** 가 떴다. 이 사이트에
+  // 복사·우클릭 방지 플러그인이 깔려 있고, 그것이 document 에서 클릭을 잡아
+  // 막는다. 그래서 버튼까지 이벤트가 **도달하지 않는다.**
+  //
+  // 전에 운영자가 "쿠팡 광고창 닫힘 에러문구뜸" 이라고 한 것도 같은 증상인데,
+  // 그때는 '클릭이 아래로 샌다' 로 잘못 읽고 z-index 와 자리만 손봤다.
+  // z-index 로는 못 푼다 — 이벤트가 오지 않는 것이 문제다.
+  //
+  // 그래서 **document 의 캡처 단계**에서 먼저 받는다. 캡처는 document 에서
+  // 대상으로 내려가는 단계라, 버블 단계에서 막는 플러그인보다 앞선다.
+  // 같은 노드에 캡처로 붙은 리스너끼리는 등록 순서지만, 플러그인이
+  // stopImmediatePropagation 까지 쓰지 않으면 우리 쪽도 실행된다.
+  //
+  // ⚠️ click 만 받지 않는다. 플러그인이 click 자체를 죽이는 경우가 있어
+  //    pointerup·touchend 도 본다. 셋 다 **버튼 위에서 뗐을 때만** 닫으므로
+  //    클릭이 아래로 새지 않는다(pointerdown 에서 닫던 옛 버그와 다르다).
+  function 버튼위인가(t) {
+    for (; t; t = t.parentNode) if (t === x) return true;
+    return false;
+  }
+  function 가로채기(e) {
+    if (!x || x.style.display === 'none') return;
+    if (!버튼위인가(e.target)) return;
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    e.preventDefault();
+    닫기();
+  }
+  try {
+    document.addEventListener('click', 가로채기, true);
+    document.addEventListener('pointerup', 가로채기, true);
+    document.addEventListener('touchend', 가로채기, true);
+  } catch (e) {}
   // 바가 글 마지막 줄을 덮지 않게 아래 여백을 준다. 캐러셀이 늦게 그려지므로
   // 높이를 한 번 더 잰다 — 처음 잰 값만 쓰면 여백이 모자란다.
   // ⚠️ 숨어 있을 때는 여백을 주지 않는다. resize 때 여백() 이 먼저 돌고
   //    겹침확인() 은 "상태가 그대로면" 아무것도 안 하므로, 이 줄이 없으면
   //    **숨은 채로 아래 여백만 남는다** — 글 끝에 빈 칸이 생긴다.
+  // 버튼이 body 직속 fixed 라, 바 높이가 바뀌면 자리를 다시 잡아 준다.
+  // 캐러셀이 늦게 그려져 높이가 변하므로 여백() 과 같은 박자로 돈다.
+  function 버튼자리() {
+    if (!x) return;
+    if (숨김 || bar.style.display === 'none') { x.style.display = 'none'; return; }
+    x.style.display = '';
+    x.style.bottom = (bar.offsetHeight + 8) + 'px';
+  }
   function 여백() {
-    if (숨김) { document.body.style.paddingBottom = ''; return; }
+    if (숨김) { document.body.style.paddingBottom = ''; 버튼자리(); return; }
     document.body.style.paddingBottom = (bar.offsetHeight + 솟은높이 + 12) + 'px';
+    버튼자리();
   }
   여백();
   setTimeout(여백, 1500);
@@ -107,6 +170,8 @@
         숨김 = 겹친다;
         // visibility 를 쓴다 — display 를 건드리면 캐러셀이 다시 그려진다.
         bar.style.visibility = 겹친다 ? 'hidden' : '';
+        // 버튼은 body 직속이라 바를 숨겨도 따라 사라지지 않는다. 같이 숨긴다.
+        if (x) x.style.visibility = 겹친다 ? 'hidden' : '';
         document.body.style.paddingBottom = 겹친다 ? '' : (bar.offsetHeight + 솟은높이 + 12) + 'px';
       }
     } catch (e) {}

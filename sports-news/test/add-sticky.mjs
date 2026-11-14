@@ -148,15 +148,50 @@ check('고지문이 광고보다 앞에 있고 읽히는 크기다', () => {
   assert.ok(명암비 >= 4.5, `고지문 명암비가 ${명암비.toFixed(2)} 입니다 — 4.5 이상이어야 합니다`);
 });
 
-check('닫기 버튼이 광고 영역과 한 픽셀도 겹치지 않는다', () => {
+check('닫기 버튼이 쌓임 문맥 밖으로 나간다 (body 직속)', () => {
   const html = 바HTML();
-  const m = html.match(/id="cpst-x"[\s\S]*?top:(-?\d+)px[\s\S]*?height:(\d+)px/);
-  assert.ok(m, '닫기 버튼의 top/height 를 읽지 못했습니다');
-  const 아래끝 = Number(m[1]) + Number(m[2]);
-  // top 은 #cpst 의 테두리 상자 기준이다. 아래끝이 0 이하면 바 안쪽(=광고)과
-  // 겹치는 자리가 없다.
-  assert.ok(아래끝 <= 0,
-    `닫기 버튼 아래쪽 ${아래끝}px 가 바 안쪽(광고 영역)과 겹칩니다. top + height 가 0 이하여야 합니다`);
+  // ⚠️ 2026-11-14, 세 번째 손질. "닫기가 안 눌린다" 가 또 나왔다.
+  //
+  //    `#cpst` 는 z-index:9999 라 **스스로 쌓임 문맥을 만든다.** 그 안의
+  //    버튼은 z-index 를 아무리 올려도 페이지 전체에서는 9999 로 묶인다.
+  //    쿠팡 캐러셀이 더 높은 레이어를 띄우면 버튼이 덮인다 — 보이는데
+  //    안 눌린다. z-index 로는 못 푼다. 문맥 밖으로 나가야 한다.
+  assert.ok(/document\.body\.appendChild\(x\)/.test(html),
+    '닫기 버튼을 body 로 옮기지 않습니다 — #cpst 안에 있으면 z-index 가 9999 로 묶입니다');
+  assert.ok(/id="cpst-x"[^>]*position:fixed/.test(html),
+    'body 직속으로 옮기므로 버튼은 position:fixed 여야 합니다');
+  // 바 높이가 변하면(캐러셀이 늦게 그려진다) 자리를 다시 잡아야 한다.
+  assert.ok(/function 버튼자리\(\)/.test(html) && /x\.style\.bottom = \(bar\.offsetHeight/.test(html),
+    '버튼 자리를 바 높이에 맞춰 갱신하지 않습니다');
+  // 바를 숨기거나 닫을 때 버튼만 남으면 안 된다.
+  assert.ok(/x\.style\.display = 'none'/.test(html),
+    '닫을 때 버튼이 같이 사라지지 않습니다');
+  assert.ok(/x\.style\.visibility = 겹친다/.test(html),
+    '구글 광고와 겹쳐 바를 숨길 때 버튼이 같이 숨지 않습니다');
+});
+
+check('콘텐츠 보호 플러그인이 가로채도 닫힌다', () => {
+  const html = 바HTML();
+  // ⚠️ 2026-11-14. 운영자 캡처에 "ALERT: Content is protected !!" 가 떴다.
+  //    이 사이트에 복사·우클릭 방지 플러그인이 있고, 그것이 document 에서
+  //    클릭을 잡아 막아 **버튼까지 이벤트가 도달하지 않는다.**
+  //    z-index 나 자리로는 못 푼다 — 캡처 단계에서 먼저 받아야 한다.
+  assert.ok(/document\.addEventListener\('click', 가로채기, true\)/.test(html),
+    'document 의 캡처 단계에서 클릭을 받지 않습니다');
+  // click 자체를 죽이는 플러그인도 있어 둘을 더 본다.
+  assert.ok(/document\.addEventListener\('pointerup', 가로채기, true\)/.test(html),
+    'pointerup 을 캡처 단계에서 받지 않습니다');
+  assert.ok(/document\.addEventListener\('touchend', 가로채기, true\)/.test(html),
+    'touchend 를 캡처 단계에서 받지 않습니다 — 모바일에서 안 닫힙니다');
+  // ⚠️ **누를 때가 아니라 뗄 때** 닫는다. pointerdown 에서 닫으면 버튼이
+  //    사라져 뒤이은 click 이 아래 광고로 떨어진다(실수 클릭).
+  assert.ok(!/addEventListener\('pointerdown'/.test(html),
+    'pointerdown 에서 닫으면 클릭이 아래 광고로 샙니다');
+  assert.ok(!/addEventListener\('mousedown'/.test(html),
+    'mousedown 에서 닫으면 클릭이 아래 광고로 샙니다');
+  // 버튼 위에서 뗀 것만 닫는다. 아무 데나 누르면 닫히면 안 된다.
+  assert.ok(/function 버튼위인가\(/.test(html) && /if \(!버튼위인가\(e\.target\)\) return;/.test(html),
+    '버튼 위에서 뗀 것인지 가리지 않습니다');
 });
 
 // 버튼이 바 위로 솟은 만큼 본문 여백도 더 줘야 마지막 줄을 안 덮는다.
