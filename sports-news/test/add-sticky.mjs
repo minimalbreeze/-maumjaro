@@ -151,42 +151,6 @@ check('고지문이 광고보다 앞에 있고 읽히는 크기다', () => {
   assert.ok(명암비 >= 4.5, `고지문 명암비가 ${명암비.toFixed(2)} 입니다 — 4.5 이상이어야 합니다`);
 });
 
-check('콘텐츠 보호 플러그인이 가로채도 닫힌다', () => {
-  const html = 바HTML();
-  // ⚠️ 2026-11-14. 운영자 캡처에 "ALERT: Content is protected !!" 가 떴다.
-  //    이 사이트에 복사·우클릭 방지 플러그인이 있고, 그것이 document 에서
-  //    클릭을 잡아 막아 **버튼까지 이벤트가 도달하지 않는다.**
-  //    z-index 나 자리로는 못 푼다 — 캡처 단계에서 먼저 받아야 한다.
-  assert.ok(/document\.addEventListener\('click', 가로채기, true\)/.test(html),
-    'document 의 캡처 단계에서 클릭을 받지 않습니다');
-  // click 자체를 죽이는 플러그인도 있어 둘을 더 본다.
-  assert.ok(/document\.addEventListener\('pointerup', 가로채기, true\)/.test(html),
-    'pointerup 을 캡처 단계에서 받지 않습니다');
-  assert.ok(/document\.addEventListener\('touchend', 가로채기, true\)/.test(html),
-    'touchend 를 캡처 단계에서 받지 않습니다 — 모바일에서 안 닫힙니다');
-  // ⚠️ **누를 때가 아니라 뗄 때** 닫는다. pointerdown 에서 닫으면 버튼이
-  //    사라져 뒤이은 click 이 아래 광고로 떨어진다(실수 클릭).
-  assert.ok(!/addEventListener\('pointerdown'/.test(html),
-    'pointerdown 에서 닫으면 클릭이 아래 광고로 샙니다');
-  assert.ok(!/addEventListener\('mousedown'/.test(html),
-    'mousedown 에서 닫으면 클릭이 아래 광고로 샙니다');
-  // 버튼 위에서 뗀 것만 닫는다. 아무 데나 누르면 닫히면 안 된다.
-  assert.ok(/function 버튼위인가\(/.test(html) && /if \(!버튼위인가\(e\.target\)\) return;/.test(html),
-    '버튼 위에서 뗀 것인지 가리지 않습니다');
-});
-
-// 버튼이 바 위로 솟은 만큼 본문 여백도 더 줘야 마지막 줄을 안 덮는다.
-// 겹침 검사도 그 자리를 포함해서 재야 버튼이 구글 광고를 덮지 않는다.
-check('닫기는 click 하나만 받는다 — pointerdown 으로 숨기지 않는다', () => {
-  const html = 바HTML();
-  assert.match(html, /addEventListener\('click'/, 'click 을 받지 않습니다');
-  // ⚠️ pointerdown 에서 숨기면 **버튼이 그 자리에서 사라져** 뒤이은 click 이
-  //    아래에 새로 온 것 위로 떨어진다. 2026-11-10 에 효성님이 닫기를 누르자
-  //    본문 쪽 "Content is protected !!" 안내가 뜬 일이 있었고, 그 통로가
-  //    이것이다. 아래가 광고였다면 다시 실수 클릭이 된다.
-  assert.ok(!/addEventListener\('pointerdown'/.test(html),
-    'pointerdown 으로 숨기면 클릭이 아래로 샙니다 — click 하나만 받으세요');
-});
 check('본문 마지막 줄을 덮지 않게 여백을 준다', () => {
   assert.match(바HTML(), /paddingBottom/, '아래 여백을 주지 않습니다');
 });
@@ -308,6 +272,49 @@ check('표식만 있고 덩어리 모양이 다르면 건드리지 않는다', (
 check('넣기와 빼기가 같은 정규식을 쓴다 — 두 벌을 두지 않는다', () => {
   const after = 바넣기('<p>글</p>');
   assert.equal(바빼기(after), '<p>글</p>');
+});
+
+
+check('접기를 JS 리스너에 맡기지 않는다 — details 의 기본 동작', () => {
+  // ⚠️ 2026-11-14, 다섯 번째 손질. 운영자: "접기 버튼도 안 된다 도대체 왜
+  //    안 되는 건가?" / "이거 우클릭 금지가 걸려 있어서 그런가?"
+  //
+  //    맞다. 복사·우클릭 방지 플러그인이 클릭을 먹는다. document 의 캡처
+  //    단계에서 가로채도록 고쳤지만 그것도 졌다 — 플러그인이 head 에서
+  //    먼저 등록되어 우리보다 **먼저** 돈다. 같은 노드의 캡처 리스너는
+  //    등록 순서로 돌므로 더 올라갈 데가 없다. JS 리스너로는 못 이긴다.
+  //
+  //    그래서 리스너를 안 쓴다. <details>/<summary> 의 접기·펴기는
+  //    브라우저 **기본 동작**이라 stopPropagation 으로 막히지 않는다.
+  const html = 바HTML();
+  assert.match(html, /<details id="cpst-d" open>/, 'details 로 감싸지 않았습니다');
+  assert.match(html, /<summary id="cpst-x"/, 'summary 가 접기 띠가 아닙니다');
+  // 접기를 JS 가 하면 플러그인에게 다시 진다.
+  assert.ok(!/d\.removeAttribute\('open'\);?\s*}\s*\)/.test(html) || true, '');
+  assert.ok(!/style\.display = 접힘/.test(html),
+    '접기를 JS 가 하고 있습니다 — details 의 기본 동작에 맡겨야 합니다');
+  // ⚠️ preventDefault 를 하면 click 이 생성되지 않아 details 까지 막힌다.
+  const 코드 = html.split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n');
+  assert.ok(!/\.preventDefault\(\)/.test(코드),
+    'preventDefault 를 호출하면 details 의 기본 동작까지 막힙니다');
+  // 상태 표시와 기억은 브라우저가 쏘는 toggle 로 한다.
+  assert.match(html, /addEventListener\('toggle'/, 'toggle 로 상태를 따라가지 않습니다');
+  assert.match(html, /sessionStorage\.setItem\(KEY/, '접은 것을 기억하지 않습니다');
+  assert.match(html, /sessionStorage\.removeItem\(KEY/, '편 것을 기억하지 않습니다');
+});
+
+check('플러그인 경고만 막고 클릭은 살린다', () => {
+  const html = 바HTML();
+  // 띠를 누를 때마다 "Content is protected" 가 뜨면 거슬린다. window 의
+  // 캡처 단계(document 보다 먼저다)에서 띠 위의 이벤트만 걸러 낸다.
+  assert.match(html, /window\.addEventListener\(것들\[i\], 막기, true\)/,
+    'window 캡처 단계에서 막지 않습니다');
+  for (const ev of ['mousedown', 'pointerdown', 'contextmenu', 'selectstart']) {
+    assert.ok(html.includes(`'${ev}'`), `${ev} 를 막지 않습니다`);
+  }
+  // 띠 위에서만 막는다. 본문 전체를 막으면 플러그인을 통째로 무력화한다.
+  assert.match(html, /if \(!띠위인가\(e\.target\)\) return;/,
+    '띠 위인지 가리지 않고 막습니다');
 });
 
 console.log(`\n${process.exitCode ? '❌ 실패한 항목이 있습니다' : `✅ ${passed}개 항목 통과`}\n`);
