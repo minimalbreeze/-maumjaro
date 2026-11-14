@@ -320,6 +320,10 @@ function finalize(raw) {
   // 화면에 쓰는 Inter 는 한자·가나·키릴을 못 그린다. 빈칸으로 나오므로 떼어낸다.
   t = t.replace(/[\u3000-\u303f\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uff00-\uffef\u0400-\u04ff]/g, ' ');
   t = t.replace(/\s{2,}/g, ' ').replace(/[\s\-–—_·]+$/, '').replace(/^[\s\-–—_·]+/, '').trim();
+  // 밑줄은 띄어쓰기 대신 쓴 것이다 — "White_beach" → "White beach"
+  t = t.replace(/_+/g, ' ');
+  // 제목 끝에 붙은 연도를 뗀다 — "passage du vent2012"
+  t = t.replace(/\s*(19|20)\d{2}\s*$/, '').trim();
   // "SWEET FRANCE wav" 처럼 확장자가 제목에 남아 오는 것이 있다.
   t = t.replace(/[\s._-]+(wav|mp3|flac|ogg|aiff?)$/i, '').trim();
   /* "(Instrumental Version)" 같은 꼬리를 뗀다. Jamendo 에서는 연주곡만
