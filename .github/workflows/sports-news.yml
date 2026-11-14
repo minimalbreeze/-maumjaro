@@ -1247,6 +1247,55 @@ jobs:
           node src/wordpress/add-product-ad.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
+      - name: 본문 쿠팡 상품 광고
+        # 글 **본문 안**에 쿠팡 상품 광고를 넣는다 / 뺀다. (2026-11-14)
+        #
+        # 운영자가 쿠팡 실적을 보여줬고, 숫자를 읽어 보니 구매 19건이
+        # 전부 가족 구매였다. 독자 구매는 아직 0 건이다. 전환율 118% 는
+        # 그래서 나온 가짜 신호다. 막힌 것은 클릭 하나뿐이다.
+        #
+        # 지금 쿠팡 광고는 하단 바의 캐러셀 하나뿐이고 글 내용과 상관없는
+        # 상품이 돈다. 운영자가 상품을 직접 골라 "전부 범용성 있는 상품으로
+        # 고정하자"고 정했다(2026-11-14).
+        #
+        # ⚠️ 하단 바가 아니라 본문이다. 받은 태그가 120×240 이라 바에 넣으면
+        #    고지문·여백까지 약 300px 이 되고, 모바일 세로 640~740 에서
+        #    화면의 40% 를 덮는다 — 광고 원칙 3번("화면을 가로막지 않는다").
+        #    본문은 스크롤로 지나가는 자리라 걸리지 않는다. 그리고 바를
+        #    그대로 두면 바뀌는 것이 본문 하나뿐이라 효과가 갈린다.
+        #
+        # ⚠️ 고지문을 이 블록이 스스로 가진다. 바에는 닫기 버튼이 있어서
+        #    독자가 닫으면 고지문이 같이 사라지고 본문 광고만 남는다.
+        #
+        # 상품을 바꿀 때는 config/ad-coupang-products.html 만 고치고
+        # post_ids 에 refresh 를 적어 돌린다 — 이미 가진 글만 갈아끼운다.
+        if: ${{ contains(inputs.mode, '본문 쿠팡 상품') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_IDS" ]; then
+            echo "::error::글 번호를 적어주세요 (post_ids). 전부 하려면 all, 광고를 가진 글만 갈아끼우려면 refresh 라고 적으세요"; exit 1
+          fi
+          args=()
+          case "$IN_MODE" in *실제\ 적용*) args+=( --apply ) ;; esac
+          case "$IN_MODE" in *빼기*) args+=( --빼기 ) ;; esac
+          case "$IN_IDS" in
+            전체|전부|all) args+=( --전체 ) ;;
+            # 광고를 **이미 가진 글만** 고친다. 상품을 바꿀 때 쓴다.
+            # ⚠️ 한글을 입력칸에 적으면 깨지므로 영문 낱말로 둔다.
+            refresh|update) args+=( --전체 --갱신만 ) ;;
+            *) for id in $IN_IDS; do args+=( "$id" ); done ;;
+          esac
+          node src/wordpress/add-product-ad.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
+          exit "${PIPESTATUS[0]}"
+
       - name: 쿠팡 광고 아래 여백
         # 운영자: "광고랑 글 사이에 간격이 좀 있으면 좋겠다. 간격이 없이
         # 너무 붙어 있으니 글을 읽는 게 너무 안 좋은 것 같다" (2026-11-07)
