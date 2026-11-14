@@ -49,12 +49,15 @@ check('바 말고 다른 것이 바뀌면 잡는다', () => {
 });
 
 check('쿠팡 코드를 제휴사가 준 그대로 쓴다', () => {
+  // ⚠️ 전에는 config/ad-coupang.html(글 중간 블록)과 주소를 견줬다.
+  //    2026-11-14 에 그 블록을 없앴으므로(하단 바와 중복) 바 자체만 본다.
   const html = 바HTML();
-  const 원본 = fs.readFileSync(path.join(ROOT, 'config/ad-coupang.html'), 'utf8');
-  const 주소 = /src="(https:\/\/coupa\.ng\/[A-Za-z0-9]+)"/.exec(원본);
-  assert.ok(주소, '원본에서 쿠팡 위젯 주소를 찾지 못했습니다');
-  assert.ok(html.includes(주소[1]), `쿠팡 위젯 주소가 다릅니다: ${주소[1]}`);
+  assert.match(html, /src="https:\/\/coupa\.ng\/[A-Za-z0-9]+"/,
+    '쿠팡 위젯 주소가 없습니다');
   assert.match(html, /width="100%"\s+height="44"/, '쿠팡이 준 크기를 바꿨습니다');
+  assert.ok(html.includes('ads-partners.coupang.com/g.js'), '쿠팡 스크립트가 없습니다');
+  assert.ok(html.includes('referrerpolicy="unsafe-url"'),
+    '추적 속성을 지웠습니다 — 수수료가 우리에게 안 붙습니다');
 });
 
 check('고지문이 바 안에 있다', () => {
