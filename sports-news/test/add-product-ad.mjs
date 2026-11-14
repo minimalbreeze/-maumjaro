@@ -36,13 +36,24 @@ const html = 광고HTML();
 
 console.log('\n[1] 쿠팡 코드를 건드리지 않는다');
 {
-  const 설정 = fs.readFileSync(path.join(ROOT, 'config/ad-coupang-products.html'), 'utf8');
-  const iframes = 설정.match(/<iframe[^>]*>/g) || [];
-  ok('쿠팡 iframe 이 하나 이상 있다', iframes.length >= 1);
+  // ⚠️ 광고가 들어오는 모양이 둘이다(2026-11-14).
+  //    (가) 상품 태그 — 쿠팡이 iframe 을 통째로 준다. 손대지 않는다.
+  //    (나) 이벤트 프로모션 — 쿠팡이 HTML 태그를 주지 않고 **단축 URL 과
+  //         배너 이미지 주소만** 준다. 그래서 a + img 는 우리가 조립한다.
+  //    어느 쪽이든 **주소는 전부 쿠팡 것이어야** 한다. 그게 이 절의 요점이다.
+  const iframes = html.match(/<iframe[^>]*>/g) || [];
+  const 링크 = html.match(/<a [^>]*href="[^"]+"[^>]*>/g) || [];
+  ok('쿠팡 광고 요소가 하나 이상 있다', iframes.length + 링크.length >= 1);
   ok('모든 iframe 이 쿠팡 주소다', iframes.every((t) => /coupa\.ng|coupang\.com/.test(t)));
-  ok('referrerpolicy 를 지웠거나 바꾸지 않았다', iframes.every((t) => t.includes('referrerpolicy="unsafe-url"')));
-  // 쿠팡이 준 width/height 를 우리가 줄이지 않는다. 변형은 제휴 코드 수정이다.
-  ok('width·height 가 쿠팡이 준 그대로 남아 있다', iframes.every((t) => /width="\d+"/.test(t) && /height="\d+"/.test(t)));
+  ok('모든 링크가 쿠팡 주소다', 링크.every((t) => /coupa\.ng|coupang\.com/.test(t)));
+  const imgs = html.match(/<img [^>]*src="[^"]+"[^>]*>/g) || [];
+  ok('모든 이미지가 쿠팡 주소다', imgs.every((t) => /coupangcdn\.com|coupang\.com/.test(t)));
+  // 추적이 이 속성에 걸린다. 지우면 수수료가 우리에게 안 붙는다.
+  ok('추적 속성(referrerpolicy)이 모든 광고 요소에 있다',
+    [...iframes, ...링크].every((t) => t.includes('referrerpolicy="unsafe-url"')));
+  // 쿠팡이 통째로 준 iframe 은 크기도 그대로 둔다. 변형은 제휴 코드 수정이다.
+  ok('iframe 의 width·height 가 쿠팡이 준 그대로다',
+    iframes.every((t) => /width="\d+"/.test(t) && /height="\d+"/.test(t)));
 }
 
 console.log('\n[2] 고지문 — 공정위 심사지침');
@@ -59,7 +70,10 @@ console.log('\n[2] 고지문 — 공정위 심사지침');
     const 비 = 명암비(color);
     ok(`명암비가 4.5 이상이다 (지금 ${비.toFixed(2)})`, 비 >= 4.5);
     // 광고보다 **앞**에 있어야 한다. 뒤에 있으면 다 보고 나서야 광고인 줄 안다.
-    ok('고지문이 광고보다 앞에 있다', html.indexOf('쿠팡 파트너스') < html.indexOf('<iframe'));
+    // 광고가 iframe 일 수도 a 일 수도 있다. **먼저 나오는 쪽**과 견준다.
+    const 광고자리 = [html.indexOf('<iframe'), html.indexOf('<a ')].filter((i) => i >= 0);
+    ok('광고 요소를 찾았다', 광고자리.length >= 1);
+    ok('고지문이 광고보다 앞에 있다', html.indexOf('쿠팡 파트너스') < Math.min(...광고자리));
   }
   // ⚠️ 하단 바와 고지문을 나눠 쓰지 않는다. 바에는 닫기 버튼이 있어서,
   //    닫으면 고지문이 같이 사라지고 본문 광고만 남는다.
@@ -70,8 +84,14 @@ console.log('\n[3] 본문과 섞이지 않는다');
 {
   ok('위아래로 여백을 둔다', /margin:\d\dpx 0/.test(html));
   ok('본문과 가르는 선이 있다', html.includes('border-top') && html.includes('border-bottom'));
-  // 모바일(360px)에서 120×4 는 한 줄에 안 들어간다. 접혀야 한다.
-  ok('좁은 화면에서 접힌다 (flex-wrap)', html.includes('flex-wrap:wrap'));
+  // 광고가 여럿이면 모바일(360px)에서 한 줄에 안 들어간다 — 접혀야 한다.
+  // 하나짜리 배너는 접을 것이 없으므로 요구하지 않는다.
+  const 광고수 = (html.match(/<iframe/g) || []).length + (html.match(/<a /g) || []).length;
+  if (광고수 > 1) ok('광고가 여럿이면 좁은 화면에서 접힌다 (flex-wrap)', html.includes('flex-wrap:wrap'));
+  else ok('광고가 하나라 가로가 넘치지 않는다', /max-width:\d+px/.test(html) || html.includes('width:100%'));
+  // 어느 모양이든 본문 폭을 넘지 않아야 한다.
+  ok('이미지가 본문 폭을 넘지 않는다',
+    !html.includes('<img') || /max-width:[^;"]+/.test(html));
   ok('화면을 고정으로 덮지 않는다', !html.includes('position:fixed'));
 }
 
@@ -97,9 +117,15 @@ console.log('\n[5] 넣기·빼기');
   ok('없는 것을 빼면 null', 광고빼기(본문) === null);
   ok('광고 말고 본문이 그대로다', 광고만바뀌었나(본문, a));
   // 상품을 바꾸면 **그 자리에서** 갈아끼운다. 자리를 옮기지 않는다.
-  const 다른상품 = html.replace('cqXZ8r', 'ZZZZZZ');
+  //
+  // ⚠️ 설정에 **지금 들어 있는 상품 코드**로 변형을 만들지 않는다(2026-11-14).
+  //    처음엔 'cqXZ8r' 을 바꿔 썼는데, 블랙프라이데이 배너로 갈아끼우자
+  //    그 문자열이 사라져 변형이 원본과 같아졌고 검사가 조용히 뜻을 잃었다.
+  //    margin 은 바로 위 [3] 이 "두 자리 px" 로 보장하므로 안전하다.
+  const 다른상품 = html.replace(/margin:(\d\d)px 0/, (m, n) => `margin:${Number(n) + 1}px 0`);
+  ok('변형이 원본과 다르다 (검사 자체가 뜻을 갖는가)', 다른상품 !== html);
   const b = 광고넣기(a, 다른상품);
-  ok('상품이 바뀌면 갈아끼운다', b !== null && b.includes('ZZZZZZ'));
+  ok('상품이 바뀌면 갈아끼운다', b !== null && b.includes(다른상품));
   ok('갈아끼워도 하나뿐이다', (b.match(/id="cppd"/g) || []).length === 1);
   ok('갈아끼워도 자리가 그대로다', b.indexOf(표식) < b.indexOf('🔥 정리하면'));
   ok('갈아끼워도 본문이 그대로다', 광고만바뀌었나(본문, b));
