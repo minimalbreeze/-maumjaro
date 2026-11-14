@@ -352,8 +352,46 @@ export const SPORTS_STYLE_SUFFIX =
   'the whole body is in one single action: hips, legs and feet take part ' +
   'in the same motion as the arms and shoulders, never a throwing upper ' +
   'body on legs that merely stand still, ' +
-  'a pitcher strides toward the plate with the front leg while the arm ' +
-  'comes through, a batter rotates the hips and back foot with the swing, ' +
+  // ⚠️ 2026-11-14. 여기에 이렇게 적혀 있었다 —
+  //      'a pitcher strides toward the plate with the front leg while
+  //       the arm comes through'
+  //    11-09 에 "상체와 하체가 따로 논다" 를 고치며 넣은 줄인데,
+  //    **이 줄 자체가 한창 돌아가는 중간을 그리라는 말이다.**
+  //    15화에서 장면 설명이 'at the top of his windup, front leg raised,
+  //    glove at chest' 로 멈추는 자리를 정확히 집었는데도 팔이 꺾인
+  //    그림이 나왔다. 규칙 13 대로 **뒤에 붙은 고정 문구가 앞의 장면
+  //    설명을 이긴다.** 내가 내 지시를 덮어쓰고 있었다.
+  //
+  //    그래서 '어느 동작' 을 지정하지 않는다. 장면 설명이 고른 그
+  //    순간에 온몸이 함께 있으라고만 적는다.
+  'the body is caught at one held instant of that action, not partway ' +
+  'through a swing or a throw: whatever pose the scene names, the hips, ' +
+  'legs and feet are in that same instant with the arms and shoulders, ' +
+  // ⚠️ 2026-11-09 에 배운 멈추는 자리를 여기에 적는다(금지가 아니라
+  //    무엇을 그릴지로 — 규칙 13).
+  'a pitching figure is held at the top of the windup with the front knee ' +
+  'raised and the glove at the chest, or at the instant before the ball ' +
+  'leaves the hand with the back foot still on the rubber, ' +
+  'a batting figure is held at the instant the bat meets the ball or just ' +
+  'after, with the back foot turned and both hands still on the bat, ' +
+  // ⚠️ 2026-11-14 운영자: "손이 반대임 주의 바람"
+  //
+  //    오른손 타자 자세인데 그립이 뒤집힌 그림이 나왔다. 위에 'a batter
+  //    holds the bat with both hands' 라고만 적어 두어서, 어느 손이
+  //    위인지를 운에 맡기고 있었다. 좌우가 같아야 한다는 규칙(양말·소매)
+  //    과 같은 자리인데 손만 빠져 있었다.
+  //
+  //    ⚠️ 투수도 같다. 글러브 낀 팔과 던지는 팔이 뒤바뀌면 사람이
+  //       아니게 된다. 11-09 에 '글러브 낀 팔을 잊는다' 는 고쳤지만
+  //       '뒤바뀐다' 는 안 고쳤다.
+  'the hands match the stance: a right-handed batter stands with his left ' +
+  'shoulder toward the pitcher and grips the bat with the right hand above ' +
+  'the left, a left-handed batter mirrors that exactly with the left hand ' +
+  'above the right, both hands stacked together on the handle and never ' +
+  'crossed or swapped, ' +
+  'a pitcher holds the ball in the throwing hand and wears the glove on ' +
+  'the other hand, and the two are never swapped: the glove is never on ' +
+  'the hand that throws, ' +
   'the pose is a real moment a human body can hold: joints bend the way ' +
   'they actually bend, the weight is on a foot that touches the ground, ' +
   'the arms and legs follow through in the direction of the motion, ' +
@@ -1111,15 +1149,32 @@ export function peopleRules(people) {
   //
   // **사진이 있으면 얼굴은 사진이 말한다.** 여기서는 아예 뺀다.
   // 사진이 없는 사람만 글로 적는다 — 그 사람은 글 말고 기댈 데가 없다.
-  const list = (Array.isArray(people) ? people : []).filter(
-    (p) => p?.name && p?.look && !allPhotosOf(p).length
-  );
+  // ⚠️ 2026-11-14. 위의 고침이 **너무 많이 지웠다.**
+  //
+  //    조건이 `p.look && !사진` 이라, 사진이 있는 사람은 목록에서
+  //    통째로 빠졌다. 15화는 다섯 명이 **전부** 사진이 있어서 이 함수가
+  //    빈 문자열을 돌려줬고, 설계 AI 는 **이 편에 누가 나오는지조차
+  //    못 들었다.** 그래서 54장 중 51장의 person 칸이 비었고, 사람이
+  //    나오는 샷인데도 리페인트가 안 걸려 전부 글로 그려졌다.
+  //    운영자가 그날 다섯 가지를 지적했는데 전부 그 글로 그린 샷이었다 —
+  //    투수 팔이 꺾이고, 타자 손이 반대고, 타자가 주자로 나오고,
+  //    톤이 실사가 되고, 헬멧 쓴 사람이 공을 들고 스윙을 했다.
+  //
+  //    지워야 했던 것은 **생김새(look)** 였지 **이름**이 아니다.
+  //    이름이 있어야 설계 AI 가 person 칸을 채우고, 그래야 사진을
+  //    쓴다. 그러니 사진이 있으면 이름·역할·표식만 싣고 look 은 뺀다.
+  const all = (Array.isArray(people) ? people : []).filter((p) => p?.name);
+  const list = all.filter((p) => allPhotosOf(p).length || p.look);
   if (!list.length) return '';
 
   const lines = list.map((p) => {
     const head = p.role ? `${p.name} (${p.role})` : p.name;
     const tell = p.tell ? `\n    알아보는 표식: ${p.tell}` : '';
-    return `  · ${head}\n    ${p.look}${tell}`;
+    // 사진이 있으면 생김새를 적지 않는다(2026-11-12). 글과 사진이 싸운다.
+    const body = allPhotosOf(p).length
+      ? '사진을 받아 두었다 — 생김새는 적지 않는다. person 칸에 이 이름을 적으면 그 사진으로 그린다.'
+      : p.look;
+    return `  · ${head}\n    ${body}${tell}`;
   });
 
   // ── 유니폼은 여기 적지 않는다 (2026-11-07) ──
@@ -1195,6 +1250,21 @@ export function peopleRules(people) {
     ...lines,
     '',
     '여기 없는 사람(단장, 기자, 관중 등)은 지어내도 된다.',
+    '',
+    '⚠️ **사람이 보이는 샷에는 반드시 위 이름 중 하나를 person 칸에 적는다.**',
+    '뒷모습이어도 적는다. 비워 두면 코드가 사진을 못 찾아 그 사람을 글로',
+    '지어내고, 그러면 팔이 꺾이거나 손이 반대로 나오거나 타자가 주자로',
+    '그려진다(2026-11-14 에 한 편에서 다섯 번 났다).',
+    '위 사람 중 누구도 아닌 장면이면 **사람을 아예 빼고** 그린다 —',
+    '빈 마운드, 장비, 전광판, 더그아웃 난간, 관중석. 모르는 사람을',
+    '그리느니 사람 없는 화면이 낫다.',
+    '',
+    '⚠️ **사진 말을 쓰지 않는다.** 우리 그림은 그린 그림이지 찍은 사진이',
+    '아니다. out of focus · soft-focus · blurred · depth of field · bokeh ·',
+    '망원 · 조리개 같은 말을 장면 설명에 적으면 그 샷만 사진처럼 나와',
+    '한 편의 결이 깨진다(2026-11-14). 그림에는 초점이 없고 붓질이 성글',
+    '뿐이다. 그럴 때는 이렇게 적는다 — 앞쪽은 넓은 붓질 몇 번,',
+    '가운데가 가장 또렷한 선, 뒤쪽은 얇고 납작한 색.',
     '',
     '⚠️ **위 사람은 한 명도 빠뜨리지 않는다.** 편 전체에서 적어도 한 번은',
     '얼굴이 나와야 하고, 그 샷의 person 칸에 이름을 적어야 한다. 이름을',

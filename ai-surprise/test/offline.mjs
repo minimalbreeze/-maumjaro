@@ -7561,18 +7561,49 @@ await asyncTest('사진이 있는 사람은 생김새를 글로 적지 않는다
   };
   const 사진없음 = { name: '양현종', look: 'a Korean pitcher in his thirties' };
 
-  // 사진이 있으면 한 글자도 안 나간다.
-  assert.equal(V.peopleRules([사진있음]), '', '사진이 있는데 생김새가 나갔습니다');
+  // ⚠️ 2026-11-14. 이 테스트는 원래 `peopleRules([사진있음]) === ''` 였다.
+  //    "한 글자도 안 나간다" 로 막아 뒀는데, **너무 많이 막았다.**
+  //    이름까지 빠지니 설계 AI 가 이 편에 누가 나오는지를 못 듣고,
+  //    person 칸을 비운 채 사람을 글로 지어냈다. 15화에서 54장 중
+  //    51장이 그렇게 나갔고 운영자가 다섯 가지를 지적했다.
+  //
+  //    지워야 하는 것은 **생김새**지 **이름**이 아니다. 그래서
+  //    조건을 바꾼다 — 생김새 문장은 안 나가고 이름은 나간다.
+  const 한명 = V.peopleRules([사진있음]);
+  assert.ok(한명.includes('김도영'), '이름까지 지웠습니다 — 설계 AI 가 person 칸을 못 채웁니다');
+  assert.ok(!한명.includes('oval face'), '사진이 있는데 생김새가 나갔습니다');
+  assert.ok(!한명.includes('sharp jawline'), '사진이 있는데 생김새가 나갔습니다');
+
   // 옛 모양(photo)도 같다.
-  assert.equal(V.peopleRules([{ ...사진있음, photos: [], photo: 'https://a/1.jpg' }]), '');
+  const 옛모양 = V.peopleRules([{ ...사진있음, photos: [], photo: 'https://a/1.jpg' }]);
+  assert.ok(옛모양.includes('김도영'));
+  assert.ok(!옛모양.includes('oval face'), '옛 모양에서 생김새가 샜습니다');
 
   // 사진이 없는 사람은 글 말고 기댈 데가 없으니 적는다.
-  assert.ok(V.peopleRules([사진없음]).includes('양현종'), '사진 없는 사람까지 지웠습니다');
+  assert.ok(V.peopleRules([사진없음]).includes('a Korean pitcher'), '사진 없는 사람까지 지웠습니다');
 
-  // 섞여 있어도 사진 있는 쪽만 빠진다.
+  // 섞여 있으면 둘 다 이름이 나가고, 생김새는 사진 없는 쪽만 나간다.
   const 섞임 = V.peopleRules([사진있음, 사진없음]);
-  assert.ok(!섞임.includes('김도영'), '사진 있는 사람이 섞여 들어갔습니다');
-  assert.ok(섞임.includes('양현종'));
+  assert.ok(섞임.includes('김도영') && 섞임.includes('양현종'));
+  assert.ok(!섞임.includes('oval face'), '사진 있는 사람의 생김새가 섞여 들어갔습니다');
+  assert.ok(섞임.includes('a Korean pitcher'));
+
+  // ⚠️ 사람이 보이는 샷에는 이름을 적으라고 설계 AI 에게 말해야 한다.
+  //    이 줄이 빠지면 person 칸이 다시 빈다.
+  assert.ok(한명.includes('person 칸'), 'person 칸을 채우라는 지시가 없습니다');
+});
+
+await asyncTest('설계 AI 에게 사진 말을 쓰지 말라고 한다', async () => {
+  // 2026-11-11 에 화풍 문구에서 렌즈 말을 뺐는데 **설계 쪽은 안 고쳤다.**
+  // 15화 장면 설명에 'soft-focus' · 'slightly out of focus' · 'blurred'
+  // 가 그대로 쓰여서, 그 샷들만 사진처럼 나왔다. 운영자: "그림 톤이
+  // 지브리 스타일이 아님 실사 임"
+  const V = await import('../src/scenes/visuals.mjs');
+  const 규칙 = V.peopleRules([{ name: '김도영', photos: [{ url: 'https://a/1.jpg' }] }]);
+  for (const w of ['out of focus', 'soft-focus', 'blurred', 'depth of field', 'bokeh']) {
+    assert.ok(규칙.includes(w) || 규칙.includes('사진 말'), `${w} 를 막는 말이 없습니다`);
+  }
+  assert.ok(규칙.includes('붓질'), '무엇을 그릴지를 안 적었습니다 — 금지로는 못 막는다(규칙 13)');
 });
 
 await asyncTest('구단 표에도 글자 이야기가 없다', async () => {
