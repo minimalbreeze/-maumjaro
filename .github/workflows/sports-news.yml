@@ -1198,6 +1198,7 @@ jobs:
             *) for id in $IN_IDS; do args+=( "$id" ); done ;;
           esac
           node src/wordpress/add-sticky.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: 본문 쿠팡 상품 광고
         # 글 **본문 안**에 쿠팡 상품 광고를 넣는다 / 뺀다. (2026-11-14)
@@ -1245,6 +1246,7 @@ jobs:
             *) for id in $IN_IDS; do args+=( "$id" ); done ;;
           esac
           node src/wordpress/add-product-ad.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
           exit "${PIPESTATUS[0]}"
 
       - name: 쿠팡 광고 아래 여백
