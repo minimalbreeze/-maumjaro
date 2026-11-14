@@ -125,3 +125,26 @@ MusicWeb 리뷰도 이 음원들을 "표면 잡음 처리가 조악하다"고 �
 
 그리고 창밖은 **한 방향으로** 흐른다(해질녘 → 밤). 되돌아오지 않으므로
 그 부분은 반복이 아예 없다.
+
+## 음원 출처
+
+기본은 **Jamendo 공식 API** 다.
+
+```
+node playlist/scripts/fetch-music.mjs --mood 늦가을 --vol 006 --n 16 --client <CLIENT_ID>
+```
+
+⚠️ **client_id 는 저장소에 넣지 않는다.** `--client` 로 주거나
+`JAMENDO_CLIENT_ID` 환경변수에 넣는다.
+devportal.jamendo.com → Applications → 앱 이름 옆의 키.
+
+⚠️ **수익화를 켜는 날 약관이 달라진다.** Jamendo API 는 비상업 용도만
+무료이고, 약관이 말하는 "상업적 이용" 에는 광고 수익이 포함된다.
+채널에 수익화를 켜면 licensing@jamendo.com 에 연락해 견적을 받아야 한다.
+이미 받아 둔 곡은 CC BY 라서 그대로 쓸 수 있다 — 달라지는 것은 API 사용이다.
+
+예전 경로(archive.org)도 남아 있다. 1~5집을 그걸로 만들었다.
+
+```
+node playlist/scripts/fetch-music.mjs --src archive --cc --mood 늦가을 --vol 006
+```

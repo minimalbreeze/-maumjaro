@@ -1,4 +1,17 @@
-// archive.org 에서 자유롭게 쓸 수 있는 음원을 받아 온다
+// 자유롭게 쓸 수 있는 음원을 받아 온다
+//
+// 출처는 둘이다. 기본은 Jamendo 공식 API 다.
+//
+//   node playlist/scripts/fetch-music.mjs --mood 늦가을 --vol 006 --client <ID>
+//   node playlist/scripts/fetch-music.mjs --src archive --cc --mood 늦가을 --vol 006
+//
+// ⚠️ Jamendo client_id 는 저장소에 넣지 않는다.
+//    --client 로 주거나 JAMENDO_CLIENT_ID 환경변수에 넣는다.
+//    devportal.jamendo.com → Applications → 앱 이름 옆의 키.
+//
+// 왜 Jamendo 가 기본인가: jamendo.mjs 의 맨 위 주석 참고. 요약하면
+// 같은 음악을 인기순으로, 연주곡만, 템포까지 골라서 받을 수 있다.
+// archive.org 쪽은 1~5집을 만든 경로라 그대로 남겨 둔다.
 //
 //   node playlist/scripts/fetch-music.mjs --cc      자유 라이선스 (CC0/BY/BY-SA)
 //   node playlist/scripts/fetch-music.mjs --pd      1923~1925 발행 78rpm (미국 PD)
@@ -19,6 +32,8 @@ import { writeFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlink
 import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { searchJamendo, JAMENDO_MOODS } from './jamendo.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BGM_ROOT = join(ROOT, 'bgm');
@@ -131,12 +146,17 @@ const MOODS = {
   차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
 };
 
+/* 어느 출처에서 받을지. 기본은 Jamendo 공식 API. */
+const SRC = val('--src', 'jamendo');
+const CLIENT_ID = val('--client', process.env.JAMENDO_CLIENT_ID || '');
+
 const MODE = has('--pd') ? 'pd' : 'cc';
 const WANT = Math.max(1, Math.min(40, Number(val('--n', '8'))));
 const DRY = has('--dry');
 const MOOD = val('--mood', '');
-if (MOOD && !MOODS[MOOD]) {
-  console.error(`\n❌ 모르는 무드: ${MOOD}\n   고를 수 있는 것: ${Object.keys(MOODS).join(' / ')}\n`);
+const MOOD_NAMES = SRC === 'jamendo' ? Object.keys(JAMENDO_MOODS) : Object.keys(MOODS);
+if (MOOD && !MOOD_NAMES.includes(MOOD)) {
+  console.error(`\n❌ 모르는 무드: ${MOOD}\n   고를 수 있는 것: ${MOOD_NAMES.join(' / ')}\n`);
   process.exit(1);
 }
 const QUERY = MOOD ? MOODS[MOOD] : val('--q', MODE === 'pd' ? 'piano' : MOODS.서정);
@@ -212,6 +232,14 @@ function filesOf(id) {
 function download(id, name, to) {
   // /download/ 는 번호 붙은 노드로 넘기고 그 주소는 계속 바뀐다. /cors/ 는 직접 준다.
   const buf = curl([`${API}/cors/${id}/${encodeURIComponent(name)}`]);
+  if (buf.length < 10000) throw new Error(`너무 작습니다 (${buf.length}B) — 받지 못했습니다`);
+  writeFileSync(to, buf);
+  return buf.length;
+}
+
+/* 주어진 주소에서 그대로 받는다. Jamendo 는 자기 저장소 주소를 준다. */
+function downloadFrom(url, to) {
+  const buf = curl(['-L', url]);
   if (buf.length < 10000) throw new Error(`너무 작습니다 (${buf.length}B) — 받지 못했습니다`);
   writeFileSync(to, buf);
   return buf.length;
@@ -294,6 +322,10 @@ function finalize(raw) {
   t = t.replace(/\s{2,}/g, ' ').replace(/[\s\-–—_·]+$/, '').replace(/^[\s\-–—_·]+/, '').trim();
   // "SWEET FRANCE wav" 처럼 확장자가 제목에 남아 오는 것이 있다.
   t = t.replace(/[\s._-]+(wav|mp3|flac|ogg|aiff?)$/i, '').trim();
+  /* "(Instrumental Version)" 같은 꼬리를 뗀다. Jamendo 에서는 연주곡만
+   * 받으므로 이 말이 제목 칸을 잡아먹기만 한다. 괄호가 없는 꼴도 있다. */
+  t = t.replace(/[\s(\[-]*\b(instrumental|karaoke|backing\s*track)\s*(version)?\b[)\]]*\s*$/i, '').trim();
+  t = t.replace(/[\s,.\-–—_]+$/, '').trim();
   if (!/[A-Za-z]/.test(t)) return '';          // 쓸 글자가 안 남았다
   // "I 2018" 처럼 글자 한두 개에 숫자만 붙은 것은 제목이 아니다.
   if (t.replace(/[^A-Za-z]/g, '').length < 3) return '';
@@ -374,7 +406,112 @@ function usedElsewhere() {
   return seen;
 }
 
-async function main() {
+/* ── Jamendo 경로 ─────────────────────────────────────────────
+ * archive.org 경로(mainArchive)와 거르개를 그대로 나눠 쓴다 —
+ * 라이선스·제목·아티스트 수·밝기. 다른 것은 후보를 어디서 받느냐뿐이다. */
+async function mainJamendo() {
+  if (!CLIENT_ID) {
+    fail('Jamendo client_id 가 없습니다.\n'
+      + '   --client <ID> 로 주거나 JAMENDO_CLIENT_ID 환경변수에 넣어 주세요.\n'
+      + '   devportal.jamendo.com → Applications → 앱 이름 옆의 키');
+  }
+
+  console.log('─'.repeat(60));
+  console.log('Jamendo 공식 API — 연주곡 · 인기순');
+  console.log(`${MOOD ? `무드: ${MOOD}` : `태그: ${val('--q', '')}`} · 목표 ${WANT}곡`);
+  console.log('─'.repeat(60));
+
+  let docs;
+  try {
+    docs = searchJamendo({
+      clientId: CLIENT_ID, mood: MOOD, tags: MOOD ? '' : val('--q', ''),
+      speed: has('--any-speed') ? '' : undefined,
+      limit: Math.min(200, Math.max(40, WANT * 6)),
+      minSec: MIN_SEC, maxSec: MAX_SEC,
+    });
+  } catch (e) { fail(e.message); }
+  if (!docs.length) fail('후보가 없습니다. 무드를 바꾸거나 --q 로 태그를 직접 주세요.');
+  console.log(`후보 ${docs.length}곡\n`);
+
+  mkdirSync(BGM, { recursive: true });
+  const listFile = join(BGM, '목록.json');
+  const list = existsSync(listFile) ? JSON.parse(readFileSync(listFile, 'utf8')) : { tracks: [] };
+  list.note = '자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.';
+  list.tracks = list.tracks || [];
+  const already = new Set(list.tracks.map((t) => t.file));
+  const used = usedElsewhere();
+
+  const perArtist = new Map();
+  const seenBy = (a) => perArtist.get(String(a).toLowerCase().trim()) || 0;
+  list.tracks.forEach((t) => {
+    const k = String(t.artist).toLowerCase().trim();
+    perArtist.set(k, (perArtist.get(k) || 0) + 1);
+  });
+  const MAX_PER_ARTIST = Number(val('--per-artist', '2'));
+
+  let got = 0, skipped = 0;
+  for (const d of docs) {
+    if (got >= WANT) break;
+
+    const lic = licenseOK(d.licenseUrl);
+    if (!lic.ok) { skipped++; continue; }
+
+    const safe = `jamendo-${d.id}.mp3`;
+    if (already.has(safe) || used.has(`jamendo-${d.id}`) || used.has(d.id)) { skipped++; continue; }
+
+    /* Jamendo 제목은 파일 이름이 아니라 사람이 적은 제목이라 꽤 깨끗하다.
+     * 그래도 같은 손질을 거친다 — 한자·대문자·아티스트 이름이 가끔 섞인다. */
+    /* 아티스트 이름에 붙은 괄호 설명을 뗀다 —
+     * "Josh Woodward (Instrumental Versions)" → "Josh Woodward" */
+    const artist = unent(d.artist).replace(/\s*[（(\[][^）)\]]*[）)\]]\s*$/, '').trim() || d.artist;
+    const title = finalize(stripArtist(unent(d.title), artist));
+    if (!title) { console.log(`  — 건너뜀: 화면에 쓸 제목이 없음 (${d.id})`); skipped++; continue; }
+
+    const same = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (same(title) === same(artist)) { skipped++; continue; }
+
+    const bad = badTitle(title);
+    if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 34)} ("${bad}")`); skipped++; continue; }
+
+    if (seenBy(artist) >= MAX_PER_ARTIST) { skipped++; continue; }
+
+    console.log(`  ${String(got + 1).padStart(2, '0')}. ${title}  (${Math.floor(d.seconds / 60)}:${String(d.seconds % 60).padStart(2, '0')})`);
+    console.log(`      ${artist.slice(0, 34)} · ${lic.name}${d.speed ? ` · ${d.speed}` : ''}`);
+
+    if (!DRY) {
+      const to = join(BGM, safe);
+      try {
+        const n = downloadFrom(d.downloadUrl, to);
+        console.log(`      ↓ ${(n / 1048576).toFixed(1)} MB`);
+      } catch (e) { console.log(`      ✗ 실패: ${e.message}`); skipped++; continue; }
+
+      const br = brightness(to);
+      if (br !== null && br > MAX_BRIGHT) {
+        console.log(`      ✗ 너무 밝습니다 (고역 ${br.toFixed(1)}dB > ${MAX_BRIGHT}) — 지웁니다`);
+        try { unlinkSync(to); } catch { /* 이미 없으면 그만 */ }
+        skipped++; continue;
+      }
+    }
+
+    list.tracks.push({
+      file: safe, title, artist,
+      recorded: d.year || '?',
+      license: lic.name,
+      /* 약관 4.1 — 아티스트(창작자)·Jamendo(제공자)·곡 페이지 링크 셋 다 들어간다. */
+      credit: `${title} — ${artist} (${lic.name}) · Provided by Jamendo · ${d.pageUrl}`,
+      source: d.pageUrl,
+    });
+    perArtist.set(artist.toLowerCase().trim(), seenBy(artist) + 1);
+    got++;
+  }
+
+  if (!DRY) writeFileSync(listFile, `${JSON.stringify(list, null, 2)}\n`);
+  console.log('─'.repeat(60));
+  console.log(`✅ ${got}곡${DRY ? ' (dry — 받지 않음)' : ' 받음'} · 거름 ${skipped}곡`);
+  console.log(`   목록: ${listFile.replace(ROOT, 'playlist')} (현재 ${list.tracks.length}곡)`);
+}
+
+async function mainArchive() {
   console.log('─'.repeat(60));
   console.log(`archive.org 에서 음원 찾기 — ${MODE === 'pd' ? '1923~1925 퍼블릭 도메인' : '자유 라이선스'}`);
   console.log(`${MOOD ? `무드: ${MOOD}` : `검색어: ${QUERY.slice(0, 60)}`} · 목표 ${WANT}곡`);
@@ -510,4 +647,5 @@ async function main() {
   }
 }
 
+const main = SRC === 'jamendo' ? mainJamendo : mainArchive;
 main().catch((e) => fail(e.stack || String(e)));

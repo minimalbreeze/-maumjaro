@@ -57,9 +57,14 @@ const credits = tracks.filter((t) => t.credit || /CC BY/i.test(t.license || ''))
 if (credits.length) {
   out.push('음원 출처 (Creative Commons)');
   out.push('');
+  /* Jamendo 약관 4.1 — 아티스트를 창작자로, Jamendo 를 제공자로 표기하고
+   * 곡마다 Jamendo 의 해당 곡 페이지로 직접 링크해야 한다.
+   * archive.org 에서 받은 1~5집 곡은 그 조항의 대상이 아니라 그대로 둔다. */
   credits.forEach((t) => {
+    const fromJamendo = /(^|\.)jamendo\.com\//.test(String(t.source || ''));
     out.push(`· ${t.title} — ${t.artist}`);
-    out.push(`  ${t.license || 'CC BY'}${t.source ? ` · ${t.source}` : ''}`);
+    out.push(`  ${t.license || 'CC BY'}${fromJamendo ? ' · Provided by Jamendo' : ''}`
+      + `${t.source ? ` · ${t.source}` : ''}`);
   });
   out.push('');
   out.push('모든 음원은 상업적 이용이 허용된 라이선스로만 골랐습니다.');
