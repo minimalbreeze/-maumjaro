@@ -7593,6 +7593,40 @@ await asyncTest('사진이 있는 사람은 생김새를 글로 적지 않는다
   assert.ok(한명.includes('person 칸'), 'person 칸을 채우라는 지시가 없습니다');
 });
 
+await asyncTest('올릴 거리 지시의 번호가 겹치지 않는다', async () => {
+  // 2026-11-14. 제목 규칙을 10개에서 12개로 늘리면서, 뒤에 덧붙는
+  // 종류별 블록(창작 동화·스포츠)이 11 부터 시작하는 것을 잊었다.
+  // 한 프롬프트 안에 11 과 12 가 두 번씩 나오면 모델이 어느 지시를
+  // 가리키는지 헷갈린다. 눈으로는 안 보이는 종류의 사고라 걸어 둔다.
+  const { uploadSystemFor } = await import('../src/upload/pack.mjs');
+  for (const kind of ['SPORTS', 'TALE', 'REAL']) {
+    const text = uploadSystemFor(kind);
+    const ns = [...text.matchAll(/^(\d+)\./gm)].map((m) => Number(m[1]));
+    const dup = ns.filter((v, i) => ns.indexOf(v) !== i);
+    assert.deepEqual(dup, [], `${kind} 지시 번호가 겹칩니다: ${dup.join(', ')}`);
+    for (let i = 0; i < ns.length; i += 1) {
+      assert.equal(ns[i], i + 1, `${kind} 지시 번호가 끊깁니다: ${ns.join(' ')}`);
+    }
+  }
+});
+
+await asyncTest('제목을 세게 만드는 길을 적어 둔다', async () => {
+  // 2026-11-14 운영자: "동영상, 쇼츠 제목을 좀더 자극적으로"
+  //
+  // 자극적 = 과장이 아니다. 과장은 유튜브가 영상을 지우는 자리이고
+  // (제목이 약속한 것이 영상에 없으면 삭제), 실제로 약하기도 하다.
+  // 세게 만드는 것은 **덜어내기**다. 그 길을 네 가지로 적어 뒀다.
+  const { uploadSystemFor } = await import('../src/upload/pack.mjs');
+  const t = uploadSystemFor('SPORTS');
+  assert.ok(t.includes('맞서는 숫자'), '맞서는 숫자 길이 없습니다');
+  assert.ok(t.includes('따옴표'), '사람 말 길이 없습니다');
+  assert.ok(t.includes('앞 15자'), '앞쪽에 센 것을 두라는 말이 없습니다');
+  assert.ok(t.includes('덜어냈기'), '왜 세지는지를 안 적었습니다');
+  // 과장 금지는 그대로 남아 있어야 한다. 둘은 같이 간다.
+  assert.ok(t.includes('충격'), '과장 금지가 사라졌습니다');
+  assert.ok(t.includes('영상 안에 실제로 있는 것만'), '진실 규칙이 사라졌습니다');
+});
+
 await asyncTest('설계 AI 에게 사진 말을 쓰지 말라고 한다', async () => {
   // 2026-11-11 에 화풍 문구에서 렌즈 말을 뺐는데 **설계 쪽은 안 고쳤다.**
   // 15화 장면 설명에 'soft-focus' · 'slightly out of focus' · 'blurred'
