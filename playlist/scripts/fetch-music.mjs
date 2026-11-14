@@ -118,6 +118,14 @@ const MOODS = {
    * 캐럴 원곡은 대부분 퍼블릭 도메인이지만 녹음은 아니므로, 라이선스는
    * 평소와 똑같이 CC BY / CC0 만 받는다. */
   크리스마스: 'subject:(christmas OR xmas OR carol OR noel OR holiday)',
+  /* 5집(연말). 파티라고 해서 EDM 으로 가지 않는다 — 조용한 사무실·카페에
+   * 틀어두는 BGM 이라는 전제는 그대로다. 스윙·빅밴드·라운지·보사처럼
+   * 몸이 조금 움직이는 재즈 계열에서 고른다. */
+/* 장르와 분위기를 둘 다 요구했더니 18곡 중 2곡만 나왔다. jamendo 의
+ * CC BY 안에서 스윙·라운지 자체가 드물어서, 조건을 겹치면 남는 게 없다.
+ * 장르만 걸고 나머지는 제목·태그·밝기 거르개에 맡긴다. */
+  연말: 'subject:(swing OR "big band" OR lounge OR cocktail OR bossa '
+      + 'OR soul OR funk OR blues OR jazz)',
   재즈: 'subject:jazz OR subject:swing OR subject:bossa OR subject:blues',
   피아노: 'subject:piano AND subject:(calm OR peaceful OR slow OR soft)',
   차분: 'subject:(ambient OR calm OR peaceful OR relaxed OR mellow) AND subject:(piano OR acoustic OR guitar)',
@@ -313,7 +321,10 @@ function finalize(raw) {
  * 캐럴에는 종·글로켄슈필·탬버린이 들어가서 고역이 원래 밝다. -14 로 재면
  * 19곡 중 15곡이 "너무 밝다"로 지워진다 — 거르려던 것은 EDM 이지 종이
  * 아니다. -9 로 두면 종은 통과하고 드럼이 앞에 선 곡은 여전히 걸린다. */
-const MAX_BRIGHT = Number(val('--bright', MOOD === '크리스마스' ? '-9' : '-14'));
+/* 무드마다 밝기 기준이 다르다. 캐럴은 종 때문에, 스윙은 브러시와 심벌
+ * 때문에 고역이 원래 밝다. 같은 자로 재면 장르째로 지워진다. */
+const BRIGHT_BY_MOOD = { 크리스마스: '-9', 연말: '-12' };
+const MAX_BRIGHT = Number(val('--bright', BRIGHT_BY_MOOD[MOOD] || '-14'));
 
 function rmsOf(file, af) {
   const r = spawnSync('ffmpeg', ['-hide_banner', '-nostats', '-ss', '20', '-t', '90',
@@ -450,7 +461,11 @@ async function main() {
      * Jamendo 는 캐럴에 rock 태그를 헐겁게 붙여 놔서, 평소 목록 그대로
      * 쓰면 18곡 중 2곡만 남는다. 대신 확실히 아닌 것만 막고, 타악기가
      * 센 곡은 받아서 소리를 재는 쪽(고역 -14dB)으로 거른다. */
-    const subjectBlock = MOOD === '크리스마스' ? XMAS_BAD_SUBJECTS : BAD_SUBJECTS;
+    /* 연말은 funk·latin·percussion 을 막지 않는다 — 라운지·보사의 결이다.
+     * 전자음악 계열은 그대로 막는다. */
+    const subjectBlock = MOOD === '크리스마스' ? XMAS_BAD_SUBJECTS
+      : MOOD === '연말' ? BAD_SUBJECTS.filter((b) => !['funk', 'latin', 'salsa', 'percussion', 'disco'].includes(b))
+      : BAD_SUBJECTS;
     const hitSub = subjectBlock.find((b) => subs.some((x) => x === b || x.includes(b)));
     if (hitSub) { console.log(`  — 건너뜀: ${title.slice(0, 34)} (태그 "${hitSub}")`); skipped++; continue; }
 

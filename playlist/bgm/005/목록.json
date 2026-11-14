@@ -1,0 +1,23 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-178912.mp3",
+      "title": "El arconte",
+      "artist": "Orquesta Arrecife",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "El arconte — Orquesta Arrecife (CC BY) · archive.org/details/jamendo-178912",
+      "source": "https://archive.org/details/jamendo-178912"
+    },
+    {
+      "file": "jamendo-302103.mp3",
+      "title": "Neo Soul",
+      "artist": "danyvin",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Neo Soul — danyvin (CC BY) · archive.org/details/jamendo-302103",
+      "source": "https://archive.org/details/jamendo-302103"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+}
