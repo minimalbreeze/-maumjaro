@@ -1,15 +1,6 @@
 {
   "tracks": [
     {
-      "file": "jamendo-178912.mp3",
-      "title": "El arconte",
-      "artist": "Orquesta Arrecife",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "El arconte — Orquesta Arrecife (CC BY) · archive.org/details/jamendo-178912",
-      "source": "https://archive.org/details/jamendo-178912"
-    },
-    {
       "file": "jamendo-302103.mp3",
       "title": "Neo Soul",
       "artist": "danyvin",
@@ -19,13 +10,13 @@
       "source": "https://archive.org/details/jamendo-302103"
     },
     {
-      "file": "jamendo-639484.mp3",
-      "title": "Deep Calm Flow",
-      "artist": "Megis",
-      "recorded": "2026",
+      "file": "jamendo-178912.mp3",
+      "title": "El arconte",
+      "artist": "Orquesta Arrecife",
+      "recorded": "2018",
       "license": "CC BY",
-      "credit": "Deep Calm Flow — Megis (CC BY) · archive.org/details/jamendo-639484",
-      "source": "https://archive.org/details/jamendo-639484"
+      "credit": "El arconte — Orquesta Arrecife (CC BY) · archive.org/details/jamendo-178912",
+      "source": "https://archive.org/details/jamendo-178912"
     },
     {
       "file": "jamendo-352410.mp3",
@@ -37,6 +28,33 @@
       "source": "https://archive.org/details/jamendo-352410"
     },
     {
+      "file": "jamendo-638964.mp3",
+      "title": "Small Town Train",
+      "artist": "Helen Langfort",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Small Town Train — Helen Langfort (CC BY) · archive.org/details/jamendo-638964",
+      "source": "https://archive.org/details/jamendo-638964"
+    },
+    {
+      "file": "jamendo-304707.mp3",
+      "title": "English Roses",
+      "artist": "Lumiere Tales",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "English Roses — Lumiere Tales (CC BY) · archive.org/details/jamendo-304707",
+      "source": "https://archive.org/details/jamendo-304707"
+    },
+    {
+      "file": "jamendo-302938.mp3",
+      "title": "Romantic piano",
+      "artist": "Nerevarin",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Romantic piano — Nerevarin (CC BY) · archive.org/details/jamendo-302938",
+      "source": "https://archive.org/details/jamendo-302938"
+    },
+    {
       "file": "jamendo-194293.mp3",
       "title": "Wet Garden",
       "artist": "JGMillan",
@@ -46,13 +64,94 @@
       "source": "https://archive.org/details/jamendo-194293"
     },
     {
-      "file": "jamendo-581719.mp3",
-      "title": "A Serpent I Did Hear",
-      "artist": "Pierce Murphy",
-      "recorded": "2024",
+      "file": "jamendo-639399.mp3",
+      "title": "Damp Haze",
+      "artist": "Konstantin Feltman",
+      "recorded": "2026",
       "license": "CC BY",
-      "credit": "A Serpent I Did Hear — Pierce Murphy (CC BY) · archive.org/details/jamendo-581719",
-      "source": "https://archive.org/details/jamendo-581719"
+      "credit": "Damp Haze — Konstantin Feltman (CC BY) · archive.org/details/jamendo-639399",
+      "source": "https://archive.org/details/jamendo-639399"
+    },
+    {
+      "file": "jamendo-639484.mp3",
+      "title": "Deep Calm Flow",
+      "artist": "Megis",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Deep Calm Flow — Megis (CC BY) · archive.org/details/jamendo-639484",
+      "source": "https://archive.org/details/jamendo-639484"
+    },
+    {
+      "file": "jamendo-638459.mp3",
+      "title": "Solitude",
+      "artist": "KonstantinPazuzuStudio",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Solitude — KonstantinPazuzuStudio (CC BY) · archive.org/details/jamendo-638459",
+      "source": "https://archive.org/details/jamendo-638459"
+    },
+    {
+      "file": "jamendo-165199.mp3",
+      "title": "The Thorn Revisit",
+      "artist": "Axletree",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Thorn Revisit — Axletree (CC BY) · archive.org/details/jamendo-165199",
+      "source": "https://archive.org/details/jamendo-165199"
+    },
+    {
+      "file": "jamendo-159822.mp3",
+      "title": "Rome",
+      "artist": "Lifeless",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Rome — Lifeless (CC BY) · archive.org/details/jamendo-159822",
+      "source": "https://archive.org/details/jamendo-159822"
+    },
+    {
+      "file": "jamendo-509791.mp3",
+      "title": "Cosmic Tree",
+      "artist": "Christian Zell",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Cosmic Tree — Christian Zell (CC BY) · archive.org/details/jamendo-509791",
+      "source": "https://archive.org/details/jamendo-509791"
+    },
+    {
+      "file": "jamendo-512899.mp3",
+      "title": "Canon For Piano No.1 Air",
+      "artist": "Michał Jałochowski",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Canon For Piano No.1 Air — Michał Jałochowski (CC BY) · archive.org/details/jamendo-512899",
+      "source": "https://archive.org/details/jamendo-512899"
+    },
+    {
+      "file": "jamendo-623050.mp3",
+      "title": "Schubert Trio Andante Improv",
+      "artist": "Steve Zwart",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Schubert Trio Andante Improv — Steve Zwart (CC BY) · archive.org/details/jamendo-623050",
+      "source": "https://archive.org/details/jamendo-623050"
+    },
+    {
+      "file": "jamendo-622274.mp3",
+      "title": "Improvisation on Bach BWV870",
+      "artist": "Steve Zwart",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Improvisation on Bach BWV870 — Steve Zwart (CC BY) · archive.org/details/jamendo-622274",
+      "source": "https://archive.org/details/jamendo-622274"
+    },
+    {
+      "file": "jamendo-189939.mp3",
+      "title": "Waiting for Spring",
+      "artist": "Mutek",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Waiting for Spring — Mutek (CC BY) · archive.org/details/jamendo-189939",
+      "source": "https://archive.org/details/jamendo-189939"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
@@ -70,6 +169,13 @@
     "jamendo-292487",
     "jamendo-139680",
     "jamendo-364124",
-    "jamendo-156464"
+    "jamendo-156464",
+    "jamendo-581719",
+    "jamendo-155789",
+    "jamendo-613738",
+    "jamendo-476531",
+    "jamendo-310912",
+    "jamendo-158330",
+    "jamendo-513717"
   ]
 }
