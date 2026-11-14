@@ -79,7 +79,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ team 을 비웠다 — 대표팀 사진이면 흰색·파랑이 그대로 가고, 소속 팀 사진이면 그 색이 간다. 적어 두면 코드가 전부 한 색으로 덮는다. ⚠️ 등번호 미확인이라 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F12%2F0005639202_001_20261112123613335.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-12 호주전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F13%2FNISI20261113_0001745146_web_20261113201414_20261113201515679.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005639918_001_20261113200617321.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-13 일본전)"
+    }
+   ]
   },
   {
    "name": "김휘집",
