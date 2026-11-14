@@ -70,6 +70,9 @@ const QUOTE_PAIRS = [
  *    세 글자보다 네 글자를 앞에 둔다.
  */
 export const PRONOUNCE = new Map([
+  // ── 네 글자 ──
+  // 2026-11-14. 15화(APBC 한일전)에서 걸렸다. 자막은 APBC 가 눈에 익다.
+  ['APBC', '에이피비씨'],
   // ── 세 글자 ──
   ['WBC', '더블유비씨'],
   ['MLB', '메이저리그'],

@@ -153,7 +153,20 @@
    "number": "",
    "look": "",
    "tell": "감독이다. 유니폼 위에 팀 재킷을 입고 등번호는 없다. ⚠️ team 을 비웠으므로 사진의 옷이 그대로 간다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005640066_001_20261113223720793.jpg&type=a340",
+     "쓰임": "1 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F12%2F0005639247_001_20261112134710979.jpg&type=a340",
+     "쓰임": "2 (11-12 호주전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F12%2F0005639431_001_20261112164619889.jpg&type=a340",
+     "쓰임": "3 (11-12 호주전)"
+    }
+   ]
   },
   {
    "name": "일본 선수단",
