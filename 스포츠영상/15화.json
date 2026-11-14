@@ -127,7 +127,24 @@
    "number": "",
    "look": "",
    "tell": "⚠️ 투구 샷은 멈추는 자리를 고른다 — 와인드업 꼭대기나 공 놓기 직전. 한창 도는 중간은 팔이 꺾인다. ⚠️ team·number 를 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005639883_001_20261113193116968.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005639879_001_20261113193015521.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F13%2F0000760872_003_20261113231219103.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-13 일본전)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F13%2F0005639895_001_20261113194717276.jpg&type=a340",
+     "쓰임": "대표팀 4 (11-13 일본전)"
+    }
+   ]
   },
   {
    "name": "최원호",
