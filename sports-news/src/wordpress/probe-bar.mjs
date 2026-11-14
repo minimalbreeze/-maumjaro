@@ -22,10 +22,25 @@
  */
 import { log } from '../utils/logger.mjs';
 
-const 기본주소 = process.argv[2] || 'https://wiki.minimalbreeze.com/';
+const 인자 = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const 모바일 = !process.argv.includes('--pc');
 
+/** 글 번호를 주면 워드프레스에서 공개 주소를 받아 온다. 주소를 손으로 적지 않는다. */
+async function 주소찾기(것) {
+  if (/^https?:\/\//.test(것)) return 것;
+  if (!/^\d+$/.test(것)) return 'https://wiki.minimalbreeze.com/';
+  const { wpFetch } = await import('./client.mjs');
+  const { data } = await wpFetch(`/wp/v2/posts/${것}`, { query: { _fields: 'id,link' } });
+  return data?.link;
+}
+
 async function main() {
+  const 기본주소 = await 주소찾기(인자[0] || '');
+  if (!기본주소) {
+    log.warn('주소를 찾지 못했습니다');
+    process.exitCode = 1;
+    return;
+  }
   const { chromium, devices } = await import('playwright');
   const browser = await chromium.launch();
   const ctx = await browser.newContext(모바일 ? devices['iPhone 13'] : {});
