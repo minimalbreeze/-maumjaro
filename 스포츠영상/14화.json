@@ -77,16 +77,16 @@
      "쓰임": "KIA시절 1"
     },
     {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F410%2F2022%2F05%2F15%2F0000867882_001_20220515153001595.jpg&type=a340",
+     "쓰임": "SSG시절 1 (2022-05 복귀)"
+    },
+    {
      "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2017%2F04%2F18%2F0000557962_002_20170418053017926.jpg&type=a340",
      "쓰임": "KIA시절 2 (2017-04)"
     },
     {
      "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAzMjRfMjcz%2FMDAxNzc0MzE3OTg3ODU1.wJMgcjWx1JzVefHFzFop-MOz8My25DqFes-FBKVzcB4g.vvkkXiUjfjjCeKXTQLAf9cidPrFU7x8-u6h4LshRBwEg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-03-24_104045.png&type=a340",
      "쓰임": "KIA시절 3"
-    },
-    {
-     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F410%2F2022%2F05%2F15%2F0000867882_001_20220515153001595.jpg&type=a340",
-     "쓰임": "SSG시절 1 (2022-05 복귀)"
     },
     {
      "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F079%2F2026%2F11%2F12%2F0004209026_001_20261112105807581.jpg&type=a340",
@@ -127,7 +127,20 @@
    "number": "",
    "look": "",
    "tell": "내야수에서 외야로 전향했다. 잦은 부상으로 1군에서 기량을 못 보여줬다. ⚠️ 기량을 평가하지 않는다. ⚠️ 등번호를 확인하지 못해 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi.namu.wiki%2Fi%2FYU58Sqoc8Xfsf3S5FoAOQAgQ3XaphchCy8HZnukFx013Xk7O0evw9N_mFjDl0W-hSRcz4m0scOMpRSVjqGNUZQ.webp&type=a340",
+     "쓰임": "1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2020%2F02%2F17%2F0000627300_002_20200217103916445.jpg&type=a340",
+     "쓰임": "2 (2020-02)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5712%2F2020%2F04%2F24%2F0000055617_001_20200424181113683.jpg&type=a340",
+     "쓰임": "3 (2020-04)"
+    }
+   ]
   }
  ]
 }
