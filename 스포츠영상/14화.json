@@ -105,7 +105,20 @@
    "number": "",
    "look": "",
    "tell": "김재환이 오면서 지명타자 자리가 사라진 쪽이다. 2025년 1군 27경기 6홈런. ⚠️ 기량을 평가하지 않는다 — 기사에 적힌 사유(부상, 자리)까지만. ⚠️ 등번호를 확인하지 못해 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F477%2F2024%2F04%2F04%2F0000482807_001_20240404191605529.jpg&type=a340",
+     "쓰임": "1 (2024-04)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2025%2F05%2F24%2F0005312921_001_20250524131916255.jpg&type=a340",
+     "쓰임": "2 (2025-05)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2025%2F08%2F27%2F0001063289_002_20250827165014262.jpg&type=a340",
+     "쓰임": "3 (2025-08)"
+    }
+   ]
   },
   {
    "name": "김창평",
