@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  광고HTML, 광고블록, 광고있나, 광고넣기, 광고빼기, 광고만바뀌었나, 넣을자리, 표식,
+  광고HTML, 광고블록, 광고있나, 광고넣기, 광고빼기, 광고만바뀌었나, 넣을자리, 꼬리앞, 표식,
 } from '../src/wordpress/add-product-ad.mjs';
 import { ROOT } from '../src/utils/env.mjs';
 
@@ -97,14 +97,38 @@ console.log('\n[3] 본문과 섞이지 않는다');
 
 console.log('\n[4] 넣는 자리');
 {
-  const 본문 = '<!-- wp:paragraph -->\n<p>가나다</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:heading -->\n<h2>🔥 정리하면</h2>\n<!-- /wp:heading -->';
-  ok('「정리하면」이 있으면 그 앞', 넣을자리(본문).이름 === '정리하면 앞');
-  const 해시 = '<!-- wp:paragraph -->\n<p>가나다</p>\n<!-- /wp:paragraph -->\n\n<!-- wp:paragraph -->\n<p>#야구 #KBO</p>\n<!-- /wp:paragraph -->';
-  ok('없으면 해시태그 앞', 넣을자리(해시).이름 === '해시태그 앞');
-  ok('둘 다 없으면 본문 끝', 넣을자리('<p>가나다</p>').이름 === '본문 끝');
-  const a = 광고넣기(본문);
-  ok('정말 「정리하면」 앞에 들어간다', a.indexOf(표식) < a.indexOf('🔥 정리하면'));
-  ok('해시태그보다 앞에 들어간다', 광고넣기(해시).indexOf(표식) < 광고넣기(해시).indexOf('#야구'));
+  // ⚠️ 2026-11-14 에 여기서 틀렸다. 「🔥 정리하면」과 해시태그만 보다가
+  //    전체 미리보기에서 449편이 '본문 끝' 으로 떨어졌고, 그 자리는
+  //    하단 고정 바와 「같이 읽을 글」 상자보다도 **뒤**였다. 그 둘은
+  //    본문 뒤에 wp:html 로 붙어 있다. 아래가 그 재발을 막는다.
+  const 바 = '<!-- wp:html -->\n<div id="cpst">바</div>\n<!-- /wp:html -->';
+  const 관련 = '<!-- wp:html -->\n<aside>같이 읽을 글</aside>\n<!-- /wp:html -->';
+  const 문단 = '<!-- wp:paragraph -->\n<p>가나다</p>\n<!-- /wp:paragraph -->';
+  const FAQ = '<!-- wp:heading -->\n<h2>❓ 자주 묻는 질문</h2>\n<!-- /wp:heading -->';
+  const FAQ민 = '<!-- wp:heading -->\n<h2>자주 묻는 질문</h2>\n<!-- /wp:heading -->';
+  const 정리 = '<!-- wp:heading -->\n<h2>🔥 정리하면</h2>\n<!-- /wp:heading -->';
+  const 해시블록 = '<!-- wp:paragraph -->\n<p>#야구 #KBO</p>\n<!-- /wp:paragraph -->';
+
+  ok('「자주 묻는 질문」이 가장 앞선다', 넣을자리([문단, FAQ, 정리].join('\n\n')).이름 === '자주 묻는 질문 앞');
+  ok('이모지가 없어도 찾는다', 넣을자리([문단, FAQ민].join('\n\n')).이름 === '자주 묻는 질문 앞');
+  ok('FAQ 가 없으면 「정리하면」 앞', 넣을자리([문단, 정리].join('\n\n')).이름 === '정리하면 앞');
+  ok('둘 다 없으면 해시태그 앞', 넣을자리([문단, 해시블록].join('\n\n')).이름 === '해시태그 앞');
+  ok('앵커가 다 없으면 하단 바 앞', 넣을자리([문단, 바, 관련].join('\n\n')).이름 === '하단 바 앞');
+  ok('wp:html 도 없으면 본문 끝', 넣을자리(문단).이름 === '본문 끝');
+
+  // **실제로 그 앞에 들어가는가.** 이름만 맞고 자리가 틀리면 소용없다.
+  const 기존글 = [문단, FAQ, 정리, 바, 관련].join('\n\n');
+  const a = 광고넣기(기존글);
+  ok('FAQ 보다 앞에 들어간다', a.indexOf(표식) < a.indexOf('자주 묻는 질문'));
+  ok('하단 바보다 앞에 들어간다', a.indexOf(표식) < a.indexOf('id="cpst"'));
+  ok('「같이 읽을 글」보다 앞에 들어간다', a.indexOf(표식) < a.indexOf('같이 읽을 글'));
+
+  // 앵커가 하나도 없는 글에서도 꼬리 블록 뒤로 가면 안 된다.
+  const 앵커없음 = [문단, 바, 관련].join('\n\n');
+  const b = 광고넣기(앵커없음);
+  ok('앵커가 없어도 하단 바보다 앞이다', b.indexOf(표식) < b.indexOf('id="cpst"'));
+  ok('앵커가 없어도 「같이 읽을 글」보다 앞이다', b.indexOf(표식) < b.indexOf('같이 읽을 글'));
+  ok('앵커가 없어도 본문보다는 뒤다', b.indexOf(표식) > b.indexOf('가나다'));
 }
 
 console.log('\n[5] 넣기·빼기');
