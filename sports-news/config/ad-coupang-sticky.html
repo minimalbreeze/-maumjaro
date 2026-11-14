@@ -1,5 +1,6 @@
-<div id="cpst" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;border-top:1px solid #e5e7eb;padding:4px 8px 6px;box-shadow:0 -2px 10px rgba(0,0,0,.08)">
-<div id="cpst-in" style="position:relative;z-index:0">
+<div id="cpst" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;border-top:1px solid #e5e7eb;box-shadow:0 -2px 10px rgba(0,0,0,.08)">
+<button id="cpst-x" type="button" aria-label="광고 접기" aria-expanded="true" style="display:block;width:100%;box-sizing:border-box;margin:0;padding:9px 0;border:0;border-bottom:1px solid #e5e7eb;border-radius:0;background:#f1f5f9;color:#334155;font-size:13px;line-height:1.2;font-family:inherit;cursor:pointer;touch-action:manipulation;-webkit-appearance:none;appearance:none">광고 접기 ▾</button>
+<div id="cpst-in" style="padding:6px 8px 8px">
 <div style="font-size:12px;line-height:1.4;color:#555;margin:0 0 4px">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</div>
 <script src="https://ads-partners.coupang.com/g.js"></script>
 <script>
@@ -7,139 +8,103 @@
 </script>
 <iframe src="https://coupa.ng/ciwQYr" width="100%" height="44" frameborder="0" scrolling="no" referrerpolicy="unsafe-url" browsingtopics></iframe>
 </div>
-<button id="cpst-x" type="button" aria-label="닫기" style="position:fixed;right:8px;width:36px;height:36px;border-radius:18px;border:1px solid #e5e7eb;background:#fff;color:#555;font-size:19px;line-height:1;cursor:pointer;z-index:2147483647;pointer-events:auto;touch-action:manipulation;box-shadow:0 1px 4px rgba(0,0,0,.18);padding:0">×</button>
 </div>
 <script>
 (function(){
   var bar = document.getElementById('cpst');
-  if (!bar) return;
-  var KEY = 'cpst-closed';
-  // 닫으면 그 방문 동안 다시 뜨지 않는다. sessionStorage 가 막혀 있어도(사생활
-  // 보호 모드 등) 바는 그대로 뜬다 — 광고가 사라지는 쪽보다 낫다.
-  try { if (sessionStorage.getItem(KEY)) { bar.style.display = 'none'; return; } } catch (e) {}
-  // 겹쳐서 숨긴 상태인가. 여백() 이 이 값을 보므로 먼저 선언한다.
-  var 숨김 = false;
-  // 닫기 버튼이 바 위로 솟아 있는 높이. 여백과 겹침 검사가 함께 쓴다.
-  var 솟은높이 = 44;
+  var inner = document.getElementById('cpst-in');
   var x = document.getElementById('cpst-x');
-  // ── 닫기 버튼을 body 직속으로 옮긴다 (2026-11-14, 세 번째 손질) ──────
-  //
-  // 또 "닫기가 안 눌린다" 가 나왔다. 이번 원인은 쌓임 문맥이다.
-  //
-  // `#cpst` 는 z-index:9999 라 **스스로 쌓임 문맥을 만든다.** 그 안에 있는
-  // 버튼의 z-index:2147483647 은 **그 문맥 안에서만** 뜻이 있고, 페이지
-  // 전체에서는 9999 로 묶인다. 쿠팡 캐러셀이 자체 레이어를 더 높게 띄우면
-  // 버튼이 그 아래로 깔린다 — 보이기는 하는데 눌리지 않는다.
-  //
-  // 운영자 캡처에서 **고지문과 상품 사진이 같은 줄에 겹쳐** 있었다.
-  // 캐러셀이 제자리를 벗어나 위로 솟았다는 뜻이고, 그 레이어가 버튼을 덮었다.
-  //
-  // z-index 를 더 올려도 소용없다. 문맥 밖으로 나가야 한다.
-  // body 직속이면 2147483647 이 페이지 전체에서 먹는다.
-  if (x && document.body && x.parentNode !== document.body) {
-    try { document.body.appendChild(x); } catch (e) {}
-  }
-  // **click 하나만 받는다.** (2026-11-10, 두 번째 손질)
-  //
-  // 한때 pointerdown 도 함께 받았다. 버튼 아래 절반이 쿠팡 캐러셀에 덮여 있던
-  // 시절, 위젯이 클릭을 가로채도 먼저 들어오라고 넣은 보조 장치였다.
-  //
-  // ⚠️ 그런데 pointerdown 에서 바를 숨기면 **버튼이 그 자리에서 사라진다.**
-  //    뒤이어 오는 click 은 그 지점에 새로 온 것 위로 떨어진다 — 클릭이 아래로
-  //    새는 것이다. 처음에 고쳤던 버그와 **같은 종류**이고, 그 아래가 광고였다면
-  //    다시 실수 클릭이 된다.
-  //
-  // 지금은 버튼이 광고 영역 바깥에 있어 가로채일 일이 없다. 보조 장치를 둘
-  // 이유가 사라졌으므로 **클릭이 끝난 뒤에 숨기는 쪽**으로 되돌린다.
-  // click 은 버튼 위에서 눌렀다 뗐을 때만 오고, 그때 대상은 이미 정해져 있다.
-  function 닫기(e) {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
-    bar.style.display = 'none';
-    if (x) x.style.display = 'none';
-    document.body.style.paddingBottom = '';
-    try { sessionStorage.setItem(KEY, '1'); } catch (e2) {}
-  }
-  if (x) x.addEventListener('click', 닫기);
+  if (!bar || !inner || !x) return;
+  var KEY = 'cpst-folded';
 
-  // ── 콘텐츠 보호 플러그인이 클릭을 가로챈다 (2026-11-14, 네 번째 손질) ──
+  // ── 왜 '접기' 인가 (2026-11-14, 네 번째 손질) ────────────────────────
   //
-  // 운영자 캡처에 **"ALERT: Content is protected !!"** 가 떴다. 이 사이트에
-  // 복사·우클릭 방지 플러그인이 깔려 있고, 그것이 document 에서 클릭을 잡아
-  // 막는다. 그래서 버튼까지 이벤트가 **도달하지 않는다.**
+  // 닫기 버튼을 세 번 고쳤고 세 번 다 틀렸다. 운영자: **"아직도 하단 쿠팡
+  // 광고 닫기 버튼이 없다. 안 되면 닫기 말고 접기로 하던지."**
   //
-  // 전에 운영자가 "쿠팡 광고창 닫힘 에러문구뜸" 이라고 한 것도 같은 증상인데,
-  // 그때는 '클릭이 아래로 샌다' 로 잘못 읽고 z-index 와 자리만 손봤다.
-  // z-index 로는 못 푼다 — 이벤트가 오지 않는 것이 문제다.
+  // 틀린 이유는 매번 같았다 — 버튼을 바 **위에 띄워** 놓고 z-index 와 자리를
+  // 계산했기 때문이다. 띄우면 계산이 틀리거나 다른 레이어에 덮인다.
   //
-  // 그래서 **document 의 캡처 단계**에서 먼저 받는다. 캡처는 document 에서
-  // 대상으로 내려가는 단계라, 버블 단계에서 막는 플러그인보다 앞선다.
-  // 같은 노드에 캡처로 붙은 리스너끼리는 등록 순서지만, 플러그인이
-  // stopImmediatePropagation 까지 쓰지 않으면 우리 쪽도 실행된다.
+  //   1차: 버튼 아래 절반이 캐러셀에 덮여 누르면 광고가 열렸다
+  //   2차: z-index 를 올렸지만 #cpst 가 쌓임 문맥이라 9999 로 묶였다
+  //   3차: body 직속 fixed 로 옮겼더니 **화면 밖으로 갔다**
   //
-  // ⚠️ click 만 받지 않는다. 플러그인이 click 자체를 죽이는 경우가 있어
-  //    pointerup·touchend 도 본다. 셋 다 **버튼 위에서 뗐을 때만** 닫으므로
-  //    클릭이 아래로 새지 않는다(pointerdown 에서 닫던 옛 버그와 다르다).
+  // 그래서 **띄우지 않는다.** 바 안 맨 위에 전체 너비 띠로 박는다.
+  //   · 흐름대로 배치되므로 화면 밖으로 갈 수가 없다 (자리 계산이 없다)
+  //   · 광고보다 **위에** 있으므로 덮일 수가 없다 (z-index 가 필요 없다)
+  //   · 전체 너비라 손가락으로 빗나갈 일이 없다
+  //
+  // 닫기가 아니라 접기다. 접으면 광고만 숨고 띠는 남아, 다시 펼 수 있다.
+  var 접힘 = false;
+  try { 접힘 = !!sessionStorage.getItem(KEY); } catch (e) {}
+
+  function 그리기() {
+    inner.style.display = 접힘 ? 'none' : '';
+    x.textContent = 접힘 ? '광고 펼치기 ▴' : '광고 접기 ▾';
+    x.setAttribute('aria-expanded', 접힘 ? 'false' : 'true');
+    여백();
+  }
+  function 접기토글(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    접힘 = !접힘;
+    try {
+      if (접힘) sessionStorage.setItem(KEY, '1');
+      else sessionStorage.removeItem(KEY);
+    } catch (e2) {}
+    그리기();
+  }
+  x.addEventListener('click', 접기토글);
+
+  // ── 콘텐츠 보호 플러그인이 클릭을 가로챈다 ───────────────────────────
+  //
+  // 운영자 캡처에 **"ALERT: Content is protected !!"** 가 떴다. 복사·우클릭
+  // 방지 플러그인이 document 에서 클릭을 잡아 막아, 버튼까지 이벤트가
+  // 도달하지 않는다. 그래서 **캡처 단계**에서 먼저 받는다 — 캡처는
+  // document 에서 대상으로 내려가는 단계라 버블에서 막는 쪽보다 앞선다.
+  //
+  // ⚠️ 누를 때가 아니라 **뗄 때** 접는다. pointerdown 에서 접으면 버튼이
+  //    움직여 뒤이은 click 이 아래 광고로 떨어진다(실수 클릭).
   function 버튼위인가(t) {
     for (; t; t = t.parentNode) if (t === x) return true;
     return false;
   }
   function 가로채기(e) {
-    if (!x || x.style.display === 'none') return;
     if (!버튼위인가(e.target)) return;
     e.stopPropagation();
     if (e.stopImmediatePropagation) e.stopImmediatePropagation();
     e.preventDefault();
-    닫기();
+    접기토글();
   }
   try {
     document.addEventListener('click', 가로채기, true);
     document.addEventListener('pointerup', 가로채기, true);
     document.addEventListener('touchend', 가로채기, true);
   } catch (e) {}
+
   // 바가 글 마지막 줄을 덮지 않게 아래 여백을 준다. 캐러셀이 늦게 그려지므로
-  // 높이를 한 번 더 잰다 — 처음 잰 값만 쓰면 여백이 모자란다.
-  // ⚠️ 숨어 있을 때는 여백을 주지 않는다. resize 때 여백() 이 먼저 돌고
-  //    겹침확인() 은 "상태가 그대로면" 아무것도 안 하므로, 이 줄이 없으면
-  //    **숨은 채로 아래 여백만 남는다** — 글 끝에 빈 칸이 생긴다.
-  // 버튼이 body 직속 fixed 라, 바 높이가 바뀌면 자리를 다시 잡아 준다.
-  // 캐러셀이 늦게 그려져 높이가 변하므로 여백() 과 같은 박자로 돈다.
-  function 버튼자리() {
-    if (!x) return;
-    if (숨김 || bar.style.display === 'none') { x.style.display = 'none'; return; }
-    x.style.display = '';
-    x.style.bottom = (bar.offsetHeight + 8) + 'px';
-  }
+  // 높이를 한 번 더 잰다. 버튼이 바 안에 있으므로 따로 더할 높이가 없다.
+  var 숨김 = false;
   function 여백() {
-    if (숨김) { document.body.style.paddingBottom = ''; 버튼자리(); return; }
-    document.body.style.paddingBottom = (bar.offsetHeight + 솟은높이 + 12) + 'px';
-    버튼자리();
+    document.body.style.paddingBottom = 숨김 ? '' : (bar.offsetHeight + 12) + 'px';
   }
-  여백();
+  그리기();
   setTimeout(여백, 1500);
   window.addEventListener('resize', 여백);
 
-  // ── 구글 광고를 덮지 않는다 (2026-11-09) ──────────────────────────
+  // ── 구글 광고를 덮지 않는다 ──────────────────────────────────────────
   //
-  // 이 바는 position:fixed; bottom:0; z-index:9999 다. 위의 여백은 **글
-  // 마지막 줄**만 지킨다 — 스크롤 중에 본문 광고가 바 뒤로 지나가면 덮인다.
   // 애드센스는 광고가 다른 요소에 가려지는 것을 허용하지 않는다. 자동 광고의
-  // 앵커 광고가 켜져 있으면 그것도 bottom:0 이라 같은 자리에서 겹친다.
+  // 앵커 광고도 bottom:0 이라 같은 자리에서 겹친다. fixed 요소는 z-index 를
+  // 낮춰도 본문 광고 위에 그려지므로(쌓임 문맥이 다르다) 겹치면 **우리 바를
+  // 숨긴다.** 숨기는 쪽이 우리 바다 — 애드센스가 정책으로 묶인 쪽이고
+  // 수익도 크다.
   //
-  // fixed 요소는 z-index 를 낮춰도 본문 광고 위에 그려진다(쌓임 문맥이
-  // 달라서다). 그래서 z-index 를 만지는 것으로는 안 풀린다. 겹치는지
-  // 재서 겹치면 **우리 바를 숨긴다.**
-  //
-  // 숨기는 쪽이 우리 바다. 애드센스가 정책으로 묶인 쪽이고 수익도 크다.
-  // 쿠팡 바는 겹치지 않는 자리에서 다시 보인다.
-  //
-  // ⚠️ 재는 데 실패하면 **지금까지의 동작(바가 보임)을 그대로 둔다.**
-  //    코드 한 줄이 틀렸을 때 모든 글에서 쿠팡 광고가 사라지는 쪽이 더 나쁘다.
+  // ⚠️ 재는 데 실패하면 지금까지의 동작(바가 보임)을 그대로 둔다.
   function 구글광고들() {
     var 것들 = [];
     try {
       var ins = document.querySelectorAll('ins.adsbygoogle');
       for (var i = 0; i < ins.length; i++) 것들.push(ins[i]);
-      // 앵커 광고는 body 에 붙는 iframe 으로 그려진다.
       var ifr = document.querySelectorAll('iframe');
       for (var j = 0; j < ifr.length; j++) {
         var src = ifr[j].src || '';
@@ -151,17 +116,14 @@
   }
   function 겹침확인() {
     try {
-      if (bar.style.display === 'none') return;
       var r = bar.getBoundingClientRect();
       if (!r.height) return;
-      // 닫기 버튼이 솟은 자리까지 포함해서 잰다 — 버튼이 광고를 덮어도 안 된다.
-      var b = { top: r.top - 솟은높이, bottom: r.bottom, left: r.left, right: r.right };
       var 겹친다 = false;
       var 광고 = 구글광고들();
       for (var i = 0; i < 광고.length; i++) {
         var a = 광고[i].getBoundingClientRect();
         if (!a.width || !a.height) continue;
-        if (a.bottom > b.top && a.top < b.bottom && a.right > b.left && a.left < b.right) {
+        if (a.bottom > r.top && a.top < r.bottom && a.right > r.left && a.left < r.right) {
           겹친다 = true;
           break;
         }
@@ -170,9 +132,7 @@
         숨김 = 겹친다;
         // visibility 를 쓴다 — display 를 건드리면 캐러셀이 다시 그려진다.
         bar.style.visibility = 겹친다 ? 'hidden' : '';
-        // 버튼은 body 직속이라 바를 숨겨도 따라 사라지지 않는다. 같이 숨긴다.
-        if (x) x.style.visibility = 겹친다 ? 'hidden' : '';
-        document.body.style.paddingBottom = 겹친다 ? '' : (bar.offsetHeight + 솟은높이 + 12) + 'px';
+        여백();
       }
     } catch (e) {}
   }

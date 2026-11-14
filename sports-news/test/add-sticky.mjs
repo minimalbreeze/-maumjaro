@@ -151,28 +151,6 @@ check('고지문이 광고보다 앞에 있고 읽히는 크기다', () => {
   assert.ok(명암비 >= 4.5, `고지문 명암비가 ${명암비.toFixed(2)} 입니다 — 4.5 이상이어야 합니다`);
 });
 
-check('닫기 버튼이 쌓임 문맥 밖으로 나간다 (body 직속)', () => {
-  const html = 바HTML();
-  // ⚠️ 2026-11-14, 세 번째 손질. "닫기가 안 눌린다" 가 또 나왔다.
-  //
-  //    `#cpst` 는 z-index:9999 라 **스스로 쌓임 문맥을 만든다.** 그 안의
-  //    버튼은 z-index 를 아무리 올려도 페이지 전체에서는 9999 로 묶인다.
-  //    쿠팡 캐러셀이 더 높은 레이어를 띄우면 버튼이 덮인다 — 보이는데
-  //    안 눌린다. z-index 로는 못 푼다. 문맥 밖으로 나가야 한다.
-  assert.ok(/document\.body\.appendChild\(x\)/.test(html),
-    '닫기 버튼을 body 로 옮기지 않습니다 — #cpst 안에 있으면 z-index 가 9999 로 묶입니다');
-  assert.ok(/id="cpst-x"[^>]*position:fixed/.test(html),
-    'body 직속으로 옮기므로 버튼은 position:fixed 여야 합니다');
-  // 바 높이가 변하면(캐러셀이 늦게 그려진다) 자리를 다시 잡아야 한다.
-  assert.ok(/function 버튼자리\(\)/.test(html) && /x\.style\.bottom = \(bar\.offsetHeight/.test(html),
-    '버튼 자리를 바 높이에 맞춰 갱신하지 않습니다');
-  // 바를 숨기거나 닫을 때 버튼만 남으면 안 된다.
-  assert.ok(/x\.style\.display = 'none'/.test(html),
-    '닫을 때 버튼이 같이 사라지지 않습니다');
-  assert.ok(/x\.style\.visibility = 겹친다/.test(html),
-    '구글 광고와 겹쳐 바를 숨길 때 버튼이 같이 숨지 않습니다');
-});
-
 check('콘텐츠 보호 플러그인이 가로채도 닫힌다', () => {
   const html = 바HTML();
   // ⚠️ 2026-11-14. 운영자 캡처에 "ALERT: Content is protected !!" 가 떴다.
@@ -199,23 +177,6 @@ check('콘텐츠 보호 플러그인이 가로채도 닫힌다', () => {
 
 // 버튼이 바 위로 솟은 만큼 본문 여백도 더 줘야 마지막 줄을 안 덮는다.
 // 겹침 검사도 그 자리를 포함해서 재야 버튼이 구글 광고를 덮지 않는다.
-check('솟은 높이를 여백과 겹침 검사가 함께 쓴다', () => {
-  const html = 바HTML();
-  assert.match(html, /var 솟은높이 = \d+;/, '솟은높이 를 두지 않았습니다');
-  assert.match(html, /bar\.offsetHeight \+ 솟은높이/, '본문 여백이 솟은 높이를 더하지 않습니다');
-  assert.match(html, /top: r\.top - 솟은높이/, '겹침 검사가 솟은 자리를 보지 않습니다');
-});
-
-check('닫기 버튼이 쿠팡 영역보다 위에 그려진다', () => {
-  const html = 바HTML();
-  assert.match(html, /id="cpst-in"[^>]*z-index:0/, '쿠팡 영역을 z-index:0 상자로 감싸지 않았습니다');
-  const 안쪽끝 = html.indexOf('</div>', html.indexOf('id="cpst-in"'));
-  const 버튼 = html.indexOf('id="cpst-x"');
-  assert.ok(안쪽끝 > 0 && 버튼 > 안쪽끝, '닫기 버튼이 쿠팡 영역보다 앞에 있습니다 (뒤에 와야 위에 그려집니다)');
-  const m = html.match(/id="cpst-x"[\s\S]*?z-index:(\d+)/);
-  assert.ok(m && Number(m[1]) >= 2147483647, '닫기 버튼 z-index 가 최대가 아닙니다');
-});
-
 check('닫기는 click 하나만 받는다 — pointerdown 으로 숨기지 않는다', () => {
   const html = 바HTML();
   assert.match(html, /addEventListener\('click'/, 'click 을 받지 않습니다');
