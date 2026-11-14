@@ -7610,6 +7610,18 @@ await asyncTest('올릴 거리 지시의 번호가 겹치지 않는다', async (
   }
 });
 
+await asyncTest('제목의 why 를 짧게 못 박는다', async () => {
+  // 2026-11-14. 제목 규칙에 네 길(①②③④)을 넣었더니 모델이 why 를
+  // 서너 줄씩 썼고, 그 분량이 출력을 먹어 **설명문과 태그가 통째로
+  // 비었다**(14화). 제목은 다 나왔는데 설명문이 고지문만 남았다.
+  // 규칙을 더할 때는 출력 어디가 밀리는지도 같이 본다.
+  const { UPLOAD_SCHEMA } = await import('../src/upload/pack.mjs');
+  const why = UPLOAD_SCHEMA.properties.titles.items.properties.why;
+  assert.ok(why.description.includes('한 문장'), 'why 를 한 문장으로 못 박지 않았습니다');
+  assert.ok(/\d+자/.test(why.description), 'why 길이 상한이 없습니다');
+  assert.ok(why.description.includes('잘린다'), '왜 짧아야 하는지를 안 적었습니다');
+});
+
 await asyncTest('제목을 세게 만드는 길을 적어 둔다', async () => {
   // 2026-11-14 운영자: "동영상, 쇼츠 제목을 좀더 자극적으로"
   //

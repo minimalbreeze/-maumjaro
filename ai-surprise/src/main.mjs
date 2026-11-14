@@ -1384,6 +1384,17 @@ async function cmdUpload(flags) {
     kind: loaded.research?.kind,
   });
   log.ok(`설명문 ${description.length}자, 태그 ${pack.tags.length}개`);
+  // ⚠️ 2026-11-14. 14화에서 설명문 본문과 태그가 **통째로 비어** 나왔다.
+  //    제목의 why 가 길어져 출력 분량을 먹은 탓인데, 로그에는
+  //    "설명문 252자" 로 찍혀 멀쩡해 보였다 — 252자는 코드가 붙이는
+  //    고지문과 출처뿐이었다. 조용히 비는 종류라 소리내어 잡는다.
+  if (!String(pack.descriptionBody || '').trim()) {
+    log.warn('설명문 본문이 비었습니다 — 지금 적힌 것은 코드가 붙인 고지문과 출처뿐입니다.');
+    log.info('모델 출력이 중간에 잘린 것입니다. 올릴 거리만 다시 만들면 됩니다(약 $0.1).');
+  }
+  if (!pack.tags.length) {
+    log.warn('태그가 하나도 없습니다 — 유튜브가 이 영상을 무엇으로 분류할지 모릅니다.');
+  }
 
   // ── 썸네일
   let moments = [];
