@@ -17,7 +17,59 @@
       "license": "CC BY",
       "credit": "Neo Soul — danyvin (CC BY) · archive.org/details/jamendo-302103",
       "source": "https://archive.org/details/jamendo-302103"
+    },
+    {
+      "file": "jamendo-639484.mp3",
+      "title": "Deep Calm Flow",
+      "artist": "Megis",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Deep Calm Flow — Megis (CC BY) · archive.org/details/jamendo-639484",
+      "source": "https://archive.org/details/jamendo-639484"
+    },
+    {
+      "file": "jamendo-352410.mp3",
+      "title": "Straight Talk",
+      "artist": "Nick Gordy",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Straight Talk — Nick Gordy (CC BY) · archive.org/details/jamendo-352410",
+      "source": "https://archive.org/details/jamendo-352410"
+    },
+    {
+      "file": "jamendo-194293.mp3",
+      "title": "Wet Garden",
+      "artist": "JGMillan",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Wet Garden — JGMillan (CC BY) · archive.org/details/jamendo-194293",
+      "source": "https://archive.org/details/jamendo-194293"
+    },
+    {
+      "file": "jamendo-581719.mp3",
+      "title": "A Serpent I Did Hear",
+      "artist": "Pierce Murphy",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "A Serpent I Did Hear — Pierce Murphy (CC BY) · archive.org/details/jamendo-581719",
+      "source": "https://archive.org/details/jamendo-581719"
     }
   ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    "jamendo-322365",
+    "jamendo-352363",
+    "jamendo-325729",
+    "jamendo-272690",
+    "jamendo-404285",
+    "jamendo-473949",
+    "jamendo-211539",
+    "jamendo-626925",
+    "jamendo-095070",
+    "jamendo-157644",
+    "jamendo-292487",
+    "jamendo-139680",
+    "jamendo-364124",
+    "jamendo-156464"
+  ]
 }
