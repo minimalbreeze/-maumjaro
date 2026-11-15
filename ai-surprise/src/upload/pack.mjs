@@ -142,7 +142,7 @@ export const UPLOAD_SCHEMA = {
   // strict 도구는 additionalProperties:false 가 없으면 400으로 거부한다.
   // 안쪽 객체까지 전부 붙여야 한다 — 하나만 빠져도 호출이 통째로 죽는다.
   additionalProperties: false,
-  required: ['titles', 'thumbnails', 'description', 'tags'],
+  required: ['titles', 'thumbnails', 'tags', 'description'],
   properties: {
     titles: {
       type: 'array',
@@ -178,8 +178,15 @@ export const UPLOAD_SCHEMA = {
         },
       },
     },
-    description: { type: 'string', description: '설명문. 줄바꿈 포함.' },
+    // ⚠️ 2026-11-14~15. 차례가 중요하다. **긴 것을 뒤에 둔다.**
+    //
+    //    출력이 길어지면 뒤에 있는 칸부터 잘린다. 14화에서는 제목의
+    //    why 가 길어 설명문과 태그가 둘 다 비었고, 다시 만들었더니
+    //    이번엔 설명문이 1,060자로 길어져 **태그만** 비었다.
+    //    태그는 열다섯 낱말뿐이라 앞에 두면 거의 안 잘린다.
+    //    설명문은 길어도 앞부분이 남으면 쓸 수 있다.
     tags: { type: 'array', description: '태그 10~15개', items: { type: 'string' } },
+    description: { type: 'string', description: '설명문. 줄바꿈 포함.' },
   },
 };
 

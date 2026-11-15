@@ -7610,6 +7610,21 @@ await asyncTest('올릴 거리 지시의 번호가 겹치지 않는다', async (
   }
 });
 
+await asyncTest('올릴 거리 스키마는 짧은 칸을 앞에 둔다', async () => {
+  // 2026-11-14~15. 출력이 길어지면 **뒤에 있는 칸부터 잘린다.**
+  // 14화에서 제목의 why 가 길어 설명문과 태그가 둘 다 비었고,
+  // 다시 만들었더니 설명문이 1,060자로 길어져 태그만 비었다.
+  // 태그는 열다섯 낱말뿐이라 앞에 두면 거의 안 잘린다.
+  const { UPLOAD_SCHEMA } = await import('../src/upload/pack.mjs');
+  const keys = Object.keys(UPLOAD_SCHEMA.properties);
+  assert.ok(
+    keys.indexOf('tags') < keys.indexOf('description'),
+    '태그가 설명문 뒤에 있습니다 — 길어지면 태그부터 잘립니다'
+  );
+  const req = UPLOAD_SCHEMA.required;
+  assert.ok(req.indexOf('tags') < req.indexOf('description'), 'required 차례도 같이 맞춥니다');
+});
+
 await asyncTest('제목의 why 를 짧게 못 박는다', async () => {
   // 2026-11-14. 제목 규칙에 네 길(①②③④)을 넣었더니 모델이 why 를
   // 서너 줄씩 썼고, 그 분량이 출력을 먹어 **설명문과 태그가 통째로
