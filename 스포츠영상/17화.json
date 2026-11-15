@@ -136,7 +136,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ 이번 대회 대표팀 사진을 쓴다. team·number 는 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F15%2F0005641123_001_20261115212309986.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-15 결승)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F15%2F0005641124_001_20261115212312073.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-15 결승)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F14%2F0005640609_001_20261114201918845.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-14 대만전)"
+    }
+   ]
   },
   {
    "name": "김도영",
