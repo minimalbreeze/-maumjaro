@@ -142,6 +142,8 @@ on:
           - '휴지통 링크를 남긴 글로 돌려주기 (실제 적용 · 비용 0원)'
           - '중복 글 휴지통으로 보내기 (미리보기 · 비용 0원)'
           - '중복 글 휴지통으로 보내기 (실제 적용 · 비용 0원)'
+          - '휴지통에서 되살리기 (미리보기 · 비용 0원)'
+          - '휴지통에서 되살리기 (실제 적용 · 비용 0원)'
           - '임시글 발행하기 (미리보기 · 비용 0원)'
           - '임시글 발행하기 (실제 발행 · 비용 0원)'
           - '주소의 이미지를 우리 미디어에 올리기 (미리보기 · 비용 0원)'
@@ -1285,6 +1287,37 @@ jobs:
             *) for id in $IN_IDS; do args+=( "$id" ); done ;;
           esac
           node src/wordpress/drop-body-ad.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
+
+      - name: 휴지통에서 되살리기
+        # delete-post.mjs 는 휴지통으로만 보낸다(영구 삭제 길을 일부러 안
+        # 만들었다). 그런데 되돌리는 길이 코드에 없어서, 판단이 바뀌면
+        # 워드프레스 관리자 화면을 직접 열어야 했다. 2026-11-15 에 실제로
+        # 그 일이 났다 — 노시환 중복 글을 1번(합치고 삭제)으로 처리한 뒤
+        # 2번(각도를 갈라 둘 다 남김)으로 바꿨다.
+        #
+        # ⚠️ 워드프레스는 휴지통에 넣을 때 슬러그 끝에 __trashed 를 붙인다.
+        #    상태만 되돌리면 주소가 그대로 남아 링크가 전부 깨진다. 그래서
+        #    상태와 슬러그를 함께 되돌린다.
+        #
+        # 임시글로 되살린다 — 되살리는 것과 다시 내보내는 것은 다른 결정이다.
+        if: ${{ contains(inputs.mode, '되살리기') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_IDS" ]; then
+            echo "::error::되살릴 글 번호를 적어주세요 (post_ids)"; exit 1
+          fi
+          args=()
+          for id in $IN_IDS; do args+=( "$id" ); done
+          case "$IN_MODE" in *실제\ 적용*) args+=( --apply ) ;; esac
+          node src/wordpress/restore-post.mjs "${args[@]}" 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
       - name: 하단 바를 실제 페이지에서 재기
