@@ -305,7 +305,19 @@ export async function makeUploadPack(item, { scriptMarkdown = '', minutes = 0, m
     description: '올릴 때 쓸 제목·썸네일 문구·설명문·태그를 제출한다',
     schema: UPLOAD_SCHEMA,
     model,
-    maxTokens: 4000,
+    // ⚠️ 2026-11-15. 4,000 이었다. 그런데 이 호출은 `thinking: adaptive`
+    //    에 `effort: 'high'` 로 돌아서, **생각하는 토큰이 여기서 나간다.**
+    //    한국어는 글자당 토큰이 비싸고 설명문이 900자쯤 되는데, 생각이
+    //    먼저 먹고 나면 쓸 자리가 안 남는다.
+    //
+    //    그래서 설명문이 세 번 비었다 — 14화에서 설명문·태그 둘 다,
+    //    다시 만들었을 때 태그만, 17화에서 또 설명문만. 그때마다 다른
+    //    데를 고쳤다(제목 why 줄이기, 태그를 설명문 앞으로). 둘 다
+    //    도움은 됐지만 **진짜 원인은 분량 상한이었다.**
+    //
+    //    max_tokens 는 상한일 뿐이라 안 쓰면 돈이 안 나간다. 아낄 이유가
+    //    없는 자리였다.
+    maxTokens: 16000,
   });
   const filtered = filterCandidates(raw);
   return {

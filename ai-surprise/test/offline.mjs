@@ -7610,6 +7610,26 @@ await asyncTest('올릴 거리 지시의 번호가 겹치지 않는다', async (
   }
 });
 
+await asyncTest('올릴 거리는 분량 상한이 넉넉하다', async () => {
+  // 2026-11-15. 설명문이 세 번 비었다. 그때마다 다른 데를 고쳤는데
+  // (제목 why 줄이기, 태그를 설명문 앞으로) **진짜 원인은 분량 상한**
+  // 이었다. 이 호출은 thinking: adaptive + effort: high 로 돌아서
+  // 생각하는 토큰이 max_tokens 에서 나간다. 한국어는 글자당 토큰이
+  // 비싸고 설명문이 900자쯤 되는데, 4,000 으로는 자리가 안 남았다.
+  //
+  // max_tokens 는 상한일 뿐이라 안 쓰면 돈이 안 나간다.
+  const src = fs.readFileSync(
+    new URL('../src/upload/pack.mjs', import.meta.url).pathname,
+    'utf8'
+  );
+  const m = src.match(/maxTokens:\s*(\d+)/);
+  assert.ok(m, 'maxTokens 가 없습니다');
+  assert.ok(
+    Number(m[1]) >= 12000,
+    `올릴 거리 분량 상한이 ${m[1]} 입니다 — 생각 토큰까지 빠지면 설명문이 잘립니다`
+  );
+});
+
 await asyncTest('올릴 거리 스키마는 짧은 칸을 앞에 둔다', async () => {
   // 2026-11-14~15. 출력이 길어지면 **뒤에 있는 칸부터 잘린다.**
   // 14화에서 제목의 why 가 길어 설명문과 태그가 둘 다 비었고,
