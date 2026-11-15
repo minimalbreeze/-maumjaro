@@ -4099,13 +4099,13 @@ await asyncTest('스포츠 화면 지시가 선수 이름을 쓰지 말라고 �
   assert.ok(!V.visualsSystemFor('TALE').includes('선수 이름을'), '동화에 스포츠 지시가 섞였습니다');
 });
 
-await asyncTest('스포츠는 쇼츠를 네 개 뽑는다', async () => {
+await asyncTest('스포츠는 쇼츠를 열 개 뽑는다', async () => {
   const S = await import('../src/video/shorts.mjs');
   // 다섯 → 여덟 → 열로 왔다. 처음엔 올리는 리듬(화~금 넷)에서 나온
   // 숫자였는데, 성적을 보니 **쇼츠가 전부**였고(유입 96% 가 Shorts 피드)
   // **이탈이 73.4%** 였다. 짧게 자르면 완주율이 오르고 개수도 는다.
   // 9분대 대본에서 40~70초로 열까지는 겹침이 11초(2%)다.
-  assert.equal(S.shortsCountFor('SPORTS'), 4);
+  assert.equal(S.shortsCountFor('SPORTS'), 10);
   assert.equal(S.shortsCountFor('TALE'), 3, '동화까지 늘어나면 서로 겹칩니다');
   assert.equal(S.shortsCountFor('EVENT'), 3);
 });
@@ -4129,7 +4129,7 @@ await asyncTest('스포츠 섹션에 점수가 매겨져 있다', async () => {
   // 개수는 **목표지 약속이 아니다.** 이 가짜 대본은 520초뿐이라 안 겹치고
   // 열 편을 담을 수 없다. 그럴 때는 적게 뽑는 것이 맞다 — 같은 대목이 두
   // 번 올라가면 두 편 다 손해다. 그래서 하한만 본다.
-  assert.ok(picked.length >= 4, `${picked.length}편뿐입니다 — 점수가 안 매겨진 것 같습니다`);
+  assert.ok(picked.length >= 5, `${picked.length}편뿐입니다 — 점수가 안 매겨진 것 같습니다`);
   assert.ok(picked.length <= 10, `${picked.length}편은 요청(10)보다 많습니다`);
   // 이 검사의 본뜻은 개수가 아니라 **값이 매겨졌는가**다. 점수가 없으면
   // 순위가 길이로만 정해지고, 1화에서 실제로 ACE 가 통째로 빠졌다.
@@ -5308,10 +5308,10 @@ section('4-r. 쇼츠를 여덟 편으로 늘린다');
 
 const shortsMod = await import('../src/video/shorts.mjs');
 
-test('스포츠만 네 편 40~70초, 나머지는 그대로', () => {
+test('스포츠만 열 편 40~70초, 나머지는 그대로', () => {
   // 본편보다 쇼츠 반응이 좋아서 늘렸다. 다른 종류까지 같이 바꾸면
   // 이야기 편이 토막난다 — 거기는 한 편이 완결돼야 한다.
-  assert.equal(shortsMod.shortsCountFor('SPORTS'), 4);
+  assert.equal(shortsMod.shortsCountFor('SPORTS'), 10);
   assert.deepEqual(shortsMod.shortsLengthFor('SPORTS'), { min: 40, max: 70 });
   assert.equal(shortsMod.shortsCountFor('TALE'), 3);
   assert.deepEqual(shortsMod.shortsLengthFor('TALE'), { min: 60, max: 90 });
@@ -5344,7 +5344,7 @@ test('길이를 안 넘기면 0초가 되지 않는다', () => {
   assert.ok(narrow.every((p) => p.duration >= 100), '넘긴 길이를 안 씁니다');
 });
 
-test('네 편이 서로 거의 안 겹친다', () => {
+test('열 편이 서로 거의 안 겹친다', () => {
   // 늘리면 같은 내용이 두 쇼츠에 들어갈 위험이 커진다. 9분대 대본에서
   // 겹침이 전체의 5%를 넘으면 개수를 다시 생각해야 한다.
   // 열 편(평균 53초)을 담으려면 9분대 본편이 있어야 한다. 재료를 모자라게
@@ -5358,7 +5358,7 @@ test('네 편이 서로 거의 안 겹친다', () => {
     })),
   }));
   const picked = shortsMod.pickShorts(scenes, { kind: 'SPORTS' });
-  assert.equal(picked.length, 4, `${picked.length}편만 나왔습니다`);
+  assert.equal(picked.length, 10, `${picked.length}편만 나왔습니다`);
   const spans = picked.map((p) => [p.start, p.end]).sort((a, b) => a[0] - b[0]);
   let overlap = 0;
   for (let i = 1; i < spans.length; i++) overlap += Math.max(0, spans[i - 1][1] - spans[i][0]);
@@ -5482,7 +5482,7 @@ await asyncTest('실제 대본에서 시작이 약한 쇼츠가 없다', async (
   for (const sec of plan.sections) values[sec.key] = sec.value ?? (sec.key === 'HOOK' ? 100 : 20);
   const picked = S3.pickShorts(scenes, { kind: 'SPORTS', sectionValues: values });
 
-  assert.ok(picked.length >= 4, `${picked.length}편뿐입니다`);
+  assert.ok(picked.length >= 8, `${picked.length}편뿐입니다`);
   for (const p of picked) {
     const first = String(p.paragraphs[0].text).trim();
     const weak = BACKREF.find((w) => first.startsWith(w));
@@ -5495,7 +5495,7 @@ await asyncTest('실제 대본에서 시작이 약한 쇼츠가 없다', async (
     const last = String(p.paragraphs[p.paragraphs.length - 1].text).trim();
     return Q.test(last) || CURIOUS.some((w) => last.endsWith(w));
   });
-  assert.ok(curious.length >= 2, `끝이 궁금한 쇼츠가 ${curious.length}편뿐입니다`);
+  assert.ok(curious.length >= 3, `끝이 궁금한 쇼츠가 ${curious.length}편뿐입니다`);
 });
 
 await asyncTest('쇼츠가 실제 음성 길이를 쓴다 — 글자 수로 다시 추정하지 않는다', async () => {
