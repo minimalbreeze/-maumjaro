@@ -79,10 +79,49 @@ async function main() {
     else log.info(`      주소  : ${post.slug} (그대로)`);
     센것 += 1;
     if (!apply) continue;
-    await wpFetch(`/wp/v2/posts/${id}`, {
-      method: 'POST',
-      body: { status: 'draft', slug: 새슬러그 },
-    });
+    // ⚠️ **두 번에 나눠 보낸다** (2026-11-15).
+    //
+    //    처음에는 { status, slug } 를 한 번에 보냈다. 요청은 200 으로
+    //    돌아왔는데 **상태가 trash 그대로였다.** 워드프레스가 휴지통 글의
+    //    슬러그를 스스로 관리하는데(`__trashed` 접미사), 같은 요청에서
+    //    슬러그를 손대면 상태 변경 쪽이 묻힌다.
+    //
+    //    그래서 ① 상태만 되돌리고 ② 그 다음 슬러그를 고친다.
+    await wpFetch(`/wp/v2/posts/${id}`, { method: 'POST', body: { status: 'draft' } });
+    // ⚠️ **보내고 끝내지 않는다. 읽어서 확인한다.** 처음 판은 응답을 보지
+    //    않아 "되살렸습니다" 를 찍고도 실제로는 아무것도 안 바뀌어 있었다.
+    let 확인;
+    try {
+      const { data } = await wpFetch(`/wp/v2/posts/${id}`, {
+        query: { context: 'edit', status: 'trash,draft,publish', _fields: 'id,slug,status' },
+      });
+      확인 = data;
+    } catch (err) {
+      log.warn(`   [${id}] 되돌린 뒤 확인하지 못했습니다 — ${err.message}`);
+      process.exitCode = 1;
+      continue;
+    }
+    if (확인?.status !== 'draft') {
+      log.warn(`   [${id}] 상태가 바뀌지 않았습니다 (지금 ${확인?.status}) — 워드프레스가 거부했습니다`);
+      process.exitCode = 1;
+      continue;
+    }
+    // 상태가 돌아온 뒤에 슬러그를 고친다.
+    const 지금슬러그 = 꼬리뗀슬러그(확인.slug);
+    if (확인.slug !== 지금슬러그) {
+      await wpFetch(`/wp/v2/posts/${id}`, { method: 'POST', body: { slug: 지금슬러그 } });
+      const { data: 끝 } = await wpFetch(`/wp/v2/posts/${id}`, {
+        query: { context: 'edit', _fields: 'id,slug,status' },
+      });
+      if (끝?.slug !== 지금슬러그) {
+        log.warn(`   [${id}] 주소가 바뀌지 않았습니다 (지금 ${끝?.slug})`);
+        process.exitCode = 1;
+        continue;
+      }
+      log.info(`      확인  : ${끝.status} · ${끝.slug}`);
+    } else {
+      log.info(`      확인  : ${확인.status} · ${확인.slug}`);
+    }
   }
 
   if (!센것) {
