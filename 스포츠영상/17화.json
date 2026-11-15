@@ -114,7 +114,20 @@
    "number": "",
    "look": "",
    "tell": "⚠️ 이번 대회 대표팀 사진을 쓴다. team·number 는 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F15%2F0005641121_001_20261115212015015.jpg&type=a340",
+     "쓰임": "대표팀 1 (11-15 결승)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F15%2F0005641122_001_20261115212018378.jpg&type=a340",
+     "쓰임": "대표팀 2 (11-15 결승)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F12%2F0005639200_001_20261112122616261.jpg&type=a340",
+     "쓰임": "대표팀 3 (11-12 호주전)"
+    }
+   ]
   },
   {
    "name": "안재석",
