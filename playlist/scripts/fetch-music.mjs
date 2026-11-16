@@ -96,8 +96,19 @@ const COPYRIGHTED_SONGS = [
   'sleigh ride', 'holly jolly christmas', 'little drummer boy', 'do you hear what i hear',
   "it's the most wonderful time", 'its the most wonderful time', 'mary did you know',
   // 그 밖의 유명 표준곡
-  'somewhere over the rainbow', 'fly me to the moon', 'autumn leaves',
-  'what a wonderful world', 'my way', 'moon river', 'take five',
+  'somewhere over the rainbow', 'what a wonderful world', 'my way', 'moon river',
+  /* 재즈 표준곡. 2026-11-16 에 7집 후보로 Yardbird Suite(찰리 파커, 1946)가
+   * 올라왔다. 재즈 무드는 이런 곡을 계속 물어 온다 — 연주자가 자기 연주를
+   * CC BY 로 풀어도 작곡자 쪽이 멜로디로 주장한다.
+   * 1930년 이전 곡(St. Louis Blues, Tiger Rag 등)은 퍼블릭 도메인이라 뺐다. */
+  'yardbird suite', 'take five', 'so what', 'blue bossa', 'summertime',
+  'my funny valentine', 'all of me', 'georgia on my mind', 'misty',
+  'round midnight', "'round midnight", 'body and soul', 'satin doll', 'caravan',
+  'night in tunisia', 'straight no chaser', 'blue monk', 'giant steps', 'naima',
+  'cantaloupe island', 'watermelon man', 'girl from ipanema', 'desafinado',
+  'corcovado', 'blue in green', 'freddie freeloader', 'moanin', 'maiden voyage',
+  'song for my father', 'fly me to the moon', 'autumn leaves', 'stella by starlight',
+  'in a sentimental mood', 'take the a train', 'mood indigo', 'sophisticated lady',
 ];
 
 /* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
@@ -329,6 +340,11 @@ function cleanTitle(fileName, artist) {
   t = t.replace(/^\d{5,}\s*[-._]\s*/, '');         // Jamendo 내부 ID
   if (artist) t = stripArtist(t, artist);           // 앞에 붙은 아티스트 이름
   t = t.replace(/_{3,}/g, ' ').replace(/[_]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  // (feat. ...) 꼬리를 뗀다. 길어서 제목이 잘린다.
+  t = t.replace(/\s*[（(\[]\s*(feat|ft|featuring|with)\b[^）)\]]*[）)\]]?\s*/gi, ' ');
+  t = t.replace(/\s+(feat|ft|featuring)\.?\s.*$/i, ' ');
+  // 별표·물결 같은 장식 기호를 뗀다 — "Prelude ... *Bright*"
+  t = t.replace(/[*~<>|^]+/g, ' ');
   // 괄호 안 설명과 날짜를 떼어낸다. 화면을 넘치게 만드는 주범이다.
   //   "Song for Self-Breaking Man(ぼくが…という歌）2018/12/02 part 2" → "Song for Self-Breaking Man"
   t = t.replace(/[（(［\[][^）)］\]]*[）)］\]]/g, ' ');
