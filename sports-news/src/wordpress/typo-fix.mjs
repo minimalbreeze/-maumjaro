@@ -77,6 +77,54 @@ export const 바로잡기 = [
   // 적었다. 스포츠서울 기사가 "1982년 개장한 시설이다. 올해로 45년이다"
   // 라고 썼고, 1982년부터 2026년이면 45년째가 맞다. 경과 연수(44)와
   // 햇수(45)를 내가 섞었다.
+  // 효성님이 기사 사진 주소를 주며 "내가 전달해준 이미지들 잘 끼워 넣어라"고
+  // 했다(2026-11-15). 미디어에 올린 것(23678~23683)을 글에 끼운다.
+  //
+  // ⚠️ 섹션 끼우기·갈아끼우기 도구는 이미지를 넘기지 않는다("자리표시자는
+  //    섹션 파일에 쓰지 않으므로 넘기지 않는다"). 그래서 여기서 한다 —
+  //    10725 의 일구회 사진 두 장도 같은 방식으로 넣었다.
+  // ⚠️ 사진 링크는 전부 페이드캠으로 간다(2026-11-10 효성님 지시).
+  //    캡션에 그 말과 **사진 출처**를 함께 적는다.
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>결승 패배의 갈림길로 <strong>5회 투수 교체 시점</strong>이 지목됐습니다.',
+    맞는:
+      '<!-- wp:image {"id":23678,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-apbc-5-1-2-n93l1f-mwijtl0p.jpg" alt="2026 APBC 결승 5회말 무사 1·2루에서 스리런 홈런을 허용한 뒤 아쉬워하는 김건우" class="wp-image-23678"/></a><figcaption class="wp-element-caption">5회말 스리런 홈런을 맞은 뒤의 김건우 (사진: OSEN) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p>결승 패배의 갈림길로 <strong>5회 투수 교체 시점</strong>이 지목됐습니다.',
+    이유: '글 16561. 교체 시점 절 머리에 그 장면 사진을 넣는다',
+    글: [16561],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>한국의 득점은 7회초 한 번뿐이었습니다.',
+    맞는:
+      '<!-- wp:image {"id":23679,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-apbc-7-2-3-3ar301-mwijvf23.jpg" alt="2026 APBC 결승 7회초 2사 3루에서 좌전 적시타를 치는 대타 안재석" class="wp-image-23679"/></a><figcaption class="wp-element-caption">7회초 2사 3루, 좌전 적시타를 치는 대타 안재석 (사진: OSEN) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p>한국의 득점은 7회초 한 번뿐이었습니다.',
+    이유: '글 16561. 한국의 유일한 득점 장면 사진을 그 문단 앞에 넣는다',
+    글: [16561],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>8강이 끝나고 4강 대진이 나왔습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23680,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-44n0ux-mwijxgck.jpg" alt="2026 삼성화재배 월드바둑마스터스 준결승 진출자 리친청 구쯔하오 신진서 변상일" class="wp-image-23680"/></a><figcaption class="wp-element-caption">왼쪽부터 리친청·구쯔하오·신진서·변상일 (사진: 쿠키뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>8강이 끝나고 4강 대진이 나왔습니다.</strong>',
+    이유: '글 17428. 4강 대진 절 머리에 진출자 넷 사진을 넣는다',
+    글: [17428],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>BLG가 젠지를 세트 스코어 3-1로 꺾고 우승했습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23681,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-blg-ryde1w-mwijzikw.jpg" alt="2026 롤드컵 우승 뒤 세리머니를 하는 BLG 바이퍼 박도현" class="wp-image-23681"/></a><figcaption class="wp-element-caption">우승 뒤 세리머니를 하는 바이퍼 박도현 (사진: 라이엇 게임즈 / 스포츠서울) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>BLG가 젠지를 세트 스코어 3-1로 꺾고 우승했습니다.</strong>',
+    이유: '글 11906. 결승 결과 절 머리에 우승 장면 사진을 넣는다',
+    글: [11906],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>FA 둘만 문제가 아닙니다.',
+    맞는:
+      '<!-- wp:image {"id":23682,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1h868w-mwik1hps.jpg" alt="2026 한국시리즈 우승 뒤 함께 사진을 찍는 삼성 크리스 페덱과 아리엘 후라도" class="wp-image-23682"/></a><figcaption class="wp-element-caption">한국시리즈 우승 뒤의 크리스 페덱과 아리엘 후라도 (사진: 삼성 라이온즈 / 스포츠경향) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p>FA 둘만 문제가 아닙니다.',
+    이유: '글 20562. 외국인 절 머리에 페덱·후라도 사진을 넣는다',
+    글: [20562],
+  },
   // 11900 은 결과 절을 「8번째 우승의 조건」 뒤에 끼웠는데, 효성님이
   // "아직 내용은 맥기로이 우승 조건인데"라고 했다. 맞다 — 글을 열면
   // 첫 문단이 11월 8일 시점의 조건 계산이다. 절을 뒤에 넣는 것만으로는
