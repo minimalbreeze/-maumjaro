@@ -102,6 +102,72 @@ function faqHtml(faq) {
 // ---------- 페이지 껍데기 ----------
 // 앱과 같은 팔레트를 쓰되 CSS는 이 파일 안에 인라인으로 둔다.
 // style.css(80KB)를 불러오면 내용 없는 페이지에 앱 전체 스타일이 딸려와 느려진다.
+// ---------- 쿠팡 파트너스 광고 ----------
+//
+// 2026-11-16 효성님 지시로 넣었다. "노출은 느는데 사용자는 제자리"라서
+// 검색용 페이지에서라도 수익을 보자는 것이다.
+//
+// ⚠️ 기대를 정확히 적어 둔다. 광고는 **노출이 아니라 방문자**에게 붙는다.
+// 2026-11-15 기준 네이버 30일 노출 6.1만 / 클릭 280 이고, 광고가 보이는
+// 모수는 6.1만이 아니라 **280** 이다. 그리고 우리 유입 1위는 `2029년 띠`
+// 같은 정보 검색이라 구매 의도가 가장 낮은 축이다
+// (`sports-news/config/revenue.md`: 클릭이 나는 글은 "골프장에 가려는 사람").
+// 큰돈이 나올 자리가 아니다. 그래도 비용이 0이고 되돌릴 수 있어서 한다.
+//
+// ⚠️ **감정 28장에는 넣지 않는다**(2026-11-16 효성님 승인).
+// /emotion/depression/ · selfblame · breakup 은 우울·자책·이별로 검색해
+// 들어온 사람이 보는 자리다. 앱 밖이긴 해도 "마음이 힘들어 들어온 사람에게
+// 광고를 보여주지 않는다"(루트 지시서, 2026-11-08)와 같은 선이다.
+// 실리로도 같다 — 감정 페이지는 구매 의도가 0에 가까워 수익은 없고 선만 넘는다.
+//
+// ⚠️ **앱 안(`index.html`)에는 절대 넣지 않는다.** 이 함수는 검색용 생성
+// 페이지만 만든다. 앱은 이 스크립트가 손대지 않는다.
+//
+// 광고 정책(2026-11-10 `sports-news/CLAUDE.md`)을 그대로 지킨다.
+//   · 고지문을 **광고보다 앞에**, 12px 이상, 명암비 4.5 이상
+//     (`--dim` #8a7355 은 배경 #fff8f3 위에서 4.28 이라 못 쓴다. #6b573d = 6.54)
+//   · 본문과 광고 사이에 여백을 둔다 — 콘텐츠처럼 보이지 않게
+//   · 전면 팝업·하단 고정바를 쓰지 않는다. 여기는 읽는 페이지다
+//   · 제휴사가 준 코드는 손대지 않는다(subId 만 우리가 채운다)
+//
+// subId 는 **어디서 난 수익인지 재려고** 넣는다. sports-news 쪽은 지금
+// `subId:null` 이라 그걸 모르고, 그래서 `revenue.md` 가 비어 있다.
+// 한 달 뒤 쿠팡 리포트에서 띠/연도/타로 중 무엇이 돈이 되는지 갈린다.
+const COUPANG_ID = 872203;
+const COUPANG_TRACKING = 'AF3646181';
+
+// 광고를 넣지 않는 페이지. 지금은 감정뿐이다.
+function adsAllowed(url) {
+  return !/^\/emotion\//.test(url);
+}
+
+// 수익을 가르는 꼬리표. 쿠팡 subId 는 영문·숫자만 안전하게 쓴다.
+function adSubId(url) {
+  if (/^\/animal\/year\//.test(url)) return 'year';
+  if (/^\/animal\/[a-z]+\/lucky\//.test(url)) return 'lucky';
+  if (/^\/animal\//.test(url)) return 'animal';
+  if (/^\/zodiac\//.test(url)) return 'zodiac';
+  if (/^\/tarot\//.test(url)) return 'tarot';
+  if (/^\/mbti\//.test(url)) return 'mbti';
+  if (/^\/match\//.test(url)) return 'match';
+  if (/^\/happiness\//.test(url)) return 'happy';
+  return 'etc';
+}
+
+// slot: 'mid'(본문 아래) | 'foot'(맨 아래). 한 페이지에 둘뿐이다.
+function adBlock(url, slot) {
+  if (!adsAllowed(url)) return '';
+  const sub = `${adSubId(url)}-${slot}`;
+  return `
+<div class="ad">
+  <p class="ad-note">이 글은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</p>
+  <script src="https://ads-partners.coupang.com/g.js"></script>
+  <script>
+    new PartnersCoupang.G({"id":${COUPANG_ID},"trackingCode":"${COUPANG_TRACKING}","subId":"${sub}","template":"carousel","width":"100%","height":"140"});
+  </script>
+</div>`;
+}
+
 function shell({ url, title, desc, h1, sub, body, breadcrumb, keywords, answer, faq }) {
   return `<!doctype html>
 <html lang="ko">
@@ -199,6 +265,10 @@ td a{color:var(--tx)}
  background:linear-gradient(135deg,var(--a),#ffc66b);color:#fff;font-weight:800;
  text-decoration:none;font-size:17px}
 .note{font-size:13px;color:var(--dim);margin-top:26px}
+/* 쿠팡 광고. 본문과 또렷이 떨어뜨려 콘텐츠로 안 읽히게 한다(광고 정책).
+   고지문 색 #6b573d 은 배경 #fff8f3 위에서 명암비 6.54 — var(--dim)은 4.28이라 못 쓴다. */
+.ad{margin:34px 0;padding:14px 0 4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ad-note{font-size:12px;line-height:1.5;color:#6b573d;margin:0 0 10px}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
 footer a{color:var(--dim)}
 </style>
@@ -210,9 +280,11 @@ footer a{color:var(--dim)}
 <p class="sub">${esc(sub)}</p>
 ${answer ? `<div class="answer"><p>${esc(answer)}</p></div>` : ''}
 ${body}
+${adBlock(url, 'mid')}
 ${faq && faq.length ? faqHtml(faq) : ''}
 <a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
+${adBlock(url, 'foot')}
 <footer>
   <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
