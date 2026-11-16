@@ -953,6 +953,52 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         : `<tr><td>만 나이</td><td><strong>${intlAge}세</strong> · 생일 전이면 ${intlAge - 1}세</td></tr>
     <tr><td>세는 나이</td><td>${korAge}세</td></tr>`;
 
+      // ---------- 60년 쌍을 가르는 나이 이정표 (2026-11-16) ----------
+      //
+      // 간지는 60년마다 돌아온다. 그래서 1938년과 1998년이 **둘 다 무인년 노란
+      // 호랑이**였고, 본문에서 다른 것이 연도 숫자와 나이 두 줄뿐이라 유사도가
+      // 97.2% 였다(90% 넘는 쌍 86개). 행운번호 13장(93.2%)보다 높다.
+      //
+      // 가르는 축으로 **나이**를 골랐다. 실측이 둘 다 가리킨다 —
+      //   `2011년 1월생 만나이` CTR 100% · `1938년생이 90되는해는` 100%
+      // 그리고 나이는 60년 쌍에서 유일하게 60 만큼 어긋나는 값이다.
+      //
+      // ⚠️ **전부 계산으로 나오는 값만 쓴다.** 그 해에 무슨 일이 있었는지 같은
+      // 것은 확인할 수 없어 한 줄도 쓰지 않는다(로또·책 규칙과 같은 선).
+      //
+      // 환갑을 맨 위에 두는 이유: 환갑은 **태어난 해의 간지가 돌아오는 해**라
+      // 60갑자의 정의 그 자체다. 1938년생의 환갑이 1998년이고, 1998년생의
+      // 환갑은 2058년이다 — 두 쌍둥이 페이지가 바로 이 줄에서 갈린다.
+      //
+      // ⚠️ 칠순·팔순 같은 전통 명칭은 세는 나이로 쇠기도 해서 쓰지 않는다.
+      // `만 70세가 되는 해` 처럼 숫자로만 적는다. 헷갈리는 것은 안 쓴다.
+      const MILESTONES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const nowAge = REF_YEAR - y;                 // 음수면 아직 안 태어난 해
+      // 환갑(60)은 간지와 직결되므로 늘 넣고, 나머지는 지금 나이 가까이에서 고른다.
+      const picked = [...new Set([60, ...MILESTONES
+        .filter((m) => m !== 60)
+        .sort((a, b) => Math.abs(a - nowAge) - Math.abs(b - nowAge))
+        .slice(0, 4)])].sort((a, b) => a - b);
+      const milestoneRows = picked.map((m) => {
+        const when = y + m;                        // 만 m세가 되는 해
+        const gap = when - REF_YEAR;
+        const state = gap === 0 ? '<strong>올해입니다</strong>'
+          : gap < 0 ? `${-gap}년 전에 지났습니다`
+          : `${gap}년 뒤`;
+        const label = m === 60
+          ? `만 60세 <span class="k">(환갑)</span>`
+          : `만 ${m}세`;
+        const note = m === 60
+          ? ` — 태어난 해의 간지 <strong>${esc(gj.ko)}년</strong>이 돌아오는 해입니다`
+          : '';
+        return `<tr><td>${label}</td><td><strong>${when}년</strong>${note}</td><td>${state}</td></tr>`;
+      }).join('\n    ');
+
+      // `2011년 1월생 만나이` CTR 100%. 1월생은 생일이 이미 지났으므로 만 나이가
+      // 하나로 정해진다 — 입춘 경계와 같이 묻는 사람이 많아 그 절에 붙인다.
+      const janAge = isFuture ? '' :
+        `<p>${y}년 1월생의 ${REF_YEAR}년 만 나이는 <strong>${intlAge}세</strong>입니다. 1월은 연초라 생일이 이미 지났기 때문에 생일 전후로 갈리지 않습니다. 다만 <strong>띠는 ${esc(prevZ.name)}</strong>라는 점이 다릅니다.</p>`;
+
       const body = `
 <div class="card">
   <p class="k">${y}년생</p>
@@ -979,7 +1025,24 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 
 <h2>${y}년 1월생은 ${esc(prevZ.name)}입니다</h2>
 <p>띠는 1월 1일이 아니라 <strong>입춘</strong>에 바뀝니다. ${y}년 1월 1일부터 2월 3일경 사이에 태어났다면 ${esc(z.name)}가 아니라 ${y - 1}년의 <a href="/animal/${prevZ.key}/">${esc(prevZ.name)}</a>입니다. 맘운자로에 생년월일을 넣으면 그 해의 실제 입춘으로 맞춰 줍니다.</p>
+${janAge}
 <p><a href="/animal/years/">입춘 기준 자세히 ›</a></p>
+
+<h2>${y}년생의 나이 이정표</h2>
+<p>${isFuture ? `${y}년은 ${REF_YEAR}년 기준 ${y - REF_YEAR}년 뒤에 옵니다. 그 뒤의 나이를 미리 적어 둡니다.` : `${REF_YEAR}년 기준 만 ${intlAge}세입니다. 앞뒤로 어느 해에 몇 살이 되는지입니다.`}</p>
+<div class="tw"><table>
+  <thead><tr><th>나이</th><th>그 해</th><th>${REF_YEAR}년 기준</th></tr></thead>
+  <tbody>
+    ${milestoneRows}
+  </tbody>
+</table></div>
+<p class="k">만 나이 기준입니다. 2023년 6월부터 법으로 쓰는 나이는 만 나이입니다.</p>
+
+<h2>${y}년생과 같은 ${esc(gj.ko)}년</h2>
+<p>간지는 <strong>60년마다</strong> 돌아옵니다. 그래서 ${y}년생이 <strong>만 60세(환갑)</strong>가 되는 ${y + 60}년이 다시 ${esc(gj.ko)}년이고, 60년 전인 ${y - 60}년도 ${esc(gj.ko)}년이었습니다.</p>
+${y - 60 >= YEAR_FROM ? `<p><strong>${y - 60}년생</strong>은 ${y}년생과 같은 ${esc(gj.colorAnimal)}입니다. ${y - 60}년생이 환갑을 맞은 해가 바로 ${y}년이고, ${REF_YEAR}년 기준 만 ${REF_YEAR - (y - 60)}세입니다 — ${y}년생보다 정확히 60세 위입니다. <a href="/animal/year/${y - 60}/">${y - 60}년생 보기 ›</a></p>` : `<p>${y - 60}년은 이 표(${YEAR_FROM}~${YEAR_TO})보다 앞이라 따로 두지 않았습니다.</p>`}
+${y + 60 <= YEAR_TO ? `<p><strong>${y + 60}년생</strong>도 같은 ${esc(gj.colorAnimal)}입니다. ${y}년생이 환갑을 맞는 해에 태어나는 사람들이고, ${REF_YEAR}년 기준으로는 ${y + 60 - REF_YEAR}년 뒤에 옵니다. <a href="/animal/year/${y + 60}/">${y + 60}년생 보기 ›</a></p>` : `<p>${y + 60}년은 이 표(${YEAR_FROM}~${YEAR_TO})보다 뒤라 따로 두지 않았습니다. ${y}년생의 환갑이 그 해입니다.</p>`}
+<p class="k">띠(${esc(z.name)})만 같은 해는 12년마다 오지만, <strong>간지까지 같은 해는 60년마다</strong>입니다. 아래 "${esc(z.name)}인 다른 해"에는 12년 간격이 전부 들어 있습니다.</p>
 
 <h2>${esc(z.name)}는 어떤 사람인가</h2>
 <p>${noDot(z.trait)}. 키워드는 <strong>${esc(z.keyword)}</strong>입니다.</p>
