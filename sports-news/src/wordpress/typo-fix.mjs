@@ -125,6 +125,107 @@ export const 바로잡기 = [
     이유: '글 20562. 외국인 절 머리에 페덱·후라도 사진을 넣는다',
     글: [20562],
   },
+  // 효성님이 "전달해준 이미지 안사용한 것들이 있는 것 같은데 확인해서
+  // 사용해줘"라고 해서 남은 것을 전부 끼운다(2026-11-16).
+  //   23690 강준이 2장 · 23700 울산 · 23703 화천 · 23696 서남물재생센터 ·
+  //   11900 해튼
+  // 이쪽은 기사 사진이라 링크가 **페이드캠**이다. 게임 글(23710)만 앱스토어다.
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>강준이(18·레드불)가 SLS 도쿄 남자 스트리트 결선에서 우승했습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23718,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1q06vw-mwix6mtm.jpg" alt="2026 아이치·나고야 아시안게임 스케이트보드 남자 스트리트 결승에 나선 강준이" class="wp-image-23718"/></a><figcaption class="wp-element-caption">아시안게임 스케이트보드 남자 스트리트 결승의 강준이 (사진: 연합뉴스 / CBS노컷뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>강준이(18·레드불)가 SLS 도쿄 남자 스트리트 결선에서 우승했습니다.</strong>',
+    이유: '글 23690. 대표 사진 사진을 넣는다',
+    글: [23690],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>기사에 적힌 이력은 이렇습니다.',
+    맞는:
+      '<!-- wp:image {"id":23719,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-10-vaumsa-mwix8kmm.jpg" alt="2026년 10월 파라과이 루케 세계스케이트보드선수권대회에 출전한 강준이" class="wp-image-23719"/></a><figcaption class="wp-element-caption">10월 파라과이 루케 세계선수권에 출전한 강준이 (사진: 연합뉴스 / CBS노컷뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p>기사에 적힌 이력은 이렇습니다.',
+    이유: '글 23690. 이력 절 사진을 넣는다',
+    글: [23690],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>울산 중구 학성동 170번지에 태화강 어울림 파크골프장이 문을 열었습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23720,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-gs0jzj-mwixafrk.jpg" alt="울산 중구 학성동 태화강 어울림 파크골프장 개장식 테이프 커팅" class="wp-image-23720"/></a><figcaption class="wp-element-caption">11월 13일 태화강 어울림 파크골프장 개장식 (사진: 장태준 기자 / 울산제일일보) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>울산 중구 학성동 170번지에 태화강 어울림 파크골프장이 문을 열었습니다.</strong>',
+    이유: '글 23700. 대표 사진 사진을 넣는다',
+    글: [23700],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>화천 간동 파크골프장이 2026년 11월 15일 정식 개장했습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23721,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-rq1yx5-mwixcnbr.jpg" alt="드론으로 촬영한 강원 화천군 간동면 간척리 간동 파크골프장 전경" class="wp-image-23721"/></a><figcaption class="wp-element-caption">드론으로 촬영한 간동 파크골프장 전경 (사진: 화천군 / 아주경제) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>화천 간동 파크골프장이 2026년 11월 15일 정식 개장했습니다.</strong>',
+    이유: '글 23703. 대표 사진 사진을 넣는다',
+    글: [23703],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>서남물재생센터 파크골프장은 서울 강서구 양천로 201 일원에 있는 9홀 구장이고,',
+    맞는:
+      '<!-- wp:image {"id":23722,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-5ocdne-mwixei29.webp" alt="서울 강서구 마곡동 서남물재생센터 파크골프장 전경" class="wp-image-23722"/></a><figcaption class="wp-element-caption">서남물재생센터 파크골프장 전경 (사진: 서울물재생시설공단 / 서울경제) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>서남물재생센터 파크골프장은 서울 강서구 양천로 201 일원에 있는 9홀 구장이고,',
+    이유: '글 23696. 대표 사진 사진을 넣는다',
+    글: [23696],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>대회 우승은 맥길로이가 아니라 해튼이었습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23723,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-dp-1nxj6o-mwixgjcr.jpg" alt="2026 DP월드투어 챔피언십 우승을 차지한 티렐 해튼" class="wp-image-23723"/></a><figcaption class="wp-element-caption">DP월드투어 챔피언십에서 우승한 티렐 해튼 (사진: DP월드투어) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>대회 우승은 맥길로이가 아니라 해튼이었습니다.</strong>',
+    이유: '글 11900. 해튼 절 사진을 넣는다',
+    글: [11900],
+  },
+  // 23710(퇴사할게요 게임 소개)의 사진 자리표시자를 진짜 사진으로 바꾼다.
+  //
+  // ⚠️ **링크가 페이드캠이 아니라 앱스토어다**(2026-11-16 효성님 지시).
+  //    "여기는 사진을 클릭하면, 퇴사할게요 앱 다운로드로 가야 한다."
+  //    업로드 도구가 만들어 주는 블록은 페이드캠 고정이라 여기서 직접 쓴다.
+  // ⚠️ 헤더는 원본(1,406KB)이 413 으로 안 올라가 1600x686·147KB 로 줄여 올렸다.
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 1 — 헤더]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23713,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/17-55-5-vbk7i9-mwiwrr2j.png" alt="퇴사할게요 오늘도 버텼다 게임 대표 이미지 — 17시 55분 퇴근 5분 전 사무실" class="wp-image-23713"/></a><figcaption class="wp-element-caption">퇴사할게요 : 오늘도 버텼다 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 1 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 2 — 17:55 부장님]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23712,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1cp8vs-mwiwnju8-scaled.png" alt="퇴사할게요 오늘도 버텼다 게임 화면 — 퇴근 5분 전 부장님의 요청과 선택지" class="wp-image-23712"/></a><figcaption class="wp-element-caption">오후 5시 55분, 부장님이 다가온다 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 2 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 3 — 재테크]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23714,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1sxp7l-mwiwtutt-scaled.png" alt="퇴사할게요 오늘도 버텼다 재테크 화면 — 지수펀드와 테마주, 역세권 원룸" class="wp-image-23714"/></a><figcaption class="wp-element-caption">비상금을 모으면 열리는 재테크 화면 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 3 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 4 — S등급]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23715,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1sxsp8-mwiww6e9-scaled.png" alt="퇴사할게요 오늘도 버텼다 엔딩 S등급 화면" class="wp-image-23715"/></a><figcaption class="wp-element-caption">출근 일수와 난이도로 매겨지는 엔딩 등급 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 4 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 5 — 좋은 순간]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23716,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1odn6v-mwiwyaat-scaled.png" alt="퇴사할게요 오늘도 버텼다 좋은 순간 화면 — 신입이랑 맛집 점심" class="wp-image-23716"/></a><figcaption class="wp-element-caption">좋은 순간이 쌓이면 「오늘도 다닐게요」 엔딩이 열린다 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 5 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
+  {
+    틀린: '<!-- wp:paragraph -->\n<p>[사진 6 — 첫 화면]</p>\n<!-- /wp:paragraph -->',
+    맞는:
+      '<!-- wp:image {"id":23717,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/app/id6831668237" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-z03d5e-mwix0aoq-scaled.png" alt="퇴사할게요 오늘도 버텼다 첫 화면 — 내 회사로 입사하기" class="wp-image-23717"/></a><figcaption class="wp-element-caption">내 회사 이름을 넣고 입사한다 · 누르면 앱스토어로 갑니다</figcaption></figure>\n<!-- /wp:image -->',
+    이유: '글 23710. 사진 6 자리표시자를 사진으로 바꾼다 (링크는 앱스토어)',
+    글: [23710],
+  },
   // 23693(김다솔)에 사진 23683 을 끼운다. 글을 올린 뒤라 따로 넣는다.
   {
     틀린: '<!-- wp:paragraph -->\n<p><strong>배구 세터 김다솔이 정관장에 입단합니다.</strong>',
