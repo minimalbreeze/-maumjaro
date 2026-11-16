@@ -125,6 +125,15 @@ export const 바로잡기 = [
     이유: '글 20562. 외국인 절 머리에 페덱·후라도 사진을 넣는다',
     글: [20562],
   },
+  // 23739(최혜진) 대표 사진.
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>최혜진(27)이 LPGA 통산 열 번째 준우승을 기록했습니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23740,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/lpga-4-1akzf2-mwj6nw87.jpg" alt="LPGA 디 안니카 최종 라운드 4번 홀에서 티샷하는 최혜진" class="wp-image-23740"/></a><figcaption class="wp-element-caption">디 안니카 최종 라운드 4번 홀의 최혜진 (사진: AP/뉴시스 · 동아일보) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>최혜진(27)이 LPGA 통산 열 번째 준우승을 기록했습니다.</strong>',
+    이유: '글 23739. 대표 사진을 첫 문단 앞에 넣는다',
+    글: [23739],
+  },
   // 효성님이 "전달해준 이미지 안사용한 것들이 있는 것 같은데 확인해서
   // 사용해줘"라고 해서 남은 것을 전부 끼운다(2026-11-16).
   //   23690 강준이 2장 · 23700 울산 · 23703 화천 · 23696 서남물재생센터 ·
