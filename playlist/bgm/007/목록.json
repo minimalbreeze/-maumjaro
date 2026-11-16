@@ -1,31 +1,13 @@
 {
   "tracks": [
     {
-      "file": "jamendo-313567.mp3",
-      "title": "Vienna Blue",
-      "artist": "Doc",
-      "recorded": "2009",
-      "license": "CC BY",
-      "credit": "Vienna Blue — Doc (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/313567",
-      "source": "https://www.jamendo.com/track/313567"
-    },
-    {
-      "file": "jamendo-1191104.mp3",
-      "title": "Lucy",
-      "artist": "Pigamma sound",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Lucy — Pigamma sound (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1191104",
-      "source": "https://www.jamendo.com/track/1191104"
-    },
-    {
-      "file": "jamendo-1319573.mp3",
-      "title": "Blues",
-      "artist": "Christian Zell",
+      "file": "jamendo-1370135.mp3",
+      "title": "Espejismo",
+      "artist": "Orquesta Arrecife",
       "recorded": "2016",
       "license": "CC BY",
-      "credit": "Blues — Christian Zell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1319573",
-      "source": "https://www.jamendo.com/track/1319573"
+      "credit": "Espejismo — Orquesta Arrecife (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1370135",
+      "source": "https://www.jamendo.com/track/1370135"
     },
     {
       "file": "jamendo-1379377.mp3",
@@ -37,24 +19,6 @@
       "source": "https://www.jamendo.com/track/1379377"
     },
     {
-      "file": "jamendo-1370135.mp3",
-      "title": "Espejismo",
-      "artist": "Orquesta Arrecife",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Espejismo — Orquesta Arrecife (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1370135",
-      "source": "https://www.jamendo.com/track/1370135"
-    },
-    {
-      "file": "jamendo-922465.mp3",
-      "title": "Closely Unrelated Modes",
-      "artist": "Leandro Perpiñán",
-      "recorded": "2012",
-      "license": "CC BY",
-      "credit": "Closely Unrelated Modes — Leandro Perpiñán (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/922465",
-      "source": "https://www.jamendo.com/track/922465"
-    },
-    {
       "file": "jamendo-1265788.mp3",
       "title": "Bossa",
       "artist": "Yonael",
@@ -62,24 +26,6 @@
       "license": "CC BY",
       "credit": "Bossa — Yonael (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1265788",
       "source": "https://www.jamendo.com/track/1265788"
-    },
-    {
-      "file": "jamendo-1312294.mp3",
-      "title": "Avance",
-      "artist": "Gill",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Avance — Gill (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1312294",
-      "source": "https://www.jamendo.com/track/1312294"
-    },
-    {
-      "file": "jamendo-2134948.mp3",
-      "title": "Prelude for Piano, Violin and Cello",
-      "artist": "Michał Jałochowski",
-      "recorded": "2023",
-      "license": "CC BY",
-      "credit": "Prelude for Piano, Violin and Cello — Michał Jałochowski (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2134948",
-      "source": "https://www.jamendo.com/track/2134948"
     },
     {
       "file": "jamendo-1512161.mp3",
@@ -91,6 +37,33 @@
       "source": "https://www.jamendo.com/track/1512161"
     },
     {
+      "file": "jamendo-1312294.mp3",
+      "title": "Avance",
+      "artist": "Gill",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Avance — Gill (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1312294",
+      "source": "https://www.jamendo.com/track/1312294"
+    },
+    {
+      "file": "jamendo-384090.mp3",
+      "title": "Manta-dive",
+      "artist": "K4MMERER",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Manta-dive — K4MMERER (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/384090",
+      "source": "https://www.jamendo.com/track/384090"
+    },
+    {
+      "file": "jamendo-313567.mp3",
+      "title": "Vienna Blue",
+      "artist": "Doc",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Vienna Blue — Doc (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/313567",
+      "source": "https://www.jamendo.com/track/313567"
+    },
+    {
       "file": "jamendo-90023.mp3",
       "title": "The Only Girl at the Bar",
       "artist": "Melange Promenade",
@@ -98,6 +71,24 @@
       "license": "CC BY",
       "credit": "The Only Girl at the Bar — Melange Promenade (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/90023",
       "source": "https://www.jamendo.com/track/90023"
+    },
+    {
+      "file": "jamendo-922465.mp3",
+      "title": "Closely Unrelated Modes",
+      "artist": "Leandro Perpiñán",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Closely Unrelated Modes — Leandro Perpiñán (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/922465",
+      "source": "https://www.jamendo.com/track/922465"
+    },
+    {
+      "file": "jamendo-1191104.mp3",
+      "title": "Lucy",
+      "artist": "Pigamma sound",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Lucy — Pigamma sound (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1191104",
+      "source": "https://www.jamendo.com/track/1191104"
     },
     {
       "file": "jamendo-1314116.mp3",
@@ -118,37 +109,43 @@
       "source": "https://www.jamendo.com/track/1314115"
     },
     {
-      "file": "jamendo-941482.mp3",
-      "title": "toutouig",
-      "artist": "Adragante",
-      "recorded": "2012",
+      "file": "jamendo-710706.mp3",
+      "title": "4 Moments (Reprise)",
+      "artist": "Keffy Kay",
+      "recorded": "2011",
       "license": "CC BY",
-      "credit": "toutouig — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/941482",
-      "source": "https://www.jamendo.com/track/941482"
+      "credit": "4 Moments (Reprise) — Keffy Kay (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/710706",
+      "source": "https://www.jamendo.com/track/710706"
     },
     {
-      "file": "jamendo-941485.mp3",
-      "title": "chanson à la marié",
-      "artist": "Adragante",
-      "recorded": "2012",
+      "file": "jamendo-1567024.mp3",
+      "title": "Glass Bell Time",
+      "artist": "Popo Glio",
+      "recorded": "2018",
       "license": "CC BY",
-      "credit": "chanson à la marié — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/941485",
-      "source": "https://www.jamendo.com/track/941485"
+      "credit": "Glass Bell Time — Popo Glio (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1567024",
+      "source": "https://www.jamendo.com/track/1567024"
     },
     {
-      "file": "jamendo-1319541.mp3",
-      "title": "Gone Crasy (4-Track-Recording-1991)",
-      "artist": "Christian Zell",
-      "recorded": "2016",
+      "file": "jamendo-2134948.mp3",
+      "title": "Prelude for Piano, Violin and Cello",
+      "artist": "Michał Jałochowski",
+      "recorded": "2023",
       "license": "CC BY",
-      "credit": "Gone Crasy (4-Track-Recording-1991) — Christian Zell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1319541",
-      "source": "https://www.jamendo.com/track/1319541"
+      "credit": "Prelude for Piano, Violin and Cello — Michał Jałochowski (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2134948",
+      "source": "https://www.jamendo.com/track/2134948"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
   "rejected": [
     "1208514",
     "129237",
-    "1252531"
+    "1252531",
+    "1319573",
+    "941482",
+    "941485",
+    "1319541",
+    "20236",
+    "384095"
   ]
 }
