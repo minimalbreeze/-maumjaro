@@ -102,6 +102,72 @@ function faqHtml(faq) {
 // ---------- 페이지 껍데기 ----------
 // 앱과 같은 팔레트를 쓰되 CSS는 이 파일 안에 인라인으로 둔다.
 // style.css(80KB)를 불러오면 내용 없는 페이지에 앱 전체 스타일이 딸려와 느려진다.
+// ---------- 쿠팡 파트너스 광고 ----------
+//
+// 2026-11-16 효성님 지시로 넣었다. "노출은 느는데 사용자는 제자리"라서
+// 검색용 페이지에서라도 수익을 보자는 것이다.
+//
+// ⚠️ 기대를 정확히 적어 둔다. 광고는 **노출이 아니라 방문자**에게 붙는다.
+// 2026-11-15 기준 네이버 30일 노출 6.1만 / 클릭 280 이고, 광고가 보이는
+// 모수는 6.1만이 아니라 **280** 이다. 그리고 우리 유입 1위는 `2029년 띠`
+// 같은 정보 검색이라 구매 의도가 가장 낮은 축이다
+// (`sports-news/config/revenue.md`: 클릭이 나는 글은 "골프장에 가려는 사람").
+// 큰돈이 나올 자리가 아니다. 그래도 비용이 0이고 되돌릴 수 있어서 한다.
+//
+// ⚠️ **감정 28장에는 넣지 않는다**(2026-11-16 효성님 승인).
+// /emotion/depression/ · selfblame · breakup 은 우울·자책·이별로 검색해
+// 들어온 사람이 보는 자리다. 앱 밖이긴 해도 "마음이 힘들어 들어온 사람에게
+// 광고를 보여주지 않는다"(루트 지시서, 2026-11-08)와 같은 선이다.
+// 실리로도 같다 — 감정 페이지는 구매 의도가 0에 가까워 수익은 없고 선만 넘는다.
+//
+// ⚠️ **앱 안(`index.html`)에는 절대 넣지 않는다.** 이 함수는 검색용 생성
+// 페이지만 만든다. 앱은 이 스크립트가 손대지 않는다.
+//
+// 광고 정책(2026-11-10 `sports-news/CLAUDE.md`)을 그대로 지킨다.
+//   · 고지문을 **광고보다 앞에**, 12px 이상, 명암비 4.5 이상
+//     (`--dim` #8a7355 은 배경 #fff8f3 위에서 4.28 이라 못 쓴다. #6b573d = 6.54)
+//   · 본문과 광고 사이에 여백을 둔다 — 콘텐츠처럼 보이지 않게
+//   · 전면 팝업·하단 고정바를 쓰지 않는다. 여기는 읽는 페이지다
+//   · 제휴사가 준 코드는 손대지 않는다(subId 만 우리가 채운다)
+//
+// subId 는 **어디서 난 수익인지 재려고** 넣는다. sports-news 쪽은 지금
+// `subId:null` 이라 그걸 모르고, 그래서 `revenue.md` 가 비어 있다.
+// 한 달 뒤 쿠팡 리포트에서 띠/연도/타로 중 무엇이 돈이 되는지 갈린다.
+const COUPANG_ID = 872203;
+const COUPANG_TRACKING = 'AF3646181';
+
+// 광고를 넣지 않는 페이지. 지금은 감정뿐이다.
+function adsAllowed(url) {
+  return !/^\/emotion\//.test(url);
+}
+
+// 수익을 가르는 꼬리표. 쿠팡 subId 는 영문·숫자만 안전하게 쓴다.
+function adSubId(url) {
+  if (/^\/animal\/year\//.test(url)) return 'year';
+  if (/^\/animal\/[a-z]+\/lucky\//.test(url)) return 'lucky';
+  if (/^\/animal\//.test(url)) return 'animal';
+  if (/^\/zodiac\//.test(url)) return 'zodiac';
+  if (/^\/tarot\//.test(url)) return 'tarot';
+  if (/^\/mbti\//.test(url)) return 'mbti';
+  if (/^\/match\//.test(url)) return 'match';
+  if (/^\/happiness\//.test(url)) return 'happy';
+  return 'etc';
+}
+
+// slot: 'mid'(본문 아래) | 'foot'(맨 아래). 한 페이지에 둘뿐이다.
+function adBlock(url, slot) {
+  if (!adsAllowed(url)) return '';
+  const sub = `${adSubId(url)}-${slot}`;
+  return `
+<div class="ad">
+  <p class="ad-note">이 글은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다</p>
+  <script src="https://ads-partners.coupang.com/g.js"></script>
+  <script>
+    new PartnersCoupang.G({"id":${COUPANG_ID},"trackingCode":"${COUPANG_TRACKING}","subId":"${sub}","template":"carousel","width":"100%","height":"140"});
+  </script>
+</div>`;
+}
+
 function shell({ url, title, desc, h1, sub, body, breadcrumb, keywords, answer, faq }) {
   return `<!doctype html>
 <html lang="ko">
@@ -199,6 +265,10 @@ td a{color:var(--tx)}
  background:linear-gradient(135deg,var(--a),#ffc66b);color:#fff;font-weight:800;
  text-decoration:none;font-size:17px}
 .note{font-size:13px;color:var(--dim);margin-top:26px}
+/* 쿠팡 광고. 본문과 또렷이 떨어뜨려 콘텐츠로 안 읽히게 한다(광고 정책).
+   고지문 색 #6b573d 은 배경 #fff8f3 위에서 명암비 6.54 — var(--dim)은 4.28이라 못 쓴다. */
+.ad{margin:34px 0;padding:14px 0 4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ad-note{font-size:12px;line-height:1.5;color:#6b573d;margin:0 0 10px}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
 footer a{color:var(--dim)}
 </style>
@@ -210,9 +280,11 @@ footer a{color:var(--dim)}
 <p class="sub">${esc(sub)}</p>
 ${answer ? `<div class="answer"><p>${esc(answer)}</p></div>` : ''}
 ${body}
+${adBlock(url, 'mid')}
 ${faq && faq.length ? faqHtml(faq) : ''}
 <a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
+${adBlock(url, 'foot')}
 <footer>
   <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
@@ -881,6 +953,52 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
         : `<tr><td>만 나이</td><td><strong>${intlAge}세</strong> · 생일 전이면 ${intlAge - 1}세</td></tr>
     <tr><td>세는 나이</td><td>${korAge}세</td></tr>`;
 
+      // ---------- 60년 쌍을 가르는 나이 이정표 (2026-11-16) ----------
+      //
+      // 간지는 60년마다 돌아온다. 그래서 1938년과 1998년이 **둘 다 무인년 노란
+      // 호랑이**였고, 본문에서 다른 것이 연도 숫자와 나이 두 줄뿐이라 유사도가
+      // 97.2% 였다(90% 넘는 쌍 86개). 행운번호 13장(93.2%)보다 높다.
+      //
+      // 가르는 축으로 **나이**를 골랐다. 실측이 둘 다 가리킨다 —
+      //   `2011년 1월생 만나이` CTR 100% · `1938년생이 90되는해는` 100%
+      // 그리고 나이는 60년 쌍에서 유일하게 60 만큼 어긋나는 값이다.
+      //
+      // ⚠️ **전부 계산으로 나오는 값만 쓴다.** 그 해에 무슨 일이 있었는지 같은
+      // 것은 확인할 수 없어 한 줄도 쓰지 않는다(로또·책 규칙과 같은 선).
+      //
+      // 환갑을 맨 위에 두는 이유: 환갑은 **태어난 해의 간지가 돌아오는 해**라
+      // 60갑자의 정의 그 자체다. 1938년생의 환갑이 1998년이고, 1998년생의
+      // 환갑은 2058년이다 — 두 쌍둥이 페이지가 바로 이 줄에서 갈린다.
+      //
+      // ⚠️ 칠순·팔순 같은 전통 명칭은 세는 나이로 쇠기도 해서 쓰지 않는다.
+      // `만 70세가 되는 해` 처럼 숫자로만 적는다. 헷갈리는 것은 안 쓴다.
+      const MILESTONES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const nowAge = REF_YEAR - y;                 // 음수면 아직 안 태어난 해
+      // 환갑(60)은 간지와 직결되므로 늘 넣고, 나머지는 지금 나이 가까이에서 고른다.
+      const picked = [...new Set([60, ...MILESTONES
+        .filter((m) => m !== 60)
+        .sort((a, b) => Math.abs(a - nowAge) - Math.abs(b - nowAge))
+        .slice(0, 4)])].sort((a, b) => a - b);
+      const milestoneRows = picked.map((m) => {
+        const when = y + m;                        // 만 m세가 되는 해
+        const gap = when - REF_YEAR;
+        const state = gap === 0 ? '<strong>올해입니다</strong>'
+          : gap < 0 ? `${-gap}년 전에 지났습니다`
+          : `${gap}년 뒤`;
+        const label = m === 60
+          ? `만 60세 <span class="k">(환갑)</span>`
+          : `만 ${m}세`;
+        const note = m === 60
+          ? ` — 태어난 해의 간지 <strong>${esc(gj.ko)}년</strong>이 돌아오는 해입니다`
+          : '';
+        return `<tr><td>${label}</td><td><strong>${when}년</strong>${note}</td><td>${state}</td></tr>`;
+      }).join('\n    ');
+
+      // `2011년 1월생 만나이` CTR 100%. 1월생은 생일이 이미 지났으므로 만 나이가
+      // 하나로 정해진다 — 입춘 경계와 같이 묻는 사람이 많아 그 절에 붙인다.
+      const janAge = isFuture ? '' :
+        `<p>${y}년 1월생의 ${REF_YEAR}년 만 나이는 <strong>${intlAge}세</strong>입니다. 1월은 연초라 생일이 이미 지났기 때문에 생일 전후로 갈리지 않습니다. 다만 <strong>띠는 ${esc(prevZ.name)}</strong>라는 점이 다릅니다.</p>`;
+
       const body = `
 <div class="card">
   <p class="k">${y}년생</p>
@@ -907,7 +1025,24 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
 
 <h2>${y}년 1월생은 ${esc(prevZ.name)}입니다</h2>
 <p>띠는 1월 1일이 아니라 <strong>입춘</strong>에 바뀝니다. ${y}년 1월 1일부터 2월 3일경 사이에 태어났다면 ${esc(z.name)}가 아니라 ${y - 1}년의 <a href="/animal/${prevZ.key}/">${esc(prevZ.name)}</a>입니다. 맘운자로에 생년월일을 넣으면 그 해의 실제 입춘으로 맞춰 줍니다.</p>
+${janAge}
 <p><a href="/animal/years/">입춘 기준 자세히 ›</a></p>
+
+<h2>${y}년생의 나이 이정표</h2>
+<p>${isFuture ? `${y}년은 ${REF_YEAR}년 기준 ${y - REF_YEAR}년 뒤에 옵니다. 그 뒤의 나이를 미리 적어 둡니다.` : `${REF_YEAR}년 기준 만 ${intlAge}세입니다. 앞뒤로 어느 해에 몇 살이 되는지입니다.`}</p>
+<div class="tw"><table>
+  <thead><tr><th>나이</th><th>그 해</th><th>${REF_YEAR}년 기준</th></tr></thead>
+  <tbody>
+    ${milestoneRows}
+  </tbody>
+</table></div>
+<p class="k">만 나이 기준입니다. 2023년 6월부터 법으로 쓰는 나이는 만 나이입니다.</p>
+
+<h2>${y}년생과 같은 ${esc(gj.ko)}년</h2>
+<p>간지는 <strong>60년마다</strong> 돌아옵니다. 그래서 ${y}년생이 <strong>만 60세(환갑)</strong>가 되는 ${y + 60}년이 다시 ${esc(gj.ko)}년이고, 60년 전인 ${y - 60}년도 ${esc(gj.ko)}년이었습니다.</p>
+${y - 60 >= YEAR_FROM ? `<p><strong>${y - 60}년생</strong>은 ${y}년생과 같은 ${esc(gj.colorAnimal)}입니다. ${y - 60}년생이 환갑을 맞은 해가 바로 ${y}년이고, ${REF_YEAR}년 기준 만 ${REF_YEAR - (y - 60)}세입니다 — ${y}년생보다 정확히 60세 위입니다. <a href="/animal/year/${y - 60}/">${y - 60}년생 보기 ›</a></p>` : `<p>${y - 60}년은 이 표(${YEAR_FROM}~${YEAR_TO})보다 앞이라 따로 두지 않았습니다.</p>`}
+${y + 60 <= YEAR_TO ? `<p><strong>${y + 60}년생</strong>도 같은 ${esc(gj.colorAnimal)}입니다. ${y}년생이 환갑을 맞는 해에 태어나는 사람들이고, ${REF_YEAR}년 기준으로는 ${y + 60 - REF_YEAR}년 뒤에 옵니다. <a href="/animal/year/${y + 60}/">${y + 60}년생 보기 ›</a></p>` : `<p>${y + 60}년은 이 표(${YEAR_FROM}~${YEAR_TO})보다 뒤라 따로 두지 않았습니다. ${y}년생의 환갑이 그 해입니다.</p>`}
+<p class="k">띠(${esc(z.name)})만 같은 해는 12년마다 오지만, <strong>간지까지 같은 해는 60년마다</strong>입니다. 아래 "${esc(z.name)}인 다른 해"에는 12년 간격이 전부 들어 있습니다.</p>
 
 <h2>${esc(z.name)}는 어떤 사람인가</h2>
 <p>${noDot(z.trait)}. 키워드는 <strong>${esc(z.keyword)}</strong>입니다.</p>
@@ -940,14 +1075,36 @@ ${good.length ? `<p>${esc(good[0].d.line)}</p>` : ''}
           a: `${REF_YEAR}년 기준 만 ${intlAge}세, 생일 전이면 ${intlAge - 1}세입니다. 세는 나이로는 ${korAge}세입니다.` }]),
       ];
 
-      const titleAge = isFuture ? '' : ` · ${REF_YEAR}년 나이`;
+      // 제목 — 2026-11-16, 실측 CTR 을 보고 바꿨다.
+      //
+      // 11/08 하루치 키워드에서 **눌린 말과 안 눌린 말이 갈렸다.**
+      //   눌림: `2029년 노란 닭` 100% · `2011년생 간지` 100% ·
+      //         `노란 원숭이띠` 25% · `2030년 띠 무슨 띠` 11.1%
+      //   안 눌림: `2029년 띠` 170노출 0% · `2003년생 띠` 116노출 0% ·
+      //         `병신년` 87노출 0%
+      //
+      // ⚠️ `2003년생 띠` 가 결정적이다. 제목이 이미 "2003년생은 무슨 띠?" 로
+      // 거의 완전히 일치하는데 0% 다. **그건 제목 문제가 아니라 순위 문제다** —
+      // 큰 볼륨 쿼리에서 우리가 아래에 있어 사람이 거기까지 안 간다.
+      // 제목을 고쳐도 저 170·116·87 은 안 바뀐다. 기대를 그만큼만 건다.
+      //
+      // 고칠 수 있는 것은 **이미 눌리고 있는 긴 꼬리**다. 간지는 괄호 안에,
+      // 색+동물은 설명에만 있었는데 둘 다 CTR 100%·25% 가 난 표현이다.
+      // 그래서 간지를 괄호 밖으로 꺼내고 색+동물을 제목에 넣는다.
+      //
+      // 나이는 제목에서 뺐다. 실측 노출이 1(`1938년생이 90되는해는`)이라
+      // 간지·색동물보다 약하고, 설명·키워드·본문에는 그대로 남는다.
+      // 제목은 36자 → 30자로 오히려 짧아진다.
+      //
+      // ⚠️ **연도 97장만 바꾼다.** 띠·타로·MBTI·별자리는 그대로 둬서 대조군으로
+      // 쓴다. 한 번에 하나만 바꿔야 효과를 가려낼 수 있다(2026-11-04 교훈).
       pages.push({
         url,
         html: shell({
           url,
           answer,
           faq,
-          title: `${y}년생은 무슨 띠? ${z.name}입니다 (${gj.ko}년)${titleAge} | 맘운자로`,
+          title: `${y}년생은 무슨 띠? ${z.name} · ${gj.ko}년 ${gj.colorAnimal}의 해 | 맘운자로`,
           desc: `${y}년생은 ${z.name}. ${gj.ko}년(${gj.han}), ${gj.colorAnimal}의 해입니다.`
             + (isFuture ? '' : ` ${REF_YEAR}년 기준 만 ${intlAge}세.`)
             + ` 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.`,
