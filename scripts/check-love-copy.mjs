@@ -35,9 +35,16 @@ function stripComments(src) {
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
 }
 
+// AI 지시문은 **모델에게 주는 말**이지 사용자에게 보이는 글이 아니다.
+// "심리학적으로 같은 말을 쓰지 않는다" 처럼 금지어가 금지하려고 들어 있으므로
+// 금지어 검사에서 빼고, 아래 [8] 에서 거꾸로 **그 금지가 있는지**를 본다.
+function stripAiPrompt(src) {
+  return src.replace(/AI-PROMPT-START[\s\S]*?AI-PROMPT-END/g, ' ');
+}
+
 const dataSrc = readFileSync(join(ROOT, 'love-data.js'), 'utf8');
 const uiSrc = readFileSync(join(ROOT, 'love.js'), 'utf8');
-const copy = stripComments(dataSrc) + '\n' + stripComments(uiSrc);
+const copy = stripComments(dataSrc) + '\n' + stripComments(stripAiPrompt(uiSrc));
 
 console.log('[1] 근거를 지어내지 않는다');
 const FAKE_EVIDENCE = ['심리학', '연구에 따르면', '연구 결과', '과학적', '과학적으로',
@@ -80,37 +87,48 @@ await import(new URL('../love-data.js', import.meta.url).href);
 const D = global.window.MaumjaroLoveData;
 if (!D) { bad('window.MaumjaroLoveData가 없다'); process.exit(1); }
 
-const negGroups = D.LOVE_SIGNAL_GROUPS.filter((g) => g.negative);
-if (!negGroups.length) bad('반대 신호 그룹이 없다 — 체크할수록 점수만 오르는 설계는 금지다');
-else good(`반대 신호 그룹 ${negGroups.length}개 / 항목 ${negGroups.reduce((s, g) => s + g.items.length, 0)}개`);
+// 2026-11-17: 체크리스트 → 4지선다. 검사도 같이 바꿨다.
+// 옛 설계는 긍정 16 + 반대 6 이라 구조가 점수를 올리는 쪽으로 기울어 있었다.
+// 지금은 문항마다 위·아래가 같이 들어 있으므로 **문항 단위로** 본다.
+const Q = D.LOVE_SITUATIONS;
+if (!Q || !Q.length) { bad('LOVE_SITUATIONS 가 없다'); process.exit(1); }
 
-const negItems = negGroups.flatMap((g) => g.items);
-if (negItems.some((it) => it.w >= 0)) bad('반대 신호에 0 이상 가중치가 있다');
-else good('반대 신호 가중치 전부 음수');
+if (Q.some((q) => q.opts.length < 3)) bad('선택지가 3개 미만인 문항이 있다 — 고를 여지가 없다');
+else good(`문항 ${Q.length}개 · 선택지 ${[...new Set(Q.map((q) => q.opts.length))].join('/')}개씩`);
 
-const posItems = D.LOVE_SIGNAL_GROUPS.filter((g) => !g.negative).flatMap((g) => g.items);
-if (posItems.some((it) => it.w <= 0)) bad('긍정 신호에 0 이하 가중치가 있다');
-else good(`긍정 신호 ${posItems.length}개 · 가중치 합 ${D.LOVE_SIGNAL_MAX}`);
+// 핵심: 문항마다 아래쪽(음수) 답이 반드시 있어야 한다.
+const noNeg = Q.filter((q) => !q.opts.some((o) => o.w < 0));
+if (noNeg.length) bad(`아래쪽 답이 없는 문항: ${noNeg.map((q) => q.id).join(', ')} — 고를수록 점수만 오르는 설계는 금지다`);
+else good('문항 전부 아래쪽(음수) 답을 갖는다');
 
-const ids = [...posItems, ...negItems].map((it) => it.id);
-if (new Set(ids).size !== ids.length) bad('신호 id가 겹친다');
-else good(`신호 id ${ids.length}개 전부 고유`);
+const noPos = Q.filter((q) => !q.opts.some((o) => o.w > 0));
+if (noPos.length) bad(`위쪽 답이 없는 문항: ${noPos.map((q) => q.id).join(', ')}`);
+else good('문항 전부 위쪽(양수) 답을 갖는다');
 
-// 점수가 0~100을 벗어나지 않는지 — 전부 체크한 경우와 반대만 체크한 경우
-const score = (set) => {
-  let raw = 0;
-  D.LOVE_SIGNAL_GROUPS.forEach((g) => g.items.forEach((it) => { if (set.has(it.id)) raw += it.w; }));
-  return Math.max(0, Math.min(100, Math.round((raw / D.LOVE_SIGNAL_MAX) * 100)));
-};
-const all = score(new Set(ids));
-const onlyNeg = score(new Set(negItems.map((it) => it.id)));
-const onlyPos = score(new Set(posItems.map((it) => it.id)));
-if (onlyPos !== 100) bad(`긍정 전부 체크했을 때 100이 아니다: ${onlyPos}`);
-else good('긍정 전부 체크 = 100');
-if (onlyNeg !== 0) bad(`반대만 체크했을 때 0이 아니다: ${onlyNeg}`);
-else good('반대만 체크 = 0');
-if (all < 0 || all > 100) bad(`전부 체크했을 때 범위를 벗어난다: ${all}`);
-else good(`전부 체크 = ${all} (0~100 안)`);
+// 기울기 검사 — 전체 선택지에서 양수와 음수 개수가 같아야 한쪽으로 안 기운다.
+const allOpts = Q.flatMap((q) => q.opts);
+const nPos = allOpts.filter((o) => o.w > 0).length;
+const nNeg = allOpts.filter((o) => o.w < 0).length;
+if (nPos !== nNeg) bad(`선택지가 한쪽으로 기울었다 — 위쪽 ${nPos}개 / 아래쪽 ${nNeg}개`);
+else good(`선택지 균형 — 위쪽 ${nPos}개 / 아래쪽 ${nNeg}개`);
+
+const ids = Q.map((q) => q.id);
+if (new Set(ids).size !== ids.length) bad('문항 id가 겹친다');
+else good(`문항 id ${ids.length}개 전부 고유`);
+
+// 점수가 0~100 을 벗어나지 않는지. 전부 최악 = 0, 전부 최고 = 100 이어야 한다.
+const norm = (raw) => Math.max(0, Math.min(100,
+  Math.round(((raw - D.LOVE_W_MIN) / (D.LOVE_W_MAX - D.LOVE_W_MIN)) * 100)));
+const worst = norm(D.LOVE_W_MIN);
+const best = norm(D.LOVE_W_MAX);
+if (worst !== 0) bad(`전부 아래쪽을 골랐을 때 0 이 아니다: ${worst}`);
+else good('전부 아래쪽 = 0');
+if (best !== 100) bad(`전부 위쪽을 골랐을 때 100 이 아니다: ${best}`);
+else good('전부 위쪽 = 100');
+// 반반이 50 근처여야 한다. 한쪽으로 치우쳐 있으면 숫자가 거짓말을 한다.
+const mid = norm(0);
+if (mid < 45 || mid > 55) bad(`가운데가 ${mid} 다 — 50 근처여야 한다`);
+else good(`가운데(합계 0) = ${mid}`);
 
 // 구간이 0~100을 빈틈없이 덮는지
 const covered = new Set();
@@ -146,6 +164,29 @@ D.LOVE_TOPICS.forEach((t) => {
 const topicIds = D.LOVE_TOPICS.map((t) => t.id);
 if (new Set(topicIds).size !== topicIds.length) bad('고민 id가 겹친다');
 if (!fail) good(`구간 ${D.LOVE_BANDS.length}개 · 고민 ${D.LOVE_TOPICS.length}개 전부 채워짐`);
+
+console.log('[8] AI 지시문이 선을 못 넘게 막는다');
+// 여기가 연애센터에서 가장 선을 넘기 쉬운 자리다. 사람이 "그 사람이 날 좋아하나요?"
+// 를 묻고 모델이 "좋아합니다" 라고 답하면 그 순간 규칙이 깨진다. 지시문이 그걸
+// 막고 있는지 **글자로** 확인한다 — 지시문이 사라져도 검사가 잡는다.
+const prompt = (uiSrc.match(/AI-PROMPT-START([\s\S]*?)AI-PROMPT-END/) || [])[1] || '';
+if (!prompt) {
+  bad('love.js 에 AI 지시문 표시(AI-PROMPT-START/END)가 없다');
+} else {
+  const must = [
+    ['단정 금지', /단정하지 않는다/],
+    ['좋아합니다 라고 말하지 않기', /좋아합니다[\s\S]{0,60}말하지 않는다/],
+    ['근거 지어내기 금지', /근거를 지어내지 않는다/],
+    ['심리학·연구 표현 금지', /심리학[\s\S]{0,80}쓰지 않는다/],
+    ['부추김 금지', /부추기지 않는다/],
+    ['거절도 결과로 인정', /거절도 하나의 결과/],
+    ['사람마다 다른 뜻', /사람마다 다른 뜻/],
+    ['안전 안내(상담전화)', /109/],
+  ];
+  const miss = must.filter(([, re]) => !re.test(prompt)).map(([n]) => n);
+  if (miss.length) bad(`AI 지시문에 빠진 금지: ${miss.join(' · ')}`);
+  else good(`AI 지시문이 ${must.length}가지를 전부 막는다`);
+}
 
 console.log(fail ? `\n실패 ${fail}건` : '\n전부 통과');
 process.exit(fail ? 1 : 0);
