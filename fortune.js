@@ -284,6 +284,13 @@
     return loadMaumunLog()[todayDateKey()] || null;
   }
 
+  // ---------- 타로 덱 (2026-11-17 마이너 56장 추가로 78장) ----------
+  // 메이저 22장만 있을 때는 주제별 3장을 22장에서 뽑느라 같은 카드가 금방 돌아왔다.
+  // 마이너가 들어오면서 한 벌이 완성됐다. 마이너 데이터 파일이 없어도 돌아간다 —
+  // 그때는 예전처럼 22장 덱이 된다.
+  const TAROT_MINOR = (window.MAUMJARO_TAROT_MINOR && window.MAUMJARO_TAROT_MINOR.TAROT_MINOR) || [];
+  const TAROT_DECK = TAROT_MAJOR.concat(TAROT_MINOR);
+
   // ---------- 사주 프로필 저장/로드 (별도 키, 기존 4개 키와 완전 독립) ----------
   function loadSajuProfile() {
     try {
@@ -1914,24 +1921,30 @@
   // 가짓수가 아주 적어서(주제 6가지, 카드는 22장 × 정/역 = 44가지) 숫자 하나로 접을 수 있다.
   //   n = ((주제 * 44 + 카드1) * 44 + 카드2) * 44 + 카드3      카드 = id * 2 + 역방향
   // 최댓값이 511103이라 36진수로 네 글자면 충분하다 → ?t=aydb
-  const TAROT_CARD_STATES = 44; // 22장 × 정방향/역방향
+  // ⚠️ 이 숫자를 바꾸면 **이미 나간 링크가 조용히 다른 카드로 열린다.** 틀렸다고 알려주지도
+  //    않고 엉뚱한 카드를 보여주는 쪽이라 제일 나쁘다. 그래서 44는 영원히 44로 두고,
+  //    78장이 된 뒤의 링크는 글자가 다른 칸(?t2=)에 담는다.
+  //    옛 링크(?t=)는 메이저 22장만 실려 있었으므로 44로 풀면 지금도 정확하다.
+  const TAROT_CARD_STATES = 44; // (구형 ?t=) 22장 × 정방향/역방향
+  const TAROT_CARD_STATES_V2 = 156; // (신형 ?t2=) 78장 × 정방향/역방향
 
   function buildTarotShareUrl(topicKey, cards) {
     const ti = TAROT_TOPICS.findIndex((t) => t.key === topicKey);
     let n = ti < 0 ? 0 : ti;
-    cards.forEach((c) => { n = n * TAROT_CARD_STATES + (c.card.id * 2 + (c.reversed ? 1 : 0)); });
-    return `${location.origin}${shareBasePath()}?t=${n.toString(36)}`;
+    cards.forEach((c) => { n = n * TAROT_CARD_STATES_V2 + (c.card.id * 2 + (c.reversed ? 1 : 0)); });
+    return `${location.origin}${shareBasePath()}?t2=${n.toString(36)}`;
   }
 
   // 보낸 사람 이름은 링크에 넣지 않는다 — 카톡·문자 어디로 보내든 받는 쪽에 이미
   // 보낸 사람이 표시되므로 중복이고, 한글 이름은 퍼센트 인코딩되며 링크를 두 배로 늘린다.
-  function parseTarotShareCode(code) {
+  function parseTarotShareCode(code, states) {
+    const base = states || TAROT_CARD_STATES;
     let n = parseInt(String(code || ''), 36);
     if (!Number.isFinite(n) || n < 0) return null;
     const nums = [];
     for (let i = 0; i < 3; i++) {
-      nums.unshift(n % TAROT_CARD_STATES);
-      n = Math.floor(n / TAROT_CARD_STATES);
+      nums.unshift(n % base);
+      n = Math.floor(n / base);
     }
     const topic = TAROT_TOPICS[n];
     if (!topic) return null;
@@ -1958,7 +1971,7 @@
       .map((v) => {
         const id = Array.isArray(v) ? v[0] : (v >> 1);
         const reversed = Array.isArray(v) ? !!v[1] : !!(v & 1);
-        const card = TAROT_MAJOR.find((c) => c.id === id);
+        const card = TAROT_DECK.find((c) => c.id === id);
         return card ? { card, reversed } : null;
       })
       .filter(Boolean);
@@ -2500,7 +2513,7 @@
   }
 
   function tarotCardOf(id) {
-    return TAROT_MAJOR.find((c) => c.id === id) || null;
+    return TAROT_DECK.find((c) => c.id === id) || null;
   }
   function tarotSideOf(card, reversed) {
     return reversed ? card.rev : card.up;
@@ -2893,7 +2906,7 @@
   // 부채꼴에 올릴 카드들을 미리 정한다. 사용자가 고른 자리의 카드가 그대로 자기 카드가 된다
   // (뽑은 뒤에 몰래 다른 카드를 배정하지 않는다 — 직접 골랐다는 감각이 타로의 핵심).
   function buildTarotFan() {
-    const pool = TAROT_MAJOR.slice();
+    const pool = TAROT_DECK.slice();
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
@@ -4069,7 +4082,7 @@
     // 친구 공유 딥링크(?custom=, ?maumun=, ?t=)가 함께 있으면 그쪽이 우선이다.
     // 친구가 보낸 걸 보러 온 사람을 홍보용 타로 화면으로 가로채면 안 된다.
     const q = new URLSearchParams(location.search);
-    if (q.get('custom') || q.get('maumun') || q.get('t') || q.get('tarot')) return;
+    if (q.get('custom') || q.get('maumun') || q.get('t') || q.get('t2') || q.get('tarot')) return;
 
     const fortuneTabBtn = document.querySelector('.tab-btn[data-view="fortune"]');
     if (!fortuneTabBtn) return;
@@ -4084,8 +4097,11 @@
   // 위 ?maumun= 처리와 같은 원칙: 손상된 링크는 조용히 무시하고 평소처럼 홈이 보인다.
   (function handleFriendTarotDeepLink() {
     const q = new URLSearchParams(location.search);
+    // 신형(?t2=, 78장) → 구형(?t=, 22장) → 더 옛날(?tarot=, LZString) 순으로 읽는다.
+    const short2 = q.get('t2');
     const short = q.get('t');
-    const payload = short ? parseTarotShareCode(short) : decodeTarotPayload(q.get('tarot'));
+    const payload = short2 ? parseTarotShareCode(short2, TAROT_CARD_STATES_V2)
+      : (short ? parseTarotShareCode(short) : decodeTarotPayload(q.get('tarot')));
     if (!payload) return;
     wireIncomingTarotTrigger(payload);
   })();
