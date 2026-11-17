@@ -27,8 +27,9 @@
 
   const STORE_KEY = 'maumjaro:love';
 
-  // 주사를 놓으면 화면이 홈으로 갔다 돌아오므로, 체크 상태는 모듈 안에 들고 있어야 한다.
-  let checked = new Set();
+  // 주사를 놓으면 화면이 홈으로 갔다 돌아오므로, 고른 답은 모듈 안에 들고 있어야 한다.
+  // { 문항id: 고른 선택지 번호 }
+  let answers = {};
   let revealed = false;
 
   function trackEvent(name, params) {
@@ -52,6 +53,9 @@
   }
 
   // ---------- 저장 (maumjaro: 접두사. 기존 키는 손대지 않는다) ----------
+  // ⚠️ 2026-11-17 에 체크리스트가 4지선다로 바뀌었다. 옛 기록은
+  // `{date, score, checked:[]}` 였고 새 기록은 `{v:2, date, score, answers:{}}` 다.
+  // **옛 값을 지우지 않는다**(localStorage 규칙). 읽을 때 v 로 가른다.
   function load() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return null; }
   }
@@ -60,28 +64,36 @@
   }
 
   // ---------- 셈 ----------
-  // 점수가 아니라 셈이다. 체크된 가중치의 합을 긍정 총합으로 나눈다.
-  // 반대 신호는 음수 가중치라 그냥 더해지고, 0 아래로는 내려가지 않는다.
-  function scoreOf(set) {
-    let raw = 0;
-    D.LOVE_SIGNAL_GROUPS.forEach((g) => {
-      g.items.forEach((it) => { if (set.has(it.id)) raw += it.w; });
-    });
-    const pct = Math.round((raw / D.LOVE_SIGNAL_MAX) * 100);
+  // 점이 아니라 셈이다. 고른 선택지의 가중치를 더해 0~100 으로 펼친다.
+  // 전부 아래쪽을 고르면 0, 전부 위쪽이면 100, 섞이면 그 사이다.
+  // **50 이 반반이다** — 옛 체크리스트처럼 "아무것도 안 해서 0" 이 아니다.
+  function rawOf(ans) {
+    return D.LOVE_SITUATIONS.reduce((sum, q) => {
+      const i = ans[q.id];
+      return sum + (typeof i === 'number' && q.opts[i] ? q.opts[i].w : 0);
+    }, 0);
+  }
+  function scoreOf(ans) {
+    const raw = rawOf(ans);
+    const pct = Math.round(((raw - D.LOVE_W_MIN) / (D.LOVE_W_MAX - D.LOVE_W_MIN)) * 100);
     return Math.max(0, Math.min(100, pct));
   }
   function bandOf(score) {
     return D.LOVE_BANDS.find((b) => score >= b.min) || D.LOVE_BANDS[D.LOVE_BANDS.length - 1];
   }
-  function countOf(set, negative) {
-    let n = 0;
-    D.LOVE_SIGNAL_GROUPS.filter((g) => !!g.negative === negative).forEach((g) => {
-      g.items.forEach((it) => { if (set.has(it.id)) n += 1; });
-    });
-    return n;
+  function answeredCount(ans) {
+    return D.LOVE_SITUATIONS.filter((q) => typeof ans[q.id] === 'number').length;
+  }
+  // 위쪽(+)을 고른 문항과 아래쪽(-)을 고른 문항을 센다. 결과 화면에서 보여준다.
+  function sideCount(ans, positive) {
+    return D.LOVE_SITUATIONS.filter((q) => {
+      const i = ans[q.id];
+      if (typeof i !== 'number' || !q.opts[i]) return false;
+      return positive ? q.opts[i].w > 0 : q.opts[i].w < 0;
+    }).length;
   }
 
-  const DISCLAIMER = '이건 점이 아니라 셈이에요. 당신이 체크한 것을 더한 값이고, 상대 마음을 알아내는 장치가 아닙니다. 같은 행동도 사람마다 다른 뜻일 수 있어요.';
+  const DISCLAIMER = '이건 점이 아니라 셈이에요. 당신이 고른 답을 더한 값이고, 상대 마음을 알아내는 장치가 아닙니다. 같은 행동도 사람마다 다른 뜻일 수 있어요.';
 
   // ---------- 허브 ----------
   function renderHub() {
@@ -96,7 +108,16 @@
         <span class="rx-custom-cta-emoji">📊</span>
         <span class="rx-custom-cta-text">
           <span class="rx-custom-cta-title">호감지수 보기</span>
-          <span class="rx-custom-cta-sub">${hasLast ? `지난번 ${last.score} · 다시 체크하기` : '내가 본 신호를 체크하면 됩니다'}</span>
+          <span class="rx-custom-cta-sub">${hasLast ? `지난번 ${last.score} · 다시 해보기` : '일상에서 상대가 어떻게 하는지 10가지'}</span>
+        </span>
+        <span class="rx-custom-cta-arrow">›</span>
+      </button>
+
+      <button class="rx-custom-cta" id="love-ai-cta" type="button">
+        <span class="rx-custom-cta-emoji">🤖</span>
+        <span class="rx-custom-cta-text">
+          <span class="rx-custom-cta-title">연애 고민 물어보기</span>
+          <span class="rx-custom-cta-sub">내 상황을 적으면 네 각도로 답해줘요</span>
         </span>
         <span class="rx-custom-cta-arrow">›</span>
       </button>
@@ -120,7 +141,6 @@
       </div>
 
       <button class="rx-friend-quick-btn" id="love-more-topics" type="button" style="width:100%;margin-top:4px;">고민 10개 전부 보기 ›</button>
-
       <button class="rx-friend-quick-btn" id="love-goto-match" type="button" style="width:100%;margin-top:8px;">💞 생년월일 궁합도 보기 ›</button>
 
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">${DISCLAIMER}</p>
@@ -128,7 +148,11 @@
 
     document.getElementById('love-signal-cta').addEventListener('click', () => {
       trackEvent('love_signal_opened', { had_last: hasLast ? 1 : 0 });
-      renderSignals();
+      renderSituations();
+    });
+    document.getElementById('love-ai-cta').addEventListener('click', () => {
+      trackEvent('love_ai_opened', {});
+      renderAiLove();
     });
     document.getElementById('love-topic-cta').addEventListener('click', renderTopicList);
     document.getElementById('love-more-topics').addEventListener('click', renderTopicList);
@@ -148,10 +172,9 @@
     }, 120);
   }
 
-  // ---------- 호감지수: 체크리스트 ----------
-  function renderSignals() {
-    const pos = countOf(checked, false);
-    const neg = countOf(checked, true);
+  // ---------- 호감지수: 일상 반응 10문항 (4지선다) ----------
+  function renderSituations() {
+    const done = answeredCount(answers);
     mount.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="love-back" type="button">‹</button>
@@ -160,56 +183,59 @@
 
       <div class="rx-detail-card">
         <div class="rx-detail-emoji">📝</div>
-        <div class="rx-detail-title">본 것만 체크해주세요</div>
-        <p class="rx-detail-symptom">짐작이 아니라 <strong>실제로 있었던 일</strong>만 고르는 게 좋아요. 반대로 가는 신호도 같이 있습니다 — 그쪽도 솔직하게 체크해야 숫자가 쓸모 있어요.</p>
+        <div class="rx-detail-title">실제로 어땠는지 골라주세요</div>
+        <p class="rx-detail-symptom">바라는 쪽이 아니라 <strong>최근에 실제로 있었던 쪽</strong>을 고르는 게 좋아요. 위쪽이 정답인 문제가 아닙니다 — 아래쪽 답도 그대로 결과에 들어갑니다.</p>
       </div>
 
-      ${D.LOVE_SIGNAL_GROUPS.map((g) => `
-        <div class="rx-custom-preview" style="margin-top:10px;">
+      ${D.LOVE_SITUATIONS.map((q, qi) => `
+        <div class="rx-custom-preview" style="margin-top:12px;">
           <div class="rx-slip-row">
-            <span class="rx-slip-key">${g.emoji} ${esc(g.label)}</span>
-            <span class="rx-slip-value">${g.negative ? '있으면 체크' : ''}</span>
+            <span class="rx-slip-key">${q.emoji} ${esc(q.q)}</span>
+            <span class="rx-slip-value">${qi + 1}/${D.LOVE_SITUATIONS.length}</span>
           </div>
-          <div class="love-signal-list">
-            ${g.items.map((it) => `
-              <button class="love-signal${checked.has(it.id) ? ' on' : ''}" type="button" data-sig="${it.id}">
-                <span class="love-signal-box">${checked.has(it.id) ? '✓' : ''}</span>
-                <span class="love-signal-label">${esc(it.label)}</span>
+          <div class="love-opt-list">
+            ${q.opts.map((o, oi) => `
+              <button class="love-opt${answers[q.id] === oi ? ' on' : ''}" type="button" data-q="${q.id}" data-o="${oi}">
+                <span class="love-opt-dot">${answers[q.id] === oi ? '✓' : ''}</span>
+                <span class="love-opt-label">${esc(o.t)}</span>
               </button>`).join('')}
           </div>
         </div>`).join('')}
 
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
-        체크 ${pos}개${neg ? ` · 반대 신호 ${neg}개` : ''}
+      <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">
+        ${done}/${D.LOVE_SITUATIONS.length} 골랐어요
       </p>
       <button class="action-btn" id="love-signal-submit" type="button" style="width:100%;margin-top:6px;">결과 보기</button>
       <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">${DISCLAIMER}</p>
     `;
 
     document.getElementById('love-back').addEventListener('click', renderHub);
-    mount.querySelectorAll('.love-signal').forEach((b) => {
+    mount.querySelectorAll('.love-opt').forEach((b) => {
       b.addEventListener('click', () => {
-        const id = b.dataset.sig;
-        if (checked.has(id)) checked.delete(id); else checked.add(id);
-        revealed = false; // 체크가 바뀌면 다시 봉인한다 — 안 그러면 숫자만 갈아보게 된다
+        answers[b.dataset.q] = Number(b.dataset.o);
+        revealed = false; // 답이 바뀌면 다시 봉인한다 — 안 그러면 숫자만 갈아보게 된다
         const y = window.scrollY;
-        renderSignals();
+        renderSituations();
         window.scrollTo(0, y);
       });
     });
     document.getElementById('love-signal-submit').addEventListener('click', () => {
-      if (!checked.size) { toast('하나라도 체크해주세요'); return; }
-      trackEvent('love_signal_submit', { pos: countOf(checked, false), neg: countOf(checked, true) });
+      const n = answeredCount(answers);
+      if (n < D.LOVE_SITUATIONS.length) {
+        toast(`${D.LOVE_SITUATIONS.length - n}개가 남았어요`);
+        return;
+      }
+      trackEvent('love_signal_submit', { pos: sideCount(answers, true), neg: sideCount(answers, false) });
       renderSignalResult();
     });
   }
 
   // ---------- 호감지수: 결과(주사로 연다) ----------
   function renderSignalResult() {
-    const score = scoreOf(checked);
+    const score = scoreOf(answers);
     const band = bandOf(score);
-    const pos = countOf(checked, false);
-    const neg = countOf(checked, true);
+    const pos = sideCount(answers, true);
+    const neg = sideCount(answers, false);
 
     if (!revealed) {
       mount.innerHTML = `
@@ -219,7 +245,7 @@
         </div>
         <div class="rx-detail-card mbti-hero">
           <div class="rx-detail-emoji">💌</div>
-          <div class="rx-detail-title">체크 ${pos}개${neg ? ` · 반대 ${neg}개` : ''}</div>
+          <div class="rx-detail-title">${D.LOVE_SITUATIONS.length}가지를 다 골랐어요</div>
           <p class="rx-detail-symptom">결과가 봉해져 있어요.<br /><strong>주사를 놓으면 열립니다</strong></p>
           <div class="mbti-sealed" aria-hidden="true">
             <span class="mbti-sealed-q">📊</span>
@@ -229,12 +255,12 @@
         <button class="action-btn" id="love-gate-btn" type="button" style="width:100%;">💉 주사 놓고 결과 열기</button>
         <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">팔을 눌러도 되고, 폰을 콕 찌르듯 움직여도 돼요</p>
       `;
-      document.getElementById('love-back').addEventListener('click', renderSignals);
+      document.getElementById('love-back').addEventListener('click', renderSituations);
       wireGate();
       return;
     }
 
-    save({ date: new Date().toISOString().slice(0, 10), score, checked: Array.from(checked) });
+    save({ v: 2, date: new Date().toISOString().slice(0, 10), score, answers: { ...answers } });
 
     mount.innerHTML = `
       <div class="rx-nav-header">
@@ -258,21 +284,22 @@
         <p class="rx-slip-text">${esc(band.dont)}</p>
       </div>
 
-      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">
-        체크한 신호 ${pos}개${neg ? ` · 반대로 가는 신호 ${neg}개` : ''} · 분모 ${D.LOVE_SIGNAL_MAX}
-      </p>
+      <div class="rx-custom-preview" style="margin-top:8px;">
+        <div class="rx-slip-row"><span class="rx-slip-key">🧾 어떻게 나온 숫자인가</span></div>
+        <p class="rx-slip-text">${D.LOVE_SITUATIONS.length}문항 중 위쪽을 고른 것이 <strong>${pos}개</strong>, 아래쪽이 <strong>${neg}개</strong>입니다. 전부 아래쪽이면 0, 전부 위쪽이면 100이고 <strong>50이 반반</strong>이에요.</p>
+      </div>
 
       <button class="rx-friend-quick-btn love-goto-rx" type="button" data-rx="${band.rxId}" style="width:100%;margin-top:8px;">
         이 마음에 맞는 처방 보러가기 ›
       </button>
       <button class="action-btn" id="love-share-btn" type="button" style="width:100%;margin-top:8px;"
-        data-txt="${escAttr(`호감지수 ${score} · ${band.title}\n내가 본 신호를 체크했더니 이렇게 나왔어`)}">결과 보내기 💌</button>
-      <button class="rx-slip-photo-btn" id="love-redo" type="button" style="width:100%;margin-top:8px;">다시 체크하기</button>
+        data-txt="${escAttr(`호감지수 ${score} · ${band.title}\n일상에서 실제로 어땠는지 10가지 고르니까 이렇게 나왔어`)}">결과 보내기 💌</button>
+      <button class="rx-slip-photo-btn" id="love-redo" type="button" style="width:100%;margin-top:8px;">다시 해보기</button>
 
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">${DISCLAIMER}</p>
     `;
     document.getElementById('love-back').addEventListener('click', renderHub);
-    document.getElementById('love-redo').addEventListener('click', () => { revealed = false; renderSignals(); });
+    document.getElementById('love-redo').addEventListener('click', () => { revealed = false; renderSituations(); });
     wireRxButtons();
     wireShare(document.getElementById('love-share-btn'), 'love-signal');
     trackEvent('love_signal_result', { score, pos, neg, band: band.min });
@@ -298,7 +325,186 @@
     });
   }
 
-  // ---------- 고민 목록 ----------
+  // ---------- 연애 고민 물어보기 (AI) ----------
+  //
+  // AI 맘운(fortune.js)과 **같은 프록시**를 쓴다. 새로 만들지 않는다 —
+  // 주소는 `window.MaumjaroFortune.AI_PROXY_URL` 로 이미 나와 있다.
+  //
+  // ⚠️ 여기가 연애센터에서 가장 선을 넘기 쉬운 자리다. 사람이 "그 사람이 날
+  // 좋아하나요?" 를 묻고 AI 가 "좋아합니다" 라고 답하면 그 순간 규칙이 깨진다.
+  // 그래서 지시문에 네 가지를 못 박는다 — 단정 금지, 근거 암시 금지,
+  // 부추김 금지(거절도 결과로 인정), 안전이 걱정되면 상담 안내.
+  // 프록시가 죽거나 늦으면 **고민 10개 중 가장 가까운 것으로 떨어진다.**
+  // 빈 화면을 남기지 않는다.
+  const AI_TIMEOUT_MS = 20000;
+
+  function proxyUrl() {
+    return (window.MaumjaroFortune && window.MaumjaroFortune.AI_PROXY_URL) || '';
+  }
+
+  // 글에서 가장 가까운 고민을 찾는다. 프록시가 죽었을 때 떨어질 자리이자,
+  // AI 답 아래에 "이 고민도 보기" 로 붙일 자리다.
+  function nearestTopic(text) {
+    const t = String(text);
+    const hit = (words) => words.reduce((n, w) => n + (t.includes(w) ? 1 : 0), 0);
+    const table = {
+      'read-no-reply': ['읽씹', '읽고', '답장', '답이 없', '안 읽', '1이'],
+      breakup: ['헤어', '이별', '찼', '차였', '헤어졌'],
+      reunion: ['재회', '다시 만', '돌아가', '전 남친', '전 여친', '전애인'],
+      fight: ['싸웠', '싸움', '화났', '다퉜', '서운'],
+      boredom: ['권태', '설렘이', '식었', '지겨'],
+      confess: ['고백', '좋아한다고', '말할까', '타이밍'],
+      sseom: ['썸', '애매', '뭐지', '무슨 사이'],
+      'first-date': ['소개팅', '첫 데이트', '첫 만남', '처음 만'],
+      'letting-go': ['정리', '포기', '그만', '잊'],
+      crush: ['짝사랑', '좋아하는데', '혼자'],
+    };
+    let best = null; let bestN = 0;
+    Object.keys(table).forEach((id) => {
+      const n = hit(table[id]);
+      if (n > bestN) { bestN = n; best = id; }
+    });
+    return best ? D.LOVE_TOPICS.find((x) => x.id === best) : null;
+  }
+
+  let aiAsking = false;
+
+  function renderAiLove() {
+    mount.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="love-back" type="button">‹</button>
+        <span class="rx-nav-title">🤖 연애 고민</span>
+      </div>
+
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">💭</div>
+        <div class="rx-detail-title">지금 상황을 적어주세요</div>
+        <p class="rx-detail-symptom">짧아도 괜찮아요. 무슨 일이 있었고 무엇이 걸리는지만 적어주시면 <strong>상황·상대·오늘 할 일·하지 말 것</strong> 네 각도로 답해드려요.</p>
+      </div>
+
+      <div class="rx-custom-field">
+        <textarea id="love-ai-q" class="rx-custom-input" rows="5"
+          placeholder="예) 두 달째 거의 매일 연락하는 사이인데, 만나자고 하면 항상 다음에 보자고 해요. 제가 너무 들이대는 걸까요?"></textarea>
+      </div>
+      <button class="action-btn" id="love-ai-submit" type="button" style="width:100%;margin-top:6px;">물어보기</button>
+      <div id="love-ai-answer"></div>
+
+      <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">
+        ${DISCLAIMER} 적어주신 내용은 답을 만드는 데만 쓰이고 저장하지 않아요.
+      </p>
+    `;
+    document.getElementById('love-back').addEventListener('click', renderHub);
+    document.getElementById('love-ai-submit').addEventListener('click', submitAiLove);
+  }
+
+  function submitAiLove() {
+    const box = document.getElementById('love-ai-q');
+    const btn = document.getElementById('love-ai-submit');
+    const out = document.getElementById('love-ai-answer');
+    const q = (box.value || '').trim();
+    if (!q) { toast('지금 상황을 적어주세요'); trackEvent('love_ai_submit_empty', {}); return; }
+    if (aiAsking) return;
+    aiAsking = true;
+    btn.disabled = true;
+    btn.textContent = '생각하는 중…';
+    const near = nearestTopic(q);
+    trackEvent('love_ai_asked', { len: q.length, matched: near ? 1 : 0, topic: near ? near.id : 'none' });
+    const askedAt = Date.now();
+
+    askAiLove(q)
+      .then((text) => {
+        renderAiLoveAnswer(text, near, 'proxy');
+        trackEvent('love_ai_answered', { source: 'proxy', ms: Date.now() - askedAt });
+      })
+      .catch(() => {
+        // 프록시가 죽어도 빈손으로 두지 않는다. 가장 가까운 고민 풀이로 떨어진다.
+        const t = near || D.LOVE_TOPICS[0];
+        out.innerHTML = `
+          <div class="rx-detail-card" style="margin-top:16px;">
+            <p class="rx-detail-symptom">지금은 답을 못 만들었어요. 대신 가장 가까워 보이는 고민 풀이를 띄울게요.</p>
+            <button class="rx-friend-quick-btn" id="love-ai-fallback" type="button" style="width:100%;margin-top:10px;">${t.emoji} ${esc(t.label)} 풀이 보기 ›</button>
+          </div>`;
+        document.getElementById('love-ai-fallback').addEventListener('click', () => renderTopic(t.id));
+        trackEvent('love_ai_answered', { source: 'fallback', ms: Date.now() - askedAt });
+      })
+      .then(() => {
+        aiAsking = false;
+        if (btn) { btn.disabled = false; btn.textContent = '다시 물어보기'; }
+      });
+  }
+
+  function askAiLove(question) {
+    const url = proxyUrl();
+    if (!url) return Promise.reject(new Error('no proxy'));
+
+    /* AI-PROMPT-START — 아래는 모델에게 주는 지시문이지 사용자에게 보이는 글이 아니다.
+       금지어가 '금지하려고' 들어 있으므로 검사에서 따로 다룬다(check-love-copy.mjs). */
+    const systemPrompt = [
+      '너는 맘운자로의 연애 상담 코너다. 한국어로, 따뜻하지만 솔직하게 답한다.',
+      '답변은 네 각도를 순서대로 따른다. 각 각도는 한두 문단이고, 번호나 소제목은 쓰지 않는다.',
+      '  (1) 지금 무슨 일이 일어나고 있나 — 적어준 상황을 구체적으로 짚어 정리한다.',
+      '  (2) 상대 쪽에서는 — 상대 입장에서 가능한 해석을 하나 이상 제시한다.',
+      '  (3) 오늘 할 한 가지 — 아주 작고 구체적인 행동 하나. "마음을 편히" 같은 막연한 말은 금지.',
+      '  (4) 하면 더 나빠지는 것 — 하지 말 행동 하나를 이유와 함께.',
+      '',
+      '아래 네 가지는 어떤 경우에도 어기지 않는다.',
+      '첫째, 상대의 마음을 단정하지 않는다. "그 사람은 당신을 좋아합니다" 또는 "좋아하지 않습니다" 처럼 말하지 않는다. 적어준 것은 그 사람이 본 행동일 뿐이고 너는 상대를 모른다. "~일 수 있어요", "~처럼 보여요" 로 말한다.',
+      '둘째, 근거를 지어내지 않는다. "심리학적으로", "연구에 따르면", "통계상", "AI가 분석한 결과" 같은 말을 쓰지 않는다. 너에게는 그런 근거가 없다.',
+      '셋째, 고백·연락·재회를 부추기지 않는다. 거절당할 가능성도 그대로 말하고, 거절도 하나의 결과로 인정하는 문장을 넣는다. 매달리기를 권하지 않는다.',
+      '넷째, 같은 행동도 사람마다 다른 뜻일 수 있다는 점을 한 번은 짚는다.',
+      '',
+      '전체 500~800자. 문단 사이는 줄바꿈 두 번. 항목 기호(-, *, 1.)는 쓰지 않는다.',
+      '상대를 비난하거나 "그런 사람은 거르세요" 같은 식으로 몰아가지 않는다. 판단은 적어준 사람이 한다.',
+      '만약 자해, 자살, 폭력, 스토킹, 학대처럼 실제 안전이 걱정되는 이야기가 보이면 연애 조언으로 넘기지 않는다. 먼저 진심으로 걱정을 전하고, 혼자 감당하지 말고 주변 사람이나 전문 상담(자살예방 상담전화 109, 24시간 무료)에 꼭 연락해보라고 부드럽게 권한다. 겁주거나 다그치지 않는다.',
+    ].join('\n');
+    /* AI-PROMPT-END */
+
+    const last = load();
+    const ctx = (last && typeof last.score === 'number')
+      ? `참고로 이 사람이 앱에서 호감지수를 재봤을 때 ${last.score}점(100점 만점, 50이 반반)이 나왔다. 숫자를 그대로 인용하지는 말고 분위기 참고만 한다.`
+      : '';
+
+    const userPrompt = [ctx, `고민: ${question}`].filter(Boolean).join('\n');
+
+    // 프록시가 늦으면 답을 기다리다 화면이 멈춘다. 시간을 끊고 떨어진다.
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, AI_TIMEOUT_MS);
+
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens: 1200 }),
+      signal: ctrl ? ctrl.signal : undefined,
+    })
+      .then((r) => { if (!r.ok) throw new Error('proxy error'); return r.json(); })
+      .then((data) => {
+        if (!data || !data.answer) throw new Error('empty answer');
+        return data.answer;
+      })
+      .then((t) => { clearTimeout(timer); return t; })
+      .catch((e) => { clearTimeout(timer); throw e; });
+  }
+
+  function renderAiLoveAnswer(text, near, source) {
+    const out = document.getElementById('love-ai-answer');
+    const paras = String(text).trim().split(/\n{2,}/)
+      .map((p) => `<p class="rx-detail-symptom" style="margin-top:10px;">${esc(p)}</p>`).join('');
+    const rxId = near ? near.rxId : 'love-crush-silent';
+    out.innerHTML = `
+      <div class="rx-detail-card" style="margin-top:16px;">
+        ${paras}
+      </div>
+      <button class="rx-friend-quick-btn love-goto-rx" type="button" data-rx="${rxId}" style="width:100%;margin-top:8px;">
+        이 고민에 맞는 처방 보러가기 ›
+      </button>
+      ${near ? `<button class="rx-slip-photo-btn" id="love-ai-near" type="button" style="width:100%;margin-top:8px;">${near.emoji} ${esc(near.label)} 풀이도 보기 ›</button>` : ''}
+    `;
+    wireRxButtons();
+    const n = document.getElementById('love-ai-near');
+    if (n) n.addEventListener('click', () => renderTopic(near.id));
+    trackEvent('love_ai_rendered', { source, topic: near ? near.id : 'none' });
+  }
+
   function renderTopicList() {
     mount.innerHTML = `
       <div class="rx-nav-header">
@@ -362,7 +568,7 @@
       </p>
     `;
     document.getElementById('love-back').addEventListener('click', renderTopicList);
-    document.getElementById('love-goto-signal').addEventListener('click', renderSignals);
+    document.getElementById('love-goto-signal').addEventListener('click', renderSituations);
     wireRxButtons();
     wireShare(document.getElementById('love-share-btn'), 'love-topic');
     trackEvent('love_topic_opened', { topic: t.id });
