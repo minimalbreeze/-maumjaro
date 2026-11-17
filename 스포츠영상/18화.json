@@ -141,7 +141,32 @@
    "number": "",
    "look": "",
    "tell": "⚠️ LG 유니폼 사진. 양의지가 시장에서 빠져 포수 수요가 몰리는 자리다. ⚠️ team·number 를 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTRfNjIg%2FMDAxNzk0NjA4OTA5OTgx.noO1UHdd_FKiZId3VHu_6XEeEKUMLOrjVifA-DNn0P0g.mGsPQXuae0ZqF7uqZnQIKO_Bpxc9c0OvbRBr4WNQ5gwg.JPEG%2Fd9b7a3bf562b96ef-bottom-31.jpg&type=a340",
+     "쓰임": "LG 1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfNzQg%2FMDAxNzk0NDgxNTI1OTY5.e9_x_Jux7NTouAc5_rOZbr5ms8ZLE1FL2MY4cYZy-VYg.TIyl6SzJaaNNkVhxrLicSJ4TpvLOMUq_fY4HDmq429gg.PNG%2F%25B9%25DA%25B5%25BF%25BF%25F84.png&type=a340",
+     "쓰임": "LG 2"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTRfMjQz%2FMDAxNzk0NjI5ODIzNjA3.Ex0dOn4yogtX1Qg3JCb7FhW15vbml0sbhZH8la5FkRYg.LlRROjBotYEo66lg_IC4Rnzn-5yE2Gh4XYm3UAdCdLgg.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 3"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTU5%2FMDAxNzk0MzgzMzgwMDA1.qh3mm_TVCFpXuG0newXTyAMOo-9SGBTx4b-YZ5aJ6zMg.6sj-SJIBds8DOP6JcfhWnrSoLDdew3i54Uxi_ZwTf1Qg.PNG%2F20261111_164057.png&type=a340",
+     "쓰임": "LG 4"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTZfNzEg%2FMDAxNzk0NzkxNDI4NTM0.teq5C9gZoglTNcTiJULYkmsyOGNYSqBmOELNOGZn9rgg.Zc8iLA6kLr1NzcX7Ve-HkFINosfkWaPqicOMO8moArcg.PNG%2F20261116_100642.png&type=a340",
+     "쓰임": "LG 5"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfMTkw%2FMDAxNzk0NzI4OTExMjQ2.GBpmV9ff7EOhXkC1nEcsUs74AeK3saSIkInVSP4DPfIg.i3wJWtbenFwLsNdnglhMAbQQTcM3I1LYsPKLXINH0NUg.JPEG%2FIMG%25A3%25DF1817.JPG&type=a340",
+     "쓰임": "LG 6"
+    }
+   ]
   },
   {
    "name": "배정대",
