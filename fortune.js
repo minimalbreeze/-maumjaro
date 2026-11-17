@@ -2549,10 +2549,14 @@
           <img class="tarot-face-img" src="${c.card.img}" alt="${c.card.name} 카드" decoding="async" />
         </div>`;
     }
+    // 마이너는 로마숫자를 쓰지 않는다 — tarotRoman(77)이 'XXXXXXXVII'가 된다.
+    // 슈트가 있으면 전통 표시(A·2~10·P·N·Q·K)와 슈트 색을 쓴다.
+    const pip = c.card.pip || tarotRoman(c.card.id);
+    const suitVar = c.card.suitColor ? ` style="--suit:${c.card.suitColor};"` : '';
     return `
-      <div class="tarot-face${c.reversed ? ' reversed' : ''}"${style}>
-        <div class="tarot-face-frame">
-          <div class="tarot-face-num">${tarotRoman(c.card.id)}</div>
+      <div class="tarot-face${c.reversed ? ' reversed' : ''}${c.card.suit ? ' is-minor' : ''}"${style}>
+        <div class="tarot-face-frame"${suitVar}>
+          <div class="tarot-face-num">${pip}</div>
           <div class="tarot-face-art"><span class="tarot-face-emoji">${c.card.emoji}</span></div>
           <div class="tarot-face-label">
             <div class="tarot-face-name">${c.card.name}</div>

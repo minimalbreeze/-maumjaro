@@ -20,20 +20,28 @@
 
   // 슈트별 기본값. rxCategory 는 처방센터 카테고리 id 와 맞춰야 한다.
   //   완드=일·열정, 컵=마음·관계, 소드=생각·말, 펜타클=현실·돈
+  // color 는 새 팔레트가 아니라 명식(saju-data.js)의 오행 다섯 색을 그대로 가져온 것이다.
+  // 네 슈트를 색으로 갈라 놓으면 78장이 '한 벌'로 읽힌다. 서양 4원소를 오행에 맞춘 게
+  // 아니라 **색만 빌려 왔다** — 소드(공기)는 오행에 없어서 가장 가까운 금색을 쓴다.
   const SUITS = [
-    { key: 'wands', ko: '완드', en: 'Wands', emoji: '🔥', rx: 'work', el: '불', note: '일과 열정' },
-    { key: 'cups', ko: '컵', en: 'Cups', emoji: '💧', rx: 'love', el: '물', note: '마음과 관계' },
-    { key: 'swords', ko: '소드', en: 'Swords', emoji: '⚔️', rx: 'emotion', el: '공기', note: '생각과 말' },
-    { key: 'pentacles', ko: '펜타클', en: 'Pentacles', emoji: '🪙', rx: 'money', el: '흙', note: '현실과 몸' },
+    { key: 'wands', ko: '완드', en: 'Wands', emoji: '🔥', rx: 'work', el: '불', note: '일과 열정', color: '#ff8f6b' },
+    { key: 'cups', ko: '컵', en: 'Cups', emoji: '💧', rx: 'love', el: '물', note: '마음과 관계', color: '#6b9fd6' },
+    { key: 'swords', ko: '소드', en: 'Swords', emoji: '⚔️', rx: 'emotion', el: '공기', note: '생각과 말', color: '#8d9bb0' },
+    { key: 'pentacles', ko: '펜타클', en: 'Pentacles', emoji: '🪙', rx: 'money', el: '흙', note: '현실과 몸', color: '#c9a36b' },
   ];
 
+  // pip 은 카드 앞면 왼쪽 위에 찍히는 작은 표시다. 메이저는 로마숫자(0~XXI)를 쓰는데,
+  // 마이너에 그걸 그대로 쓰면 id 77 이 'XXXXXXXVII' 가 된다(실제로 한 번 그렇게 나왔다).
+  // 마이너는 전통대로 A·2~10·P·N·Q·K 를 쓴다.
   const RANKS = [
-    { n: 1, ko: '에이스', en: 'Ace' },
-    { n: 2, ko: '2', en: 'Two' }, { n: 3, ko: '3', en: 'Three' }, { n: 4, ko: '4', en: 'Four' },
-    { n: 5, ko: '5', en: 'Five' }, { n: 6, ko: '6', en: 'Six' }, { n: 7, ko: '7', en: 'Seven' },
-    { n: 8, ko: '8', en: 'Eight' }, { n: 9, ko: '9', en: 'Nine' }, { n: 10, ko: '10', en: 'Ten' },
-    { n: 11, ko: '시종', en: 'Page' }, { n: 12, ko: '기사', en: 'Knight' },
-    { n: 13, ko: '여왕', en: 'Queen' }, { n: 14, ko: '왕', en: 'King' },
+    { n: 1, ko: '에이스', en: 'Ace', pip: 'A' },
+    { n: 2, ko: '2', en: 'Two', pip: '2' }, { n: 3, ko: '3', en: 'Three', pip: '3' },
+    { n: 4, ko: '4', en: 'Four', pip: '4' }, { n: 5, ko: '5', en: 'Five', pip: '5' },
+    { n: 6, ko: '6', en: 'Six', pip: '6' }, { n: 7, ko: '7', en: 'Seven', pip: '7' },
+    { n: 8, ko: '8', en: 'Eight', pip: '8' }, { n: 9, ko: '9', en: 'Nine', pip: '9' },
+    { n: 10, ko: '10', en: 'Ten', pip: '10' },
+    { n: 11, ko: '시종', en: 'Page', pip: 'P' }, { n: 12, ko: '기사', en: 'Knight', pip: 'N' },
+    { n: 13, ko: '여왕', en: 'Queen', pip: 'Q' }, { n: 14, ko: '왕', en: 'King', pip: 'K' },
   ];
 
   // [정방향 키워드, 정방향 한 줄, 역방향 키워드, 역방향 한 줄, 이모지, (rxCategory 덮어쓰기)]
@@ -115,8 +123,10 @@
         en: `${rank.en} of ${suit.en}`,
         emoji: m[4] || suit.emoji,
         rxCategory: m[5] || suit.rx,
+        pip: rank.pip,
         suit: suit.key,
         suitKo: suit.ko,
+        suitColor: suit.color,
         suitNote: suit.note,
         element: suit.el,
         up: { keyword: m[0], line: m[1] },
