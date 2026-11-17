@@ -125,6 +125,15 @@ export const 바로잡기 = [
     이유: '글 20562. 외국인 절 머리에 페덱·후라도 사진을 넣는다',
     글: [20562],
   },
+  // 23745(NC ROY 대전) 대표 사진 — 구단이 낸 포스터다.
+  {
+    틀린: '<!-- wp:paragraph -->\n<p><strong>NC 다이노스가 11월 28일 토요일 오후 1시 창원NC파크에서 창단 15주년 기념 스페셜 게임을 엽니다.</strong>',
+    맞는:
+      '<!-- wp:image {"id":23746,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-roy-2013-2014-3j7seu-mwkrdbst.jpg" alt="2026 엔팍시리즈 ROY 대전 포스터 — 2013 신인왕 이재학과 2014 신인왕 박민우" class="wp-image-23746"/></a><figcaption class="wp-element-caption">2026 엔팍시리즈 ROY 대전 (사진: NC 다이노스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:paragraph -->\n<p><strong>NC 다이노스가 11월 28일 토요일 오후 1시 창원NC파크에서 창단 15주년 기념 스페셜 게임을 엽니다.</strong>',
+    이유: '글 23745. 포스터를 첫 문단 앞에 넣는다',
+    글: [23745],
+  },
   // 23739(최혜진) 대표 사진.
   {
     틀린: '<!-- wp:paragraph -->\n<p><strong>최혜진(27)이 LPGA 통산 열 번째 준우승을 기록했습니다.</strong>',
