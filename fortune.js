@@ -2541,21 +2541,15 @@
     return out;
   }
 
-  function tarotFaceArt(card) {
-    const A = window.MaumjaroTarotArt;
-    return (A && typeof A.faceForCard === 'function') ? (A.faceForCard(card) || '') : '';
-  }
-
   // 카드 이름이 **그림 안에 적혀 있는가**.
-  // 이모지 프레임은 안에 이름을 쓴다. 도판(라이더-웨이트)과 직접 그린 핍 카드는 안 쓴다.
-  // 그래서 그 둘은 카드 아래에 이름을 따로 붙여야 한다.
+  // 이모지 프레임은 안에 이름을 쓴다. 도판(라이더-웨이트)은 안 쓴다.
+  // 그래서 도판 카드는 카드 아래에 이름을 따로 붙여야 한다.
   //
-  // ⚠️ 여기를 `card.img` 로만 보고 있었다. 마이너에 그림을 넣자마자
-  //    **마이너 카드의 이름이 화면에서 통째로 사라졌다** — 프레임이 빠졌는데
-  //    아래 캡션은 도판 카드에만 붙었기 때문이다. 그림을 더할 때는 그 그림이
-  //    무엇을 대신하는지(여기서는 이름표)를 같이 따라가야 한다.
+  // ⚠️ 한 번 여기서 터졌다. 마이너에 그림을 넣자마자 프레임이 빠졌는데 아래 캡션은
+  //    도판에만 붙어서 **마이너 카드의 이름이 화면에서 통째로 사라졌다.**
+  //    그림을 더할 때는 그 그림이 무엇을 대신하는지(여기서는 이름표)를 같이 따라간다.
   function tarotFaceHasOwnName(card) {
-    return !card.img && !tarotFaceArt(card);
+    return !card.img;
   }
 
   // 카드 앞면 마크업. 작은 카드(결과 화면)와 큰 카드(전체화면 공개)가 같은 구조를 쓰도록
@@ -2579,15 +2573,6 @@
     const pip = c.card.pip || tarotRoman(c.card.id);
     const suitVar = c.card.suitColor ? ` style="--suit:${c.card.suitColor};"` : '';
 
-    // 마이너는 도판이 없어 이모지로 때우고 있었다. 이제 뒷면과 같은 금박 라인으로
-    // 그린 핍 카드를 쓴다(tarot-minor-art.js). 그려지지 않으면 예전처럼 이모지다.
-    const art = tarotFaceArt(c.card);
-    if (art) {
-      return `
-        <div class="tarot-face has-art${c.reversed ? ' reversed' : ''}"${style}>
-          ${art}
-        </div>`;
-    }
     return `
       <div class="tarot-face${c.reversed ? ' reversed' : ''}${c.card.suit ? ' is-minor' : ''}"${style}>
         <div class="tarot-face-frame"${suitVar}>
