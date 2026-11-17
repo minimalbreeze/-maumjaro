@@ -221,26 +221,25 @@
     return out;
   }
 
-  // 라이브러리에서 대운 시작 나이만 꺼내 온다. 못 꺼내면 null.
-  // 명식을 계산하는 그 라이브러리와 같은 것이라 출처가 하나다.
-  function daeunStartAge(profile) {
+  // 대운 시작 나이(대운수). **라이브러리 없이 우리가 계산한다**(solar-terms.js).
+  //
+  // ⚠️ 처음엔 lunar-javascript 의 getYun() 에 기대고 "CDN 이 막혀 못 돌려봤다"고
+  //    적었다. 효성님이 짚었다 — "검산이 안 되면 안 띄운다가 아니라, 검산이 되게
+  //    해라". 맞는 말이었다. 절기는 천문 계산이라 직접 구할 수 있고,
+  //    `scripts/check-solar-terms.mjs` 가 공표된 분점·지점과 **1분 안쪽**으로
+  //    맞는 것까지 확인한다(실측 최대 0.59분).
+  function daeunDetail(profile, forward) {
     try {
-      if (!window.Solar || !profile || !profile.birthDate) return null;
-      const [y, m, d] = profile.birthDate.split('-').map(Number);
-      let hh = 12; let mm = 0;
+      const S = window.MaumjaroSolarTerms;
+      if (!S || !profile || !profile.birthDate) return null;
+      const [y, m, d] = String(profile.birthDate).split('-').map(Number);
+      if (!y || !m || !d) return null;
+      let hour = 12; // 시간을 모르면 정오로 본다. 대운수는 3일 단위라 반나절이 흔들려도 같은 값이 나온다.
       if (!profile.timeUnknown && profile.birthTime) {
-        const t = profile.birthTime.split(':').map(Number);
-        hh = t[0]; mm = t[1] || 0;
+        const t = String(profile.birthTime).split(':').map(Number);
+        if (Number.isFinite(t[0])) hour = t[0] + (t[1] || 0) / 60;
       }
-      const solar = window.Solar.fromYmdHms(y, m, d, hh, mm, 0);
-      const ec = solar.getLunar().getEightChar();
-      if (!ec || typeof ec.getYun !== 'function') return null;
-      const yun = ec.getYun(profile.gender === 'male' ? 1 : 0);
-      if (!yun || typeof yun.getStartYear !== 'function') return null;
-      // 만 나이로 몇 살에 첫 대운이 시작하는지. 년·월·일을 합쳐 반올림한다.
-      const age = yun.getStartYear() + (yun.getStartMonth ? yun.getStartMonth() / 12 : 0);
-      if (!Number.isFinite(age) || age < 0 || age > 12) return null; // 대운수는 1~10 사이다
-      return Math.max(1, Math.round(age));
+      return S.daeunStartDetail({ y, m, d, hour }, forward);
     } catch (e) {
       return null;
     }
@@ -254,7 +253,8 @@
     const list = daeunGanZhi(monthP, forward, 8);
     if (!list.length) return '';
 
-    const startAge = daeunStartAge(profile);
+    const detail = daeunDetail(profile, forward);
+    const startAge = detail ? detail.age : null;
     const nowAge = (() => {
       if (!profile || !profile.birthDate) return null;
       const y = Number(String(profile.birthDate).slice(0, 4));
@@ -290,9 +290,9 @@
         <p class="rx-custom-hint" style="margin:8px 0 0;">
           월주에서 60갑자를 ${forward ? '한 칸씩 앞으로' : '한 칸씩 뒤로'} 민 글자예요.
           ${forward ? '양간에 남자거나 음간에 여자면 순행' : '음간에 남자거나 양간에 여자면 역행'}으로 보는 전통 규칙을 그대로 씁니다.
-          ${startAge == null
-            ? '<strong>시작 나이는 절기 계산이 필요해서 지금은 비워 뒀어요.</strong> 잠시 뒤 다시 들어오시면 채워집니다.'
-            : `첫 대운이 만 ${startAge}세에 시작해요.`}
+          ${detail == null
+            ? '<strong>시작 나이를 지금은 못 구했어요.</strong> 생년월일을 다시 확인해 주세요.'
+            : `태어난 날에서 ${detail.forward ? '다음' : '지난'} 절기인 <strong>${esc(detail.termKo)}</strong>(${detail.termM}월 ${detail.termD}일)까지 ${detail.days}일이고, 3일을 1년으로 세어 <strong>만 ${detail.age}세</strong>에 첫 대운이 시작해요.`}
         </p>
         <p class="rx-custom-hint" style="margin:6px 0 0;">
           앞으로 어떻게 된다는 말은 적지 않았어요. 전통이 그 10년에 붙여온 <strong>글자와 십성</strong>까지만 적습니다.
@@ -356,5 +356,5 @@
     return true;
   }
 
-  window.MaumjaroSaju = { render, tenGod, mainHiddenStem, isForward, daeunGanZhi };
+  window.MaumjaroSaju = { render, tenGod, mainHiddenStem, isForward, daeunGanZhi, daeunDetail };
 })();
