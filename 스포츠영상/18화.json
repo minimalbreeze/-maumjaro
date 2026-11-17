@@ -230,7 +230,32 @@
    "number": "",
    "look": "",
    "tell": "⚠️ LG 유니폼 사진. 최근 2년이 부진했다는 것까지만 말한다. ⚠️ team·number 를 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTU3%2FMDAxNzk0Mzg3MDY5MTY2.1iWznEUfT0qeHoW3aUcAsBcdSVjcqqFfqPNhI6ybHn8g.jURCEAjarhqAZZpC6cPPblypYSpuj7LweVTnWDMDBGgg.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfMjg0%2FMDAxNzk0NDUxNTQ1MzA0._E57pF_W1Ndr0dvNXM4M3ZDJhsnX2tlNiC8IHSCbbP8g.5DTMIHBe0rQrDbLfqilmJcqMDP3lOMiwDJlJJBvkEcgg.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 2"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMTkg%2FMDAxNzk0MjIwOTUwNTY2.UITKnKv3sAQ0bg_rzVjScaogyfjVP5sGBSIVQZAatcUg.JwsNtijCNdV4wj3WY68CEXd243PAIqirvfSl4ONGaBUg.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 3"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMTY5%2FMDAxNzk0MjIwOTY1NjQ5.sG_3loEYW_EKPQr_nSA7dX6EaRpLgy_IcnCaE_e7vNYg.pBrZyTS_CXqKF0vj0lU__gaWv91DSdg3qw4lTjrdDQcg.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 4"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTc3%2FMDAxNzk0MzYwNjYwMTU5.LIT6v_SNYxt14Pp6iZq8K8p9vlsH4sA7BJNee84ZWZAg.slCUk4kLHmmZjsPeNMadlS52v_mxvojbDMOUcqtN1k4g.PNG%2Fimage.png&type=a340",
+     "쓰임": "LG 5"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfMTY5%2FMDAxNzk0NDUxMzM4MDAy.8lZNfICyhgCDqOLPer-mB9-RuRacI_0bPy5d4S0r76sg.y2LMAszzWLPfxEAaSCdwLM0rhL77Ddt7OyKWVo-NpHgg.JPEG%2F2B9D685C%25A3%25AD2781%25A3%25AD407F%25A3%25ADAF5C%25A3%25ADFBBFAD11312C.jpeg&type=a340",
+     "쓰임": "LG 6"
+    }
+   ]
   },
   {
    "name": "구자욱",
