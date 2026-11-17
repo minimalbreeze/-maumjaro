@@ -512,6 +512,7 @@
     const chart = getOrComputeSajuChart(profile);
     const S = window.MaumjaroSaju;
     const ok = S && typeof S.render === 'function' && S.render(fortuneContent, chart, {
+      profile, // 대운은 성별과 생년월일이 있어야 순행/역행과 시작 나이가 정해진다
       onBack: () => renderFortuneHub(profile),
       onMaumun: () => renderMaumun(profile),
     });
