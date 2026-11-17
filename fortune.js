@@ -533,10 +533,10 @@
         <span class="rx-custom-cta-arrow">›</span>
       </button>
       <button class="rx-custom-cta" id="fortune-ai-cta-btn" type="button">
-        <span class="rx-custom-cta-emoji">🤖</span>
+        <span class="rx-custom-cta-emoji">🫂</span>
         <span class="rx-custom-cta-text">
-          <span class="rx-custom-cta-title">AI 맘운에게 물어보기</span>
-          <span class="rx-custom-cta-sub">오늘 상황을 말하면 맞춤 답을 줘요</span>
+          <span class="rx-custom-cta-title">맘운 상담실</span>
+          <span class="rx-custom-cta-sub">오늘 있었던 일을 적어주시면 들어드릴게요</span>
         </span>
         <span class="rx-custom-cta-arrow">›</span>
       </button>
@@ -586,11 +586,6 @@
           <span class="rx-category-label">맘운 처방</span>
           <span class="rx-category-count">마음+운</span>
         </div>
-        <div class="rx-category-tile" data-fortune="match">
-          <span class="rx-category-emoji">💘</span>
-          <span class="rx-category-label">궁합</span>
-          <span class="rx-category-count">생년월일</span>
-        </div>
       </div>
     `;
 
@@ -612,7 +607,8 @@
         else if (type === 'cheer') renderCheerFortune(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
-        else if (type === 'match') renderMatchCenter(profile, 'saju', null);
+        // 궁합 타일은 여기 없다 — 연애센터로 옮겼다(위 matchHost 주석 참고).
+        // 연애센터가 openMatchIn()으로 자기 탭 안에 그린다.
       });
     });
   }
@@ -1387,6 +1383,33 @@
   // 한 번 연 짝은 이 세션 동안 기억해 두고, 다시 볼 때는 또 놓게 하지 않는다.
   const matchRevealed = new Set();
 
+  // ---------- 궁합의 집은 연애센터다 (2026-11-17 효성님 지시) ----------
+  // "운세/타로에서 궁합은 빼서 연애 카테고리에 두는 게 더 좋을 것 같지 않나.
+  //  연애운 관련된 것들을 연애 카테고리에서 한눈에 볼 수 있으면 좋겠는데."
+  //
+  // 맞는 말이다. 궁합은 연애운이고, 연애센터에 호감지수·고민 풀이가 이미 있는데
+  // 궁합만 다른 탭에 있으면 사람이 두 군데를 왔다 갔다 해야 한다.
+  // 그래서 운세 허브에서 궁합 타일을 뺐다.
+  //
+  // 다만 코드를 love.js로 옮기지는 않았다. 사주 명식·오행 관계·별자리 원소·
+  // 띠 삼합/육합/충/원진 계산이 전부 이 파일 안에 있어서, 옮기면 그 계산을
+  // 통째로 끌고 가거나 두 벌로 만들게 된다. 대신 **그릴 자리만 바꿔 끼운다** —
+  // love.js가 `openMatchIn(mount, …)`로 자기 탭 안을 가리키면 궁합이 거기 그려진다.
+  // 사람에게는 연애센터 안의 화면으로 보이고, 계산은 한 벌로 남는다.
+  //
+  // ⚠️ 배경은 약국 톤 그대로다. 연애센터를 theme.js의 MOODY에 넣지 않는 규칙
+  //    (세 번째 무드를 만들지 않는다 / 연애를 점괘로 읽히게 하지 않는다)은 그대로다.
+  let matchHost = null; // { mount, onBack } — 비어 있으면 운세 탭에 그린다
+  function matchMount() { return matchHost ? matchHost.mount : fortuneContent; }
+  // 궁합 화면 안의 요소만 찾는다. document 전체에서 찾으면 운세 탭에 같은 id가
+  // 남아 있을 때 엉뚱한 쪽을 집는다(fortune-detail-back이 그런 id다).
+  function mq(sel) { const el = matchMount(); return el ? el.querySelector(sel) : null; }
+  function matchHostTabView() { return matchHost ? 'love' : 'fortune'; }
+  function matchBack(profile) {
+    if (matchHost && typeof matchHost.onBack === 'function') { matchHost.onBack(); return; }
+    renderFortuneHub(profile);
+  }
+
   function matchGateHtml(title) {
     return `
       <div class="rx-detail-card mbti-hero">
@@ -1404,7 +1427,7 @@
   }
 
   function wireMatchGate(pairId, onOpened) {
-    const btn = document.getElementById('match-gate-btn');
+    const btn = mq('#match-gate-btn');
     if (!btn) return;
     const syntheticP = {
       id: 'match-reveal', category: 'social', title: '궁합', diagnosis: '결과를 여는 중',
@@ -1414,7 +1437,9 @@
       resetDoseVisuals();
       Rx.resetGenericFlowState('💉 주사 놓고 궁합 열기');
       Rx.showRxImageFade(syntheticP, () => {
-        const tab = document.querySelector('.tab-btn[data-view="fortune"]');
+        // 주사를 놓으면 화면이 홈으로 갔다 온다. 궁합이 어느 탭에 그려져 있었는지에
+        // 따라 돌아올 자리가 다르다 — 연애센터 안이었으면 연애 탭으로 돌아온다.
+        const tab = document.querySelector(`.tab-btn[data-view="${matchHostTabView()}"]`);
         if (tab) tab.click();
         matchRevealed.add(pairId);
         sfx('loveReveal'); // 봄날 같은 공개음
@@ -1445,7 +1470,7 @@
       const pairId = `saju:${matchPartner.calendarType}:${matchPartner.birthDate}`;
       const opened = pair && matchRevealed.has(pairId);
 
-      fortuneContent.innerHTML = `
+      matchMount().innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
           <span class="rx-nav-title">💞 궁합</span>
@@ -1509,19 +1534,19 @@
       `;
       wireMatchCommon(profile, m);
 
-      document.getElementById('match-cal-toggle').querySelectorAll('.seg-btn').forEach((b) => {
+      mq('#match-cal-toggle').querySelectorAll('.seg-btn').forEach((b) => {
         b.addEventListener('click', () => { matchPartner.calendarType = b.dataset.val; renderMatchCenter(profile, m, null); });
       });
-      const birth = document.getElementById('match-birth');
-      const time = document.getElementById('match-time');
+      const birth = mq('#match-birth');
+      const time = mq('#match-time');
       birth.addEventListener('change', () => { matchPartner.birthDate = birth.value; });
       time.addEventListener('change', () => { matchPartner.birthTime = time.value; });
-      document.getElementById('match-time-unknown').addEventListener('click', () => {
+      mq('#match-time-unknown').addEventListener('click', () => {
         matchPartner.timeUnknown = !matchPartner.timeUnknown;
         renderMatchCenter(profile, m, null);
       });
 
-      const submit = document.getElementById('match-saju-submit');
+      const submit = mq('#match-saju-submit');
       if (submit) {
         submit.addEventListener('click', () => {
           if (!birth.value) { Core.showToast('상대 생년월일을 넣어주세요'); return; }
@@ -1530,7 +1555,7 @@
           renderMatchCenter(profile, m, null);
         });
       }
-      const reset = document.getElementById('match-reset');
+      const reset = mq('#match-reset');
       if (reset) {
         reset.addEventListener('click', () => {
           matchPartner = { calendarType: 'solar', birthDate: '', birthTime: '', timeUnknown: true };
@@ -1547,13 +1572,13 @@
     const isZ = m === 'zodiac';
     const list = isZ ? ZODIAC_SIGNS : CHINESE_ZODIAC;
     const mine = isZ ? myZodiac : myAnimal;
-    if (!mine) { renderFortuneHub(profile); return; }
+    if (!mine) { matchBack(profile); return; }
 
     const pair = otherKey ? (isZ ? zodiacPair(mine.key, otherKey) : animalPair(mine.zhi, otherKey)) : null;
     const pairId = `${m}:${isZ ? mine.key : mine.zhi}:${otherKey}`;
     const opened = pair && matchRevealed.has(pairId);
 
-    fortuneContent.innerHTML = `
+    matchMount().innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
         <span class="rx-nav-title">💞 궁합</span>
@@ -1599,7 +1624,7 @@
     `;
     wireMatchCommon(profile, m);
 
-    fortuneContent.querySelectorAll('.mbti-pick').forEach((b) => {
+    matchMount().querySelectorAll('.mbti-pick').forEach((b) => {
       b.addEventListener('click', () => {
         sfx('cardDraw');
         renderMatchCenter(profile, m, b.dataset.o);
@@ -1633,22 +1658,34 @@
     </p>`;
   }
   function wireMatchCommon(profile, m) {
-    document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
-    const toLove = document.getElementById('match-goto-love');
+    const back = mq('#fortune-detail-back');
+    if (back) back.addEventListener('click', () => matchBack(profile));
+    const toLove = mq('#match-goto-love');
     if (toLove) {
       toLove.addEventListener('click', () => {
         if (window.MaumjaroLove) window.MaumjaroLove.open();
       });
     }
-    document.getElementById('fortune-goto-maumun-btn').addEventListener('click', () => renderMaumun(profile));
-    document.getElementById('match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
+    const toMaumun = mq('#fortune-goto-maumun-btn');
+    if (toMaumun) {
+      toMaumun.addEventListener('click', () => {
+        // 맘운 처방은 운세 탭 화면이다. 연애센터 안에서 궁합을 보던 중이면
+        // 먼저 운세 탭으로 건너간 다음 그린다 — 안 그러면 숨은 화면에 그려진다.
+        if (matchHost) {
+          const tab = document.querySelector('.tab-btn[data-view="fortune"]');
+          if (tab) tab.click();
+        }
+        renderMaumun(profile);
+      });
+    }
+    mq('#match-mode-toggle').querySelectorAll('.seg-btn').forEach((b) => {
       // 모드를 바꾸면 상대 선택은 비운다(사주·별자리·띠는 서로 다른 입력을 쓴다).
       b.addEventListener('click', () => renderMatchCenter(profile, b.dataset.val, null));
     });
-    fortuneContent.querySelectorAll('.fortune-goto-rx-btn').forEach((b) => {
+    matchMount().querySelectorAll('.fortune-goto-rx-btn').forEach((b) => {
       b.addEventListener('click', () => Rx.goToRxCategory(b.dataset.rxcat));
     });
-    const share = document.getElementById('match-share-btn');
+    const share = mq('#match-share-btn');
     if (share) {
       share.addEventListener('click', () => {
         Rx.shareOrCopy(share.dataset.txt, 'https://maumjaro.minimalbreeze.com/', 'match');
@@ -2179,7 +2216,11 @@
     const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
 
     const systemPrompt = [
-      '너는 "맘운자로"라는 한국 앱의 "AI 맘운" 캐릭터다.',
+      '너는 "맘운자로"라는 한국 앱의 "맘운 상담실" 상담사다. 사람의 이야기를 끝까지 듣고 대답하는 사람이고, 기계처럼 분석해서 보고하지 않는다.',
+      '"AI가 분석한 결과", "데이터를 보면" 같은 기계적인 말투를 쓰지 않는다. 사람이 사람에게 말하듯 쓴다.',
+      // 이름에서 AI를 뗀 것은 말투를 따뜻하게 하려는 것이고, 정체를 숨기려는 게 아니다.
+      // 사람인지 묻는 사람에게 사람이라고 답하면 그건 거짓말이다. 거기까지 가지 않는다.
+      '사용자가 "사람이냐", "AI냐"를 직접 물으면 솔직하게 AI라고 답한다. 사람인 척하지 않는다. 답한 뒤에도 하던 이야기를 계속 들어준다.',
       '사용자의 사주(오행 관계), 오늘의 운세, 오늘 감정, 사용자의 질문을 종합해서 답한다.',
       '문체: 상냥한 존댓말, 따뜻하고 위로가 되는 톤. 무겁거나 불안을 조장하는 표현은 쓰지 않는다.',
       '실제 의학적·심리학적 진단명은 절대 쓰지 않는다.',
@@ -2282,9 +2323,9 @@
       fortuneContent.innerHTML = `
         <div class="rx-nav-header">
           <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-          <span class="rx-nav-title">🤖 AI 맘운</span>
+          <span class="rx-nav-title">🫂 맘운 상담실</span>
         </div>
-        <p class="rx-custom-hint">아직 오늘의 마음을 기록하지 않으셨어요. 홈에서 먼저 오늘의 감정을 처방받고 오면, AI 맘운이 사주+운세+감정을 합쳐서 답해드릴게요</p>
+        <p class="rx-custom-hint">아직 오늘의 마음을 기록하지 않으셨어요. 홈에서 먼저 오늘의 감정을 처방받고 오시면, 사주와 오늘의 운, 지금 마음을 같이 놓고 이야기해드릴게요</p>
         <button class="action-btn" id="fortune-goto-home-btn" type="button" style="width:100%;">💉 홈에서 마음 처방받기</button>
       `;
       document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
@@ -2297,12 +2338,12 @@
     fortuneContent.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="fortune-detail-back" type="button">‹</button>
-        <span class="rx-nav-title">🤖 AI 맘운</span>
+        <span class="rx-nav-title">🫂 맘운 상담실</span>
       </div>
-      <p class="rx-custom-hint">💛 오늘 상황이나 궁금한 걸 편하게 적어보세요. 길게 적을수록 더 자세히 답해드려요. 사주 프로필 + 오늘의 운세 + 지금 마음을 합쳐서 답해드릴게요</p>
+      <p class="rx-custom-hint">💛 오늘 있었던 일이나 마음에 걸리는 걸 편하게 적어보세요. 길게 적으셔도 괜찮아요 — 길게 적어주시면 그만큼 자세히 답해드립니다. 사주와 오늘의 운, 지금 마음을 같이 놓고 읽어드릴게요</p>
       <textarea id="ai-maumun-input" class="rx-custom-input" style="width:100%;min-height:150px;resize:vertical;line-height:1.6;" maxlength="800" placeholder="예: 3년 다닌 회사를 그만둘까 고민 중이에요. 팀은 좋은데 하는 일이 계속 줄어드는 느낌이고, 이직 자리는 연봉이 조금 낮아요. 지금 옮기는 게 맞을까요?"></textarea>
       <span class="rx-custom-counter" id="ai-maumun-count">0/800</span>
-      <button class="action-btn" id="ai-maumun-submit-btn" type="button" style="width:100%;margin-top:10px;">🔮 AI 맘운에게 물어보기</button>
+      <button class="action-btn" id="ai-maumun-submit-btn" type="button" style="width:100%;margin-top:10px;">🫂 이야기 들려주기</button>
       <div id="ai-maumun-answer"></div>
     `;
     document.getElementById('fortune-detail-back').addEventListener('click', () => renderFortuneHub(profile));
@@ -4031,5 +4072,30 @@
 
   // AI 프록시 주소는 이 파일이 원본이다. heal-ai.js가 같은 주소를 또 적어두면
   // 나중에 프록시를 옮길 때 한쪽만 고쳐져 조용히 어긋난다. 여기서만 노출한다.
-  window.MaumjaroFortune = { AI_PROXY_URL: AI_MAUMUN_PROXY_URL };
+  window.MaumjaroFortune = {
+    AI_PROXY_URL: AI_MAUMUN_PROXY_URL,
+    // 연애센터가 자기 탭 안에 궁합을 그리게 해주는 창구.
+    // mount: 그릴 요소, onBack: ‹ 를 눌렀을 때 호출(연애 허브로 돌아가기).
+    // 사주 프로필이 아직 없으면 그리지 않고 false를 돌려준다 — 프로필 입력
+    // 화면은 운세 탭 쪽 흐름이라, 안내는 부른 쪽이 한다.
+    openMatchIn(mount, opts) {
+      const profile = loadSajuProfile();
+      if (!mount || !profile) return false;
+      // 사주 계산은 CDN에서 오는 음력 라이브러리(Solar/Lunar)에 기댄다. 그게 안 뜬 날에는
+      // 여기서 터지는데, 그러면 연애 탭이 빈 화면으로 남는다. false를 돌려주면 부른 쪽이
+      // 안내 화면을 그리므로, 적어도 막힌 이유와 다음 걸음이 보인다.
+      try {
+        matchHost = { mount, onBack: opts && opts.onBack };
+        renderMatchCenter(profile, (opts && opts.mode) || 'saju', null);
+        return true;
+      } catch (e) {
+        matchHost = null;
+        return false;
+      }
+    },
+    // 연애센터를 떠날 때 호출해 둔다. 안 풀면 운세 탭에서 궁합을 볼 때도
+    // 연애 탭 쪽 mount에 그려진다.
+    releaseMatchHost() { matchHost = null; },
+    hasSajuProfile() { return !!loadSajuProfile(); },
+  };
 })();
