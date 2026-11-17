@@ -117,7 +117,15 @@
     time: { ko: '시주', sub: '쓰임·말년' },
   };
 
+  // ---------- 60갑자 ----------
+  // 대운(大運)은 월주에서 60갑자를 한 칸씩 밀거나 당겨 만든다. 그래서 순서가 필요하다.
+  const STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+  const BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  const SEXAGENARY = [];
+  for (let i = 0; i < 60; i++) SEXAGENARY.push(STEMS[i % 10] + BRANCHES[i % 12]);
+
   window.MAUMJARO_SAJU_DATA = {
+    STEMS, BRANCHES, SEXAGENARY,
     STEM_YY, BRANCH_YY, HIDDEN_STEMS, TEN_GODS, TEN_GOD_NOTE,
     DAY_MASTER, ELEMENT_ORDER, ELEMENT_INFO, ELEMENT_MANY, ELEMENT_NONE, PILLAR_LABEL,
   };

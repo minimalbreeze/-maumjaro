@@ -183,10 +183,128 @@
       </div>`;
   }
 
+  // ---------- 대운(大運) ----------
+  //
+  // ⚠️⚠️ 여기는 **내가 검증하지 못한 값이 하나 섞인다.** 그걸 먼저 적어 둔다.
+  //
+  //   · 간지 흐름(순행/역행과 10년마다의 글자) → **내가 계산한다.** 월주에서 60갑자를
+  //     한 칸씩 밀거나 당기는 산수라, 테스트로 전부 검산해 뒀다.
+  //   · 시작 나이(대운수) → **라이브러리가 준다.** 절기(節氣)까지의 날수를 3으로 나누는
+  //     값이라 절기 날짜가 필요한데, 그 표는 lunar-javascript 안에만 있다.
+  //     이 컨테이너에서는 그 CDN이 막혀 있어 **실제 값을 한 번도 못 돌려봤다.**
+  //
+  // 그래서 나이는 **라이브러리가 줄 때만** 쓴다. 못 받으면 나이 칸을 비우고
+  // 화면이 그 사실을 말한다. 지어낸 나이를 적느니 비우는 쪽이 맞다
+  // (로또·책 규칙과 같은 선: 확인 못 한 것을 확인한 것처럼 적지 않는다).
+  //
+  // 그리고 **해석을 쓰지 않는다.** "이 시기엔 돈이 들어옵니다" 같은 말은 한 줄도 없다.
+  // 명식의 다른 칸과 똑같이 글자·오행·십성까지만 적는다. 10년 앞을 예언하기
+  // 시작하면 그 순간 이 앱이 운세 앱이 된다(브랜드 1번 원칙).
+
+  // 양간: 갑·병·무·경·임. 양남·음녀는 순행, 음남·양녀는 역행 — 전통 규칙이다.
+  function isForward(yearGan, gender) {
+    const yang = D.STEM_YY[yearGan] === '양';
+    const male = gender === 'male';
+    return (yang && male) || (!yang && !male);
+  }
+
+  // 월주에서 ±1씩 민 간지 여덟 개. 60갑자를 돌려 쓴다.
+  function daeunGanZhi(monthPillar, forward, count) {
+    const cyc = D.SEXAGENARY;
+    const start = cyc.indexOf(monthPillar.gan + monthPillar.zhi);
+    if (start < 0) return [];
+    const out = [];
+    for (let i = 1; i <= (count || 8); i++) {
+      const idx = ((start + (forward ? i : -i)) % 60 + 60) % 60;
+      out.push({ gan: cyc[idx][0], zhi: cyc[idx][1] });
+    }
+    return out;
+  }
+
+  // 라이브러리에서 대운 시작 나이만 꺼내 온다. 못 꺼내면 null.
+  // 명식을 계산하는 그 라이브러리와 같은 것이라 출처가 하나다.
+  function daeunStartAge(profile) {
+    try {
+      if (!window.Solar || !profile || !profile.birthDate) return null;
+      const [y, m, d] = profile.birthDate.split('-').map(Number);
+      let hh = 12; let mm = 0;
+      if (!profile.timeUnknown && profile.birthTime) {
+        const t = profile.birthTime.split(':').map(Number);
+        hh = t[0]; mm = t[1] || 0;
+      }
+      const solar = window.Solar.fromYmdHms(y, m, d, hh, mm, 0);
+      const ec = solar.getLunar().getEightChar();
+      if (!ec || typeof ec.getYun !== 'function') return null;
+      const yun = ec.getYun(profile.gender === 'male' ? 1 : 0);
+      if (!yun || typeof yun.getStartYear !== 'function') return null;
+      // 만 나이로 몇 살에 첫 대운이 시작하는지. 년·월·일을 합쳐 반올림한다.
+      const age = yun.getStartYear() + (yun.getStartMonth ? yun.getStartMonth() / 12 : 0);
+      if (!Number.isFinite(age) || age < 0 || age > 12) return null; // 대운수는 1~10 사이다
+      return Math.max(1, Math.round(age));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function daeunHtml(chart, profile) {
+    const dayGan = chart.pillars.day.gan;
+    const monthP = chart.pillars.month;
+    if (!monthP) return '';
+    const forward = isForward(chart.pillars.year.gan, profile && profile.gender);
+    const list = daeunGanZhi(monthP, forward, 8);
+    if (!list.length) return '';
+
+    const startAge = daeunStartAge(profile);
+    const nowAge = (() => {
+      if (!profile || !profile.birthDate) return null;
+      const y = Number(String(profile.birthDate).slice(0, 4));
+      return Number.isFinite(y) ? new Date().getFullYear() - y : null;
+    })();
+
+    const cells = list.map((p, i) => {
+      const from = startAge == null ? null : startAge + i * 10;
+      const to = from == null ? null : from + 9;
+      const here = from != null && nowAge != null && nowAge >= from && nowAge <= to;
+      const ganEl = GAN_ELEMENT[p.gan];
+      const zhiEl = BRANCH_ELEMENT[p.zhi];
+      return `
+        <div class="saju-daeun-cell${here ? ' here' : ''}">
+          <div class="saju-daeun-age">${from == null ? '—' : `${from}~${to}세`}</div>
+          <div class="saju-daeun-gz" style="--el:${D.ELEMENT_INFO[ganEl].color};">
+            <span class="saju-daeun-han">${p.gan}${p.zhi}</span>
+            <span class="saju-daeun-ko">${STEM_KO[p.gan]}${BRANCH_KO[p.zhi]}</span>
+          </div>
+          <div class="saju-daeun-god">${esc(tenGod(dayGan, p.gan) || '—')} · ${esc(tenGod(dayGan, mainHiddenStem(p.zhi)) || '—')}</div>
+          <div class="saju-daeun-el">${D.ELEMENT_INFO[ganEl].emoji}${D.ELEMENT_INFO[zhiEl].emoji}</div>
+          ${here ? '<div class="saju-daeun-now">지금</div>' : ''}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="rx-custom-preview" style="margin-top:8px;">
+        <div class="rx-slip-row">
+          <span class="rx-slip-key">🕰️ 대운 — 10년마다 바뀌는 글자</span>
+          <span class="rx-slip-value">${forward ? '순행' : '역행'}</span>
+        </div>
+        <div class="saju-daeun">${cells}</div>
+        <p class="rx-custom-hint" style="margin:8px 0 0;">
+          월주에서 60갑자를 ${forward ? '한 칸씩 앞으로' : '한 칸씩 뒤로'} 민 글자예요.
+          ${forward ? '양간에 남자거나 음간에 여자면 순행' : '음간에 남자거나 양간에 여자면 역행'}으로 보는 전통 규칙을 그대로 씁니다.
+          ${startAge == null
+            ? '<strong>시작 나이는 절기 계산이 필요해서 지금은 비워 뒀어요.</strong> 잠시 뒤 다시 들어오시면 채워집니다.'
+            : `첫 대운이 만 ${startAge}세에 시작해요.`}
+        </p>
+        <p class="rx-custom-hint" style="margin:6px 0 0;">
+          앞으로 어떻게 된다는 말은 적지 않았어요. 전통이 그 10년에 붙여온 <strong>글자와 십성</strong>까지만 적습니다.
+        </p>
+      </div>`;
+  }
+
   // ---------- 화면 ----------
   function render(mount, chart, opts) {
     if (!mount || !chart || !chart.pillars || !chart.pillars.day) return false;
     const o = opts || {};
+    const profile = o.profile || null;
     const dayGan = chart.pillars.day.gan;
     const dm = D.DAY_MASTER[dayGan];
     if (!dm) return false;
@@ -219,6 +337,7 @@
       ${godsHtml(chart, dayGan)}
       ${hiddenHtml(chart, dayGan)}
       ${elementsHtml(chart)}
+      ${profile ? daeunHtml(chart, profile) : ''}
 
       <p class="rx-custom-hint" style="margin-top:12px;">
         🧾 여기 적힌 것은 전부 <strong>전통이 정해 둔 표를 그대로 펼친 것</strong>이에요.
@@ -237,5 +356,5 @@
     return true;
   }
 
-  window.MaumjaroSaju = { render, tenGod, mainHiddenStem };
+  window.MaumjaroSaju = { render, tenGod, mainHiddenStem, isForward, daeunGanZhi };
 })();
