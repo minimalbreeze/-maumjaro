@@ -498,6 +498,20 @@
       </div>`;
   }
 
+  // ---------- 내 명식 (saju.js) ----------
+  // 계산은 여기 있는 것을 그대로 쓰고, 펼쳐 보이는 일만 saju.js가 한다.
+  // 새 계산을 더하지 않았다 — 십성·지장간·음양은 전부 전통 표라 데이터 파일에 있다.
+  function renderSaju(profile) {
+    const chart = getOrComputeSajuChart(profile);
+    const S = window.MaumjaroSaju;
+    const ok = S && typeof S.render === 'function' && S.render(fortuneContent, chart, {
+      onBack: () => renderFortuneHub(profile),
+      onMaumun: () => renderMaumun(profile),
+    });
+    // 못 그리면 빈 화면을 남기지 않는다(궁합과 같은 규칙).
+    if (!ok) renderFortuneHub(profile);
+  }
+
   // ---------- 운세 탭 렌더 ----------
   // 홍보 링크(?start=tarot)로 들어왔을 때 한 번만 켜지는 표시.
   // 탭 전환은 withLunar를 거치는데, lunar가 아직 안 받아졌으면 renderFortuneHome이
@@ -576,6 +590,11 @@
           <span class="rx-category-label">오늘의 응원운</span>
           <span class="rx-category-count">경기 보는 날</span>
         </div>
+        <div class="rx-category-tile" data-fortune="saju">
+          <span class="rx-category-emoji">📜</span>
+          <span class="rx-category-label">내 명식</span>
+          <span class="rx-category-count">여덟 글자</span>
+        </div>
         <div class="rx-category-tile" data-fortune="tojeong">
           <span class="rx-category-emoji">📜</span>
           <span class="rx-category-label">토정비결</span>
@@ -605,6 +624,7 @@
         else if (type === 'animal') renderSignFortune(profile, 'animal');
         else if (type === 'tarot') renderTarotTopics(profile);
         else if (type === 'cheer') renderCheerFortune(profile);
+        else if (type === 'saju') renderSaju(profile);
         else if (type === 'tojeong') renderFortuneTojeong(profile);
         else if (type === 'maumun') renderMaumun(profile);
         // 궁합 타일은 여기 없다 — 연애센터로 옮겼다(위 matchHost 주석 참고).
