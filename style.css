@@ -5707,3 +5707,52 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 @media (prefers-reduced-motion: reduce) {
   .tarot-spread-row .tarot-card-back { transition: none; }
 }
+
+/* ---------- 새 버전 알림 띠 (update-nudge.js) ----------
+   2026-11-17. 홈 화면 앱이 떠 있는 채로 탭만 옮기면 index.html 을 다시 안 받아서,
+   배포가 끝났는데도 옛 화면을 보게 된다. 그걸 앱이 알아채고 알려 주는 자리다.
+   ⚠️ 가로막지 않는다 — 탭바 위 얇은 띠 하나, 닫을 수 있고, 저절로 새로고침 안 한다.
+   ⚠️ 새 팔레트를 만들지 않는다. 딥틸과 CTA 보라~핑크를 그대로 쓴다. */
+#mj-update-bar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px)); /* 탭바 위 */
+  transform: translate(-50%, 14px);
+  z-index: 60; /* 탭바보다 위, 주사 전체화면보다 아래 */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(calc(100vw - 32px), 420px);
+  padding: 9px 10px 9px 14px;
+  border-radius: 999px;
+  background: #1f5c50;
+  color: #f2fbf8;
+  box-shadow: 0 6px 20px rgba(31, 92, 80, 0.32);
+  opacity: 0;
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+#mj-update-bar.on { opacity: 1; transform: translate(-50%, 0); }
+.mj-update-text { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.mj-update-go {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #b779ef, #ff8fb3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mj-update-close {
+  border: none;
+  background: transparent;
+  color: rgba(242, 251, 248, 0.75);
+  font-size: 14px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  #mj-update-bar { transition: none; }
+}
