@@ -132,7 +132,32 @@
    "number": "",
    "look": "",
    "tell": "⚠️ SSG 유니폼 사진. ⚠️ 계약 기간은 매체마다 달라 대본에서 말하지 않는다. ⚠️ team·number 를 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F214%2F2026%2F11%2F17%2F0001536067_001_20261117103108659.jpg&type=a340",
+     "쓰임": "SSG 1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F17%2F0003488008_002_20261117093910445.jpg&type=a340",
+     "쓰임": "SSG 2"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMThfMjAz%2FMDAxNzk0OTI4OTA5NTcx.w99Sx13m_B850R6t8IMlJpbGbqjZGPlSq8TDt5I0EYIg.G0HlEJN0C1APkzEHDoqwjFt8jkKsLyTdLfJxnF1HI9Eg.JPEG%2Foutput%25A3%25DF2928167925.jpg&type=a340",
+     "쓰임": "SSG 3"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTdfMTQg%2FMDAxNzk0OTE5MDM1NDcy.b7s7hHE1J6qgfXtajGr0JIabVRDvto7bSO_RfsSC6N8g.--4XmpduE8ChU97QMTUcRjzEd25zXqpWrQRVhJD8oIAg.JPEG%2Fnews_01_241.jpg&type=a340",
+     "쓰임": "SSG 4"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMThfMTI4%2FMDAxNzk0OTI5MDkxMTEx.fIxEhfFgB6XDNlLDLXTwM6HS-MeyoySKeryKUXTfgsQg.39z8Ga0nek6xwHaURLBmjNiJf2Q0hZSBiVoKfB2oR7og.JPEG%2Foutput%25A3%25DF2159551705.jpg&type=a340",
+     "쓰임": "SSG 5"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMThfMTgg%2FMDAxNzk0OTMzNTIwOTI3.NbJ04yb5bPMaUng4lMV3hgL5nSSHj_v6oFSBLmteVHMg.X1QjQQ9QB9VweGjnDHfYrZqLiWnUf8Fm14s2dgSsXb8g.PNG%2Fimage.png&type=a340",
+     "쓰임": "SSG 6"
+    }
+   ]
   },
   {
    "name": "박동원",
