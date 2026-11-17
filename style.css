@@ -5675,3 +5675,10 @@ body:has(#healing-overlay.show) #app #syringe-svg {
 @media (prefers-reduced-motion: reduce) {
   .tarot-spread-row .tarot-card-back { transition: none; }
 }
+
+/* 마이너 카드 앞면 — 직접 그린 금박 핍 카드가 카드를 꽉 채운다.
+   메이저 도판(.has-img)과 같은 자리·같은 크기로 들어간다. */
+.tarot-face.has-art { padding: 0; background: #0e0b1c; }
+.tarot-face.has-art svg { display: block; width: 100%; height: 100%; }
+/* 역방향은 그림만 뒤집는다 — 도판과 같은 규칙이다. */
+.tarot-face.has-art.reversed svg { transform: rotate(180deg); }

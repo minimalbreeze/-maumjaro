@@ -2561,6 +2561,16 @@
     // 슈트가 있으면 전통 표시(A·2~10·P·N·Q·K)와 슈트 색을 쓴다.
     const pip = c.card.pip || tarotRoman(c.card.id);
     const suitVar = c.card.suitColor ? ` style="--suit:${c.card.suitColor};"` : '';
+
+    // 마이너는 도판이 없어 이모지로 때우고 있었다. 이제 뒷면과 같은 금박 라인으로
+    // 그린 핍 카드를 쓴다(tarot-minor-art.js). 그려지지 않으면 예전처럼 이모지다.
+    const art = window.MaumjaroTarotArt ? window.MaumjaroTarotArt.faceForCard(c.card) : '';
+    if (art) {
+      return `
+        <div class="tarot-face has-art${c.reversed ? ' reversed' : ''}"${style}>
+          ${art}
+        </div>`;
+    }
     return `
       <div class="tarot-face${c.reversed ? ' reversed' : ''}${c.card.suit ? ' is-minor' : ''}"${style}>
         <div class="tarot-face-frame"${suitVar}>
