@@ -94,7 +94,36 @@
    "number": "",
    "look": "",
    "tell": "⚠️ 이 편에서 가장 많이 나온다. 42억 옵션을 버리고 55억을 받은 사람이다. ⚠️ 두산 유니폼 사진으로 받는다. team 은 비웠다 — 사진 원본 색이 그대로 간다. ⚠️ 등번호 미확인이라 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F17%2F0001150365_001_20261117220016636.jpg&type=a340",
+     "쓰임": "두산 1 (11-17 계약 발표일)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMjQ1%2FMDAxNzk0NDAxNTg3Mjkx.k0FAxPJ3vl9UIoFLiJmpadNeJLmkG-To2Il03oeg53Ug.hztnqqz7Yb3Oy3Y1XbnmA18CtEHxjmdp3jOTZY3rTncg.PNG%2F3-1.png&type=a340",
+     "쓰임": "두산 2"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfMTU3%2FMDAxNzk0NDc4NDkyODUy.FzFuBSbvaNo1EAbmNiN-4GYWS6de-hJWIeQHsemKmCcg.LOwV7x4qYykoevAzu5zgpvgcMhMffIr1nx8_iZCg3YQg.PNG%2Fimage.png&type=a340",
+     "쓰임": "두산 3"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTRfNTcg%2FMDAxNzk0NjMzMDA4MTM4.PT5HMI115GFQ4O0IfvWi68dslAQ1u2ffOqzzR5dpkpkg.oW2C6LoPzzLo6oVo1cCJ9gik4-1M1iUp7HGADfs65uIg.PNG%2Fimage.png&type=a340",
+     "쓰임": "두산 4"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5244%2F2026%2F11%2F17%2F0000583566_001_20261117105816334.jpg&type=a340",
+     "쓰임": "두산 5 (11-17)"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTNfMTcy%2FMDAxNzk0NTc3MTIxNzQx.Sd0PRTjUbX9XcjXDOHM2FBxo3hpxlZtKzXj2pQoHc2Ug.oBYx_3pTdqybxpbczuCFSXXOUhtxuu0_-72omYa6Smog.PNG%2Fimage.png&type=a340",
+     "쓰임": "두산 6"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTZfMTU2%2FMDAxNzk0NzkyMjgzMTQ5.ioS24kKU42Ae8yfMTwCjctyswoB1M3wl9_z07hCPTEkg.qkpBXHPCw43StRKlYHl7JIIIJs4OZhSgGS7Rv4WOxV0g.JPEG%2FKBO1116_01_photo_02.jpg&type=l340_165",
+     "쓰임": "두산 7 (KBO 11-16)"
+    }
+   ]
   },
   {
    "name": "오태곤",
