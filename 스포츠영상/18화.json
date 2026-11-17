@@ -200,7 +200,28 @@
    "number": "",
    "look": "",
    "tell": "⚠️ KT 유니폼 사진. ⚠️ 성적과 나이를 확인하지 못했다 — 대본에서 그렇게 말한다. ⚠️ team·number 를 비웠다.",
-   "photos": []
+   "photos": [
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTBfNDEg%2FMDAxNzk0MzIyMTk2ODg1.BreeaQmRNQA86Q6YiQGdCQhv12XKtEI9Kw6UEDARf-sg.qAWluawkE6A8qx7CHv_XGtGGNXBmFSPpazU1wPv_f0Ug.PNG%2Fimage.png&type=a340",
+     "쓰임": "KT 1"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTNfMjgz%2FMDAxNzk0NTcyMjI2NzY5.LPwd_f3hqBJURl7XsFKAtL2voBB-o2DhkaF1oYFJemQg.Bv9oLzGvKN9WvS2mbnlX47Axi3G8czJ7e3XE_ipGOoMg.PNG%2F%25B9%25E8%25C1%25A4%25B4%25EB_%25281%2529.png&type=a340",
+     "쓰임": "KT 2"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTRfMjgg%2FMDAxNzk0NjExNzI0MzA2.1ppkDQodurtViDwZGPLsZ3lEbDdDmQXGNjn0ylgyzLAg.x3rlV53lzT2IrKwT2fUbacBGfsOYwRNkn6UmfUkSvj0g.PNG%2Fimage.png&type=a340",
+     "쓰임": "KT 3"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfMjgx%2FMDAxNzk0NjcwMjcwODQ4.DiNLygpcOJDKozxYWda4Ri902gTXlPuahvsjHQlmyoYg.U3OWGbnVvnXQF7O-ypFWv3GW2Fcb-fW_rFYFKMUkUuwg.PNG%2Fimage.png&type=a340",
+     "쓰임": "KT 4"
+    },
+    {
+     "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTZfMjMg%2FMDAxNzk0ODEzNzg5ODA1.ZBJQPrPjENZo90ZAzVIDrFkdIJUHyW348l6erwcMToEg.b8opBl5qIO88OVGDjXSVG4lOLc-Wkoe6Jf-nR_UGzbgg.JPEG%2F06.jpg&type=l340_165",
+     "쓰임": "KT 5"
+    }
+   ]
   },
   {
    "name": "홍창기",
