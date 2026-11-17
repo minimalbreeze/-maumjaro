@@ -2450,7 +2450,14 @@
   // (마음 → 운 → 처방)에 그대로 대응시키고, 마지막은 반드시 주사로 끝난다.
   // 하단 탭을 새로 만들지 않고 운세센터 타일 하나로만 진입한다.
   const TAROT_LOG_KEY = 'maumjaro:tarotLog';
-  const TAROT_FAN_COUNT = 9; // 부채꼴에 펼칠 카드 수
+  // 펼치는 카드 수 (2026-11-17 효성님 "78장 중에 선택할 수 있게 … 총 4줄로 만든다.
+  // 타로는 선택이 관건이다").
+  //
+  // 예전엔 9장만 부채꼴로 폈다. 덱이 78장인데 9장만 보여주면 "내가 고른다"는 감각이
+  // 반쯤 사라진다 — 실은 앱이 9장을 이미 골라 준 것이기 때문이다.
+  // 이제 **덱 전체**를 네 줄로 깔고, 고르는 일을 온전히 사람에게 넘긴다.
+  const TAROT_SPREAD_ROWS = [19, 19, 20, 20]; // 합 78
+  const TAROT_FAN_COUNT = TAROT_SPREAD_ROWS.reduce((a2, b2) => a2 + b2, 0);
 
   // 저장 구조: log[날짜][주제] = entry. 주제마다 하루 한 번씩 볼 수 있다.
   // 주제 선택이 없던 시절의 기록(log[날짜]에 cards가 바로 있던 형태)은 'today' 주제로 읽어준다.
@@ -3141,12 +3148,22 @@
     mount.innerHTML = `
       <button class="gacha-full-back" data-act="back" type="button" aria-label="뒤로">‹</button>
       <p class="tf-title">${topic.emoji} ${topic.label} 타로</p>
-      <p class="tf-question">마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
+      <p class="tf-question">78장이 다 깔려 있어요. 마음이 가는 카드를 <strong>3장</strong> 골라주세요</p>
       <div class="tf-slots" data-el="slots">
         ${[0, 1, 2].map((i) => `<span class="tf-slot" data-slot="${i}"><b>${i + 1}</b></span>`).join('')}
       </div>
-      <div class="tarot-fan" data-el="fan">
-        ${fan.map((_, i) => `<button class="tarot-card-back" type="button" data-i="${i}" style="--i:${i};" aria-label="${i + 1}번째 카드">${TAROT_BACK_SVG}</button>`).join('')}
+      <div class="tarot-spread" data-el="fan">
+        ${(() => {
+          let n = 0;
+          return TAROT_SPREAD_ROWS.map((len, row) => {
+            const cells = [];
+            for (let k = 0; k < len && n < fan.length; k++, n++) {
+              cells.push(`<button class="tarot-card-back" type="button" data-i="${n}" style="--k:${k};" aria-label="${n + 1}번째 카드">${TAROT_BACK_SVG}</button>`);
+            }
+            // 줄마다 카드 수가 달라서(19/19/20/20) 폭을 칸 수로 넘겨준다.
+            return `<div class="tarot-spread-row" style="--len:${cells.length};--row:${row};">${cells.join('')}</div>`;
+          }).join('');
+        })()}
       </div>
       <p class="tf-line" data-el="count">0 / 3 선택</p>
       <button class="action-btn tf-cta" data-el="open" type="button" disabled>카드를 3장 골라주세요</button>
