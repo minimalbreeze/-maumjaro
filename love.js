@@ -97,6 +97,8 @@
 
   // ---------- 허브 ----------
   function renderHub() {
+    const F = window.MaumjaroFortune;
+    if (F && typeof F.releaseMatchHost === 'function') F.releaseMatchHost();
     const last = load();
     const hasLast = last && typeof last.score === 'number';
     mount.innerHTML = `
@@ -114,10 +116,10 @@
       </button>
 
       <button class="rx-custom-cta" id="love-ai-cta" type="button">
-        <span class="rx-custom-cta-emoji">🤖</span>
+        <span class="rx-custom-cta-emoji">💌</span>
         <span class="rx-custom-cta-text">
-          <span class="rx-custom-cta-title">연애 고민 물어보기</span>
-          <span class="rx-custom-cta-sub">내 상황을 적으면 네 각도로 답해줘요</span>
+          <span class="rx-custom-cta-title">연애 속풀이</span>
+          <span class="rx-custom-cta-sub">지금 상황을 적어주시면 네 각도로 같이 봐드려요</span>
         </span>
         <span class="rx-custom-cta-arrow">›</span>
       </button>
@@ -131,6 +133,26 @@
         <span class="rx-custom-cta-arrow">›</span>
       </button>
 
+      <p class="rx-custom-hint" style="margin-top:18px;font-weight:600;">💞 궁합</p>
+      <div class="rx-category-grid">
+        <div class="rx-category-tile" data-match="saju">
+          <span class="rx-category-emoji">🗓️</span>
+          <span class="rx-category-label">생년월일 궁합</span>
+          <span class="rx-category-count">사주 오행</span>
+        </div>
+        <div class="rx-category-tile" data-match="zodiac">
+          <span class="rx-category-emoji">⭐</span>
+          <span class="rx-category-label">별자리 궁합</span>
+          <span class="rx-category-count">원소 관계</span>
+        </div>
+        <div class="rx-category-tile" data-match="animal">
+          <span class="rx-category-emoji">🐯</span>
+          <span class="rx-category-label">띠 궁합</span>
+          <span class="rx-category-count">삼합·육합·충</span>
+        </div>
+      </div>
+
+      <p class="rx-custom-hint" style="margin-top:18px;font-weight:600;">🧩 지금 제일 가까운 고민</p>
       <div class="rx-category-grid">
         ${D.LOVE_TOPICS.slice(0, 6).map((t) => `
           <div class="rx-category-tile" data-topic="${t.id}">
@@ -141,7 +163,7 @@
       </div>
 
       <button class="rx-friend-quick-btn" id="love-more-topics" type="button" style="width:100%;margin-top:4px;">고민 10개 전부 보기 ›</button>
-      <button class="rx-friend-quick-btn" id="love-goto-match" type="button" style="width:100%;margin-top:8px;">💞 생년월일 궁합도 보기 ›</button>
+      <button class="rx-friend-quick-btn" id="love-goto-tarot" type="button" style="width:100%;margin-top:8px;">🔮 연애 타로 3장 보기 ›</button>
 
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">${DISCLAIMER}</p>
     `;
@@ -156,20 +178,82 @@
     });
     document.getElementById('love-topic-cta').addEventListener('click', renderTopicList);
     document.getElementById('love-more-topics').addEventListener('click', renderTopicList);
-    document.getElementById('love-goto-match').addEventListener('click', gotoMatch);
-    mount.querySelectorAll('.rx-category-tile').forEach((tile) => {
+    document.getElementById('love-goto-tarot').addEventListener('click', gotoLoveTarot);
+    mount.querySelectorAll('.rx-category-tile[data-topic]').forEach((tile) => {
       tile.addEventListener('click', () => renderTopic(tile.dataset.topic));
+    });
+    mount.querySelectorAll('.rx-category-tile[data-match]').forEach((tile) => {
+      tile.addEventListener('click', () => renderMatch(tile.dataset.match));
     });
   }
 
-  // 궁합은 운세 탭 안에 이미 있다. 새로 만들지 않고 그쪽으로 보낸다.
-  function gotoMatch() {
+  // ---------- 궁합 (2026-11-17 효성님 지시로 운세 탭에서 여기로 옮겼다) ----------
+  //
+  // 계산(사주 명식·오행 관계·별자리 원소·띠 삼합/육합/충/원진)은 fortune.js에
+  // 한 벌로 있고, 그 화면을 **연애 탭 안에** 그려 달라고 부른다. 코드를 복사해 오면
+  // 두 벌이 되고, 한쪽만 고쳐지는 날이 온다.
+  //
+  // 사주 프로필이 없으면 그릴 수 없다(상대와 비교할 내 명식이 없다). 그때는
+  // 운세 탭의 프로필 입력으로 보낸다 — 프로필 화면은 그쪽 흐름이라 새로 만들지 않는다.
+  function renderMatch(mode) {
+    const F = window.MaumjaroFortune;
+    trackEvent('love_match_opened', { mode: mode || 'saju' });
+    if (F && typeof F.openMatchIn === 'function'
+        && F.openMatchIn(mount, { mode: mode || 'saju', onBack: renderHub })) return;
+
+    // 못 연 이유가 두 가지다. 프로필이 없는 것과, 사주 계산 라이브러리가 안 뜬 것.
+    // 둘을 같은 문구로 덮으면 "생년월일을 넣으라"는데 이미 넣은 사람이 또 넣게 된다.
+    const hasProfile = !!(F && typeof F.hasSajuProfile === 'function' && F.hasSajuProfile());
+    mount.innerHTML = `
+      <div class="rx-nav-header">
+        <button class="rx-back-btn" id="love-back" type="button">‹</button>
+        <span class="rx-nav-title">💞 궁합</span>
+      </div>
+      <div class="rx-detail-card">
+        <div class="rx-detail-emoji">${hasProfile ? '📡' : '🗓️'}</div>
+        <div class="rx-detail-title">${hasProfile ? '지금은 궁합을 열 수 없어요' : '내 생년월일이 먼저 필요해요'}</div>
+        <p class="rx-detail-symptom">${hasProfile
+          ? '사주를 계산하는 자료를 불러오지 못했어요. 인터넷이 잠깐 끊겼을 때 이렇게 됩니다. 조금 뒤에 다시 들어와 주세요.'
+          : '궁합은 두 사람의 사주를 맞대어 보는 거라, 내 생년월일이 있어야 시작할 수 있어요. 한 번만 넣어두시면 다음부터는 바로 열립니다.'}</p>
+      </div>
+      ${hasProfile ? `
+      <button class="action-btn" id="love-match-retry" type="button" style="width:100%;margin-top:10px;">다시 열어보기</button>
+      ` : `
+      <button class="action-btn" id="love-goto-profile" type="button" style="width:100%;margin-top:10px;">생년월일 넣고 오기 ›</button>
+      <p class="rx-custom-hint" style="text-align:center;margin-top:10px;">운세 탭에서 한 번 넣으면 끝이에요</p>
+      `}
+      <button class="rx-friend-quick-btn" id="love-match-to-signal" type="button" style="width:100%;margin-top:8px;">📊 그동안 호감지수 먼저 재보기 ›</button>
+    `;
+    document.getElementById('love-back').addEventListener('click', renderHub);
+    const retry = document.getElementById('love-match-retry');
+    if (retry) retry.addEventListener('click', () => renderMatch(mode));
+    const toProfile = document.getElementById('love-goto-profile');
+    if (toProfile) {
+      toProfile.addEventListener('click', () => {
+        const tab = document.querySelector('.tab-btn[data-view="fortune"]');
+        if (tab) tab.click();
+      });
+    }
+    // 막힌 화면을 끝으로 두지 않는다(브랜드 원칙 3). 여기서도 주사 쪽으로 길이 난다.
+    document.getElementById('love-match-to-signal').addEventListener('click', renderSituations);
+  }
+
+  // 연애 타로는 타로 무대(운세 탭)에서 돌아간다 — 카드 섞기·뒤집기 연출이 그쪽에 있다.
+  // 여기서는 입구만 둬서 "연애운은 연애센터에서 한눈에"를 지킨다.
+  function gotoLoveTarot() {
+    trackEvent('love_goto_tarot', {});
     const tab = document.querySelector('.tab-btn[data-view="fortune"]');
     if (tab) tab.click();
     setTimeout(() => {
-      const tile = document.querySelector('.rx-category-tile[data-fortune="match"]');
+      // 반드시 운세 탭 안에서 찾는다. `data-topic`은 연애센터 타일도 쓰는 이름이라
+      // document 전체에서 찾으면 숨어 있는 연애 탭 타일을 집을 수 있다.
+      const tile = document.querySelector('#fortune-content .rx-category-tile[data-fortune="tarot"]');
       if (tile) tile.click();
-    }, 120);
+      setTimeout(() => {
+        const love = document.querySelector('#fortune-content .rx-category-tile[data-topic="love"]');
+        if (love) love.click();
+      }, 140);
+    }, 140);
   }
 
   // ---------- 호감지수: 일상 반응 10문항 (4지선다) ----------
@@ -373,20 +457,20 @@
     mount.innerHTML = `
       <div class="rx-nav-header">
         <button class="rx-back-btn" id="love-back" type="button">‹</button>
-        <span class="rx-nav-title">🤖 연애 고민</span>
+        <span class="rx-nav-title">💌 연애 속풀이</span>
       </div>
 
       <div class="rx-detail-card">
         <div class="rx-detail-emoji">💭</div>
-        <div class="rx-detail-title">지금 상황을 적어주세요</div>
-        <p class="rx-detail-symptom">짧아도 괜찮아요. 무슨 일이 있었고 무엇이 걸리는지만 적어주시면 <strong>상황·상대·오늘 할 일·하지 말 것</strong> 네 각도로 답해드려요.</p>
+        <div class="rx-detail-title">여기에 다 적어주세요</div>
+        <p class="rx-detail-symptom">짧아도 괜찮고 길어도 괜찮아요. 무슨 일이 있었고 무엇이 걸리는지 적어주시면 <strong>상황·상대·오늘 할 일·하지 말 것</strong> 네 각도로 같이 봐드려요.</p>
       </div>
 
       <div class="rx-custom-field">
         <textarea id="love-ai-q" class="rx-custom-input" rows="5"
           placeholder="예) 두 달째 거의 매일 연락하는 사이인데, 만나자고 하면 항상 다음에 보자고 해요. 제가 너무 들이대는 걸까요?"></textarea>
       </div>
-      <button class="action-btn" id="love-ai-submit" type="button" style="width:100%;margin-top:6px;">물어보기</button>
+      <button class="action-btn" id="love-ai-submit" type="button" style="width:100%;margin-top:6px;">💌 털어놓기</button>
       <div id="love-ai-answer"></div>
 
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">
