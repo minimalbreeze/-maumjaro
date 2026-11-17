@@ -5620,3 +5620,58 @@ body:has(#healing-overlay.show) #app #syringe-svg {
   background: #b779ef; color: #fff; font-size: 9px; font-weight: 700;
   padding: 1px 7px; border-radius: 999px; white-space: nowrap;
 }
+
+/* ---------- 타로 — 78장을 네 줄로 깐다 (2026-11-17) ----------
+   효성님 "78장 중에 선택할 수 있게 … 총 4줄로 만든다. 타로는 선택이 관건이다."
+
+   예전 부채꼴은 9장이었다. 덱이 78장인데 9장만 보여주면 "내가 고른다"는 감각이
+   반쯤 사라진다 — 실은 앱이 9장을 이미 골라 준 것이기 때문이다.
+   이제 덱 전체를 깔고, 카드를 겹쳐 폭을 맞춘다(화투 패를 쫙 펴둔 모양).
+
+   한 줄에 19~20장이 들어가야 하므로 카드가 보이는 폭은 얇다. 그래서
+   · 겹침 간격(--step)은 화면 폭에서 계산한다 — 줄마다 칸 수가 달라도 양 끝이 맞는다
+   · 고르면 위로 솟고 테두리가 생겨, 얇아도 어느 걸 골랐는지 바로 보인다
+   · 손가락이 닿는 영역은 카드 전체라 얇아도 누를 수 있다 */
+.tarot-spread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 16px;
+  /* 카드 한 장의 실제 크기. 뒷면 그림은 같은 SVG 라 작아져도 결이 같다. */
+  --card-w: 42px;
+  --card-h: 66px;
+  --lift: 13px;
+}
+.tarot-spread-row {
+  position: relative;
+  height: calc(var(--card-h) + var(--lift));
+  /* 줄 안에서 겹치는 간격. 마지막 카드까지 화면 안에 들어오게 역산한다. */
+  --step: calc((100% - var(--card-w)) / (var(--len) - 1));
+}
+.tarot-spread-row .tarot-card-back {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--k) * var(--step));
+  width: var(--card-w);
+  height: var(--card-h);
+  border-radius: 6px;
+  box-shadow: -1px 2px 6px rgba(0, 0, 0, 0.38);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  /* 왼쪽 카드가 아래로 깔리게 — 실제로 쫙 편 패와 같은 겹침이다. */
+  z-index: calc(var(--k) + 1);
+}
+.tarot-spread-row .tarot-card-back:active { filter: brightness(1.15); }
+.tarot-spread-row .tarot-card-back.picked {
+  transform: translateY(calc(var(--lift) * -1));
+  box-shadow: 0 0 0 2.5px #fff, 0 8px 18px rgba(0, 0, 0, 0.3);
+  z-index: 99;
+}
+.tarot-spread-row .tarot-card-back.locked { pointer-events: none; opacity: 0.45; }
+
+/* 화면이 넓으면 카드도 조금 커진다 — 태블릿에서 성냥개비처럼 보이지 않게. */
+@media (min-width: 480px) {
+  .tarot-spread { --card-w: 52px; --card-h: 82px; --lift: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tarot-spread-row .tarot-card-back { transition: none; }
+}
