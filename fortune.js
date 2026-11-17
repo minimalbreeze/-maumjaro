@@ -2541,6 +2541,23 @@
     return out;
   }
 
+  function tarotFaceArt(card) {
+    const A = window.MaumjaroTarotArt;
+    return (A && typeof A.faceForCard === 'function') ? (A.faceForCard(card) || '') : '';
+  }
+
+  // 카드 이름이 **그림 안에 적혀 있는가**.
+  // 이모지 프레임은 안에 이름을 쓴다. 도판(라이더-웨이트)과 직접 그린 핍 카드는 안 쓴다.
+  // 그래서 그 둘은 카드 아래에 이름을 따로 붙여야 한다.
+  //
+  // ⚠️ 여기를 `card.img` 로만 보고 있었다. 마이너에 그림을 넣자마자
+  //    **마이너 카드의 이름이 화면에서 통째로 사라졌다** — 프레임이 빠졌는데
+  //    아래 캡션은 도판 카드에만 붙었기 때문이다. 그림을 더할 때는 그 그림이
+  //    무엇을 대신하는지(여기서는 이름표)를 같이 따라가야 한다.
+  function tarotFaceHasOwnName(card) {
+    return !card.img && !tarotFaceArt(card);
+  }
+
   // 카드 앞면 마크업. 작은 카드(결과 화면)와 큰 카드(전체화면 공개)가 같은 구조를 쓰도록
   // 한 곳에서 만든다 — 크기는 CSS로만 달라진다(디자인이 갈라지지 않게).
   function tarotFaceHtml(c, opts) {
@@ -2564,7 +2581,7 @@
 
     // 마이너는 도판이 없어 이모지로 때우고 있었다. 이제 뒷면과 같은 금박 라인으로
     // 그린 핍 카드를 쓴다(tarot-minor-art.js). 그려지지 않으면 예전처럼 이모지다.
-    const art = window.MaumjaroTarotArt ? window.MaumjaroTarotArt.faceForCard(c.card) : '';
+    const art = tarotFaceArt(c.card);
     if (art) {
       return `
         <div class="tarot-face has-art${c.reversed ? ' reversed' : ''}"${style}>
@@ -3302,7 +3319,7 @@
       <div class="tarot-face-wrap tappable" data-card-i="${i}">
         <div class="tarot-face-pos">${topic.positions[i].emoji} ${topic.positions[i].label}</div>
         ${tarotFaceHtml(c, { delay: i * 0.45 })}
-        ${c.card.img ? `<div class="tarot-face-under">${c.card.name} · ${tarotDirLabel(c.reversed)}</div>` : ''}
+        ${tarotFaceHasOwnName(c.card) ? '' : `<div class="tarot-face-under">${c.card.name} · ${tarotDirLabel(c.reversed)}</div>`}
       </div>`).join('');
 
     const readHtml = cards.map((c, i) => `
