@@ -151,6 +151,10 @@
           <span class="rx-category-count">삼합·육합·충</span>
         </div>
       </div>
+      <!-- 타로는 궁합 바로 아래다(2026-11-17 효성님 "타로를 … 띠궁합 아래쪽에
+           들어갔으면 좋겠어"). 둘 다 "둘 사이를 본다"는 같은 묶음이라, 맨 아래
+           혼자 떨어져 있을 때보다 여기서 더 자연스럽게 읽힌다. -->
+      <button class="rx-friend-quick-btn" id="love-goto-tarot" type="button" style="width:100%;margin-top:8px;">🔮 연애 타로 3장 보기 ›</button>
 
       <p class="rx-custom-hint" style="margin-top:18px;font-weight:600;">🧩 지금 제일 가까운 고민</p>
       <div class="rx-category-grid">
@@ -163,7 +167,6 @@
       </div>
 
       <button class="rx-friend-quick-btn" id="love-more-topics" type="button" style="width:100%;margin-top:4px;">고민 10개 전부 보기 ›</button>
-      <button class="rx-friend-quick-btn" id="love-goto-tarot" type="button" style="width:100%;margin-top:8px;">🔮 연애 타로 3장 보기 ›</button>
 
       <p class="rx-custom-hint" style="text-align:center;margin-top:12px;">${DISCLAIMER}</p>
     `;
