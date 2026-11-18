@@ -144,6 +144,8 @@ on:
           - '중복 글 휴지통으로 보내기 (실제 적용 · 비용 0원)'
           - '휴지통에서 되살리기 (미리보기 · 비용 0원)'
           - '휴지통에서 되살리기 (실제 적용 · 비용 0원)'
+          - '글 카테고리 바꾸기 (미리보기 · 비용 0원)'
+          - '글 카테고리 바꾸기 (실제 적용 · 비용 0원)'
           - '임시글 발행하기 (미리보기 · 비용 0원)'
           - '임시글 발행하기 (실제 발행 · 비용 0원)'
           - '주소의 이미지를 우리 미디어에 올리기 (미리보기 · 비용 0원)'
@@ -247,7 +249,7 @@ jobs:
       # 글 자체는 그대로 나간다. 글을 못 쓰는 것보다 카드가 못생긴 게 낫다.
       # 조용히 넘기지는 않는다 — 아래 경고가 실행 기록에 남는다.
       - name: 한글 폰트 설치
-        if: ${{ (!contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '분류 설명') && !contains(inputs.mode, '상금 제목') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '실제 페이지에서 재기') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '겹치는 글 전부') && !contains(inputs.mode, '보강 1순위') && !contains(inputs.mode, '섞인 이름') && !contains(inputs.mode, '용접된 문단') && !contains(inputs.mode, 'alt 둘') && !contains(inputs.mode, '무엇이 모자란지') && !contains(inputs.mode, '같은 대회 짝') && !contains(inputs.mode, '안내 여러 쌍에') && !contains(inputs.mode, '글 본문 보기') && !contains(inputs.mode, '카드 이미지 다시 굽기') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '볼링 글 제목') && !contains(inputs.mode, 'AI 인용 기준') && !contains(inputs.mode, '흔들리는 말') && !contains(inputs.mode, '첫 문장 보기') && !contains(inputs.mode, '인사말로 연 글') && !contains(inputs.mode, '인사말 걷어내기') && !contains(inputs.mode, '첫 문장을 결론으로') && !contains(inputs.mode, '자주 묻는 질문 절 넣기') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '휴지통') && !contains(inputs.mode, '임시글 발행') && !contains(inputs.mode, '우리 미디어에 올리기') && !contains(inputs.mode, '깨진 링크') && !contains(inputs.mode, '깨진 표') && !contains(inputs.mode, '글자로 남은 링크') && !contains(inputs.mode, '누를 수 없는 주소') && !contains(inputs.mode, '적힌 주소를 링크로') && !contains(inputs.mode, '하단 고정 바') && !contains(inputs.mode, '본문 쿠팡 상품') && !contains(inputs.mode, '옛 쿠팡 블록') && !contains(inputs.mode, '광고 아래 여백') && !contains(inputs.mode, '돌려주기') && !contains(inputs.mode, '사이트맵') && !contains(inputs.mode, '쿠팡 광고를') && !contains(inputs.mode, '소제목 섹션 빼기') && !contains(inputs.mode, '섹션 끼워넣기') && !contains(inputs.mode, '섹션 내용 갈아끼우기') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기')) || contains(inputs.mode, '파일로 올리기') || contains(inputs.mode, '카드 이미지 다시 굽기') }}
+        if: ${{ (!contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '분류 설명') && !contains(inputs.mode, '상금 제목') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '실제 페이지에서 재기') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '겹치는 글 전부') && !contains(inputs.mode, '보강 1순위') && !contains(inputs.mode, '섞인 이름') && !contains(inputs.mode, '용접된 문단') && !contains(inputs.mode, 'alt 둘') && !contains(inputs.mode, '무엇이 모자란지') && !contains(inputs.mode, '같은 대회 짝') && !contains(inputs.mode, '안내 여러 쌍에') && !contains(inputs.mode, '글 본문 보기') && !contains(inputs.mode, '카드 이미지 다시 굽기') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '볼링 글 제목') && !contains(inputs.mode, 'AI 인용 기준') && !contains(inputs.mode, '흔들리는 말') && !contains(inputs.mode, '첫 문장 보기') && !contains(inputs.mode, '인사말로 연 글') && !contains(inputs.mode, '인사말 걷어내기') && !contains(inputs.mode, '첫 문장을 결론으로') && !contains(inputs.mode, '자주 묻는 질문 절 넣기') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '휴지통') && !contains(inputs.mode, '카테고리 바꾸기') && !contains(inputs.mode, '임시글 발행') && !contains(inputs.mode, '우리 미디어에 올리기') && !contains(inputs.mode, '깨진 링크') && !contains(inputs.mode, '깨진 표') && !contains(inputs.mode, '글자로 남은 링크') && !contains(inputs.mode, '누를 수 없는 주소') && !contains(inputs.mode, '적힌 주소를 링크로') && !contains(inputs.mode, '하단 고정 바') && !contains(inputs.mode, '본문 쿠팡 상품') && !contains(inputs.mode, '옛 쿠팡 블록') && !contains(inputs.mode, '광고 아래 여백') && !contains(inputs.mode, '돌려주기') && !contains(inputs.mode, '사이트맵') && !contains(inputs.mode, '쿠팡 광고를') && !contains(inputs.mode, '소제목 섹션 빼기') && !contains(inputs.mode, '섹션 끼워넣기') && !contains(inputs.mode, '섹션 내용 갈아끼우기') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기')) || contains(inputs.mode, '파일로 올리기') || contains(inputs.mode, '카드 이미지 다시 굽기') }}
         timeout-minutes: 5
         continue-on-error: true
         run: |
@@ -1498,6 +1500,42 @@ jobs:
           node src/wordpress/delete-post.mjs $IN_IDS $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
           exit "${PIPESTATUS[0]}"
 
+      - name: 글 카테고리 바꾸기
+        # 분류를 잘못 받은 글 하나의 카테고리만 고친다.
+        #
+        # 2026-11-18 에 최민정(쇼트트랙) 글이 **당구**로 분류됐다. 주제 분류는
+        # AI 가 하는데 종목 목록에 쇼트트랙이 없어 가장 가까워 보이는 칸을
+        # 골랐다. 효성님: "최민정 카테고리가 왜 당구지? 차라리 생활정보에 넣어라".
+        #
+        # 글을 다시 쓰면 300원이 들고 주소가 바뀐다. 카테고리 하나만 고치는
+        # 길이 없어서 만들었다. 보내는 것은 `categories` 하나뿐이다 —
+        # 제목·본문·슬러그·메타는 손대지 않는다. 주소가 바뀌면 색인이 끊긴다.
+        #
+        # 바꿀 이름은 new_title 칸에 적는다(입력 칸이 이미 많아 나눠 쓴다).
+        # 없는 이름을 적으면 멈추고 있는 카테고리 목록을 보여준다 —
+        # 오타 하나가 분류를 늘리지 않게 새 카테고리는 만들지 않는다.
+        if: ${{ contains(inputs.mode, '글 카테고리 바꾸기') }}
+        working-directory: sports-news
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_IDS: ${{ inputs.post_ids }}
+          IN_CAT: ${{ inputs.new_title }}
+          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
+          WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
+          WORDPRESS_APP_PASSWORD: ${{ secrets.WORDPRESS_APP_PASSWORD }}
+          WORDPRESS_USER_AGENT: ${{ secrets.WORDPRESS_USER_AGENT }}
+        run: |
+          if [ -z "$IN_IDS" ]; then
+            echo "::error::고칠 글 번호를 적어주세요 (post_ids)"; exit 1
+          fi
+          if [ -z "$IN_CAT" ]; then
+            echo "::error::바꿀 카테고리 이름을 new_title 칸에 적어주세요 (예: 생활정보)"; exit 1
+          fi
+          how=''
+          case "$IN_MODE" in *실제\ 적용*) how='--apply' ;; esac
+          node src/wordpress/set-category.mjs $IN_IDS "--분류=$IN_CAT" $how 2>&1 | tee -a "$RUNNER_TEMP/sn.log"
+          exit "${PIPESTATUS[0]}"
+
       - name: 임시글 발행하기
         # **사람이 글을 보고 번호를 지목했을 때만** 임시글을 발행한다.
         #
@@ -1983,7 +2021,7 @@ jobs:
       - name: 실행
         # 사이트 조사만 고르거나 손보기만 할 때는 여기를 건너뛴다. AI를 한 번도 부르지 않으므로
         # 비용이 0원이다. 설정이 제대로 됐는지 확인할 때 쓴다.
-        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '분류 설명') && !contains(inputs.mode, '상금 제목') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '실제 페이지에서 재기') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '겹치는 글 전부') && !contains(inputs.mode, '보강 1순위') && !contains(inputs.mode, '섞인 이름') && !contains(inputs.mode, '용접된 문단') && !contains(inputs.mode, 'alt 둘') && !contains(inputs.mode, '무엇이 모자란지') && !contains(inputs.mode, '같은 대회 짝') && !contains(inputs.mode, '안내 여러 쌍에') && !contains(inputs.mode, '글 본문 보기') && !contains(inputs.mode, '카드 이미지 다시 굽기') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '볼링 글 제목') && !contains(inputs.mode, 'AI 인용 기준') && !contains(inputs.mode, '흔들리는 말') && !contains(inputs.mode, '첫 문장 보기') && !contains(inputs.mode, '인사말로 연 글') && !contains(inputs.mode, '인사말 걷어내기') && !contains(inputs.mode, '첫 문장을 결론으로') && !contains(inputs.mode, '자주 묻는 질문 절 넣기') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '휴지통') && !contains(inputs.mode, '임시글 발행') && !contains(inputs.mode, '우리 미디어에 올리기') && !contains(inputs.mode, '깨진 링크') && !contains(inputs.mode, '깨진 표') && !contains(inputs.mode, '글자로 남은 링크') && !contains(inputs.mode, '누를 수 없는 주소') && !contains(inputs.mode, '적힌 주소를 링크로') && !contains(inputs.mode, '하단 고정 바') && !contains(inputs.mode, '본문 쿠팡 상품') && !contains(inputs.mode, '옛 쿠팡 블록') && !contains(inputs.mode, '광고 아래 여백') && !contains(inputs.mode, '돌려주기') && !contains(inputs.mode, '사이트맵') && !contains(inputs.mode, '쿠팡 광고를') && !contains(inputs.mode, '소제목 섹션 빼기') && !contains(inputs.mode, '섹션 끼워넣기') && !contains(inputs.mode, '섹션 내용 갈아끼우기') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기') }}
+        if: ${{ !contains(inputs.mode, '사이트 조사만') && !contains(inputs.mode, 'SEO 손보기') && !contains(inputs.mode, '링크 현재창으로') && !contains(inputs.mode, '글 찾기') && !contains(inputs.mode, '메타 설명') && !contains(inputs.mode, '이미지 설명') && !contains(inputs.mode, '분류 설명') && !contains(inputs.mode, '상금 제목') && !contains(inputs.mode, '제목·설명 고치기') && !contains(inputs.mode, '중계 배너') && !contains(inputs.mode, '홈페이지 배너') && !contains(inputs.mode, '광고가 페이지에') && !contains(inputs.mode, '실제 페이지에서 재기') && !contains(inputs.mode, '색인이 안 되는 이유') && !contains(inputs.mode, '겹치는 글 전부') && !contains(inputs.mode, '보강 1순위') && !contains(inputs.mode, '섞인 이름') && !contains(inputs.mode, '용접된 문단') && !contains(inputs.mode, 'alt 둘') && !contains(inputs.mode, '무엇이 모자란지') && !contains(inputs.mode, '같은 대회 짝') && !contains(inputs.mode, '안내 여러 쌍에') && !contains(inputs.mode, '글 본문 보기') && !contains(inputs.mode, '카드 이미지 다시 굽기') && !contains(inputs.mode, '색인에서 빼기') && !contains(inputs.mode, '다시 들여보내기') && !contains(inputs.mode, '시설 글 제목') && !contains(inputs.mode, '볼링 글 제목') && !contains(inputs.mode, 'AI 인용 기준') && !contains(inputs.mode, '흔들리는 말') && !contains(inputs.mode, '첫 문장 보기') && !contains(inputs.mode, '인사말로 연 글') && !contains(inputs.mode, '인사말 걷어내기') && !contains(inputs.mode, '첫 문장을 결론으로') && !contains(inputs.mode, '자주 묻는 질문 절 넣기') && !contains(inputs.mode, '글끼리 링크') && !contains(inputs.mode, '오타') && !contains(inputs.mode, '휴지통') && !contains(inputs.mode, '카테고리 바꾸기') && !contains(inputs.mode, '임시글 발행') && !contains(inputs.mode, '우리 미디어에 올리기') && !contains(inputs.mode, '깨진 링크') && !contains(inputs.mode, '깨진 표') && !contains(inputs.mode, '글자로 남은 링크') && !contains(inputs.mode, '누를 수 없는 주소') && !contains(inputs.mode, '적힌 주소를 링크로') && !contains(inputs.mode, '하단 고정 바') && !contains(inputs.mode, '본문 쿠팡 상품') && !contains(inputs.mode, '옛 쿠팡 블록') && !contains(inputs.mode, '광고 아래 여백') && !contains(inputs.mode, '돌려주기') && !contains(inputs.mode, '사이트맵') && !contains(inputs.mode, '쿠팡 광고를') && !contains(inputs.mode, '소제목 섹션 빼기') && !contains(inputs.mode, '섹션 끼워넣기') && !contains(inputs.mode, '섹션 내용 갈아끼우기') && !contains(inputs.mode, '올해 글 안내') && !contains(inputs.mode, '글감 후보') && !contains(inputs.mode, '공식 페이지') && !contains(inputs.mode, '파일로 올리기') }}
         working-directory: sports-news
         env:
           IN_SUBJECT: ${{ inputs.subject }}
