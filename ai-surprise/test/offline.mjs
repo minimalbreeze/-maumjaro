@@ -3375,6 +3375,15 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     // 않지만, 분기를 '화풍 미리보기' 보다 먼저 두었으므로 표에서도 먼저
     // 둔다. 표 차례와 분기 차례가 어긋나면 이 검사가 거짓으로 통과한다.
     '인물 시트': '인물 시트',
+    // '로고 후보 뽑기 (야포츠 채널 로고 …)' 를 2026-11-18 에 넣었다.
+    //
+    // ⚠️ 이름을 고를 때 **'야포츠' 가 '스포츠' 를 품지 않는지**를 먼저 봤다.
+    //    품었다면 '스포츠' 분기로 새서 기획 파일을 찾다가 죽었을 것이다.
+    //    '포츠' 는 같지만 '스포츠' 는 아니라 안전하다.
+    // ⚠️ '화풍 후보 비교' 와 '후보' 를 같이 쓴다. 분기는 어느 쪽이 먼저든
+    //    서로를 안 품지만('로고 후보 뽑기' ⊄ '화풍 후보 비교'), 분기에서
+    //    로고가 먼저이므로 표에서도 먼저 둔다.
+    '로고 후보 뽑기': '로고 후보 뽑기',
     // '화풍 후보 비교 (같은 장면 네 **그림**체 …)' 에도 '그림' 이 들어 있다.
     // 2026-11-04 에 넣으면서 똑같이 그림 분기로 샜고 이 검사가 잡았다.
     // '화풍 미리보기' 와도 '화풍' 을 같이 쓰므로 둘의 차례도 중요하다.
@@ -8201,6 +8210,137 @@ test('비율을 재는 자리마다 적는다', () => {
 });
 
 
+
+
+
+// ───────────────────────────────────────────────────────────
+section('4-가. 야포츠 로고 후보 — 제비');
+
+const { LOGO_POSES, logoPrompt } = await import('../src/logo.mjs');
+
+test('로고 모드도 이미지 토큰 확인을 거친다', () => {
+  // ⚠️ 토큰은 실행 단계에 언제나 넘어가므로 돌긴 돈다. 그런데 사전 확인
+  //    단계를 안 거치면, 토큰이 없을 때 "어디서 만들어 어디에 넣어라" 를
+  //    알려 주는 줄이 안 나온다. 2026-11-18 에 로고 모드를 넣으면서
+  //    빠뜨렸다가 실행 로그에서 건너뛴 것을 보고 메웠다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const step = yml.slice(yml.indexOf('- name: 이미지 토큰이 등록되어 있는지 확인'));
+  const cond = step.slice(0, step.indexOf('\n        run:'));
+  assert.ok(cond.includes("'로고'"), '로고 모드가 토큰 확인 조건에 없습니다');
+});
+
+test('자세마다 설명과 프롬프트가 있다', () => {
+  assert.ok(LOGO_POSES.length >= 4, '후보가 너무 적으면 고를 게 없다');
+  const keys = LOGO_POSES.map((p) => p.key);
+  assert.equal(new Set(keys).size, keys.length, '자세 이름이 겹칩니다');
+  for (const p of LOGO_POSES) {
+    assert.ok(p.key && p.why && p.subject, `${p.key}: 빈 칸이 있습니다`);
+  }
+});
+
+test('금지로 적지 않는다 — flux 는 negative_prompt 가 없다', () => {
+  // ⚠️ CLAUDE.md 13번. "no text" 를 적으면 그 낱말이 **긍정 프롬프트에**
+  //    붙어서 모델이 글자를 그린다. 모자 마크에서 네 번 겪은 일이다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose);
+    for (const w of ['no text', 'no letters', 'without text', 'no logo', 'no watermark']) {
+      assert.ok(!p.toLowerCase().includes(w), `${pose.key}: "${w}" 는 금지 문구입니다`);
+    }
+  }
+});
+
+test('렌즈 말을 쓰지 않는다 — 판화에는 초점이 없다', () => {
+  // ⚠️ CLAUDE.md 14번. 사진 말이 섞이면 판화가 사진처럼 나온다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    for (const w of ['out of focus', 'soft-focus', 'blurred', 'depth of field', 'bokeh']) {
+      assert.ok(!p.includes(w), `${pose.key}: "${w}" 는 렌즈 말입니다`);
+    }
+  }
+});
+
+test('야구공을 넣지 않는다 (2026-11-18 효성님)', () => {
+  // "야구공은 빼자." 손톱만 한 크기에서 공이 먼저 뭉개지고, 참고 사진처럼
+  // 제비만 있는 쪽이 깔끔하다. 되돌리려면 subject 에 공 문구를 다시 붙이되
+  // 솔기까지 적어야 한다 — 안 적으면 그냥 흰 점이 된다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(!p.includes('baseball'), `${pose.key}: 야구공이 다시 들어갔습니다`);
+    assert.ok(!p.includes('beak'), `${pose.key}: 부리에 문 것이 남아 있습니다`);
+  }
+});
+
+test('평면 2색 로고 마크로 적는다 — 타투라고 적으면 음영이 따라온다', () => {
+  // ⚠️ 2026-11-18 효성님: "너무 실사 같아. 로고이니 단순화를 좀 해야겠지"
+  //    '타투' 가 음영의 입구였다. 타투를 부르면 모델이 깃털과 그라데이션을
+  //    같이 가져온다. '점묘' 도 마찬가지다 — 부드러운 음영을 만든다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('flat two-colour vector logo mark'), `${pose.key}: 평면 2색 로고라는 말이 빠졌습니다`);
+    assert.ok(p.includes('solid black'), `${pose.key}: 검정 바탕이 빠졌습니다`);
+    for (const w of ['tattoo', 'stippled', 'gradient', 'shading', 'engraving']) {
+      assert.ok(!p.includes(w), `${pose.key}: "${w}" 가 음영을 불러옵니다`);
+    }
+  }
+});
+
+test('값이 둘뿐이라고 적는다 — 색을 막는 것보다 세다', () => {
+  // ⚠️ #98 의 '급강하' 가 컬러로, #99 의 '정면' 이 빨간 목으로 샜다.
+  //    제비의 빨간 목은 모델이 세게 쥔 지식이라 색을 막는 말로는 안 빠진다.
+  //    중간 톤이 없다고 적으면 음영도 색도 같이 못 들어온다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('only those two values'), `${pose.key}: 값이 둘뿐이라는 말이 빠졌습니다`);
+  }
+});
+
+test('날개를 두 장 다 편다 — 참고 사진의 핵심이다', () => {
+  // 손으로 그릴 때 날개를 한 장만 그려서 비행기가 됐다. 타투 제비는
+  // 두 장을 다 펴고, 그 둘이 겹치는 모양이 제비로 읽히게 만든다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(/both wings/.test(p), `${pose.key}: 날개 두 장을 적어야 합니다`);
+    assert.ok(/forked tail/.test(p), `${pose.key}: 갈라진 꼬리가 빠졌습니다`);
+  }
+});
+
+test('깃털을 한 올씩 그리지 않는다 — 큰 덩어리로 적는다', () => {
+  // ⚠️ 실행 #98 에서 자연사 삽화가 나왔다. 깃털을 한 올씩 그려 놓아서
+  //    48px 로 줄이면 전부 검은 얼룩이 된다. 로고는 큰 덩어리 몇 개로
+  //    읽혀야 한다. 금지가 아니라 무엇을 그릴지로 적는다(CLAUDE.md 13번).
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(/large simple shapes|large shapes/.test(p), `${pose.key}: 큰 덩어리로 그리라는 말이 빠졌습니다`);
+    assert.ok(/bold even outline|heavy outline/.test(p), `${pose.key}: 굵은 외곽선이 빠졌습니다`);
+  }
+});
+
+test('화면을 꽉 채운다 — 여백을 비우라고 했더니 새가 작아졌다', () => {
+  // ⚠️ #99 에서 새가 작게 나왔다. "아래 여백을 비워라" 를 적은 탓이다.
+  //    YAPORTS 자리는 SVG 로 얹을 때 만들면 된다. 뽑을 때는 꽉 채운다.
+  for (const pose of LOGO_POSES) {
+    assert.ok(/fills most/.test(logoPrompt(pose)), `${pose.key}: 꽉 채우라는 말이 빠졌습니다`);
+  }
+});
+
+test('작게 줄여도 읽히라는 말이 들어간다', () => {
+  // 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장이 전부 여기서 졌다.
+  for (const pose of LOGO_POSES) {
+    assert.ok(/shrunk|readable/i.test(logoPrompt(pose)), `${pose.key}: 작은 크기 조건이 빠졌습니다`);
+  }
+});
+
+test('자세가 앞, 판화 결이 뒤에 온다', () => {
+  // ⚠️ CLAUDE.md 13번. 뒤에 붙은 고정 문구가 앞말을 이긴다. 바뀌면 안 되는
+  //    판화 결을 뒤에 둬야 장마다 결이 유지된다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose);
+    assert.ok(p.indexOf('swallow') < p.indexOf('flat two-colour'), `${pose.key}: 순서가 뒤집혔습니다`);
+  }
+});
 
 
 console.log(`\n${'═'.repeat(60)}`);
