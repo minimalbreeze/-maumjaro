@@ -1,0 +1,145 @@
+{
+  "kind": "SPORTS",
+  "title": "최지훈 4년 67억, 그리고 다음 차례 김호령",
+  "premise": "FA 사흘째. 세 번째 계약이 나왔는데 앞의 둘과 등급이 다르다. 최지훈이 SSG 에 4년 67억으로 남았다. 그런데 이 계약은 시장에 나간 적이 없고, SSG 가 FA 형식을 쓴 이유가 따로 있다 — 구자욱을 노리기 위한 보호선수다.",
+  "angle": "18화에서 한 예측의 첫 채점이 여기서 나온다. 최지훈 잔류 55% 는 맞혔지만 근거가 틀렸다. 그리고 이 편에서는 18화에서 하지 않겠다고 한 것을 한다 — 김호령의 금액을 산정한다. 말을 바꾼 것이므로 바꿨다고 먼저 밝히고 들어간다.",
+  "sections": [],
+  "sources": [
+    "스포티비뉴스 김태우 기자 (2026-11-18 13:33, 오키나와) — 김호령 연봉·보상액·2년 성적, 이범호 감독 발언, FA 신청의 상호 이득",
+    "마이데일리 김진성 기자 (2026-11-18 15:01) — 구단별 온도, 박해민 비교",
+    "마이데일리 (2026-11-16) — 김호령 등급·2026 성적",
+    "SSG 공식 발표 (2026-11-18) — 최지훈 계약 내용"
+  ],
+  "people": [
+    {
+      "name": "최지훈",
+      "role": "SSG 랜더스 중견수, 29세. 이 편의 주인공 — 11월 18일 4년 67억에 잔류했다.",
+      "team": "SSG",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(CLAUDE.md 12번). 글과 사진이 싸운다. ⚠️ 등번호를 확인하지 못했다. **비워 둔다** — 빈 칸을 남기면 모델이 아무 번호나 그린다(규칙 3). ⚠️ 계약 숫자는 4년 67억(계약금 38억·연봉 20억·옵션 9억)이다. 데일리안만 '2년 55억'으로 적었는데 그건 양의지 계약과 섞인 오기다. 공식 발표 기준으로만 쓴다. ⚠️ 타율은 매체마다 0.250/0.25 로 소수점 자리가 달라, 확신이 약하면 아예 안 쓴다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5310%2F2026%2F11%2F18%2F0000065077_001_20261118110617710.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjVfMjQw%2FMDAxNzkyODk0NzE5NzI5.0f57-uN6fSyPNY-VJEHPLvtQt149DPVli8VJHad-7AEg.JSeoVZd0rKZuuzTKNto6MRJzfLa1hWXG6uD-6hLSN1cg.PNG%2F1.png&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMDlfMTk1%2FMDAxNzkxNTM3NjgzNDA1.7VTINRE6ycIuPgDwTGNfUdxSRlfNbK4f9zxJ2nus0oIg.9yIh89rePziTspP0I12R4RHSaL4QlbNo_D5OUCvWvpsg.PNG%2Fimage.png&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F469%2F2026%2F11%2F18%2F0000966256_001_20261118114418682.jpg&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTVfMjIx%2FMDAxNzkyMDMyNTYwMjk2.v2Ir9masw9dLicIdgsYDt6TmJM5PAlRaptPgXRoCwsAg.janULEmU6zsVftxbDCeh9tdhVNGXRdMeSLcy6lhutkUg.PNG%2Fimage.png&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjNfMjMz%2FMDAxNzkyNjkzMzc2NTc2.L2sxzStuXk9Bvku09Lvq8u9tkbBaOc-MQDXfGPOhXZ4g.th69mvj01kG2khTa1fmmYn7ouViIXhd0eDZcoC9hg50g.PNG%2F%25C8%25AD%25B8%25E9_%25C4%25B8%25C3%25B3_2026-10-23_032250.png&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTdfNTEg%2FMDAxNzkyMTg5NDc2Mjc5.UFyzSgx0mGdcAy5BXdDSRM2QyfOnH2uaVm2p1IylpK8g.FVWmeuxfaVc28jOslubLUgPVowCyOGzEo4FE-oPjN4Yg.PNG%2Ffile_00000000d18c82098eb9fe7fb8456460.png&type=a340",
+          "쓰임": "7"
+        }
+      ]
+    },
+    {
+      "name": "구자욱",
+      "role": "삼성 외야수 · 주장 · 33세 · 좌타",
+      "team": "삼성",
+      "number": "5",
+      "look": "",
+      "tell": "⚠️ 18화에서 그대로 가져온 사진이다. 이 편에서는 **SSG 가 노리는 상대**로 나온다 — SSG 가 최지훈과 FA 계약을 한 이유가 구자욱 영입에 대비해 보호선수를 한 명 더 묶기 위해서다. ⚠️ 금액을 예측하지 않는다. ⚠️ 사진이 있으므로 생김새(look)는 비운다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F421%2F2026%2F11%2F08%2F0009276994_001_20261108150424943.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2025%2F03%2F11%2F0001131305_003_20250311170012085.jpg&type=a340",
+          "쓰임": "타석"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2020%2F10%2F03%2F0000858968_001_20201003182138451.jpg&type=a340",
+          "쓰임": "스윙직후"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F119%2F2026%2F10%2F25%2F0003146643_002_20261025070308111.jpg&type=a340",
+          "쓰임": "수비"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2025%2F06%2F04%2F0003335042_001_20250604205111175.jpg&type=a340",
+          "쓰임": "더그아웃"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMjI1%2FMDAxNzk0MjMyMTM4MTYz.DQMXdqV8Z21ml3MhL3gfrqnUlSwU3iDoYmyY02y3bCwg.hCzG5QmSl2u2H_eGILfbCtcQlYgW52r2Oc20dpf3bw4g.PNG%2Fimage.png&type=a340",
+          "쓰임": "우승 세리머니"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F445%2F2026%2F11%2F13%2F0000490016_003_20261113141217527.jpg&type=a340",
+          "쓰임": "삼성 7 (11-13)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTEg%2FMDAxNzk0NDA0OTYwMTYw.rY_lK3GE0paCVXciEkQ7BcEHnfvzBr1X348J6Zp9Qbsg.mEODvzcQlxMZUQho7sJQjYSFtcOCUjf5198bQRkZ08Mg.PNG%2Fimage.png&type=a340",
+          "쓰임": "삼성 8"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfOCAg%2FMDAxNzk0Mzg2MTI1MzA3.eD5cVBsTGdBUaPn1N6227Qb-mB_WbxX5__ZQT5Jq3l4g.5rb14h-2PLPf7RyOATKykEHWh_WnoilmV54jXkFThCgg.JPEG%2F3E82588C%25A3%25AD916F%25A3%25AD4313%25A3%25ADBD1D%25A3%25ADA1259D829C6D.jpeg&type=a340",
+          "쓰임": "삼성 9"
+        }
+      ]
+    },
+    {
+      "name": "원태인",
+      "role": "삼성 선발투수 · 26세 · 우완",
+      "team": "삼성",
+      "number": "18",
+      "look": "",
+      "tell": "⚠️ 18화에서 그대로 가져온 사진이다. 이 편에서는 **한 줄만 지나간다** — A등급 6명이 아직 안 움직인다는 대목이다. 샷을 많이 쓰지 않는다. ⚠️ 사진이 있으므로 생김새(look)는 비운다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F04%2F0005634804_001_20261104213917300.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147694_003_20261102155112728.jpg&type=a340",
+          "쓰임": "예전"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA4MDJfMTQ4%2FMDAxNzg1NjQxNjMxNjI0.l-CQB6Q4B89sOtvD1DlFGbUe8qVjbBQ2MOdYB0SHas8g.3xAT4WLQcfzk8jSW5QlmyFPNZOBUlbrkbVgGR2KQ91sg.PNG%2Fimage.png&type=a340",
+          "쓰임": "투구"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F10%2F0003486292_001_20261110132208993.jpg&type=a340",
+          "쓰임": "우승"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MTVfMjc2%2FMDAxNzg5NDczNDkwMzAw.iwsm7vj663h9qq-_sauvB1PKgUvskcTyXP_dDmGU2Wgg.MC_Zk9EQtbsLXcsiMk-EHSBPMPA-Gkc0yzuFi-rXezAg.PNG%2Fimage.png&type=a340",
+          "쓰임": "세트 포지션"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F014%2F2026%2F11%2F13%2F0005604075_001_20261113165609199.jpg&type=a340",
+          "쓰임": "삼성 6 (11-13 공시일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F472%2F2026%2F11%2F17%2F0000042490_001_20261117064510396.jpg&type=a340",
+          "쓰임": "삼성 7 (11-17 개장일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F014%2F2026%2F11%2F16%2F0005604609_003_20261116091309647.jpg&type=a340",
+          "쓰임": "삼성 8 (11-16 승인일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTNfMjM4%2FMDAxNzk0NTA0MjUwNzc0.Z7JOkLt4vJtrzQn9Fs_ZQYXEwc1_rpNyr0YN3L-E47og.nPRlDAR-uGhH9xENlrSsrpNLywNEfCRSmPOEz3_EEUwg.JPEG%2F1794504250450.jpg&type=a340",
+          "쓰임": "삼성 9"
+        }
+      ]
+    }
+  ]
+}
