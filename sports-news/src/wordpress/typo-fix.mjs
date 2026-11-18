@@ -2740,6 +2740,62 @@ export const 바로잡기 = [
       '이 절은 2026년 11월 18일 결승 1국 종료 시점 기준입니다. 2국 결과가 나오는 대로 갱신합니다.',
     이유: '글 17428. 기준 시점을 1국 종료로 옮긴다',
     글: [17428],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 홍창기와 전병우, 두 사람의 현재</h2>',
+    맞는:
+      '<!-- wp:image {"id":23956,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-fyc6m-mwm4qug7.jpg" alt="KIA 타이거즈 FA 외부 영입" class="wp-image-23956"/></a><figcaption class="wp-element-caption">사진: 엑스포츠뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 홍창기와 전병우, 두 사람의 현재</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23956)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 숫자로 보는 KIA의 2번 타순 고민</h2>',
+    맞는:
+      '<!-- wp:image {"id":23960,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-1-el9ftn-mwm4zpqm.jpg" alt="2027 KBO FA 시장" class="wp-image-23960"/></a><figcaption class="wp-element-caption">사진: 오마이뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 숫자로 보는 KIA의 2번 타순 고민</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23960)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 KIA에 맞는 퍼즐 조각인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":23961,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-2-el9fui-mwm4zt4b.jpg" alt="2027 KBO FA 시장" class="wp-image-23961"/></a><figcaption class="wp-element-caption">사진: 스포츠서울 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 KIA에 맞는 퍼즐 조각인가</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23961)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 먹튀에서 핵심 전력으로</h2>',
+    맞는:
+      '<!-- wp:image {"id":23955,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-10p1ap-mwm4ot5k.jpg" alt="보스턴 셀틱스 폴 조지" class="wp-image-23955"/></a><figcaption class="wp-element-caption">사진: 루키 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 먹튀에서 핵심 전력으로</h2>',
+    이유: '글 23947. 기사 사진을 넣는다 (미디어 23955)',
+    글: [23947],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 올해 수상자들, 누가 눈에 띄나</h2>',
+    맞는:
+      '<!-- wp:image {"id":23958,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-2-ov09ri-mwm4xlgn.jpg" alt="2026 KBO 수비상 3루수 김도영" class="wp-image-23958"/></a><figcaption class="wp-element-caption">사진: 스타뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 올해 수상자들, 누가 눈에 띄나</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23958)',
+    글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 숫자로 보는 2026 수비상</h2>',
+    맞는:
+      '<!-- wp:image {"id":23957,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-1-ov09qn-mwm4xhia.jpg" alt="2026 KBO 수비상" class="wp-image-23957"/></a><figcaption class="wp-element-caption">사진: KBS 뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 숫자로 보는 2026 수비상</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23957)',
+    글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 올해 수비상에서 주목할 지점</h2>',
+    맞는:
+      '<!-- wp:image {"id":23959,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-3-ov09sd-mwm4xoab.jpg" alt="2026 KBO 수비상 좌익수 에레디아" class="wp-image-23959"/></a><figcaption class="wp-element-caption">사진: 스타뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 올해 수비상에서 주목할 지점</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23959)',
+    글: [23951],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
