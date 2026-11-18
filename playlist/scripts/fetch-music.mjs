@@ -382,6 +382,14 @@ function finalize(raw) {
   if (t.length > 15 && t === t.toUpperCase() && /[A-Z]/.test(t)) {
     t = t.toLowerCase().replace(/(^|[\s(\[-])([a-z])/g, (_, a, b) => a + b.toUpperCase());
   }
+  /* 클래식 제목이 길어 잘린다 —
+   *   "Violin Partita No.2 in D minor, BWV 1004 Chaconne" → 42자에서 뚝.
+   * 조성("in D minor")을 먼저 버린다. 화면에서 가장 덜 필요한 정보이고,
+   * 작품 번호(BWV 1004)는 그 곡을 가리키는 이름이라 남긴다. */
+  if (t.length > 42) {
+    const short = t.replace(/\s*,?\s*in\s+[A-G](\s*(sharp|flat|#|b))?\s+(major|minor)\b/i, '');
+    if (short.length >= 8) t = short.trim().replace(/\s*,\s*/g, ', ');
+  }
   if (t.length > 42) t = `${t.slice(0, 41).trimEnd()}…`;
   return t;
 }
@@ -440,6 +448,30 @@ function badTitle(t) {
  * rejected 도 같이 보는 이유: 3집에서 합창곡 두 개를 목록에서 지웠더니,
  * '쓴 곡' 명단에서도 같이 빠져서 다음 내려받기에 그대로 다시 들어왔다.
  * 뺀 것은 뺐다고 적어 둬야 한다. */
+/* 채널 전체에서 아티스트별 곡 수를 센다.
+ *
+ * 한 집에 두 곡까지로 막아 놨는데도 8집까지 Christian Zell 이 다섯 집,
+ * Josh Woodward 와 Steve Zwart 가 네 집에 나왔다. 인기순으로만 뽑으니
+ * 매번 같은 곡이 위에 뜨는 탓이다 — 4,369곡이 있는데 위쪽 몇백 곡만
+ * 보고 있었다. 집을 건너서도 세어서 막는다. */
+function artistCountsAcross() {
+  const n = new Map();
+  if (!existsSync(BGM_ROOT)) return n;
+  const dirs = [BGM_ROOT, ...readdirSync(BGM_ROOT, { withFileTypes: true })
+    .filter((d) => d.isDirectory()).map((d) => join(BGM_ROOT, d.name))];
+  for (const d of dirs) {
+    const f = join(d, '목록.json');
+    if (!existsSync(f)) continue;
+    try {
+      (JSON.parse(readFileSync(f, 'utf8')).tracks || []).forEach((t) => {
+        const k = String(t.artist || '').toLowerCase().trim();
+        if (k) n.set(k, (n.get(k) || 0) + 1);
+      });
+    } catch { /* 읽히지 않으면 없는 셈 친다 */ }
+  }
+  return n;
+}
+
 function usedElsewhere() {
   const seen = new Set();
   if (!existsSync(BGM_ROOT)) return seen;
@@ -479,6 +511,8 @@ async function mainJamendo() {
     docs = searchJamendo({
       clientId: CLIENT_ID, mood: MOOD, tags: MOOD ? '' : val('--q', ''),
       speed: has('--any-speed') ? '' : undefined,
+      acoustic: has('--acoustic') ? true : (has('--any-sound') ? false : undefined),
+      offset: Number(val('--offset', '0')),
       limit: Math.min(200, Math.max(40, WANT * 6)),
       minSec: MIN_SEC, maxSec: MAX_SEC,
     });
@@ -501,6 +535,10 @@ async function mainJamendo() {
     perArtist.set(k, (perArtist.get(k) || 0) + 1);
   });
   const MAX_PER_ARTIST = Number(val('--per-artist', '2'));
+  /* 채널 전체 기준. 이걸 넘은 아티스트는 새 집에서 안 받는다. */
+  const MAX_ACROSS = Number(val('--artist-cap', '4'));
+  const across = artistCountsAcross();
+  const acrossOf = (a) => across.get(String(a).toLowerCase().trim()) || 0;
 
   let got = 0, skipped = 0;
   for (const d of docs) {
@@ -527,6 +565,10 @@ async function mainJamendo() {
     if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 34)} ("${bad}")`); skipped++; continue; }
 
     if (seenBy(artist) >= MAX_PER_ARTIST) { skipped++; continue; }
+    if (acrossOf(artist) >= MAX_ACROSS) {
+      console.log(`  — 건너뜀: ${title.slice(0, 28)} (${artist.slice(0, 18)} — 채널에 이미 ${acrossOf(artist)}곡)`);
+      skipped++; continue;
+    }
 
     console.log(`  ${String(got + 1).padStart(2, '0')}. ${title}  (${Math.floor(d.seconds / 60)}:${String(d.seconds % 60).padStart(2, '0')})`);
     console.log(`      ${artist.slice(0, 34)} · ${lic.name}${d.speed ? ` · ${d.speed}` : ''}`);

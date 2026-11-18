@@ -44,14 +44,28 @@ const API = 'https://api.jamendo.com/v3.0/tracks/';
  * 1등을 먼저 모으면 품질도 지키고 한 장르로 쏠리지도 않는다. */
 export const JAMENDO_MOODS = {
   늦가을: { groups: ['jazz,piano', 'bossanova', 'lounge', 'acoustic,instrumental'], speed: 'medium' },
-  서정: { groups: ['piano', 'classical,piano', 'newage', 'acoustic'], speed: 'medium' },
-  초겨울: { groups: ['piano', 'classical', 'newage', 'acoustic,calm'], speed: 'medium' },
+  /* acoustic: true 는 Jamendo 가 분류해 둔 acousticelectric 을 쓴다.
+   * "EDM 사운드가 세다" 던 문제를 질의 단계에서 막는다 — 받아서 재는
+   * 밝기 거르개보다 먼저 걸러지니 헛걸음이 준다.
+   * 재즈 계열은 켜지 않는다. 일렉 피아노·일렉 기타가 원래 그 음악의 일부라,
+   * 켜면 재즈가 아니라 포크만 남는다. */
+  서정: { groups: ['piano', 'classical,piano', 'newage', 'acoustic'], speed: 'medium', acoustic: true },
+  초겨울: { groups: ['piano', 'classical', 'newage', 'acoustic,calm'], speed: 'medium', acoustic: true },
   재즈: { groups: ['jazz', 'swing', 'bossanova', 'blues'], speed: 'medium' },
-  피아노: { groups: ['piano', 'classical,piano'], speed: 'medium' },
-  차분: { groups: ['piano', 'newage', 'lounge', 'acoustic'], speed: 'low' },
+  피아노: { groups: ['piano', 'classical,piano'], speed: 'medium', acoustic: true },
+  차분: { groups: ['piano', 'newage', 'lounge', 'acoustic'], speed: 'low', acoustic: true },
   연말: { groups: ['lounge', 'jazz', 'bossanova', 'swing', 'soul'], speed: 'medium' },
   // 캐럴은 템포로 거르지 않는다. 종이 들어가면 speed 가 high 로 잡힌다.
   크리스마스: { groups: ['christmas', 'xmas'], speed: '' },
+
+  /* 악기로 뽑는 무드. 장르 태그만 쓰면 jazz 안에서 뭐가 나올지 모르는데,
+   * 악기로 뽑으면 집마다 색이 분명해진다. 검색어로도 쓸 수 있다
+   * ("색소폰 재즈", "첼로 연주곡"). 2026-11-18 에 재 본 곡 수를 적어 둔다. */
+  색소폰: { groups: ['saxophone', 'saxophone,jazz'], speed: 'medium' },          // 48곡
+  현악: { groups: ['violin', 'cello', 'strings'], speed: 'medium', acoustic: true }, // 181·91
+  하프: { groups: ['harp'], speed: '', acoustic: true },                         // 200곡
+  플루트: { groups: ['flute'], speed: 'medium', acoustic: true },                 // 167곡
+  기타: { groups: ['guitar,acoustic', 'guitar,classical'], speed: 'medium', acoustic: true },
 };
 
 function curlJson(params) {
@@ -80,24 +94,31 @@ function callWithRetry(params, tries = 6) {
 
 /* 한 무드(또는 직접 준 태그)로 후보를 긁어 온다.
  * 돌려주는 모양은 fetch-music.mjs 가 쓰던 것과 같게 맞춘다. */
-export function searchJamendo({ clientId, mood, tags, speed, limit = 60, minSec = 90, maxSec = 480 }) {
+export function searchJamendo({ clientId, mood, tags, speed, acoustic, offset = 0,
+  limit = 60, minSec = 90, maxSec = 480 }) {
   if (!clientId) throw new Error('Jamendo client_id 가 없습니다');
   const preset = JAMENDO_MOODS[mood] || {};
   const groups = tags ? [tags] : preset.groups;
   if (!groups || !groups.length) throw new Error(`Jamendo 태그를 정할 수 없습니다 (무드: ${mood || '없음'})`);
   const useSpeed = speed !== undefined ? speed : (preset.speed || '');
-  const per = Math.max(10, Math.ceil(limit / groups.length) * 2);
+  const useAcoustic = acoustic !== undefined ? acoustic : !!preset.acoustic;
+  /* 넉넉히 받아 둔다. 이미 쓴 곡·뺀 곡을 걸러내고 나면 얼마 안 남기 때문이다.
+   * 적게 받으면 늘 인기 상위 몇십 곡만 보게 되고, 같은 아티스트가 집마다
+   * 되풀이된다 — 8집까지 Christian Zell 이 다섯 집에 나왔다. */
+  const per = Math.min(200, Math.max(60, Math.ceil(limit / groups.length) * 6));
 
   const lists = groups.map((g) => callWithRetry({
     client_id: clientId,
     format: 'json',
-    limit: String(Math.min(200, per)),
+    limit: String(per),
+    offset: String(offset),
     order: 'popularity_total',          // 인기순 — 이것 하나로 품질이 확 달라진다
     include: 'musicinfo licenses',
     audioformat: 'mp32',
     tags: g,
     vocalinstrumental: 'instrumental',  // BGM 이다. 가사가 있으면 일하는 데 방해된다
     speed: useSpeed,
+    acousticelectric: useAcoustic ? 'acoustic' : '',
     durationbetween: `${minSec}_${maxSec}`,
     // NC(비상업)·ND(변경금지)·SA(동일조건)를 질의에서 뺀다.
     // 남는 것은 CC BY 와 CC0 뿐이다.
