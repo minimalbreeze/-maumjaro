@@ -561,6 +561,15 @@ async function mainJamendo() {
     const same = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
     if (same(title) === same(artist)) { skipped++; continue; }
 
+    /* 화면에 쓰는 Inter 는 키릴·한자·가나를 못 그린다. 제목은 finalize 가
+     * 걸러 왔는데 아티스트 이름은 안 보고 있었다 — 9집 후보에
+     * "Анатолий Дехт" 가 올라왔고, 그대로 두면 아티스트 줄이 빈칸이 된다.
+     * 이름을 고쳐 쓸 수는 없으니(남의 이름이다) 그 곡을 받지 않는다. */
+    if (!/[A-Za-z]/.test(artist)) {
+      console.log(`  — 건너뜀: ${title.slice(0, 28)} (아티스트 이름을 화면에 못 그림)`);
+      skipped++; continue;
+    }
+
     const bad = badTitle(title);
     if (bad) { console.log(`  — 건너뜀: ${title.slice(0, 34)} ("${bad}")`); skipped++; continue; }
 

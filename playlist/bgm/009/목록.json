@@ -1,15 +1,6 @@
 {
   "tracks": [
     {
-      "file": "jamendo-202927.mp3",
-      "title": "Disabled emotions suite - Part 2",
-      "artist": "zero-project",
-      "recorded": "2008",
-      "license": "CC BY",
-      "credit": "Disabled emotions suite - Part 2 — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/202927",
-      "source": "https://www.jamendo.com/track/202927"
-    },
-    {
       "file": "jamendo-1465379.mp3",
       "title": "Drakkar",
       "artist": "Ivan Tregub",
@@ -17,15 +8,6 @@
       "license": "CC BY",
       "credit": "Drakkar — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465379",
       "source": "https://www.jamendo.com/track/1465379"
-    },
-    {
-      "file": "jamendo-633200.mp3",
-      "title": "Princess of my heart",
-      "artist": "zero-project",
-      "recorded": "2010",
-      "license": "CC BY",
-      "credit": "Princess of my heart — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/633200",
-      "source": "https://www.jamendo.com/track/633200"
     },
     {
       "file": "jamendo-529446.mp3",
@@ -55,24 +37,6 @@
       "source": "https://www.jamendo.com/track/1426826"
     },
     {
-      "file": "jamendo-1282146.mp3",
-      "title": "Happyness",
-      "artist": "Анатолий Дехт",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Happyness — Анатолий Дехт (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1282146",
-      "source": "https://www.jamendo.com/track/1282146"
-    },
-    {
-      "file": "jamendo-1288287.mp3",
-      "title": "3- L'aventure de lavie",
-      "artist": "Lepellec dominique",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "3- L'aventure de lavie — Lepellec dominique (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288287",
-      "source": "https://www.jamendo.com/track/1288287"
-    },
-    {
       "file": "jamendo-556536.mp3",
       "title": "Night Palette Reprise",
       "artist": "Peter Rudenko",
@@ -89,15 +53,6 @@
       "license": "CC BY",
       "credit": "Weathervane — Blue Dot Sessions (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1366304",
       "source": "https://www.jamendo.com/track/1366304"
-    },
-    {
-      "file": "jamendo-1282145.mp3",
-      "title": "remember you",
-      "artist": "Анатолий Дехт",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "remember you — Анатолий Дехт (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1282145",
-      "source": "https://www.jamendo.com/track/1282145"
     },
     {
       "file": "jamendo-2152282.mp3",
@@ -143,7 +98,106 @@
       "license": "CC BY",
       "credit": "Forgotten Memories — Prysmal (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1421143",
       "source": "https://www.jamendo.com/track/1421143"
+    },
+    {
+      "file": "jamendo-2037678.mp3",
+      "title": "Fire and Ice (Fantasy orchestra)",
+      "artist": "Moonwalk",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Fire and Ice (Fantasy orchestra) — Moonwalk (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2037678",
+      "source": "https://www.jamendo.com/track/2037678"
+    },
+    {
+      "file": "jamendo-1375001.mp3",
+      "title": "Silver tears",
+      "artist": "Christian Petermann",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Silver tears — Christian Petermann (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1375001",
+      "source": "https://www.jamendo.com/track/1375001"
+    },
+    {
+      "file": "jamendo-1375002.mp3",
+      "title": "Sky dream",
+      "artist": "Christian Petermann",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Sky dream — Christian Petermann (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1375002",
+      "source": "https://www.jamendo.com/track/1375002"
+    },
+    {
+      "file": "jamendo-1550305.mp3",
+      "title": "#22 (Gullinburste-2018)",
+      "artist": "Ivan Tregub",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "#22 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550305",
+      "source": "https://www.jamendo.com/track/1550305"
+    },
+    {
+      "file": "jamendo-2037671.mp3",
+      "title": "Long Road (Strings Fantasy)",
+      "artist": "Moonwalk",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Long Road (Strings Fantasy) — Moonwalk (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2037671",
+      "source": "https://www.jamendo.com/track/2037671"
+    },
+    {
+      "file": "jamendo-1559873.mp3",
+      "title": "Imagination",
+      "artist": "Yakov Golman",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Imagination — Yakov Golman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1559873",
+      "source": "https://www.jamendo.com/track/1559873"
+    },
+    {
+      "file": "jamendo-1469706.mp3",
+      "title": "Kleine Morgenmusik",
+      "artist": "Vale Valentin Fortister Mutrasiel",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Kleine Morgenmusik — Vale Valentin Fortister Mutrasiel (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1469706",
+      "source": "https://www.jamendo.com/track/1469706"
+    },
+    {
+      "file": "jamendo-1213889.mp3",
+      "title": "The Life Countdown",
+      "artist": "Paulo Kalazzi",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "The Life Countdown — Paulo Kalazzi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1213889",
+      "source": "https://www.jamendo.com/track/1213889"
     }
   ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    "202927",
+    "633200",
+    "1282146",
+    "1288287",
+    "1282145",
+    {
+      "file": "jamendo-2180493.mp3",
+      "title": "Promises",
+      "artist": "zero-project",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Promises — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2180493",
+      "source": "https://www.jamendo.com/track/2180493",
+      "reason": "아티스트명이 파일명처럼 읽힌다 (zero-project)"
+    },
+    {
+      "file": "jamendo-202926.mp3",
+      "title": "Disabled emotions suite - Part 1",
+      "artist": "zero-project",
+      "recorded": "2008",
+      "license": "CC BY",
+      "credit": "Disabled emotions suite - Part 1 — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/202926",
+      "source": "https://www.jamendo.com/track/202926",
+      "reason": "아티스트명이 파일명처럼 읽힌다 (zero-project)"
+    }
+  ]
 }

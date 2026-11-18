@@ -49,6 +49,9 @@ const has = (f) => args.includes(f);
 const val = (f, d) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 
 const DRY = has('--dry');
+/* --rain 을 준 집에만 빗소리를 한 겹 얹는다.
+ * LP 체인과 크래클은 건드리지 않는다 — 그 둘이 시그니처다. */
+const RAIN = has('--rain');
 const TONE = has('--tone');
 const LIMIT_MIN = Number(val('--minutes', '0')) || 0;
 
@@ -203,17 +206,35 @@ function buildAudio(tracks) {
   // 크래클을 세게 깔면 조용한 사무실에서 틀어놨을 때 그게 먼저 들린다.
   const total = probe(joined);
   const final = join(WORK, 'audio.m4a');
-  ff(['-i', joined,
-    '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.0035:r=44100',
-    '-filter_complex',
-      `[0:a]${LP_CHAIN}[warm];`
-            // alimiter 의 limit 은 0.0625 미만을 안 받는다. 더 줄이는 일은 volume 이 한다.
-      + '[1:a]highpass=f=2500,lowpass=f=9000,volume=0.4,alimiter=limit=0.0625,'
-      + 'aformat=channel_layouts=stereo[crk];'
-      + '[warm][crk]amix=inputs=2:weights=1 0.35:normalize=0,'
-      // 색깔을 입히며 음량이 움직였으므로 마지막에 한 번 더 맞춘다
-      + 'loudnorm=I=-16:TP=-1.5:LRA=11[a]',
-    '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', final]);
+
+  /* 빗소리(--rain). 핑크 노이즈를 350~6500Hz 만 남기고, 0.1Hz 로 아주 느리게
+   * 세기를 흔든다 — 비가 한 번씩 세졌다 약해지는 느낌.
+   *
+   * ⚠️ tremolo 의 f 최소값은 0.1 이다. 0.06 은 거부당한다.
+   * ⚠️ volume 을 1.0 까지 올려야 들린다. anoisesrc 가 이미 작은 데다
+   *    highpass·lowpass 로 또 깎여서, 처음 값(0.3)으로는 비만 따로 재면
+   *    -42dB 로 음악(-18dB)보다 24dB 아래였다 — 아예 안 들렸다.
+   *    지금 값은 음악보다 약 14dB 아래다(2026-11-18 효성님이 고른 세기). */
+  const RAIN_SRC = 'anoisesrc=c=pink:a=0.25:r=44100';
+  const RAIN_CHAIN = 'highpass=f=350,lowpass=f=6500,tremolo=f=0.1:d=0.12,volume=1.0,'
+    + 'aformat=channel_layouts=stereo';
+
+  const ins = ['-i', joined,
+    '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.0035:r=44100'];
+  if (RAIN) ins.push('-f', 'lavfi', '-t', String(total), '-i', RAIN_SRC);
+
+  const fc = `[0:a]${LP_CHAIN}[warm];`
+    // alimiter 의 limit 은 0.0625 미만을 안 받는다. 더 줄이는 일은 volume 이 한다.
+    + '[1:a]highpass=f=2500,lowpass=f=9000,volume=0.4,alimiter=limit=0.0625,'
+    + 'aformat=channel_layouts=stereo[crk];'
+    + (RAIN ? `[2:a]${RAIN_CHAIN}[rain];[warm][crk][rain]amix=inputs=3:weights=1 0.35 1`
+            : '[warm][crk]amix=inputs=2:weights=1 0.35')
+    + ':normalize=0,'
+    // 색깔을 입히며 음량이 움직였으므로 마지막에 한 번 더 맞춘다
+    + 'loudnorm=I=-16:TP=-1.5:LRA=11[a]';
+
+  if (RAIN) console.log('   빗소리 한 겹 (이 집만 · 음악보다 약 14dB 아래)');
+  ff([...ins, '-filter_complex', fc, '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', final]);
   return { file: final, total: probe(final) };
 }
 
