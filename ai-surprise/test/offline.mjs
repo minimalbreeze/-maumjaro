@@ -8257,14 +8257,36 @@ test('야구공은 솔기까지 적는다 — 안 적으면 흰 점이 된다', 
   }
 });
 
-test('판화 결과 검정 바탕이 장마다 들어간다', () => {
+test('타투 판화 결과 검정 바탕이 장마다 들어간다', () => {
   // 여섯 장이 서로 다른 것은 자세뿐이고 결은 같아야 한다. 결이 흔들리면
   // 나란히 놓고 자세만 비교할 수가 없다.
+  //
+  // 2026-11-18 효성님이 참고 사진을 준 뒤 결이 'woodcut' 에서 올드스쿨
+  // 타투로 바뀌었다. 점묘 음영이 그 결의 핵심이라 같이 본다.
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose).toLowerCase();
-    assert.ok(p.includes('woodcut'), `${pose.key}: 판화가 빠졌습니다`);
+    assert.ok(p.includes('tattoo'), `${pose.key}: 타투 결이 빠졌습니다`);
+    assert.ok(p.includes('stippled'), `${pose.key}: 점묘 음영이 빠졌습니다`);
     assert.ok(p.includes('black background'), `${pose.key}: 검정 바탕이 빠졌습니다`);
     assert.ok(p.includes('single'), `${pose.key}: 단색 잉크라는 말이 빠졌습니다`);
+  }
+});
+
+test('날개를 두 장 다 편다 — 참고 사진의 핵심이다', () => {
+  // 손으로 그릴 때 날개를 한 장만 그려서 비행기가 됐다. 타투 제비는
+  // 두 장을 다 펴고, 그 둘이 겹치는 모양이 제비로 읽히게 만든다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(/both wings/.test(p), `${pose.key}: 날개 두 장을 적어야 합니다`);
+    assert.ok(/forked tail/.test(p), `${pose.key}: 갈라진 꼬리가 빠졌습니다`);
+  }
+});
+
+test('아래에 글자 자리를 비운다', () => {
+  // YAPORTS 를 SVG 로 얹을 자리다. 제비가 화면을 꽉 채우면 글자가
+  // 들어갈 데가 없어 다시 뽑아야 한다.
+  for (const pose of LOGO_POSES) {
+    assert.ok(/below/.test(logoPrompt(pose)), `${pose.key}: 아래 여백이 빠졌습니다`);
   }
 });
 
@@ -8280,7 +8302,7 @@ test('자세가 앞, 판화 결이 뒤에 온다', () => {
   //    판화 결을 뒤에 둬야 장마다 결이 유지된다.
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose);
-    assert.ok(p.indexOf('swallow') < p.indexOf('woodcut'), `${pose.key}: 순서가 뒤집혔습니다`);
+    assert.ok(p.indexOf('swallow') < p.indexOf('tattoo'), `${pose.key}: 순서가 뒤집혔습니다`);
   }
 });
 

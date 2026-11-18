@@ -29,14 +29,29 @@ import path from 'node:path';
 import { createClient as createReplicate, modelFor } from './assets/replicate.mjs';
 import { log } from './utils/logger.mjs';
 
-/** 판화 톤. 여섯 장이 서로 다른 것은 **자세**뿐이고 결은 같아야 한다. */
+/**
+ * 판화·타투 톤.
+ *
+ * 2026-11-18 효성님이 참고 사진을 줬다 — 검정 철판에 흰 잉크로 찍은 제비.
+ * 보고 나서 목표가 분명해졌다. 내가 쫓던 "진짜 제비 실루엣"이 아니라
+ * **올드스쿨 타투 제비**다. 날개 두 장을 다 펼치고, 가슴이 통통하고,
+ * 점묘로 음영을 넣은 그 모양.
+ *
+ * ⚠️ **그 사진은 'SEASON COFFEE&BAKE' 라는 가게의 실제 간판이다.**
+ *    결(검정 바탕·흰 잉크·타투 판화·아래 두 줄 글자)만 가져오고 제비 모양은
+ *    우리 것으로 뽑는다. 남의 로고를 베끼지 않는다 — 로또·책 규칙과 같은 선이다.
+ *    그리고 우리에게는 저쪽에 없는 것이 하나 있다. **입에 문 야구공**이다.
+ *
+ * 여섯 장이 서로 다른 것은 **자세**뿐이고 결은 같아야 한다. 결이 흔들리면
+ * 나란히 놓고 자세만 비교할 수가 없다.
+ */
 const PRINT =
-  'a woodcut print emblem on a solid black background, printed in a single ' +
-  'warm off-white ink, bold carved shapes with slightly ragged edges where ' +
-  'the blade left the block, flat graphic shapes in one ink with no shading ' +
-  'and no gradient, the emblem sits centered with an even black margin on all ' +
-  'four sides, the shape stays readable when the whole image is shrunk to the ' +
-  'size of a fingernail';
+  'drawn in the old-school traditional tattoo style, printed in a single ' +
+  'warm off-white ink on a solid black background, a bold clean outline with ' +
+  'stippled dot shading inside the wings and the breast, flat graphic shapes ' +
+  'in one ink with no gradient, the emblem sits centered with an even black ' +
+  'margin on all four sides and open black space below it, the shape stays ' +
+  'readable when the whole image is shrunk to the size of a fingernail';
 
 /** 야구공은 솔기를 적어야 야구공으로 읽힌다. 안 적으면 그냥 흰 점이다. */
 const BALL =
@@ -52,54 +67,57 @@ const BALL =
  */
 export const LOGO_POSES = [
   {
-    key: '측면',
-    why: '옆에서 본 제비. 손으로 그렸을 때 사람과 가장 멀었던 자세다.',
+    key: '타투정면',
+    why: '참고 사진에 가장 가까운 자세. 날개 두 장을 활짝 펴고 몸을 비튼다.',
     subject:
-      'a barn swallow seen from the side, flying upward to the right, its long ' +
-      'pointed wings swept back behind it, its deeply forked tail trailing, ' +
+      'a swallow in flight seen from the side with its body turned toward the ' +
+      'viewer, both wings spread wide and open, one wing sweeping up and back ' +
+      'while the other reaches forward across the body, a full rounded breast, ' +
+      'a deeply forked tail fanned out behind, ' +
       BALL,
   },
   {
-    key: '위에서',
-    why: '위에서 본 대칭. 꼬리가 가장 잘 보이지만 사람으로 읽히기 쉽다.',
+    key: '상승',
+    why: '위로 솟는 자세. 아래에 글자 자리가 가장 넓게 남는다.',
     subject:
-      'a barn swallow seen from directly above, both long pointed wings swept ' +
-      'back in a wide curve well behind the shoulders, the deeply forked tail ' +
-      'between them, ' +
+      'a swallow climbing upward with both wings spread wide and open, the ' +
+      'wing tips pointing up and back, a full rounded breast, a deeply forked ' +
+      'tail streaming below, ' +
+      BALL,
+  },
+  {
+    key: '급강하',
+    why: '내려오는 자세. 덩어리가 하나로 뭉쳐 작은 크기에 강하다.',
+    subject:
+      'a swallow diving downward with both wings spread and swept back, the ' +
+      'head low and the deeply forked tail open above, ' +
       BALL,
   },
   {
     key: '원테두리',
-    why: '얇은 원 테두리 안에 넣은 엠블럼. 프로필이 원형이라 테두리가 맞아떨어진다.',
+    why: '얇은 원 테두리 안에 넣은 엠블럼. 프로필이 원형이라 맞아떨어진다.',
     subject:
-      'a barn swallow seen from the side with swept-back wings and a deeply ' +
-      'forked tail, enclosed in a thin circular frame carved in the same ink, ' +
+      'a swallow in flight with both wings spread wide, a full rounded breast ' +
+      'and a deeply forked tail, enclosed in a thin circular frame drawn in the ' +
+      'same ink, ' +
       BALL,
   },
   {
     key: '단순',
     why: '가장 적은 획. 24px 에서 살아남는지를 보는 안이다.',
     subject:
-      'a bold simple silhouette of a barn swallow from the side, carved so that ' +
-      'only three shapes read at a glance: the swept wing, the body, and the ' +
-      'forked tail, ' +
+      'a bold simple swallow in flight with both wings spread, drawn with a ' +
+      'clean heavy outline and almost no shading so that only three shapes ' +
+      'read at a glance: the two open wings and the forked tail, ' +
       BALL,
   },
   {
-    key: '급강하',
-    why: '날개를 접고 내려오는 자세. 덩어리가 하나로 뭉쳐 작은 크기에 강하다.',
+    key: '점묘',
+    why: '점묘 음영을 가장 세게 준 안. 판화 느낌이 제일 진하다.',
     subject:
-      'a barn swallow diving downward with its wings held close to its body and ' +
-      'its forked tail open behind, carved with a few thick confident strokes, ' +
-      BALL,
-  },
-  {
-    key: '해칭',
-    why: '몸을 칼자국 결로 채운 안. 판화 느낌이 가장 세게 난다.',
-    subject:
-      'a barn swallow seen from the side with swept-back wings and a forked ' +
-      'tail, the body filled with coarse parallel carving marks so the ink ' +
-      'reads as carved texture, ' +
+      'a swallow in flight with both wings spread wide, the wings and breast ' +
+      'filled with dense stippled dots so the ink reads as carved texture, a ' +
+      'deeply forked tail behind, ' +
       BALL,
   },
 ];
