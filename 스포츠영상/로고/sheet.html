@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8">
 <style>
- body{margin:0;background:#fff;font:14px/1.4 -apple-system,"Noto Sans KR",sans-serif;color:#222}
+ body{margin:0;background:#888;font:14px/1.4 -apple-system,"Noto Sans KR",sans-serif;color:#fff}
  .row{display:flex;gap:26px;padding:24px;align-items:flex-start;flex-wrap:wrap}
  .cell{text-align:center} .big{width:190px;height:190px;border-radius:50%;overflow:hidden}
  .sm{width:48px;height:48px;border-radius:50%;overflow:hidden;margin:8px auto 0}
@@ -8,46 +8,47 @@
  h3{margin:0 0 8px;font-size:13px;font-weight:700} svg{display:block}
 </style><div class="row" id="r"></div>
 <script>
-const TEAL='#1f5c50',CREAM='#f6fbf9',ORANGE='#ff9166';
+const INK='#f2efe6', BG='#0d0d0d';
 
-// 제비 — 작고 둥근 머리 / 가는 몸통 / 짧고 아래로 처진 가위꼬리 / 뒤로 젖힌 낫 날개 두 장
-const swallow=(fg,{tilt=-18,ball=0}={})=>`
-<g transform="rotate(${tilt} 50 50)">
- <!-- 몸통: 머리에서 꼬리로 가늘어진다 -->
+// 측면 제비. 몸통이 수평으로 길다(사람은 수직이라 여기서 갈린다).
+// 날개는 몸통보다 두껍게 — 가늘면 팔로 읽힌다. 꼬리는 짧게 — 길면 비행기가 된다.
+const bird=(fg,{dy=0,tilt=-12,ball=1,scale=1}={})=>`
+<g transform="translate(50 ${44+dy}) rotate(${tilt}) scale(${scale}) translate(-50 -44)">
+ <!-- 몸통 + 머리 + 가위 꼬리 (한 덩어리) -->
  <path fill="${fg}" d="
-  M84 46 C84 41 80 38 75 38.5
-  C66 39.5 56 43 46 47
-  C40 49.5 36 52 34 54
-  C36 55.5 39 56.5 43 56.5
-  C53 55.5 64 52.5 73 49.5
-  C79 47.5 84 48.5 84 46 Z"/>
- <!-- 가위 꼬리: 짧고 뒤·아래로, 안쪽 V가 깊다 -->
+  M82 31 C80 26.5 74 24 68 26
+  C58 29 46 34 36 39
+  L12 33 C9 32.3 8 35.5 10.5 36.8 L28 45
+  L13 57 C10.5 59 12.5 62 15 60.5 L38 48
+  C50 46 64 42 74 38 C80 35.5 83.5 34 82 31 Z"/>
+ <!-- 날개: 어깨에서 위·뒤로 젖힌 낫. 몸통보다 두껍다 -->
  <path fill="${fg}" d="
-  M38 52 L11 46 C8 45.3 7 48 9.5 49.3 L30 57
-  L14 70 C11.5 72 13.5 74.5 16 73 L40 58 Z"/>
- <!-- 윗날개: 몸통 중간에서 뒤로 젖힌 낫 -->
- <path fill="${fg}" d="
-  M58 44 C54 32 45 19 33 11
-  C30 9 32.5 5.5 35.5 7.5
-  C51 17 62 30 66 42 Z"/>
- <!-- 아랫날개: 짧게, 새라는 걸 더 분명히 -->
- <path fill="${fg}" d="
-  M52 53 C48 60 41 68 32 74
-  C29.5 75.8 31 78.8 33.5 77.3
-  C44 71 51 63 55 55 Z"/>
- ${ball?`<circle cx="90" cy="43" r="7" fill="${CREAM}" stroke="${fg}" stroke-width="1.5"/>
-  <path d="M85 39.5 C87.3 41.8 87.3 44.2 85 46.5" stroke="${fg}" stroke-width="1.2" fill="none"/>`:''}
+  M62 32 C54 22 44 13 32 7
+  C29 5.5 27 9 30 11
+  C40 17 48 26 53 37 Z"/>
+ ${ball?`<circle cx="89" cy="28" r="6" fill="${BG}" stroke="${fg}" stroke-width="2"/>
+  <path d="M85 24.5 C87 26.5 87 29.5 85 31.5" stroke="${fg}" stroke-width="1.5" fill="none"/>`:''}
 </g>`;
 
-const C=(bg,inner)=>`<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="${bg}"/>${inner}</svg>`;
+const word=(fg,{y=86,size=14,len=54}={})=>
+ `<text x="50" y="${y}" fill="${fg}" font-family="Arial Black, Arial, sans-serif" font-weight="900"
+   font-size="${size}" textLength="${len}" lengthAdjust="spacingAndGlyphs" text-anchor="middle">YAPORTS</text>`;
+
+const grain=`<filter id="g" x="-20%" y="-20%" width="140%" height="140%">
+ <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="5" result="n"/>
+ <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+</filter>`;
+const C=(inner,{filt=0}={})=>`<svg viewBox="0 0 100 100" width="100%" height="100%">
+ <defs>${grain}</defs><rect width="100" height="100" fill="${BG}"/>
+ <g ${filt?'filter="url(#g)"':''}>${inner}</g></svg>`;
+
 const sets=[
- ['J · 제비 (기울임 -18°)', C(TEAL, swallow(CREAM))],
- ['J2 · 더 기울임 -32°',    C(TEAL, swallow(CREAM,{tilt:-32}))],
- ['J3 · 수평',              C(TEAL, swallow(CREAM,{tilt:0}))],
- ['J4 · 밝은 바탕',         C(CREAM, swallow(TEAL))],
- ['K · 공을 문 제비',       C(TEAL, `<g transform="translate(-4,2) scale(0.94)">${swallow(CREAM,{ball:1})}</g>`)],
- ['K2 · 밝은 바탕',         C(CREAM, `<g transform="translate(-4,2) scale(0.94)">${swallow(TEAL,{ball:1})}</g>`)],
- ['K3 · 주황 제비',         C(TEAL, swallow(ORANGE))],
+ ['N · 측면 제비 + 공',      C(bird(INK,{dy:6,scale:1.06}))],
+ ['O · + YAPORTS',           C(bird(INK,{dy:-5,scale:0.95})+word(INK))],
+ ['O2 · 판화 질감',          C(bird(INK,{dy:-5,scale:0.95})+word(INK), {filt:1})],
+ ['O3 · 더 기울임 -24°',     C(bird(INK,{dy:-5,tilt:-24,scale:0.95})+word(INK))],
+ ['O4 · 수평',               C(bird(INK,{dy:-5,tilt:0,scale:0.95})+word(INK))],
+ ['N2 · 글자 없이 판화',      C(bird(INK,{dy:6,scale:1.06}), {filt:1})],
 ];
 r.innerHTML=sets.map(([t,s])=>`<div class="cell"><h3>${t}</h3><div class="big">${s}</div><div class="sm">${s}</div><div class="xs">${s}</div></div>`).join('');
 </script>

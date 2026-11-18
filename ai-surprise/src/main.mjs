@@ -61,6 +61,7 @@ import { modelFor, DEFAULT_IMAGE_MODEL, createClient as createReplicate } from '
 import { FORMATS, buildAss, buildCues, renderSrt } from './video/subtitle.mjs';
 import { buildTimeline } from './video/plan.mjs';
 import { pickShorts } from './video/shorts.mjs';
+import { cmdLogo } from './logo.mjs';
 import { renderTimeline, renderShort, probe } from './video/render.mjs';
 import {
   saveToInbox,
@@ -2580,6 +2581,9 @@ async function main() {
       break;
     case 'preview':
       await cmdPreview(flags);
+      break;
+    case 'logo':
+      await cmdLogo(flags);
       break;
     case 'portrait':
       await cmdPortrait(flags);

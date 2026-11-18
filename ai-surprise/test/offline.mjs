@@ -3375,6 +3375,15 @@ test('워크플로의 모든 모드가 제 갈 길로 간다', () => {
     // 않지만, 분기를 '화풍 미리보기' 보다 먼저 두었으므로 표에서도 먼저
     // 둔다. 표 차례와 분기 차례가 어긋나면 이 검사가 거짓으로 통과한다.
     '인물 시트': '인물 시트',
+    // '로고 후보 뽑기 (야포츠 채널 로고 …)' 를 2026-11-18 에 넣었다.
+    //
+    // ⚠️ 이름을 고를 때 **'야포츠' 가 '스포츠' 를 품지 않는지**를 먼저 봤다.
+    //    품었다면 '스포츠' 분기로 새서 기획 파일을 찾다가 죽었을 것이다.
+    //    '포츠' 는 같지만 '스포츠' 는 아니라 안전하다.
+    // ⚠️ '화풍 후보 비교' 와 '후보' 를 같이 쓴다. 분기는 어느 쪽이 먼저든
+    //    서로를 안 품지만('로고 후보 뽑기' ⊄ '화풍 후보 비교'), 분기에서
+    //    로고가 먼저이므로 표에서도 먼저 둔다.
+    '로고 후보 뽑기': '로고 후보 뽑기',
     // '화풍 후보 비교 (같은 장면 네 **그림**체 …)' 에도 '그림' 이 들어 있다.
     // 2026-11-04 에 넣으면서 똑같이 그림 분기로 샜고 이 검사가 잡았다.
     // '화풍 미리보기' 와도 '화풍' 을 같이 쓰므로 둘의 차례도 중요하다.
@@ -8201,6 +8210,79 @@ test('비율을 재는 자리마다 적는다', () => {
 });
 
 
+
+
+
+// ───────────────────────────────────────────────────────────
+section('4-가. 야포츠 로고 후보 — 제비');
+
+const { LOGO_POSES, logoPrompt } = await import('../src/logo.mjs');
+
+test('자세마다 설명과 프롬프트가 있다', () => {
+  assert.ok(LOGO_POSES.length >= 4, '후보가 너무 적으면 고를 게 없다');
+  const keys = LOGO_POSES.map((p) => p.key);
+  assert.equal(new Set(keys).size, keys.length, '자세 이름이 겹칩니다');
+  for (const p of LOGO_POSES) {
+    assert.ok(p.key && p.why && p.subject, `${p.key}: 빈 칸이 있습니다`);
+  }
+});
+
+test('금지로 적지 않는다 — flux 는 negative_prompt 가 없다', () => {
+  // ⚠️ CLAUDE.md 13번. "no text" 를 적으면 그 낱말이 **긍정 프롬프트에**
+  //    붙어서 모델이 글자를 그린다. 모자 마크에서 네 번 겪은 일이다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose);
+    for (const w of ['no text', 'no letters', 'without text', 'no logo', 'no watermark']) {
+      assert.ok(!p.toLowerCase().includes(w), `${pose.key}: "${w}" 는 금지 문구입니다`);
+    }
+  }
+});
+
+test('렌즈 말을 쓰지 않는다 — 판화에는 초점이 없다', () => {
+  // ⚠️ CLAUDE.md 14번. 사진 말이 섞이면 판화가 사진처럼 나온다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    for (const w of ['out of focus', 'soft-focus', 'blurred', 'depth of field', 'bokeh']) {
+      assert.ok(!p.includes(w), `${pose.key}: "${w}" 는 렌즈 말입니다`);
+    }
+  }
+});
+
+test('야구공은 솔기까지 적는다 — 안 적으면 흰 점이 된다', () => {
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('baseball'), `${pose.key}: 야구공이 빠졌습니다`);
+    assert.ok(p.includes('seam'), `${pose.key}: 솔기를 안 적으면 야구공으로 안 읽힙니다`);
+    assert.ok(p.includes('beak'), `${pose.key}: 공을 부리에 물려야 박씨가 됩니다`);
+  }
+});
+
+test('판화 결과 검정 바탕이 장마다 들어간다', () => {
+  // 여섯 장이 서로 다른 것은 자세뿐이고 결은 같아야 한다. 결이 흔들리면
+  // 나란히 놓고 자세만 비교할 수가 없다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('woodcut'), `${pose.key}: 판화가 빠졌습니다`);
+    assert.ok(p.includes('black background'), `${pose.key}: 검정 바탕이 빠졌습니다`);
+    assert.ok(p.includes('single'), `${pose.key}: 단색 잉크라는 말이 빠졌습니다`);
+  }
+});
+
+test('작게 줄여도 읽히라는 말이 들어간다', () => {
+  // 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장이 전부 여기서 졌다.
+  for (const pose of LOGO_POSES) {
+    assert.ok(/shrunk|readable/i.test(logoPrompt(pose)), `${pose.key}: 작은 크기 조건이 빠졌습니다`);
+  }
+});
+
+test('자세가 앞, 판화 결이 뒤에 온다', () => {
+  // ⚠️ CLAUDE.md 13번. 뒤에 붙은 고정 문구가 앞말을 이긴다. 바뀌면 안 되는
+  //    판화 결을 뒤에 둬야 장마다 결이 유지된다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose);
+    assert.ok(p.indexOf('swallow') < p.indexOf('woodcut'), `${pose.key}: 순서가 뒤집혔습니다`);
+  }
+});
 
 
 console.log(`\n${'═'.repeat(60)}`);
