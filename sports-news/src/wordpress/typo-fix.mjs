@@ -2676,6 +2676,14 @@ export const 바로잡기 = [
       '<!-- wp:heading {"level":3} -->\n<h3>계약금의 일부가 인천으로 갑니다</h3>',
     이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23785)',
     글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 르브론 제임스, 그리고 문제의 광고</h2>',
+    맞는:
+      '<!-- wp:image {"id":23791,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-j9su8k-mwljyt46.jpg" alt="필라델피아 세븐티식서스 유니폼을 입은 르브론 제임스" class="wp-image-23791"/></a><figcaption class="wp-element-caption">필라델피아 세븐티식서스 유니폼을 입은 르브론 제임스 (사진: KBS 뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 르브론 제임스, 그리고 문제의 광고</h2>',
+    이유: '글 23794. 소송 당사자 사진을 광고 절 앞에 넣는다 (미디어 23791)',
+    글: [23794],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
