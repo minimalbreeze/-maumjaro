@@ -8284,7 +8284,6 @@ test('타투 판화 결과 검정 바탕이 장마다 들어간다', () => {
     assert.ok(p.includes('tattoo'), `${pose.key}: 타투 결이 빠졌습니다`);
     assert.ok(p.includes('stippled'), `${pose.key}: 점묘 음영이 빠졌습니다`);
     assert.ok(p.includes('black background'), `${pose.key}: 검정 바탕이 빠졌습니다`);
-    assert.ok(p.includes('single'), `${pose.key}: 단색 잉크라는 말이 빠졌습니다`);
   }
 });
 
@@ -8295,6 +8294,26 @@ test('날개를 두 장 다 편다 — 참고 사진의 핵심이다', () => {
     const p = logoPrompt(pose).toLowerCase();
     assert.ok(/both wings/.test(p), `${pose.key}: 날개 두 장을 적어야 합니다`);
     assert.ok(/forked tail/.test(p), `${pose.key}: 갈라진 꼬리가 빠졌습니다`);
+  }
+});
+
+test('깃털을 한 올씩 그리지 않는다 — 큰 덩어리로 적는다', () => {
+  // ⚠️ 실행 #98 에서 자연사 삽화가 나왔다. 깃털을 한 올씩 그려 놓아서
+  //    48px 로 줄이면 전부 검은 얼룩이 된다. 로고는 큰 덩어리 몇 개로
+  //    읽혀야 한다. 금지가 아니라 무엇을 그릴지로 적는다(CLAUDE.md 13번).
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(/large simple shapes|large shapes/.test(p), `${pose.key}: 큰 덩어리로 그리라는 말이 빠졌습니다`);
+    assert.ok(p.includes('bold heavy outline'), `${pose.key}: 굵은 외곽선이 빠졌습니다`);
+  }
+});
+
+test('단색을 두 번 못 박는다 — 색이 샌 적이 있다', () => {
+  // ⚠️ #98 의 '급강하' 가 빨강·파랑으로 나왔다. 한 번만 적으면 샌다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('single warm off-white ink'), `${pose.key}: 단색 잉크가 빠졌습니다`);
+    assert.ok(p.includes('one ink and one background'), `${pose.key}: 단색을 한 번 더 박아야 합니다`);
   }
 });
 

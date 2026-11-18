@@ -46,12 +46,23 @@ import { log } from './utils/logger.mjs';
  * 나란히 놓고 자세만 비교할 수가 없다.
  */
 const PRINT =
-  'drawn in the old-school traditional tattoo style, printed in a single ' +
-  'warm off-white ink on a solid black background, a bold clean outline with ' +
-  'stippled dot shading inside the wings and the breast, flat graphic shapes ' +
-  'in one ink with no gradient, the emblem sits centered with an even black ' +
-  'margin on all four sides and open black space below it, the shape stays ' +
-  'readable when the whole image is shrunk to the size of a fingernail';
+  'drawn in the old-school traditional tattoo style, ' +
+  // ⚠️ 2026-11-18 실행 #98 에서 **자연사 삽화**가 나왔다. 깃털을 한 올씩
+  //    그려 놓아서 48px 로 줄이면 전부 검은 얼룩이 된다. 로고는 큰 덩어리
+  //    몇 개로 읽혀야 한다. 금지가 아니라 **무엇을 그릴지**로 적는다.
+  'the whole bird built from a few large simple shapes with a bold heavy ' +
+  'outline, each wing one clean solid mass, light stippled dots used sparingly ' +
+  'as shading inside those masses, ' +
+  // ⚠️ #98 의 '급강하' 가 빨강·파랑으로 샜다. 단색을 한 번 더 못 박는다.
+  'every shape printed in the same single warm off-white ink on a solid black ' +
+  'background, one ink and one background colour only, flat graphic shapes ' +
+  'with no gradient, ' +
+  'the emblem sits centered with an even black margin on all four sides and ' +
+  'open black space below it, ' +
+  // 작은 크기가 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장도 #98 의
+  // 여섯 장도 전부 여기서 졌다.
+  'the bird still reads as three or four large shapes when the whole image is ' +
+  'shrunk to the size of a fingernail';
 
 // ⚠️ 2026-11-18 효성님: "야구공은 빼자." 입에 물린 공을 뺐다.
 //    손톱만 한 크기에서 공이 먼저 뭉개지고, 참고 사진처럼 제비만 있는 쪽이
