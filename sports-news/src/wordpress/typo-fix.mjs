@@ -2652,6 +2652,30 @@ export const 바로잡기 = [
     맞는: '킨텍스',
     이유: '글 23755. 고양 KINTEX 는 킨텍스다. 생성 때 탄텍스로 나갔다',
     글: [23755],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>최지훈 4년 67억 — FA 시장 3호 계약입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23783,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-1-6o2uy1-mwlhp0u2.jpg" alt="SSG 랜더스 최지훈 FA 4년 67억 원 계약" class="wp-image-23783"/></a><figcaption class="wp-element-caption">FA 4년 67억 원에 SSG에 잔류한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>최지훈 4년 67억 — FA 시장 3호 계약입니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23783)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>구단이 돈을 쓴 진짜 이유는 수비입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23784,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-2-6o2uyw-mwlhp417.jpg" alt="SSG 랜더스 최지훈 중견수 수비" class="wp-image-23784"/></a><figcaption class="wp-element-caption">2026시즌 외야 1,196이닝을 소화한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>구단이 돈을 쓴 진짜 이유는 수비입니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23784)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>계약금의 일부가 인천으로 갑니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23785,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-3-6o2uzr-mwlhp7cx.jpg" alt="SSG 랜더스 최지훈 계약 발표" class="wp-image-23785"/></a><figcaption class="wp-element-caption">1억 원 기부 의사를 구단에 전달한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>계약금의 일부가 인천으로 갑니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23785)',
+    글: [16558],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
