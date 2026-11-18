@@ -1,34 +1,22 @@
 <!doctype html><meta charset="utf-8">
-<style>body{margin:0;background:#9a9a9a;font:13px/1.5 -apple-system,"Noto Sans KR",sans-serif;color:#111}
-.row{display:flex;gap:24px;padding:18px;align-items:flex-start}
-.c{text-align:center}.cap{margin-top:4px;font-size:11px;opacity:.75}
-.b{width:176px;height:176px;border-radius:50%;overflow:hidden}
-.m{width:88px;height:88px;border-radius:50%;overflow:hidden;margin:8px auto 0}
-.s{width:48px;height:48px;border-radius:50%;overflow:hidden;margin:8px auto 0}
-.x{width:24px;height:24px;border-radius:50%;overflow:hidden;margin:6px auto 0}
-.wm{width:120px;height:120px;margin:0 auto}
-img{width:100%;height:100%;display:block}h3{margin:0 0 6px;font-weight:700}
-.vid{width:300px;height:169px;background:linear-gradient(135deg,#2a6b5e,#8a5fb0);position:relative;border-radius:4px}
-.vid img{position:absolute;right:8px;bottom:8px;width:34px;height:34px}</style>
-<div class="row">
- <div class="c"><h3>프로필 (글자)</h3>
-  <div class="b"><img src="yaports-profile-800.png"></div>
-  <div class="cap">800px — 채널 페이지</div>
-  <div class="m"><img src="yaports-profile-800.png"></div><div class="cap">88px — 영상 옆</div>
-  <div class="s"><img src="yaports-profile-800.png"></div><div class="cap">48px — 댓글</div>
-  <div class="x"><img src="yaports-profile-800.png"></div><div class="cap">24px</div>
- </div>
- <div class="c"><h3>제비만</h3>
-  <div class="b"><img src="yaports-mark-512.png"></div>
-  <div class="cap">512px</div>
-  <div class="m"><img src="yaports-mark-512.png"></div><div class="cap">88px</div>
-  <div class="s"><img src="yaports-mark-512.png"></div><div class="cap">48px</div>
-  <div class="x"><img src="yaports-mark-512.png"></div><div class="cap">24px</div>
- </div>
- <div class="c"><h3>워터마크 (배경 없음)</h3>
-  <div class="wm"><img src="yaports-watermark-512.png"></div>
-  <div class="cap">영상 위에 얹히는 것</div>
-  <div style="margin-top:14px"><div class="vid"><img src="yaports-watermark-512.png"></div></div>
-  <div class="cap">영상 오른쪽 아래에 올렸을 때</div>
- </div>
-</div>
+<style>
+body{margin:0;background:#8a8a8a;font:13px/1.5 -apple-system,"Noto Sans CJK KR",sans-serif;color:#111;padding:14px}
+h3{margin:16px 0 6px;font-size:14px}
+.full{position:relative;width:556px}
+.full img{width:100%;display:block}
+.safe{position:absolute;left:12.26%;top:31.64%;width:75.49%;height:36.72%;
+      outline:2px dashed #ff9166;pointer-events:none}
+.safe b{position:absolute;top:-20px;left:0;color:#ff9166;font-size:11px;white-space:nowrap}
+.crop{width:420px;height:115px;overflow:hidden;position:relative;border-radius:3px}
+.crop img{position:absolute;width:556px;left:-68px;top:-99px}
+.cap{font-size:11px;opacity:.85;margin-top:4px}
+.row{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+</style><div id="r"></div><script>
+r.innerHTML=['A','B','C'].map(k=>`
+<h3>${k}안</h3><div class="row">
+ <div><div class="full"><img src="banner-${k}.png"><div class="safe"><b>휴대폰에서 보이는 영역</b></div></div>
+  <div class="cap">전체 2048×1152 — TV에서만 다 보인다</div></div>
+ <div><div class="crop"><img src="banner-${k}.png"></div>
+  <div class="cap">↑ 휴대폰에서 실제로 보이는 것</div></div>
+</div>`).join('');
+</script>
