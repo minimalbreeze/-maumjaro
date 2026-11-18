@@ -1,0 +1,133 @@
+{
+  "kind": "SPORTS",
+  "title": "같은 부진을 반대로 읽는다 — KIA의 겨울",
+  "premise": "KIA 가 내부 FA 단속과 외부 보강을 같이 노린다. 가장 큰 숙제는 2번 타순이고, 후보로 홍창기와 전병우가 거론된다. 둘 다 올해 타율이 낮은 선수다.",
+  "angle": "18화에서 홍창기 LG 잔류 75%, 전병우 삼성 잔류 80% 로 봤다. 기사는 둘 다 KIA 후보로 든다. 더 중요한 건 근거가 뒤집혔다는 것이다 — 나는 부진을 '안 데려갈 이유'로 읽었고 기사는 '싸게 데려올 이유'로 읽는다. 같은 숫자, 반대 결론.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "같은 부진, 반대 결론",
+      "value": 100,
+      "note": "⭐ 이 편의 심장. 18화에서 홍창기 LG 잔류 75%·전병우 삼성 잔류 80%로 봤는데 기사는 둘 다 KIA 후보로 든다. 더 중요한 건 근거가 뒤집혔다는 것 — 나는 부진을 '밖에서 데려갈 이유가 약하다'로 읽었고 기사는 '몸값이 낮아진 저점 매수'로 읽는다."
+    },
+    {
+      "key": "KIA",
+      "label": "KIA 가 선 자리",
+      "value": 85,
+      "note": "준PO 에서 LG 를 3-0 으로 꺾고 PO 에서 삼성에 2-3 석패. 내부 FA 둘 — 김태군(자격유지·B등급), 김호령(신규·C등급). 둘 다 센터라인 핵심이다."
+    },
+    {
+      "key": "HOLE",
+      "label": "2번 타순",
+      "value": 95,
+      "note": "가장 큰 숙제. KIA 2026 2번 타순 출루율 0.332 로 리그 9위. 부동의 3번 김도영 앞자리를 못 채워 타선 효율을 갉아먹었다. PO 막판엔 김도영을 2번으로 올리는 초강수까지 뒀지만 근본 해결은 못 됐다."
+    },
+    {
+      "key": "HONG",
+      "label": "홍창기 — 숫자 하나",
+      "value": 100,
+      "note": "⭐ 2026 128경기 타율 0.239·출루율 0.375·장타율 0.284. 타율과 장타율은 커리어 최저 수준인데 **출루율 0.375 가 KIA 2번 타순 전체 0.332 보다 높다.** '왜 부진한 선수를 데려오나'에 이 한 줄이 답한다. ⚠️ 기사가 든 최원준 4년 48억은 비교 사례지 홍창기 예상액이 아니다."
+    },
+    {
+      "key": "JEON",
+      "label": "전병우 — 가장 싸다",
+      "value": 95,
+      "note": "1992년생, 118경기 타율 0.238·12홈런·54타점·출루율 0.355, 데뷔 첫 두 자릿수 홈런. 연봉 9000만원이라 C등급 보상이 1억 3500만원뿐 — 김호령(3억 7500만원)보다 싸다. KIA 가 김도영을 유격수로 쓸 계획이라 3루가 비어 있다. 삼성은 구자욱·원태인을 먼저 챙겨야 해 셋을 다 잡기 어렵다."
+    },
+    {
+      "key": "BIG",
+      "label": "최대어는 왜 아닌가",
+      "value": 80,
+      "note": "구자욱·원태인은 최소 150억 이상이 거론돼 KIA 로선 부담이다. ⚠️ 이 숫자는 기사가 전하는 시장 관측이지 내 산정이 아니다. 19화에서 김호령 금액을 산정했으므로 그 차이를 분명히 한다. ⚠️ 19화 기사는 KIA 자금력을 '삼성과 함께 최고 수준'이라 했고 이 기사는 '최근 큰 규모 투자가 없었다'고 한다 — 모순이 아니다. 능력과 의지는 다르다."
+    },
+    {
+      "key": "CLOSE",
+      "label": "내 표가 흔들린다",
+      "value": 85,
+      "note": "18화 표에서 홍창기 75%·전병우 80%를 어떻게 볼지. 아직 계약이 없으니 고치지 않고, 흔들린다는 것만 말한다. 계약이 끝나면 채점한다."
+    }
+  ],
+  "sources": [
+    "엑스포츠뉴스 김근한 기자 (2026-11-18) — 이 편의 바탕",
+    "18화 예측 (2026-11-17) — 홍창기 75% · 전병우 80%",
+    "스포티비뉴스·마이데일리 (2026-11-18) — 김호령·김태군 등급, KIA 기조"
+  ],
+  "people": [
+    {
+      "name": "홍창기",
+      "role": "LG 트윈스 외야수. A등급. 이 편의 첫 번째 후보 — KIA 2번 타순 자리다.",
+      "team": "",
+      "number": "",
+      "look": "",
+      "tell": "⭐ 18화에서 받아 두고 한 샷도 못 쓴 사진이다. 이 편에서 주인공이 된다. ⚠️ **계약이 안 됐다.** 계약한 것처럼 보이는 장면을 그리지 않는다. ⚠️ 2026 성적은 128경기 타율 0.239·출루율 0.375·장타율 0.284 다. 타율과 장타율은 커리어 최저 수준이지만 **출루율 0.375 가 KIA 2번 타순 전체 0.332 보다 높다** — 이 편의 핵심 숫자다. ⚠️ 기사가 든 최원준 4년 48억은 **비교 사례**지 홍창기 예상액이 아니다. 섞지 않는다. ⚠️ 사진이 있으므로 생김새(look)는 비운다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTU3%2FMDAxNzk0Mzg3MDY5MTY2.1iWznEUfT0qeHoW3aUcAsBcdSVjcqqFfqPNhI6ybHn8g.jURCEAjarhqAZZpC6cPPblypYSpuj7LweVTnWDMDBGgg.PNG%2Fimage.png&type=a340",
+          "쓰임": "LG 1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfMjg0%2FMDAxNzk0NDUxNTQ1MzA0._E57pF_W1Ndr0dvNXM4M3ZDJhsnX2tlNiC8IHSCbbP8g.5DTMIHBe0rQrDbLfqilmJcqMDP3lOMiwDJlJJBvkEcgg.PNG%2Fimage.png&type=a340",
+          "쓰임": "LG 2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMTkg%2FMDAxNzk0MjIwOTUwNTY2.UITKnKv3sAQ0bg_rzVjScaogyfjVP5sGBSIVQZAatcUg.JwsNtijCNdV4wj3WY68CEXd243PAIqirvfSl4ONGaBUg.PNG%2Fimage.png&type=a340",
+          "쓰임": "LG 3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMTY5%2FMDAxNzk0MjIwOTY1NjQ5.sG_3loEYW_EKPQr_nSA7dX6EaRpLgy_IcnCaE_e7vNYg.pBrZyTS_CXqKF0vj0lU__gaWv91DSdg3qw4lTjrdDQcg.PNG%2Fimage.png&type=a340",
+          "쓰임": "LG 4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTc3%2FMDAxNzk0MzYwNjYwMTU5.LIT6v_SNYxt14Pp6iZq8K8p9vlsH4sA7BJNee84ZWZAg.slCUk4kLHmmZjsPeNMadlS52v_mxvojbDMOUcqtN1k4g.PNG%2Fimage.png&type=a340",
+          "쓰임": "LG 5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTJfMTY5%2FMDAxNzk0NDUxMzM4MDAy.8lZNfICyhgCDqOLPer-mB9-RuRacI_0bPy5d4S0r76sg.y2LMAszzWLPfxEAaSCdwLM0rhL77Ddt7OyKWVo-NpHgg.JPEG%2F2B9D685C%25A3%25AD2781%25A3%25AD407F%25A3%25ADAF5C%25A3%25ADFBBFAD11312C.jpeg&type=a340",
+          "쓰임": "LG 6"
+        }
+      ]
+    },
+    {
+      "name": "전병우",
+      "role": "삼성 라이온즈 내야수, 1992년생. C등급. 이 편의 두 번째 후보 — KIA 3루 자리다.",
+      "team": "삼성",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). ⚠️ 등번호를 확인하지 못해 **비워 둔다**(규칙 3). ⚠️ **계약이 안 됐다.** 계약·악수·유니폼 전달 장면을 그리지 않는다. ⚠️ 2026 성적은 118경기 타율 0.238·12홈런·54타점·출루율 0.355. 데뷔 첫 두 자릿수 홈런이다. 연봉 9000만원이라 C등급 보상이 1억 3500만원뿐 — 김호령(3억 7500만원)보다 싸다. ⚠️ 3루 수비가 삼성 우승에 '소금 같은 역할'을 했다는 평가는 **기사의 평가**다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTVfNTIg%2FMDAxNzkyMDc0MjE1NjUx.2yZMs7G_205_teCwbJb1jMjkDRX_8WfxrtjBk-gCp74g.DUM8RuLY3IqN0yyd-6-u7LwCsrgo9_Ecx0YJtirwyq8g.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-10-15_%25BF%25C0%25C8%25C4_11.23.03.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2025%2F03%2F15%2F0001838395_001_20250315094510961.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2025%2F10%2F07%2F2025100701000361700044961_20251007112116086.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MDFfMjc4%2FMDAxNzg4MjMyMTE2MjYz.311kEIR3S586K4s7k7esvZ2EBZCdyPNM0i7Js8hc8YQg.QZRUElHTv-74sLjZtqgkP3wGloGmdk3XPs7FU3jI88kg.PNG%2Fimage.png&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F07%2F31%2F0002040272_001_20260731190315657.jpg&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDNfMjg4%2FMDAxNzkzNjUzNDQ3ODM1.2KsDeepok09noD5ye1Z0oHzGqc0ToiP5KaYNguHvNqMg.HjNdJiLZZ6WETl1A4MRn3muBild2_nNJlUzYn7SceUog.PNG%2F%25C0%25FC%25BA%25B4%25BF%25EC.png&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTlfMTQ1%2FMDAxNzkyMzkwMTUxNzg2.QVumxzO4mMRIgBBSAWTf7-T2UJdyxCGWs1jU5323AKcg.R6HmGj0_098G9XLqnVMYZ7HOQjvHZ947x1uPEHxSncwg.JPEG%2Fimages_%25287%2529.jpg&type=a340",
+          "쓰임": "7"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F06%2F21%2F2026062101001448200095083_20260621161417700.jpg&type=a340",
+          "쓰임": "8"
+        }
+      ]
+    }
+  ]
+}
