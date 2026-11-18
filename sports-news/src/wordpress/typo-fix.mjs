@@ -2796,6 +2796,22 @@ export const 바로잡기 = [
       '<!-- wp:heading -->\n<h2>🎯 올해 수비상에서 주목할 지점</h2>',
     이유: '글 23951. 기사 사진을 넣는다 (미디어 23959)',
     글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 최민정과 동료들의 목소리</h2>',
+    맞는:
+      '<!-- wp:image {"id":23962,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-19dpk7-mwm51xu8.jpg" alt="쇼트트랙 최민정 목동 미디어데이" class="wp-image-23962"/></a><figcaption class="wp-element-caption">사진: 스포츠조선 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 최민정과 동료들의 목소리</h2>',
+    이유: '글 23969. 미디어데이 사진을 넣는다 (미디어 23962)',
+    글: [23969],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 시즌 초반 성적으로 보는 최민정의 현재</h2>',
+    맞는:
+      '<!-- wp:image {"id":23963,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-19dpk8-mwm51zsq.jpg" alt="쇼트트랙 최민정" class="wp-image-23963"/></a><figcaption class="wp-element-caption">사진: 스포츠조선 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 시즌 초반 성적으로 보는 최민정의 현재</h2>',
+    이유: '글 23969. 미디어데이 사진을 넣는다 (미디어 23963)',
+    글: [23969],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
