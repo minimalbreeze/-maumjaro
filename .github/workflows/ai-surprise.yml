@@ -232,7 +232,7 @@ jobs:
           echo "GOOGLE_TTS_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
       - name: 이미지 토큰이 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '미리보기') || contains(inputs.mode, '인물 시트') }}
+        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '미리보기') || contains(inputs.mode, '인물 시트') || contains(inputs.mode, '로고') }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |

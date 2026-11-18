@@ -8218,6 +8218,20 @@ section('4-가. 야포츠 로고 후보 — 제비');
 
 const { LOGO_POSES, logoPrompt } = await import('../src/logo.mjs');
 
+test('로고 모드도 이미지 토큰 확인을 거친다', () => {
+  // ⚠️ 토큰은 실행 단계에 언제나 넘어가므로 돌긴 돈다. 그런데 사전 확인
+  //    단계를 안 거치면, 토큰이 없을 때 "어디서 만들어 어디에 넣어라" 를
+  //    알려 주는 줄이 안 나온다. 2026-11-18 에 로고 모드를 넣으면서
+  //    빠뜨렸다가 실행 로그에서 건너뛴 것을 보고 메웠다.
+  const yml = fs.readFileSync(
+    new URL('../../.github/workflows/ai-surprise.yml', import.meta.url).pathname,
+    'utf8'
+  );
+  const step = yml.slice(yml.indexOf('- name: 이미지 토큰이 등록되어 있는지 확인'));
+  const cond = step.slice(0, step.indexOf('\n        run:'));
+  assert.ok(cond.includes("'로고'"), '로고 모드가 토큰 확인 조건에 없습니다');
+});
+
 test('자세마다 설명과 프롬프트가 있다', () => {
   assert.ok(LOGO_POSES.length >= 4, '후보가 너무 적으면 고를 게 없다');
   const keys = LOGO_POSES.map((p) => p.key);
