@@ -47,7 +47,15 @@ def text(x, y, s, size, *, fill=INK, weight=900, anchor='middle', ls=0, family=N
             f'font-weight="{weight}" font-size="{size}" text-anchor="{anchor}"{sp}>{s}</text>')
 
 KO = 'Noto Sans CJK KR, Noto Sans KR, sans-serif'
-TAG = '세어 보면 다르게 보입니다'
+
+# ⚠️ 2026-11-18 효성님이 직접 정했다.
+#    처음에 내가 '세어 보면 다르게 보입니다' 를 넣었는데 효성님:
+#    "세어보먄 다르게 보입니다가 뭔소리야?"
+#    맞는 지적이었다. '세어 본다' 는 내가 제목 만들 때 쓰는 내부 규칙에서
+#    끌어온 말이라 처음 보는 사람에게는 아무 뜻이 없고, 더 나쁘게는
+#    **그 한 줄에 야구도 KBO 도 없었다.** '야포츠' 만으로는 야구 채널인지
+#    모른다. 배너 한 줄은 그걸 2초에 알려 주는 자리다.
+TAG = '야알못의 야구 헛소리'
 
 def banner(kind):
     cx, cy = W / 2, H / 2
