@@ -53,10 +53,13 @@ const PRINT =
   'margin on all four sides and open black space below it, the shape stays ' +
   'readable when the whole image is shrunk to the size of a fingernail';
 
-/** 야구공은 솔기를 적어야 야구공으로 읽힌다. 안 적으면 그냥 흰 점이다. */
-const BALL =
-  'a small baseball held in its beak, the baseball drawn with its two curved ' +
-  'seams so it reads as a baseball';
+// ⚠️ 2026-11-18 효성님: "야구공은 빼자." 입에 물린 공을 뺐다.
+//    손톱만 한 크기에서 공이 먼저 뭉개지고, 참고 사진처럼 제비만 있는 쪽이
+//    깔끔하다. 되돌리려면 자세마다 subject 뒤에 공 문구를 다시 붙이면 된다 —
+//    공을 적을 때는 솔기까지 적어야 한다. 안 적으면 그냥 흰 점이 된다.
+//
+// ⚠️ 공을 빼면 참고한 가게 간판과 **더 닮아진다.** 그래서 제비 자세가 저쪽과
+//    달라야 한다는 것이 더 중요해졌다. 고를 때 그걸 본다.
 
 /**
  * 자세만 다른 여섯 가지.
@@ -73,8 +76,7 @@ export const LOGO_POSES = [
       'a swallow in flight seen from the side with its body turned toward the ' +
       'viewer, both wings spread wide and open, one wing sweeping up and back ' +
       'while the other reaches forward across the body, a full rounded breast, ' +
-      'a deeply forked tail fanned out behind, ' +
-      BALL,
+      'a deeply forked tail fanned out behind',
   },
   {
     key: '상승',
@@ -82,16 +84,14 @@ export const LOGO_POSES = [
     subject:
       'a swallow climbing upward with both wings spread wide and open, the ' +
       'wing tips pointing up and back, a full rounded breast, a deeply forked ' +
-      'tail streaming below, ' +
-      BALL,
+      'tail streaming below',
   },
   {
     key: '급강하',
     why: '내려오는 자세. 덩어리가 하나로 뭉쳐 작은 크기에 강하다.',
     subject:
       'a swallow diving downward with both wings spread and swept back, the ' +
-      'head low and the deeply forked tail open above, ' +
-      BALL,
+      'head low and the deeply forked tail open above',
   },
   {
     key: '원테두리',
@@ -99,8 +99,7 @@ export const LOGO_POSES = [
     subject:
       'a swallow in flight with both wings spread wide, a full rounded breast ' +
       'and a deeply forked tail, enclosed in a thin circular frame drawn in the ' +
-      'same ink, ' +
-      BALL,
+      'same ink',
   },
   {
     key: '단순',
@@ -108,8 +107,7 @@ export const LOGO_POSES = [
     subject:
       'a bold simple swallow in flight with both wings spread, drawn with a ' +
       'clean heavy outline and almost no shading so that only three shapes ' +
-      'read at a glance: the two open wings and the forked tail, ' +
-      BALL,
+      'read at a glance: the two open wings and the forked tail',
   },
   {
     key: '점묘',
@@ -117,8 +115,7 @@ export const LOGO_POSES = [
     subject:
       'a swallow in flight with both wings spread wide, the wings and breast ' +
       'filled with dense stippled dots so the ink reads as carved texture, a ' +
-      'deeply forked tail behind, ' +
-      BALL,
+      'deeply forked tail behind',
   },
 ];
 

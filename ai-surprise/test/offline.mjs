@@ -8262,12 +8262,14 @@ test('렌즈 말을 쓰지 않는다 — 판화에는 초점이 없다', () => {
   }
 });
 
-test('야구공은 솔기까지 적는다 — 안 적으면 흰 점이 된다', () => {
+test('야구공을 넣지 않는다 (2026-11-18 효성님)', () => {
+  // "야구공은 빼자." 손톱만 한 크기에서 공이 먼저 뭉개지고, 참고 사진처럼
+  // 제비만 있는 쪽이 깔끔하다. 되돌리려면 subject 에 공 문구를 다시 붙이되
+  // 솔기까지 적어야 한다 — 안 적으면 그냥 흰 점이 된다.
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose).toLowerCase();
-    assert.ok(p.includes('baseball'), `${pose.key}: 야구공이 빠졌습니다`);
-    assert.ok(p.includes('seam'), `${pose.key}: 솔기를 안 적으면 야구공으로 안 읽힙니다`);
-    assert.ok(p.includes('beak'), `${pose.key}: 공을 부리에 물려야 박씨가 됩니다`);
+    assert.ok(!p.includes('baseball'), `${pose.key}: 야구공이 다시 들어갔습니다`);
+    assert.ok(!p.includes('beak'), `${pose.key}: 부리에 문 것이 남아 있습니다`);
   }
 });
 
