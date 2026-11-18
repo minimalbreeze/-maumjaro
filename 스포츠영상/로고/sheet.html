@@ -1,54 +1,34 @@
 <!doctype html><meta charset="utf-8">
-<style>
- body{margin:0;background:#888;font:14px/1.4 -apple-system,"Noto Sans KR",sans-serif;color:#fff}
- .row{display:flex;gap:26px;padding:24px;align-items:flex-start;flex-wrap:wrap}
- .cell{text-align:center} .big{width:190px;height:190px;border-radius:50%;overflow:hidden}
- .sm{width:48px;height:48px;border-radius:50%;overflow:hidden;margin:8px auto 0}
- .xs{width:24px;height:24px;border-radius:50%;overflow:hidden;margin:6px auto 0}
- h3{margin:0 0 8px;font-size:13px;font-weight:700} svg{display:block}
-</style><div class="row" id="r"></div>
-<script>
-const INK='#f2efe6', BG='#0d0d0d';
-
-// 측면 제비. 몸통이 수평으로 길다(사람은 수직이라 여기서 갈린다).
-// 날개는 몸통보다 두껍게 — 가늘면 팔로 읽힌다. 꼬리는 짧게 — 길면 비행기가 된다.
-const bird=(fg,{dy=0,tilt=-12,ball=1,scale=1}={})=>`
-<g transform="translate(50 ${44+dy}) rotate(${tilt}) scale(${scale}) translate(-50 -44)">
- <!-- 몸통 + 머리 + 가위 꼬리 (한 덩어리) -->
- <path fill="${fg}" d="
-  M82 31 C80 26.5 74 24 68 26
-  C58 29 46 34 36 39
-  L12 33 C9 32.3 8 35.5 10.5 36.8 L28 45
-  L13 57 C10.5 59 12.5 62 15 60.5 L38 48
-  C50 46 64 42 74 38 C80 35.5 83.5 34 82 31 Z"/>
- <!-- 날개: 어깨에서 위·뒤로 젖힌 낫. 몸통보다 두껍다 -->
- <path fill="${fg}" d="
-  M62 32 C54 22 44 13 32 7
-  C29 5.5 27 9 30 11
-  C40 17 48 26 53 37 Z"/>
- ${ball?`<circle cx="89" cy="28" r="6" fill="${BG}" stroke="${fg}" stroke-width="2"/>
-  <path d="M85 24.5 C87 26.5 87 29.5 85 31.5" stroke="${fg}" stroke-width="1.5" fill="none"/>`:''}
-</g>`;
-
-const word=(fg,{y=86,size=14,len=54}={})=>
- `<text x="50" y="${y}" fill="${fg}" font-family="Arial Black, Arial, sans-serif" font-weight="900"
-   font-size="${size}" textLength="${len}" lengthAdjust="spacingAndGlyphs" text-anchor="middle">YAPORTS</text>`;
-
-const grain=`<filter id="g" x="-20%" y="-20%" width="140%" height="140%">
- <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="5" result="n"/>
- <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
-</filter>`;
-const C=(inner,{filt=0}={})=>`<svg viewBox="0 0 100 100" width="100%" height="100%">
- <defs>${grain}</defs><rect width="100" height="100" fill="${BG}"/>
- <g ${filt?'filter="url(#g)"':''}>${inner}</g></svg>`;
-
-const sets=[
- ['N · 측면 제비 + 공',      C(bird(INK,{dy:6,scale:1.06}))],
- ['O · + YAPORTS',           C(bird(INK,{dy:-5,scale:0.95})+word(INK))],
- ['O2 · 판화 질감',          C(bird(INK,{dy:-5,scale:0.95})+word(INK), {filt:1})],
- ['O3 · 더 기울임 -24°',     C(bird(INK,{dy:-5,tilt:-24,scale:0.95})+word(INK))],
- ['O4 · 수평',               C(bird(INK,{dy:-5,tilt:0,scale:0.95})+word(INK))],
- ['N2 · 글자 없이 판화',      C(bird(INK,{dy:6,scale:1.06}), {filt:1})],
-];
-r.innerHTML=sets.map(([t,s])=>`<div class="cell"><h3>${t}</h3><div class="big">${s}</div><div class="sm">${s}</div><div class="xs">${s}</div></div>`).join('');
-</script>
+<style>body{margin:0;background:#9a9a9a;font:13px/1.5 -apple-system,"Noto Sans KR",sans-serif;color:#111}
+.row{display:flex;gap:24px;padding:18px;align-items:flex-start}
+.c{text-align:center}.cap{margin-top:4px;font-size:11px;opacity:.75}
+.b{width:176px;height:176px;border-radius:50%;overflow:hidden}
+.m{width:88px;height:88px;border-radius:50%;overflow:hidden;margin:8px auto 0}
+.s{width:48px;height:48px;border-radius:50%;overflow:hidden;margin:8px auto 0}
+.x{width:24px;height:24px;border-radius:50%;overflow:hidden;margin:6px auto 0}
+.wm{width:120px;height:120px;margin:0 auto}
+img{width:100%;height:100%;display:block}h3{margin:0 0 6px;font-weight:700}
+.vid{width:300px;height:169px;background:linear-gradient(135deg,#2a6b5e,#8a5fb0);position:relative;border-radius:4px}
+.vid img{position:absolute;right:8px;bottom:8px;width:34px;height:34px}</style>
+<div class="row">
+ <div class="c"><h3>프로필 (글자)</h3>
+  <div class="b"><img src="yaports-profile-800.png"></div>
+  <div class="cap">800px — 채널 페이지</div>
+  <div class="m"><img src="yaports-profile-800.png"></div><div class="cap">88px — 영상 옆</div>
+  <div class="s"><img src="yaports-profile-800.png"></div><div class="cap">48px — 댓글</div>
+  <div class="x"><img src="yaports-profile-800.png"></div><div class="cap">24px</div>
+ </div>
+ <div class="c"><h3>제비만</h3>
+  <div class="b"><img src="yaports-mark-512.png"></div>
+  <div class="cap">512px</div>
+  <div class="m"><img src="yaports-mark-512.png"></div><div class="cap">88px</div>
+  <div class="s"><img src="yaports-mark-512.png"></div><div class="cap">48px</div>
+  <div class="x"><img src="yaports-mark-512.png"></div><div class="cap">24px</div>
+ </div>
+ <div class="c"><h3>워터마크 (배경 없음)</h3>
+  <div class="wm"><img src="yaports-watermark-512.png"></div>
+  <div class="cap">영상 위에 얹히는 것</div>
+  <div style="margin-top:14px"><div class="vid"><img src="yaports-watermark-512.png"></div></div>
+  <div class="cap">영상 오른쪽 아래에 올렸을 때</div>
+ </div>
+</div>
