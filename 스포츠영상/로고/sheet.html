@@ -1,0 +1,53 @@
+<!doctype html><meta charset="utf-8">
+<style>
+ body{margin:0;background:#fff;font:14px/1.4 -apple-system,"Noto Sans KR",sans-serif;color:#222}
+ .row{display:flex;gap:26px;padding:24px;align-items:flex-start;flex-wrap:wrap}
+ .cell{text-align:center} .big{width:190px;height:190px;border-radius:50%;overflow:hidden}
+ .sm{width:48px;height:48px;border-radius:50%;overflow:hidden;margin:8px auto 0}
+ .xs{width:24px;height:24px;border-radius:50%;overflow:hidden;margin:6px auto 0}
+ h3{margin:0 0 8px;font-size:13px;font-weight:700} svg{display:block}
+</style><div class="row" id="r"></div>
+<script>
+const TEAL='#1f5c50',CREAM='#f6fbf9',ORANGE='#ff9166';
+
+// 제비 — 작고 둥근 머리 / 가는 몸통 / 짧고 아래로 처진 가위꼬리 / 뒤로 젖힌 낫 날개 두 장
+const swallow=(fg,{tilt=-18,ball=0}={})=>`
+<g transform="rotate(${tilt} 50 50)">
+ <!-- 몸통: 머리에서 꼬리로 가늘어진다 -->
+ <path fill="${fg}" d="
+  M84 46 C84 41 80 38 75 38.5
+  C66 39.5 56 43 46 47
+  C40 49.5 36 52 34 54
+  C36 55.5 39 56.5 43 56.5
+  C53 55.5 64 52.5 73 49.5
+  C79 47.5 84 48.5 84 46 Z"/>
+ <!-- 가위 꼬리: 짧고 뒤·아래로, 안쪽 V가 깊다 -->
+ <path fill="${fg}" d="
+  M38 52 L11 46 C8 45.3 7 48 9.5 49.3 L30 57
+  L14 70 C11.5 72 13.5 74.5 16 73 L40 58 Z"/>
+ <!-- 윗날개: 몸통 중간에서 뒤로 젖힌 낫 -->
+ <path fill="${fg}" d="
+  M58 44 C54 32 45 19 33 11
+  C30 9 32.5 5.5 35.5 7.5
+  C51 17 62 30 66 42 Z"/>
+ <!-- 아랫날개: 짧게, 새라는 걸 더 분명히 -->
+ <path fill="${fg}" d="
+  M52 53 C48 60 41 68 32 74
+  C29.5 75.8 31 78.8 33.5 77.3
+  C44 71 51 63 55 55 Z"/>
+ ${ball?`<circle cx="90" cy="43" r="7" fill="${CREAM}" stroke="${fg}" stroke-width="1.5"/>
+  <path d="M85 39.5 C87.3 41.8 87.3 44.2 85 46.5" stroke="${fg}" stroke-width="1.2" fill="none"/>`:''}
+</g>`;
+
+const C=(bg,inner)=>`<svg viewBox="0 0 100 100" width="100%" height="100%"><rect width="100" height="100" fill="${bg}"/>${inner}</svg>`;
+const sets=[
+ ['J · 제비 (기울임 -18°)', C(TEAL, swallow(CREAM))],
+ ['J2 · 더 기울임 -32°',    C(TEAL, swallow(CREAM,{tilt:-32}))],
+ ['J3 · 수평',              C(TEAL, swallow(CREAM,{tilt:0}))],
+ ['J4 · 밝은 바탕',         C(CREAM, swallow(TEAL))],
+ ['K · 공을 문 제비',       C(TEAL, `<g transform="translate(-4,2) scale(0.94)">${swallow(CREAM,{ball:1})}</g>`)],
+ ['K2 · 밝은 바탕',         C(CREAM, `<g transform="translate(-4,2) scale(0.94)">${swallow(TEAL,{ball:1})}</g>`)],
+ ['K3 · 주황 제비',         C(TEAL, swallow(ORANGE))],
+];
+r.innerHTML=sets.map(([t,s])=>`<div class="cell"><h3>${t}</h3><div class="big">${s}</div><div class="sm">${s}</div><div class="xs">${s}</div></div>`).join('');
+</script>
