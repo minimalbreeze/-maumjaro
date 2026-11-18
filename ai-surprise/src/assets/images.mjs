@@ -384,6 +384,13 @@ export async function generateImages(prompts, {
         // 호출이 성공한 시점에 돈이 나갔다. 내려받기가 실패해도 쓴 건 쓴 거다.
         spentUsd += result.usdEstimate ?? shotCost;
 
+        // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+        //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 **내가 만든
+        //    그림을 내가 못 본다.** 규칙 15("55장을 돌리기 전에 몇 장 먼저 보고
+        //    보여 준다")가 사람에게만 기대고 있었다.
+        //    같은 날 미리보기 쪽 네 자리를 고쳤는데 **본편을 빼먹었다** —
+        //    53장을 만드는 자리가 여기다. 19화에서 그래서 한 장도 못 봤다.
+        onProgress?.(`  ${shot.shot_id} — ${result.url}`);
         const bytes = await api.download(result.url);
         if (!looksLikeImage(bytes)) {
           throw new Error(`내려받은 파일이 이미지가 아닙니다 (${bytes?.length ?? 0}바이트)`);
