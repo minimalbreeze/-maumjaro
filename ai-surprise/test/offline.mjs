@@ -8273,17 +8273,27 @@ test('야구공을 넣지 않는다 (2026-11-18 효성님)', () => {
   }
 });
 
-test('타투 판화 결과 검정 바탕이 장마다 들어간다', () => {
-  // 여섯 장이 서로 다른 것은 자세뿐이고 결은 같아야 한다. 결이 흔들리면
-  // 나란히 놓고 자세만 비교할 수가 없다.
-  //
-  // 2026-11-18 효성님이 참고 사진을 준 뒤 결이 'woodcut' 에서 올드스쿨
-  // 타투로 바뀌었다. 점묘 음영이 그 결의 핵심이라 같이 본다.
+test('평면 2색 로고 마크로 적는다 — 타투라고 적으면 음영이 따라온다', () => {
+  // ⚠️ 2026-11-18 효성님: "너무 실사 같아. 로고이니 단순화를 좀 해야겠지"
+  //    '타투' 가 음영의 입구였다. 타투를 부르면 모델이 깃털과 그라데이션을
+  //    같이 가져온다. '점묘' 도 마찬가지다 — 부드러운 음영을 만든다.
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose).toLowerCase();
-    assert.ok(p.includes('tattoo'), `${pose.key}: 타투 결이 빠졌습니다`);
-    assert.ok(p.includes('stippled'), `${pose.key}: 점묘 음영이 빠졌습니다`);
-    assert.ok(p.includes('black background'), `${pose.key}: 검정 바탕이 빠졌습니다`);
+    assert.ok(p.includes('flat two-colour vector logo mark'), `${pose.key}: 평면 2색 로고라는 말이 빠졌습니다`);
+    assert.ok(p.includes('solid black'), `${pose.key}: 검정 바탕이 빠졌습니다`);
+    for (const w of ['tattoo', 'stippled', 'gradient', 'shading', 'engraving']) {
+      assert.ok(!p.includes(w), `${pose.key}: "${w}" 가 음영을 불러옵니다`);
+    }
+  }
+});
+
+test('값이 둘뿐이라고 적는다 — 색을 막는 것보다 세다', () => {
+  // ⚠️ #98 의 '급강하' 가 컬러로, #99 의 '정면' 이 빨간 목으로 샜다.
+  //    제비의 빨간 목은 모델이 세게 쥔 지식이라 색을 막는 말로는 안 빠진다.
+  //    중간 톤이 없다고 적으면 음영도 색도 같이 못 들어온다.
+  for (const pose of LOGO_POSES) {
+    const p = logoPrompt(pose).toLowerCase();
+    assert.ok(p.includes('only those two values'), `${pose.key}: 값이 둘뿐이라는 말이 빠졌습니다`);
   }
 });
 
@@ -8304,24 +8314,15 @@ test('깃털을 한 올씩 그리지 않는다 — 큰 덩어리로 적는다', 
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose).toLowerCase();
     assert.ok(/large simple shapes|large shapes/.test(p), `${pose.key}: 큰 덩어리로 그리라는 말이 빠졌습니다`);
-    assert.ok(p.includes('bold heavy outline'), `${pose.key}: 굵은 외곽선이 빠졌습니다`);
+    assert.ok(/bold even outline|heavy outline/.test(p), `${pose.key}: 굵은 외곽선이 빠졌습니다`);
   }
 });
 
-test('단색을 두 번 못 박는다 — 색이 샌 적이 있다', () => {
-  // ⚠️ #98 의 '급강하' 가 빨강·파랑으로 나왔다. 한 번만 적으면 샌다.
+test('화면을 꽉 채운다 — 여백을 비우라고 했더니 새가 작아졌다', () => {
+  // ⚠️ #99 에서 새가 작게 나왔다. "아래 여백을 비워라" 를 적은 탓이다.
+  //    YAPORTS 자리는 SVG 로 얹을 때 만들면 된다. 뽑을 때는 꽉 채운다.
   for (const pose of LOGO_POSES) {
-    const p = logoPrompt(pose).toLowerCase();
-    assert.ok(p.includes('single warm off-white ink'), `${pose.key}: 단색 잉크가 빠졌습니다`);
-    assert.ok(p.includes('one ink and one background'), `${pose.key}: 단색을 한 번 더 박아야 합니다`);
-  }
-});
-
-test('아래에 글자 자리를 비운다', () => {
-  // YAPORTS 를 SVG 로 얹을 자리다. 제비가 화면을 꽉 채우면 글자가
-  // 들어갈 데가 없어 다시 뽑아야 한다.
-  for (const pose of LOGO_POSES) {
-    assert.ok(/below/.test(logoPrompt(pose)), `${pose.key}: 아래 여백이 빠졌습니다`);
+    assert.ok(/fills most/.test(logoPrompt(pose)), `${pose.key}: 꽉 채우라는 말이 빠졌습니다`);
   }
 });
 
@@ -8337,7 +8338,7 @@ test('자세가 앞, 판화 결이 뒤에 온다', () => {
   //    판화 결을 뒤에 둬야 장마다 결이 유지된다.
   for (const pose of LOGO_POSES) {
     const p = logoPrompt(pose);
-    assert.ok(p.indexOf('swallow') < p.indexOf('tattoo'), `${pose.key}: 순서가 뒤집혔습니다`);
+    assert.ok(p.indexOf('swallow') < p.indexOf('flat two-colour'), `${pose.key}: 순서가 뒤집혔습니다`);
   }
 });
 

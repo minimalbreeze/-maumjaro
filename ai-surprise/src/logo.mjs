@@ -46,21 +46,27 @@ import { log } from './utils/logger.mjs';
  * 나란히 놓고 자세만 비교할 수가 없다.
  */
 const PRINT =
-  'drawn in the old-school traditional tattoo style, ' +
-  // ⚠️ 2026-11-18 실행 #98 에서 **자연사 삽화**가 나왔다. 깃털을 한 올씩
-  //    그려 놓아서 48px 로 줄이면 전부 검은 얼룩이 된다. 로고는 큰 덩어리
-  //    몇 개로 읽혀야 한다. 금지가 아니라 **무엇을 그릴지**로 적는다.
-  'the whole bird built from a few large simple shapes with a bold heavy ' +
-  'outline, each wing one clean solid mass, light stippled dots used sparingly ' +
-  'as shading inside those masses, ' +
-  // ⚠️ #98 의 '급강하' 가 빨강·파랑으로 샜다. 단색을 한 번 더 못 박는다.
-  'every shape printed in the same single warm off-white ink on a solid black ' +
-  'background, one ink and one background colour only, flat graphic shapes ' +
-  'with no gradient, ' +
-  'the emblem sits centered with an even black margin on all four sides and ' +
-  'open black space below it, ' +
-  // 작은 크기가 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장도 #98 의
-  // 여섯 장도 전부 여기서 졌다.
+  // ⚠️ 2026-11-18 효성님: "너무 실사 같아. 로고이니 단순화를 좀 해야겠지"
+  //    맞는 말이었다. **'타투' 라고 적은 것이 음영의 입구였다** — 타투를
+  //    부르면 모델이 깃털과 그라데이션을 같이 가져온다. 참고 사진의 점묘는
+  //    아주 가벼운데, 모델에게 '점묘' 라고 하면 부드러운 음영을 만든다.
+  //    그래서 결을 **평면 2색 로고 마크**로 바꿨다. 타투라는 낱말을 뺀다.
+  'a flat two-colour vector logo mark, warm off-white on solid black, ' +
+  // 금지가 아니라 무엇을 그릴지로 적는다(CLAUDE.md 13번). "깃털을 그리지
+  // 마라" 가 아니라 "날개는 끊기지 않은 한 덩어리" 라고 적는다.
+  'the whole bird built from a few large simple shapes with one bold even ' +
+  'outline, each wing a single unbroken area of ink, its outer edge cut into ' +
+  'three or four large notches, ' +
+  // ⚠️ 값이 둘뿐이라고 적는다. #98 의 '급강하' 가 컬러로, #99 의 '타투정면'
+  //    이 빨간 목으로 샜다. 색을 막는 것보다 **값이 둘뿐**이라고 적는 쪽이
+  //    세다 — 중간 톤이 없으면 음영도 못 들어온다.
+  'every area is either solid ink or solid black and there are only those two ' +
+  'values in the whole image, each edge clean and hard, ' +
+  // ⚠️ #99 에서 새가 작게 나왔다. "아래 여백을 비워라" 를 적은 탓이다.
+  //    글자 자리는 SVG 에서 만들면 된다. 여기서는 꽉 채우게 한다.
+  'the mark fills most of the square frame and sits centered, ' +
+  // 작은 크기가 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장도 #98·#99
+  // 의 열두 장도 전부 여기서 졌다.
   'the bird still reads as three or four large shapes when the whole image is ' +
   'shrunk to the size of a fingernail';
 
@@ -81,8 +87,8 @@ const PRINT =
  */
 export const LOGO_POSES = [
   {
-    key: '타투정면',
-    why: '참고 사진에 가장 가까운 자세. 날개 두 장을 활짝 펴고 몸을 비튼다.',
+    key: '정면',
+    why: '날개 두 장을 활짝 편 대칭 자세. 작게 줄여도 방향이 안 헷갈린다.',
     subject:
       'a swallow in flight seen from the side with its body turned toward the ' +
       'viewer, both wings spread wide and open, one wing sweeping up and back ' +
@@ -91,7 +97,7 @@ export const LOGO_POSES = [
   },
   {
     key: '상승',
-    why: '위로 솟는 자세. 아래에 글자 자리가 가장 넓게 남는다.',
+    why: '위로 솟는 자세. 꼬리가 길게 늘어져 제비라는 신호가 세다.',
     subject:
       'a swallow climbing upward with both wings spread wide and open, the ' +
       'wing tips pointing up and back, a full rounded breast, a deeply forked ' +
@@ -105,28 +111,21 @@ export const LOGO_POSES = [
       'head low and the deeply forked tail open above',
   },
   {
-    key: '원테두리',
-    why: '얇은 원 테두리 안에 넣은 엠블럼. 프로필이 원형이라 맞아떨어진다.',
-    subject:
-      'a swallow in flight with both wings spread wide, a full rounded breast ' +
-      'and a deeply forked tail, enclosed in a thin circular frame drawn in the ' +
-      'same ink',
-  },
-  {
     key: '단순',
     why: '가장 적은 획. 24px 에서 살아남는지를 보는 안이다.',
     subject:
       'a bold simple swallow in flight with both wings spread, drawn with a ' +
-      'clean heavy outline and almost no shading so that only three shapes ' +
-      'read at a glance: the two open wings and the forked tail',
+      'clean heavy outline so that only three shapes read at a glance: ' +
+      'the two open wings and the forked tail',
   },
   {
-    key: '점묘',
-    why: '점묘 음영을 가장 세게 준 안. 판화 느낌이 제일 진하다.',
+    key: '실루엣',
+    why: '음영을 아예 안 쓴 안. 가장 단순해서 24px 에서 가장 세다.',
     subject:
-      'a swallow in flight with both wings spread wide, the wings and breast ' +
-      'filled with dense stippled dots so the ink reads as carved texture, a ' +
-      'deeply forked tail behind',
+      'a swallow in flight shown as one flat silhouette, both wings spread ' +
+      'wide and the deeply forked tail open behind, the whole bird a single ' +
+      'solid area of ink with only the wing notches and the tail fork cut ' +
+      'into its outline',
   },
 ];
 
@@ -155,7 +154,7 @@ export async function cmdLogo(flags) {
 
   const per = modelFor(modelKey).usdPerImage;
   log.section(`🐦 야포츠 로고 후보  |  ${poses.length}장  |  ${modelKey}`);
-  log.info('검정 바탕 · 판화 · 공을 문 제비. 글자는 여기서 안 넣습니다.');
+  log.info('검정 바탕 · 평면 2색 · 단순화한 제비. 글자는 여기서 안 넣습니다.');
   log.info('YAPORTS 는 뽑힌 모양을 보고 SVG 로 얹습니다 — 모델이 쓰면 깨집니다.');
   for (const p of poses) log.raw(`  · ${p.key} — ${p.why}`);
   log.info(`예상 비용 약 $${Math.round(poses.length * per * 10000) / 10000}`);
@@ -205,9 +204,9 @@ export async function cmdLogo(flags) {
   fs.writeFileSync(
     path.join(outDir, '보는-법.md'),
     [
-      '# 야포츠 로고 후보 — 제비',
+      '# 야포츠 로고 후보 — 제비 (평면 2색)',
       '',
-      '검정 바탕 · 판화 · 입에 야구공(박씨 대신). **글자는 들어 있지 않습니다.**',
+      '검정 바탕 · 평면 2색 로고 마크. **글자는 들어 있지 않습니다.**',
       'YAPORTS 는 고른 모양을 SVG 로 다시 그린 뒤 얹습니다.',
       '',
       `쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`,
@@ -216,8 +215,8 @@ export async function cmdLogo(flags) {
       '',
       '- **손톱만 하게 줄여도 제비로 읽히는가.** 로고의 유일한 절대 조건이다',
       '- 비행기나 사람으로 보이지 않는가 (손으로 그렸을 때 여섯 번 다 그렇게 됐다)',
-      '- 공이 부리에 **붙어** 있는가, 따로 떠 있지 않은가',
-      '- 아래에 YAPORTS 가 들어갈 자리가 비어 있는가',
+      '- **실사 삽화로 안 보이는가.** 깃털·음영·중간 톤이 들어오면 로고가 아니다',
+      '- 참고한 가게 간판과 자세가 다른가 (공을 뺐으므로 여기가 더 중요해졌다)',
       '',
       '## 자세',
       '',
