@@ -18,6 +18,9 @@ const pick = (f, d) => { const i = argv.indexOf(f); return i >= 0 && argv[i + 1]
 const VOL = pick('--vol', '').replace(/[^\w-]/g, '');
 const BGM = VOL ? join(ROOT, 'bgm', VOL) : join(ROOT, 'bgm');
 const INTRO = pick('--intro', '가을 저녁, 창이 큰 어느 로비에서.');
+/* 해시태그. 집마다 색이 다르면(빗소리·현악 같은) --tags 로 바꾼다.
+ * 앞의 세 개는 채널 공통이라 고정하고, 뒤만 갈아 끼운다. */
+const TAGS = pick('--tags', '#작업할때듣는음악 #재즈 #lofi #공부할때듣는음악');
 
 const list = JSON.parse(readFileSync(join(BGM, '목록.json'), 'utf8'));
 const tracks = (list.tracks || []).filter((t) => existsSync(join(BGM, t.file)));
@@ -73,6 +76,6 @@ if (credits.length) {
   out.push('');
 }
 out.push('minimalbreeze');
-out.push('#플레이리스트 #playlist #작업할때듣는음악 #재즈 #lofi #공부할때듣는음악');
+out.push(`#플레이리스트 #playlist ${TAGS}`);
 
 console.log(out.join('\n'));
