@@ -1,0 +1,24 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1198566.mp3",
+      "title": "O Little Town of Bethlehem",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "O Little Town of Bethlehem — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198566",
+      "source": "https://www.jamendo.com/track/1198566"
+    },
+    {
+      "file": "jamendo-1198565.mp3",
+      "title": "O Come O Come Emmanuel",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "O Come O Come Emmanuel — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198565",
+      "source": "https://www.jamendo.com/track/1198565"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": []
+}
