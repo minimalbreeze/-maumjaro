@@ -1,0 +1,244 @@
+/**
+ * 야포츠 채널 로고 후보 뽑기.
+ *
+ * 2026-11-18 효성님이 방향을 정했다 — "검정 바탕에 판화로 찍은 듯한 제비,
+ * 입에는 박씨 대신 작은 야구공. 그 아래 YAPORTS."
+ *
+ * ⚠️ **글자는 모델에게 맡기지 않는다.** 로고에서 가장 흔한 실패가 그것이다.
+ *    확산 모델은 글자를 그림으로 그리기 때문에 YAPORTS 가 YAPQRTS 나
+ *    YAP0RT5 로 나온다. 그래서 여기서는 **제비만** 뽑고, YAPORTS 는
+ *    `스포츠영상/로고/sheet.html` 에서 SVG 로 얹는다. 자간·굵기를 나중에
+ *    고칠 수 있다는 이점도 따라온다.
+ *
+ * ⚠️ 왜 이 파일이 생겼나. SVG 로 손수 여섯 번 그렸는데 사람·별·비행기·가위가
+ *    나왔다(2026-11-18). 좌표를 글로 쓰고 결과를 보는 되풀이로는 새 실루엣이
+ *    안 맞는다. 모양을 모델에게 받아서, 쓸 만한 것을 보고 SVG 로 다시 그린다.
+ *    최종 로고는 벡터여야 한다 — 유튜브 프로필·워터마크·썸네일이 서로 다른
+ *    크기를 쓰므로 래스터 한 장으로는 못 버틴다.
+ *
+ * ⚠️ 프롬프트에 금지를 적지 않는다(CLAUDE.md 13번). flux-schnell·dev 는
+ *    negative_prompt 가 없어서 "no text" 가 **긍정 프롬프트에 그대로 붙는다** —
+ *    모델은 그 낱말을 보고 글자를 그린다. 무엇을 그릴지로만 적는다.
+ *
+ * ⚠️ 렌즈 말을 쓰지 않는다(CLAUDE.md 14번). 판화에는 초점이 없다.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { createClient as createReplicate, modelFor } from './assets/replicate.mjs';
+import { log } from './utils/logger.mjs';
+
+/**
+ * 판화·타투 톤.
+ *
+ * 2026-11-18 효성님이 참고 사진을 줬다 — 검정 철판에 흰 잉크로 찍은 제비.
+ * 보고 나서 목표가 분명해졌다. 내가 쫓던 "진짜 제비 실루엣"이 아니라
+ * **올드스쿨 타투 제비**다. 날개 두 장을 다 펼치고, 가슴이 통통하고,
+ * 점묘로 음영을 넣은 그 모양.
+ *
+ * ⚠️ **그 사진은 'SEASON COFFEE&BAKE' 라는 가게의 실제 간판이다.**
+ *    결(검정 바탕·흰 잉크·타투 판화·아래 두 줄 글자)만 가져오고 제비 모양은
+ *    우리 것으로 뽑는다. 남의 로고를 베끼지 않는다 — 로또·책 규칙과 같은 선이다.
+ *    그리고 우리에게는 저쪽에 없는 것이 하나 있다. **입에 문 야구공**이다.
+ *
+ * 여섯 장이 서로 다른 것은 **자세**뿐이고 결은 같아야 한다. 결이 흔들리면
+ * 나란히 놓고 자세만 비교할 수가 없다.
+ */
+const PRINT =
+  // ⚠️ 2026-11-18 효성님: "너무 실사 같아. 로고이니 단순화를 좀 해야겠지"
+  //    맞는 말이었다. **'타투' 라고 적은 것이 음영의 입구였다** — 타투를
+  //    부르면 모델이 깃털과 그라데이션을 같이 가져온다. 참고 사진의 점묘는
+  //    아주 가벼운데, 모델에게 '점묘' 라고 하면 부드러운 음영을 만든다.
+  //    그래서 결을 **평면 2색 로고 마크**로 바꿨다. 타투라는 낱말을 뺀다.
+  'a flat two-colour vector logo mark, warm off-white on solid black, ' +
+  // 금지가 아니라 무엇을 그릴지로 적는다(CLAUDE.md 13번). "깃털을 그리지
+  // 마라" 가 아니라 "날개는 끊기지 않은 한 덩어리" 라고 적는다.
+  'the whole bird built from a few large simple shapes with one bold even ' +
+  'outline, each wing a single unbroken area of ink, its outer edge cut into ' +
+  'three or four large notches, ' +
+  // ⚠️ 값이 둘뿐이라고 적는다. #98 의 '급강하' 가 컬러로, #99 의 '타투정면'
+  //    이 빨간 목으로 샜다. 색을 막는 것보다 **값이 둘뿐**이라고 적는 쪽이
+  //    세다 — 중간 톤이 없으면 음영도 못 들어온다.
+  'every area is either solid ink or solid black and there are only those two ' +
+  'values in the whole image, each edge clean and hard, ' +
+  // ⚠️ #99 에서 새가 작게 나왔다. "아래 여백을 비워라" 를 적은 탓이다.
+  //    글자 자리는 SVG 에서 만들면 된다. 여기서는 꽉 채우게 한다.
+  'the mark fills most of the square frame and sits centered, ' +
+  // 작은 크기가 로고의 유일한 절대 조건이다. 손으로 그린 여섯 장도 #98·#99
+  // 의 열두 장도 전부 여기서 졌다.
+  'the bird still reads as three or four large shapes when the whole image is ' +
+  'shrunk to the size of a fingernail';
+
+// ⚠️ 2026-11-18 효성님: "야구공은 빼자." 입에 물린 공을 뺐다.
+//    손톱만 한 크기에서 공이 먼저 뭉개지고, 참고 사진처럼 제비만 있는 쪽이
+//    깔끔하다. 되돌리려면 자세마다 subject 뒤에 공 문구를 다시 붙이면 된다 —
+//    공을 적을 때는 솔기까지 적어야 한다. 안 적으면 그냥 흰 점이 된다.
+//
+// ⚠️ 공을 빼면 참고한 가게 간판과 **더 닮아진다.** 그래서 제비 자세가 저쪽과
+//    달라야 한다는 것이 더 중요해졌다. 고를 때 그걸 본다.
+
+/**
+ * 자세만 다른 여섯 가지.
+ *
+ * 손으로 그릴 때 어디서 무너졌는지를 그대로 후보로 바꿨다 — 위에서 본 형태는
+ * 사람이 됐고, 수평 측면은 비행기가 됐다. 어느 쪽이 모델에게서 살아남는지를
+ * 본다.
+ */
+export const LOGO_POSES = [
+  {
+    key: '정면',
+    why: '날개 두 장을 활짝 편 대칭 자세. 작게 줄여도 방향이 안 헷갈린다.',
+    subject:
+      'a swallow in flight seen from the side with its body turned toward the ' +
+      'viewer, both wings spread wide and open, one wing sweeping up and back ' +
+      'while the other reaches forward across the body, a full rounded breast, ' +
+      'a deeply forked tail fanned out behind',
+  },
+  {
+    key: '상승',
+    why: '위로 솟는 자세. 꼬리가 길게 늘어져 제비라는 신호가 세다.',
+    subject:
+      'a swallow climbing upward with both wings spread wide and open, the ' +
+      'wing tips pointing up and back, a full rounded breast, a deeply forked ' +
+      'tail streaming below',
+  },
+  {
+    key: '급강하',
+    why: '내려오는 자세. 덩어리가 하나로 뭉쳐 작은 크기에 강하다.',
+    subject:
+      'a swallow diving downward with both wings spread and swept back, the ' +
+      'head low and the deeply forked tail open above',
+  },
+  {
+    key: '단순',
+    why: '가장 적은 획. 24px 에서 살아남는지를 보는 안이다.',
+    subject:
+      'a bold simple swallow in flight with both wings spread, drawn with a ' +
+      'clean heavy outline so that only three shapes read at a glance: ' +
+      'the two open wings and the forked tail',
+  },
+  {
+    key: '실루엣',
+    why: '음영을 아예 안 쓴 안. 가장 단순해서 24px 에서 가장 세다.',
+    subject:
+      'a swallow in flight shown as one flat silhouette, both wings spread ' +
+      'wide and the deeply forked tail open behind, the whole bird a single ' +
+      'solid area of ink with only the wing notches and the tail fork cut ' +
+      'into its outline',
+  },
+];
+
+/** 로고 후보 한 장의 프롬프트. 자세를 **앞**에, 판화 결을 뒤에 둔다. */
+export function logoPrompt(pose) {
+  // ⚠️ 자리가 중요하다(CLAUDE.md 13번). 뒤에 붙은 고정 문구가 앞말을
+  //    이기므로, 바뀌면 안 되는 **판화 결**을 뒤에 둔다. 자세는 장마다
+  //    다르니 앞이다.
+  return `${pose.subject}. ${PRINT}.`;
+}
+
+export async function cmdLogo(flags) {
+  const modelKey = String(flags.model || 'dev');
+  modelFor(modelKey); // 모르는 이름이면 돈 쓰기 전에 여기서 막힌다
+
+  const only = String(flags.only || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const poses = only.length ? LOGO_POSES.filter((p) => only.includes(p.key)) : LOGO_POSES;
+  if (!poses.length) {
+    log.error(`그런 자세가 없습니다: ${only.join(', ')}`);
+    log.info(`쓸 수 있는 것: ${LOGO_POSES.map((p) => p.key).join(', ')}`);
+    process.exit(1);
+  }
+
+  const per = modelFor(modelKey).usdPerImage;
+  log.section(`🐦 야포츠 로고 후보  |  ${poses.length}장  |  ${modelKey}`);
+  log.info('검정 바탕 · 평면 2색 · 단순화한 제비. 글자는 여기서 안 넣습니다.');
+  log.info('YAPORTS 는 뽑힌 모양을 보고 SVG 로 얹습니다 — 모델이 쓰면 깨집니다.');
+  for (const p of poses) log.raw(`  · ${p.key} — ${p.why}`);
+  log.info(`예상 비용 약 $${Math.round(poses.length * per * 10000) / 10000}`);
+
+  if (flags['dry-run']) {
+    log.raw('');
+    log.info('미리보기입니다. 돈을 쓰지 않고 여기서 멈춥니다.');
+    log.raw(`  ${logoPrompt(poses[0]).slice(0, 200)}…`);
+    return;
+  }
+
+  const token = process.env.REPLICATE_API_TOKEN;
+  if (!token) {
+    log.error('REPLICATE_API_TOKEN 이 없습니다.');
+    process.exit(1);
+  }
+
+  const outDir = path.join(process.cwd(), 'preview', '로고');
+  fs.mkdirSync(outDir, { recursive: true });
+  const api = createReplicate({ token });
+
+  let spent = 0;
+  const made = [];
+  const urls = [];
+  for (const [i, pose] of poses.entries()) {
+    log.step(`${i + 1}/${poses.length} — ${pose.key}`);
+    try {
+      const r = await api.generate(logoPrompt(pose), {
+        modelKey,
+        // 프로필이 원형이라 정사각으로 뽑는다. 16:9 로 뽑으면 좌우가 잘린다.
+        aspectRatio: '1:1',
+      });
+      spent += r.usdEstimate ?? per;
+      const bytes = await api.download(r.url);
+      const file = `제비-${pose.key}.png`;
+      fs.writeFileSync(path.join(outDir, file), bytes);
+      made.push(file);
+      // ⚠️ 주소를 로그에 찍는다. 아티팩트는 이 컨테이너에서 못 받으므로
+      //    (Azure 가 403) 결과를 보려면 이 주소뿐이다.
+      urls.push(`${pose.key}: ${r.url}`);
+      log.raw(`    ${r.url}`);
+    } catch (e) {
+      log.error(`${pose.key}: ${e.message}`);
+    }
+  }
+
+  fs.writeFileSync(
+    path.join(outDir, '보는-법.md'),
+    [
+      '# 야포츠 로고 후보 — 제비 (평면 2색)',
+      '',
+      '검정 바탕 · 평면 2색 로고 마크. **글자는 들어 있지 않습니다.**',
+      'YAPORTS 는 고른 모양을 SVG 로 다시 그린 뒤 얹습니다.',
+      '',
+      `쓴 돈 약 $${Math.round(spent * 10000) / 10000} (추정치)`,
+      '',
+      '## 고를 때',
+      '',
+      '- **손톱만 하게 줄여도 제비로 읽히는가.** 로고의 유일한 절대 조건이다',
+      '- 비행기나 사람으로 보이지 않는가 (손으로 그렸을 때 여섯 번 다 그렇게 됐다)',
+      '- **실사 삽화로 안 보이는가.** 깃털·음영·중간 톤이 들어오면 로고가 아니다',
+      '- 참고한 가게 간판과 자세가 다른가 (공을 뺐으므로 여기가 더 중요해졌다)',
+      '',
+      '## 자세',
+      '',
+      ...poses.map((p) => `- **${p.key}** — ${p.why}`),
+      '',
+      '## 주소 (아티팩트를 못 받을 때)',
+      '',
+      ...urls.map((u) => `- ${u}`),
+    ].join('\n') + '\n',
+    'utf8'
+  );
+
+  log.raw('');
+  if (!made.length) {
+    log.error(`한 장도 만들지 못했습니다 — ${poses.length}장 모두 실패`);
+    log.info('위의 ❌ 줄에 이유가 있습니다.');
+    process.exitCode = 1;
+    return;
+  }
+  if (made.length < poses.length) {
+    log.warn(`${poses.length - made.length}장 실패 (${made.length}/${poses.length} 성공)`);
+  }
+  log.ok(`로고 후보 ${made.length}장 — preview/로고/`);
+  log.info('다음: 쓸 만한 모양을 골라 SVG 로 다시 그리고 YAPORTS 를 얹습니다.');
+}

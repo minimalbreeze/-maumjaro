@@ -2652,6 +2652,166 @@ export const 바로잡기 = [
     맞는: '킨텍스',
     이유: '글 23755. 고양 KINTEX 는 킨텍스다. 생성 때 탄텍스로 나갔다',
     글: [23755],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>최지훈 4년 67억 — FA 시장 3호 계약입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23783,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-1-6o2uy1-mwlhp0u2.jpg" alt="SSG 랜더스 최지훈 FA 4년 67억 원 계약" class="wp-image-23783"/></a><figcaption class="wp-element-caption">FA 4년 67억 원에 SSG에 잔류한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>최지훈 4년 67억 — FA 시장 3호 계약입니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23783)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>구단이 돈을 쓴 진짜 이유는 수비입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23784,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-2-6o2uyw-mwlhp417.jpg" alt="SSG 랜더스 최지훈 중견수 수비" class="wp-image-23784"/></a><figcaption class="wp-element-caption">2026시즌 외야 1,196이닝을 소화한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>구단이 돈을 쓴 진짜 이유는 수비입니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23784)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>계약금의 일부가 인천으로 갑니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23785,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/ssg-fa-4-67-3-6o2uzr-mwlhp7cx.jpg" alt="SSG 랜더스 최지훈 계약 발표" class="wp-image-23785"/></a><figcaption class="wp-element-caption">1억 원 기부 의사를 구단에 전달한 최지훈 (사진: OSEN·SSG 랜더스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>계약금의 일부가 인천으로 갑니다</h3>',
+    이유: '글 16558. 최지훈 FA 절에 OSEN 기사 사진을 넣는다 (미디어 23785)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 르브론 제임스, 그리고 문제의 광고</h2>',
+    맞는:
+      '<!-- wp:image {"id":23791,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-j9su8k-mwljyt46.jpg" alt="필라델피아 세븐티식서스 유니폼을 입은 르브론 제임스" class="wp-image-23791"/></a><figcaption class="wp-element-caption">필라델피아 세븐티식서스 유니폼을 입은 르브론 제임스 (사진: KBS 뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 르브론 제임스, 그리고 문제의 광고</h2>',
+    이유: '글 23794. 소송 당사자 사진을 광고 절 앞에 넣는다 (미디어 23791)',
+    글: [23794],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>리친청은 예선부터 올라온 8연승입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23936,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1-1-1qvufr-mwlsolpa.jpg" alt="2026 삼성화재배 결승 1국 변상일 9단" class="wp-image-23936"/></a><figcaption class="wp-element-caption">결승 1국에서 대국 중인 변상일 9단 (사진: 스포츠경향 윤은용 기자) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n<!-- wp:heading {"level":3} -->\n<h3>리친청은 예선부터 올라온 8연승입니다</h3>',
+    이유: '글 17428. 결승 1국 사진을 리친청 절 앞에 넣는다 (미디어 23936)',
+    글: [17428],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>상대전적은 5승 5패입니다</h3>',
+    맞는:
+      '<!-- wp:image {"id":23937,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1-2-1qvufr-mwlsop7z.jpg" alt="2026 삼성화재배 결승 1국 리친청 9단과 변상일 9단" class="wp-image-23937"/></a><figcaption class="wp-element-caption">결승 1국 대국 장면 (사진: 스포츠경향 윤은용 기자) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n<!-- wp:heading {"level":3} -->\n<h3>상대전적은 5승 5패입니다</h3>',
+    이유: '글 17428. 결승 1국 사진을 상대전적 절 앞에 넣는다 (미디어 23937)',
+    글: [17428],
+  },
+  {
+    틀린: '<h3>리친청은 예선부터 올라온 8연승입니다</h3>',
+    맞는:
+      '<h3>리친청은 통합예선부터 9연승입니다</h3>',
+    이유: '글 17428. 1국까지 이겨 9연승이 됐다',
+    글: [17428],
+  },
+  {
+    틀린: '이번 대회를 <strong>예선부터 치러 8연승</strong>으로 결승까지 왔습니다. 리친청 9단 역시 삼성화재배 첫 결승입니다.',
+    맞는:
+      '이번 대회를 <strong>통합예선부터 치르며 결승 1국까지 한 번도 지지 않았습니다 — 9연승</strong>입니다. 리친청 9단 역시 삼성화재배 첫 결승이고, 지난해 북해신역배 준우승에 이어 생애 첫 메이저 세계대회 우승까지 한 걸음을 남겼습니다.',
+    이유: '글 17428. 1국 승리까지 포함해 9연승으로 고치고 북해신역배 준우승을 더한다',
+    글: [17428],
+  },
+  {
+    틀린: '<h3>상대전적은 5승 5패입니다</h3>',
+    맞는:
+      '<h3>상대전적은 변상일 5승 6패로 뒤집혔습니다</h3>',
+    이유: '글 17428. 1국 패배로 상대전적이 바뀌었다',
+    글: [17428],
+  },
+  {
+    틀린: '두 기사의 역대 상대전적은 <strong>변상일 5승, 리친청 5패로 정확히 반반</strong>입니다. 어느 쪽으로도 기울지 않은 숫자라, 18일 1국의 흐름이 그대로 3번기 전체를 좌우할 가능성이 큽니다.',
+    맞는:
+      '1국 전까지 두 기사의 상대전적은 5승 5패로 정확히 반반이었습니다. 이 패배로 <strong>변상일이 5승 6패로 다시 열세</strong>가 됐습니다.',
+    이유: '글 17428. 1국 결과로 상대전적을 갱신한다',
+    글: [17428],
+  },
+  {
+    틀린: '세 대국 모두 <strong>낮 12시 시작</strong>이라 점심시간과 겹칩니다.',
+    맞는:
+      '<strong>2국은 11월 19일 낮 12시</strong>에 시작합니다. 점심시간과 겹칩니다.',
+    이유: '글 17428. 1국이 끝났으므로 다음 대국을 가리킨다',
+    글: [17428],
+  },
+  {
+    틀린: '이 절은 2026년 11월 17일 4강 종료 시점 기준입니다. 대국 결과가 나오는 대로 갱신합니다.',
+    맞는:
+      '이 절은 2026년 11월 18일 결승 1국 종료 시점 기준입니다. 2국 결과가 나오는 대로 갱신합니다.',
+    이유: '글 17428. 기준 시점을 1국 종료로 옮긴다',
+    글: [17428],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 홍창기와 전병우, 두 사람의 현재</h2>',
+    맞는:
+      '<!-- wp:image {"id":23956,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-fyc6m-mwm4qug7.jpg" alt="KIA 타이거즈 FA 외부 영입" class="wp-image-23956"/></a><figcaption class="wp-element-caption">사진: 엑스포츠뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 홍창기와 전병우, 두 사람의 현재</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23956)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 숫자로 보는 KIA의 2번 타순 고민</h2>',
+    맞는:
+      '<!-- wp:image {"id":23960,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-1-el9ftn-mwm4zpqm.jpg" alt="2027 KBO FA 시장" class="wp-image-23960"/></a><figcaption class="wp-element-caption">사진: 오마이뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 숫자로 보는 KIA의 2번 타순 고민</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23960)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 KIA에 맞는 퍼즐 조각인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":23961,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-fa-2-el9fui-mwm4zt4b.jpg" alt="2027 KBO FA 시장" class="wp-image-23961"/></a><figcaption class="wp-element-caption">사진: 스포츠서울 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 KIA에 맞는 퍼즐 조각인가</h2>',
+    이유: '글 23943. 기사 사진을 넣는다 (미디어 23961)',
+    글: [23943],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 먹튀에서 핵심 전력으로</h2>',
+    맞는:
+      '<!-- wp:image {"id":23955,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-10p1ap-mwm4ot5k.jpg" alt="보스턴 셀틱스 폴 조지" class="wp-image-23955"/></a><figcaption class="wp-element-caption">사진: 루키 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 먹튀에서 핵심 전력으로</h2>',
+    이유: '글 23947. 기사 사진을 넣는다 (미디어 23955)',
+    글: [23947],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 올해 수상자들, 누가 눈에 띄나</h2>',
+    맞는:
+      '<!-- wp:image {"id":23958,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-2-ov09ri-mwm4xlgn.jpg" alt="2026 KBO 수비상 3루수 김도영" class="wp-image-23958"/></a><figcaption class="wp-element-caption">사진: 스타뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 올해 수상자들, 누가 눈에 띄나</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23958)',
+    글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 숫자로 보는 2026 수비상</h2>',
+    맞는:
+      '<!-- wp:image {"id":23957,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-1-ov09qn-mwm4xhia.jpg" alt="2026 KBO 수비상" class="wp-image-23957"/></a><figcaption class="wp-element-caption">사진: KBS 뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 숫자로 보는 2026 수비상</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23957)',
+    글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 올해 수비상에서 주목할 지점</h2>',
+    맞는:
+      '<!-- wp:image {"id":23959,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-3-ov09sd-mwm4xoab.jpg" alt="2026 KBO 수비상 좌익수 에레디아" class="wp-image-23959"/></a><figcaption class="wp-element-caption">사진: 스타뉴스 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 올해 수비상에서 주목할 지점</h2>',
+    이유: '글 23951. 기사 사진을 넣는다 (미디어 23959)',
+    글: [23951],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 최민정과 동료들의 목소리</h2>',
+    맞는:
+      '<!-- wp:image {"id":23962,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-19dpk7-mwm51xu8.jpg" alt="쇼트트랙 최민정 목동 미디어데이" class="wp-image-23962"/></a><figcaption class="wp-element-caption">사진: 스포츠조선 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 최민정과 동료들의 목소리</h2>',
+    이유: '글 23969. 미디어데이 사진을 넣는다 (미디어 23962)',
+    글: [23969],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📊 시즌 초반 성적으로 보는 최민정의 현재</h2>',
+    맞는:
+      '<!-- wp:image {"id":23963,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-19dpk8-mwm51zsq.jpg" alt="쇼트트랙 최민정" class="wp-image-23963"/></a><figcaption class="wp-element-caption">사진: 스포츠조선 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📊 시즌 초반 성적으로 보는 최민정의 현재</h2>',
+    이유: '글 23969. 미디어데이 사진을 넣는다 (미디어 23963)',
+    글: [23969],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시

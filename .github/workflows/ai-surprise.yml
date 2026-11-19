@@ -38,6 +38,7 @@ on:
           - '스포츠 분석 — 완성본 (그림 + 목소리 + 영상 · 약 $0.6)'
           - '화풍 미리보기 (그림 6장만 · 약 $0.1)'
           - '화풍 후보 비교 (같은 장면 네 그림체 · 약 $0.2)'
+          - '로고 후보 뽑기 (야포츠 채널 로고 · 검정 판화 제비 · 약 $0.15)'
           - '인물 시트 만들기 (사진을 참조로 얼굴 · 약 $0.3)'
           - '사진을 지브리로 (받아 둔 사진을 그대로 바꿔 봅니다 · 장당 약 $0.05)'
           - '사진 살펴보기 (워터마크가 있는지 눈으로 봅니다 · 돈 안 듦)'
@@ -231,7 +232,7 @@ jobs:
           echo "GOOGLE_TTS_API_KEY 등록되어 있습니다. (값은 출력하지 않습니다)"
 
       - name: 이미지 토큰이 등록되어 있는지 확인
-        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '미리보기') || contains(inputs.mode, '인물 시트') }}
+        if: ${{ contains(inputs.mode, '그림') || contains(inputs.mode, '완성본') || contains(inputs.mode, '미리보기') || contains(inputs.mode, '인물 시트') || contains(inputs.mode, '로고') }}
         env:
           REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
         run: |
@@ -453,6 +454,12 @@ jobs:
               echo "기획 파일의 people 에 적힌 사진 주소를 참조로 얼굴을 만듭니다."
               echo "사진은 Replicate 이 주소에서 직접 받아 갑니다 — 저장소에 남지 않습니다."
               node src/main.mjs portrait --plan="$IN_SPORTS_PLAN"
+              ;;
+            *'로고 후보 뽑기'*)
+              # 검정 바탕 · 판화 · 입에 야구공을 문 제비를 자세별로 뽑는다.
+              # 글자(YAPORTS)는 넣지 않는다 — 확산 모델이 쓰면 깨진다.
+              # 고른 모양을 보고 SVG 로 다시 그려 글자를 얹는다.
+              node src/main.mjs logo --model=dev
               ;;
             *'화풍 후보 비교'*)
               # 같은 장면을 그림체만 바꿔 네 장 뽑는다. 장면이 같아야
