@@ -95,6 +95,10 @@ const COPYRIGHTED_SONGS = [
   'blue christmas', 'feliz navidad', 'last christmas', 'all i want for christmas',
   'sleigh ride', 'holly jolly christmas', 'little drummer boy', 'do you hear what i hear',
   "it's the most wonderful time", 'its the most wonderful time', 'mary did you know',
+  /* 2026-11-19. 캐럴 집을 다시 보다가 걸렸다. 제목이 전통 캐럴처럼
+   * 보여도 20세기 작품인 것들이다. 1946년 작 petit papa noël 이 Jamendo
+   * 크리스마스 태그 상위에 그대로 올라와 있다. */
+  'petit papa noel', 'petit papa noël',
   // 그 밖의 유명 표준곡
   'somewhere over the rainbow', 'what a wonderful world', 'my way', 'moon river',
   /* 재즈 표준곡. 2026-11-16 에 7집 후보로 Yardbird Suite(찰리 파커, 1946)가

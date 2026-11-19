@@ -98,6 +98,114 @@
       "license": "CC BY",
       "credit": "Canción de Doménica González — Doménica González (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1416988",
       "source": "https://www.jamendo.com/track/1416988"
+    },
+    {
+      "file": "jamendo-2180493.mp3",
+      "title": "Promises",
+      "artist": "zero-project",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Promises — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2180493",
+      "source": "https://www.jamendo.com/track/2180493"
+    },
+    {
+      "file": "jamendo-1198566.mp3",
+      "title": "O Little Town of Bethlehem",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "O Little Town of Bethlehem — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198566",
+      "source": "https://www.jamendo.com/track/1198566"
+    },
+    {
+      "file": "jamendo-1559903.mp3",
+      "title": "River",
+      "artist": "Yakov Golman",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "River — Yakov Golman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1559903",
+      "source": "https://www.jamendo.com/track/1559903"
+    },
+    {
+      "file": "jamendo-1559886.mp3",
+      "title": "Japan",
+      "artist": "Yakov Golman",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Japan — Yakov Golman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1559886",
+      "source": "https://www.jamendo.com/track/1559886"
+    },
+    {
+      "file": "jamendo-1604949.mp3",
+      "title": "Missing",
+      "artist": "zero-project",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Missing — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1604949",
+      "source": "https://www.jamendo.com/track/1604949"
+    },
+    {
+      "file": "jamendo-801977.mp3",
+      "title": "That's what I'll always love",
+      "artist": "Razvan Veina",
+      "recorded": "2011",
+      "license": "CC BY",
+      "credit": "That's what I'll always love — Razvan Veina (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/801977",
+      "source": "https://www.jamendo.com/track/801977"
+    },
+    {
+      "file": "jamendo-1340393.mp3",
+      "title": "1 Le Double Secret1",
+      "artist": "GSE",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "1 Le Double Secret1 — GSE (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1340393",
+      "source": "https://www.jamendo.com/track/1340393"
+    },
+    {
+      "file": "jamendo-1340392.mp3",
+      "title": "2 LE BAIN TURC",
+      "artist": "GSE",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "2 LE BAIN TURC — GSE (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1340392",
+      "source": "https://www.jamendo.com/track/1340392"
+    },
+    {
+      "file": "jamendo-1687316.mp3",
+      "title": "Jours de pluie",
+      "artist": "Ehma",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Jours de pluie — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687316",
+      "source": "https://www.jamendo.com/track/1687316"
+    },
+    {
+      "file": "jamendo-1214517.mp3",
+      "title": "Thank U Two",
+      "artist": "1000turtles",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Thank U Two — 1000turtles (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1214517",
+      "source": "https://www.jamendo.com/track/1214517"
+    },
+    {
+      "file": "jamendo-1687396.mp3",
+      "title": "Les parapluies",
+      "artist": "Ehma",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Les parapluies — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687396",
+      "source": "https://www.jamendo.com/track/1687396"
+    },
+    {
+      "file": "jamendo-1198565.mp3",
+      "title": "O Come O Come Emmanuel",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "O Come O Come Emmanuel — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198565",
+      "source": "https://www.jamendo.com/track/1198565"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
