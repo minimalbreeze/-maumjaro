@@ -2828,6 +2828,14 @@ export const 바로잡기 = [
       '<!-- wp:heading {"level":3} -->\n<h3>아직 안 풀린 내부 FA — LG와 KIA가 넷</h3>',
     이유: '글 16558. 내부 FA 넷 사진을 넣는다 (미디어 25518)',
     글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 허구연 총재는 어떤 인물인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":25545,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kbo-12qx4c-mwo43eh1.jpg" alt="허구연 KBO 총재" class="wp-image-25545"/></a><figcaption class="wp-element-caption">3연임에 성공한 허구연 KBO 총재 (사진: 서울신문) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 허구연 총재는 어떤 인물인가</h2>',
+    이유: '글 25543. 허구연 총재 사진을 넣는다 (미디어 25545)',
+    글: [25543],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
