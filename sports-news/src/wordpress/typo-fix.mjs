@@ -2820,6 +2820,14 @@ export const 바로잡기 = [
       '<!-- wp:heading -->\n<h2>🌟 세 외국인 선수, 어떤 선수들인가</h2>',
     이유: '글 25514. 구단이 낸 외국인 선수 네 명 사진을 넣는다 (미디어 25516)',
     글: [25514],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>아직 안 풀린 내부 FA — LG와 KIA가 넷</h3>',
+    맞는:
+      '<!-- wp:image {"id":25518,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-hhzqnk-mwndo6bp.jpg" alt="내부 FA 박동원 홍창기 김태군 김호령" class="wp-image-25518"/></a><figcaption class="wp-element-caption">아직 계약이 안 난 내부 FA — 박동원·홍창기·김태군·김호령 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>아직 안 풀린 내부 FA — LG와 KIA가 넷</h3>',
+    이유: '글 16558. 내부 FA 넷 사진을 넣는다 (미디어 25518)',
+    글: [16558],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
