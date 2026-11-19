@@ -1,0 +1,113 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-210608.mp3",
+      "title": "Les cordes de l'âme",
+      "artist": "Adragante",
+      "recorded": "2008",
+      "license": "CC BY",
+      "credit": "Les cordes de l'âme — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/210608",
+      "source": "https://www.jamendo.com/track/210608"
+    },
+    {
+      "file": "jamendo-296726.mp3",
+      "title": "brian boru 2",
+      "artist": "Adragante",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "brian boru 2 — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/296726",
+      "source": "https://www.jamendo.com/track/296726"
+    },
+    {
+      "file": "jamendo-1550244.mp3",
+      "title": "#02 (Gullinburste-2018)",
+      "artist": "Ivan Tregub",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "#02 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550244",
+      "source": "https://www.jamendo.com/track/1550244"
+    },
+    {
+      "file": "jamendo-1550272.mp3",
+      "title": "#06 (Gullinburste-2018)",
+      "artist": "Ivan Tregub",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "#06 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550272",
+      "source": "https://www.jamendo.com/track/1550272"
+    },
+    {
+      "file": "jamendo-2326378.mp3",
+      "title": "Zen Mystic Harp Strings",
+      "artist": "KonstantinPazuzuStudio",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Zen Mystic Harp Strings — KonstantinPazuzuStudio (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2326378",
+      "source": "https://www.jamendo.com/track/2326378"
+    },
+    {
+      "file": "jamendo-2326575.mp3",
+      "title": "Distant Thunder",
+      "artist": "KonstantinPazuzuStudio",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Distant Thunder — KonstantinPazuzuStudio (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2326575",
+      "source": "https://www.jamendo.com/track/2326575"
+    },
+    {
+      "file": "jamendo-1288291.mp3",
+      "title": "1-Sans regarder derrière",
+      "artist": "Lepellec dominique",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "1-Sans regarder derrière — Lepellec dominique (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288291",
+      "source": "https://www.jamendo.com/track/1288291"
+    },
+    {
+      "file": "jamendo-1207579.mp3",
+      "title": "The Wishe # 1",
+      "artist": "LizZarDino",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "The Wishe # 1 — LizZarDino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1207579",
+      "source": "https://www.jamendo.com/track/1207579"
+    },
+    {
+      "file": "jamendo-1288286.mp3",
+      "title": "2-Saha1",
+      "artist": "Lepellec dominique",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "2-Saha1 — Lepellec dominique (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288286",
+      "source": "https://www.jamendo.com/track/1288286"
+    },
+    {
+      "file": "jamendo-1721268.mp3",
+      "title": "okey",
+      "artist": "Lil T.h.e",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "okey — Lil T.h.e (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1721268",
+      "source": "https://www.jamendo.com/track/1721268"
+    },
+    {
+      "file": "jamendo-1613585.mp3",
+      "title": "VolexTagamine - Cry (StepOne, music2000,…",
+      "artist": "VolexOne",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "VolexTagamine - Cry (StepOne, music2000,… — VolexOne (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1613585",
+      "source": "https://www.jamendo.com/track/1613585"
+    },
+    {
+      "file": "jamendo-2169228.mp3",
+      "title": "Ordinary Miracle",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Ordinary Miracle — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2169228",
+      "source": "https://www.jamendo.com/track/2169228"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+}
