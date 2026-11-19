@@ -17,6 +17,15 @@
       "license": "CC BY",
       "credit": "O Come O Come Emmanuel — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198565",
       "source": "https://www.jamendo.com/track/1198565"
+    },
+    {
+      "file": "jamendo-1320743.mp3",
+      "title": "Lo How E'er A Rose Is Blooming",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Lo How E'er A Rose Is Blooming — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320743",
+      "source": "https://www.jamendo.com/track/1320743"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",

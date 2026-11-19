@@ -118,33 +118,6 @@
       "source": "https://www.jamendo.com/track/1214517"
     },
     {
-      "file": "jamendo-1687322.mp3",
-      "title": "Les bottes en caoutchouc",
-      "artist": "Ehma",
-      "recorded": "2019",
-      "license": "CC BY",
-      "credit": "Les bottes en caoutchouc — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687322",
-      "source": "https://www.jamendo.com/track/1687322"
-    },
-    {
-      "file": "jamendo-1320743.mp3",
-      "title": "Lo How E'er A Rose Is Blooming",
-      "artist": "Ryan Sheeler",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Lo How E'er A Rose Is Blooming — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320743",
-      "source": "https://www.jamendo.com/track/1320743"
-    },
-    {
-      "file": "jamendo-1480430.mp3",
-      "title": "The Factory",
-      "artist": "Tony Jego",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "The Factory — Tony Jego (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1480430",
-      "source": "https://www.jamendo.com/track/1480430"
-    },
-    {
       "file": "jamendo-1366299.mp3",
       "title": "Denzel Sprak",
       "artist": "Blue Dot Sessions",
@@ -154,13 +127,40 @@
       "source": "https://www.jamendo.com/track/1366299"
     },
     {
-      "file": "jamendo-1257230.mp3",
-      "title": "WET",
-      "artist": "Miro Silveira",
-      "recorded": "2015",
+      "file": "jamendo-2037544.mp3",
+      "title": "Elegy (Guitar Folk Rock)",
+      "artist": "Moonwalk",
+      "recorded": "2023",
       "license": "CC BY",
-      "credit": "WET — Miro Silveira (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1257230",
-      "source": "https://www.jamendo.com/track/1257230"
+      "credit": "Elegy (Guitar Folk Rock) — Moonwalk (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2037544",
+      "source": "https://www.jamendo.com/track/2037544"
+    },
+    {
+      "file": "jamendo-1540860.mp3",
+      "title": "Heart Strings",
+      "artist": "Jesse Keller",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Heart Strings — Jesse Keller (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1540860",
+      "source": "https://www.jamendo.com/track/1540860"
+    },
+    {
+      "file": "jamendo-1501559.mp3",
+      "title": "The Horizon",
+      "artist": "Max Stival",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Horizon — Max Stival (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1501559",
+      "source": "https://www.jamendo.com/track/1501559"
+    },
+    {
+      "file": "jamendo-1540856.mp3",
+      "title": "A Good Dream",
+      "artist": "Jesse Keller",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "A Good Dream — Jesse Keller (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1540856",
+      "source": "https://www.jamendo.com/track/1540856"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
@@ -354,6 +354,46 @@
       "credit": "Les parapluies — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687396",
       "source": "https://www.jamendo.com/track/1687396",
       "reason": "제목이 그림·주제와 어긋남"
+    },
+    {
+      "file": "jamendo-1687322.mp3",
+      "title": "Les bottes en caoutchouc",
+      "artist": "Ehma",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Les bottes en caoutchouc — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687322",
+      "source": "https://www.jamendo.com/track/1687322",
+      "reason": "제목이 그림·주제와 어긋남"
+    },
+    {
+      "file": "jamendo-1480430.mp3",
+      "title": "The Factory",
+      "artist": "Tony Jego",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Factory — Tony Jego (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1480430",
+      "source": "https://www.jamendo.com/track/1480430",
+      "reason": "제목이 그림·주제와 어긋남"
+    },
+    {
+      "file": "jamendo-1257230.mp3",
+      "title": "WET",
+      "artist": "Miro Silveira",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "WET — Miro Silveira (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1257230",
+      "source": "https://www.jamendo.com/track/1257230",
+      "reason": "제목이 그림·주제와 어긋남"
+    },
+    {
+      "file": "jamendo-1174489.mp3",
+      "title": "05-Empty beach.September - LAMPA - Wormwo…",
+      "artist": "LAMPA",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "05-Empty beach.September - LAMPA - Wormwo… — LAMPA (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174489",
+      "source": "https://www.jamendo.com/track/1174489",
+      "reason": "제목이 파일명 그대로다"
     }
   ]
 }
