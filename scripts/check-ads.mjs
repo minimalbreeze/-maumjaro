@@ -17,6 +17,12 @@
 //   5. 고지문이 12px 이상이고 명암비 4.5 이상인가
 //   6. subId 가 비어 있지 않은가 — 측정 없이 붙이면 어디가 돈이 됐는지 모른다
 //   7. 전면 팝업·하단 고정바가 없는가
+//
+// ⚠️ 2026-11-19 부터 광고는 **꺼져 있다**(효성님 실업급여 신청). 꺼져 있으면
+//    검사가 뒤집힌다 — "정확히 2개" 대신 "한 장도 없다"를 본다. 스위치는
+//    `scripts/build-pages.mjs` 의 `ADS_ON` 이고, 이 검사는 그 값을 읽어서
+//    어느 쪽을 봐야 하는지 스스로 정한다. 스위치만 켜고 빌드를 안 하면
+//    (또는 그 반대면) 여기서 걸린다.
 
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -28,6 +34,13 @@ const bad = (m) => { console.error('  ✗', m); fail += 1; };
 const good = (m) => console.log('  ✓', m);
 
 const AD = 'ads-partners.coupang.com';
+
+// 광고 스위치를 빌드 스크립트에서 그대로 읽는다. 두 군데에 적어 두면 갈린다.
+const buildSrc = readFileSync(join(ROOT, 'scripts/build-pages.mjs'), 'utf8');
+const m = buildSrc.match(/^const ADS_ON = (true|false);/m);
+if (!m) { console.error('  ✗ build-pages.mjs 에서 ADS_ON 을 못 찾았다'); process.exit(1); }
+const ADS_ON = m[1] === 'true';
+console.log(`광고 스위치: ${ADS_ON ? 'ON' : 'OFF'}`);
 
 // 생성된 페이지를 모은다(sitemap 기준이라 앱·초안과 섞이지 않는다)
 const sm = readFileSync(join(ROOT, 'sitemap.xml'), 'utf8');
@@ -50,6 +63,31 @@ for (const f of readdirSync(ROOT).filter((f) => f.endsWith('.js'))) {
   if (/coupang/i.test(src)) bad(`${f} 에 쿠팡 코드가 있다`);
 }
 if (!fail) good('앱 JS 도 깨끗');
+
+// ---- 광고가 꺼져 있을 때: 한 장도 없어야 한다 ----
+if (!ADS_ON) {
+  console.log('[2] 어느 페이지에도 광고가 없다 (스위치 OFF)');
+  let hit = 0;
+  for (const p of pages) {
+    const h = readFileSync(p.file, 'utf8');
+    if (h.includes(AD) || /coupang/i.test(h)) { bad(`${p.url} 에 아직 쿠팡 코드가 있다 — 다시 빌드해라`); hit += 1; }
+  }
+  if (!hit) good(`${pages.length}장 전부 쿠팡 코드 0건`);
+
+  console.log('[3] 제휴 고지문도 남아 있지 않다');
+  let note = 0;
+  for (const p of pages) {
+    if (readFileSync(p.file, 'utf8').includes('쿠팡 파트너스 활동의 일환')) { bad(`${p.url} 에 제휴 고지문이 남아 있다`); note += 1; }
+  }
+  if (!note) good('고지문 0건');
+
+  console.log('[4] 다시 켤 수 있게 코드는 남아 있다');
+  if (!/PartnersCoupang\.G/.test(buildSrc)) bad('build-pages.mjs 에서 광고 코드가 사라졌다 — 지우지 말고 스위치로 끈다');
+  else good('ADS_ON = true 한 줄로 되돌릴 수 있다');
+
+  console.log(fail ? `\n실패 ${fail}건` : '\n전부 통과 (광고 OFF)');
+  process.exit(fail ? 1 : 0);
+}
 
 console.log('[2] 감정 페이지에는 광고가 없다');
 const emo = pages.filter((p) => p.url.startsWith('/emotion/'));
