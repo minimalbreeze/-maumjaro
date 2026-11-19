@@ -19,24 +19,6 @@
       "source": "https://www.jamendo.com/track/296726"
     },
     {
-      "file": "jamendo-1550244.mp3",
-      "title": "#02 (Gullinburste-2018)",
-      "artist": "Ivan Tregub",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "#02 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550244",
-      "source": "https://www.jamendo.com/track/1550244"
-    },
-    {
-      "file": "jamendo-1550272.mp3",
-      "title": "#06 (Gullinburste-2018)",
-      "artist": "Ivan Tregub",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "#06 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550272",
-      "source": "https://www.jamendo.com/track/1550272"
-    },
-    {
       "file": "jamendo-2326378.mp3",
       "title": "Zen Mystic Harp Strings",
       "artist": "KonstantinPazuzuStudio",
@@ -46,13 +28,109 @@
       "source": "https://www.jamendo.com/track/2326378"
     },
     {
+      "file": "jamendo-2169228.mp3",
+      "title": "Ordinary Miracle",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Ordinary Miracle — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2169228",
+      "source": "https://www.jamendo.com/track/2169228"
+    },
+    {
+      "file": "jamendo-1374949.mp3",
+      "title": "Nocturno No. 2",
+      "artist": "Daniel Bautista",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Nocturno No. 2 — Daniel Bautista (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1374949",
+      "source": "https://www.jamendo.com/track/1374949"
+    },
+    {
+      "file": "jamendo-325391.mp3",
+      "title": "Out on a limb",
+      "artist": "Dan Falvey",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Out on a limb — Dan Falvey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/325391",
+      "source": "https://www.jamendo.com/track/325391"
+    },
+    {
+      "file": "jamendo-575468.mp3",
+      "title": "Coastal Path",
+      "artist": "Dan Falvey",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Coastal Path — Dan Falvey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/575468",
+      "source": "https://www.jamendo.com/track/575468"
+    },
+    {
+      "file": "jamendo-1375004.mp3",
+      "title": "Wonderful romance",
+      "artist": "Christian Petermann",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Wonderful romance — Christian Petermann (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1375004",
+      "source": "https://www.jamendo.com/track/1375004"
+    },
+    {
+      "file": "jamendo-1275150.mp3",
+      "title": "Each Time",
+      "artist": "Razvan Veina",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Each Time — Razvan Veina (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1275150",
+      "source": "https://www.jamendo.com/track/1275150"
+    },
+    {
+      "file": "jamendo-1480430.mp3",
+      "title": "The Factory",
+      "artist": "Tony Jego",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Factory — Tony Jego (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1480430",
+      "source": "https://www.jamendo.com/track/1480430"
+    },
+    {
+      "file": "jamendo-1416988.mp3",
+      "title": "Canción de Doménica González",
+      "artist": "Doménica González",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Canción de Doménica González — Doménica González (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1416988",
+      "source": "https://www.jamendo.com/track/1416988"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1550244.mp3",
+      "title": "#02 (Gullinburste-2018)",
+      "artist": "Ivan Tregub",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "#02 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550244",
+      "source": "https://www.jamendo.com/track/1550244",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
+    },
+    {
+      "file": "jamendo-1550272.mp3",
+      "title": "#06 (Gullinburste-2018)",
+      "artist": "Ivan Tregub",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "#06 (Gullinburste-2018) — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1550272",
+      "source": "https://www.jamendo.com/track/1550272",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
+    },
+    {
       "file": "jamendo-2326575.mp3",
       "title": "Distant Thunder",
       "artist": "KonstantinPazuzuStudio",
       "recorded": "2026",
       "license": "CC BY",
       "credit": "Distant Thunder — KonstantinPazuzuStudio (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2326575",
-      "source": "https://www.jamendo.com/track/2326575"
+      "source": "https://www.jamendo.com/track/2326575",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
       "file": "jamendo-1288291.mp3",
@@ -61,7 +139,8 @@
       "recorded": "2015",
       "license": "CC BY",
       "credit": "1-Sans regarder derrière — Lepellec dominique (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288291",
-      "source": "https://www.jamendo.com/track/1288291"
+      "source": "https://www.jamendo.com/track/1288291",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
       "file": "jamendo-1207579.mp3",
@@ -70,7 +149,8 @@
       "recorded": "2015",
       "license": "CC BY",
       "credit": "The Wishe # 1 — LizZarDino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1207579",
-      "source": "https://www.jamendo.com/track/1207579"
+      "source": "https://www.jamendo.com/track/1207579",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
       "file": "jamendo-1288286.mp3",
@@ -79,7 +159,8 @@
       "recorded": "2015",
       "license": "CC BY",
       "credit": "2-Saha1 — Lepellec dominique (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288286",
-      "source": "https://www.jamendo.com/track/1288286"
+      "source": "https://www.jamendo.com/track/1288286",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
       "file": "jamendo-1721268.mp3",
@@ -88,7 +169,8 @@
       "recorded": "2020",
       "license": "CC BY",
       "credit": "okey — Lil T.h.e (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1721268",
-      "source": "https://www.jamendo.com/track/1721268"
+      "source": "https://www.jamendo.com/track/1721268",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
       "file": "jamendo-1613585.mp3",
@@ -97,17 +179,38 @@
       "recorded": "2019",
       "license": "CC BY",
       "credit": "VolexTagamine - Cry (StepOne, music2000,… — VolexOne (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1613585",
-      "source": "https://www.jamendo.com/track/1613585"
+      "source": "https://www.jamendo.com/track/1613585",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     },
     {
-      "file": "jamendo-2169228.mp3",
-      "title": "Ordinary Miracle",
-      "artist": "Soundstortion Dramatic",
+      "file": "jamendo-2219327.mp3",
+      "title": "Acoustic Ukulele Happy Music",
+      "artist": "Sevennotes",
       "recorded": "2024",
       "license": "CC BY",
-      "credit": "Ordinary Miracle — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2169228",
-      "source": "https://www.jamendo.com/track/2169228"
+      "credit": "Acoustic Ukulele Happy Music — Sevennotes (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2219327",
+      "source": "https://www.jamendo.com/track/2219327",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
+    },
+    {
+      "file": "jamendo-1726216.mp3",
+      "title": "Prahułki Pieššu",
+      "artist": "Plushka",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "Prahułki Pieššu — Plushka (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1726216",
+      "source": "https://www.jamendo.com/track/1726216",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
+    },
+    {
+      "file": "jamendo-1475486.mp3",
+      "title": "Forsaken (instr)",
+      "artist": "Mark Bodino",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Forsaken (instr) — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475486",
+      "source": "https://www.jamendo.com/track/1475486",
+      "reason": "제목이 화면에 쓸 수 없거나 분위기가 어긋남"
     }
-  ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  ]
 }
