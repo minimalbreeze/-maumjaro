@@ -866,6 +866,12 @@ async function cmdPreview(flags) {
         referenceImage: job.reference || undefined,
       });
       spent += r.usdEstimate ?? modelFor(job.model).usdPerImage;
+      // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
       const bytes = await api.download(r.url);
       fs.writeFileSync(path.join(outDir, job.file), bytes);
       made.push(job.file);
@@ -1208,7 +1214,19 @@ async function cmdRepaint(flags) {
           aspectRatio: '16:9',
         });
         spent += r.usdEstimate ?? per;
-        fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+          // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+          //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+          //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+          //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+          //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+        log.raw(`    ${r.url}`);
+        // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
+      fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
         made.push(job.file);
         break;
       } catch (e) {
@@ -1309,6 +1327,12 @@ async function cmdPortrait(flags) {
         negativePrompt: PORTRAIT_NEGATIVE,
       });
       spent += r.usdEstimate ?? per;
+      // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
       fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
       made.push(job.file);
     } catch (e) {
