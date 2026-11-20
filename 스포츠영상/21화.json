@@ -54,6 +54,32 @@
   ],
   "people": [
     {
+      "name": "이택근",
+      "role": "롯데 자이언츠 단장. 선수 시절 키움(넥센)에서 뛰었다. 이번이 부임 후 첫 트레이드다.",
+      "team": "롯데",
+      "number": "",
+      "look": "",
+      "tell": "⚠️⚠️ **단장은 유니폼을 안 입는다**(규칙 12). 정장이나 구단 재킷이고 **등번호가 없다**. 13화에서 유정근 사장에게 야구 유니폼이 붙은 적이 있다 — 같은 실수를 하지 않는다. ⚠️ **선수 샷을 그리지 않는다.** 투구·타격·수비 자세로 그리면 현역 선수가 된다. 서 있거나 앉아 있거나 이야기하는 모습이다. ⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). ⚠️ 등번호 칸은 비워 둔다 — 단장은 번호가 원래 안 보인다. ⚠️ 이 편에서 맡은 자리는 HOOK 과 DEAL 이다. 'FA 가 아니라 트레이드를 골랐다'는 대목과 '친정 키움이 상대였다'는 대목. **의도를 지어내는 장면을 그리지 않는다** — 회심의 미소, 계산하는 표정 같은 것. 기사는 '공교롭게도'까지만 썼다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfNTIg%2FMDAxNzk0Njc4OTU4ODgx.4to0uVCTMu4vdVXzmw1aaUVN6OYUZpB2FFL0pLnKz3Ug.PdEQbXZ8RWsDGB-REqsLlLowcBffx9dFaJmjw1CRvCAg.PNG%2Fimage.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfMTMz%2FMDAxNzk0NzE2ODU2MTQ4.azTljg8-lW58HYfBnvbwn0BrLWaSq_kFGrOG4SNd_Vgg.fkxeXj-Fz7uzhzStL21yNK7IqzwQjzjNks7pZ7P4Byog.PNG%2F20261115_132726.png&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5003%2F2026%2F10%2F26%2F20261026151535_2407111_875_475_20261026151814568.jpg&type=l340_165",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjVfMTQx%2FMDAxNzkyOTIwNDIzNTUx.M8kawO3ePTj3c3qUU9vEatmbTOVdbCQgVYCtd_XHtr4g.Ng6boVip1Z5bRsEgWHsadARS5U98VAU8STDxuGgZGCQg.PNG%2Fimage.png&type=a340",
+          "쓰임": "4"
+        }
+      ]
+    },
+    {
       "name": "정철원",
       "role": "투수. 2026년 11월 20일 롯데에서 키움으로 트레이드됐다. 이 편의 주인공.",
       "team": "키움",
