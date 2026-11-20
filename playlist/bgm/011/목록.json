@@ -26,8 +26,176 @@
       "license": "CC BY",
       "credit": "Lo How E'er A Rose Is Blooming — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320743",
       "source": "https://www.jamendo.com/track/1320743"
+    },
+    {
+      "file": "jamendo-693405.mp3",
+      "title": "Best Christmas Yet",
+      "artist": "Stellar Art Wars",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Best Christmas Yet — Stellar Art Wars (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/693405",
+      "source": "https://www.jamendo.com/track/693405"
+    },
+    {
+      "file": "jamendo-1287797.mp3",
+      "title": "Snowy Fairy",
+      "artist": "Alexandr Ossipov",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Snowy Fairy — Alexandr Ossipov (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1287797",
+      "source": "https://www.jamendo.com/track/1287797"
+    },
+    {
+      "file": "jamendo-700573.mp3",
+      "title": "Christmas Lullaby",
+      "artist": "Blik",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Christmas Lullaby — Blik (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/700573",
+      "source": "https://www.jamendo.com/track/700573"
+    },
+    {
+      "file": "jamendo-1300602.mp3",
+      "title": "Christmas Lights",
+      "artist": "Patrick Poe",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Christmas Lights — Patrick Poe (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1300602",
+      "source": "https://www.jamendo.com/track/1300602"
+    },
+    {
+      "file": "jamendo-1405647.mp3",
+      "title": "Sunny Christmas",
+      "artist": "ruka",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Sunny Christmas — ruka (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1405647",
+      "source": "https://www.jamendo.com/track/1405647"
+    },
+    {
+      "file": "jamendo-1273186.mp3",
+      "title": "Eens in Betlehem (Sou ons U herken?)",
+      "artist": "Tinus Badenhorst",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Eens in Betlehem (Sou ons U herken?) — Tinus Badenhorst (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1273186",
+      "source": "https://www.jamendo.com/track/1273186"
+    },
+    {
+      "file": "jamendo-1494567.mp3",
+      "title": "Christmas Song",
+      "artist": "DEgITx",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Christmas Song — DEgITx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1494567",
+      "source": "https://www.jamendo.com/track/1494567"
+    },
+    {
+      "file": "jamendo-1078362.mp3",
+      "title": "minuit chrétien",
+      "artist": "Adragante",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "minuit chrétien — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1078362",
+      "source": "https://www.jamendo.com/track/1078362"
+    },
+    {
+      "file": "jamendo-1078363.mp3",
+      "title": "greensleeve",
+      "artist": "Adragante",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "greensleeve — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1078363",
+      "source": "https://www.jamendo.com/track/1078363"
+    },
+    {
+      "file": "jamendo-532559.mp3",
+      "title": "French Suite No.2, BWV 813 (Allemande)",
+      "artist": "Ivan Dolgunov",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "French Suite No.2, BWV 813 (Allemande) — Ivan Dolgunov (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/532559",
+      "source": "https://www.jamendo.com/track/532559"
+    },
+    {
+      "file": "jamendo-1622640.mp3",
+      "title": "VolexTagamine - Sudden threat (StepThree,…",
+      "artist": "VolexOne",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "VolexTagamine - Sudden threat (StepThree,… — VolexOne (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1622640",
+      "source": "https://www.jamendo.com/track/1622640"
+    },
+    {
+      "file": "jamendo-1540857.mp3",
+      "title": "Amazing Grace",
+      "artist": "Jesse Keller",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Amazing Grace — Jesse Keller (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1540857",
+      "source": "https://www.jamendo.com/track/1540857"
+    },
+    {
+      "file": "jamendo-1849556.mp3",
+      "title": "Magic Lantern",
+      "artist": "Lumiere Tales",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Magic Lantern — Lumiere Tales (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1849556",
+      "source": "https://www.jamendo.com/track/1849556"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
-  "rejected": []
+  "rejected": [
+    {
+      "file": "jamendo-88462.mp3",
+      "title": "Lo, How A Rose E'er Blooming (15th C. Hym…",
+      "artist": "Gabriel Garcea-Hofmann: MusicComposer",
+      "recorded": "2007",
+      "license": "CC BY",
+      "credit": "Lo, How A Rose E'er Blooming (15th C. Hym… — Gabriel Garcea-Hofmann: MusicComposer (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/88462",
+      "source": "https://www.jamendo.com/track/88462",
+      "reason": "제목이 쓸 수 없거나 같은 찬송이 겹침"
+    },
+    {
+      "file": "jamendo-1320745.mp3",
+      "title": "O Little Town Of Bethlehem",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "O Little Town Of Bethlehem — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320745",
+      "source": "https://www.jamendo.com/track/1320745",
+      "reason": "제목이 쓸 수 없거나 같은 찬송이 겹침"
+    },
+    {
+      "file": "jamendo-1681897.mp3",
+      "title": "Alicia Fourmi",
+      "artist": "Enlia",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Alicia Fourmi — Enlia (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1681897",
+      "source": "https://www.jamendo.com/track/1681897",
+      "reason": "제목이 쓸 수 없거나 같은 찬송이 겹침"
+    },
+    {
+      "file": "jamendo-1716031.mp3",
+      "title": "christmas anime",
+      "artist": "green key",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "christmas anime — green key (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1716031",
+      "source": "https://www.jamendo.com/track/1716031",
+      "reason": "제목이 쓸 수 없거나 같은 찬송이 겹침"
+    },
+    {
+      "file": "jamendo-1410489.mp3",
+      "title": "Xmas 3000",
+      "artist": "Rainmechanics",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Xmas 3000 — Rainmechanics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1410489",
+      "source": "https://www.jamendo.com/track/1410489",
+      "reason": "제목이 쓸 수 없거나 같은 찬송이 겹침"
+    }
+  ]
 }

@@ -308,6 +308,23 @@ function unent(x) {
     .replace(/&nbsp;/gi, ' ');
 }
 
+/* 아티스트 이름 뒤에 붙은 영업 문구를 뗀다. 화면 한가운데 "Free License"
+ * 가 뜨면 음원이 아니라 라이선스를 파는 가게처럼 보인다.
+ * 2026-11-19 11집에서 Stellar Art Wars Free License ·
+ * Alexandr Ossipov production music · Gabriel Garcea-Hofmann: MusicComposer
+ * 가 걸렸다. 실제 이름을 자르지 않도록 정확히 이 꼬리만 본다. */
+const ARTIST_TAILS = [
+  ' production music', ' productions music', ' free license', ' royalty free',
+  ': musiccomposer', ' music composer', ' music library', ' - topic',
+];
+
+export function cleanArtist(a) {
+  const s = String(a || '').trim();
+  const low = s.toLowerCase();
+  const tail = ARTIST_TAILS.find((t) => low.endsWith(t));
+  return tail ? s.slice(0, s.length - tail.length).replace(/[\s\-:,]+$/, '') : s;
+}
+
 function stripArtist(title, artist) {
   const parts = unent(artist).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .split(/[^A-Za-z0-9]+/).filter(Boolean);
@@ -558,7 +575,8 @@ async function mainJamendo() {
      * 그래도 같은 손질을 거친다 — 한자·대문자·아티스트 이름이 가끔 섞인다. */
     /* 아티스트 이름에 붙은 괄호 설명을 뗀다 —
      * "Josh Woodward (Instrumental Versions)" → "Josh Woodward" */
-    const artist = unent(d.artist).replace(/\s*[（(\[][^）)\]]*[）)\]]\s*$/, '').trim() || d.artist;
+    const artist = cleanArtist(
+      unent(d.artist).replace(/\s*[（(\[][^）)\]]*[）)\]]\s*$/, '').trim()) || d.artist;
     const title = finalize(stripArtist(unent(d.title), artist));
     if (!title) { console.log(`  — 건너뜀: 화면에 쓸 제목이 없음 (${d.id})`); skipped++; continue; }
 
