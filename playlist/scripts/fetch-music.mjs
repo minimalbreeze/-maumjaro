@@ -493,6 +493,12 @@ function artistCountsAcross() {
   return n;
 }
 
+/* 제목+아티스트를 한 덩이로 만든 열쇠. 대소문자·기호·공백을 지운다. */
+function sameKey(title, artist) {
+  const n = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `t:${n(title)}|${n(artist)}`;
+}
+
 function usedElsewhere() {
   const seen = new Set();
   if (!existsSync(BGM_ROOT)) return seen;
@@ -503,10 +509,24 @@ function usedElsewhere() {
     if (!existsSync(f)) continue;
     try {
       const j = JSON.parse(readFileSync(f, 'utf8'));
-      (j.tracks || []).forEach((t) => {
+      const note = (t) => {
+        if (!t) return;
+        /* 두 가지로 적어 둔다. 번호만 보면 같은 곡이 다른 번호로 다시
+         * 올라왔을 때 못 걸러낸다 — 14집에 3집의 Silent Weave 와
+         * 5집의 Damp Haze 가 그렇게 다시 들어왔다. */
         if (t.source) seen.add(String(t.source).split('/').pop());
+        if (t.file) seen.add(String(t.file).replace(/\.mp3$/i, ''));
+        if (t.title) seen.add(sameKey(t.title, t.artist));
+      };
+      (j.tracks || []).forEach(note);
+      /* ⚠️ rejected 는 예전에 번호 문자열이었는데 지금은 곡 객체다.
+       * String(객체) 는 "[object Object]" 가 되어 아무것도 못 거른다.
+       * 그래서 한 번 뺀 곡(zero-project · The Factory)이 다음 집에
+       * 그대로 다시 들어왔다. 둘 다 받아들인다. */
+      (j.rejected || []).forEach((r) => {
+        if (typeof r === 'string' || typeof r === 'number') seen.add(String(r));
+        else note(r);
       });
-      (j.rejected || []).forEach((id) => seen.add(String(id)));
     } catch { /* 읽히지 않으면 없는 셈 친다 */ }
   }
   return seen;
@@ -582,6 +602,14 @@ async function mainJamendo() {
 
     const same = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
     if (same(title) === same(artist)) { skipped++; continue; }
+
+    /* 번호가 달라도 같은 곡이면 거른다. Jamendo 에는 같은 녹음이 번호를
+     * 바꿔 다시 올라오는 일이 있다 — 14집에 3집의 Silent Weave 와
+     * 5집의 Damp Haze 가 그렇게 들어왔다. 제목+아티스트로 한 번 더 본다. */
+    if (used.has(sameKey(title, artist))) {
+      console.log(`  — 건너뜀: ${title} (이미 다른 집에 있는 곡)`);
+      skipped++; continue;
+    }
 
     /* 화면에 쓰는 Inter 는 키릴·한자·가나를 못 그린다. 제목은 finalize 가
      * 걸러 왔는데 아티스트 이름은 안 보고 있었다 — 9집 후보에

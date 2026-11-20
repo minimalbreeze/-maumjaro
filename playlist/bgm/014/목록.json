@@ -1,0 +1,264 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1365390.mp3",
+      "title": "Wingspan",
+      "artist": "Blue Dot Sessions",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Wingspan — Blue Dot Sessions (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1365390",
+      "source": "https://www.jamendo.com/track/1365390"
+    },
+    {
+      "file": "jamendo-2300377.mp3",
+      "title": "The Day We Smiled",
+      "artist": "HoneyTune",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "The Day We Smiled — HoneyTune (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2300377",
+      "source": "https://www.jamendo.com/track/2300377"
+    },
+    {
+      "file": "jamendo-2168282.mp3",
+      "title": "Warm music box",
+      "artist": "NONO",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Warm music box — NONO (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2168282",
+      "source": "https://www.jamendo.com/track/2168282"
+    },
+    {
+      "file": "jamendo-1272857.mp3",
+      "title": "Fly and high",
+      "artist": "Arsha",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Fly and high — Arsha (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1272857",
+      "source": "https://www.jamendo.com/track/1272857"
+    },
+    {
+      "file": "jamendo-2303689.mp3",
+      "title": "Elegant Horizon",
+      "artist": "Megis",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Elegant Horizon — Megis (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2303689",
+      "source": "https://www.jamendo.com/track/2303689"
+    },
+    {
+      "file": "jamendo-1194610.mp3",
+      "title": "Eu venho vagando no ar",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Eu venho vagando no ar — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194610",
+      "source": "https://www.jamendo.com/track/1194610"
+    },
+    {
+      "file": "jamendo-1273887.mp3",
+      "title": "Errance",
+      "artist": "Phebus",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Errance — Phebus (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1273887",
+      "source": "https://www.jamendo.com/track/1273887"
+    },
+    {
+      "file": "jamendo-1177819.mp3",
+      "title": "On the Way to the Dance",
+      "artist": "FlauschGAU",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "On the Way to the Dance — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177819",
+      "source": "https://www.jamendo.com/track/1177819"
+    },
+    {
+      "file": "jamendo-1275157.mp3",
+      "title": "Dreaming of You",
+      "artist": "Razvan Veina",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dreaming of You — Razvan Veina (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1275157",
+      "source": "https://www.jamendo.com/track/1275157"
+    },
+    {
+      "file": "jamendo-2292537.mp3",
+      "title": "Shadows of Us",
+      "artist": "Megis",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Shadows of Us — Megis (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2292537",
+      "source": "https://www.jamendo.com/track/2292537"
+    },
+    {
+      "file": "jamendo-313670.mp3",
+      "title": "An die Romanze",
+      "artist": "Doc",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "An die Romanze — Doc (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/313670",
+      "source": "https://www.jamendo.com/track/313670"
+    },
+    {
+      "file": "jamendo-2038452.mp3",
+      "title": "Interference Patterns of Life",
+      "artist": "Muted Symphony",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Interference Patterns of Life — Muted Symphony (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2038452",
+      "source": "https://www.jamendo.com/track/2038452"
+    },
+    {
+      "file": "jamendo-1321658.mp3",
+      "title": "Ada Hayden Sunset",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Ada Hayden Sunset — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321658",
+      "source": "https://www.jamendo.com/track/1321658"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-2186819.mp3",
+      "title": "Train to Nowhere",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Train to Nowhere — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2186819",
+      "source": "https://www.jamendo.com/track/2186819",
+      "reason": "제목이 가라앉는다"
+    },
+    {
+      "file": "jamendo-2326921.mp3",
+      "title": "Dark Piano Requiem",
+      "artist": "Lilith Nyx",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Dark Piano Requiem — Lilith Nyx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2326921",
+      "source": "https://www.jamendo.com/track/2326921",
+      "reason": "제목이 장례·어둠 — 스트레칭과 반대"
+    },
+    {
+      "file": "jamendo-2326993.mp3",
+      "title": "Evidence Review",
+      "artist": "Lilith Nyx",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Evidence Review — Lilith Nyx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2326993",
+      "source": "https://www.jamendo.com/track/2326993",
+      "reason": "제목이 수사물 같다"
+    },
+    {
+      "file": "jamendo-2327299.mp3",
+      "title": "Walking Home in the Dark",
+      "artist": "Felted Classics",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Walking Home in the Dark — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327299",
+      "source": "https://www.jamendo.com/track/2327299",
+      "reason": "아침 그림과 반대"
+    },
+    {
+      "file": "jamendo-2328894.mp3",
+      "title": "Silent Weave",
+      "artist": "Konstantin Feltman",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Silent Weave — Konstantin Feltman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2328894",
+      "source": "https://www.jamendo.com/track/2328894",
+      "reason": "이미 3집에 있는 곡"
+    },
+    {
+      "file": "jamendo-2328903.mp3",
+      "title": "Damp Haze",
+      "artist": "Konstantin Feltman",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Damp Haze — Konstantin Feltman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2328903",
+      "source": "https://www.jamendo.com/track/2328903",
+      "reason": "이미 5집에 있는 곡"
+    },
+    {
+      "file": "jamendo-1198564.mp3",
+      "title": "It Came Upon the Midnight Clear",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "It Came Upon the Midnight Clear — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198564",
+      "source": "https://www.jamendo.com/track/1198564",
+      "reason": "캐럴 — 이 집 주제가 아니다"
+    },
+    {
+      "file": "jamendo-1181918.mp3",
+      "title": "Dramatic Dance",
+      "artist": "Milles",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dramatic Dance — Milles (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1181918",
+      "source": "https://www.jamendo.com/track/1181918",
+      "reason": "제목이 격하다 — 스트레칭과 반대"
+    },
+    {
+      "file": "jamendo-1465424.mp3",
+      "title": "Call of nature",
+      "artist": "Ivan Tregub",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Call of nature — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465424",
+      "source": "https://www.jamendo.com/track/1465424",
+      "reason": "영어 관용구로 화장실 이야기가 된다"
+    },
+    {
+      "file": "jamendo-1198563.mp3",
+      "title": "Jolly Old Saint Nicholas",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Jolly Old Saint Nicholas — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198563",
+      "source": "https://www.jamendo.com/track/1198563",
+      "reason": "캐럴 — 이 집 주제가 아니다"
+    },
+    {
+      "file": "jamendo-1198561.mp3",
+      "title": "Angels We Have Heard on High",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Angels We Have Heard on High — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198561",
+      "source": "https://www.jamendo.com/track/1198561",
+      "reason": "캐럴 — 이 집 주제가 아니다"
+    },
+    {
+      "file": "jamendo-1177815.mp3",
+      "title": "Jolly Pink Pony",
+      "artist": "FlauschGAU",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Jolly Pink Pony — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177815",
+      "source": "https://www.jamendo.com/track/1177815",
+      "reason": "제목이 유치하다"
+    },
+    {
+      "file": "jamendo-1254637.mp3",
+      "title": "Gloomy wanderer",
+      "artist": "Igor Goncharov",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Gloomy wanderer — Igor Goncharov (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1254637",
+      "source": "https://www.jamendo.com/track/1254637",
+      "reason": "제목이 가라앉는다 — 아침 그림과 반대"
+    },
+    {
+      "file": "jamendo-1388858.mp3",
+      "title": "10 Music Garden",
+      "artist": "Ali",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "10 Music Garden — Ali (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1388858",
+      "source": "https://www.jamendo.com/track/1388858",
+      "reason": "번호가 붙은 파일명 같은 제목"
+    }
+  ]
+}
