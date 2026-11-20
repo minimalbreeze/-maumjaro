@@ -2842,6 +2842,14 @@ export const 바로잡기 = [
     맞는: '<h2>🏆 결승 3번기 결과 — 변상일, 리친청 꺾고 삼성화재배 우승</h2>',
     이유: '글 17428. 11월 20일 최종국이 끝나 변상일 우승으로 확정됐다. 소제목이 아직 "18~20일" 예고였다',
     글: [17428],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 정철원 — 신인왕 출신, 통산 59홀드 22세이브</h2>',
+    맞는:
+      '<!-- wp:image {"id":25559,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1i2fzj-mwox0ewz.jpg" alt="정철원과 임지열" class="wp-image-25559"/></a><figcaption class="wp-element-caption">맞바뀐 두 선수 — 정철원과 임지열 (사진: 롯데 자이언츠·키움 히어로즈) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 정철원 — 신인왕 출신, 통산 59홀드 22세이브</h2>',
+    이유: '글 25557. 맞바뀐 두 선수 사진을 넣는다 (미디어 25559)',
+    글: [25557],
   },];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
