@@ -2893,6 +2893,22 @@ export const 바로잡기 = [
     이유: '글 25557. 지명 순위를 더해 두 선수의 무게를 숫자로 보여준다 (스포티비뉴스 보도)',
     글: [25557],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 추성훈 "아저씨 싸움을 보여주는 게 아니다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25646,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/17-1-1yohpp-mwp0t6ak.jpg" alt="추성훈 블랙컴뱃 17" class="wp-image-25646"/></a><figcaption class="wp-element-caption">블랙컴뱃 17: 벤타블랙 (사진: 스포탈코리아) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 추성훈 "아저씨 싸움을 보여주는 게 아니다"</h2>',
+    이유: '글 25640. 추성훈 절 앞에 사진을 넣는다 (미디어 25646)',
+    글: [25640],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 리벤 "누리고 살면 사람이 부드러워진다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25647,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/17-2-1yohpq-mwp0t9jw.jpg" alt="크리스 리벤 블랙컴뱃 17" class="wp-image-25647"/></a><figcaption class="wp-element-caption">블랙컴뱃 17: 벤타블랙 (사진: 스포탈코리아) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 리벤 "누리고 살면 사람이 부드러워진다"</h2>',
+    이유: '글 25640. 리벤 절 앞에 사진을 넣는다 (미디어 25647)',
+    글: [25640],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
