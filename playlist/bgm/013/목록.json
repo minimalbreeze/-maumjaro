@@ -89,6 +89,114 @@
       "license": "CC BY",
       "credit": "Love — Rochelle Gabrielle (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1190762",
       "source": "https://www.jamendo.com/track/1190762"
+    },
+    {
+      "file": "jamendo-1847926.mp3",
+      "title": "Detune Winter",
+      "artist": "Sam Smithwick",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Detune Winter — Sam Smithwick (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1847926",
+      "source": "https://www.jamendo.com/track/1847926"
+    },
+    {
+      "file": "jamendo-1430958.mp3",
+      "title": "HERÜ (prod. BIV)",
+      "artist": "Aisha Sal Diri",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "HERÜ (prod. BIV) — Aisha Sal Diri (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1430958",
+      "source": "https://www.jamendo.com/track/1430958"
+    },
+    {
+      "file": "jamendo-1567023.mp3",
+      "title": "Korpo Voice",
+      "artist": "Popo Glio",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Korpo Voice — Popo Glio (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1567023",
+      "source": "https://www.jamendo.com/track/1567023"
+    },
+    {
+      "file": "jamendo-1368743.mp3",
+      "title": "Tangled Mess of Monsters",
+      "artist": "Sarah Golley",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Tangled Mess of Monsters — Sarah Golley (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1368743",
+      "source": "https://www.jamendo.com/track/1368743"
+    },
+    {
+      "file": "jamendo-1368737.mp3",
+      "title": "Sludge",
+      "artist": "Sarah Golley",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Sludge — Sarah Golley (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1368737",
+      "source": "https://www.jamendo.com/track/1368737"
+    },
+    {
+      "file": "jamendo-1349336.mp3",
+      "title": "What A Difference A Day Makes",
+      "artist": "Esmeralda Xha",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "What A Difference A Day Makes — Esmeralda Xha (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1349336",
+      "source": "https://www.jamendo.com/track/1349336"
+    },
+    {
+      "file": "jamendo-1204669.mp3",
+      "title": "What Is Love",
+      "artist": "Melanie Ungar",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "What Is Love — Melanie Ungar (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1204669",
+      "source": "https://www.jamendo.com/track/1204669"
+    },
+    {
+      "file": "jamendo-1174817.mp3",
+      "title": "Leave and Never Look Back",
+      "artist": "madelyn munsell",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Leave and Never Look Back — madelyn munsell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174817",
+      "source": "https://www.jamendo.com/track/1174817"
+    },
+    {
+      "file": "jamendo-1093607.mp3",
+      "title": "Stitches ft. Shane MauX",
+      "artist": "Lilly Wolf",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Stitches ft. Shane MauX — Lilly Wolf (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1093607",
+      "source": "https://www.jamendo.com/track/1093607"
+    },
+    {
+      "file": "jamendo-1093608.mp3",
+      "title": "Strictly Luxury",
+      "artist": "Lilly Wolf",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Strictly Luxury — Lilly Wolf (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1093608",
+      "source": "https://www.jamendo.com/track/1093608"
+    },
+    {
+      "file": "jamendo-1243462.mp3",
+      "title": "Gnarly (feat. Devyn Rush)",
+      "artist": "David Amber",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Gnarly (feat. Devyn Rush) — David Amber (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1243462",
+      "source": "https://www.jamendo.com/track/1243462"
+    },
+    {
+      "file": "jamendo-1174820.mp3",
+      "title": "Street Signs and White Lies",
+      "artist": "madelyn munsell",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Street Signs and White Lies — madelyn munsell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174820",
+      "source": "https://www.jamendo.com/track/1174820"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
