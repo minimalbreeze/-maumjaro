@@ -1,0 +1,273 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1483585.mp3",
+      "title": "Casanova",
+      "artist": "Seth Power",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Casanova — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483585",
+      "source": "https://www.jamendo.com/track/1483585"
+    },
+    {
+      "file": "jamendo-1483587.mp3",
+      "title": "Fire",
+      "artist": "Seth Power",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Fire — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483587",
+      "source": "https://www.jamendo.com/track/1483587"
+    },
+    {
+      "file": "jamendo-1243463.mp3",
+      "title": "Smile",
+      "artist": "David Amber",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Smile — David Amber (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1243463",
+      "source": "https://www.jamendo.com/track/1243463"
+    },
+    {
+      "file": "jamendo-1215804.mp3",
+      "title": "Take it",
+      "artist": "Manhat10",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Take it — Manhat10 (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1215804",
+      "source": "https://www.jamendo.com/track/1215804"
+    },
+    {
+      "file": "jamendo-1301369.mp3",
+      "title": "Every Time",
+      "artist": "Elysian Bailey",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Every Time — Elysian Bailey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301369",
+      "source": "https://www.jamendo.com/track/1301369"
+    },
+    {
+      "file": "jamendo-1711840.mp3",
+      "title": "Song Of My Life",
+      "artist": "Eliot Feldman",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Song Of My Life — Eliot Feldman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1711840",
+      "source": "https://www.jamendo.com/track/1711840"
+    },
+    {
+      "file": "jamendo-1665671.mp3",
+      "title": "Kissing Streams",
+      "artist": "Rivers and Leaves",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Kissing Streams — Rivers and Leaves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1665671",
+      "source": "https://www.jamendo.com/track/1665671"
+    },
+    {
+      "file": "jamendo-1194604.mp3",
+      "title": "Birosca",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Birosca — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194604",
+      "source": "https://www.jamendo.com/track/1194604"
+    },
+    {
+      "file": "jamendo-1194607.mp3",
+      "title": "Paraty",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Paraty — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194607",
+      "source": "https://www.jamendo.com/track/1194607"
+    },
+    {
+      "file": "jamendo-1328309.mp3",
+      "title": "Wena Wedwa",
+      "artist": "GLM Nation",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Wena Wedwa — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
+      "source": "https://www.jamendo.com/track/1328309"
+    },
+    {
+      "file": "jamendo-1860165.mp3",
+      "title": "Athens",
+      "artist": "Pierce Murphy",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Athens — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1860165",
+      "source": "https://www.jamendo.com/track/1860165"
+    },
+    {
+      "file": "jamendo-1405565.mp3",
+      "title": "Caught on the Wire",
+      "artist": "Berkley Mallin",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Caught on the Wire — Berkley Mallin (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1405565",
+      "source": "https://www.jamendo.com/track/1405565"
+    },
+    {
+      "file": "jamendo-1187638.mp3",
+      "title": "Come Home",
+      "artist": "Marc Reeves",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Come Home — Marc Reeves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1187638",
+      "source": "https://www.jamendo.com/track/1187638"
+    },
+    {
+      "file": "jamendo-1321406.mp3",
+      "title": "Horizons",
+      "artist": "Train Room",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Horizons — Train Room (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321406",
+      "source": "https://www.jamendo.com/track/1321406"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1208376.mp3",
+      "title": "Tremont (prod. ηoM∩D)",
+      "artist": "NePh",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Tremont (prod. ηoM∩D) — NePh (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1208376",
+      "source": "https://www.jamendo.com/track/1208376",
+      "reason": "제목에 깨진 문자와 prod. 표기"
+    },
+    {
+      "file": "jamendo-1481499.mp3",
+      "title": "B.E.D. (Stripped)",
+      "artist": "Cortéz",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "B.E.D. (Stripped) — Cortéz (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1481499",
+      "source": "https://www.jamendo.com/track/1481499",
+      "reason": "랩 계열 · 같은 곡이 둘"
+    },
+    {
+      "file": "jamendo-1446169.mp3",
+      "title": "Da Rockwilder Freestyle",
+      "artist": "Ralph Da God",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Da Rockwilder Freestyle — Ralph Da God (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1446169",
+      "source": "https://www.jamendo.com/track/1446169",
+      "reason": "랩 프리스타일 — 감미로운 보컬이 아니다"
+    },
+    {
+      "file": "jamendo-1480576.mp3",
+      "title": "Like Im Broke Feat. King Ski",
+      "artist": "Markay",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Like Im Broke Feat. King Ski — Markay (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1480576",
+      "source": "https://www.jamendo.com/track/1480576",
+      "reason": "랩 · 제목에 오타"
+    },
+    {
+      "file": "jamendo-1400330.mp3",
+      "title": "B.E.D",
+      "artist": "Cortéz",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "B.E.D — Cortéz (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1400330",
+      "source": "https://www.jamendo.com/track/1400330",
+      "reason": "랩 계열 · 같은 곡이 둘"
+    },
+    {
+      "file": "jamendo-1210775.mp3",
+      "title": "pido-perdon-v-zen-bea-eunice-instrumental…",
+      "artist": "En 3 palabras",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "pido-perdon-v-zen-bea-eunice-instrumental… — En 3 palabras (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1210775",
+      "source": "https://www.jamendo.com/track/1210775",
+      "reason": "제목을 화면에 쓸 수 없다"
+    },
+    {
+      "file": "jamendo-1791441.mp3",
+      "title": "An Empty Room",
+      "artist": "Elephant Funeral",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "An Empty Room — Elephant Funeral (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1791441",
+      "source": "https://www.jamendo.com/track/1791441",
+      "reason": "아티스트명이 Elephant Funeral — 화면에서 분위기가 꺾인다"
+    },
+    {
+      "file": "jamendo-1356510.mp3",
+      "title": "No Worries/Make It Out - Ladell (feat. Th…",
+      "artist": "Ladell",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "No Worries/Make It Out - Ladell (feat. Th… — Ladell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1356510",
+      "source": "https://www.jamendo.com/track/1356510",
+      "reason": "제목을 화면에 쓸 수 없다"
+    },
+    {
+      "file": "jamendo-1597604.mp3",
+      "title": "Winner",
+      "artist": "Rxbyn",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Winner — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1597604",
+      "source": "https://www.jamendo.com/track/1597604",
+      "reason": "제목이 밋밋하다 · 같은 아티스트가 둘"
+    },
+    {
+      "file": "jamendo-1615673.mp3",
+      "title": "Glass House",
+      "artist": "Rxbyn",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Glass House — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1615673",
+      "source": "https://www.jamendo.com/track/1615673",
+      "reason": "같은 아티스트가 둘 · 주제와 거리가 있다"
+    },
+    {
+      "file": "jamendo-1221536.mp3",
+      "title": "Action Reaction",
+      "artist": "monotone",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Action Reaction — monotone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1221536",
+      "source": "https://www.jamendo.com/track/1221536",
+      "reason": "제목이 기계적이다 — 감미로운 보컬과 어긋난다"
+    },
+    {
+      "file": "jamendo-1569386.mp3",
+      "title": "THINGS YOU SAY",
+      "artist": "Egor Budennyy",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "THINGS YOU SAY — Egor Budennyy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569386",
+      "source": "https://www.jamendo.com/track/1569386",
+      "reason": "전부 대문자"
+    },
+    {
+      "file": "jamendo-1271904.mp3",
+      "title": "Fall For You",
+      "artist": "Devon Elizabeth",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Fall For You — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1271904",
+      "source": "https://www.jamendo.com/track/1271904",
+      "reason": "아티스트 이름이 여성 — 남성 보컬 집의 전제가 흐려진다"
+    },
+    {
+      "file": "jamendo-1195291.mp3",
+      "title": "See me sink see me rise",
+      "artist": "Simon van Gend",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "See me sink see me rise — Simon van Gend (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1195291",
+      "source": "https://www.jamendo.com/track/1195291",
+      "reason": "제목이 길고 대소문자가 섞였다"
+    }
+  ]
+}

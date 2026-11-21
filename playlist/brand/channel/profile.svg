@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <!-- 유튜브 프로필은 동그랗게 잘린다. 마크 전체(가로선 끝까지)가
+       지름 560px 안전원 안에 들어오게 잡았다. -->
+  <rect width="800" height="800" fill="#14100e"/>
+  <g transform="translate(400,400) scale(2.58)" fill="none" stroke="#f2efe9" stroke-width="5.6">
+    <circle r="46"/>
+    <line x1="-118" y1="0" x2="-60" y2="0" stroke-linecap="round"/>
+    <line x1="60" y1="0" x2="118" y2="0" stroke-linecap="round"/>
+  </g>
+  <circle cx="400" cy="400" r="11.9" fill="#f2efe9"/>
+</svg>
