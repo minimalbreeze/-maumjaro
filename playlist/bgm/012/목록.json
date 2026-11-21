@@ -1,42 +1,6 @@
 {
   "tracks": [
     {
-      "file": "jamendo-1483587.mp3",
-      "title": "Fire",
-      "artist": "Seth Power",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "Fire — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483587",
-      "source": "https://www.jamendo.com/track/1483587"
-    },
-    {
-      "file": "jamendo-1194604.mp3",
-      "title": "Birosca",
-      "artist": "Túlio Borges",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Birosca — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194604",
-      "source": "https://www.jamendo.com/track/1194604"
-    },
-    {
-      "file": "jamendo-1215804.mp3",
-      "title": "Take it",
-      "artist": "Manhat10",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Take it — Manhat10 (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1215804",
-      "source": "https://www.jamendo.com/track/1215804"
-    },
-    {
-      "file": "jamendo-1194607.mp3",
-      "title": "Paraty",
-      "artist": "Túlio Borges",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Paraty — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194607",
-      "source": "https://www.jamendo.com/track/1194607"
-    },
-    {
       "file": "jamendo-1483585.mp3",
       "title": "Casanova",
       "artist": "Seth Power",
@@ -44,6 +8,15 @@
       "license": "CC BY",
       "credit": "Casanova — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483585",
       "source": "https://www.jamendo.com/track/1483585"
+    },
+    {
+      "file": "jamendo-1483587.mp3",
+      "title": "Fire",
+      "artist": "Seth Power",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Fire — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483587",
+      "source": "https://www.jamendo.com/track/1483587"
     },
     {
       "file": "jamendo-1243463.mp3",
@@ -55,13 +28,13 @@
       "source": "https://www.jamendo.com/track/1243463"
     },
     {
-      "file": "jamendo-1860165.mp3",
-      "title": "Athens",
-      "artist": "Pierce Murphy",
-      "recorded": "2021",
+      "file": "jamendo-1215804.mp3",
+      "title": "Take it",
+      "artist": "Manhat10",
+      "recorded": "2015",
       "license": "CC BY",
-      "credit": "Athens — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1860165",
-      "source": "https://www.jamendo.com/track/1860165"
+      "credit": "Take it — Manhat10 (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1215804",
+      "source": "https://www.jamendo.com/track/1215804"
     },
     {
       "file": "jamendo-1301369.mp3",
@@ -71,24 +44,6 @@
       "license": "CC BY",
       "credit": "Every Time — Elysian Bailey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301369",
       "source": "https://www.jamendo.com/track/1301369"
-    },
-    {
-      "file": "jamendo-1328309.mp3",
-      "title": "Wena Wedwa",
-      "artist": "GLM Nation",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Wena Wedwa — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
-      "source": "https://www.jamendo.com/track/1328309"
-    },
-    {
-      "file": "jamendo-1321406.mp3",
-      "title": "Horizons",
-      "artist": "Train Room",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Horizons — Train Room (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321406",
-      "source": "https://www.jamendo.com/track/1321406"
     },
     {
       "file": "jamendo-1711840.mp3",
@@ -109,13 +64,40 @@
       "source": "https://www.jamendo.com/track/1665671"
     },
     {
-      "file": "jamendo-1187638.mp3",
-      "title": "Come Home",
-      "artist": "Marc Reeves",
+      "file": "jamendo-1194604.mp3",
+      "title": "Birosca",
+      "artist": "Túlio Borges",
       "recorded": "2015",
       "license": "CC BY",
-      "credit": "Come Home — Marc Reeves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1187638",
-      "source": "https://www.jamendo.com/track/1187638"
+      "credit": "Birosca — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194604",
+      "source": "https://www.jamendo.com/track/1194604"
+    },
+    {
+      "file": "jamendo-1194607.mp3",
+      "title": "Paraty",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Paraty — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194607",
+      "source": "https://www.jamendo.com/track/1194607"
+    },
+    {
+      "file": "jamendo-1328309.mp3",
+      "title": "Wena Wedwa",
+      "artist": "GLM Nation",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Wena Wedwa — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
+      "source": "https://www.jamendo.com/track/1328309"
+    },
+    {
+      "file": "jamendo-1860165.mp3",
+      "title": "Athens",
+      "artist": "Pierce Murphy",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Athens — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1860165",
+      "source": "https://www.jamendo.com/track/1860165"
     },
     {
       "file": "jamendo-1405565.mp3",
@@ -125,6 +107,24 @@
       "license": "CC BY",
       "credit": "Caught on the Wire — Berkley Mallin (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1405565",
       "source": "https://www.jamendo.com/track/1405565"
+    },
+    {
+      "file": "jamendo-1187638.mp3",
+      "title": "Come Home",
+      "artist": "Marc Reeves",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Come Home — Marc Reeves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1187638",
+      "source": "https://www.jamendo.com/track/1187638"
+    },
+    {
+      "file": "jamendo-1321406.mp3",
+      "title": "Horizons",
+      "artist": "Train Room",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Horizons — Train Room (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321406",
+      "source": "https://www.jamendo.com/track/1321406"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
