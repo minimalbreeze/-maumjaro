@@ -67,6 +67,17 @@ const AT = val('--at', '40');
  *    어느 쪽이 나은지는 추측이 아니라 유튜브가 숫자로 고른다. */
 const BARE = argv.includes('--bare');
 
+/* --logo : 그림 가운데에 로고를 크게. A/B 테스트의 세 번째 판.
+ *
+ * 2026-11-21 효성님 제안. 솔직한 예상은 "지금은 효과가 작다" 이다 —
+ * 로고는 "이게 뭔지" 가 아니라 "누가 만들었는지" 를 말하는데, 클릭은
+ * 전자에서 나온다. 게다가 시청자의 99.5% 가 신규라 알아볼 사람이 없다.
+ * 가운데 큰 로고는 210px 에서 우리를 구분해 주는 유일한 것(그림)도 덮는다.
+ *
+ * 그래도 만든다. 내 예상이 맞는지는 유튜브가 숫자로 답하면 된다 —
+ * '테스트 및 비교' 는 세 개까지 붙일 수 있다. */
+const LOGO = argv.includes('--logo');
+
 const W = 1280, H = 720;        // 유튜브 썸네일 크기
 
 function fail(m) { console.error(`\n❌ ${m}\n`); process.exit(1); }
@@ -108,6 +119,25 @@ const scrim = scrimFor(art);
 
 const { w, h, y } = LOOK;
 const out = join(OUT, `썸네일-${VOL}.png`);
+
+if (LOGO) {
+  /* 로고를 화면 폭의 55% 로 키워 한가운데. 밝은 그림 위에서도 읽히도록
+   * 뒤에 아주 옅은 검정 막을 한 겹 깐다 — 가장자리는 건드리지 않는다. */
+  const out3 = join(OUT, `썸네일-${VOL}-logo.png`);
+  const lw = Math.round(w * 0.55);
+  ff(['-i', art, '-i', lockup,
+    '-filter_complex',
+      `[0:v]scale=${w}:${h},`
+      + `drawbox=x=0:y=${Math.round(h * 0.33)}:w=${w}:h=${Math.round(h * 0.34)}`
+      + ':color=0x101010@0.22:t=fill[bg];'
+      + `[1:v]scale=${lw}:-1[lk];`
+      + `[bg][lk]overlay=(W-w)/2:(H-h)/2,scale=${W}:${H}[v]`,
+    '-map', '[v]', '-frames:v', '1', out3]);
+  const size3 = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height',
+    '-of', 'csv=p=0:s=x', out3], { encoding: 'utf8' }).trim();
+  console.log(`✅ ${out3.replace(ROOT, 'playlist')}  (${size3})  — 로고를 가운데 크게`);
+  process.exit(0);
+}
 
 if (BARE) {
   /* 그림 + 작은 로고. 로고는 오른쪽 아래 구석에 두고 크기를 반으로 줄인다.

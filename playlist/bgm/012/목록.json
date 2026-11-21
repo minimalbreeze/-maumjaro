@@ -71,6 +71,114 @@
       "license": "CC BY",
       "credit": "Glass House — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1615673",
       "source": "https://www.jamendo.com/track/1615673"
+    },
+    {
+      "file": "jamendo-1860165.mp3",
+      "title": "Athens",
+      "artist": "Pierce Murphy",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Athens — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1860165",
+      "source": "https://www.jamendo.com/track/1860165"
+    },
+    {
+      "file": "jamendo-1301369.mp3",
+      "title": "Every Time",
+      "artist": "elysian bailey",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Every Time — elysian bailey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301369",
+      "source": "https://www.jamendo.com/track/1301369"
+    },
+    {
+      "file": "jamendo-1328309.mp3",
+      "title": "Wena Wedwa feat. Charles Murdoch",
+      "artist": "GLM Nation",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Wena Wedwa feat. Charles Murdoch — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
+      "source": "https://www.jamendo.com/track/1328309"
+    },
+    {
+      "file": "jamendo-1221536.mp3",
+      "title": "Action Reaction",
+      "artist": "monotone",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Action Reaction — monotone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1221536",
+      "source": "https://www.jamendo.com/track/1221536"
+    },
+    {
+      "file": "jamendo-1569386.mp3",
+      "title": "THINGS YOU SAY",
+      "artist": "Egor Budennyy",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "THINGS YOU SAY — Egor Budennyy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569386",
+      "source": "https://www.jamendo.com/track/1569386"
+    },
+    {
+      "file": "jamendo-1271904.mp3",
+      "title": "Fall For You",
+      "artist": "Devon Elizabeth",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Fall For You — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1271904",
+      "source": "https://www.jamendo.com/track/1271904"
+    },
+    {
+      "file": "jamendo-1321406.mp3",
+      "title": "Horizons",
+      "artist": "Train Room",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Horizons — Train Room (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321406",
+      "source": "https://www.jamendo.com/track/1321406"
+    },
+    {
+      "file": "jamendo-1711840.mp3",
+      "title": "Song Of My Life",
+      "artist": "Eliot Feldman",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Song Of My Life — Eliot Feldman (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1711840",
+      "source": "https://www.jamendo.com/track/1711840"
+    },
+    {
+      "file": "jamendo-1665671.mp3",
+      "title": "Kissing Streams",
+      "artist": "Rivers and Leaves",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Kissing Streams — Rivers and Leaves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1665671",
+      "source": "https://www.jamendo.com/track/1665671"
+    },
+    {
+      "file": "jamendo-1187638.mp3",
+      "title": "Come Home",
+      "artist": "Marc Reeves",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Come Home — Marc Reeves (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1187638",
+      "source": "https://www.jamendo.com/track/1187638"
+    },
+    {
+      "file": "jamendo-1405565.mp3",
+      "title": "Caught on the Wire",
+      "artist": "Berkley Mallin",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Caught on the Wire — Berkley Mallin (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1405565",
+      "source": "https://www.jamendo.com/track/1405565"
+    },
+    {
+      "file": "jamendo-1195291.mp3",
+      "title": "See me sink see me rise",
+      "artist": "Simon van Gend",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "See me sink see me rise — Simon van Gend (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1195291",
+      "source": "https://www.jamendo.com/track/1195291"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
