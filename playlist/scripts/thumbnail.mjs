@@ -50,6 +50,23 @@ const VOL = val('--vol', '').replace(/[^\w-]/g, '');
  * 자리로 잡아 두고, 모양이 마음에 안 들면 --at 으로 옮긴다. */
 const AT = val('--at', '40');
 
+/* --bare : 자막 띠도 이퀄라이저도 없이, 그림과 작은 로고만.
+ *
+ * 왜 만드나 (2026-11-21)
+ *   썸네일 클릭률이 0.8% 다. 보통 2~10% 인데 한참 아래다. 원인이
+ *   그림인지 우리가 얹은 층인지 알 수가 없어서, 유튜브의 '테스트 및
+ *   비교' 에 붙일 두 번째 썸네일을 만든다.
+ *
+ *   검색 결과에서 썸네일은 가로 210px 로 줄어든다. 그 크기에서
+ *   이퀄라이저는 가느다란 선 하나고, 자막 띠는 아래 절반을 회색으로
+ *   덮는다. 14집이 특히 그랬다 — 밝은 그림이라 막이 0.45 까지
+ *   올라가서 바닥이 회색판이 됐다.
+ *
+ * ⚠️ 영상에는 손대지 않는다. 영상의 네 층(이퀄라이저·제목·아티스트·
+ *    로고)은 시그니처 그대로다. 이것은 썸네일 한 장을 더 만드는 것뿐이고,
+ *    어느 쪽이 나은지는 추측이 아니라 유튜브가 숫자로 고른다. */
+const BARE = argv.includes('--bare');
+
 const W = 1280, H = 720;        // 유튜브 썸네일 크기
 
 function fail(m) { console.error(`\n❌ ${m}\n`); process.exit(1); }
@@ -91,6 +108,23 @@ const scrim = scrimFor(art);
 
 const { w, h, y } = LOOK;
 const out = join(OUT, `썸네일-${VOL}.png`);
+
+if (BARE) {
+  /* 그림 + 작은 로고. 로고는 오른쪽 아래 구석에 두고 크기를 반으로 줄인다.
+   * 가운데를 비워 두면 그림이 온전히 보인다. */
+  const out2 = join(OUT, `썸네일-${VOL}-bare.png`);
+  ff(['-i', art, '-i', lockup,
+    '-filter_complex',
+      `[0:v]scale=${w}:${h}[bg];`
+      + `[1:v]scale=${Math.round(LOOK.lockupW * 0.55)}:-1,format=rgba,`
+      + 'colorchannelmixer=aa=0.85[lk];'
+      + `[bg][lk]overlay=W-w-48:H-h-40,scale=${W}:${H}[v]`,
+    '-map', '[v]', '-frames:v', '1', out2]);
+  const size2 = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height',
+    '-of', 'csv=p=0:s=x', out2], { encoding: 'utf8' }).trim();
+  console.log(`✅ ${out2.replace(ROOT, 'playlist')}  (${size2})  — 띠도 이퀄라이저도 없는 판`);
+  process.exit(0);
+}
 
 ff(['-i', art, '-ss', String(AT), '-i', sound, '-i', lockup,
   '-filter_complex',
