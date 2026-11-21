@@ -55,24 +55,6 @@
       "source": "https://www.jamendo.com/track/1243463"
     },
     {
-      "file": "jamendo-1597604.mp3",
-      "title": "Winner",
-      "artist": "Rxbyn",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "Winner — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1597604",
-      "source": "https://www.jamendo.com/track/1597604"
-    },
-    {
-      "file": "jamendo-1615673.mp3",
-      "title": "Glass House",
-      "artist": "Rxbyn",
-      "recorded": "2019",
-      "license": "CC BY",
-      "credit": "Glass House — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1615673",
-      "source": "https://www.jamendo.com/track/1615673"
-    },
-    {
       "file": "jamendo-1860165.mp3",
       "title": "Athens",
       "artist": "Pierce Murphy",
@@ -84,47 +66,20 @@
     {
       "file": "jamendo-1301369.mp3",
       "title": "Every Time",
-      "artist": "elysian bailey",
+      "artist": "Elysian Bailey",
       "recorded": "2015",
       "license": "CC BY",
-      "credit": "Every Time — elysian bailey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301369",
+      "credit": "Every Time — Elysian Bailey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301369",
       "source": "https://www.jamendo.com/track/1301369"
     },
     {
       "file": "jamendo-1328309.mp3",
-      "title": "Wena Wedwa feat. Charles Murdoch",
+      "title": "Wena Wedwa",
       "artist": "GLM Nation",
       "recorded": "2016",
       "license": "CC BY",
-      "credit": "Wena Wedwa feat. Charles Murdoch — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
+      "credit": "Wena Wedwa — GLM Nation (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1328309",
       "source": "https://www.jamendo.com/track/1328309"
-    },
-    {
-      "file": "jamendo-1221536.mp3",
-      "title": "Action Reaction",
-      "artist": "monotone",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Action Reaction — monotone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1221536",
-      "source": "https://www.jamendo.com/track/1221536"
-    },
-    {
-      "file": "jamendo-1569386.mp3",
-      "title": "THINGS YOU SAY",
-      "artist": "Egor Budennyy",
-      "recorded": "2018",
-      "license": "CC BY",
-      "credit": "THINGS YOU SAY — Egor Budennyy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569386",
-      "source": "https://www.jamendo.com/track/1569386"
-    },
-    {
-      "file": "jamendo-1271904.mp3",
-      "title": "Fall For You",
-      "artist": "Devon Elizabeth",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Fall For You — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1271904",
-      "source": "https://www.jamendo.com/track/1271904"
     },
     {
       "file": "jamendo-1321406.mp3",
@@ -170,15 +125,6 @@
       "license": "CC BY",
       "credit": "Caught on the Wire — Berkley Mallin (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1405565",
       "source": "https://www.jamendo.com/track/1405565"
-    },
-    {
-      "file": "jamendo-1195291.mp3",
-      "title": "See me sink see me rise",
-      "artist": "Simon van Gend",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "See me sink see me rise — Simon van Gend (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1195291",
-      "source": "https://www.jamendo.com/track/1195291"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
@@ -262,6 +208,66 @@
       "credit": "No Worries/Make It Out - Ladell (feat. Th… — Ladell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1356510",
       "source": "https://www.jamendo.com/track/1356510",
       "reason": "제목을 화면에 쓸 수 없다"
+    },
+    {
+      "file": "jamendo-1597604.mp3",
+      "title": "Winner",
+      "artist": "Rxbyn",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Winner — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1597604",
+      "source": "https://www.jamendo.com/track/1597604",
+      "reason": "제목이 밋밋하다 · 같은 아티스트가 둘"
+    },
+    {
+      "file": "jamendo-1615673.mp3",
+      "title": "Glass House",
+      "artist": "Rxbyn",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Glass House — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1615673",
+      "source": "https://www.jamendo.com/track/1615673",
+      "reason": "같은 아티스트가 둘 · 주제와 거리가 있다"
+    },
+    {
+      "file": "jamendo-1221536.mp3",
+      "title": "Action Reaction",
+      "artist": "monotone",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Action Reaction — monotone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1221536",
+      "source": "https://www.jamendo.com/track/1221536",
+      "reason": "제목이 기계적이다 — 감미로운 보컬과 어긋난다"
+    },
+    {
+      "file": "jamendo-1569386.mp3",
+      "title": "THINGS YOU SAY",
+      "artist": "Egor Budennyy",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "THINGS YOU SAY — Egor Budennyy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569386",
+      "source": "https://www.jamendo.com/track/1569386",
+      "reason": "전부 대문자"
+    },
+    {
+      "file": "jamendo-1271904.mp3",
+      "title": "Fall For You",
+      "artist": "Devon Elizabeth",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Fall For You — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1271904",
+      "source": "https://www.jamendo.com/track/1271904",
+      "reason": "아티스트 이름이 여성 — 남성 보컬 집의 전제가 흐려진다"
+    },
+    {
+      "file": "jamendo-1195291.mp3",
+      "title": "See me sink see me rise",
+      "artist": "Simon van Gend",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "See me sink see me rise — Simon van Gend (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1195291",
+      "source": "https://www.jamendo.com/track/1195291",
+      "reason": "제목이 길고 대소문자가 섞였다"
     }
   ]
 }

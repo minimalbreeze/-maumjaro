@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="96" viewBox="0 0 620 96">
+  <!-- 썸네일 전용. 영상에 쓰는 lockup-light.svg 는 건드리지 않는다.
+       썸네일에서는 로고를 화면 폭의 72% 로 키워 가운데 놓으므로,
+       글자가 가늘면 그림에 묻힌다. 글씨를 볼드로 하고 마크의 선도
+       그만큼 굵혀서 둘의 무게를 맞춘다.
+       (2026-11-21 효성님: "로고의 글씨 볼드 처리만 해서 테두리는 빼고") -->
+  <g transform="translate(46,48)" fill="none" stroke="#f2efe9" stroke-width="3.8">
+    <circle r="26"/>
+    <line x1="-44" y1="0" x2="-34" y2="0" stroke-linecap="round"/>
+    <line x1="34" y1="0" x2="44" y2="0" stroke-linecap="round"/>
+  </g>
+  <circle cx="46" cy="48" r="4.2" fill="#f2efe9"/>
+  <text x="112" y="58" font-family="Inter" font-weight="700" font-size="34"
+        letter-spacing="8.5" fill="#f2efe9">minimalbreeze</text>
+</svg>

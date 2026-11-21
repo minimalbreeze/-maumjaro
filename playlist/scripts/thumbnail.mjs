@@ -106,7 +106,11 @@ if (!sound) {
     if (first && existsSync(join(dir, first.file))) sound = join(dir, first.file);
   }
 }
-if (!sound) fail(`소리를 찾지 못했습니다 — ${mp4} 또는 playlist/bgm/${VOL}/ 가 필요합니다`);
+/* 소리는 이퀄라이저를 그릴 때만 필요하다. --logo · --bare 는 그림과
+ * 로고만 쓰므로 소리가 없어도 만들 수 있다 — 발행한 지 오래된 집은
+ * mp3 도 mp4 도 지워졌을 수 있다(둘 다 git 에 넣지 않는다). */
+const needSound = !argv.includes('--logo') && !argv.includes('--bare');
+if (!sound && needSound) fail(`소리를 찾지 못했습니다 — ${mp4} 또는 playlist/bgm/${VOL}/ 가 필요합니다`);
 
 /* 로고. 자막 띠를 씌우고 나면 그 자리는 늘 어두우므로 밝은 로고를 쓴다 —
  * 영상에서 쓰는 것과 같은 파일이다. */
@@ -119,58 +123,38 @@ const lockup = existsSync(lockupBig) ? lockupBig : join(BRAND, 'lockup-light.png
 if (!existsSync(lockup)) fail(`로고가 없습니다: ${lockup}`);
 
 console.log(`그림  ${art.replace(ROOT, 'playlist')}`);
-console.log(`소리  ${sound.replace(ROOT, 'playlist')}  (${AT}초 지점)`);
+if (sound) console.log(`소리  ${sound.replace(ROOT, 'playlist')}  (${AT}초 지점)`);
 const scrim = scrimFor(art);
 
 const { w, h, y } = LOOK;
 const out = join(OUT, `썸네일-${VOL}.png`);
 
 if (LOGO) {
-  /* 로고를 화면 폭의 72% 로 키우고 두꺼운 검은 테두리를 두른다.
+  /* 로고를 화면 폭의 72% 로 키워 한가운데.
    *
-   * 2026-11-21 효성님: "잘 보이게 외곽에 검은색 테두리를 넣어 더 크고
-   * 잘 보이게 한다" → "더 굵고 진하게 넣어도 될 것 같다."
+   * 2026-11-21 효성님: 테두리를 굵게 → 얇게 → "테두리 없는 게 예쁜 것
+   * 같다. 로고의 글씨 볼드 처리만 해서 테두리는 빼고."
    *
-   * 테두리를 만드는 법 — ffmpeg 에 획(stroke) 필터가 없다. 로고의 검은
-   * 실루엣을 둘레로 밀어 깔고 그 위에 원래 로고를 얹는다.
-   *   굵기: 바깥 고리(16방향, 반지름 t)로 폭을 만든다
-   *   진하기: 안쪽 고리(8방향, 반지름 t/2)를 한 겹 더 깔아 겹치게 한다.
-   *           로고 가장자리가 반투명이라 한 겹만으로는 흐리게 나온다
+   * 테두리 대신 글씨를 볼드로 한다(lockup-light-bold.svg). 영상에 쓰는
+   * lockup-light.svg 는 건드리지 않는다 — 그쪽은 자막 띠 위에 올라가서
+   * 가늘어도 읽힌다. 썸네일만 그림 위에 맨몸으로 놓인다.
    *
-   * 뒤에 막을 깔던 것은 뺐다 — 테두리가 생기면 막이 필요 없고,
-   * 막은 그림까지 어둡게 만든다. */
+   * ⚠️ 로고는 1920px 로 그린 것을 쓴다. lockup-light.png 는 620x96 이라
+   *    여기서 쓰면 2.2배 확대가 되어 글자가 계단처럼 깨진다. */
   const out3 = join(OUT, `썸네일-${VOL}-logo.png`);
+  const bold = join(BRAND, 'lockup-light-bold.png');
+  const mark = existsSync(bold) ? bold : lockup;
   const lw = Math.round(w * 0.72);
-  /* 2026-11-21 효성님: "글자 테두리는 매우 얇게 해달라."
-   * 처음 16 으로 했더니 글자가 테두리에 먹혔다. 3 이면 밝은 그림 위에서
-   * 글자가 떠 보일 만큼만 남는다. */
-  const t = 3;                                   // 1920 기준 테두리 두께
-  const black = 'colorchannelmixer=rr=0:rg=0:rb=0:gr=0:gg=0:gb=0:br=0:bg=0:bb=0';
 
-  const ring = (r, n) => Array.from({ length: n }, (_, i) => {
-    const a = (2 * Math.PI * i) / n;
-    return [Math.round(Math.cos(a) * r), Math.round(Math.sin(a) * r)];
-  });
-  /* 얇아도 계단이 지지 않도록 각도를 촘촘히 둔다. */
-  const dirs = [...ring(t, 24), ...ring(t * 0.6, 12)];
-
-  let fc = `[0:v]scale=${w}:${h}[bg];`
-    + `[1:v]scale=${lw}:-1,format=rgba,split=${dirs.length + 1}`
-    + `[lgo]${dirs.map((_, i) => `[s${i}]`).join('')};`;
-  dirs.forEach((_, i) => { fc += `[s${i}]${black}[k${i}];`; });
-  let prev = 'bg';
-  dirs.forEach(([dx, dy], i) => {
-    const sx = dx < 0 ? `-${-dx}` : `+${dx}`;
-    const sy = dy < 0 ? `-${-dy}` : `+${dy}`;
-    fc += `[${prev}][k${i}]overlay=(W-w)/2${sx}:(H-h)/2${sy}[b${i}];`;
-    prev = `b${i}`;
-  });
-  fc += `[${prev}][lgo]overlay=(W-w)/2:(H-h)/2,scale=${W}:${H}[v]`;
-
-  ff(['-i', art, '-i', lockup, '-filter_complex', fc, '-map', '[v]', '-frames:v', '1', out3]);
+  ff(['-i', art, '-i', mark,
+    '-filter_complex',
+      `[0:v]scale=${w}:${h}[bg];`
+      + `[1:v]scale=${lw}:-1,format=rgba[lgo];`
+      + `[bg][lgo]overlay=(W-w)/2:(H-h)/2,scale=${W}:${H}[v]`,
+    '-map', '[v]', '-frames:v', '1', out3]);
   const size3 = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height',
     '-of', 'csv=p=0:s=x', out3], { encoding: 'utf8' }).trim();
-  console.log(`✅ ${out3.replace(ROOT, 'playlist')}  (${size3})  — 로고를 가운데 크게 · 얇은 검은 테두리`);
+  console.log(`✅ ${out3.replace(ROOT, 'playlist')}  (${size3})  — 로고 가운데, 볼드, 테두리 없음`);
   process.exit(0);
 }
 
