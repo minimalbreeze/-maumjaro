@@ -3242,6 +3242,77 @@ test('썸네일 지점을 서로 떨어뜨려 고른다', () => {
   assert.ok(picked.some((p) => p.mood === 'twist'), '반전 장면을 하나도 안 집었습니다');
 });
 
+test('⭐ 사람이 있는 샷을 먼저 고른다 (썸네일 CTR 1.2% 를 보고 고침)', () => {
+  // ⚠️ 2026-11-21. 효성님이 보여준 통계에서 본편 썸네일 클릭률이 1.2% 였다
+  //    (노출 3.2만에 클릭 397). 21화 썸네일 세 장을 실제로 받아서 봤더니
+  //    **빈 더그아웃과 빈 라커룸**이었다 — 사람이 아예 없었다.
+  //
+  //    원인이 둘이었다. 분위기(mood)로만 골랐는데 분위기 있는 장면은 대개
+  //    빈 공간이고, 게다가 **장면 한가운데**를 집어서 장면 안의 여러 샷 중
+  //    사람 없는 샷이 걸렸다. 21화는 세 지점이 전부 person 있는 **장면**인데
+  //    집힌 **샷**은 둘이 사람 없는 샷이었다.
+  const scenes = [
+    { duration: 60, mood: 'somber', section: 'A', shots: [
+      { shot_id: 'S1-1', duration: 30, person: '' },       // 빈 더그아웃
+      { shot_id: 'S1-2', duration: 30, person: '' },
+    ] },
+    { duration: 60, mood: 'calm', section: 'B', shots: [
+      { shot_id: 'S2-1', duration: 30, person: '' },
+      { shot_id: 'S2-2', duration: 30, person: '정철원' },
+    ] },
+    { duration: 60, mood: 'calm', section: 'C', shots: [
+      { shot_id: 'S3-1', duration: 30, person: '임지열' },
+      { shot_id: 'S3-2', duration: 30, person: '' },
+    ] },
+    { duration: 60, mood: 'tension', section: 'D', shots: [
+      { shot_id: 'S4-1', duration: 30, person: '이택근' },
+      { shot_id: 'S4-2', duration: 30, person: '' },
+    ] },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  // 셋 다 사람이 있어야 한다. 분위기가 가장 센 somber/tension 쪽이라도
+  // 사람 없는 샷보다 사람 있는 샷이 먼저다.
+  for (const p of picked) {
+    assert.ok(p.person, `${p.at}초가 사람 없는 샷입니다 — 빈 화면은 안 눌립니다`);
+  }
+});
+
+test('사람이 여럿이면 서로 다른 사람으로 고른다', () => {
+  // 같은 사람 얼굴 세 장을 주면 고를 맛이 없다.
+  const scenes = Array.from({ length: 6 }, (_, i) => ({
+    duration: 40, mood: 'calm', section: `S${i}`,
+    shots: [{ shot_id: `S${i}-1`, duration: 40, person: ['가', '나', '다'][i % 3] }],
+  }));
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(new Set(picked.map((p) => p.person)).size, 3, '같은 사람만 골랐습니다');
+});
+
+test('사람 있는 샷이 모자라면 분위기로 채운다 (빈손으로 돌려주지 않는다)', () => {
+  const scenes = [
+    { duration: 60, mood: 'calm', section: 'A', shots: [{ shot_id: 'S1-1', duration: 60, person: '정철원' }] },
+    { duration: 60, mood: 'twist', section: 'B', shots: [{ shot_id: 'S2-1', duration: 60, person: '' }] },
+    { duration: 60, mood: 'mystery', section: 'C', shots: [{ shot_id: 'S3-1', duration: 60, person: '' }] },
+    { duration: 60, mood: 'calm', section: 'D', shots: [{ shot_id: 'S4-1', duration: 60, person: '' }] },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  assert.ok(picked.some((p) => p.person === '정철원'), '사람 있는 샷을 안 집었습니다');
+  // 나머지는 분위기 순서대로 — twist 가 mystery 보다 먼저다.
+  assert.ok(picked.some((p) => p.mood === 'twist'), '남은 자리를 분위기로 안 채웠습니다');
+});
+
+test('shots 가 없는 옛 장면 구조도 그대로 돌아간다', () => {
+  // 동화·전설 쪽은 shots 를 안 만든다. 거기서 죽으면 안 된다.
+  const scenes = [
+    { duration: 40, mood: 'calm' }, { duration: 40, mood: 'twist' },
+    { duration: 40, mood: 'tension' }, { duration: 40, mood: 'mystery' },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  for (const p of picked) assert.equal(p.person, '');
+});
+
 test('맨 앞과 맨 끝은 피한다 (어둡거나 비어 있다)', () => {
   const scenes = Array.from({ length: 10 }, (_, i) => ({ duration: 30, mood: i === 0 ? 'twist' : 'mystery' }));
   const total = 300;

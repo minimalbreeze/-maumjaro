@@ -146,45 +146,99 @@ export function thumbnailArgs({
 /**
  * 어느 지점에서 프레임을 뽑을까.
  *
- * 장면 목록에서 **분위기가 센 장면**을 고른다(twist → tension → mystery).
- * 같은 장면만 세 장 뽑으면 셋이 똑같아지므로 서로 떨어진 것으로 고른다.
+ * ⚠️⚠️ 2026-11-21 에 통째로 고쳤다. 효성님이 통계를 보여줬는데 **본편 썸네일
+ *    클릭률이 1.2%** 였다(노출 3.2만에 클릭 397). 21화 썸네일 세 장을 실제로
+ *    받아서 봤더니 **빈 더그아웃과 빈 라커룸**이었다. 사람이 아예 없었다.
  *
- * 맨 앞과 맨 끝은 피한다. 보통 어둡거나 비어 있다.
+ *    원인은 구조였다. 예전 코드는 **분위기(mood)만 보고** 골랐는데,
+ *    분위기 있는 장면은 대개 **빈 공간**이다 — 쓸쓸한 그림이 somber 로
+ *    분류된다. 그래서 분위기로 고를수록 사람이 빠졌다.
+ *
+ *    게다가 **장면 한가운데**를 집었다. 장면 하나에 샷이 두세 개인데
+ *    person 이 붙은 샷은 그중 하나뿐일 때가 많다. 21화 썸네일 세 지점이
+ *    전부 person 있는 **장면**이었는데, 집힌 **샷**은 둘이 사람 없는
+ *    샷이었다. 장면이 아니라 샷을 봐야 한다.
+ *
+ * 그래서 지금은 **샷 단위**로 보고 **사람이 있는 샷을 먼저** 고른다.
+ * 분위기는 그다음이다.
+ * ⚠️ 사람이 있는 샷이 모자라면 나머지는 예전처럼 분위기로 채운다 —
+ *    빈손으로 돌려주지 않는다.
  */
 export const MOOD_RANK = { twist: 0, tension: 1, mystery: 2, somber: 3, record: 4, calm: 5 };
 
 export function pickThumbnailMoments(scenes, { count = 3, minGap = 20 } = {}) {
+  // 샷 단위로 편다. 샷에 길이가 없으면 장면을 샷 수로 나눠 쓴다.
   const list = [];
   let cursor = 0;
   for (const scene of scenes || []) {
-    const duration = Number(scene.duration) || 0;
-    // 장면 한가운데를 쓴다. 경계는 전환 중이라 흐릿할 수 있다.
-    list.push({
-      at: cursor + duration / 2,
-      mood: scene.mood || 'mystery',
-      section: scene.section || '',
-      rank: MOOD_RANK[scene.mood] ?? 9,
-    });
-    cursor += duration;
+    const shots = Array.isArray(scene.shots) && scene.shots.length ? scene.shots : null;
+    const sceneDur = Number(scene.duration) || 0;
+    if (!shots) {
+      list.push({
+        at: cursor + sceneDur / 2,
+        mood: scene.mood || 'mystery',
+        section: scene.section || '',
+        person: '',
+        rank: MOOD_RANK[scene.mood] ?? 9,
+      });
+      cursor += sceneDur;
+      continue;
+    }
+    const fallbackEach = shots.length ? sceneDur / shots.length : sceneDur;
+    for (const shot of shots) {
+      const dur = Number(shot.duration) || fallbackEach;
+      list.push({
+        // 샷 한가운데. 경계는 전환 중이라 흐릿할 수 있다.
+        at: cursor + dur / 2,
+        mood: scene.mood || 'mystery',
+        section: scene.section || '',
+        person: String(shot.person || '').trim(),
+        rank: MOOD_RANK[scene.mood] ?? 9,
+      });
+      cursor += dur;
+    }
   }
+
   const total = cursor;
+  // 맨 앞과 맨 끝은 피한다. 보통 어둡거나 비어 있다.
   const usable = list.filter((x) => x.at > total * 0.08 && x.at < total * 0.92);
   const pool = usable.length ? usable : list;
 
+  // ⭐ 사람이 있는 샷이 먼저다. 그다음이 분위기, 그다음이 시각.
+  const order = (a, b) =>
+    (a.person ? 0 : 1) - (b.person ? 0 : 1) || a.rank - b.rank || a.at - b.at;
+
   const picked = [];
-  for (const cand of [...pool].sort((a, b) => a.rank - b.rank || a.at - b.at)) {
-    if (picked.length >= count) break;
-    if (picked.some((p) => Math.abs(p.at - cand.at) < minGap)) continue;
+  const take = (cand) => {
+    if (picked.length >= count) return;
+    if (picked.includes(cand)) return;
+    if (picked.some((p) => Math.abs(p.at - cand.at) < minGap)) return;
     picked.push(cand);
+  };
+
+  // 1) 사람이 있는 샷으로 채운다. 같은 사람만 셋 나오지 않게 번갈아 본다.
+  const withPerson = pool.filter((x) => x.person).sort(order);
+  const seen = new Set();
+  for (const cand of withPerson) {
+    if (seen.has(cand.person)) continue;
+    take(cand);
+    seen.add(cand.person);
   }
-  // 떨어뜨릴 수 없을 만큼 짧은 편이면 간격을 포기하고 채운다.
+  for (const cand of withPerson) take(cand);
+
+  // 2) 모자라면 분위기로 채운다.
+  for (const cand of [...pool].sort((a, b) => a.rank - b.rank || a.at - b.at)) take(cand);
+
+  // 3) 떨어뜨릴 수 없을 만큼 짧은 편이면 간격을 포기하고 채운다.
   for (const cand of pool) {
     if (picked.length >= count) break;
     if (!picked.includes(cand)) picked.push(cand);
   }
+
   return picked.slice(0, count).sort((a, b) => a.at - b.at).map((x) => ({
     at: Math.round(x.at * 100) / 100,
     mood: x.mood,
     section: x.section,
+    person: x.person || '',
   }));
 }
