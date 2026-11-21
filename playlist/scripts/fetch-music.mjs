@@ -124,6 +124,25 @@ const COPYRIGHTED_SONGS = [
   'i put a spell on you', 'nature boy', "it's a wonderful world",
   'blue moon', 'tenderly', 'teach me tonight', 'black coffee',
   'never let me go', 'angel eyes', 'lover man', 'god bless the child',
+  /* 2026-11-21 13집 후보로 통과해 버린 것들. 재즈 스탠더드가 아니라
+   * 팝·영화 음악이라 위 목록에 없었다. 보컬 집은 커버곡이 많다. */
+  'jolene', 'city of stars', 'hallelujah', 'imagine', 'yesterday',
+  'killing me softly', 'stand by me', 'bridge over troubled water',
+  'dancing queen', 'wonderwall', 'creep', 'hotel california',
+  'make you feel my love', 'both sides now', 'the sound of silence',
+];
+
+/* 아예 받지 않을 아티스트.
+ *
+ * 2026-11-21. 지금까지 곡 단위로만 막아 왔는데, 한 번 뺀 아티스트의
+ * **다른 곡**은 그대로 들어온다. zero-project 를 9집·10집에서 빼고도
+ * 13집에서 또 만났다. 이름이 화면 한가운데 박히는 자리라 아티스트
+ * 단위로 막는 편이 맞다.
+ *
+ * 이유 없이 넣지 않는다. 음악이 나빠서가 아니라 **화면에 쓸 수 없는
+ * 이름**이라서다 — 소문자와 하이픈뿐이라 파일 이름처럼 읽힌다. */
+const BAD_ARTISTS = [
+  'zero-project',
 ];
 
 /* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
@@ -618,6 +637,11 @@ async function mainJamendo() {
 
     const same = (x) => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
     if (same(title) === same(artist)) { skipped++; continue; }
+
+    if (BAD_ARTISTS.some((a) => same(a) === same(artist))) {
+      console.log(`  — 건너뜀: ${title} (${artist} — 화면에 쓸 수 없는 이름)`);
+      skipped++; continue;
+    }
 
     /* 번호가 달라도 같은 곡이면 거른다. Jamendo 에는 같은 녹음이 번호를
      * 바꿔 다시 올라오는 일이 있다 — 14집에 3집의 Silent Weave 와

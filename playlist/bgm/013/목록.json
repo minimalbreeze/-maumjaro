@@ -1,0 +1,177 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-472893.mp3",
+      "title": "Winter Sunlight",
+      "artist": "Snowflake & ccMixter",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Winter Sunlight — Snowflake & ccMixter (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/472893",
+      "source": "https://www.jamendo.com/track/472893"
+    },
+    {
+      "file": "jamendo-1227197.mp3",
+      "title": "All I Ever Wanted",
+      "artist": "Devon Elizabeth",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "All I Ever Wanted — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1227197",
+      "source": "https://www.jamendo.com/track/1227197"
+    },
+    {
+      "file": "jamendo-1204670.mp3",
+      "title": "Deeper For You",
+      "artist": "Melanie Ungar",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Deeper For You — Melanie Ungar (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1204670",
+      "source": "https://www.jamendo.com/track/1204670"
+    },
+    {
+      "file": "jamendo-1246471.mp3",
+      "title": "If Only",
+      "artist": "Devon Elizabeth",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "If Only — Devon Elizabeth (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1246471",
+      "source": "https://www.jamendo.com/track/1246471"
+    },
+    {
+      "file": "jamendo-1348952.mp3",
+      "title": "Felicidade",
+      "artist": "Esmeralda Xha",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Felicidade — Esmeralda Xha (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1348952",
+      "source": "https://www.jamendo.com/track/1348952"
+    },
+    {
+      "file": "jamendo-1210909.mp3",
+      "title": "Magic",
+      "artist": "J Metro",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Magic — J Metro (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1210909",
+      "source": "https://www.jamendo.com/track/1210909"
+    },
+    {
+      "file": "jamendo-339851.mp3",
+      "title": "Oi Da Ne Vecher",
+      "artist": "Lena Selyanina",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Oi Da Ne Vecher — Lena Selyanina (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/339851",
+      "source": "https://www.jamendo.com/track/339851"
+    },
+    {
+      "file": "jamendo-1190764.mp3",
+      "title": "Frozen",
+      "artist": "Rochelle Gabrielle",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Frozen — Rochelle Gabrielle (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1190764",
+      "source": "https://www.jamendo.com/track/1190764"
+    },
+    {
+      "file": "jamendo-1395500.mp3",
+      "title": "Blindly Love",
+      "artist": "Kara Square",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Blindly Love — Kara Square (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1395500",
+      "source": "https://www.jamendo.com/track/1395500"
+    },
+    {
+      "file": "jamendo-1190762.mp3",
+      "title": "Love",
+      "artist": "Rochelle Gabrielle",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Love — Rochelle Gabrielle (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1190762",
+      "source": "https://www.jamendo.com/track/1190762"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1870773.mp3",
+      "title": "Last dance (feat. Dia Yiannopoulou)",
+      "artist": "zero-project",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Last dance (feat. Dia Yiannopoulou) — zero-project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1870773",
+      "source": "https://www.jamendo.com/track/1870773",
+      "reason": "아티스트 이름을 화면에 쓸 수 없다 (zero-project)"
+    },
+    {
+      "file": "jamendo-1127171.mp3",
+      "title": "Ahley para el amor no hay edad",
+      "artist": "Ashley",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Ahley para el amor no hay edad — Ashley (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1127171",
+      "source": "https://www.jamendo.com/track/1127171",
+      "reason": "제목에 오타가 섞였다"
+    },
+    {
+      "file": "jamendo-1174441.mp3",
+      "title": "03 - Dont be afraid - Jabberheads - Jolen…",
+      "artist": "Jabberheads",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "03 - Dont be afraid - Jabberheads - Jolen… — Jabberheads (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174441",
+      "source": "https://www.jamendo.com/track/1174441",
+      "reason": "제목이 파일명 그대로다"
+    },
+    {
+      "file": "jamendo-1210773.mp3",
+      "title": "my-love-eunice (1)",
+      "artist": "En 3 palabras",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "my-love-eunice (1) — En 3 palabras (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1210773",
+      "source": "https://www.jamendo.com/track/1210773",
+      "reason": "제목이 파일명 그대로다"
+    },
+    {
+      "file": "jamendo-1396163.mp3",
+      "title": "An Angel In Fly",
+      "artist": "The woods",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "An Angel In Fly — The woods (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1396163",
+      "source": "https://www.jamendo.com/track/1396163",
+      "reason": "제목이 문장이 안 된다"
+    },
+    {
+      "file": "jamendo-1174445.mp3",
+      "title": "11 - Jolene - Jabberheads - Jolene (2013)",
+      "artist": "Jabberheads",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "11 - Jolene - Jabberheads - Jolene (2013) — Jabberheads (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174445",
+      "source": "https://www.jamendo.com/track/1174445",
+      "reason": "제목이 파일명 그대로다"
+    },
+    {
+      "file": "jamendo-1430664.mp3",
+      "title": "City Of Stars",
+      "artist": "Esmeralda Xha",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "City Of Stars — Esmeralda Xha (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1430664",
+      "source": "https://www.jamendo.com/track/1430664",
+      "reason": "라라랜드(2016) — 작곡 저작권이 살아 있다"
+    },
+    {
+      "file": "jamendo-1340813.mp3",
+      "title": "amuri amuri",
+      "artist": "Piccola Orchestra Popolare CANTODINIZIO",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "amuri amuri — Piccola Orchestra Popolare CANTODINIZIO (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1340813",
+      "source": "https://www.jamendo.com/track/1340813",
+      "reason": "제목이 파일명 그대로다"
+    }
+  ]
+}
