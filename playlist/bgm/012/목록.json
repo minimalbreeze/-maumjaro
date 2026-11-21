@@ -1,0 +1,159 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1483587.mp3",
+      "title": "Fire",
+      "artist": "Seth Power",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Fire — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483587",
+      "source": "https://www.jamendo.com/track/1483587"
+    },
+    {
+      "file": "jamendo-1194604.mp3",
+      "title": "Birosca",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Birosca — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194604",
+      "source": "https://www.jamendo.com/track/1194604"
+    },
+    {
+      "file": "jamendo-1215804.mp3",
+      "title": "Take it",
+      "artist": "Manhat10",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Take it — Manhat10 (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1215804",
+      "source": "https://www.jamendo.com/track/1215804"
+    },
+    {
+      "file": "jamendo-1194607.mp3",
+      "title": "Paraty",
+      "artist": "Túlio Borges",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Paraty — Túlio Borges (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1194607",
+      "source": "https://www.jamendo.com/track/1194607"
+    },
+    {
+      "file": "jamendo-1483585.mp3",
+      "title": "Casanova",
+      "artist": "Seth Power",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Casanova — Seth Power (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1483585",
+      "source": "https://www.jamendo.com/track/1483585"
+    },
+    {
+      "file": "jamendo-1243463.mp3",
+      "title": "Smile",
+      "artist": "David Amber",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Smile — David Amber (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1243463",
+      "source": "https://www.jamendo.com/track/1243463"
+    },
+    {
+      "file": "jamendo-1597604.mp3",
+      "title": "Winner",
+      "artist": "Rxbyn",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Winner — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1597604",
+      "source": "https://www.jamendo.com/track/1597604"
+    },
+    {
+      "file": "jamendo-1615673.mp3",
+      "title": "Glass House",
+      "artist": "Rxbyn",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Glass House — Rxbyn (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1615673",
+      "source": "https://www.jamendo.com/track/1615673"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1208376.mp3",
+      "title": "Tremont (prod. ηoM∩D)",
+      "artist": "NePh",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Tremont (prod. ηoM∩D) — NePh (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1208376",
+      "source": "https://www.jamendo.com/track/1208376",
+      "reason": "제목에 깨진 문자와 prod. 표기"
+    },
+    {
+      "file": "jamendo-1481499.mp3",
+      "title": "B.E.D. (Stripped)",
+      "artist": "Cortéz",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "B.E.D. (Stripped) — Cortéz (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1481499",
+      "source": "https://www.jamendo.com/track/1481499",
+      "reason": "랩 계열 · 같은 곡이 둘"
+    },
+    {
+      "file": "jamendo-1446169.mp3",
+      "title": "Da Rockwilder Freestyle",
+      "artist": "Ralph Da God",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Da Rockwilder Freestyle — Ralph Da God (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1446169",
+      "source": "https://www.jamendo.com/track/1446169",
+      "reason": "랩 프리스타일 — 감미로운 보컬이 아니다"
+    },
+    {
+      "file": "jamendo-1480576.mp3",
+      "title": "Like Im Broke Feat. King Ski",
+      "artist": "Markay",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Like Im Broke Feat. King Ski — Markay (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1480576",
+      "source": "https://www.jamendo.com/track/1480576",
+      "reason": "랩 · 제목에 오타"
+    },
+    {
+      "file": "jamendo-1400330.mp3",
+      "title": "B.E.D",
+      "artist": "Cortéz",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "B.E.D — Cortéz (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1400330",
+      "source": "https://www.jamendo.com/track/1400330",
+      "reason": "랩 계열 · 같은 곡이 둘"
+    },
+    {
+      "file": "jamendo-1210775.mp3",
+      "title": "pido-perdon-v-zen-bea-eunice-instrumental…",
+      "artist": "En 3 palabras",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "pido-perdon-v-zen-bea-eunice-instrumental… — En 3 palabras (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1210775",
+      "source": "https://www.jamendo.com/track/1210775",
+      "reason": "제목을 화면에 쓸 수 없다"
+    },
+    {
+      "file": "jamendo-1791441.mp3",
+      "title": "An Empty Room",
+      "artist": "Elephant Funeral",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "An Empty Room — Elephant Funeral (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1791441",
+      "source": "https://www.jamendo.com/track/1791441",
+      "reason": "아티스트명이 Elephant Funeral — 화면에서 분위기가 꺾인다"
+    },
+    {
+      "file": "jamendo-1356510.mp3",
+      "title": "No Worries/Make It Out - Ladell (feat. Th…",
+      "artist": "Ladell",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "No Worries/Make It Out - Ladell (feat. Th… — Ladell (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1356510",
+      "source": "https://www.jamendo.com/track/1356510",
+      "reason": "제목을 화면에 쓸 수 없다"
+    }
+  ]
+}

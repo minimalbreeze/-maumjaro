@@ -82,8 +82,12 @@ export const JAMENDO_MOODS = {
    * ⚠️ 보컬 재즈는 스탠더드 천지다. 재 보는 중에 Estate(1960)와
    *    Quiet Nights of Quiet Stars(1960)가 상위에 바로 나왔다. 연주곡보다
    *    COPYRIGHTED_SONGS 가 훨씬 많이 일한다. */
-  남성보컬: { groups: ['soul', 'jazz', 'rnb', 'bossanova'], speed: 'medium', vocal: true, gender: 'male' },
-  여성보컬: { groups: ['jazz', 'soul', 'rnb', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
+  /* ⚠️ rnb 는 넣지 않는다. 2026-11-21 에 남성보컬로 16곡을 받아 보니
+   *    절반이 랩·힙합이었다 — Da Rockwilder Freestyle · Like Im Broke
+   *    Feat. King Ski · Tremont (prod. ηoM∩D). Jamendo 에서 R&B 태그는
+   *    힙합과 거의 한 덩이다. "감미로운 보컬" 과는 다른 물건이다. */
+  남성보컬: { groups: ['soul', 'jazz', 'bossanova', 'singersongwriter'], speed: 'medium', vocal: true, gender: 'male' },
+  여성보컬: { groups: ['jazz', 'soul', 'bossanova', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
 };
 
 function curlJson(params) {
