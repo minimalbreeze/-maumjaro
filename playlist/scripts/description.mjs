@@ -21,6 +21,11 @@ const INTRO = pick('--intro', '가을 저녁, 창이 큰 어느 로비에서.');
 /* 해시태그. 집마다 색이 다르면(빗소리·현악 같은) --tags 로 바꾼다.
  * 앞의 세 개는 채널 공통이라 고정하고, 뒤만 갈아 끼운다. */
 const TAGS = pick('--tags', '#작업할때듣는음악 #재즈 #lofi #공부할때듣는음악');
+/* 맨 첫 줄. 구글·유튜브 검색 결과에 보이는 것은 설명란 첫 두 줄이다.
+ * 7집은 외부 유입이 Google Search 100% 였는데, 그 자리에 "틀어두고 하던
+ * 일을 하세요" 가 있었다. 검색어가 거기 있어야 한다.
+ * 길이는 자동으로 붙는다 — 곡 길이를 재서 쓰므로 손으로 적을 일이 없다. */
+const LEAD = pick('--lead', '');
 
 const list = JSON.parse(readFileSync(join(BGM, '목록.json'), 'utf8'));
 const tracks = (list.tracks || []).filter((t) => existsSync(join(BGM, t.file)));
@@ -35,6 +40,7 @@ const dur = (f) => Number(execFileSync('ffprobe',
 const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 const out = [];
+/* LEAD 는 전체 길이를 알아야 해서 맨 마지막에 맨 앞으로 끼워 넣는다. */
 out.push(INTRO);
 out.push('틀어두고 하던 일을 하세요.');
 out.push('');
@@ -77,5 +83,7 @@ if (credits.length) {
 }
 out.push('minimalbreeze');
 out.push(`#플레이리스트 #playlist ${TAGS}`);
+
+if (LEAD) out.unshift(`${LEAD} · ${Math.round(at / 60)}분`, '');
 
 console.log(out.join('\n'));
