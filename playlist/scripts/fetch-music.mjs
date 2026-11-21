@@ -130,6 +130,7 @@ const COPYRIGHTED_SONGS = [
   'killing me softly', 'stand by me', 'bridge over troubled water',
   'dancing queen', 'wonderwall', 'creep', 'hotel california',
   'make you feel my love', 'both sides now', 'the sound of silence',
+  'what a difference a day makes', 'cry to me', 'summertime sadness',
 ];
 
 /* 아예 받지 않을 아티스트.
