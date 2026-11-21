@@ -66,6 +66,24 @@ export const JAMENDO_MOODS = {
   하프: { groups: ['harp'], speed: '', acoustic: true },                         // 200곡
   플루트: { groups: ['flute'], speed: 'medium', acoustic: true },                 // 167곡
   기타: { groups: ['guitar,acoustic', 'guitar,classical'], speed: 'medium', acoustic: true },
+
+  /* 노래가 들어가는 무드. 2026-11-21 에 한 편씩만 만들어 보기로 했다.
+   *
+   * ⚠️ 이 무드는 vocalinstrumental=vocal 로 질의한다. 지금까지 모든 집이
+   *    연주곡이었던 것과 정반대다. 작업·공부용 BGM 이 아니라는 뜻이므로
+   *    다른 집에 섞어 쓰지 않는다.
+   *
+   * 2026-11-21 에 재 본 곡 수(CC BY/CC0 · 2~7분 · 인기순):
+   *   남성  재즈 101 · 소울 102 · R&B 200+ · 보사노바 33 · 포크 200+
+   *   여성  재즈 29 · 소울 31 · R&B 62 · 보사노바 5 · 포크 31
+   * 남성 쪽은 서너 집이 나오고 여성 쪽은 한 편이면 바닥난다. 그래서
+   * 시리즈가 아니라 한 편씩이다.
+   *
+   * ⚠️ 보컬 재즈는 스탠더드 천지다. 재 보는 중에 Estate(1960)와
+   *    Quiet Nights of Quiet Stars(1960)가 상위에 바로 나왔다. 연주곡보다
+   *    COPYRIGHTED_SONGS 가 훨씬 많이 일한다. */
+  남성보컬: { groups: ['soul', 'jazz', 'rnb', 'bossanova'], speed: 'medium', vocal: true, gender: 'male' },
+  여성보컬: { groups: ['jazz', 'soul', 'rnb', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
 };
 
 function curlJson(params) {
@@ -94,14 +112,16 @@ function callWithRetry(params, tries = 6) {
 
 /* 한 무드(또는 직접 준 태그)로 후보를 긁어 온다.
  * 돌려주는 모양은 fetch-music.mjs 가 쓰던 것과 같게 맞춘다. */
-export function searchJamendo({ clientId, mood, tags, speed, acoustic, offset = 0,
-  limit = 60, minSec = 90, maxSec = 480 }) {
+export function searchJamendo({ clientId, mood, tags, speed, acoustic, vocal, gender,
+  offset = 0, limit = 60, minSec = 90, maxSec = 480 }) {
   if (!clientId) throw new Error('Jamendo client_id 가 없습니다');
   const preset = JAMENDO_MOODS[mood] || {};
   const groups = tags ? [tags] : preset.groups;
   if (!groups || !groups.length) throw new Error(`Jamendo 태그를 정할 수 없습니다 (무드: ${mood || '없음'})`);
   const useSpeed = speed !== undefined ? speed : (preset.speed || '');
   const useAcoustic = acoustic !== undefined ? acoustic : !!preset.acoustic;
+  const useVocal = vocal !== undefined ? vocal : !!preset.vocal;
+  const useGender = gender !== undefined ? gender : (preset.gender || '');
   /* 넉넉히 받아 둔다. 이미 쓴 곡·뺀 곡을 걸러내고 나면 얼마 안 남기 때문이다.
    * 적게 받으면 늘 인기 상위 몇십 곡만 보게 되고, 같은 아티스트가 집마다
    * 되풀이된다 — 8집까지 Christian Zell 이 다섯 집에 나왔다. */
@@ -116,7 +136,10 @@ export function searchJamendo({ clientId, mood, tags, speed, acoustic, offset = 
     include: 'musicinfo licenses',
     audioformat: 'mp32',
     tags: g,
-    vocalinstrumental: 'instrumental',  // BGM 이다. 가사가 있으면 일하는 데 방해된다
+    // 기본은 연주곡이다. BGM 이라 가사가 있으면 일하는 데 방해된다.
+    // 보컬 무드만 vocal 로 뒤집고 목소리 성별까지 고른다.
+    vocalinstrumental: useVocal ? 'vocal' : 'instrumental',
+    gender: useGender,
     speed: useSpeed,
     acousticelectric: useAcoustic ? 'acoustic' : '',
     durationbetween: `${minSec}_${maxSec}`,

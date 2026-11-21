@@ -113,6 +113,17 @@ const COPYRIGHTED_SONGS = [
   'corcovado', 'blue in green', 'freddie freeloader', 'moanin', 'maiden voyage',
   'song for my father', 'fly me to the moon', 'autumn leaves', 'stella by starlight',
   'in a sentimental mood', 'take the a train', 'mood indigo', 'sophisticated lady',
+  /* 노래로 부르는 스탠더드. 2026-11-21 보컬 풀을 재다가 Estate(1960)와
+   * Quiet Nights of Quiet Stars(1960)가 상위에 바로 나왔다. 연주곡 집보다
+   * 보컬 집에서 이 목록이 훨씬 많이 일한다 — 보컬 재즈는 스탠더드 천지다. */
+  'estate', 'quiet nights of quiet stars', 'the way you look tonight',
+  'dream a little dream', 'cry me a river', 'at last', 'feeling good',
+  'unforgettable', 'beyond the sea', 'la vie en rose', 'bésame mucho',
+  'besame mucho', 'sway', 'perhaps perhaps perhaps', 'quizas quizas',
+  'lullaby of birdland', 'but not for me', 'the nearness of you',
+  'i put a spell on you', 'nature boy', "it's a wonderful world",
+  'blue moon', 'tenderly', 'teach me tonight', 'black coffee',
+  'never let me go', 'angel eyes', 'lover man', 'god bless the child',
 ];
 
 /* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
@@ -431,7 +442,9 @@ function finalize(raw) {
  * 아니다. -9 로 두면 종은 통과하고 드럼이 앞에 선 곡은 여전히 걸린다. */
 /* 무드마다 밝기 기준이 다르다. 캐럴은 종 때문에, 스윙은 브러시와 심벌
  * 때문에 고역이 원래 밝다. 같은 자로 재면 장르째로 지워진다. */
-const BRIGHT_BY_MOOD = { 크리스마스: '-9', 연말: '-12' };
+/* 노래가 들어가면 고역이 원래 밝다 — 사람 목소리의 자음이 거기 있다.
+ * 연주곡 기준(-14)을 그대로 쓰면 쓸 만한 곡까지 "너무 밝다" 고 버린다. */
+const BRIGHT_BY_MOOD = { 크리스마스: '-9', 연말: '-12', 남성보컬: '-8', 여성보컬: '-8' };
 const MAX_BRIGHT = Number(val('--bright', BRIGHT_BY_MOOD[MOOD] || '-14'));
 
 function rmsOf(file, af) {
@@ -543,7 +556,8 @@ async function mainJamendo() {
   }
 
   console.log('─'.repeat(60));
-  console.log('Jamendo 공식 API — 연주곡 · 인기순');
+  const kind = (has('--vocal') || /보컬$/.test(MOOD)) ? '노래' : '연주곡';
+  console.log(`Jamendo 공식 API — ${kind} · 인기순`);
   console.log(`${MOOD ? `무드: ${MOOD}` : `태그: ${val('--q', '')}`} · 목표 ${WANT}곡`);
   console.log('─'.repeat(60));
 
@@ -553,6 +567,8 @@ async function mainJamendo() {
       clientId: CLIENT_ID, mood: MOOD, tags: MOOD ? '' : val('--q', ''),
       speed: has('--any-speed') ? '' : undefined,
       acoustic: has('--acoustic') ? true : (has('--any-sound') ? false : undefined),
+      vocal: has('--vocal') ? true : undefined,
+      gender: val('--gender', '') || undefined,
       offset: Number(val('--offset', '0')),
       limit: Math.min(200, Math.max(40, WANT * 6)),
       minSec: MIN_SEC, maxSec: MAX_SEC,
