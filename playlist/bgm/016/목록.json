@@ -1,15 +1,6 @@
 {
   "tracks": [
     {
-      "file": "jamendo-135744.mp3",
-      "title": "Dreams de L'Herbe",
-      "artist": "The Whisky project",
-      "recorded": "2008",
-      "license": "CC BY",
-      "credit": "Dreams de L'Herbe — The Whisky project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/135744",
-      "source": "https://www.jamendo.com/track/135744"
-    },
-    {
       "file": "jamendo-1256831.mp3",
       "title": "Serious Emotions",
       "artist": "Offenbach Project",
@@ -17,33 +8,6 @@
       "license": "CC BY",
       "credit": "Serious Emotions — Offenbach Project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1256831",
       "source": "https://www.jamendo.com/track/1256831"
-    },
-    {
-      "file": "jamendo-497844.mp3",
-      "title": "Inspired by the Beatles(remastered)",
-      "artist": "Blik",
-      "recorded": "2009",
-      "license": "CC BY",
-      "credit": "Inspired by the Beatles(remastered) — Blik (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/497844",
-      "source": "https://www.jamendo.com/track/497844"
-    },
-    {
-      "file": "jamendo-1759283.mp3",
-      "title": "TM Grooves - Daddy",
-      "artist": "TM Grooves - Soulful House",
-      "recorded": "2020",
-      "license": "CC BY",
-      "credit": "TM Grooves - Daddy — TM Grooves - Soulful House (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1759283",
-      "source": "https://www.jamendo.com/track/1759283"
-    },
-    {
-      "file": "jamendo-1465398.mp3",
-      "title": "Wolfpack",
-      "artist": "Ivan Tregub",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "Wolfpack — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465398",
-      "source": "https://www.jamendo.com/track/1465398"
     },
     {
       "file": "jamendo-1465394.mp3",
@@ -55,24 +19,6 @@
       "source": "https://www.jamendo.com/track/1465394"
     },
     {
-      "file": "jamendo-949865.mp3",
-      "title": "Alien Sound",
-      "artist": "Cardiocard",
-      "recorded": "2012",
-      "license": "CC BY",
-      "credit": "Alien Sound — Cardiocard (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/949865",
-      "source": "https://www.jamendo.com/track/949865"
-    },
-    {
-      "file": "jamendo-1209003.mp3",
-      "title": "Dreaming in thunderclouds",
-      "artist": "Cobat",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Dreaming in thunderclouds — Cobat (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1209003",
-      "source": "https://www.jamendo.com/track/1209003"
-    },
-    {
       "file": "jamendo-1846467.mp3",
       "title": "Lounge Piano",
       "artist": "Sevennotes",
@@ -80,15 +26,6 @@
       "license": "CC BY",
       "credit": "Lounge Piano — Sevennotes (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1846467",
       "source": "https://www.jamendo.com/track/1846467"
-    },
-    {
-      "file": "jamendo-1306692.mp3",
-      "title": "the memories will never be erased",
-      "artist": "Djavam R. Silva",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "the memories will never be erased — Djavam R. Silva (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1306692",
-      "source": "https://www.jamendo.com/track/1306692"
     },
     {
       "file": "jamendo-1360639.mp3",
@@ -118,13 +55,96 @@
       "source": "https://www.jamendo.com/track/1360643"
     },
     {
+      "file": "jamendo-1475481.mp3",
+      "title": "The Last Summer",
+      "artist": "Mark Bodino",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Last Summer — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475481",
+      "source": "https://www.jamendo.com/track/1475481"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-135744.mp3",
+      "title": "Dreams de L'Herbe",
+      "artist": "The Whisky project",
+      "recorded": "2008",
+      "license": "CC BY",
+      "credit": "Dreams de L'Herbe — The Whisky project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/135744",
+      "source": "https://www.jamendo.com/track/135744",
+      "reason": "제목이 약물로 읽힐 수 있다"
+    },
+    {
+      "file": "jamendo-497844.mp3",
+      "title": "Inspired by the Beatles(remastered)",
+      "artist": "Blik",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Inspired by the Beatles(remastered) — Blik (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/497844",
+      "source": "https://www.jamendo.com/track/497844",
+      "reason": "비틀즈를 제목에 달았고 꼬리표가 붙었다"
+    },
+    {
+      "file": "jamendo-1759283.mp3",
+      "title": "TM Grooves - Daddy",
+      "artist": "TM Grooves - Soulful House",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "TM Grooves - Daddy — TM Grooves - Soulful House (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1759283",
+      "source": "https://www.jamendo.com/track/1759283",
+      "reason": "제목에 아티스트 이름이 붙었다"
+    },
+    {
+      "file": "jamendo-1465398.mp3",
+      "title": "Wolfpack",
+      "artist": "Ivan Tregub",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Wolfpack — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465398",
+      "source": "https://www.jamendo.com/track/1465398",
+      "reason": "늑대 무리 — 카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-949865.mp3",
+      "title": "Alien Sound",
+      "artist": "Cardiocard",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Alien Sound — Cardiocard (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/949865",
+      "source": "https://www.jamendo.com/track/949865",
+      "reason": "카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-1209003.mp3",
+      "title": "Dreaming in thunderclouds",
+      "artist": "Cobat",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dreaming in thunderclouds — Cobat (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1209003",
+      "source": "https://www.jamendo.com/track/1209003",
+      "reason": "천둥 — 카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-1306692.mp3",
+      "title": "the memories will never be erased",
+      "artist": "Djavam R. Silva",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "the memories will never be erased — Djavam R. Silva (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1306692",
+      "source": "https://www.jamendo.com/track/1306692",
+      "reason": "전부 소문자에 문장이 길다"
+    },
+    {
       "file": "jamendo-1404089.mp3",
       "title": "Drifting And Glooming",
       "artist": "Iltarusko",
       "recorded": "2016",
       "license": "CC BY",
       "credit": "Drifting And Glooming — Iltarusko (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1404089",
-      "source": "https://www.jamendo.com/track/1404089"
+      "source": "https://www.jamendo.com/track/1404089",
+      "reason": "제목에 우울(gloom)이 들어간다"
     },
     {
       "file": "jamendo-1177821.mp3",
@@ -133,16 +153,8 @@
       "recorded": "2014",
       "license": "CC BY",
       "credit": "Like a Phoenix — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177821",
-      "source": "https://www.jamendo.com/track/1177821"
-    },
-    {
-      "file": "jamendo-1475481.mp3",
-      "title": "The Last Summer (NO vocals)",
-      "artist": "Mark Bodino",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "The Last Summer (NO vocals) — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475481",
-      "source": "https://www.jamendo.com/track/1475481"
+      "source": "https://www.jamendo.com/track/1177821",
+      "reason": "카페 분위기가 아니다"
     },
     {
       "file": "jamendo-1251801.mp3",
@@ -151,7 +163,8 @@
       "recorded": "2015",
       "license": "CC BY",
       "credit": "You Know I'm No Good — Eddy Retali (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1251801",
-      "source": "https://www.jamendo.com/track/1251801"
+      "source": "https://www.jamendo.com/track/1251801",
+      "reason": "에이미 와인하우스(2006) — 작곡 저작권이 살아 있다"
     },
     {
       "file": "jamendo-2017833.mp3",
@@ -160,8 +173,8 @@
       "recorded": "2023",
       "license": "CC BY",
       "credit": "Guitar Solo in Bm — Kenduskeag's Meeting (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2017833",
-      "source": "https://www.jamendo.com/track/2017833"
+      "source": "https://www.jamendo.com/track/2017833",
+      "reason": "제목이 아니라 설명이다"
     }
-  ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  ]
 }

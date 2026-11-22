@@ -131,6 +131,7 @@ const COPYRIGHTED_SONGS = [
   'dancing queen', 'wonderwall', 'creep', 'hotel california',
   'make you feel my love', 'both sides now', 'the sound of silence',
   'what a difference a day makes', 'cry to me', 'summertime sadness',
+  "you know i'm no good", 'you know im no good', 'back to black', 'valerie',
 ];
 
 /* 아예 받지 않을 아티스트.
