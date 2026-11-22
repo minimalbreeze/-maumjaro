@@ -2959,6 +2959,46 @@ export const 바로잡기 = [
     이유: '글 25658. 결과가 나왔으므로 마지막 소제목을 바꾼다',
     글: [25658],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 김도규 — 54경기 19세이브, 퓨처스 세이브 1위</h2>',
+    맞는:
+      '<!-- wp:image {"id":25689,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1-ch8wcm-mwrf975j.jpg" alt="울산 웨일즈 김도규" class="wp-image-25689"/></a><figcaption class="wp-element-caption">구단 MVP 김도규 (사진: 울산 웨일즈 제공) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 김도규 — 54경기 19세이브, 퓨처스 세이브 1위</h2>',
+    이유: '글 25679. 김도규 사진 (미디어 25689)',
+    글: [25679],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 숄튼스는 어떤 투수인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":25690,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-2-ch8wdh-mwrf9aum.jpg" alt="한화 제시 숄튼스" class="wp-image-25690"/></a><figcaption class="wp-element-caption">제시 숄튼스 (사진: 한화 이글스 제공) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 숄튼스는 어떤 투수인가</h2>',
+    이유: '글 25682. 숄튼스 사진 (미디어 25690)',
+    글: [25682],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 2027 외국인 선발 셋 — 숄튼스·왓슨·왕옌청</h2>',
+    맞는:
+      '<!-- wp:image {"id":25691,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-3-ch8wec-mwrf9ct1.jpg" alt="한화 이글스 외국인 투수" class="wp-image-25691"/></a><figcaption class="wp-element-caption">한화 이글스 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 2027 외국인 선발 셋 — 숄튼스·왓슨·왕옌청</h2>',
+    이유: '글 25682. 외국인 선발 절 사진 (미디어 25691)',
+    글: [25682],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 MVP 2회 이상은 44년 동안 다섯 명뿐입니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25692,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-4-ch8wf7-mwrf9f2u.jpg" alt="KIA 김도영" class="wp-image-25692"/></a><figcaption class="wp-element-caption">김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 MVP 2회 이상은 44년 동안 다섯 명뿐입니다</h2>',
+    이유: '글 25685. 김도영 사진 (미디어 25692)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📌 내년부터 유격수를 봅니다 — 강정호의 40홈런이 기준선</h2>',
+    맞는:
+      '<!-- wp:image {"id":25693,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-5-ch8wg2-mwrf9iby.jpg" alt="KIA 김도영 타격" class="wp-image-25693"/></a><figcaption class="wp-element-caption">김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📌 내년부터 유격수를 봅니다 — 강정호의 40홈런이 기준선</h2>',
+    이유: '글 25685. 유격수 절 사진 (미디어 25693)',
+    글: [25685],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
