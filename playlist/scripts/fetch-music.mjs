@@ -154,6 +154,24 @@ const BAD_ARTISTS = [
   'zero-project',
 ];
 
+/* archive.org 에서만 쓰는 거르개.
+ *
+ * 컬렉션으로 가둬도 netlabels 안에 상업 음반이 섞여 들어올 수 있다.
+ * 이름이 널리 알려진 사람이 "CC BY" 로 올라와 있으면 거의 틀림없이
+ * 올린 사람이 권리자가 아니다. 의심스러우면 받지 않는다 —
+ * 틀렸을 때 잃는 것이 너무 크다(삭제 요청 = 경고 = 채널 삭제로 가는 길).
+ *
+ * 완전한 목록일 수 없다. 사람이 마지막에 눈으로 한 번 더 본다. */
+const FAMOUS_UPLOADS = [
+  'prince', 'c418', 'coil', 'radiohead', 'nirvana', 'beatles', 'the beatles',
+  'pink floyd', 'daft punk', 'aphex twin', 'boards of canada', 'burial',
+  'nujabes', 'j dilla', 'mf doom', 'madlib', 'bts', 'blackpink', 'iu',
+  'bob dylan', 'david bowie', 'miles davis', 'john coltrane', 'bill evans',
+  'chet baker', 'nina simone', 'amy winehouse', 'norah jones', 'joao gilberto',
+  'tom jobim', 'antonio carlos jobim', 'stan getz', 'yiruma', 'ryuichi sakamoto',
+  'joe hisaishi', 'hans zimmer', 'ludovico einaudi', 'max richter', 'olafur arnalds',
+];
+
 /* 크리스마스 집에서 막을 장르. 확실히 아닌 것만 남긴다. */
 const XMAS_BAD_SUBJECTS = [
   'techno', 'trance', 'dubstep', 'drum and bass', 'dnb', 'edm', 'rave',
@@ -290,10 +308,26 @@ function search() {
   const CC_BY = 'licenseurl:("http://creativecommons.org/licenses/by/3.0/" '
     + 'OR "https://creativecommons.org/licenses/by/4.0/" '
     + 'OR "http://creativecommons.org/publicdomain/zero/1.0/")';
+  /* ⚠️ archive.org 의 라이선스 표시는 **올린 사람이 고른 것**이다.
+   * Jamendo 는 아티스트 본인이 올리고 본인이 라이선스를 고르지만,
+   * archive 는 아무나 올리고 아무 체크박스나 누를 수 있다.
+   *
+   * 2026-11-22 에 mediatype:audio 의 CC BY 4.0 상위를 뽑아 봤더니
+   * Prince 의 Piano & a Microphone 1983, C418 의 Minecraft Volume
+   * Alpha, Coil 의 팬 업로드가 전부 "CC BY" 로 올라와 있었다. 권리자가
+   * 허락한 게 아니라 올린 사람이 눌렀을 뿐이다. 그걸 쓰면 주장이 아니라
+   * 삭제 요청이 온다 — 경고(strike) 다.
+   *
+   * 그래서 **컬렉션으로 먼저 가둔다.**
+   *   jamendo-albums  Jamendo 가 미러링한 것. 출처가 아티스트다
+   *   netlabels       처음부터 CC 로 내는 레이블들. 2,468건이 CC BY 다
+   * 둘 다 "CC 로 내려고 만들어진 곳" 이라 표시를 믿을 수 있다.
+   * mediatype:audio 전체(41,059건)는 쓰지 않는다. */
+  const COLLECTION = has('--netlabels') ? 'collection:netlabels' : 'collection:jamendo-albums';
   const q = MODE === 'pd'
     // 1923~1925 발행만. 미국은 이 해까지 음반이 퍼블릭 도메인이다(2026 기준).
     ? `collection:georgeblood AND date:[1923-01-01 TO 1925-12-31] AND (${QUERY})`
-    : `collection:jamendo-albums AND ${CC_BY} AND (${QUERY})`;
+    : `${COLLECTION} AND ${CC_BY} AND (${QUERY})`;
   const d = jget('/advancedsearch.php', {
     q, 'fl[]': ['identifier', 'title', 'creator', 'date', 'licenseurl', 'subject'],
     rows: String(WANT * 5), output: 'json',
@@ -716,7 +750,9 @@ async function mainJamendo() {
 
 async function mainArchive() {
   console.log('─'.repeat(60));
-  console.log(`archive.org 에서 음원 찾기 — ${MODE === 'pd' ? '1923~1925 퍼블릭 도메인' : '자유 라이선스'}`);
+  const where = MODE === 'pd' ? '1923~1925 퍼블릭 도메인'
+    : (has('--netlabels') ? 'netlabels (CC 로 내는 레이블)' : 'jamendo-albums');
+  console.log(`archive.org 에서 음원 찾기 — ${where}`);
   console.log(`${MOOD ? `무드: ${MOOD}` : `검색어: ${QUERY.slice(0, 60)}`} · 목표 ${WANT}곡`);
   console.log('─'.repeat(60));
 
@@ -784,6 +820,18 @@ async function mainArchive() {
       console.log(`  — 건너뜀: 제목이 아티스트 이름과 같음 (${title.slice(0, 30)})`);
       skipped++; continue;
     }
+
+    /* ⚠️ 이름이 널리 알려진 사람이 "CC BY" 로 올라와 있으면 거의 틀림없이
+     * 올린 사람이 권리자가 아니다. 의심스러우면 받지 않는다 — 틀렸을 때
+     * 잃는 것이 너무 크다. 위의 FAMOUS_UPLOADS 주석 참고. */
+    const flat = (x) => String(x).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const who = ` ${flat(artist)} `;
+    const famous = FAMOUS_UPLOADS.find((n) => who.includes(` ${n} `));
+    if (famous) {
+      console.log(`  — 건너뜀: ${title.slice(0, 30)} (${artist} — 올린 사람이 권리자가 아닐 것이다)`);
+      skipped++; continue;
+    }
+    if (BAD_ARTISTS.some((a) => flat(a) === flat(artist))) { skipped++; continue; }
 
     if (seenBy(artist) >= MAX_PER_ARTIST) {
       console.log(`  — 건너뜀: ${title.slice(0, 30)} (${String(artist).slice(0, 20)} 곡이 이미 ${MAX_PER_ARTIST}개)`);
