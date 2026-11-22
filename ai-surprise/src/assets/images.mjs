@@ -274,7 +274,15 @@ export async function generateImages(prompts, {
       const list = allPhotosOf(p);
       if (name && list.length) {
         photosOf.set(name, list);
-        uniformOf.set(name, uniformClause({ team: p?.team, number: p?.number, role: p?.role }));
+        // ⚠️ `fromPhoto: true` — 이 표는 **사진에서 그리는 샷에만** 쓰인다
+        //    (repaintPrompt). 거기서는 등번호를 요구하지 않는다. "등에 큰
+        //    글씨로 42" 는 색이 아니라 **자세 지시**라, 사진이 정한 자세와
+        //    싸워서 몸을 돌려 놓는다 — 22화에서 투구 사진이 "등은 뒤를 보고
+        //    얼굴은 앞을 보는" 그림이 됐다(운영자: "괴물인가?").
+        uniformOf.set(
+          name,
+          uniformClause({ team: p?.team, number: p?.number, role: p?.role, fromPhoto: true })
+        );
       }
     }
   }

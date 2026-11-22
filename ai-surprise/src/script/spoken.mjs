@@ -208,6 +208,94 @@ export function latinSpots(sentences) {
  *    있을 수 있어서다 — '기아자동차'를 KIA 로 바꾸면 안 된다.
  *    사람이 보고 고친다.
  */
+/**
+ * 숫자 뒤의 단위를 한글로 적은 자리. 자막에는 기호가 눈에 익다.
+ *
+ * ── 왜 (2026-11-22, 22화) ──
+ *
+ * 운영자: **"150퍼센트 퍼센트를 % 로 적었으면 좋았겠다"**
+ *
+ * 같은 화면에서 카드는 `연봉 150%` 인데 자막만 `150퍼센트` 였다.
+ * 한 화면 안에서 같은 값이 두 꼴로 보인다.
+ *
+ * 그런데 이건 **코드가 이미 할 줄 아는 일이었다.** `numbers.mjs` 가
+ * `%` 를 " 퍼센트" 로 바꿔 읽는다. 그러니 대본에 `150%` 라고만 적었으면
+ * 자막은 `150%`, 읽기는 "백오십 퍼센트" 로 **둘 다 맞았다.**
+ * 내가 **읽는 글을 대본에 적어서** 둘 다 잃었다.
+ *
+ * 자막/읽기 규칙 그대로다 — 대본에는 **자막에 나갈 글**을 쓰고
+ * 읽기는 코드가 바꾼다.
+ *
+ * ⚠️ 숫자가 앞에 있을 때만 잡는다. "퍼센트로 따지면" 처럼 숫자 없이
+ *    쓰는 자리는 한글이 맞다.
+ */
+const UNIT_SYMBOLS = [
+  [/(\d)\s*퍼센트/g, '%'],
+  // ⚠️ '프로야구'·'프로선수'는 백분율이 아니다. 그 낱말만 비켜 간다 —
+  //    `(?![가-힣])` 로 막았더니 "50프로입니다" 까지 안 잡혔다.
+  [/(\d)\s*프로(?!야구|선수|팀|리그|스포츠|구단)/g, '%'],
+];
+
+/**
+ * 앞 편을 끌어오는 자리. 한 편은 **그 편만으로 끝나야 한다.**
+ *
+ * ── 왜 (2026-11-22, 22화) ──
+ *
+ * 운영자: **"18화 이야기는 빼라. 전편과 이어지는 게 아니라 하나하나
+ * 독립의 영상이다. 앞으로 잘 기억해라"**
+ *
+ * 맞는 말이다. 유튜브는 검색과 추천으로 **한 편만** 보고 들어온다.
+ * "18화에서 제가" 라고 하면 그 편을 안 본 사람은 그 자리에서 길을 잃고,
+ * 그게 영상에서 가장 중요한 대목(채점)이면 통째로 못 알아듣는다.
+ * 22화는 한 섹션이 통째로 "18화 예측 채점" 이었다.
+ *
+ * ⚠️ **인용을 하지 말라는 말이 아니다.** 같은 날 운영자가 분명히 했다 —
+ *    "전에 영상을 인용하려면 '전에 얼마라고 제가 예측했다'지
+ *     '몇 화에 이랬다' 이렇게 넣지 마라"
+ *
+ *    빼는 것은 **편 번호**다. 채점은 그대로 한다.
+ *      나쁨: "18화에서 문승원을 잔류 65%로 봤어요"
+ *      좋음: "전에 제가 문승원은 남는다고 봤습니다. 열에 여섯쯤으로요"
+ *    "전에"는 써도 된다 — 아래 표가 그 말은 안 잡는다.
+ */
+const PRIOR_EPISODE = [
+  // "18화에서" · "지난 편에서" · "19화 때"
+  /\d+\s*화(?:에서|에는|에|의|를|가|때|도|는)?/g,
+  /지난\s*(?:편|화|영상)/g,
+  /전\s*편(?:에서|에는|에)?/g,
+  /저번\s*(?:편|화|영상)/g,
+];
+
+export function priorEpisodeSpots(sentences) {
+  const out = [];
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    const hits = [];
+    for (const re of PRIOR_EPISODE) {
+      re.lastIndex = 0;
+      const m = text.match(re);
+      if (m) hits.push(m[0].trim());
+    }
+    if (hits.length) out.push({ text, hits });
+  }
+  return out;
+}
+
+export function unitSymbolSpots(sentences) {
+  const out = [];
+  for (const raw of sentences || []) {
+    const text = String(raw);
+    const hits = [];
+    for (const [re, symbol] of UNIT_SYMBOLS) {
+      re.lastIndex = 0;
+      const m = text.match(re);
+      if (m) hits.push({ found: m[0].trim(), symbol });
+    }
+    if (hits.length) out.push({ text, hits });
+  }
+  return out;
+}
+
 export function subtitleSpellingSpots(sentences) {
   const out = [];
   for (const raw of sentences || []) {
@@ -356,6 +444,30 @@ export function checkSpoken(markdown) {
   }
 
   // 반대 방향. 자막에 영문이 익숙한 것을 한글로 적어 뒀는가.
+  // ⚠️⚠️ 앞 편을 끌어오지 않는다 (2026-11-22 운영자
+  //       "하나하나 독립의 영상이다. 앞으로 잘 기억해라")
+  const prior = priorEpisodeSpots(sentences);
+  if (prior.length) {
+    const words = [...new Set(prior.flatMap((p) => p.hits))];
+    notes.push(
+      `앞 편을 끌어오는 말이 ${prior.length}곳 있습니다 (${words.join(', ')}). ` +
+        '한 편은 그 편만으로 끝나야 합니다 — 검색으로 한 편만 보고 들어온 사람이 ' +
+        '그 자리에서 길을 잃습니다. 채점은 하되 편 번호 없이, ' +
+        '"저는 ~로 봤습니다"처럼 이 영상 안에서 완결되게 적어 주세요.'
+    );
+  }
+
+  // 숫자 뒤 단위는 기호로 (2026-11-22 운영자 "150퍼센트 퍼센트를 % 로 적었으면")
+  const units = unitSymbolSpots(sentences);
+  if (units.length) {
+    const found = [...new Set(units.flatMap((u) => u.hits.map((h) => `${h.found}→${h.symbol}`)))];
+    notes.push(
+      `숫자 뒤 단위가 한글입니다 (${found.join(', ')}). 자막에는 기호가 눈에 익습니다 — ` +
+        '대본에 %로 적으면 자막은 %로 나가고 읽기만 "퍼센트"가 됩니다(numbers.mjs가 바꿉니다). ' +
+        `${units.length}곳.`
+    );
+  }
+
   const spelling = subtitleSpellingSpots(sentences);
   if (spelling.length) {
     const pairs = [
