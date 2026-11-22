@@ -1185,10 +1185,13 @@ async function cmdRepaint(flags) {
         if (crop && attempt === 1) {
           // 기획 파일이 이 사진의 자르기를 못 박았으면 재지 않는다.
           // 사람이 자른 사진을 보고 적은 값이라 추측보다 정확하다.
-          const 이사진 = job.아래 ? { ...crop, bottom: job.아래 } : crop;
+          // ⚠️ `job.아래 ?` 로 보면 **0 이 안 적은 것과 같아진다**(2026-11-22).
+          //    0 은 "자를 게 없다"는 말이라 그대로 따라야 한다.
+          const 못박음 = job.아래 != null;
+          const 이사진 = 못박음 ? { ...crop, bottom: job.아래 } : crop;
           const c = await cropToDataUri(job.referenceImage, {
             crop: 이사진,
-            measure: !job.아래,
+            measure: !못박음,
           });
           // ⚠️ 깨끗이 못 자르는 사진은 **그리지 않는다.** 반만 잘린
           //    워터마크가 남으면 모델이 그 자리를 글자로 읽고 커다란

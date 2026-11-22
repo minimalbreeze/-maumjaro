@@ -7140,6 +7140,79 @@ test('자르는 식이 비율대로 나온다', () => {
   assert.ok(CR.DEFAULT_CROP.bottom > CR.DEFAULT_CROP.top);
 });
 
+test('"아래": 0 은 "자를 게 없다"는 말이다 — 안 적은 것과 다르다', () => {
+  // ⚠️⚠️ 2026-11-22. 전에는 `Number(row.아래) > 0` 이라 **0 이 조용히 버려졌다.**
+  //    그러면 기본 12% 가 잘린다. 구단이 낸 공식 사진처럼 워터마크가 아예
+  //    없는 사진이 있고, 문승원 투구 샷(647x903)에서 12% 면 108px — 발목이
+  //    날아간다. 자를 게 없다고 말할 수 있어야 한다.
+  const jobs = (photos) =>
+    RP.repaintJobs([{ name: '아무개', team: 'SSG', photos }]).jobs;
+
+  const 영 = jobs([{ url: 'https://x/a.jpg', 아래: 0 }]);
+  assert.equal(영[0].아래, 0, '0 을 적었는데 사라졌습니다 — 기본값 12% 가 잘립니다');
+
+  const 없음 = jobs([{ url: 'https://x/b.jpg' }]);
+  assert.equal(없음[0].아래, null, '안 적었으면 null 이어야 재는 쪽이 돕니다');
+
+  const 많이 = jobs([{ url: 'https://x/c.jpg', 아래: 0.22 }]);
+  assert.equal(많이[0].아래, 0.22);
+
+  // 음수나 글자는 안 적은 것으로 본다.
+  assert.equal(jobs([{ url: 'https://x/d.jpg', 아래: -1 }])[0].아래, null);
+  assert.equal(jobs([{ url: 'https://x/e.jpg', 아래: '엉뚱' }])[0].아래, null);
+});
+
+const VS = await import('../src/scenes/visuals.mjs');
+const UNI = await import('../src/scenes/uniforms.mjs');
+
+test('번호를 못 적는 샷에서는 "번호가 보인다"를 지운다 (22화 S17-2)', () => {
+  // ⚠️⚠️ 2026-11-22. 22화에서 구자욱 뒷모습에 **등번호 23 이 지어내졌다.**
+  //    설계가 "the back of his head and his number visible" 이라 적고
+  //    person 칸을 비웠다. 등번호는 코드가 사람 기록을 보고 적는데
+  //    이름이 없으면 적을 번호가 없다. 그런데 "번호가 보인다"가 글에
+  //    남아 있으니 모델이 아무 번호나 채웠다. 이 편에 23번은 없다.
+  //
+  // ⚠️ 금지로는 못 막는다(규칙 13). 그 말을 **아예 없앤다.**
+  const 뒷모습 =
+    'A hitter seen from behind, the back of his head and his number visible, no face.';
+  const 걷어낸것 = VS.dropNumberAsk(뒷모습);
+  assert.ok(!/number/i.test(걷어낸것), `번호 이야기가 남았습니다: ${걷어낸것}`);
+  assert.ok(/back of his head/.test(걷어낸것), '뒷모습이라는 말까지 지웠습니다');
+  assert.ok(/no face/.test(걷어낸것), '얼굴 없다는 말까지 지웠습니다');
+  assert.ok(!/,\s*,|\s,|,\s*\./.test(걷어낸것), `쉼표가 엉켰습니다: ${걷어낸것}`);
+
+  // 숫자가 박힌 꼴도 지운다.
+  assert.ok(!/42/.test(VS.dropNumberAsk('back of his head and number 42 visible')));
+
+  // 번호 이야기가 없는 글은 **한 글자도 건드리지 않는다.**
+  const 그냥 = 'An empty bullpen mound at dusk, a single white baseball on the rubber.';
+  assert.equal(VS.dropNumberAsk(그냥), 그냥);
+});
+
+test('번호를 적을 수 있으면 그대로 둔다 — 뒷모습은 번호로 사람을 말한다', () => {
+  // ⚠️ 2026-11-07 운영자: "유니폼과 등번호가 같아야 선수임을 뒤만 봐도
+  //    알 수 있지 않나." 적을 수 있을 때까지 지우면 안 된다.
+  const 사람 = { name: '문승원', team: 'SSG', number: '42', photos: [] };
+  const 설계 = {
+    shots: [{
+      shot_id: 'S1-1',
+      image_prompt: 'A pitcher from behind, the back of his head and his number visible, no face.',
+      person: '문승원',
+      era: 'present',
+      camera: 'hold',
+    }],
+  };
+  const { scene } = VS.mergeVisuals(
+    { shots: [{ shot_id: 'S1-1' }] },
+    설계,
+    { kind: 'SPORTS', photoNames: new Set(), uniforms: new Map([['문승원', UNI.uniformClause(사람)]]) }
+  );
+  const shots = scene.shots;
+  const 글 = shots[0].image_prompt_content;
+  assert.ok(/number/i.test(글), '번호를 적을 수 있는데 지웠습니다');
+  assert.ok(/42/.test(shots[0].image_prompt), '등번호 42 가 프롬프트에 안 붙었습니다');
+});
+
 test('너무 많이 자르지 않는다 — 사람이 잘린다', () => {
   // ⚠️ 야구 사진은 세로로 꽉 찬 것이 많다. 아래를 20% 넘게 자르면
   //    다리가 날아간다. 워터마크를 지우려다 그림을 버리면 안 된다.
