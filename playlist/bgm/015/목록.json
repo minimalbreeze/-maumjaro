@@ -1,0 +1,225 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1071073.mp3",
+      "title": "Sax & Soul",
+      "artist": "Luigi Talluto",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "Sax & Soul — Luigi Talluto (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1071073",
+      "source": "https://www.jamendo.com/track/1071073"
+    },
+    {
+      "file": "jamendo-1000296.mp3",
+      "title": "Soul Gecko",
+      "artist": "MrJuan",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "Soul Gecko — MrJuan (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1000296",
+      "source": "https://www.jamendo.com/track/1000296"
+    },
+    {
+      "file": "jamendo-1199520.mp3",
+      "title": "Breathless",
+      "artist": "REC",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Breathless — REC (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1199520",
+      "source": "https://www.jamendo.com/track/1199520"
+    },
+    {
+      "file": "jamendo-1543320.mp3",
+      "title": "Tigers",
+      "artist": "Lfete",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Tigers — Lfete (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1543320",
+      "source": "https://www.jamendo.com/track/1543320"
+    },
+    {
+      "file": "jamendo-1569888.mp3",
+      "title": "Zoom Charm",
+      "artist": "Lfete",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Zoom Charm — Lfete (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569888",
+      "source": "https://www.jamendo.com/track/1569888"
+    },
+    {
+      "file": "jamendo-2188063.mp3",
+      "title": "Heart Beats for Love",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Heart Beats for Love — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2188063",
+      "source": "https://www.jamendo.com/track/2188063"
+    },
+    {
+      "file": "jamendo-1335126.mp3",
+      "title": "Sfumato",
+      "artist": "Zoop",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Sfumato — Zoop (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1335126",
+      "source": "https://www.jamendo.com/track/1335126"
+    },
+    {
+      "file": "jamendo-1293831.mp3",
+      "title": "The Stones Jungle",
+      "artist": "Al Ryden",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "The Stones Jungle — Al Ryden (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1293831",
+      "source": "https://www.jamendo.com/track/1293831"
+    },
+    {
+      "file": "jamendo-1655359.mp3",
+      "title": "Depths",
+      "artist": "Instil",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Depths — Instil (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1655359",
+      "source": "https://www.jamendo.com/track/1655359"
+    },
+    {
+      "file": "jamendo-1370162.mp3",
+      "title": "La palmera rosa",
+      "artist": "Orquesta Arrecife",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "La palmera rosa — Orquesta Arrecife (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1370162",
+      "source": "https://www.jamendo.com/track/1370162"
+    },
+    {
+      "file": "jamendo-1886074.mp3",
+      "title": "Cafezinho com Leite",
+      "artist": "Popoi",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Cafezinho com Leite — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1886074",
+      "source": "https://www.jamendo.com/track/1886074"
+    },
+    {
+      "file": "jamendo-1903842.mp3",
+      "title": "Madrugada",
+      "artist": "Popoi",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Madrugada — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1903842",
+      "source": "https://www.jamendo.com/track/1903842"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1533542.mp3",
+      "title": "Zero V-Isles of the Blessed",
+      "artist": "Various Artists",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Zero V-Isles of the Blessed — Various Artists (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1533542",
+      "source": "https://www.jamendo.com/track/1533542",
+      "reason": "아티스트가 Various Artists 라 화면에 쓸 수 없다"
+    },
+    {
+      "file": "jamendo-1174492.mp3",
+      "title": "07-The end of the movie - LAMPA - Wormwoo…",
+      "artist": "LAMPA",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "07-The end of the movie - LAMPA - Wormwoo… — LAMPA (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1174492",
+      "source": "https://www.jamendo.com/track/1174492",
+      "reason": "제목이 파일명 그대로다"
+    },
+    {
+      "file": "jamendo-1311201.mp3",
+      "title": "the warrior s rest",
+      "artist": "Giocol",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "the warrior s rest — Giocol (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1311201",
+      "source": "https://www.jamendo.com/track/1311201",
+      "reason": "소문자에 아포스트로피가 깨졌다"
+    },
+    {
+      "file": "jamendo-1177809.mp3",
+      "title": "Emotional Rollercoaster",
+      "artist": "FlauschGAU",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Emotional Rollercoaster — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177809",
+      "source": "https://www.jamendo.com/track/1177809",
+      "reason": "감정 기복 — 운전과 어긋난다"
+    },
+    {
+      "file": "jamendo-1301556.mp3",
+      "title": "Distemper",
+      "artist": "Iltarusko",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Distemper — Iltarusko (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1301556",
+      "source": "https://www.jamendo.com/track/1301556",
+      "reason": "제목의 뜻이 홍역·역정이다"
+    },
+    {
+      "file": "jamendo-1209015.mp3",
+      "title": "its a real take",
+      "artist": "burning spoon",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "its a real take — burning spoon (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1209015",
+      "source": "https://www.jamendo.com/track/1209015",
+      "reason": "소문자에 오타(its)"
+    },
+    {
+      "file": "jamendo-1320749.mp3",
+      "title": "14 Silent Night",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "14 Silent Night — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320749",
+      "source": "https://www.jamendo.com/track/1320749",
+      "reason": "캐럴 — 이 집 주제가 아니다"
+    },
+    {
+      "file": "jamendo-2253109.mp3",
+      "title": "Even to Lately (ID 2306)",
+      "artist": "Lobo Loco",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Even to Lately (ID 2306) — Lobo Loco (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2253109",
+      "source": "https://www.jamendo.com/track/2253109",
+      "reason": "제목에 ID 꼬리가 붙었다"
+    },
+    {
+      "file": "jamendo-2186818.mp3",
+      "title": "Mysterious Suspenseful Waiting",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2024",
+      "license": "CC BY",
+      "credit": "Mysterious Suspenseful Waiting — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2186818",
+      "source": "https://www.jamendo.com/track/2186818",
+      "reason": "긴장감 — 운전과 반대다"
+    },
+    {
+      "file": "jamendo-2253103.mp3",
+      "title": "Dusty Mountians (ID 2309)",
+      "artist": "Lobo Loco",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Dusty Mountians (ID 2309) — Lobo Loco (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2253103",
+      "source": "https://www.jamendo.com/track/2253103",
+      "reason": "제목에 오타(Mountians)와 ID 꼬리"
+    },
+    {
+      "file": "jamendo-2304722.mp3",
+      "title": "Presumptuous Hypocrisy (Cmn)",
+      "artist": "Carmine Rendina",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Presumptuous Hypocrisy (Cmn) — Carmine Rendina (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2304722",
+      "source": "https://www.jamendo.com/track/2304722",
+      "reason": "제목의 뜻이 건방진 위선이다"
+    }
+  ]
+}

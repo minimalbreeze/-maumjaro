@@ -1,0 +1,303 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1257221.mp3",
+      "title": "Domingo",
+      "artist": "Miro Silveira",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Domingo — Miro Silveira (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1257221",
+      "source": "https://www.jamendo.com/track/1257221"
+    },
+    {
+      "file": "jamendo-1463998.mp3",
+      "title": "Only for You",
+      "artist": "Aufklarung",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Only for You — Aufklarung (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1463998",
+      "source": "https://www.jamendo.com/track/1463998"
+    },
+    {
+      "file": "jamendo-1846467.mp3",
+      "title": "Lounge Piano",
+      "artist": "Sevennotes",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Lounge Piano — Sevennotes (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1846467",
+      "source": "https://www.jamendo.com/track/1846467"
+    },
+    {
+      "file": "jamendo-1465394.mp3",
+      "title": "Viola",
+      "artist": "Ivan Tregub",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Viola — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465394",
+      "source": "https://www.jamendo.com/track/1465394"
+    },
+    {
+      "file": "jamendo-1475481.mp3",
+      "title": "The Last Summer",
+      "artist": "Mark Bodino",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "The Last Summer — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475481",
+      "source": "https://www.jamendo.com/track/1475481"
+    },
+    {
+      "file": "jamendo-1360639.mp3",
+      "title": "Only Fools",
+      "artist": "Zero V",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Only Fools — Zero V (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1360639",
+      "source": "https://www.jamendo.com/track/1360639"
+    },
+    {
+      "file": "jamendo-1360643.mp3",
+      "title": "Concrete",
+      "artist": "Zero V",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Concrete — Zero V (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1360643",
+      "source": "https://www.jamendo.com/track/1360643"
+    },
+    {
+      "file": "jamendo-1414739.mp3",
+      "title": "Future",
+      "artist": "Dom Sith",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Future — Dom Sith (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1414739",
+      "source": "https://www.jamendo.com/track/1414739"
+    },
+    {
+      "file": "jamendo-1256831.mp3",
+      "title": "Serious Emotions",
+      "artist": "Offenbach Project",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Serious Emotions — Offenbach Project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1256831",
+      "source": "https://www.jamendo.com/track/1256831"
+    },
+    {
+      "file": "jamendo-1321889.mp3",
+      "title": "Country Morning Blue",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Country Morning Blue — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321889",
+      "source": "https://www.jamendo.com/track/1321889"
+    },
+    {
+      "file": "jamendo-969494.mp3",
+      "title": "Crystal Forest",
+      "artist": "Zeffon",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Crystal Forest — Zeffon (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/969494",
+      "source": "https://www.jamendo.com/track/969494"
+    },
+    {
+      "file": "jamendo-1475483.mp3",
+      "title": "When the Lights Go Down",
+      "artist": "Mark Bodino",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "When the Lights Go Down — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475483",
+      "source": "https://www.jamendo.com/track/1475483"
+    },
+    {
+      "file": "jamendo-1355028.mp3",
+      "title": "Under the Moonlight",
+      "artist": "VITNE",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Under the Moonlight — VITNE (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1355028",
+      "source": "https://www.jamendo.com/track/1355028"
+    },
+    {
+      "file": "jamendo-1687400.mp3",
+      "title": "Les grandes marches",
+      "artist": "Ehma",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Les grandes marches — Ehma (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1687400",
+      "source": "https://www.jamendo.com/track/1687400"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "file": "jamendo-135744.mp3",
+      "title": "Dreams de L'Herbe",
+      "artist": "The Whisky project",
+      "recorded": "2008",
+      "license": "CC BY",
+      "credit": "Dreams de L'Herbe — The Whisky project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/135744",
+      "source": "https://www.jamendo.com/track/135744",
+      "reason": "제목이 약물로 읽힐 수 있다"
+    },
+    {
+      "file": "jamendo-497844.mp3",
+      "title": "Inspired by the Beatles(remastered)",
+      "artist": "Blik",
+      "recorded": "2009",
+      "license": "CC BY",
+      "credit": "Inspired by the Beatles(remastered) — Blik (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/497844",
+      "source": "https://www.jamendo.com/track/497844",
+      "reason": "비틀즈를 제목에 달았고 꼬리표가 붙었다"
+    },
+    {
+      "file": "jamendo-1759283.mp3",
+      "title": "TM Grooves - Daddy",
+      "artist": "TM Grooves - Soulful House",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "TM Grooves - Daddy — TM Grooves - Soulful House (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1759283",
+      "source": "https://www.jamendo.com/track/1759283",
+      "reason": "제목에 아티스트 이름이 붙었다"
+    },
+    {
+      "file": "jamendo-1465398.mp3",
+      "title": "Wolfpack",
+      "artist": "Ivan Tregub",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Wolfpack — Ivan Tregub (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1465398",
+      "source": "https://www.jamendo.com/track/1465398",
+      "reason": "늑대 무리 — 카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-949865.mp3",
+      "title": "Alien Sound",
+      "artist": "Cardiocard",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Alien Sound — Cardiocard (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/949865",
+      "source": "https://www.jamendo.com/track/949865",
+      "reason": "카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-1209003.mp3",
+      "title": "Dreaming in thunderclouds",
+      "artist": "Cobat",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dreaming in thunderclouds — Cobat (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1209003",
+      "source": "https://www.jamendo.com/track/1209003",
+      "reason": "천둥 — 카페와 어긋난다"
+    },
+    {
+      "file": "jamendo-1306692.mp3",
+      "title": "the memories will never be erased",
+      "artist": "Djavam R. Silva",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "the memories will never be erased — Djavam R. Silva (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1306692",
+      "source": "https://www.jamendo.com/track/1306692",
+      "reason": "전부 소문자에 문장이 길다"
+    },
+    {
+      "file": "jamendo-1404089.mp3",
+      "title": "Drifting And Glooming",
+      "artist": "Iltarusko",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Drifting And Glooming — Iltarusko (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1404089",
+      "source": "https://www.jamendo.com/track/1404089",
+      "reason": "제목에 우울(gloom)이 들어간다"
+    },
+    {
+      "file": "jamendo-1177821.mp3",
+      "title": "Like a Phoenix",
+      "artist": "FlauschGAU",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Like a Phoenix — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177821",
+      "source": "https://www.jamendo.com/track/1177821",
+      "reason": "카페 분위기가 아니다"
+    },
+    {
+      "file": "jamendo-1251801.mp3",
+      "title": "You Know I'm No Good",
+      "artist": "Eddy Retali",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "You Know I'm No Good — Eddy Retali (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1251801",
+      "source": "https://www.jamendo.com/track/1251801",
+      "reason": "에이미 와인하우스(2006) — 작곡 저작권이 살아 있다"
+    },
+    {
+      "file": "jamendo-2017833.mp3",
+      "title": "Guitar Solo in Bm",
+      "artist": "Kenduskeag's Meeting",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Guitar Solo in Bm — Kenduskeag's Meeting (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2017833",
+      "source": "https://www.jamendo.com/track/2017833",
+      "reason": "제목이 아니라 설명이다"
+    },
+    {
+      "file": "jamendo-1177811.mp3",
+      "title": "Mister Green Sleeves",
+      "artist": "FlauschGAU",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Mister Green Sleeves — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1177811",
+      "source": "https://www.jamendo.com/track/1177811",
+      "reason": "11집에 Greensleeve 가 이미 있다"
+    },
+    {
+      "file": "jamendo-1250432.mp3",
+      "title": "Dudu malaperis",
+      "artist": "Gijom' Armide",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dudu malaperis — Gijom' Armide (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1250432",
+      "source": "https://www.jamendo.com/track/1250432",
+      "reason": "제목이 읽히지 않는다"
+    },
+    {
+      "file": "jamendo-1206405.mp3",
+      "title": "Lemon Pie",
+      "artist": "A-D-D-F_Toxic",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Lemon Pie — A-D-D-F_Toxic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1206405",
+      "source": "https://www.jamendo.com/track/1206405",
+      "reason": "아티스트 이름을 화면에 쓸 수 없다 (A-D-D-F_Toxic)"
+    },
+    {
+      "file": "jamendo-1321891.mp3",
+      "title": "Amazing Grace",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Amazing Grace — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1321891",
+      "source": "https://www.jamendo.com/track/1321891",
+      "reason": "11집에 같은 찬송이 있다 · 카페 집 주제가 아니다"
+    },
+    {
+      "file": "jamendo-517141.mp3",
+      "title": "Jokencheche",
+      "artist": "BALAM",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Jokencheche — BALAM (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/517141",
+      "source": "https://www.jamendo.com/track/517141",
+      "reason": "제목이 읽히지 않는다"
+    },
+    {
+      "file": "jamendo-1288254.mp3",
+      "title": "FREE YOUR MIND",
+      "artist": "LUKASWORKS",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "FREE YOUR MIND — LUKASWORKS (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288254",
+      "source": "https://www.jamendo.com/track/1288254",
+      "reason": "제목과 아티스트가 전부 대문자"
+    }
+  ]
+}
