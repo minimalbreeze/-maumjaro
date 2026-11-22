@@ -2945,6 +2945,20 @@ export const 바로잡기 = [
     이유: '글 25658. 확인할 것 목록에서도 바로 갈 수 있게 한다',
     글: [25658],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏅 결과 — 국제부 킵코에치, 국내 1위 김홍록</h2>',
+    맞는:
+      '<!-- wp:image {"id":25668,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-11gqgj-mwr75sii.jpg" alt="2026 인천마라톤" class="wp-image-25668"/></a><figcaption class="wp-element-caption">2026 인천마라톤 (사진: SK브로드밴드 뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏅 결과 — 킵코에치·티루세우 우승, 국내 1위 김홍록·김은미</h2>',
+    이유: '글 25658. 결과 절 앞에 사진을 넣고(미디어 25668), 남자만 적힌 소제목을 네 부문으로 고친다',
+    글: [25658],
+  },
+  {
+    틀린: '<h2>🔥 결과가 나오면 확인할 것</h2>',
+    맞는: '<h2>🔥 남은 것은 완주 기록입니다</h2>',
+    이유: '글 25658. 결과가 나왔으므로 마지막 소제목을 바꾼다',
+    글: [25658],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
