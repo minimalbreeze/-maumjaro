@@ -52,6 +52,8 @@ const DRY = has('--dry');
 /* --rain 을 준 집에만 빗소리를 한 겹 얹는다.
  * LP 체인과 크래클은 건드리지 않는다 — 그 둘이 시그니처다. */
 const RAIN = has('--rain');
+/* --fire : 모닥불 한 겹. 17집(불멍)용. 자세한 것은 아래 섞는 자리 참고. */
+const FIRE = has('--fire');
 const TONE = has('--tone');
 const LIMIT_MIN = Number(val('--minutes', '0')) || 0;
 
@@ -219,21 +221,66 @@ function buildAudio(tracks) {
   const RAIN_CHAIN = 'highpass=f=350,lowpass=f=6500,tremolo=f=0.1:d=0.12,volume=1.0,'
     + 'aformat=channel_layouts=stereo';
 
+  /* 모닥불(--fire). 두 겹이다.
+   *
+   *   웅웅거림  브라운 노이즈를 220Hz 아래만 남기고 0.12Hz 로 아주 느리게
+   *             흔든다. 불이 숨 쉬는 소리다.
+   *   탁탁      화이트 노이즈를 600~5000Hz 로 자르고 **게이트** 를 세게
+   *             건다. 임계값 위로 솟은 봉우리만 통과시켜서 드문드문
+   *             터지는 소리가 된다.
+   *
+   * ⚠️ 리미터가 아니라 게이트다. 빗소리나 LP 지직 소리는 리미터로
+   *    뭉개서 "쉬이이" 하는 결을 만들지만, 불은 반대로 **사이를 비워야**
+   *    장작 소리가 된다. 리미터를 걸면 백색소음이 되어 버린다.
+   *
+   * ⚠️ 세기: 처음 만든 것은 음악보다 3dB 밖에 안 아래여서 불이 음악을
+   *    덮었다. 세 가지를 들어 보고 '조금더'(음악보다 약 11dB 아래,
+   *    volume 0.398)로 정했다 — 2026-11-21 효성님. 빗소리(14dB 아래)보다
+   *    조금 크다. */
+  const FIRE_RUMBLE = 'anoisesrc=c=brown:a=0.9:r=44100';
+  const FIRE_POPS = 'anoisesrc=c=white:a=0.6:r=44100';
+  const FIRE_LEVEL = 0.398;
+
   const ins = ['-i', joined,
     '-f', 'lavfi', '-t', String(total), '-i', 'anoisesrc=c=violet:a=0.0035:r=44100'];
   if (RAIN) ins.push('-f', 'lavfi', '-t', String(total), '-i', RAIN_SRC);
+  if (FIRE) {
+    ins.push('-f', 'lavfi', '-t', String(total), '-i', FIRE_RUMBLE);
+    ins.push('-f', 'lavfi', '-t', String(total), '-i', FIRE_POPS);
+  }
+
+  /* 섞을 갈래를 모은다. 첫째가 음악, 둘째가 LP 지직 소리이고
+   * 그 뒤에 이 집만의 한 겹이 붙는다. */
+  const legs = ['warm', 'crk'];
+  const weights = ['1', '0.35'];
+  let extra = '';
+  let idx = 2;                                   // 0=음악 1=지직
+  if (RAIN) {
+    extra += `[${idx}:a]${RAIN_CHAIN}[rain];`;
+    legs.push('rain'); weights.push('1'); idx += 1;
+  }
+  if (FIRE) {
+    extra += `[${idx}:a]lowpass=f=220,tremolo=f=0.12:d=0.35,`
+      + 'aformat=channel_layouts=stereo[frum];'
+      + `[${idx + 1}:a]highpass=f=600,lowpass=f=5000,`
+      + 'agate=threshold=0.32:ratio=9000:attack=0.1:release=45,volume=3.0,'
+      + 'aformat=channel_layouts=stereo[fpop];'
+      + `[frum][fpop]amix=inputs=2:weights=1 1:normalize=0,volume=${FIRE_LEVEL}[fire];`;
+    legs.push('fire'); weights.push('1'); idx += 2;
+  }
 
   const fc = `[0:a]${LP_CHAIN}[warm];`
     // alimiter 의 limit 은 0.0625 미만을 안 받는다. 더 줄이는 일은 volume 이 한다.
     + '[1:a]highpass=f=2500,lowpass=f=9000,volume=0.4,alimiter=limit=0.0625,'
     + 'aformat=channel_layouts=stereo[crk];'
-    + (RAIN ? `[2:a]${RAIN_CHAIN}[rain];[warm][crk][rain]amix=inputs=3:weights=1 0.35 1`
-            : '[warm][crk]amix=inputs=2:weights=1 0.35')
-    + ':normalize=0,'
+    + extra
+    + legs.map((l) => `[${l}]`).join('')
+    + `amix=inputs=${legs.length}:weights=${weights.join(' ')}:normalize=0,`
     // 색깔을 입히며 음량이 움직였으므로 마지막에 한 번 더 맞춘다
     + 'loudnorm=I=-16:TP=-1.5:LRA=11[a]';
 
   if (RAIN) console.log('   빗소리 한 겹 (이 집만 · 음악보다 약 14dB 아래)');
+  if (FIRE) console.log('   모닥불 한 겹 (이 집만 · 음악보다 약 11dB 아래)');
   ff([...ins, '-filter_complex', fc, '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', final]);
   return { file: final, total: probe(final) };
 }

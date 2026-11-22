@@ -1,0 +1,95 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1345182.mp3",
+      "title": "These Rivers",
+      "artist": "Mark.Nine",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "These Rivers — Mark.Nine (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1345182",
+      "source": "https://www.jamendo.com/track/1345182"
+    },
+    {
+      "file": "jamendo-1494482.mp3",
+      "title": "Forest Spirits",
+      "artist": "DEgITx",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Forest Spirits — DEgITx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1494482",
+      "source": "https://www.jamendo.com/track/1494482"
+    },
+    {
+      "file": "jamendo-1569181.mp3",
+      "title": "Foggy",
+      "artist": "TWOMUSIC",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Foggy — TWOMUSIC (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1569181",
+      "source": "https://www.jamendo.com/track/1569181"
+    },
+    {
+      "file": "jamendo-1493312.mp3",
+      "title": "All night",
+      "artist": "Unwritten Stories",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "All night — Unwritten Stories (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1493312",
+      "source": "https://www.jamendo.com/track/1493312"
+    },
+    {
+      "file": "jamendo-1775951.mp3",
+      "title": "Dark",
+      "artist": "Carlos Fornés",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "Dark — Carlos Fornés (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1775951",
+      "source": "https://www.jamendo.com/track/1775951"
+    },
+    {
+      "file": "jamendo-1701093.mp3",
+      "title": "Morning",
+      "artist": "Amadeus Washington",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Morning — Amadeus Washington (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1701093",
+      "source": "https://www.jamendo.com/track/1701093"
+    },
+    {
+      "file": "jamendo-1866808.mp3",
+      "title": "Serene Breeze [CC0]",
+      "artist": "Anima & Animus",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Serene Breeze [CC0] — Anima & Animus (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1866808",
+      "source": "https://www.jamendo.com/track/1866808"
+    },
+    {
+      "file": "jamendo-1518620.mp3",
+      "title": "Cloudsy",
+      "artist": "FlauschGAU",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Cloudsy — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1518620",
+      "source": "https://www.jamendo.com/track/1518620"
+    },
+    {
+      "file": "jamendo-1588395.mp3",
+      "title": "Tired of life",
+      "artist": "Meydan",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Tired of life — Meydan (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1588395",
+      "source": "https://www.jamendo.com/track/1588395"
+    },
+    {
+      "file": "jamendo-1701097.mp3",
+      "title": "Romantic Theme",
+      "artist": "Amadeus Washington",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Romantic Theme — Amadeus Washington (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1701097",
+      "source": "https://www.jamendo.com/track/1701097"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+}
