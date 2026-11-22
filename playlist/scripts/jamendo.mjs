@@ -86,6 +86,26 @@ export const JAMENDO_MOODS = {
    *    절반이 랩·힙합이었다 — Da Rockwilder Freestyle · Like Im Broke
    *    Feat. King Ski · Tremont (prod. ηoM∩D). Jamendo 에서 R&B 태그는
    *    힙합과 거의 한 덩이다. "감미로운 보컬" 과는 다른 물건이다. */
+  /* ── 2026-11-22 태그 조사로 더한 무드 ───────────────────────
+   * 태그 80개를 우리가 쓰는 조건(연주곡 · CC BY/CC0 · 90~480초 · medium)
+   * 그대로 세어 보고 깊이가 있는 것만 골랐다. 전체 결과는
+   * playlist/jamendo-태그조사.txt 에 있다.
+   *
+   * 알게 된 것 둘:
+   *   1. neoclassical(185) · ambient/chillout/downtempo(각 200 상한) ·
+   *      folk/worldmusic(각 200 상한)을 열일곱 집 동안 한 번도 안 썼다.
+   *      "틀어두고 듣는" 음악의 본진인데 손도 안 댔다.
+   *   2. study · focus · coffee · sleep · night · morning · autumn 은
+   *      0~2곡이다. **Jamendo 태그는 장르와 악기로만 달린다.**
+   *      용도나 시간으로 찾으면 안 나온다. */
+  네오클래식: { groups: ['neoclassical', 'minimal', 'neoclassical,piano'], speed: 'medium', acoustic: true }, // 185·173
+  앰비언트: { groups: ['ambient', 'downtempo', 'chillout'], speed: 'low' },                    // 각 200 상한
+  포크: { groups: ['folk', 'celtic', 'folk,acoustic'], speed: 'medium', acoustic: true },       // 200·71
+  블루스: { groups: ['blues', 'blues,guitar'], speed: 'medium' },                               // 155
+  첼로: { groups: ['cello', 'viola', 'violin,classical'], speed: 'medium', acoustic: true },    // 60·36·123
+  명상: { groups: ['meditative', 'peaceful', 'calm'], speed: 'low', acoustic: true },           // 86·200·200
+  월드: { groups: ['worldmusic', 'latin', 'celtic'], speed: 'medium', acoustic: true },         // 200·53·71
+
   남성보컬: { groups: ['soul', 'jazz', 'bossanova', 'singersongwriter'], speed: 'medium', vocal: true, gender: 'male' },
   여성보컬: { groups: ['jazz', 'soul', 'bossanova', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
 };

@@ -1,0 +1,31 @@
+태그          medium 속도 연주곡 수 (200 은 상한)
+  ambient           200
+  chillout          200
+  downtempo         200
+  folk              200
+  worldmusic        200
+  relax             200
+  calm              200
+  peaceful          200
+  neoclassical      185
+  minimal           173
+  blues             155
+  funk              141
+  violin            123
+  dreamy            104
+  melancholic        93
+  dub                86
+  meditative         86
+  celtic             71
+  cello              60
+  reggae             54
+  latin              53
+  organ              46
+  viola              36
+  romantic           31
+  trumpet            30
+  accordion          25
+  clarinet           24
+
+--- 20곡 미만 (쓰기 어렵다) ---
+ukulele:19  sitar:18  nostalgic:18  banjo:14  marimba:14  glockenspiel:12  gospel:12  vibraphone:10  smoothjazz:9  doublebass:8  kalimba:8  koto:8  oboe:6  trombone:6  flamenco:6  samba:6  frenchhorn:5  mandolin:5  spring:4  celesta:3  tango:3  bassoon:2  harpsichord:2  bolero:2  cumbia:2  night:2  morning:2  autumn:2  ragtime:1  fado:1  klezmer:1  winter:1  erhu:0  bansuri:0  handpan:0  musicbox:0  dulcimer:0  triphop:0  nujazz:0  cooljazz:0  chanson:0  hopeful:0  sleep:0  study:0  focus:0  coffee:0
