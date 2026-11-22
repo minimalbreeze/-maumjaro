@@ -218,7 +218,7 @@ export function teamKey(team) {
  *    모델이 채우려고 아무 번호나 그린다 — 틀린 번호는 번호가 없는 것보다
  *    나쁘다. 등번호를 못 찾은 사람(엄상백·류지현·이강철)이 실제로 있다.
  */
-export function uniformClause({ team, number, role } = {}) {
+export function uniformClause({ team, number, role, fromPhoto = false } = {}) {
   const key = teamKey(team);
   if (!key) return '';
   const u = KBO_UNIFORMS[key];
@@ -283,6 +283,29 @@ export function uniformClause({ team, number, role } = {}) {
       ? 'the front of the jacket and the jersey is smooth plain fabric in one solid colour'
       : 'the front of the jersey is smooth plain fabric'
   );
+
+  // ⚠️⚠️ **사진에서 그릴 때는 등번호를 요구하지 않는다** (2026-11-22) ⚠️⚠️
+  //
+  // 운영자가 22화에서 본 것 — **"등이 보이는데 얼굴이 정면이다 괴물인가?"**
+  //
+  // 투구 사진(옆·반측면)을 바탕으로 그렸는데 결과는 **등번호가 보이는
+  // 뒷몸에 정면 얼굴**이었다. 목이 180도 꺾였다. 등에는 `FUNAL` 이라는
+  // 없는 글자까지 생겼다.
+  //
+  // 아래 문장이 범인이다. "등에 큰 글씨로 42" 는 색 이야기가 아니라
+  // **자세 지시**다. 모델이 등을 보여주려고 몸을 돌렸고, 얼굴은 사진대로
+  // 두려다 목이 돌아갔다. 그리고 등을 그리기 시작하니 민무늬 규칙이
+  // 가슴에만 있어서 등에 글자가 들어앉았다.
+  //
+  // 사진에서 그리는 샷은 **자세를 사진이 정한다.** 거기에 글로 자세를
+  // 하나 더 얹으면 둘이 싸운다 — 규칙 13 과 같은 자리다.
+  // 번호가 사진에 보이면 어차피 따라온다. 안 보이면 안 나오는 게 맞다.
+  // **번호 없는 뒷모습이 목 꺾인 사람보다 낫다.**
+  if (fromPhoto) {
+    // 등도 민무늬로 덮는다. 가슴만 막아 두면 등으로 샌다.
+    parts.push('the back of the jersey is smooth plain fabric too');
+    return parts.join(', ');
+  }
 
   const n = String(number ?? '').trim();
   if (n && !isStaff) {
