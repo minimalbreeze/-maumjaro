@@ -7140,6 +7140,28 @@ test('자르는 식이 비율대로 나온다', () => {
   assert.ok(CR.DEFAULT_CROP.bottom > CR.DEFAULT_CROP.top);
 });
 
+test('"아래": 0 은 "자를 게 없다"는 말이다 — 안 적은 것과 다르다', () => {
+  // ⚠️⚠️ 2026-11-22. 전에는 `Number(row.아래) > 0` 이라 **0 이 조용히 버려졌다.**
+  //    그러면 기본 12% 가 잘린다. 구단이 낸 공식 사진처럼 워터마크가 아예
+  //    없는 사진이 있고, 문승원 투구 샷(647x903)에서 12% 면 108px — 발목이
+  //    날아간다. 자를 게 없다고 말할 수 있어야 한다.
+  const jobs = (photos) =>
+    RP.repaintJobs([{ name: '아무개', team: 'SSG', photos }]).jobs;
+
+  const 영 = jobs([{ url: 'https://x/a.jpg', 아래: 0 }]);
+  assert.equal(영[0].아래, 0, '0 을 적었는데 사라졌습니다 — 기본값 12% 가 잘립니다');
+
+  const 없음 = jobs([{ url: 'https://x/b.jpg' }]);
+  assert.equal(없음[0].아래, null, '안 적었으면 null 이어야 재는 쪽이 돕니다');
+
+  const 많이 = jobs([{ url: 'https://x/c.jpg', 아래: 0.22 }]);
+  assert.equal(많이[0].아래, 0.22);
+
+  // 음수나 글자는 안 적은 것으로 본다.
+  assert.equal(jobs([{ url: 'https://x/d.jpg', 아래: -1 }])[0].아래, null);
+  assert.equal(jobs([{ url: 'https://x/e.jpg', 아래: '엉뚱' }])[0].아래, null);
+});
+
 test('너무 많이 자르지 않는다 — 사람이 잘린다', () => {
   // ⚠️ 야구 사진은 세로로 꽉 찬 것이 많다. 아래를 20% 넘게 자르면
   //    다리가 날아간다. 워터마크를 지우려다 그림을 버리면 안 된다.
