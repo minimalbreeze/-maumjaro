@@ -132,6 +132,13 @@ const COPYRIGHTED_SONGS = [
   'make you feel my love', 'both sides now', 'the sound of silence',
   'what a difference a day makes', 'cry to me', 'summertime sadness',
   "you know i'm no good", 'you know im no good', 'back to black', 'valerie',
+  /* 2026-11-22. 13집의 Felicidade(Esmeralda Xha)에 **멜로디** 주장이
+   * 걸렸다 — A Felicidade 는 톰 조빙·비니시우스 지 모라이스의 1959년
+   * 보사노바다. 오디오 주장(유형 ①)과 달리 이건 진짜 작곡 저작권이다.
+   * 4집의 It's Beginning to Look a Lot Like Christmas 이후 두 번째다.
+   * 보사노바 스탠더드도 재즈 스탠더드만큼 위험하다. */
+  'felicidade', 'chega de saudade', 'insensatez', 'wave', 'triste',
+  'aguas de marco', 'águas de março', 'one note samba', 'samba de uma nota',
 ];
 
 /* 아예 받지 않을 아티스트.
