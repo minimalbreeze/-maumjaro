@@ -39,10 +39,29 @@ const dur = (f) => Number(execFileSync('ffprobe',
   { encoding: 'utf8' }).trim());
 const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
+/* --story 로 준 몇 줄을 맨 앞에 둔다.
+ * 2026-11-23: 상위 플레이리스트 채널(Hickive 39만·good day flow 13만·
+ * Yurimood 10만)을 보니 설명란이 전부 이야기로 시작한다. 안내문으로
+ * 시작하는 곳은 우리뿐이었다. 사람은 안내문을 안 읽는다. */
+const STORY = pick('--story', '').split('|').map((x) => x.trim()).filter(Boolean);
+/* --en : 영어 한 줄. Yurimood 댓글에 외국인이 있었다 — 영어를 적어 두면 온다. */
+const EN = pick('--en', '');
+/* --real : "AI 아님, 진짜 연주" 를 밝힌다.
+ * 본 채널들이 전부 AI 음원이었다(ⓘ AI 배지). 우리만 실제 연주자의 CC BY
+ * 녹음을 쓰고 곡마다 이름을 적는다. 이게 유일한 차별점이라 숨기지 않는다. */
+const REAL = argv.includes('--real');
+
 const out = [];
 /* LEAD 는 전체 길이를 알아야 해서 맨 마지막에 맨 앞으로 끼워 넣는다. */
+if (STORY.length) { out.push(...STORY); out.push(''); }
 out.push(INTRO);
 out.push('틀어두고 하던 일을 하세요.');
+if (EN) { out.push(''); out.push(EN); }
+if (REAL) {
+  out.push('');
+  out.push('🎻 AI가 만든 음악이 아닙니다.');
+  out.push('   실제 연주자가 녹음한 음원만 씁니다. 곡마다 이름을 아래에 적어 두었습니다.');
+}
 out.push('');
 out.push('━━━━━━━━━━━━━━━━');
 out.push('');
