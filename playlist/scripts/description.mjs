@@ -55,7 +55,9 @@ const out = [];
 /* LEAD 는 전체 길이를 알아야 해서 맨 마지막에 맨 앞으로 끼워 넣는다. */
 if (STORY.length) { out.push(...STORY); out.push(''); }
 out.push(INTRO);
-out.push('틀어두고 하던 일을 하세요.');
+/* 둘째 줄. 기본은 작업용 문구지만 수면집처럼 안 맞는 집이 있다
+ * ("잠들기 전"에 "하던 일을 하세요"는 말이 안 된다). --line2 로 바꾼다. */
+out.push(pick('--line2', '틀어두고 하던 일을 하세요.'));
 if (EN) { out.push(''); out.push(EN); }
 if (REAL) {
   out.push('');
@@ -101,7 +103,16 @@ if (credits.length) {
   out.push('');
 }
 out.push('minimalbreeze');
-out.push(`#플레이리스트 #playlist ${TAGS}`);
+/* 앞의 두 개는 채널 공통이라 고정한다. 다만 --tags 에 이미 들어 있으면
+ * 두 번 찍히므로 중복을 걷어낸다. 유튜브에서 같은 태그가 두 번 보이면
+ * 성의 없어 보인다. */
+const tagList = `#플레이리스트 #playlist ${TAGS}`.split(/\s+/).filter(Boolean);
+const seenTag = new Set();
+out.push(tagList.filter((t) => {
+  const k = t.toLowerCase();
+  if (seenTag.has(k)) return false;
+  seenTag.add(k); return true;
+}).join(' '));
 
 if (LEAD) out.unshift(`${LEAD} · ${Math.round(at / 60)}분`, '');
 
