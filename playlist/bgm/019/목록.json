@@ -65,11 +65,11 @@
     },
     {
       "file": "jamendo-2327369.mp3",
-      "title": "Dance of the Sugar Plum Fairy (from The N…",
+      "title": "Dance of the Sugar Plum Fairy",
       "artist": "Felted Classics",
       "recorded": "2026",
       "license": "CC BY",
-      "credit": "Dance of the Sugar Plum Fairy (from The N… — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327369",
+      "credit": "Dance of the Sugar Plum Fairy — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327369",
       "source": "https://www.jamendo.com/track/2327369"
     },
     {
@@ -80,7 +80,37 @@
       "license": "CC BY",
       "credit": "Waltz of the Flowers — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327366",
       "source": "https://www.jamendo.com/track/2327366"
+    },
+    {
+      "file": "jamendo-1185392.mp3",
+      "title": "Jingle Bells",
+      "artist": "Milles",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Jingle Bells — Milles (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1185392",
+      "source": "https://www.jamendo.com/track/1185392"
+    },
+    {
+      "file": "jamendo-1198556.mp3",
+      "title": "What Child Is This",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "What Child Is This — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198556",
+      "source": "https://www.jamendo.com/track/1198556"
     }
   ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
+  "rejected": [
+    {
+      "title": "Jingle bells",
+      "artist": "MonacoLorenzo",
+      "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
+    },
+    {
+      "title": "What Child Is This? (Jeris Mix)",
+      "artist": "ccMixter",
+      "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
+    }
+  ]
 }
