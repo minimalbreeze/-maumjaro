@@ -49,6 +49,11 @@ const has = (f) => args.includes(f);
 const val = (f, d) => { const i = args.indexOf(f); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 
 const DRY = has('--dry');
+/* --reuse-audio : work/audio.m4a 가 이미 완성돼 있으면 오디오를 다시 만들지
+ * 않고 그대로 쓴다. 영상 단계에서 렌더가 죽었을 때(워커 재시작 등) 30분짜리
+ * 오디오 인코딩을 처음부터 또 돌리지 않기 위한 것이다.
+ * 곡 목록이 바뀌었으면 쓰면 안 된다 — 길이가 안 맞는다. */
+const REUSE_AUDIO = has('--reuse-audio');
 /* --rain 을 준 집에만 빗소리를 한 겹 얹는다.
  * LP 체인과 크래클은 건드리지 않는다 — 그 둘이 시그니처다. */
 const RAIN = has('--rain');
@@ -181,6 +186,16 @@ const LP_CHAIN = [
 ].join(',');
 
 function buildAudio(tracks) {
+  const finalPath = join(WORK, 'audio.m4a');
+  if (REUSE_AUDIO) {
+    const wavs = tracks.map((t, i) => join(WORK, `a${i}.wav`));
+    const missing = [finalPath, ...wavs].filter((f) => !existsSync(f));
+    if (missing.length) fail(`--reuse-audio 인데 없는 파일이 있습니다:\n   ${missing.join('\n   ')}`);
+    tracks.forEach((t, i) => { t._sec = probe(wavs[i]); });
+    console.log('   ♻️  오디오를 다시 만들지 않고 work/audio.m4a 를 그대로 씁니다');
+    return { file: finalPath, total: probe(finalPath) };
+  }
+
   const parts = [];
   tracks.forEach((t, i) => {
     const norm = join(WORK, `a${i}.wav`);
