@@ -98,6 +98,33 @@
       "license": "CC BY",
       "credit": "What Child Is This — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198556",
       "source": "https://www.jamendo.com/track/1198556"
+    },
+    {
+      "file": "jamendo-2327097.mp3",
+      "title": "Twinkle Twinkle Little Star",
+      "artist": "Adam Lullaby",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Twinkle Twinkle Little Star — Adam Lullaby (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327097",
+      "source": "https://www.jamendo.com/track/2327097"
+    },
+    {
+      "file": "jamendo-2327358.mp3",
+      "title": "Canon in D",
+      "artist": "Felted Classics",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Canon in D — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327358",
+      "source": "https://www.jamendo.com/track/2327358"
+    },
+    {
+      "file": "jamendo-1475526.mp3",
+      "title": "Fur Elise (solo guitar)",
+      "artist": "Mark Bodino",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Fur Elise (solo guitar) — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475526",
+      "source": "https://www.jamendo.com/track/1475526"
     }
   ],
   "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
@@ -111,6 +138,21 @@
       "title": "What Child Is This? (Jeris Mix)",
       "artist": "ccMixter",
       "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
+    },
+    {
+      "title": "Celestial Flower Child Dream Twinkle Twin…",
+      "artist": "Lenny Wiles Lionstar GALAXY BANDSTAND",
+      "why": "제목이 잘렸고 아티스트명이 화면에 못 올릴 길이"
+    },
+    {
+      "title": "Pachelbels Canon in D",
+      "artist": "Evvowxm",
+      "why": "Felted Classics 판과 같은 곡 · 아티스트명 Evvowxm 이 사람 이름이 아니다"
+    },
+    {
+      "title": "Clair de Lune (Debussy)",
+      "artist": "Felted Classics",
+      "why": "아이와 함께 듣는 집에 쓰기에는 어둡고 길다"
     }
   ]
 }
