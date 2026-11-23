@@ -1,0 +1,86 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1198557.mp3",
+      "title": "Silent Night",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Silent Night — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198557",
+      "source": "https://www.jamendo.com/track/1198557"
+    },
+    {
+      "file": "jamendo-1198562.mp3",
+      "title": "Away in a Manger",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Away in a Manger — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198562",
+      "source": "https://www.jamendo.com/track/1198562"
+    },
+    {
+      "file": "jamendo-1078367.mp3",
+      "title": "away in a manger",
+      "artist": "Adragante",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "away in a manger — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1078367",
+      "source": "https://www.jamendo.com/track/1078367"
+    },
+    {
+      "file": "jamendo-1198559.mp3",
+      "title": "Still Still Still",
+      "artist": "Gerry Baird",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Still Still Still — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198559",
+      "source": "https://www.jamendo.com/track/1198559"
+    },
+    {
+      "file": "jamendo-2137450.mp3",
+      "title": "Good King Wenceslas",
+      "artist": "Pierce Murphy",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "Good King Wenceslas — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2137450",
+      "source": "https://www.jamendo.com/track/2137450"
+    },
+    {
+      "file": "jamendo-757095.mp3",
+      "title": "Hark! The Herald Angels Sing",
+      "artist": "Rune Factory",
+      "recorded": "2011",
+      "license": "CC BY",
+      "credit": "Hark! The Herald Angels Sing — Rune Factory (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/757095",
+      "source": "https://www.jamendo.com/track/757095"
+    },
+    {
+      "file": "jamendo-1320751.mp3",
+      "title": "Hark The Herald Angels",
+      "artist": "Ryan Sheeler",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Hark The Herald Angels — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320751",
+      "source": "https://www.jamendo.com/track/1320751"
+    },
+    {
+      "file": "jamendo-2327369.mp3",
+      "title": "Dance of the Sugar Plum Fairy (from The N…",
+      "artist": "Felted Classics",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Dance of the Sugar Plum Fairy (from The N… — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327369",
+      "source": "https://www.jamendo.com/track/2327369"
+    },
+    {
+      "file": "jamendo-2327366.mp3",
+      "title": "Waltz of the Flowers",
+      "artist": "Felted Classics",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Waltz of the Flowers — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327366",
+      "source": "https://www.jamendo.com/track/2327366"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+}
