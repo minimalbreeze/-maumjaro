@@ -134,6 +134,63 @@ function callWithRetry(params, tries = 6) {
   return [];
 }
 
+/* 곡 **이름** 으로 찾는다.
+ *
+ * 태그로 긁는 방식은 "어떤 분위기의 아무 곡"을 모을 때는 맞지만, 유명한
+ * 캐럴처럼 **그 곡이어야 하는** 경우에는 안 맞는다. Jamendo 의 christmas
+ * 태그에 달린 연주곡은 다 합쳐 25곡뿐인데, 정작 Silent Night 같은 녹음은
+ * 태그가 안 달린 채로 올라와 있어 태그 검색에 안 걸린다.
+ *
+ * ⚠️ namesearch 는 느슨하게 맞춘다. "Silent Night" 로 부르면 "Silent
+ *    Forest", "Silent dreams" 까지 같이 온다. 그래서 받은 뒤에 제목이
+ *    실제로 그 곡인지 다시 거른다 — 그러지 않으면 캐럴 집에 엉뚱한
+ *    앰비언트가 섞인다.
+ * ⚠️ 1900년 이전 곡만 넣을 것. 화이트 크리스마스(1942)·루돌프(1949)·
+ *    Petit Papa Noël(1946) 같은 20세기 캐럴은 곡 저작권이 살아 있어서
+ *    녹음이 CC BY 라도 쓸 수 없다. 거르는 것은 fetch-music.mjs 의
+ *    COPYRIGHTED_SONGS 가 맡는다. */
+export function searchJamendoByName({ clientId, names, vocal, minSec = 60, maxSec = 600 }) {
+  if (!clientId) throw new Error('Jamendo client_id 가 없습니다');
+  if (!names || !names.length) throw new Error('찾을 곡 이름이 없습니다');
+  const flat = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const rows = [];
+  const seen = new Set();
+  for (const name of names) {
+    const got = callWithRetry({
+      client_id: clientId,
+      format: 'json',
+      limit: '50',
+      order: 'popularity_total',
+      include: 'musicinfo licenses',
+      audioformat: 'mp32',
+      namesearch: name,
+      // 보컬을 안 가린다. 아이와 부르는 캐럴은 목소리가 있어야 하는 곡도 있다.
+      vocalinstrumental: vocal === undefined ? '' : (vocal ? 'vocal' : 'instrumental'),
+      durationbetween: `${minSec}_${maxSec}`,
+      ccnc: 'false', ccnd: 'false', ccsa: 'false',
+    });
+    // 제목이 실제로 그 곡인 것만 남긴다
+    for (const t of got) {
+      if (!flat(t.name).includes(flat(name))) continue;
+      if (seen.has(t.id)) continue;
+      seen.add(t.id);
+      rows.push(t);
+    }
+  }
+  return rows.map((t) => ({
+    id: String(t.id),
+    title: String(t.name || ''),
+    artist: String(t.artist_name || '미상'),
+    seconds: Number(t.duration || 0),
+    licenseUrl: String(t.license_ccurl || ''),
+    downloadUrl: String(t.audiodownload || t.audio || ''),
+    pageUrl: String(t.shareurl || `https://www.jamendo.com/track/${t.id}`),
+    year: String(t.releasedate || '').slice(0, 4),
+    speed: (t.musicinfo || {}).speed || '',
+    genres: ((t.musicinfo || {}).tags || {}).genres || [],
+  }));
+}
+
 /* 한 무드(또는 직접 준 태그)로 후보를 긁어 온다.
  * 돌려주는 모양은 fetch-music.mjs 가 쓰던 것과 같게 맞춘다. */
 export function searchJamendo({ clientId, mood, tags, speed, acoustic, vocal, gender,

@@ -192,8 +192,19 @@ function buildAudio(tracks) {
     const missing = [finalPath, ...wavs].filter((f) => !existsSync(f));
     if (missing.length) fail(`--reuse-audio 인데 없는 파일이 있습니다:\n   ${missing.join('\n   ')}`);
     tracks.forEach((t, i) => { t._sec = probe(wavs[i]); });
+
+    /* ⚠️ work/ 는 집마다 돌려쓰는 폴더다. 앞 집의 audio.m4a 가 남아 있으면
+     * 그걸 그대로 집어다 다른 집 영상에 붙일 수 있다. 길이를 맞춰 본다.
+     * 곡 길이 합 + 곡 사이 빈틈이 실제 오디오 길이와 몇 초 안으로 맞아야 한다. */
+    const want = tracks.reduce((a, t) => a + t._sec, 0) + GAP_SEC * (tracks.length - 1);
+    const got = probe(finalPath);
+    if (!Number.isFinite(got) || Math.abs(got - want) > 3) {
+      fail(`--reuse-audio 인데 work/audio.m4a 가 이 집의 것이 아닙니다.\n`
+        + `   기대 ${mmss(want)} · 실제 ${Number.isFinite(got) ? mmss(got) : '읽을 수 없음'}\n`
+        + '   --reuse-audio 없이 다시 돌리세요.');
+    }
     console.log('   ♻️  오디오를 다시 만들지 않고 work/audio.m4a 를 그대로 씁니다');
-    return { file: finalPath, total: probe(finalPath) };
+    return { file: finalPath, total: got };
   }
 
   const parts = [];

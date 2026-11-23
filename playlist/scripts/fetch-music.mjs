@@ -33,7 +33,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { searchJamendo, JAMENDO_MOODS } from './jamendo.mjs';
+import { searchJamendo, searchJamendoByName, JAMENDO_MOODS } from './jamendo.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BGM_ROOT = join(ROOT, 'bgm');
@@ -253,6 +253,11 @@ const MODE = has('--pd') ? 'pd' : 'cc';
 const WANT = Math.max(1, Math.min(40, Number(val('--n', '8'))));
 const DRY = has('--dry');
 const MOOD = val('--mood', '');
+/* --names "Silent Night,Away in a Manger,..."
+ * 무드(태그)로 긁는 대신 곡 이름을 지목해 찾는다. 유명 캐럴처럼
+ * "그 곡이어야 하는" 집에 쓴다. 자세한 사정은 jamendo.mjs 의
+ * searchJamendoByName 주석에 적어 두었다. */
+const NAMES = val('--names', '').split(',').map((x) => x.trim()).filter(Boolean);
 const MOOD_NAMES = SRC === 'jamendo' ? Object.keys(JAMENDO_MOODS) : Object.keys(MOODS);
 if (MOOD && !MOOD_NAMES.includes(MOOD)) {
   console.error(`\n❌ 모르는 무드: ${MOOD}\n   고를 수 있는 것: ${MOOD_NAMES.join(' / ')}\n`);
@@ -618,14 +623,21 @@ async function mainJamendo() {
   }
 
   console.log('─'.repeat(60));
-  const kind = (has('--vocal') || /보컬$/.test(MOOD)) ? '노래' : '연주곡';
-  console.log(`Jamendo 공식 API — ${kind} · 인기순`);
-  console.log(`${MOOD ? `무드: ${MOOD}` : `태그: ${val('--q', '')}`} · 목표 ${WANT}곡`);
+  const kind = NAMES.length ? '곡 이름으로 지목'
+    : ((has('--vocal') || /보컬$/.test(MOOD)) ? '노래' : '연주곡');
+  console.log(`Jamendo 공식 API — ${kind}${NAMES.length ? '' : ' · 인기순'}`);
+  console.log(NAMES.length
+    ? `찾는 곡 ${NAMES.length}개 · 목표 ${WANT}곡`
+    : `${MOOD ? `무드: ${MOOD}` : `태그: ${val('--q', '')}`} · 목표 ${WANT}곡`);
   console.log('─'.repeat(60));
 
   let docs;
   try {
-    docs = searchJamendo({
+    docs = NAMES.length ? searchJamendoByName({
+      clientId: CLIENT_ID, names: NAMES,
+      vocal: has('--vocal') ? true : (has('--instrumental') ? false : undefined),
+      minSec: MIN_SEC, maxSec: MAX_SEC,
+    }) : searchJamendo({
       clientId: CLIENT_ID, mood: MOOD, tags: MOOD ? '' : val('--q', ''),
       speed: has('--any-speed') ? '' : undefined,
       acoustic: has('--acoustic') ? true : (has('--any-sound') ? false : undefined),
@@ -636,7 +648,11 @@ async function mainJamendo() {
       minSec: MIN_SEC, maxSec: MAX_SEC,
     });
   } catch (e) { fail(e.message); }
-  if (!docs.length) fail('후보가 없습니다. 무드를 바꾸거나 --q 로 태그를 직접 주세요.');
+  if (!docs.length) {
+    fail(NAMES.length
+      ? '그 이름의 곡을 못 찾았습니다. 철자를 바꾸거나 곡을 더 넣어 보세요.'
+      : '후보가 없습니다. 무드를 바꾸거나 --q 로 태그를 직접 주세요.');
+  }
   console.log(`후보 ${docs.length}곡\n`);
 
   mkdirSync(BGM, { recursive: true });
