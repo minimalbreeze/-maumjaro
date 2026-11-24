@@ -1,158 +1,179 @@
 {
-  "tracks": [
-    {
-      "file": "jamendo-1198557.mp3",
-      "title": "Silent Night",
-      "artist": "Gerry Baird",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Silent Night — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198557",
-      "source": "https://www.jamendo.com/track/1198557"
-    },
-    {
-      "file": "jamendo-1198562.mp3",
-      "title": "Away in a Manger",
-      "artist": "Gerry Baird",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Away in a Manger — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198562",
-      "source": "https://www.jamendo.com/track/1198562"
-    },
-    {
-      "file": "jamendo-1078367.mp3",
-      "title": "away in a manger",
-      "artist": "Adragante",
-      "recorded": "2013",
-      "license": "CC BY",
-      "credit": "away in a manger — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1078367",
-      "source": "https://www.jamendo.com/track/1078367"
-    },
-    {
-      "file": "jamendo-1198559.mp3",
-      "title": "Still Still Still",
-      "artist": "Gerry Baird",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Still Still Still — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198559",
-      "source": "https://www.jamendo.com/track/1198559"
-    },
-    {
-      "file": "jamendo-2137450.mp3",
-      "title": "Good King Wenceslas",
-      "artist": "Pierce Murphy",
-      "recorded": "2023",
-      "license": "CC BY",
-      "credit": "Good King Wenceslas — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2137450",
-      "source": "https://www.jamendo.com/track/2137450"
-    },
-    {
-      "file": "jamendo-757095.mp3",
-      "title": "Hark! The Herald Angels Sing",
-      "artist": "Rune Factory",
-      "recorded": "2011",
-      "license": "CC BY",
-      "credit": "Hark! The Herald Angels Sing — Rune Factory (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/757095",
-      "source": "https://www.jamendo.com/track/757095"
-    },
-    {
-      "file": "jamendo-1320751.mp3",
-      "title": "Hark The Herald Angels",
-      "artist": "Ryan Sheeler",
-      "recorded": "2016",
-      "license": "CC BY",
-      "credit": "Hark The Herald Angels — Ryan Sheeler (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320751",
-      "source": "https://www.jamendo.com/track/1320751"
-    },
-    {
-      "file": "jamendo-2327369.mp3",
-      "title": "Dance of the Sugar Plum Fairy",
-      "artist": "Felted Classics",
-      "recorded": "2026",
-      "license": "CC BY",
-      "credit": "Dance of the Sugar Plum Fairy — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327369",
-      "source": "https://www.jamendo.com/track/2327369"
-    },
-    {
-      "file": "jamendo-2327366.mp3",
-      "title": "Waltz of the Flowers",
-      "artist": "Felted Classics",
-      "recorded": "2026",
-      "license": "CC BY",
-      "credit": "Waltz of the Flowers — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327366",
-      "source": "https://www.jamendo.com/track/2327366"
-    },
-    {
-      "file": "jamendo-1185392.mp3",
-      "title": "Jingle Bells",
-      "artist": "Milles",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Jingle Bells — Milles (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1185392",
-      "source": "https://www.jamendo.com/track/1185392"
-    },
-    {
-      "file": "jamendo-1198556.mp3",
-      "title": "What Child Is This",
-      "artist": "Gerry Baird",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "What Child Is This — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198556",
-      "source": "https://www.jamendo.com/track/1198556"
-    },
-    {
-      "file": "jamendo-2327097.mp3",
-      "title": "Twinkle Twinkle Little Star",
-      "artist": "Adam Lullaby",
-      "recorded": "2026",
-      "license": "CC BY",
-      "credit": "Twinkle Twinkle Little Star — Adam Lullaby (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327097",
-      "source": "https://www.jamendo.com/track/2327097"
-    },
-    {
-      "file": "jamendo-2327358.mp3",
-      "title": "Canon in D",
-      "artist": "Felted Classics",
-      "recorded": "2026",
-      "license": "CC BY",
-      "credit": "Canon in D — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327358",
-      "source": "https://www.jamendo.com/track/2327358"
-    },
-    {
-      "file": "jamendo-1475526.mp3",
-      "title": "Fur Elise (solo guitar)",
-      "artist": "Mark Bodino",
-      "recorded": "2017",
-      "license": "CC BY",
-      "credit": "Fur Elise (solo guitar) — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475526",
-      "source": "https://www.jamendo.com/track/1475526"
-    }
-  ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다.",
-  "rejected": [
-    {
-      "title": "Jingle bells",
-      "artist": "MonacoLorenzo",
-      "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
-    },
-    {
-      "title": "What Child Is This? (Jeris Mix)",
-      "artist": "ccMixter",
-      "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
-    },
-    {
-      "title": "Celestial Flower Child Dream Twinkle Twin…",
-      "artist": "Lenny Wiles Lionstar GALAXY BANDSTAND",
-      "why": "제목이 잘렸고 아티스트명이 화면에 못 올릴 길이"
-    },
-    {
-      "title": "Pachelbels Canon in D",
-      "artist": "Evvowxm",
-      "why": "Felted Classics 판과 같은 곡 · 아티스트명 Evvowxm 이 사람 이름이 아니다"
-    },
-    {
-      "title": "Clair de Lune (Debussy)",
-      "artist": "Felted Classics",
-      "why": "아이와 함께 듣는 집에 쓰기에는 어둡고 길다"
-    }
-  ]
+ "tracks": [
+  {
+   "file": "jamendo-1185392.mp3",
+   "title": "Jingle Bells",
+   "artist": "Milles",
+   "recorded": "2015",
+   "license": "CC BY",
+   "credit": "Jingle Bells — Milles (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1185392",
+   "source": "https://www.jamendo.com/track/1185392"
+  },
+  {
+   "file": "jamendo-2327369.mp3",
+   "title": "Dance of the Sugar Plum Fairy",
+   "artist": "Felted Classics",
+   "recorded": "2026",
+   "license": "CC BY",
+   "credit": "Dance of the Sugar Plum Fairy — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327369",
+   "source": "https://www.jamendo.com/track/2327369"
+  },
+  {
+   "file": "jamendo-757095.mp3",
+   "title": "Hark! The Herald Angels Sing",
+   "artist": "Rune Factory",
+   "recorded": "2011",
+   "license": "CC BY",
+   "credit": "Hark! The Herald Angels Sing — Rune Factory (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/757095",
+   "source": "https://www.jamendo.com/track/757095"
+  },
+  {
+   "file": "jamendo-1078367.mp3",
+   "title": "away in a manger",
+   "artist": "Adragante",
+   "recorded": "2013",
+   "license": "CC BY",
+   "credit": "away in a manger — Adragante (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1078367",
+   "source": "https://www.jamendo.com/track/1078367"
+  },
+  {
+   "file": "jamendo-2137450.mp3",
+   "title": "Good King Wenceslas",
+   "artist": "Pierce Murphy",
+   "recorded": "2023",
+   "license": "CC BY",
+   "credit": "Good King Wenceslas — Pierce Murphy (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2137450",
+   "source": "https://www.jamendo.com/track/2137450"
+  },
+  {
+   "file": "jamendo-1198556.mp3",
+   "title": "What Child Is This",
+   "artist": "Gerry Baird",
+   "recorded": "2015",
+   "license": "CC BY",
+   "credit": "What Child Is This — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198556",
+   "source": "https://www.jamendo.com/track/1198556"
+  },
+  {
+   "file": "jamendo-2327358.mp3",
+   "title": "Canon in D",
+   "artist": "Felted Classics",
+   "recorded": "2026",
+   "license": "CC BY",
+   "credit": "Canon in D — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327358",
+   "source": "https://www.jamendo.com/track/2327358"
+  },
+  {
+   "file": "jamendo-2327357.mp3",
+   "title": "Arabesque No. 1 (Debussy)",
+   "artist": "Felted Classics",
+   "recorded": "2026",
+   "license": "CC BY",
+   "credit": "Arabesque No. 1 (Debussy) — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327357",
+   "source": "https://www.jamendo.com/track/2327357"
+  },
+  {
+   "file": "jamendo-1198559.mp3",
+   "title": "Still Still Still",
+   "artist": "Gerry Baird",
+   "recorded": "2015",
+   "license": "CC BY",
+   "credit": "Still Still Still — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198559",
+   "source": "https://www.jamendo.com/track/1198559"
+  },
+  {
+   "file": "jamendo-2327097.mp3",
+   "title": "Twinkle Twinkle Little Star",
+   "artist": "Adam Lullaby",
+   "recorded": "2026",
+   "license": "CC BY",
+   "credit": "Twinkle Twinkle Little Star — Adam Lullaby (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327097",
+   "source": "https://www.jamendo.com/track/2327097"
+  },
+  {
+   "file": "jamendo-598527.mp3",
+   "title": "cradle song",
+   "artist": "Canoply Games",
+   "recorded": "2010",
+   "license": "CC BY",
+   "credit": "cradle song — Canoply Games (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/598527",
+   "source": "https://www.jamendo.com/track/598527"
+  },
+  {
+   "file": "jamendo-1475526.mp3",
+   "title": "Fur Elise (solo guitar)",
+   "artist": "Mark Bodino",
+   "recorded": "2017",
+   "license": "CC BY",
+   "credit": "Fur Elise (solo guitar) — Mark Bodino (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1475526",
+   "source": "https://www.jamendo.com/track/1475526"
+  },
+  {
+   "file": "jamendo-1080601.mp3",
+   "title": "Das Wiegenlied des Monsieur Lapin",
+   "artist": "FlauschGAU",
+   "recorded": "2013",
+   "license": "CC BY",
+   "credit": "Das Wiegenlied des Monsieur Lapin — FlauschGAU (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1080601",
+   "source": "https://www.jamendo.com/track/1080601"
+  },
+  {
+   "file": "jamendo-1198557.mp3",
+   "title": "Silent Night",
+   "artist": "Gerry Baird",
+   "recorded": "2015",
+   "license": "CC BY",
+   "credit": "Silent Night — Gerry Baird (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1198557",
+   "source": "https://www.jamendo.com/track/1198557"
+  },
+  {
+   "file": "jamendo-2327366.mp3",
+   "title": "Waltz of the Flowers",
+   "artist": "Felted Classics",
+   "recorded": "2026",
+   "license": "CC BY",
+   "credit": "Waltz of the Flowers — Felted Classics (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327366",
+   "source": "https://www.jamendo.com/track/2327366"
+  }
+ ],
+ "note": "아이와 함께 듣는 캐럴. 첫 곡은 Jingle Bells — 밝게 시작해야 한다(집만들기.md 첫 곡 규칙). 같은 곡이 두 번 들어간 두 건을 뺐다(rejected). Jamendo 의 캐럴 음원은 004·007·010·011·019 로 바닥났다 — 후보 25곡이 전부 이미 쓴 곡이거나 아티스트 한도에 걸렸다. 길이를 메우려고 아이용 자장가·클래식 3곡(Wiegenlied·Arabesque·cradle song)을 뒤쪽 재우는 구간에 넣었다.",
+ "rejected": [
+  {
+   "title": "Jingle bells",
+   "artist": "MonacoLorenzo",
+   "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
+  },
+  {
+   "title": "What Child Is This? (Jeris Mix)",
+   "artist": "ccMixter",
+   "why": "같은 캐럴이 두 판 / 아티스트명이 플랫폼 이름"
+  },
+  {
+   "title": "Celestial Flower Child Dream Twinkle Twin…",
+   "artist": "Lenny Wiles Lionstar GALAXY BANDSTAND",
+   "why": "제목이 잘렸고 아티스트명이 화면에 못 올릴 길이"
+  },
+  {
+   "title": "Pachelbels Canon in D",
+   "artist": "Evvowxm",
+   "why": "Felted Classics 판과 같은 곡 · 아티스트명 Evvowxm 이 사람 이름이 아니다"
+  },
+  {
+   "title": "Clair de Lune (Debussy)",
+   "artist": "Felted Classics",
+   "why": "아이와 함께 듣는 집에 쓰기에는 어둡고 길다"
+  },
+  {
+   "file": "jamendo-1320751.mp3",
+   "title": "Hark The Herald Angels",
+   "artist": "Ryan Sheeler",
+   "why": "Hark The Herald Angels (Ryan Sheeler) — Rune Factory 판과 같은 곡. Ryan Sheeler 는 주장 3건 상습자이고 채널에 이미 5곡이라 이쪽을 뺐다."
+  },
+  {
+   "file": "jamendo-1198562.mp3",
+   "title": "Away in a Manger",
+   "artist": "Gerry Baird",
+   "why": "Away in a Manger (Gerry Baird) — Adragante 판과 같은 곡. Gerry Baird 가 이 집에 4곡이라 이쪽을 뺐다."
+  }
+ ]
 }
