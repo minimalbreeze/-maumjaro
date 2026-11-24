@@ -2999,6 +2999,46 @@ export const 바로잡기 = [
     이유: '글 25685. 유격수 절 사진 (미디어 25693)',
     글: [25685],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏁 합격선은 상위 25위, 실제로는 27명입니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25743,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/lpga-q-2027-1ddtxj-mwuqvg2d.jpg" alt="LPGA Q시리즈 최종전에서 2027시즌 출전권을 따낸 유현조·이다연·김민선이 합격 피켓을 들고 기념 촬영을 하고 있다" class="wp-image-25743"/></a><figcaption class="wp-element-caption">왼쪽부터 유현조·이다연·김민선 (사진: 넥스트크리에이티브) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏁 합격선은 상위 25위, 실제로는 27명입니다</h2>',
+    이유: '글 25735. 사진을 넣는다 (미디어 25743)',
+    글: [25735],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🧤 "무조건 해야 한다" — 서동욱이 짚은 전환 과제</h2>',
+    맞는:
+      '<!-- wp:image {"id":25744,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-3-1o8bp1-mwuqxre4.jpg" alt="KIA 타이거즈 김도영이 포스트시즌 경기에서 3루 수비를 준비하고 있다" class="wp-image-25744"/></a><figcaption class="wp-element-caption">포스트시즌에서 3루 수비를 준비하는 김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🧤 "무조건 해야 한다" — 서동욱이 짚은 전환 과제</h2>',
+    이유: '글 25685. 사진을 넣는다 (미디어 25744)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌍 전 세계 유망주 통합 랭킹 1위에 올랐습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25745,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-1f6qbl-mwuqzu9p.jpg" alt="KIA 타이거즈 김도영이 포스트시즌 경기에서 파울 타구를 잡기 위해 전력 질주하고 있다" class="wp-image-25745"/></a><figcaption class="wp-element-caption">파울 타구를 잡으려 전력 질주하는 김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌍 전 세계 유망주 통합 랭킹 1위에 올랐습니다</h2>',
+    이유: '글 25685. 사진을 넣는다 (미디어 25745)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🤔 톨허스트는 어떻게 되나 — 12승 투수를 두고 고민합니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25746,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-145jhp-mwur1wzh.jpg" alt="LG 트윈스 선발 톨허스트가 투구를 앞두고 생각에 잠겨 있다" class="wp-image-25746"/></a><figcaption class="wp-element-caption">투구를 앞두고 생각에 잠긴 톨허스트 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🤔 톨허스트는 어떻게 되나 — 12승 투수를 두고 고민합니다</h2>',
+    이유: '글 11834. 사진을 넣는다 (미디어 25746)',
+    글: [11834],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>💬 "스크린골프로 골프를 시작했다" — 윤이나 데뷔전 소감</h2>',
+    맞는:
+      '<!-- wp:image {"id":25742,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/wtgl-s9g7z5-mwuqsowr.jpg" alt="윤이나가 여자 팀 골프 리그 WTGL 데뷔전에 보스턴 커먼 골프 소속으로 출전한다" class="wp-image-25742"/></a><figcaption class="wp-element-caption">WTGL 데뷔전에 나서는 윤이나 (사진: 국민일보) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>💬 "스크린골프로 골프를 시작했다" — 윤이나 데뷔전 소감</h2>',
+    이유: '글 11897. 사진을 넣는다 (미디어 25742)',
+    글: [11897],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
