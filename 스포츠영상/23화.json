@@ -85,11 +85,11 @@
       "photos": [
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F19%2F2026111901001269500118921_20261119182912282.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F24%2F0001151488_002_20261124171412560.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfMTgy%2FMDAxNzk1MDIwNTg3MTk4.7IfMQ0TStJk8yUxqudKgySw0Bx3ZBBk_QvW-J__UELgg.1FS-YUyCz3kw1eOYkOtbA_40yIv36VLD8SFNZQX1hfEg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-11-19_014423.png&type=a340",
@@ -189,7 +189,7 @@
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F24%2F0001151488_001_20261124171412413.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         }
       ]
     },
@@ -211,15 +211,15 @@
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747830_web_20261114200841_20261114200915509.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747839_web_20261114200940_20261114201022178.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         },
         {
           "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F14%2F0005640581_001_20261114195713163.jpg&type=a340",
-          "아래": 0
+          "아래": 0.15
         }
       ]
     },
