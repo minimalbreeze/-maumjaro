@@ -68,7 +68,22 @@ function loadSiteReport() {
   try { return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null; } catch { return null; }
 }
 
+/**
+ * ⚠️⚠️ 광고 스위치. 끄면 새 글에 쿠팡 광고가 한 글자도 안 들어간다.
+ *
+ * 2026-11-19 에 효성님이 실업급여를 신청하면서 **수익이 생기면 안 되는
+ * 기간**이 됐다. 그래서 사이트의 광고를 내렸는데, 이 파일만 빠져 있었다 —
+ * 글을 올릴 때마다 하단 고정 바가 자동으로 붙어서, 올릴 때마다 사람이
+ * '쿠팡 하단 고정 바 빼기' 를 한 번 더 돌려야 했다. 2026-11-25 에
+ * 한 번 빠뜨려 실제로 발행된 글에 바가 나갔다.
+ *
+ * 손으로 빼는 일을 되풀이하면 언젠가 또 빠뜨린다. 그래서 스위치로 막는다.
+ * 다시 켤 때는 이 한 줄만 true 로 바꾸면 된다.
+ */
+const 광고_켬 = false;
+
 const AD_SNIPPET = (() => {
+  if (!광고_켬) return '';
   const f = path.join(ROOT, 'config', 'ad-coupang.html');
   try { return fs.existsSync(f) ? fs.readFileSync(f, 'utf8').trim() : ''; } catch { return ''; }
 })();
@@ -85,6 +100,7 @@ const AD_SNIPPET = (() => {
  * 못 올리는 쪽이 더 나쁘다.
  */
 const STICKY_BLOCK = (() => {
+  if (!광고_켬) return '';
   try { return 바블록(바HTML()); } catch { return ''; }
 })();
 
