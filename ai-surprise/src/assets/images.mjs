@@ -309,6 +309,39 @@ export async function generateImages(prompts, {
   let spentUsd = 0;
   let stoppedBy = null;
 
+  // ── 같은 사진으로 그린 그림은 **나눠 쓴다** (2026-11-25 운영자) ──
+  //
+  //   "아님 전달해준 사진을 상황에 따라 반복하는 것은 어떤가?"
+  //
+  // 전에는 사진을 돌려가며 고르기만 하고 **샷마다 새로 그렸다.** 사진이
+  // 여섯 장인데 사람 샷이 열넷이면 같은 사진을 두세 번 다시 그린 셈이라,
+  // 돈은 그만큼 더 나가면서 화면에는 어차피 같은 구도가 돌아왔다
+  // (22화에서 전광판 사진이 세 번 나왔다).
+  //
+  // 이제 한 번만 그리고 파일을 복사한다. 그 샷이 $0.05 에서 0원이 된다.
+  //
+  // ⚠️ **같은 장면 안에서는 나눠 쓰지 않는다.** 2026-11-04 에 한 장면의
+  //    인물 샷을 묶어 그림 하나로 쓰게 했다가 "야구장 같은 현장감을 넣어
+  //    달라"는 말을 들었다 — 한 장면이 통째로 정지 그림 한 장이 됐기
+  //    때문이다. 그래서 장면이 다를 때만 복사하고, 같으면 새로 그린다.
+  //
+  // 사진 주소 → { file, scene, shot_id }
+  const madeFromPhoto = new Map();
+
+  /** 이 샷에 쓸 사진. photoTurn 을 **건드리지 않고** 엿본다(비용 계산용). */
+  const peekPhoto = (name) => {
+    const list = photosOf.get(name) || null;
+    if (!list || !list.length) return null;
+    return list[(photoTurn.get(name) || 0) % list.length];
+  };
+  /** 그 사진으로 이미 그린 게 있고, 그 샷이 **다른 장면**이면 나눠 쓸 수 있다. */
+  const reusableFor = (url, sceneNumber) => {
+    if (!url) return null;
+    const hit = madeFromPhoto.get(url);
+    if (!hit || hit.scene === sceneNumber) return null;
+    return fs.existsSync(hit.file) ? hit : null;
+  };
+
   const perImage = modelFor(modelKey).usdPerImage;
 
   for (const [i, shot] of todo.entries()) {
@@ -320,10 +353,15 @@ export async function generateImages(prompts, {
     // 상한을 넘기 **전에** 멈춘다. 넘은 다음에 세면 이미 쓴 뒤다.
     // ⚠️ 참조 모델이 더 비싸므로 **그 샷의 값**으로 센다. 싼 값으로
     //    세면 상한을 넘겨 놓고 넘은 줄 모른다.
+    // ⚠️ 나눠 쓰는 샷은 **0원**이다. 그걸 안 보면 상한에 걸려 멈춘 뒤에
+    //    복사만 하면 되는 샷까지 못 만든다.
     const whoNext = String(shot.person || '').trim();
-    const nextCost = photosOf.has(whoNext)
-      ? modelFor(REPAINT_MODEL).usdPerImage
-      : perImage;
+    const peeked = peekPhoto(whoNext);
+    const nextCost = reusableFor(peeked, shot.scene_number)
+      ? 0
+      : peeked
+        ? modelFor(REPAINT_MODEL).usdPerImage
+        : perImage;
     if (spentUsd + nextCost > maxUsd) {
       stoppedBy = 'budget';
       for (const rest of todo.slice(i)) {
@@ -338,6 +376,28 @@ export async function generateImages(prompts, {
     const pool = photosOf.get(who) || null;
     let fromPhoto = pool && pool.length ? pool[(photoTurn.get(who) || 0) % pool.length] : null;
     if (fromPhoto) photoTurn.set(who, (photoTurn.get(who) || 0) + 1);
+
+    // ── 이미 그린 사진이면 나눠 쓴다 (0원) ──
+    const already = reusableFor(fromPhoto, shot.scene_number);
+    if (already) {
+      try {
+        fs.copyFileSync(already.file, shot.file);
+        made.push({
+          shot_id: shot.shot_id,
+          file: shot.file,
+          bytes: fs.statSync(shot.file).size,
+          attempts: 0,
+          reusedFrom: already.shot_id,
+        });
+        onProgress?.(
+          `이미지 ${i + 1}/${todo.length} — ${shot.shot_id} (장면 ${shot.scene_number})` +
+            `  ♻️ ${already.shot_id} 그림을 나눠 씁니다 (0원)`
+        );
+        continue;
+      } catch {
+        // 복사가 안 되면 그냥 새로 그린다. 빈 화면을 남기지 않는다.
+      }
+    }
 
     // ── flux-pulid(참조 모델)를 **버렸다** (2026-11-11) ──
     //
@@ -409,6 +469,15 @@ export async function generateImages(prompts, {
         const tmp = `${shot.file}.part`;
         fs.writeFileSync(tmp, bytes);
         fs.renameSync(tmp, shot.file);
+
+        // 사진에서 그렸으면 장부에 적는다 — 같은 사진이 또 걸리면 나눠 쓴다.
+        if (fromPhoto) {
+          madeFromPhoto.set(fromPhoto, {
+            file: shot.file,
+            scene: shot.scene_number,
+            shot_id: shot.shot_id,
+          });
+        }
 
         made.push({ shot_id: shot.shot_id, file: shot.file, bytes: bytes.length, attempts: attempt });
         done = true;

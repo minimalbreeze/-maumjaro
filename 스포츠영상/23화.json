@@ -1,0 +1,325 @@
+{
+  "kind": "SPORTS",
+  "title": "가장 싸게 살 수 있는데 전화가 안 온다 — KIA의 겨울",
+  "premise": "KIA 내부 FA 김호령·김태군 협상이 멈춰 있다. 단장은 오퍼를 줬다 하고, 선수는 금액을 못 받았다 하고, 감독은 소식이 없다고 한다.",
+  "angle": "김호령은 C등급이라 보상이 가장 싸고 수비는 FA 최대어보다 위라는 평가도 받는다. 그런데 타 팀 연락이 '별로 많이 없었다'. 싼데 아무도 안 사는 이유를 센다 — 1992년생 내년 35살, 커리어하이인데 전반기 0.280에서 후반기 0.245로 떨어졌고 포스트시즌까지 안 돌아왔다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "세 사람, 세 가지 말",
+      "value": 100,
+      "note": "같은 날 같은 팀에서 세 사람이 다른 말을 했다. 심재학 단장 11/23 '우리 쪽의 오퍼는 제시한 상태고, 선수들의 답을 기다리는 상황이다'. 김호령 11/23 'KIA로부터 아직 금액 제시는 받지 못했다'. 이범호 감독 11/24 '아직은 소식이 없네요. 뭐가 있으면 연락이 왔을 건데…'. ⚠️⚠️ 누가 거짓말한다고 쓰지 않는다. 같은 일을 다르게 부른 것일 수 있다."
+    },
+    {
+      "key": "KEY",
+      "label": "받은 것은 숫자가 아니었다",
+      "value": 95,
+      "note": "열쇠는 김호령이 준다 — '다만, 다른 팀과 얘기를 나눈 후 \"네 얘기를 꼭 다시 해달라\"라는 내용은 전달받았다'. 그러니까 KIA가 건넨 것은 '시장 보고 와서 다시 얘기하자'였고 금액이 아니었다. 단장은 그걸 오퍼라 부르고 선수는 금액 제시가 아니라고 센 것이다. ⚠️ 단장은 '선수들'이라고 복수로 말했다 — 김태군 건은 확인할 수 없다. 거기까지만 간다."
+    },
+    {
+      "key": "CHEAP",
+      "label": "가장 싸다",
+      "value": 90,
+      "note": "C등급이라 보상선수 없이 직전 연봉 150%만 주면 된다. 2026 연봉 2억 5000만원 → 보상금 3억 7500만원. ⚠️ 그런데 C등급이 뜻밖이었다 — 기사가 'B등급이 예상됐던 자원'이라 썼고 본인도 'FA를 신청하고 등급이 나왔을 때 나도 처음 알았다. 연봉도 올해 많이 올려주셔서 당연히 B등급일 거라 생각했는데'라고 했다. 등급은 리그 전체 연봉 순위로 매긴다. ⚠️ '남들이 더 올라서'는 내 해석이다 — 규정이 그렇게 돌아간다는 사실까지만 말한다. 수비는 '리그 최정상급', 기사는 '최지훈과 비교해도 손색이 없다. 오히려 김호령이 위라고 볼 수도 있다'고 썼다."
+    },
+    {
+      "key": "QUIET",
+      "label": "그런데 전화가 안 온다",
+      "value": 100,
+      "note": "⭐⭐ 이 편의 중심. 김호령은 '타 팀서 연락을 많이 받았나'는 물음에 '별로 많이 없었다(웃음)'고 답했다. 기사도 '예상과 달리 현 시점에서 두 사람에 대한 영입전이 그렇게 뜨거운 분위기는 아니다'라고 적었다. 가장 싸고 수비는 최대어보다 위일 수도 있다는데 아무도 안 온다. 여기가 이 편의 '왜?'다."
+    },
+    {
+      "key": "WHY",
+      "label": "세어 보면 이유가 보인다",
+      "value": 95,
+      "note": "기사가 둘을 든다. 나이 — 1992년생, 내년이면 35살. 타격 — 2025 타율 0.283에서 2026 0.267로 내려갔는데 140안타 13홈런 68타점은 커리어하이다. 한 해 안에서도 갈린다: 전반기 0.280, 후반기 0.245. '체력 탓인지 떨어진 타격 페이스는 포스트시즌까지 끝내 돌아오지 않아' 물음표를 남겼다. ⚠️ 기사도 '탓인지'라고 물음표를 달았다. 체력 때문이라고 단정하지 않는다. 기사 원문: 'C등급이라 보상 규모가 작다고 해도 타구단이 이적 프리미엄을 많이 얹어주긴 어렵다'."
+    },
+    {
+      "key": "SENT",
+      "label": "KIA가 보낸 사람들",
+      "value": 85,
+      "note": "'KIA는 내부 FA라도 오버페이라고 판단하면 움직이지 않았다'. 2024 시즌 뒤 필승조 장현식이 LG로 4년 52억, 2025 시즌 뒤 주전 유격수 박찬호가 두산으로 4년 80억, 4번타자 최형우가 삼성으로 2년 26억. 셋 다 주전이었고 셋 다 나갔다. 기사는 '이 기조는 올해도 달라지진 않을 듯하다'고 썼다. ⭐ 그러니 '차분히 기다린다'가 여유가 아니라 방식일 수 있다. ⚠️ 셋이 나간 것과 이번 건은 다른 일이다. '또 나갈 것'이라고 쓰지 않는다."
+    },
+    {
+      "key": "CATCHER",
+      "label": "포수 쪽은 사정이 다르다",
+      "value": 80,
+      "note": "김태군은 1989년생. KIA는 한준수를 주전으로 키우는 중이고 김태군이 그 뒤를 받친다. '풀타임 주전 경험이 부족한 한준수가 전반기 막바지부터 페이스가 떨어졌을 때는 김태군이 주전을 맡아 후반기까지 안정적으로 안방을 지켰다'. 그런데 'KBO 구단 전반적으로 포수 세대교체가 이뤄진 상황이라 1989년생인 김태군에게 주전을 기대하고 오퍼를 넣을 구단은 많지 않아 보인다'. 같은 자리다 — 팀엔 필요한데 시장은 조용하다. 당장 없으면 한준수와 주효상 등 1군 경험이 부족한 선수들로 안방을 꾸려야 한다."
+    },
+    {
+      "key": "NEXT",
+      "label": "없으면 누가 — 감독이 이름을 댔다",
+      "value": 85,
+      "note": "이범호 감독: '만약 호령이가 떠나면 재현이를 중견수로 쓰고, 지금 상황에선 카스트로를 좌익수로 쓰는 방안 말고는 없다'. 후보는 박재현·박정우·김민규 셋인데, ⭐ 중견수 구력은 박재현이 가장 떨어진다(고교 때 코너 외야와 3루). 그런데도 감독이 첫손에 꼽은 것은 방망이 때문이다 — 고졸 2년차에 19홈런을 쳤고 APBC에서 중견수를 무난히 소화했다. ⚠️⚠️ 감독이 단서를 달았다: '돔구장이 아마 수비하기가 좀 더 편했을 거예요. 광주에서 어떨지, 스프링캠프에서 어떨지 봐야 한다' / '지금은 어떻다고 딱 얘기할 수 있는 건 없다'. 후계자로 못 박지 않는다."
+    },
+    {
+      "key": "CAP",
+      "label": "돈이 또 묶여 있다",
+      "value": 90,
+      "note": "⭐ KIA는 외국인 셋과 다 가고 싶어 한다(심재학 단장 '외국인 선수들과 동행을 고려하고 있다'). 그런데 올려 줄 돈이 40만 달러뿐이다. 네일 31경기 13승 7패 ERA 3.49(연봉 200만 달러), 올러 30경기 11승 10패 ERA 3.13(120만), 카스트로 99경기 타율 0.327 21홈런 88타점 OPS 0.928(100만). 합이 420만. 상한은 기본 400만에 재계약 연차마다 10만씩 붙어 KIA는 460만. 그러니 인상분이 40만 달러, 약 5억 3000만원이고 그걸 셋이 나눈다. 네일과 올러는 퀄리티스타트 39회를 합작해 10개 구단 외국인 투수 조합 중 1위였고, 카스트로는 5월 햄스트링으로 한 달을 빠지고도 저 성적이다. ⚠️ 넘기면 제재가 있다 — 1회 초과분 50% 제재금, 2회 100% + 신인드래프트 2라운드 지명권 9단계 하락, 3회 이상 150% + 지명권 하락."
+    },
+    {
+      "key": "CLOSE",
+      "label": "내가 걸어 둔 숫자",
+      "value": 85,
+      "note": "전에 김호령을 3년 30억 안팎(폭 25~38억)으로 봤고 잔류 60 이적 40으로 봤다. 지금까지 나온 것으로 보면 — 이적 쪽 전화가 '별로 많이 없었고', 그 '다른 팀'이 아직 안 보이고, KIA는 아직 금액을 안 냈다. ⚠️⚠️ 아직 채점이 아니다. 계약이 안 났다. 중간 상황이라고 분명히 말한다. ⚠️ 규칙 25 — 편 번호를 대지 않는다. '전에 제가 3년 30억으로 봤습니다'로 쓴다."
+    }
+  ],
+  "sources": [
+    "스포츠조선 김민경 (2026-11-24) — 심재학 단장 발언, 김호령 걸림돌, 전·후반기 타율, 김태군 사정, KIA가 보낸 FA 셋",
+    "스포츠동아 장은상 (2026-11-25) — 김호령 인터뷰, C등급 경위, 보상금, '연락 별로 없었다'",
+    "마이데일리 김진성 (2026-11-25, 인천공항) — 이범호 '소식이 없네요', 영입전 온도",
+    "마이데일리 김진성 (2026-11-24, 인천공항) — 중견수 후보 셋, 박재현, 감독의 단서",
+    "스포츠동아 박정현 (2026-11-25) — 외국인 셋 성적·연봉, 상한제 계산, 제재 규정",
+    "MK스포츠 김재호 (2026-11-25) — 김도영 랭킹(이 편에서는 안 쓴다)",
+    "3년 30억은 내가 전에 산정한 것이다"
+  ],
+  "people": [
+    {
+      "name": "김호령",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 외야수. 1992년생, 내년이면 35살. 중견수 수비는 리그 최정상급으로 평가받는다. 2026에 140안타 13홈런 68타점으로 커리어하이를 찍었지만 타율은 0.267이다. C등급 FA로 시장에 나왔고 에이전트 없이 혼자 협상한다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 이 편의 주인공이다. 사진 10장을 받았으니 샷마다 다른 사진이 걸린다.\n⚠️ 외야수다 — 투구 동작을 그리지 않는다. 수비·타격·더그아웃·인터뷰 자세다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F076%2F2026%2F11%2F19%2F2026111901001269500118921_20261119182912282.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F24%2F0001151488_002_20261124171412560.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfMTgy%2FMDAxNzk1MDIwNTg3MTk4.7IfMQ0TStJk8yUxqudKgySw0Bx3ZBBk_QvW-J__UELgg.1FS-YUyCz3kw1eOYkOtbA_40yIv36VLD8SFNZQX1hfEg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-11-19_014423.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfMTcx%2FMDAxNzk1NDc4NjQyNDU5.2D19flCDW3OEaNTAxuCgHFvaHVnaSubxoBX4LAElvx8g.SqdnW3sjShvb4DE48bQij24pkBbSKyBAB4AyYLeIfBMg.JPEG%2Fthumb.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMThfMTQ1%2FMDAxNzk0OTg4MjIxNTIz.Ce2BLdHV3QQdSPfmAyRtw6LS8Am3Jj6X47ELTfvDJSQg.rthZoUnRb3In7bj21o5T_xzBQUIZgdDanvX2z4uHikYg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjJfMjk5%2FMDAxNzk1MzA5Njg4ODk2.WD6Gb4_nuDo0QAGHlf8rUd3o83X6dzkwcubg1GrJjJ8g.hXX7W_Jopb7_xdWiaWMbV0eA32pE91xZgsjtwwsZufkg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjJfMTQ3%2FMDAxNzk1MzUyODEyOTcy.Q49tXJpI9xOuwY-U4vjZC9uyO6KT8YxE4L1wMmqgeIIg.tO_AQ-25SBvYqZ-94R5MFdqb8RE04AVf9ZSvCJdGRPog.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjJfNTcg%2FMDAxNzk1MzE5OTYyOTA3.ZdajTV7495p_sUvl2-4CiasJrqu7BnUjuEDPKV3JcE4g.ekcC6sC3q-EsqCrK3ICEaOyjFLhTAcUmTi6fMIn9TQsg.PNG%2F%25BB%25E7%25C1%25F83.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2026%2F11%2F25%2F0001306609_003_20261125063015683.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfMjM4%2FMDAxNzk1MDk1MTE5NTQ2.P2jCURcmZvNmdqtf-fdhET14m6ily3kOUspIrVsod6Qg.QExn1ijext284UuE1Y0vYyCGWnbFmqkfc3VbVokAHEAg.PNG%2F20261119_223114.png&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "이범호",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 감독. 2027이 계약 마지막 시즌이다. 오키나와 마무리캠프를 마치고 인천공항에서 두 번 말했다 — FA 소식이 없다는 것과, 김호령이 떠나면 박재현을 중견수로 쓰겠다는 것.",
+      "tell": "⚠️⚠️ 감독은 유니폼 위에 구단 재킷을 입고 **등번호가 없다**. 선수 샷(투구·타격·수비)을 그리지 않는다 — 그렇게 그리면 현역 선수가 된다.\n⚠️ 사진이 있으므로 생김새를 글로 적지 않는다.\n⚠️ 인천공항에서 한 말이라 공항·기자 앞 장면이 어울린다. 다만 사진에 없는 자세를 지어내지 않는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDNfNSAg%2FMDAxNzkzNzE0NDg2OTQ1.6KyHPZ8vjFWNUxQKK70kNPGDI0ohoN8UsFZvPxAckrkg.4mLuAdDDobPvr9RhGQ_dT-zko3bs1pRaIDrDf1V8K9Eg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDRfMjAx%2FMDAxNzkzNzcxNDY3NTUz.GF4Zdi3RbGZ63n5gWKcDOS7ODBgqckF4yQCgImQajMAg.bWkpqvDWYFZBaoknlX04gvtEvxqBLQbMlGk5cNDM5Lkg.JPEG%2F825835_1355101_2112.jpg&type=l340_165",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDRfNTcg%2FMDAxNzkzNzc4MzYzNTg5.HYFKaoBypeYlDNvAc2kNGy0P1AEXjpKSXl0XCWCft24g.87RbLQIdxiA06Z_7JPacoMshr-RIwx-bCBME5v-p7aUg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDVfMTQ4%2FMDAxNzkzODY0NDE3NzI2.7jTMHkITHB8p8ilbPoA83yorvQMtv3usV_oLgs190Ekg.VYMMxfALyxAavL37Kmce-pi_IWg0LiX4PQ60PAKWWZgg.JPEG%2FKIA%2B%25C0%25CC%25B9%25FC%25C8%25A3%2B8%25C0%25A7%25BF%25A1%25BC%25AD%2B3%25C0%25A7%25B7%25CE%2B%25B9%25DD%25B5%25EE%25C7%25DF%25B4%25C2%25B5%25A5%25B5%25B5%2B%25B8%25ED%25C0%25E5%2B%25C6%25F2%25B0%25A1%25B0%25A1%2B%25BE%25F9%25B0%25A5%25B8%25AE%25B4%25C2%2B%25C0%25CC%25C0%25AF_%25281%2529.jpg&type=l340_165",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDRfNjIg%2FMDAxNzkzNzc3NDk0NzI4.BvkaRWZNbuvjt_vUDOuQypuuvwGmWS6NIRQxcIEdd8sg.eDD5vIZ27_4xAMy2Lmc3kknx6Z9-sjNcmP4YAPI0hjcg.PNG%2F3%25C0%25A7%25B4%25C2%2B%25B0%25A8%25B5%25B6%2B%25B4%25F6%25BA%25D0%252C%2B%25C5%25BB%25B6%25F4%25C0%25BA%2B%25B4%25A9%25B1%25B8%2B%25C3%25A5%25C0%25D3%2BKIA%2B%25C0%25CC%25B9%25FC%25C8%25A3%25C0%25C7%2B%25BD%25C3%25C1%25F0%2B%25BF%25EE%25BF%25B5%25C0%25BB%2B%25B4%25D9%25BD%25C3%2B%25B5%25E9%25BF%25A9%25B4%25D9%25BA%25B8%25B4%25CF_%25282%2529.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTBfMjg5%2FMDAxNzk0MjgzNTEyNjQ5.lju3PfUTIabgDOXcANd9X3DihwtwKu9wLHmcpH5vjVUg.nxKRbBGHeqFnTh69obOqgJu09jCc836TvxOuUvvF5hUg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDZfMTQx%2FMDAxNzkzOTM0NDI5MzEw.C7SmPWbX7SgQf6JHGgVsqioQk83sSUJZS-PleLv_GjQg.U8W4Jh7BS2vr7G4-XMFc85TX0lU2YsKZPisibkRpMgwg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "김태군",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 포수. 1989년생. 한준수를 주전으로 키우는 동안 뒤를 받쳤고, 한준수가 처졌을 때 후반기 안방을 지켰다. 김호령과 함께 이번 내부 FA다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 포수다 — 포수 장비(마스크·프로텍터)를 입은 샷이 사진에 있으면 그대로 간다. 투수 동작을 그리지 않는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfMTg0%2FMDAxNzk1MDQ5NTgwMTY0.nVvnyT6OU9y3pseSFOo4doaYLD-h1atf036bihPJIcMg.91t8zQcF1WWydbpi4ty14KTWrGjA291haq5VGU1APlUg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjNfOTEg%2FMDAxNzk1NDAwMDc3NzM5.Rkk2_lmFiC4lm4HiO7FvpGugT-d1AwnvIh7GetLW2okg.w-2_8wTpgflYdbyc-4SN7lDTRf3cYimjbbDcAnqIjrIg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMThfNiAg%2FMDAxNzk1MDAxMzQ0ODIz.ES_wVWRu-Wru5g529hIEHuw04hahIkSRMm1cug5sOz0g.LwVMtvndbw1SX-PCIl_Dx8rRhzIHIwtlp7ev_BZ4c44g.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfMTE5%2FMDAxNzk1MTQ2NDA2MzY3.jbG6587bUYV7AgT7NWjBageOZX2Eh21Z4bBPChWcUzcg.bBs1kIbUNwUpnd0bCQGDZDE1-GRI25MEOnHPfiGI3aEg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F24%2F0001151488_001_20261124171412413.jpg&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "박재현",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 외야수. 고졸 2년차에 19홈런을 쳤다. 중견수 구력은 후보 셋 중 가장 떨어지지만 감독이 첫손에 꼽았다. APBC에서 중견수를 소화했다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 아직 후계자가 아니다. 감독이 '캠프 때 봐야 한다'고 했다 — 주전처럼 보이는 연출을 하지 않는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjVfNTAg%2FMDAxNzk1NTY4OTM5NjMy.A0oBNVHAqJSwbzqGkY9fVizvy6baDIylHDW0l9FJ1DUg.SkzUhslD7ocDy_ZfqoLk3-YcnnqlVEVYfF-dtbcmjo4g.JPEG%2F109_0005632997_1.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfMTg5%2FMDAxNzk1MDkzODM1NDA4.mTFKN0UT_94Geh4XYr-7lcAlOTNVLwIRQtT8RaAkxcMg.Rq6Hf_EafqhPzVjXj34YNvgXAeHfDnYxKXcFz36-VkYg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747830_web_20261114200841_20261114200915509.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2026%2F11%2F14%2FNISI20261114_0001747839_web_20261114200940_20261114201022178.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F14%2F0005640581_001_20261114195713163.jpg&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "네일",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 외국인 투수. 2026에 31경기 13승 7패 평균자책점 3.49. 연봉 200만 달러로 셋 중 가장 많다. 올러와 함께 퀄리티스타트 39회를 합작했다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 투수다. 던지는 손에 공, 반대 손에 글러브. 바뀌지 않는다(규칙 19).\n⚠️ 동작을 그린다면 멈추는 자리다 — 와인드업 꼭대기나 공 놓기 직전(규칙 18).",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfOTMg%2FMDAxNzk1NTE5MzI4NDgx.fM4KKnDPegktYtyf6P9g3HvLtsig1e8GjAo47EM6fAkg.GVluGVUI-ISWY8ArOhXOOCJBE8oH1-7PuYyPQT7IuLwg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfNDgg%2FMDAxNzk1NTE5MjcxMzcy.cgJca0sgy89YG-r2NyFP0quONFQ6vJc3iNwqLn-3fmwg.NyOgG_3k98Bi7jgx0HXRveik5Th4xfV3vtqGIpAVIIAg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfMjE0%2FMDAxNzk1NTE5MzE2NTg1.3AGcCTDaJ_ZBZC2HNmKVgT0zuVkGMNFX0s4tc-xJ790g.g_cX4uegrQGEhx0f4-aQDmAm191wlS18Upt_gR6Q2Dwg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfNDQg%2FMDAxNzk1NTE5MzQwMzQ3.ggs4EcSm5SxcLL-3qcFv0QDduZBU5ezi54Jv7Hk0mI8g.qj_3vFmU1P4uYUY8oM3GuVbPDSsIELbl5C1y4Tznwd4g.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjVfMTQ0%2FMDAxNzk1NTQ2NTY1NzYx.UvRme2IIuPKDFObW-eDHzCMqAqBZnrlXmiKDPx7YA6kg.C2mV_pErSNmiMEBIMCmBlVfgDG6GQxp2T9HanN57MpYg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfMjE1%2FMDAxNzk1NTE5NjM1ODI3.964QIKVKAIWZsV2fx1mSw99lFlDR0pFs80PzIBeHoT0g.Hag8Qcjwhbu7sqHSlEV_4_uLgEmk8l8iPkWG9y985QEg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "올러",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 외국인 투수. 2026에 30경기 11승 10패 평균자책점 3.13. 연봉 120만 달러. 평균자책점은 네일보다 좋았다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 투수다. 던지는 손에 공, 반대 손에 글러브.\n⚠️⚠️ 체격을 느낌말로 적지 않는다(규칙 4). 전에 '두꺼운 체격'이라고 적었다가 '이 돼지는 누구인가'라는 말을 들었다. 사진이 있으니 글로는 아무것도 안 적는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfNTUg%2FMDAxNzk1MTcxNjY0NTQx.OfHNoDjSTGFdWFUPmtBtIxGA84mV8hW7Rfxl8zio-3sg.f92O5_G3RVwiCUN-RaGmFd5IELdiMKCcUJDLxjChwSIg.PNG%2F8f41cae6-2ad1-4c0e-9dad-3f623d37a456.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfMTg3%2FMDAxNzk1MTcxNzQ0MzAw.ohRss7XFc7U9BSbA9EJIwqZx7WmbNIXokV2MijpplK4g.1yf8jmDF3xFrJPOY71PI2WycBG1PoZ23N3wZGw1jVSAg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-11-20_194603.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjVfMjg0%2FMDAxNzk1NTM3MzU1MjM5.z36dTq_ptgL30YYp14nX08dwkEEQ4Lj24Fm7-5kPuXAg.CbxFJ6SkckFsVcNZmmjEmrtdRnoxLh0ZaH8ZB1exjGcg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjVfMSAg%2FMDAxNzk1NTc3NTk0MjQw.CP9LdJhDtj8kSefUfKcB5RFNukS8ys6BKyTX6CVg524g.h5rXJaMlQgP2ut4XFFct4_80v9nSOMJy2B0RvTnt7hYg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfMjA0%2FMDAxNzk1MTcxNzU0MzI1.B7ms-1Ble2PF3ijK2748KGiiZAxDBlpehuQYIXnXeEsg.U0NOGycC1z_MxX4IgD64KylfFqdeZgt0QaeP6t0Gy18g.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-11-20_194542.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjJfMjI3%2FMDAxNzk1MzQ0NzYxNDQ3.XaONpZKNaWWddn8Y9Hl08fv7iP6BfPPNMjVlXVqgUSwg.zB1H-gwbQRvMHXZxIN31inaXo2o4agW2f_s4kOnox0gg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "카스트로",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 외국인 타자. 2026에 99경기 타율 0.327, 21홈런 88타점, OPS 0.928. 연봉 100만 달러. 5월 햄스트링으로 한 달을 빠지고도 그 성적이다. 김호령이 떠나면 좌익수로 쓰는 방안이 거론된다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ `아래: 0` — 받은 사진에 워터마크가 없으면 자를 이유가 없다. 자르면 발목이 날아간다.\n⚠️ 타자다 — 투구 동작을 그리지 않는다. 오른손 타자는 오른손이 위, 왼손 타자는 그 거울이다(규칙 19). 사진에서 그리면 사진이 정한다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjNfOCAg%2FMDAxNzk1NDI1MjU2MTM1.YTMW7oSjRzvq7U5EjkB6eENobn3vxwLsOJ6ngSXhhzUg.pgiINlsv4Q5EJQ2W4vjBdE4ZUzeGGFUFPGYxwBWn5A0g.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfODUg%2FMDAxNzk1NTIxODI4Njg3.Uwn8_OHsFSIjY0Z2tc2NkFgtwrx1n6VA3AoSfcvBn7wg.Jq_ScBv0NIgTTTH91X6NghXDUgZcutMsejp94JE9_YUg.PNG%2F%25B1%25E2%25BE%25C6_%25C4%25AB%25BD%25BA%25C6%25AE%25B7%25CE.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjNfMTEz%2FMDAxNzk1NDIyOTE3MTIw.c1T_T8sMTH88cHPRa9v8h917utuJLqhqV8mQmKfNZI4g.KfjFiuIzWz65B8hdaARy5sLlRBj0CTgoDCKOZUMtkhkg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjRfMTE4%2FMDAxNzk1NTMwNTUxNDE2.8rYUbuyKwBBHQO7GuOfHIO-AckwgqWB4wXunhFHh8iwg.8n6nYNUp9QbarBMW5PQt_KvwwQo51Y3LUGQ8V2KHAgsg.JPEG%2F900_1795530550746.jpeg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjVfMTEg%2FMDAxNzk1NTM3NDUzOTI5.hNImornNJvkOJe2HVA6q2jQ4ReJ94kegm2LQsPqAHAcg.IInaXD-roC4icXiMTTujmYbLs9lZ-XOBGHMCVqo7xFkg.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        }
+      ]
+    }
+  ]
+}

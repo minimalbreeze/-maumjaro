@@ -2522,6 +2522,47 @@ await asyncTest('상한에 걸려 멈춘 뒤 다시 돌리면 남은 것부터 �
   assert.equal(second.skipped.filter((s) => s.reason === '이미 있습니다').length, 2);
 });
 
+await asyncTest('같은 사진으로 그린 그림은 나눠 쓴다 — 다시 그리지 않는다', async () => {
+  // ⚠️⚠️ 2026-11-25 운영자: "아님 전달해준 사진을 상황에 따라 반복하는 것은 어떤가?"
+  //
+  // 전에는 사진을 돌려가며 고르기만 하고 **샷마다 새로 그렸다.** 사진 2장에
+  // 샷 6개면 같은 사진을 세 번씩 다시 그린 셈이라, 돈은 세 배로 나가면서
+  // 화면에는 어차피 같은 구도가 돌아왔다(22화에서 전광판이 세 번 나왔다).
+  const dir = imgDir('reuse-photo');
+  const 사람 = [{ name: '김호령', team: 'KIA', photos: [{ url: 'https://p/1.jpg' }, { url: 'https://p/2.jpg' }] }];
+  // 장면을 서로 다르게 둔다 — 같은 장면 안에서는 나눠 쓰지 않기 때문이다.
+  const shots = fakePrompts(6).map((s, i) => ({ ...s, person: '김호령', scene_number: i + 1 }));
+
+  const api = fakeApi();
+  const r = await generateImages(shots, {
+    assetDir: dir, client: api, people: 사람, maxUsd: 9, sleepFn: async () => {},
+  });
+
+  assert.equal(r.made.length, 6, '여섯 장이 다 만들어져야 한다');
+  // 사진이 2장이니 모델은 **두 번만** 부른다. 나머지 넷은 복사다.
+  assert.equal(api.calls.length, 2, `${api.calls.length}번 불렀다 — 같은 사진을 다시 그렸다`);
+  assert.equal(r.made.filter((m) => m.reusedFrom).length, 4, '나눠 쓴 표시가 없다');
+  for (const m of r.made) assert.ok(fs.existsSync(m.file), `${m.shot_id} 파일이 없다`);
+});
+
+await asyncTest('같은 장면 안에서는 나눠 쓰지 않는다 — 정지 그림이 되면 안 된다', async () => {
+  // ⚠️ 2026-11-04 에 한 장면의 인물 샷을 묶어 그림 하나로 쓰게 했다가
+  //    "야구장 같은 현장감을 넣어 달라"는 말을 들었다. 한 장면이 통째로
+  //    정지 그림 한 장이 됐기 때문이다. 그 자리로 돌아가지 않는다.
+  const dir = imgDir('reuse-same-scene');
+  const 사람 = [{ name: '김호령', team: 'KIA', photos: [{ url: 'https://q/1.jpg' }] }];
+  // 사진 1장 · 같은 장면에 샷 3개 → 나눠 쓸 수 없으니 세 번 다 그린다.
+  const shots = fakePrompts(3).map((s) => ({ ...s, person: '김호령', scene_number: 7 }));
+
+  const api = fakeApi();
+  const r = await generateImages(shots, {
+    assetDir: dir, client: api, people: 사람, maxUsd: 9, sleepFn: async () => {},
+  });
+
+  assert.equal(api.calls.length, 3, '같은 장면인데 그림을 돌려 썼다');
+  assert.equal(r.made.filter((m) => m.reusedFrom).length, 0);
+});
+
 await asyncTest('일시적 실패는 다시 걸어본다', async () => {
   const dir = imgDir('retry');
   const api = fakeApi({ failTimes: 2 });
