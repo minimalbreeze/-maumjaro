@@ -7225,7 +7225,13 @@ await asyncTest('정장 사진에는 유니폼을 안 입힌다 (24화 "양복 �
 
   const c = UNI2.suitClause();
   assert.ok(/suit/i.test(c), '무엇을 입을지를 안 적었습니다');
-  assert.ok(/no cap/i.test(c), '모자가 없다고 안 적으면 모자 마크가 생깁니다');
+  // ⚠️⚠️ **금지로 적지 않는다**(규칙 13). "no cap" 이라고 적었더니 둘째 판에서
+  //    양복에 야구 모자가 또 씌워졌다. flux 는 negative_prompt 가 없어서
+  //    "no X" 가 긍정문에 그대로 이어 붙는다. 머리를 그리라고 적는다.
+  assert.ok(!/\bno\s+(cap|baseball|jersey|uniform)/i.test(c),
+    '금지로 적으면 모델이 그 낱말을 그립니다 — 머리를 그리라고 적으세요');
+  assert.ok(/head is bare|hair is fully visible/i.test(c),
+    '모자 자리에 무엇이 있는지(맨머리·머리카락)를 안 적었습니다');
   assert.ok(!/red|black|navy|orange|blue/i.test(c), '팀 색을 적으면 사진과 또 싸웁니다');
 
   // 본편이 실제로 갈아끼우는지 본다.
@@ -7258,7 +7264,13 @@ await asyncTest('미리보기가 본편과 같은 옷을 입힌다 — 안 그�
   // ⚠️ 여기가 24화에서 터진 자리다 — 양복 사진에 "빨간 모자"가 붙었다.
   assert.ok(!/baseball jersey/i.test(정장), '정장 사진에 야구 유니폼이 붙습니다');
   assert.ok(!/solid red cap/i.test(정장), '정장 사진에 팀 색 모자가 붙습니다');
-  assert.ok(/no cap/i.test(정장), '모자가 없다고 안 적으면 모자 마크가 생깁니다');
+  assert.ok(/head is bare/i.test(정장), '맨머리라고 안 적으면 모자가 씌워집니다');
+  // ⚠️ 구도를 지키라는 줄도 **입은 것에 맞춰** 말이 바뀌어야 한다.
+  //    거기서 `the front of the jersey` 라고 부르면 "유니폼이 있다"고
+  //    알려 준 셈이라, 뒤에 양복을 적어도 앞말이 이긴다(규칙 13).
+  assert.ok(/front of the suit jacket/i.test(정장),
+    '구도 줄이 아직 유니폼을 부릅니다 — 뒤에 양복을 적어도 집니다');
+  assert.ok(/front of the jersey/i.test(경기), '경기 사진에서는 유니폼이 맞습니다');
 });
 
 await asyncTest('본편도 기획 파일의 "아래" 를 읽는다 — 리페인트만 읽고 있었다', async () => {

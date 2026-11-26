@@ -335,9 +335,14 @@ export function uniformClause({ team, number, role, fromPhoto = false } = {}) {
  *    그냥 어두운 정장이고, 색을 적으면 사진과 또 싸운다.
  */
 export function suitClause() {
+  // ⚠️⚠️ **금지로 적지 않는다**(규칙 13). 처음에 "no cap of any kind,
+  //    no baseball uniform and no jersey" 라고 적었더니 모델이 그 낱말을
+  //    그렸다 — 24화 둘째 판에서 양복에 **야구 모자**가 또 씌워졌다.
+  //    flux 는 negative_prompt 가 없어서 "no X" 가 **긍정문에 그대로
+  //    이어 붙는다.** 그려야 할 것만 적는다.
   return (
-    'wearing a dark formal suit with a dress shirt, bare-headed with no cap ' +
-    'of any kind, no baseball uniform and no jersey, the suit is smooth plain ' +
-    'fabric with nothing printed or stitched on it'
+    'wearing a dark formal suit jacket over a dress shirt and a tie, ' +
+    'the head is bare and the hair is fully visible from the hairline to ' +
+    'the crown, the jacket is smooth plain fabric in one solid colour'
   );
 }

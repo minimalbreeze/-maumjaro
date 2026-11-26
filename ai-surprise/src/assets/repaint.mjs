@@ -65,7 +65,21 @@ export const REPAINT_MODEL = 'kontext';
  *    버리는데, 그러면 이 모델을 쓰는 뜻이 없어진다. 우리가 이걸 쓰는
  *    까닭이 바로 "사진의 자세를 그대로 가져오는 것"이다.
  */
-export const REPAINT_KEEP =
+/**
+ * 구도를 지키라는 줄. **가슴에 무엇을 입었는지**에 따라 낱말이 달라진다.
+ *
+ * ⚠️⚠️ 2026-11-26. 시상식 정장 사진인데 이 줄이 `the front of the jersey`
+ * 라고 말하고 있었다. **"유니폼이 있다"고 모델에게 알려 준 셈**이라,
+ * 뒤에서 양복을 적어도 앞말이 이겨 흰 유니폼이 나왔다(규칙 13 — 뒤에
+ * 붙인 말은 앞말을 못 이긴다). 그래서 입은 것에 맞춰 낱말을 바꾼다.
+ */
+export function repaintKeep(chest = 'jersey') {
+  return KEEP_HEAD + `the front of the ${chest} is repainted as smooth ` +
+    `plain fabric in the ${chest} colour, whatever was there before is not ` +
+    'carried over';
+}
+
+const KEEP_HEAD =
   'keep the exact same pose, the same camera angle, the same framing and ' +
   'the same composition as the photograph, keep both arms and both legs ' +
   'exactly where they are, keep the number of people the same, ' +
@@ -88,9 +102,9 @@ export const REPAINT_KEEP =
   //
   // 글자를 지우라고는 하지 않는다 — 그 낱말을 부르면 그린다.
   // **다시 칠하라**고만 한다.
-  'with one exception: the front of the jersey is repainted as smooth ' +
-  'plain fabric in the jersey colour, whatever was there before is not ' +
-  'carried over';
+  'with one exception: ';
+
+export const REPAINT_KEEP = repaintKeep('jersey');
 
 /**
  * 사진 느낌을 지우는 줄.
@@ -170,10 +184,12 @@ export const REPAINT_CLEAN =
   'plain grass, the sky is plain sky';
 
 /** 한 장에 보낼 지시문. */
-export function repaintPrompt(person, shot = null, { uniform = '' } = {}) {
+export function repaintPrompt(person, shot = null, { uniform = '', 정장 = false } = {}) {
   const bits = [
     `Turn this photograph into ${SPORTS_PAINT}.`,
-    REPAINT_KEEP,
+    // 정장 사진이면 "가슴"이 유니폼이 아니라 재킷이다. 여기서 유니폼을
+    // 부르면 뒤에 양복을 적어도 앞말이 이긴다(규칙 13).
+    정장 ? repaintKeep('suit jacket') : REPAINT_KEEP,
     REPAINT_DROP,
     REPAINT_CLEAN,
   ];
@@ -302,6 +318,7 @@ export function repaintJobs(people, { spare = false } = {}) {
         //    나왔다 — **미리보기가 본편을 못 비추면 미리 볼 이유가 없다**
         //    (규칙 15). 정장 사진이면 정장 문장이 가는 것도 같다.
         prompt: repaintPrompt(p, shot, {
+          정장: shot?.정장 === true,
           uniform: shot?.정장 === true
             ? suitClause()
             : uniformClause({ team: p?.team, number: p?.number, role: p?.role, fromPhoto: true }),

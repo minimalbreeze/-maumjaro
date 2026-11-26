@@ -467,6 +467,7 @@ export async function generateImages(prompts, {
           //    없는 마크(`B`)까지 그려진다. 사진이 옷을 정한다.
           const 정장 = suitPhotos.has(fromPhoto);
           prompt = repaintPrompt({ name: who }, null, {
+            정장,
             uniform: 정장 ? suitClause() : uniformOf.get(who) || '',
           });
           reference = ref;
