@@ -50,6 +50,7 @@
 // 공개 저장소에 언론사 사진을 커밋하면 그건 퍼블리싱이다.
 
 import { SPORTS_PAINT } from '../scenes/visuals.mjs';
+import { uniformClause, suitClause } from '../scenes/uniforms.mjs';
 
 /** 쓰는 모델. 사진을 받아 구도를 지키면서 화풍만 바꾼다. */
 export const REPAINT_MODEL = 'kontext';
@@ -268,6 +269,8 @@ export function repaintJobs(people, { spare = false } = {}) {
           아래: Number.isFinite(Number(row?.아래)) && Number(row.아래) >= 0
             ? Number(row.아래)
             : null,
+          // 시상식·인터뷰처럼 유니폼을 안 입은 사진. 유니폼 문장을 안 붙인다.
+          정장: row?.정장 === true,
         });
       }
     }
@@ -293,7 +296,16 @@ export function repaintJobs(people, { spare = false } = {}) {
         file: `${name}${shots.length > 1 || shot.쓰임 ? label : ''}.png`,
         referenceImage: shot.url,
         아래: shot.아래 ?? null,
-        prompt: repaintPrompt(p, shot),
+        // ⚠️⚠️ 미리보기도 **본편과 같은 유니폼 문장**을 쓴다 (2026-11-26).
+        //    전에는 미리보기만 유니폼을 안 붙였다. 그래서 24화에서
+        //    미리보기 3장은 멀쩡했는데 본편에서 양복 위에 야구 모자가
+        //    나왔다 — **미리보기가 본편을 못 비추면 미리 볼 이유가 없다**
+        //    (규칙 15). 정장 사진이면 정장 문장이 가는 것도 같다.
+        prompt: repaintPrompt(p, shot, {
+          uniform: shot?.정장 === true
+            ? suitClause()
+            : uniformClause({ team: p?.team, number: p?.number, role: p?.role, fromPhoto: true }),
+        }),
       });
       made += 1;
     }

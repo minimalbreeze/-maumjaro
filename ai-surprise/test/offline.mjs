@@ -7237,6 +7237,30 @@ await asyncTest('정장 사진에는 유니폼을 안 입힌다 (24화 "양복 �
   );
 });
 
+await asyncTest('미리보기가 본편과 같은 옷을 입힌다 — 안 그러면 미리 볼 이유가 없다', async () => {
+  // ⚠️⚠️ 2026-11-26. 24화에서 미리보기 3장은 멀쩡했는데 본편에서
+  //    **양복 위에 야구 모자**가 나왔다. 까닭은 간단했다 — 미리보기는
+  //    유니폼 문장을 아예 안 붙이고 있었다. 본편만 붙였다.
+  //    **미리보기가 본편을 못 비추면 미리 볼 이유가 없다**(규칙 15).
+  const { jobs } = RP.repaintJobs([{
+    name: '아무개',
+    team: 'KIA',
+    photos: [{ url: 'https://x/g.jpg' }, { url: 'https://x/s.jpg', 정장: true }],
+  }]);
+  assert.equal(jobs.length, 2);
+  const 경기 = jobs[0].prompt;
+  const 정장 = jobs[1].prompt;
+
+  assert.ok(/baseball jersey/i.test(경기), '경기 사진에 유니폼 문장이 안 붙습니다');
+  assert.ok(/solid red cap/i.test(경기), '경기 사진에 팀 색 모자가 안 붙습니다');
+
+  assert.ok(/dark formal suit/i.test(정장), '정장 사진에 양복 문장이 안 붙습니다');
+  // ⚠️ 여기가 24화에서 터진 자리다 — 양복 사진에 "빨간 모자"가 붙었다.
+  assert.ok(!/baseball jersey/i.test(정장), '정장 사진에 야구 유니폼이 붙습니다');
+  assert.ok(!/solid red cap/i.test(정장), '정장 사진에 팀 색 모자가 붙습니다');
+  assert.ok(/no cap/i.test(정장), '모자가 없다고 안 적으면 모자 마크가 생깁니다');
+});
+
 await asyncTest('본편도 기획 파일의 "아래" 를 읽는다 — 리페인트만 읽고 있었다', async () => {
   // ⚠️⚠️ 2026-11-26. 미리보기(repaintJobs)는 `아래` 를 읽는데 **본편
   //    (images.mjs)은 안 읽었다.** `allPhotosOf` 가 주소만 돌려주느라
