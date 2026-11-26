@@ -88,3 +88,24 @@ export function photoCropsOf(p) {
   }
   return out;
 }
+
+/**
+ * **정장 사진**의 주소들. 시상식·인터뷰처럼 유니폼을 안 입은 사진이다.
+ *
+ * ⚠️⚠️ 2026-11-26. 24화(시상식 편)에서 터졌다. 사진에서 그리는 샷에는
+ * 늘 팀 색 유니폼 문장이 따라붙는데(`uniformClause`), 원본이 **정장**
+ * 사진이면 그 문장과 사진이 싸운다. 모델이 둘을 섞어 **양복 위에 야구
+ * 모자**를 씌웠고, 모자가 생기니 거기에 `B` 라는 없는 마크까지 그렸다.
+ * 한 장은 아예 사진을 버리고 `S` 가 박힌 모르는 선수를 그렸다.
+ *
+ * 규칙 13 과 같은 자리다 — 사진이 자세와 옷을 정하는데 글로 다른 옷을
+ * 얹으면 둘 중 하나가 진다. 그러니 **정장 사진에는 유니폼을 적지 않는다.**
+ */
+export function suitPhotosOf(p) {
+  const out = new Set();
+  for (const row of Array.isArray(p?.photos) ? p.photos : []) {
+    const url = String(row?.url || '').trim();
+    if (/^https?:\/\//.test(url) && row?.정장 === true) out.add(url);
+  }
+  return out;
+}

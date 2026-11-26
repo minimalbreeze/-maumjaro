@@ -318,3 +318,26 @@ export function uniformClause({ team, number, role, fromPhoto = false } = {}) {
 
   return parts.join(', ');
 }
+
+/**
+ * **정장 사진**에 붙이는 문장. 유니폼 자리를 대신한다.
+ *
+ * ⚠️⚠️ 2026-11-26, 24화(시상식 편)에서 배웠다. 시상식 사진을 그림으로
+ * 바꾸는데 팀 색 유니폼 문장이 같이 붙어서, 모델이 **양복 위에 빨간 야구
+ * 모자**를 씌웠다. 모자가 생기니 거기에 `B` 라는 없는 마크를 그렸고,
+ * 다른 한 장은 사진을 통째로 버리고 `S` 가 박힌 모르는 선수를 그렸다.
+ *
+ * 규칙 13 — **금지로는 못 막는다. 무엇을 그릴지로 적는다.** 그래서
+ * "유니폼 말고"가 아니라 **양복을 그려라**로 적는다. 그리고 모자가
+ * 없다는 것을 분명히 해야 모자 마크가 애초에 생기지 않는다.
+ *
+ * ⚠️ 구단 이름도 색도 적지 않는다. 시상식 양복은 팀 색이 아니라
+ *    그냥 어두운 정장이고, 색을 적으면 사진과 또 싸운다.
+ */
+export function suitClause() {
+  return (
+    'wearing a dark formal suit with a dress shirt, bare-headed with no cap ' +
+    'of any kind, no baseball uniform and no jersey, the suit is smooth plain ' +
+    'fabric with nothing printed or stitched on it'
+  );
+}

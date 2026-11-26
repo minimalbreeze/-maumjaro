@@ -7203,6 +7203,40 @@ test('"아래": 0 은 "자를 게 없다"는 말이다 — 안 적은 것과 다
   assert.equal(jobs([{ url: 'https://x/e.jpg', 아래: '엉뚱' }])[0].아래, null);
 });
 
+await asyncTest('정장 사진에는 유니폼을 안 입힌다 (24화 "양복 위에 야구 모자")', async () => {
+  // ⚠️⚠️ 2026-11-26. 시상식 사진을 그림으로 바꾸는데 팀 색 유니폼 문장이
+  //    같이 붙어서, 모델이 **양복 위에 빨간 야구 모자**를 씌웠다. 모자가
+  //    생기니 거기에 `B` 라는 없는 마크를 그렸고, 다른 한 장은 사진을
+  //    통째로 버리고 `S` 가 박힌 모르는 선수를 그렸다.
+  const PO = await import('../src/assets/photo-of.mjs');
+  const UNI2 = await import('../src/scenes/uniforms.mjs');
+
+  const 사람 = {
+    name: '아무개',
+    team: 'KIA',
+    photos: [
+      { url: 'https://x/ceremony.jpg', 정장: true },
+      { url: 'https://x/game.jpg' },
+    ],
+  };
+  const 정장들 = PO.suitPhotosOf(사람);
+  assert.ok(정장들.has('https://x/ceremony.jpg'), '정장 사진을 못 골라냅니다');
+  assert.ok(!정장들.has('https://x/game.jpg'), '경기 사진까지 정장으로 봤습니다');
+
+  const c = UNI2.suitClause();
+  assert.ok(/suit/i.test(c), '무엇을 입을지를 안 적었습니다');
+  assert.ok(/no cap/i.test(c), '모자가 없다고 안 적으면 모자 마크가 생깁니다');
+  assert.ok(!/red|black|navy|orange|blue/i.test(c), '팀 색을 적으면 사진과 또 싸웁니다');
+
+  // 본편이 실제로 갈아끼우는지 본다.
+  const src = fs.readFileSync(new URL('../src/assets/images.mjs', import.meta.url), 'utf8');
+  assert.ok(src.includes('suitPhotosOf'), '본편이 정장 사진을 안 읽습니다');
+  assert.ok(
+    /정장 \? suitClause\(\)/.test(src),
+    '정장 사진인데 유니폼 문장이 그대로 붙습니다'
+  );
+});
+
 await asyncTest('본편도 기획 파일의 "아래" 를 읽는다 — 리페인트만 읽고 있었다', async () => {
   // ⚠️⚠️ 2026-11-26. 미리보기(repaintJobs)는 `아래` 를 읽는데 **본편
   //    (images.mjs)은 안 읽었다.** `allPhotosOf` 가 주소만 돌려주느라

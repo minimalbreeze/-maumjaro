@@ -26,9 +26,10 @@ import {
   sparePhotoOf as sparePhoto,
   allPhotosOf,
   photoCropsOf,
+  suitPhotosOf,
 } from './photo-of.mjs';
 import { repaintPrompt, REPAINT_MODEL } from './repaint.mjs';
-import { uniformClause } from '../scenes/uniforms.mjs';
+import { uniformClause, suitClause } from '../scenes/uniforms.mjs';
 import { cropToDataUri, DEFAULT_CROP } from './crop.mjs';
 
 
@@ -275,6 +276,8 @@ export async function generateImages(prompts, {
   const uniformOf = new Map();
   // 사진마다 적어 둔 **아래 자를 비율**(주소 → 비율). 비어 있으면 재서 자른다.
   const cropOf = new Map();
+  // **정장 사진**의 주소. 여기 든 사진에는 유니폼을 안 입힌다.
+  const suitPhotos = new Set();
   if (usePhotos) {
     for (const p of people || []) {
       const name = String(p?.name || '').trim();
@@ -282,6 +285,7 @@ export async function generateImages(prompts, {
       if (name && list.length) {
         photosOf.set(name, list);
         for (const [url, v] of photoCropsOf(p)) cropOf.set(url, v);
+        for (const url of suitPhotosOf(p)) suitPhotos.add(url);
         // ⚠️ `fromPhoto: true` — 이 표는 **사진에서 그리는 샷에만** 쓰인다
         //    (repaintPrompt). 거기서는 등번호를 요구하지 않는다. "등에 큰
         //    글씨로 42" 는 색이 아니라 **자세 지시**라, 사진이 정한 자세와
@@ -457,7 +461,14 @@ export async function generateImages(prompts, {
           }
         }
         if (fromPhoto) {
-          prompt = repaintPrompt({ name: who }, null, { uniform: uniformOf.get(who) || '' });
+          // ⚠️⚠️ 정장 사진에는 유니폼을 적지 않는다 (2026-11-26, 24화).
+          //    시상식 사진에 팀 색 유니폼 문장이 붙으면 둘이 싸워서
+          //    **양복 위에 야구 모자**가 씌워지고, 모자가 생기면 거기에
+          //    없는 마크(`B`)까지 그려진다. 사진이 옷을 정한다.
+          const 정장 = suitPhotos.has(fromPhoto);
+          prompt = repaintPrompt({ name: who }, null, {
+            uniform: 정장 ? suitClause() : uniformOf.get(who) || '',
+          });
           reference = ref;
         }
         const result = await api.generate(prompt, {
