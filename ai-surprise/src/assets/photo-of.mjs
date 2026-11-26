@@ -62,3 +62,29 @@ export function allPhotosOf(p) {
   push(p?.photo_예비);
   return out;
 }
+
+/**
+ * 사진마다 적어 둔 **아래 자를 비율**. 주소 → 비율.
+ *
+ * ⚠️⚠️ 2026-11-26. 리페인트(`repaintJobs`)는 기획 파일의 `아래` 를
+ * 읽는데 **본편(images.mjs)은 안 읽고 있었다.** 그래서 미리보기에서
+ * 0 을 적어 멀쩡하던 세로 사진이 본편에서는 기본 12% 가 잘렸다
+ * (647x903 에서 108px — 발목이 날아간다).
+ *
+ * `allPhotosOf` 가 주소만 돌려주느라 중간에 값이 날아간 것이다.
+ * 읽는 자리를 하나로 모으되 주소 목록의 모양은 건드리지 않는다.
+ *
+ * ⚠️ **0 도 값이다.** `>= 0` 으로 본다 — `아래: 0` 은 "자르지 말라"는
+ *    뜻이고, 비워 둔 것은 "재서 알아서 잘라라" 다.
+ */
+export function photoCropsOf(p) {
+  const out = new Map();
+  for (const row of Array.isArray(p?.photos) ? p.photos : []) {
+    const url = String(row?.url || '').trim();
+    const v = Number(row?.아래);
+    if (/^https?:\/\//.test(url) && Number.isFinite(v) && v >= 0 && !out.has(url)) {
+      out.set(url, v);
+    }
+  }
+  return out;
+}

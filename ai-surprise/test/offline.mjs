@@ -7203,6 +7203,40 @@ test('"아래": 0 은 "자를 게 없다"는 말이다 — 안 적은 것과 다
   assert.equal(jobs([{ url: 'https://x/e.jpg', 아래: '엉뚱' }])[0].아래, null);
 });
 
+await asyncTest('본편도 기획 파일의 "아래" 를 읽는다 — 리페인트만 읽고 있었다', async () => {
+  // ⚠️⚠️ 2026-11-26. 미리보기(repaintJobs)는 `아래` 를 읽는데 **본편
+  //    (images.mjs)은 안 읽었다.** `allPhotosOf` 가 주소만 돌려주느라
+  //    중간에서 값이 날아갔다. 그러면 눈으로 다 보고 `아래: 0` 을 적어 둔
+  //    세로 사진도 본편에서는 기본 12% 가 잘린다 — 발목이 날아간다.
+  const PO = await import('../src/assets/photo-of.mjs');
+  const 사람 = {
+    name: '아무개',
+    photos: [
+      { url: 'https://x/a.jpg', 아래: 0 },
+      { url: 'https://x/b.jpg', 아래: 0.16 },
+      { url: 'https://x/c.jpg' },
+    ],
+  };
+
+  // 주소 목록의 모양은 안 바뀐다 — 본편이 돌려 쓰는 순서가 그대로다.
+  assert.deepEqual(PO.allPhotosOf(사람), [
+    'https://x/a.jpg', 'https://x/b.jpg', 'https://x/c.jpg',
+  ]);
+
+  const m = PO.photoCropsOf(사람);
+  assert.equal(m.get('https://x/a.jpg'), 0, '0 을 적었는데 사라졌습니다');
+  assert.equal(m.get('https://x/b.jpg'), 0.16);
+  assert.ok(!m.has('https://x/c.jpg'), '안 적은 것은 비워 둬야 재는 쪽이 돕니다');
+
+  // 본편이 그 값을 실제로 꽂는지 본다 — 값이 있으면 재지 않는다.
+  const src = fs.readFileSync(new URL('../src/assets/images.mjs', import.meta.url), 'utf8');
+  assert.ok(src.includes('photoCropsOf'), '본편이 `아래` 를 안 읽습니다');
+  assert.ok(
+    /measure:\s*!못박음/.test(src),
+    '`아래` 를 적어 뒀는데 본편이 또 재면 적어 둔 값이 덮입니다'
+  );
+});
+
 const VS = await import('../src/scenes/visuals.mjs');
 const UNI = await import('../src/scenes/uniforms.mjs');
 

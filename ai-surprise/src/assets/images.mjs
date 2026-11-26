@@ -21,7 +21,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, modelFor, DEFAULT_IMAGE_MODEL } from './replicate.mjs';
 import { SPORTS_LIKENESS_CLAUSE, SPORTS_INVENTED_CLAUSE } from '../scenes/visuals.mjs';
-import { photoOf as mainPhoto, sparePhotoOf as sparePhoto, allPhotosOf } from './photo-of.mjs';
+import {
+  photoOf as mainPhoto,
+  sparePhotoOf as sparePhoto,
+  allPhotosOf,
+  photoCropsOf,
+} from './photo-of.mjs';
 import { repaintPrompt, REPAINT_MODEL } from './repaint.mjs';
 import { uniformClause } from '../scenes/uniforms.mjs';
 import { cropToDataUri, DEFAULT_CROP } from './crop.mjs';
@@ -268,12 +273,15 @@ export async function generateImages(prompts, {
   // 사람마다 **팀 색 유니폼 문장**도 같이 들고 있는다. 사진을 그대로
   // 베끼지 않고 이 색으로 다시 칠한다 (2026-11-12 운영자).
   const uniformOf = new Map();
+  // 사진마다 적어 둔 **아래 자를 비율**(주소 → 비율). 비어 있으면 재서 자른다.
+  const cropOf = new Map();
   if (usePhotos) {
     for (const p of people || []) {
       const name = String(p?.name || '').trim();
       const list = allPhotosOf(p);
       if (name && list.length) {
         photosOf.set(name, list);
+        for (const [url, v] of photoCropsOf(p)) cropOf.set(url, v);
         // ⚠️ `fromPhoto: true` — 이 표는 **사진에서 그리는 샷에만** 쓰인다
         //    (repaintPrompt). 거기서는 등번호를 요구하지 않는다. "등에 큰
         //    글씨로 42" 는 색이 아니라 **자세 지시**라, 사진이 정한 자세와
@@ -433,7 +441,15 @@ export async function generateImages(prompts, {
         let ref = reference;
         if (fromPhoto && attempt === 1) {
           // 워터마크는 잘라서 안 보여준다. 실패하면 원래 주소 그대로.
-          const c = await cropToDataUri(fromPhoto, { crop: DEFAULT_CROP });
+          //
+          // ⚠️ 기획 파일에 `아래` 를 적어 뒀으면 **그 값을 쓰고 재지 않는다.**
+          //    사진을 눈으로 다 보고 적은 값이라 재는 쪽보다 정확하다.
+          //    `아래: 0` 은 "자르지 말라"는 뜻이다 — 0 도 값이다.
+          const 못박음 = cropOf.has(fromPhoto);
+          const c = await cropToDataUri(fromPhoto, {
+            crop: 못박음 ? { ...DEFAULT_CROP, bottom: cropOf.get(fromPhoto) } : DEFAULT_CROP,
+            measure: !못박음,
+          });
           if (c.needsNewPhoto) {
             onProgress?.(`  ${shot.shot_id} — ${c.reason}`);
           } else {

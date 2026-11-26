@@ -1,0 +1,242 @@
+{
+  "kind": "SPORTS",
+  "title": "표는 2.35배로 이기고 홈런은 1개로 이겼다",
+  "premise": "2026 신한 SOL KBO 시상식이 11월 26일 서울 롯데호텔에서 열렸다. 김도영이 MVP·홈런·장타율·3루수 수비상 4관왕이다.",
+  "angle": "같은 사람에게 붙은 두 숫자가 방향이 반대다 — MVP 득표는 136표 중 80표로 2위의 2.35배인데 홈런왕은 45 대 44로 1개 차였다. 그 하나는 정규시즌 마지막 경기 8회말 투런포에서 나왔고, 그러면서 144경기 중 135경기만 뛰었다. 그리고 4관왕이 가장 의미 있다고 꼽은 트로피는 홈런왕이 아니라 수비상이다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "표는 2.35배, 홈런은 1개",
+      "value": 100,
+      "note": "⭐⭐ 이 편의 중심. 같은 사람에게 붙은 두 숫자가 방향이 반대다. MVP 득표는 136표 중 80표(58.8%)로 2위 곽빈 34표의 2.35배인데, 홈런왕은 45개로 2위 힐리어드 44개를 1개 앞섰다. 압도적으로 이긴 상과 하나 차로 이긴 상이 같은 날 같은 사람에게 갔다."
+    },
+    {
+      "key": "ONE",
+      "label": "그 하나는 마지막 경기에서 나왔다",
+      "value": 95,
+      "note": "정규시즌 마지막 경기였던 10월 12일 잠실 LG전, 2-2로 맞선 8회말 무사 주자 1루에서 담장을 넘겼다. 투런포다. 승리와 홈런왕을 한 번에 가져갔다."
+    },
+    {
+      "key": "GAMES",
+      "label": "144경기 중 135경기",
+      "value": 85,
+      "note": "⚠️ 김도영은 144경기 중 135경기를 뛰었다. 9월 아이치-나고야 아시안게임 차출로 자리를 비운 기간이 있었다. ⚠️⚠️ \"빠진 9경기가 전부 아시안게임 때문\"이라고 말하지 않는다 — 기사는 \"차출로 자리를 비운 기간이 있어\"까지만 썼다. 135경기를 뛰었다는 사실과 차출 기간이 있었다는 사실만 놓는다."
+    },
+    {
+      "key": "FOUR",
+      "label": "4관왕인데 본인이 꼽은 건 수비상이다",
+      "value": 95,
+      "note": "MVP·홈런상·장타율상(0.647)·ADT캡스 3루수 수비상. ⭐ 그런데 본인이 \"집에 있는 트로피들 중에 제일 의미있는 트로피가 될 것 같다\"고 한 것은 수비상이다. 홈런왕이 아니다. 수비상 소감은 \"기본만 하자고 생각했는데 여기까지 오게 됐다\"로 시작한다. ⚠️ 두 소감 모두 \"나의 힘으로 받은 게 아니다\"로 간다 — 홈런왕은 \"타이틀이라는 건 나의 힘으로 받을 수 없는 상\", 수비상은 \"나의 힘으로 여기까지 왔다고 생각 안 하고, 많은 실수를 하였음에도 계속 경기 내보내준 감독님께 감사하다\". 박기남 코치 이름도 댔다."
+    },
+    {
+      "key": "SEVENTEEN",
+      "label": "KIA 홈런왕은 17년 만이다",
+      "value": 80,
+      "note": "2009년 김상현 이후 처음이다. 본인 말 — \"내 인생에 없을 줄 알았던 홈런왕을 받게 돼서 영광스럽게 생각한다\", \"홈런 칠 줄 아는 선수로 만들어주신 코치님들께 감사드린다\". ⚠️ 김상현의 2009년 홈런 수는 기사에 없다. 지어내지 않는다. ⚠️ 두 번째 MVP다(2024년에 이어). \"2년 만\"이라고 쓰지 않는다 — 2025 수상자를 모른다."
+    },
+    {
+      "key": "REST",
+      "label": "나머지 수상자",
+      "value": 75,
+      "note": "신인왕 허인서(한화, 포수). 타격왕·출루율왕 구자욱(삼성, 0.371 / 0.458, 생애 첫 타격왕). 평균자책점·탈삼진 2관왕 곽빈(두산). 구원왕 김재윤(삼성, 35세이브, 데뷔 첫). ⚠️⚠️ 허인서·곽빈의 성적 수치가 기사에 없다. 숫자 없는 사람은 숫자 없이 소개한다. ⚠️⚠️ 다승·타점·득점·도루왕이 내가 본 기사 둘에 안 나온다 — \"시상식 전체를 다 보여 준다\"고 말하지 않고, 빠진 부문이 있다는 것을 밝힌다."
+    },
+    {
+      "key": "KWAK",
+      "label": "투수 최고가 MVP는 졌다",
+      "value": 85,
+      "note": "⭐ 곽빈이 묘한 자리에 있다. 투수 부문 2관왕인데 MVP는 34표로 김도영에게 내줬다. 투수 쪽에서 가장 잘한 선수인데 타자에게 상을 내준 것이다. 기사도 \"김도영에게 MVP를 내준 곽빈\"이라고 적었다."
+    },
+    {
+      "key": "KOO",
+      "label": "타격왕이 지금 시장에 있다",
+      "value": 85,
+      "note": "⭐⭐ 구자욱이 타율 0.371로 생애 첫 타격왕을 찍고 출루율도 1위인데, 지금 FA로 시장에 나와 있다. ⚠️⚠️ 이 기사에 FA 이야기가 없다. \"타격왕이 시장에 나와 있습니다\"까지만 말하고 금액 전망은 하지 않는다. ⚠️ 편 번호를 대지 않는다(규칙 25)."
+    },
+    {
+      "key": "CLOSE",
+      "label": "3루수 수비상을 받고 유격수로 간다",
+      "value": 90,
+      "note": "마무리. 본인 말 — \"사실 내년에 아주 큰 도전을 앞두고 있는데, 꼭 성공해서 내년 이 자리에서 이 상을 받게 해보겠다\", \"실수 많이 해도 팬분들이 너그럽게 이해해주셨으면 좋겠다\". 3루수 수비상을 받은 선수가 자리를 옮기고, 그 자리에서 다시 수비상을 받겠다고 했다. ⚠️ \"성공할 것이다\"라고 쓰지 않는다 — 본인도 \"실수 많이 해도\"라고 했다."
+    }
+  ],
+  "sources": [
+    "OSEN 조은혜 (2026-11-26, 잠실) — 김도영 성적·소감 전문, 홈런 경쟁, 마지막 경기 투런포, 17년 만, 유격수 도전",
+    "(매체 미상) (2026-11-26) — MVP 득표수 136표 중 80표, 신인왕, 부문별 수상자",
+    "⚠️ 다승·타점·득점·도루왕은 두 기사에 없다. 빠진 부문이 있다고 영상에서 밝힌다."
+  ],
+  "people": [
+    {
+      "name": "김도영",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "role": "KIA 내야수 · 2003년생 · 우투좌타. 2026에 135경기 타율 0.308, 45홈런 118타점 120득점, 출루율 0.413 장타율 0.647 OPS 1.060. MVP·홈런·장타율·3루수 수비상 4관왕. 내년엔 유격수로 자리를 옮긴다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 KIA 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ 시상식 사진이 섞여 있다. 정장 차림 사진이 걸리면 그대로 쓴다 — 시상식 장면에 유니폼을 입히지 않는다.\n⚠️ 이 편의 주인공이다. 사진 12장이 걸리므로 샷마다 다른 자세가 나온다.\n⚠️ 타자·3루수다 — 투구 동작을 그리지 않는다. 타격·수비·시상식·인터뷰 자세다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147739_001_20261102233019143.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDRfMTMx%2FMDAxNzkzODAwODY2MDM4.7-d9mXULE-Fx2Sdn2TNV-bK5ooCJc_pi4KKmdBJM2C4g.IGAwJZQXGltcpmV37PEmmJf0RDEo6X4pomxi-b7tSOEg.JPEG%2F%25C8%25AD%25B8%25E9_%25C4%25B8%25C3%25B3_2026-11-04_230102.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDVfMTMg%2FMDAxNzkzODQ0MjU4Mjcx.12jwIiMa2d43mj4XMT3TyKUXJDuzQ44PC1mRI8_FdMgg.lsh-AUq3Pcvhlhf56OZQvl388VxcaahQUGSSI7apYYcg.JPEG%2F900_Screenshot_20261105_110159_KakaoTalk.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDVfNTQg%2FMDAxNzkzODU3NjI2MjM0.ZX5ckhiNe6qdGzWfcx3jJn0v3_lY1OJxVzwEgw8aaAQg.MS80eZHhilG8Ud3ChjS9PM-J0kIFG7heKsblSGE0xLIg.PNG%2Fimage.png&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA4MTdfMTcy%2FMDAxNzg2OTIwMTg1MDAw.BPJ2zdry8G57rW_HTmU-6VR61JM4qGIjWvpNNYaCoH8g.V-ycnEvH9tUo7nc2eu6wKDhgMoK8n9WHaqcUd5WtVbMg.PNG%2Fimage.png&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=https%3A%2F%2Fpup-post-phinf.pstatic.net%2FMjAyNjA0MTRfMTMg%2FMDAxNzc2MTcyOTEyNjI1.FM7_hMRqv7lsARrI-_zPIfCZRCzLxkBDEGMo7R8C-4Qg.DF1WDVjjh-JiuiWNLyRrEWBDHasf7QgA77ggsmamCpkg.JPEG%2FPOST_IMAGE_ENCODING_20260414_222151_781.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2024%2F09%2F23%2FPYH2024092319670005400_P4_20240923200413255.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMThfOTQg%2FMDAxNzkyMjkyODQyMTE4.jG7MLUIAkuuE5xkCIgb6Ee3dWneCmpPiAI85HPqWYwUg.J76A5T7VNXhfQqAiqrjadbRMZ5TpBN6Q6yDVN2OqP38g.JPEG%2F02.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F055%2F2026%2F11%2F26%2F0001406065_001_20261126154707890.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F26%2F0003490491_001_20261126155408032.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F001%2F2026%2F11%2F26%2FPYH2026112619600001300_P4_20261126155412812.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F26%2F0000762064_001_20261126154309266.jpg&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "곽빈",
+      "team": "두산",
+      "number": "",
+      "look": "",
+      "role": "두산 투수. 2026 평균자책점·탈삼진 2관왕. MVP 투표에서 34표로 2위였다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 두산 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ 시상식 사진이 섞여 있다. 정장 차림 사진이 걸리면 그대로 쓴다 — 시상식 장면에 유니폼을 입히지 않는다.\n⚠️ 평균자책점·탈삼진 수치는 내가 본 기사에 없다. 숫자를 지어내지 않는다.\n⚠️ 투수다 — 멈추는 자리를 고른다. 와인드업 꼭대기나 공 놓기 직전이다. 던지는 손에 공, 반대 손에 글러브.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F26%2F0000762040_001_20261126143408543.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F26%2F0005645627_001_20261126143709229.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5360%2F2026%2F11%2F24%2F0000037737_003_20261124084421357.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfMTAy%2FMDAxNzk1MTMwMDExNzUw.1ddsxFUZ7hU9YfpxEHBF6niakVtKKyVc6YBcdHO-Oowg.0BHAc7OQAptNy_fuZqHS_GfTn0J4vmFIfWAfOPDBSR0g.JPEG%2F900_2026_KBO_%25BD%25C3%25BB%25F3%25BD%25C4_%25C0%25CF%25C1%25A4_%25B9%25D7_%25C1%25DF%25B0%25E8_%25BE%25C8%25B3%25BB%252C_MVP_%25C8%25C4%25BA%25B8%25B4%25C2_%25B1%25E8%25B5%25B5%25BF%25B5_vs_%25B0%25FB%25BA%25F3_2%25C6%25C4%25C0%25FC_1.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfOTMg%2FMDAxNzk1MTMxOTk0NTAz.nU0gHIzZwMTnJe6uFGFeYSkKYqL0hOJx2xOYLILOE7Ug.4LE3AcRdMwYpdDft2Kfyu9PqJbIrpcHP12iChw8HX5Ug.PNG%2Fimage.png&type=a340",
+          "아래": 0
+        }
+      ]
+    },
+    {
+      "name": "허인서",
+      "team": "한화",
+      "number": "",
+      "look": "",
+      "role": "한화 포수. 2026 신인왕.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 한화 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ 시상식 사진이 섞여 있다. 정장 차림 사진이 걸리면 그대로 쓴다 — 시상식 장면에 유니폼을 입히지 않는다.\n⚠️⚠️ 성적이 내가 본 기사에 하나도 없다. 숫자를 지어내지 않는다 — 한화 포수이고 신인왕이라는 것까지만이다.\n⚠️ 포수다. 앉은 자세나 마스크를 든 자세다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F26%2F0003490490_001_20261126155215000.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F396%2F2026%2F11%2F26%2F0000762049_001_20261126150214004.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F445%2F2026%2F11%2F26%2F0000493617_003_20261126153015480.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjBfMTU4%2FMDAxNzk1MTQxMjg0OTYx.66e0bNeWqHOZ8yl0sULk8zd9GwjBuEnYfXSpd-De0y0g.sMJWXj1p1l65BWCCy08siAsxTu5YMl1qFRCCEHTDGvcg.JPEG%2F6.jpg&type=a340",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTlfOTAg%2FMDAxNzk1MDY3NTUyMzUy.5pxaK69kAIkqgg4HbZOHnJWB-OUcSMoanJfDXIG6AqQg.wFqijdMdXfkSHkcijs0RgUlLVhD2oV3izouM87aWRMAg.JPEG%2F06.jpg&type=a340",
+          "아래": 0.16
+        }
+      ]
+    },
+    {
+      "name": "김재윤",
+      "team": "삼성",
+      "number": "",
+      "look": "",
+      "role": "삼성 투수. 2026 구원왕, 35세이브. 데뷔 첫 구원왕이다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 삼성 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ 시상식 사진이 섞여 있다. 정장 차림 사진이 걸리면 그대로 쓴다 — 시상식 장면에 유니폼을 입히지 않는다.\n⚠️ 투수다 — 멈추는 자리를 고른다. 던지는 손에 공, 반대 손에 글러브.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F26%2F0005645617_001_20261126143218057.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjNfMTEy%2FMDAxNzk1NDIwMjE3MDA3.GjTgPCbyaf2hxLD9KRvaS5WBlNE0hN3EK5hfU-pnT48g.WY7CAA-W3AV1NW_b_zi48pj8K2htWwUzzYpq20o2j-Qg.PNG%2F3.PNG&type=l340_165",
+          "아래": 0
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F311%2F2026%2F11%2F26%2F0002084314_001_20261126142709269.jpg&type=a340",
+          "아래": 0.16
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMjFfMTU0%2FMDAxNzk1MjY3MzQxNjMx.6e_UWTZIxqkPDUdZ8wYL7VXR8CTE9BknJ3eAav-5XEUg.8L6k_1MMHHjEmKOlMRnznDTxsVYmvSFVHXbj8BSAK3Ig.PNG%2Fimage.png&type=a340",
+          "아래": 0.16
+        }
+      ]
+    },
+    {
+      "name": "구자욱",
+      "team": "삼성",
+      "number": "",
+      "look": "",
+      "role": "삼성 외야수 · 주장. 2026 타격왕(타율 0.371)·출루율왕(0.458). 생애 첫 타격왕이다. 지금 FA로 시장에 나와 있다.",
+      "tell": "⚠️ 사진이 있으므로 생김새(look)를 글로 적지 않는다(규칙 12). 사람이 보이는 샷은 받은 사진을 화풍만 바꾼다.\n⚠️ 유니폼은 사진을 베끼지 않고 삼성 상징색으로 다시 칠한다 — 모자 마크와 가슴 로고는 넣지 않는다.\n⚠️ 등번호는 비워 뒀다. 사진에서 그리는 샷은 번호를 요구하지 않으므로(규칙 27) 지어낸 번호가 안 나온다.\n⚠️ 시상식 사진이 섞여 있다. 정장 차림 사진이 걸리면 그대로 쓴다 — 시상식 장면에 유니폼을 입히지 않는다.\n⚠️⚠️ FA 금액을 말하지 않는다. 내가 본 기사에 FA 이야기가 아예 없다 — \"시장에 나와 있다\"까지만이다.\n⚠️ 좌타자다 — 왼손이 위, 오른쪽 어깨가 투수를 향한다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F421%2F2026%2F11%2F08%2F0009276994_001_20261108150424943.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2025%2F03%2F11%2F0001131305_003_20250311170012085.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2020%2F10%2F03%2F0000858968_001_20201003182138451.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F119%2F2026%2F10%2F25%2F0003146643_002_20261025070308111.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2025%2F06%2F04%2F0003335042_001_20250604205111175.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMjI1%2FMDAxNzk0MjMyMTM4MTYz.DQMXdqV8Z21ml3MhL3gfrqnUlSwU3iDoYmyY02y3bCwg.hCzG5QmSl2u2H_eGILfbCtcQlYgW52r2Oc20dpf3bw4g.PNG%2Fimage.png&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F445%2F2026%2F11%2F13%2F0000490016_003_20261113141217527.jpg&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTEg%2FMDAxNzk0NDA0OTYwMTYw.rY_lK3GE0paCVXciEkQ7BcEHnfvzBr1X348J6Zp9Qbsg.mEODvzcQlxMZUQho7sJQjYSFtcOCUjf5198bQRkZ08Mg.PNG%2Fimage.png&type=a340"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfOCAg%2FMDAxNzk0Mzg2MTI1MzA3.eD5cVBsTGdBUaPn1N6227Qb-mB_WbxX5__ZQT5Jq3l4g.5rb14h-2PLPf7RyOATKykEHWh_WnoilmV54jXkFThCgg.JPEG%2F3E82588C%25A3%25AD916F%25A3%25AD4313%25A3%25ADBD1D%25A3%25ADA1259D829C6D.jpeg&type=a340"
+        }
+      ]
+    }
+  ]
+}
