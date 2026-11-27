@@ -1,24 +1,6 @@
 {
   "tracks": [
     {
-      "file": "jamendo-1182292.mp3",
-      "title": "Spasm",
-      "artist": "Suedey",
-      "recorded": "2015",
-      "license": "CC BY",
-      "credit": "Spasm — Suedey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1182292",
-      "source": "https://www.jamendo.com/track/1182292"
-    },
-    {
-      "file": "jamendo-1917024.mp3",
-      "title": "Dorila y Mello",
-      "artist": "Popoi",
-      "recorded": "2022",
-      "license": "CC BY",
-      "credit": "Dorila y Mello — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1917024",
-      "source": "https://www.jamendo.com/track/1917024"
-    },
-    {
       "file": "jamendo-1892348.mp3",
       "title": "Georgetown Cafe",
       "artist": "Popoi",
@@ -26,6 +8,24 @@
       "license": "CC BY",
       "credit": "Georgetown Cafe — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1892348",
       "source": "https://www.jamendo.com/track/1892348"
+    },
+    {
+      "file": "jamendo-1650001.mp3",
+      "title": "Daydreams & Make Believe",
+      "artist": "Edgar Cards",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Daydreams & Make Believe — Edgar Cards (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1650001",
+      "source": "https://www.jamendo.com/track/1650001"
+    },
+    {
+      "file": "jamendo-1574408.mp3",
+      "title": "Lofi machine",
+      "artist": "Andrea Faraboli",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Lofi machine — Andrea Faraboli (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1574408",
+      "source": "https://www.jamendo.com/track/1574408"
     },
     {
       "file": "jamendo-1401382.mp3",
@@ -37,14 +37,142 @@
       "source": "https://www.jamendo.com/track/1401382"
     },
     {
-      "file": "jamendo-1574408.mp3",
-      "title": "Lofi machine",
-      "artist": "Andrea Faraboli",
+      "file": "jamendo-1649999.mp3",
+      "title": "If You Ever Find",
+      "artist": "Edgar Cards",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "If You Ever Find — Edgar Cards (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1649999",
+      "source": "https://www.jamendo.com/track/1649999"
+    },
+    {
+      "file": "jamendo-1182292.mp3",
+      "title": "Spasm",
+      "artist": "Suedey",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Spasm — Suedey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1182292",
+      "source": "https://www.jamendo.com/track/1182292"
+    },
+    {
+      "file": "jamendo-1688677.mp3",
+      "title": "Love Her",
+      "artist": "J Bert",
+      "recorded": "2019",
+      "license": "CC BY",
+      "credit": "Love Her — J Bert (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1688677",
+      "source": "https://www.jamendo.com/track/1688677"
+    },
+    {
+      "file": "jamendo-1573019.mp3",
+      "title": "Wants To Know",
+      "artist": "BODYSURFER",
       "recorded": "2018",
       "license": "CC BY",
-      "credit": "Lofi machine — Andrea Faraboli (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1574408",
-      "source": "https://www.jamendo.com/track/1574408"
+      "credit": "Wants To Know — BODYSURFER (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1573019",
+      "source": "https://www.jamendo.com/track/1573019"
+    },
+    {
+      "file": "jamendo-1340797.mp3",
+      "title": "West Coast (with Malk)",
+      "artist": "Starjam",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "West Coast (with Malk) — Starjam (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1340797",
+      "source": "https://www.jamendo.com/track/1340797"
+    },
+    {
+      "file": "jamendo-1917024.mp3",
+      "title": "Dorila y Mello",
+      "artist": "Popoi",
+      "recorded": "2022",
+      "license": "CC BY",
+      "credit": "Dorila y Mello — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1917024",
+      "source": "https://www.jamendo.com/track/1917024"
+    },
+    {
+      "file": "jamendo-1182287.mp3",
+      "title": "Midnight Over London",
+      "artist": "Suedey",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Midnight Over London — Suedey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1182287",
+      "source": "https://www.jamendo.com/track/1182287"
+    },
+    {
+      "file": "jamendo-1320534.mp3",
+      "title": "Neith",
+      "artist": "CyberSDF",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Neith — CyberSDF (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1320534",
+      "source": "https://www.jamendo.com/track/1320534"
+    },
+    {
+      "file": "jamendo-1071433.mp3",
+      "title": "Showers",
+      "artist": "Rataxes",
+      "recorded": "2013",
+      "license": "CC BY",
+      "credit": "Showers — Rataxes (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1071433",
+      "source": "https://www.jamendo.com/track/1071433"
+    },
+    {
+      "file": "jamendo-92427.mp3",
+      "title": "Haarlem Studio 3",
+      "artist": "Karash",
+      "recorded": "2007",
+      "license": "CC BY",
+      "credit": "Haarlem Studio 3 — Karash (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/92427",
+      "source": "https://www.jamendo.com/track/92427"
+    },
+    {
+      "file": "jamendo-1178226.mp3",
+      "title": "Au revoir",
+      "artist": "SkySonik",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "Au revoir — SkySonik (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1178226",
+      "source": "https://www.jamendo.com/track/1178226"
     }
   ],
-  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+  "note": "20집 — 밤에 작업할 때 · 로파이 힙합. 그루브 확장의 첫 집(기획-그루브.md).\nchillhop 을 축으로 triphop·hiphop 을 보조로 섞었다. 밝기 기준은 -11 로 풀었다 — 하이햇이 들어가서 기본값 -14 로는 거의 다 버려진다.\n⚠️ 받은 36곡 중 20곡이 걸러졌다. 그중 둘은 남의 곡 재현(Drake · Clayton Kershaw)이라 멜로디 저작권이 살아 있다 — CC BY 로 못 푼다. 제목 거르개(COPYCAT_WORDS)를 그래서 넣었다.\n첫 곡은 Georgetown Cafe. 카페 이름이라 들어오는 느낌이 부드럽고, 첫 곡 규칙(무겁게 시작하지 않는다)에 맞는다.",
+  "rejected": [
+    {
+      "file": "jamendo-1363926.mp3",
+      "title": "Drake- Still Here instrumental (reprod. J…",
+      "artist": "JBlanked",
+      "why": "남의 곡 재현 — 멜로디 저작권이 살아 있다. CC BY 로 못 푼다"
+    },
+    {
+      "file": "jamendo-1296804.mp3",
+      "title": "Clayton Kershaw (feat. Evan Coles) ~",
+      "artist": "David Amber",
+      "why": "상업곡 인스트루멘털 판으로 보임 — 같은 이유"
+    },
+    {
+      "file": "jamendo-1406194.mp3",
+      "title": "Crevasse [Electro]",
+      "artist": "Hardcore Scm",
+      "why": "제목부터 일렉트로다. 로파이 힙합 집의 색이 아니다"
+    },
+    {
+      "file": "jamendo-1565052.mp3",
+      "title": "New1aug18",
+      "artist": "Magico",
+      "why": "제목이 작업 파일명이다. 완성곡인지 알 수 없다"
+    },
+    {
+      "file": "jamendo-1558923.mp3",
+      "title": "Nasty Hair",
+      "artist": "Lfete",
+      "why": "2분 10초에 성격이 안 맞는다"
+    },
+    {
+      "file": "jamendo-1081801.mp3",
+      "title": "Ebon power (ft. Qvimera)",
+      "artist": "BrunoXe",
+      "why": "2분 17초에 성격이 안 맞는다"
+    }
+  ]
 }

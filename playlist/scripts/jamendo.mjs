@@ -106,6 +106,21 @@ export const JAMENDO_MOODS = {
   명상: { groups: ['meditative', 'peaceful', 'calm'], speed: 'low', acoustic: true },           // 86·200·200
   월드: { groups: ['worldmusic', 'latin', 'celtic'], speed: 'medium', acoustic: true },         // 200·53·71
 
+  /* ── 2026-11-27 그루브 확장 (기획-그루브.md) ───────────────────
+   * 같은 조건(연주곡 · CC BY/CC0 · 90~480초 · medium)으로 센 곡 수:
+   *   chillhop 33 · triphop 200상한 · hiphop 200상한 · soul 84 ·
+   *   rnb 67 · funk 141 · jazzfusion 56 · nujazz 13 · smoothjazz 9 ·
+   *   downtempo 200상한 · lounge 200상한
+   *
+   * ⚠️ hiphop 을 맨 앞에 두지 않는다. 그 태그는 타입 비트와 상업곡
+   *    재현 천지다. chillhop 은 같은 조건에서 창작곡이 대부분이라
+   *    이쪽을 축으로 삼고 hiphop 은 뒤에 붙여 보조로만 쓴다.
+   *    제목 거르개(BAD_WORDS)에도 type beat·reprod·가수 이름을 넣었다. */
+  로파이힙합: { groups: ['chillhop', 'triphop', 'hiphop'], speed: 'medium' },
+  소울그루브: { groups: ['soul', 'rnb', 'funk'], speed: 'medium' },
+  재즈퓨전: { groups: ['jazzfusion', 'nujazz', 'smoothjazz'], speed: 'medium' },
+  다운템포: { groups: ['downtempo', 'lounge'], speed: 'medium' },
+
   남성보컬: { groups: ['soul', 'jazz', 'bossanova', 'singersongwriter'], speed: 'medium', vocal: true, gender: 'male' },
   여성보컬: { groups: ['jazz', 'soul', 'bossanova', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
 };

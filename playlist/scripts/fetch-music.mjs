@@ -201,6 +201,27 @@ const BAD_WORDS = [
   'hypnosis', 'binaural', 'relaxation',
 ];
 
+/* 2026-11-27 그루브 확장에서 추가. Jamendo 의 hiphop·rnb 태그에는 타입
+ * 비트와 상업곡 재현이 쏟아진다. 실제로 상위에 나온 것들 —
+ * "FREE Post Malone Type Beat", "Drake- Still Here instrumental (reprod. J...)".
+ * CC BY 는 녹음에 대한 허락이지 작곡에 대한 허락이 아니라서, 남의 곡을
+ * 다시 연주한 것은 멜로디 저작권이 살아 있다. Content ID 멜로디 주장은
+ * 이의로 못 푼다(4집 사례).
+ *
+ * ⚠️ BAD_WORDS 가 아니라 여기에 둔다. BAD_WORDS 는 띄어쓰기로만 단어를
+ *    가르는데, 이쪽 제목은 "Drake-" · "(reprod." 처럼 구두점에 붙어 있어
+ *    안 걸린다. 실제로 처음에 BAD_WORDS 에 넣었다가 Drake 곡이 그대로
+ *    통과했다. 이 목록은 구두점을 뗀 제목(flat)과 견준다. */
+const COPYCAT_WORDS = [
+  'type beat', 'typebeat', 'free beat', 'reprod', 'prod by',
+  'remake', 'cover', 'instrumental version', 'tribute',
+  /* 재현곡은 거의 전부 원곡 가수 이름을 제목에 박아 둔다. */
+  'drake', 'post malone', 'travis scott', 'weeknd', 'kendrick',
+  'j cole', 'eminem', 'kanye', 'rihanna', 'beyonce', 'bruno mars',
+  'dua lipa', 'billie eilish', 'ariana', 'taylor swift', 'ed sheeran',
+  'justin bieber', 'doja cat', 'nicki minaj',
+];
+
 /* 무드 프리셋.
  *
  * 매번 검색어를 손으로 쓰면 지난번에 뭐가 좋았는지가 날아간다.
@@ -511,7 +532,10 @@ function finalize(raw) {
  * 때문에 고역이 원래 밝다. 같은 자로 재면 장르째로 지워진다. */
 /* 노래가 들어가면 고역이 원래 밝다 — 사람 목소리의 자음이 거기 있다.
  * 연주곡 기준(-14)을 그대로 쓰면 쓸 만한 곡까지 "너무 밝다" 고 버린다. */
-const BRIGHT_BY_MOOD = { 크리스마스: '-9', 연말: '-12', 남성보컬: '-8', 여성보컬: '-8' };
+/* 그루브 네 무드는 하이햇이 들어가서 기본값 -14 로는 거의 다 버려진다.
+ * 2026-11-27 에 chillhop 으로 재 보니 -11 에서 11곡 중 5곡이 통과했다. */
+const BRIGHT_BY_MOOD = { 크리스마스: '-9', 연말: '-12', 남성보컬: '-8', 여성보컬: '-8',
+  로파이힙합: '-11', 소울그루브: '-11', 재즈퓨전: '-11', 다운템포: '-11' };
 const MAX_BRIGHT = Number(val('--bright', BRIGHT_BY_MOOD[MOOD] || '-14'));
 
 function rmsOf(file, af) {
@@ -538,6 +562,11 @@ function badTitle(t) {
   const flat = String(t).toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ');
   const song = COPYRIGHTED_SONGS.find((x) => flat.includes(x.replace(/[^a-z0-9 ]/g, '')));
   if (song) return `저작권 살아 있는 곡: ${song}`;
+
+  /* 남의 곡을 다시 연주한 것·타입 비트. 구두점을 뗀 제목과 견준다. */
+  const padded = ` ${flat} `;
+  const copycat = COPYCAT_WORDS.find((w) => padded.includes(` ${w} `));
+  if (copycat) return `재현곡·타입비트로 보임: ${copycat}`;
 
   const words = MOOD === '크리스마스' ? BAD_WORDS : [...BAD_WORDS, ...XMAS_WORDS];
   return words.find((w) => low.includes(` ${w} `) || low.includes(`${w} `) && low.trim().startsWith(w));
