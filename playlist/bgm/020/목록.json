@@ -1,0 +1,50 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1182292.mp3",
+      "title": "Spasm",
+      "artist": "Suedey",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Spasm — Suedey (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1182292",
+      "source": "https://www.jamendo.com/track/1182292"
+    },
+    {
+      "file": "jamendo-1917024.mp3",
+      "title": "Dorila y Mello",
+      "artist": "Popoi",
+      "recorded": "2022",
+      "license": "CC BY",
+      "credit": "Dorila y Mello — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1917024",
+      "source": "https://www.jamendo.com/track/1917024"
+    },
+    {
+      "file": "jamendo-1892348.mp3",
+      "title": "Georgetown Cafe",
+      "artist": "Popoi",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Georgetown Cafe — Popoi (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1892348",
+      "source": "https://www.jamendo.com/track/1892348"
+    },
+    {
+      "file": "jamendo-1401382.mp3",
+      "title": "The Wise Man's Fear",
+      "artist": "DenisBonfa",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "The Wise Man's Fear — DenisBonfa (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1401382",
+      "source": "https://www.jamendo.com/track/1401382"
+    },
+    {
+      "file": "jamendo-1574408.mp3",
+      "title": "Lofi machine",
+      "artist": "Andrea Faraboli",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Lofi machine — Andrea Faraboli (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1574408",
+      "source": "https://www.jamendo.com/track/1574408"
+    }
+  ],
+  "note": "자유롭게 쓸 수 있는 음원만 넣는다. fetch-music.mjs 가 라이선스를 걸러 적는다."
+}
