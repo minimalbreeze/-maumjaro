@@ -213,7 +213,10 @@ const BAD_WORDS = [
  *    안 걸린다. 실제로 처음에 BAD_WORDS 에 넣었다가 Drake 곡이 그대로
  *    통과했다. 이 목록은 구두점을 뗀 제목(flat)과 견준다. */
 const COPYCAT_WORDS = [
-  'type beat', 'typebeat', 'free beat', 'reprod', 'prod by',
+  /* 'prod' 한 단어로 막는다. "[Prod. SuaVay Nova]" · "06-... Prod" 처럼
+   * 비트 크레딧이 제목에 붙는 일이 아주 흔하다. 구두점을 뗀 뒤에 보므로
+   * "produced" 같은 긴 말에는 안 걸린다. */
+  'type beat', 'typebeat', 'free beat', 'reprod', 'prod', 'prod by',
   'remake', 'cover', 'instrumental version', 'tribute',
   /* 재현곡은 거의 전부 원곡 가수 이름을 제목에 박아 둔다. */
   'drake', 'post malone', 'travis scott', 'weeknd', 'kendrick',
