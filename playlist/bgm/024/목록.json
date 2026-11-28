@@ -1,0 +1,688 @@
+{
+  "tracks": [
+    {
+      "file": "jamendo-1525485.mp3",
+      "title": "the warmth",
+      "artist": "Spiral Island",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "the warmth — Spiral Island (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1525485",
+      "source": "https://www.jamendo.com/track/1525485"
+    },
+    {
+      "file": "jamendo-1303035.mp3",
+      "title": "Cup of Tea",
+      "artist": "Andrey Avkhimovich",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Cup of Tea — Andrey Avkhimovich (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1303035",
+      "source": "https://www.jamendo.com/track/1303035"
+    },
+    {
+      "file": "jamendo-1493167.mp3",
+      "title": "Oasis",
+      "artist": "Christian-Z",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Oasis — Christian-Z (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1493167",
+      "source": "https://www.jamendo.com/track/1493167"
+    },
+    {
+      "file": "jamendo-1847564.mp3",
+      "title": "Inspiration",
+      "artist": "Lumiere Tales",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "Inspiration — Lumiere Tales (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1847564",
+      "source": "https://www.jamendo.com/track/1847564"
+    },
+    {
+      "file": "jamendo-1476507.mp3",
+      "title": "Birds Music",
+      "artist": "Alexander Blu",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Birds Music — Alexander Blu (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1476507",
+      "source": "https://www.jamendo.com/track/1476507"
+    },
+    {
+      "file": "jamendo-1381631.mp3",
+      "title": "Exotic Ride",
+      "artist": "Christian-Z",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Exotic Ride — Christian-Z (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1381631",
+      "source": "https://www.jamendo.com/track/1381631"
+    },
+    {
+      "file": "jamendo-1525356.mp3",
+      "title": "crystal",
+      "artist": "FAS",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "crystal — FAS (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1525356",
+      "source": "https://www.jamendo.com/track/1525356"
+    },
+    {
+      "file": "jamendo-1568168.mp3",
+      "title": "four",
+      "artist": "Reutsky",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "four — Reutsky (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1568168",
+      "source": "https://www.jamendo.com/track/1568168"
+    },
+    {
+      "file": "jamendo-1476513.mp3",
+      "title": "Angel Voice",
+      "artist": "Alexander Blu",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Angel Voice — Alexander Blu (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1476513",
+      "source": "https://www.jamendo.com/track/1476513"
+    },
+    {
+      "file": "jamendo-949860.mp3",
+      "title": "Metropolis",
+      "artist": "Cardiocard",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Metropolis — Cardiocard (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/949860",
+      "source": "https://www.jamendo.com/track/949860"
+    },
+    {
+      "file": "jamendo-1589577.mp3",
+      "title": "Train",
+      "artist": "Sergey Cheremisinov",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Train — Sergey Cheremisinov (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1589577",
+      "source": "https://www.jamendo.com/track/1589577"
+    },
+    {
+      "file": "jamendo-1589578.mp3",
+      "title": "When You Leave",
+      "artist": "Sergey Cheremisinov",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "When You Leave — Sergey Cheremisinov (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1589578",
+      "source": "https://www.jamendo.com/track/1589578"
+    },
+    {
+      "file": "jamendo-1432275.mp3",
+      "title": "Number Seven",
+      "artist": "Celebration Symphony Orchestra",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Number Seven — Celebration Symphony Orchestra (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1432275",
+      "source": "https://www.jamendo.com/track/1432275"
+    },
+    {
+      "file": "jamendo-1537143.mp3",
+      "title": "05 - Between The Rings",
+      "artist": "Stellardrone",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "05 - Between The Rings — Stellardrone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1537143",
+      "source": "https://www.jamendo.com/track/1537143"
+    },
+    {
+      "file": "jamendo-1537142.mp3",
+      "title": "02 - Breathe In The Light",
+      "artist": "Stellardrone",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "02 - Breathe In The Light — Stellardrone (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1537142",
+      "source": "https://www.jamendo.com/track/1537142"
+    },
+    {
+      "file": "jamendo-1180670.mp3",
+      "title": "as it was before",
+      "artist": "Smiling Cynic",
+      "recorded": "2014",
+      "license": "CC BY",
+      "credit": "as it was before — Smiling Cynic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1180670",
+      "source": "https://www.jamendo.com/track/1180670"
+    },
+    {
+      "file": "jamendo-1589050.mp3",
+      "title": "For Bleecker St",
+      "artist": "Ambient Samurai - Ichiro NAKAGAWA",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "For Bleecker St — Ambient Samurai - Ichiro NAKAGAWA (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1589050",
+      "source": "https://www.jamendo.com/track/1589050"
+    },
+    {
+      "file": "jamendo-1525468.mp3",
+      "title": "Strange things",
+      "artist": "SWMM",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Strange things — SWMM (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1525468",
+      "source": "https://www.jamendo.com/track/1525468"
+    },
+    {
+      "file": "jamendo-1529465.mp3",
+      "title": "Cloudy smoke",
+      "artist": "Dr.GROOVER",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Cloudy smoke — Dr.GROOVER (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1529465",
+      "source": "https://www.jamendo.com/track/1529465"
+    },
+    {
+      "file": "jamendo-1531079.mp3",
+      "title": "Liquid dreams",
+      "artist": "SWMM",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Liquid dreams — SWMM (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1531079",
+      "source": "https://www.jamendo.com/track/1531079"
+    },
+    {
+      "file": "jamendo-1496813.mp3",
+      "title": "Science Cosmos",
+      "artist": "M.O.M",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "Science Cosmos — M.O.M (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1496813",
+      "source": "https://www.jamendo.com/track/1496813"
+    },
+    {
+      "file": "jamendo-616030.mp3",
+      "title": "noche sin prisa",
+      "artist": "Nelson Ramazzotti",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "noche sin prisa — Nelson Ramazzotti (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/616030",
+      "source": "https://www.jamendo.com/track/616030"
+    },
+    {
+      "file": "jamendo-1823331.mp3",
+      "title": "End of the Day",
+      "artist": "skbzk",
+      "recorded": "2021",
+      "license": "CC BY",
+      "credit": "End of the Day — skbzk (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1823331",
+      "source": "https://www.jamendo.com/track/1823331"
+    },
+    {
+      "file": "jamendo-1492157.mp3",
+      "title": "wind of earth",
+      "artist": "Giocol",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "wind of earth — Giocol (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1492157",
+      "source": "https://www.jamendo.com/track/1492157"
+    },
+    {
+      "file": "jamendo-1519336.mp3",
+      "title": "like me",
+      "artist": "FriedPotato",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "like me — FriedPotato (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1519336",
+      "source": "https://www.jamendo.com/track/1519336"
+    },
+    {
+      "file": "jamendo-1518661.mp3",
+      "title": "sorry, im late",
+      "artist": "FriedPotato",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "sorry, im late — FriedPotato (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1518661",
+      "source": "https://www.jamendo.com/track/1518661"
+    },
+    {
+      "file": "jamendo-2038459.mp3",
+      "title": "The Place That I Call Home",
+      "artist": "Muted Symphony",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "The Place That I Call Home — Muted Symphony (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2038459",
+      "source": "https://www.jamendo.com/track/2038459"
+    },
+    {
+      "file": "jamendo-1423853.mp3",
+      "title": "sad piano song #2",
+      "artist": "Kozirsky",
+      "recorded": "2017",
+      "license": "CC BY",
+      "credit": "sad piano song #2 — Kozirsky (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1423853",
+      "source": "https://www.jamendo.com/track/1423853"
+    },
+    {
+      "file": "jamendo-2327637.mp3",
+      "title": "The Cold Coffee",
+      "artist": "Helen Langfort",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "The Cold Coffee — Helen Langfort (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327637",
+      "source": "https://www.jamendo.com/track/2327637"
+    },
+    {
+      "file": "jamendo-2327636.mp3",
+      "title": "Still Here, Still Searching",
+      "artist": "Helen Langfort",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Still Here, Still Searching — Helen Langfort (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327636",
+      "source": "https://www.jamendo.com/track/2327636"
+    },
+    {
+      "file": "jamendo-2327021.mp3",
+      "title": "Eight Years at the Gate",
+      "artist": "Lilith Nyx",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Eight Years at the Gate — Lilith Nyx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327021",
+      "source": "https://www.jamendo.com/track/2327021"
+    },
+    {
+      "file": "jamendo-2327018.mp3",
+      "title": "Low Battery, Getting Dark",
+      "artist": "Lilith Nyx",
+      "recorded": "2026",
+      "license": "CC BY",
+      "credit": "Low Battery, Getting Dark — Lilith Nyx (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2327018",
+      "source": "https://www.jamendo.com/track/2327018"
+    },
+    {
+      "file": "jamendo-2235183.mp3",
+      "title": "8. Chaconne No.2 in D Minor",
+      "artist": "Michał Jałochowski",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "8. Chaconne No.2 in D Minor — Michał Jałochowski (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2235183",
+      "source": "https://www.jamendo.com/track/2235183"
+    },
+    {
+      "file": "jamendo-1245187.mp3",
+      "title": "Beach Karma",
+      "artist": "Ton in Ton",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Beach Karma — Ton in Ton (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1245187",
+      "source": "https://www.jamendo.com/track/1245187"
+    },
+    {
+      "file": "jamendo-523817.mp3",
+      "title": "Chryzanthem",
+      "artist": "Noqturne",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Chryzanthem — Noqturne (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/523817",
+      "source": "https://www.jamendo.com/track/523817"
+    },
+    {
+      "file": "jamendo-1207849.mp3",
+      "title": "Somewhere In The Church",
+      "artist": "REC",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Somewhere In The Church — REC (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1207849",
+      "source": "https://www.jamendo.com/track/1207849"
+    },
+    {
+      "file": "jamendo-1529460.mp3",
+      "title": "Night cruise",
+      "artist": "Dr.GROOVER",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Night cruise — Dr.GROOVER (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1529460",
+      "source": "https://www.jamendo.com/track/1529460"
+    },
+    {
+      "file": "jamendo-1360634.mp3",
+      "title": "Indian Summer",
+      "artist": "Zero V",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Indian Summer — Zero V (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1360634",
+      "source": "https://www.jamendo.com/track/1360634"
+    },
+    {
+      "file": "jamendo-1360632.mp3",
+      "title": "Come and Play",
+      "artist": "Zero V",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Come and Play — Zero V (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1360632",
+      "source": "https://www.jamendo.com/track/1360632"
+    },
+    {
+      "file": "jamendo-1256834.mp3",
+      "title": "Whispering",
+      "artist": "Offenbach Project",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Whispering — Offenbach Project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1256834",
+      "source": "https://www.jamendo.com/track/1256834"
+    },
+    {
+      "file": "jamendo-1266959.mp3",
+      "title": "Moonlit Skyline",
+      "artist": "Nihilore",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Moonlit Skyline — Nihilore (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1266959",
+      "source": "https://www.jamendo.com/track/1266959"
+    },
+    {
+      "file": "jamendo-949861.mp3",
+      "title": "Sospensive",
+      "artist": "Cardiocard",
+      "recorded": "2012",
+      "license": "CC BY",
+      "credit": "Sospensive — Cardiocard (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/949861",
+      "source": "https://www.jamendo.com/track/949861"
+    },
+    {
+      "file": "jamendo-1295291.mp3",
+      "title": "Relaxing touch",
+      "artist": "Asuntar",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Relaxing touch — Asuntar (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1295291",
+      "source": "https://www.jamendo.com/track/1295291"
+    },
+    {
+      "file": "jamendo-1256835.mp3",
+      "title": "Avalanche",
+      "artist": "Offenbach Project",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Avalanche — Offenbach Project (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1256835",
+      "source": "https://www.jamendo.com/track/1256835"
+    },
+    {
+      "file": "jamendo-1233738.mp3",
+      "title": "Litocrium",
+      "artist": "WooDMooD",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Litocrium — WooDMooD (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1233738",
+      "source": "https://www.jamendo.com/track/1233738"
+    },
+    {
+      "file": "jamendo-1595080.mp3",
+      "title": "I can´t say no",
+      "artist": "V.D.G",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "I can´t say no — V.D.G (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1595080",
+      "source": "https://www.jamendo.com/track/1595080"
+    },
+    {
+      "file": "jamendo-1288691.mp3",
+      "title": "Words as defense",
+      "artist": "DJ Habett",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Words as defense — DJ Habett (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1288691",
+      "source": "https://www.jamendo.com/track/1288691"
+    },
+    {
+      "file": "jamendo-2227337.mp3",
+      "title": "Early Morning Fog",
+      "artist": "Soundstortion Dramatic",
+      "recorded": "2025",
+      "license": "CC BY",
+      "credit": "Early Morning Fog — Soundstortion Dramatic (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2227337",
+      "source": "https://www.jamendo.com/track/2227337"
+    },
+    {
+      "file": "jamendo-1396307.mp3",
+      "title": "Shanghai",
+      "artist": "Anastasia Glam",
+      "recorded": "2016",
+      "license": "CC BY",
+      "credit": "Shanghai — Anastasia Glam (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1396307",
+      "source": "https://www.jamendo.com/track/1396307"
+    },
+    {
+      "file": "jamendo-1302100.mp3",
+      "title": "Couleur .317",
+      "artist": "CORDE",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Couleur .317 — CORDE (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1302100",
+      "source": "https://www.jamendo.com/track/1302100"
+    },
+    {
+      "file": "jamendo-2038451.mp3",
+      "title": "The Lighthouse in the Mist",
+      "artist": "Muted Symphony",
+      "recorded": "2023",
+      "license": "CC BY",
+      "credit": "The Lighthouse in the Mist — Muted Symphony (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/2038451",
+      "source": "https://www.jamendo.com/track/2038451"
+    },
+    {
+      "file": "jamendo-1233737.mp3",
+      "title": "Icewalkers",
+      "artist": "WooDMooD",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Icewalkers — WooDMooD (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1233737",
+      "source": "https://www.jamendo.com/track/1233737"
+    },
+    {
+      "file": "jamendo-1280064.mp3",
+      "title": "kymavee",
+      "artist": "SlowSine",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "kymavee — SlowSine (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1280064",
+      "source": "https://www.jamendo.com/track/1280064"
+    },
+    {
+      "file": "jamendo-523838.mp3",
+      "title": "Ever less",
+      "artist": "Noqturne",
+      "recorded": "2010",
+      "license": "CC BY",
+      "credit": "Ever less — Noqturne (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/523838",
+      "source": "https://www.jamendo.com/track/523838"
+    },
+    {
+      "file": "jamendo-1548737.mp3",
+      "title": "Mea Culpa",
+      "artist": "Haive Music",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "Mea Culpa — Haive Music (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1548737",
+      "source": "https://www.jamendo.com/track/1548737"
+    },
+    {
+      "file": "jamendo-1245191.mp3",
+      "title": "Daydream",
+      "artist": "Ton in Ton",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Daydream — Ton in Ton (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1245191",
+      "source": "https://www.jamendo.com/track/1245191"
+    },
+    {
+      "file": "jamendo-1196234.mp3",
+      "title": "Dandelion [downbeat]",
+      "artist": "Hardcore Scm",
+      "recorded": "2015",
+      "license": "CC BY",
+      "credit": "Dandelion [downbeat] — Hardcore Scm (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1196234",
+      "source": "https://www.jamendo.com/track/1196234"
+    },
+    {
+      "file": "jamendo-1589054.mp3",
+      "title": "For Canal St",
+      "artist": "Ambient Samurai - Ichiro NAKAGAWA",
+      "recorded": "2018",
+      "license": "CC BY",
+      "credit": "For Canal St — Ambient Samurai - Ichiro NAKAGAWA (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1589054",
+      "source": "https://www.jamendo.com/track/1589054"
+    },
+    {
+      "file": "jamendo-1766424.mp3",
+      "title": "Prince Of Air - Indra",
+      "artist": "CHASMA",
+      "recorded": "2020",
+      "license": "CC BY",
+      "credit": "Prince Of Air - Indra — CHASMA (CC BY) · Provided by Jamendo · https://www.jamendo.com/track/1766424",
+      "source": "https://www.jamendo.com/track/1766424"
+    }
+  ],
+  "note": "24집 — 시즌2 1편. 조용한 전자음 + 네오클래식 + 다운템포.\n처음부터 4시간 한 편으로 짰다(집을 쪼개 붙이지 않는다).\n84곡 받아 25곡 빼고 59곡. 아티스트 쏠림 없음(전원 2곡 이하).\n⚠️ 소리는 못 들어 보고 제목·길이·아티스트 분포로만 골랐다.",
+  "rejected": [
+    {
+      "file": "jamendo-1519237.mp3",
+      "title": "50forint-108",
+      "artist": "orangeicebear",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1494530.mp3",
+      "title": "Mr.DeVo! vs The Wipkip society-Hold your…",
+      "artist": "Mr.DeVo!",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1519448.mp3",
+      "title": "1bmpc-95",
+      "artist": "orangeicebear",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1687770.mp3",
+      "title": "2 The tale of my guitar",
+      "artist": "Black_Angel",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1523376.mp3",
+      "title": "Himno - esgm feat fl",
+      "artist": "EdSeGaMe",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1535989.mp3",
+      "title": "killer woman",
+      "artist": "Giocol",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1523369.mp3",
+      "title": "Inicio - esgm",
+      "artist": "EdSeGaMe",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1687771.mp3",
+      "title": "3 My goddess",
+      "artist": "Black_Angel",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1515553.mp3",
+      "title": "Humdrm-Have Some More Tea",
+      "artist": "Various Artists",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1533546.mp3",
+      "title": "Ekim-Triple 10 (The Red Notes Were Comple…",
+      "artist": "Various Artists",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-313669.mp3",
+      "title": "Naughty Waltz",
+      "artist": "Doc",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1360438.mp3",
+      "title": "08.Radio",
+      "artist": "Behrang Shegarfkar",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1622638.mp3",
+      "title": "VolexTagamine - My park (StepThree, music…",
+      "artist": "VolexOne",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1622633.mp3",
+      "title": "VolexTagamine - Everyone is here (StepThr…",
+      "artist": "VolexOne",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-2000797.mp3",
+      "title": "Violin Caprice / Dolce Gusto",
+      "artist": "Michał Jałochowski",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1199528.mp3",
+      "title": "Yet To Come (Chill Mix) - BONUS TRACK",
+      "artist": "REC",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-80132.mp3",
+      "title": "Barrilada no",
+      "artist": "BrunoXe",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-9453.mp3",
+      "title": "Rítmico",
+      "artist": "BrunoXe",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1159989.mp3",
+      "title": "Summer Shit",
+      "artist": "XBloome",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1307440.mp3",
+      "title": "Im Having a Stroke",
+      "artist": "The Fish Who Saved the Planet",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1313235.mp3",
+      "title": "BREAK OPEN",
+      "artist": "noaccordion",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1254859.mp3",
+      "title": "grest",
+      "artist": "Walter Hunt",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1214617.mp3",
+      "title": "Crafted Martyr",
+      "artist": "Quad",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-409994.mp3",
+      "title": "My Brain Is Not In The Mood To Talk With…",
+      "artist": "Flex Blur",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    },
+    {
+      "file": "jamendo-1759288.mp3",
+      "title": "TM Grooves - Going Out",
+      "artist": "TM Grooves - Soulful House",
+      "why": "제목이 파일명·번호·조각이거나 집의 색과 안 맞아 뺐다"
+    }
+  ]
+}
