@@ -3095,6 +3095,14 @@ export const 바로잡기 = [
     이유: '글 25856. 사진을 넣는다 (미디어 25857)',
     글: [25856],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🔄 쇼트 2위를 프리에서 뒤집었습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25859,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/nhk-1dt425-mx0km2qw.jpg" alt="NHK 트로피 여자 싱글 시상대에 선 지바 모네 신지아 유영" class="wp-image-25859"/></a><figcaption class="wp-element-caption">왼쪽부터 지바 모네·신지아·유영 (사진: AP=연합뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🔄 쇼트 2위를 프리에서 뒤집었습니다</h2>',
+    이유: '글 25862. 시상대 사진을 넣는다 (미디어 25859)',
+    글: [25862],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
