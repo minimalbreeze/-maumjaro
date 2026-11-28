@@ -3047,6 +3047,38 @@ export const 바로잡기 = [
     이유: '글 25812. 사진을 넣는다 (미디어 25814)',
     글: [25812],
   },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏆 LPBA 결승 — 김가영 vs 정수빈, 20승과 10억이 걸렸습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25829,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/pba-lpba-lpba-1g9p97-mwzri7mx.jpg" alt="휴온스 PBA-LPBA 챔피언십 LPBA 결승에 오른 김가영과 정수빈" class="wp-image-25829"/></a><figcaption class="wp-element-caption">김가영과 정수빈 (사진: 일간스포츠) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏆 LPBA 결승 — 김가영 vs 정수빈, 20승과 10억이 걸렸습니다</h2>',
+    이유: '글 23755. 사진을 넣는다 (미디어 25829)',
+    글: [23755],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>💬 "사고 친 건 아니다. 다 계획적이었다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25830,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-3-1p15sh-mwzrooky.jpg" alt="2026 KBO 시상식에서 3관왕에 오른 두산 베어스 투수 곽빈" class="wp-image-25830"/></a><figcaption class="wp-element-caption">KBO 시상식에서 3관왕에 오른 곽빈 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>💬 "사고 친 건 아니다. 다 계획적이었다"</h2>',
+    이유: '글 25828. 사진을 넣는다 (미디어 25830)',
+    글: [25828],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🔨 타격 자세를 바꿨습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25831,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-flvx3l-mwzrqx9p.jpg" alt="오키나와 마무리훈련을 마치고 돌아온 KIA 타이거즈 외야수 박정우" class="wp-image-25831"/></a><figcaption class="wp-element-caption">마무리훈련을 마치고 돌아온 박정우 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🔨 타격 자세를 바꿨습니다</h2>',
+    이유: '글 25825. 사진을 넣는다 (미디어 25831)',
+    글: [25825],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🇰🇷 한국은 조별리그를 3전 전승으로 통과했습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25832,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/fifa-u-17-32-u-17-ryqtp7-mwzrsvik.jpg" alt="FIFA U-17 월드컵 32강에 오른 김현준 감독의 대한민국 U-17 대표팀" class="wp-image-25832"/></a><figcaption class="wp-element-caption">U-17 월드컵 32강에 오른 대표팀 (사진: 인터풋볼) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🇰🇷 한국은 조별리그를 3전 전승으로 통과했습니다</h2>',
+    이유: '글 25821. 사진을 넣는다 (미디어 25832)',
+    글: [25821],
+  },
 ];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
