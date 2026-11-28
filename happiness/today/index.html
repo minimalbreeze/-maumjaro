@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"그래서 오늘 뭘 하나 — 행복의 기원에서 따라 나오는 것 | 맘운자로","description":"작은 것을 자주, 되도록 사람과, 남과 견주지 않고. 오늘 안에 들어가는 다섯 가지와, 아무것도 안 되는 날을 위한 표.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/happiness/today/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"행복해지는 법, 오늘 할 일, 기분 전환, 행복의 기원 실천, 소소한 행복, 우울할 때, 작은 행복 만들기",
  "abstract":"『행복의 기원』의 주장에서 실제로 따라 나오는 것은 작은 것을 자주, 되도록 사람과, 남과 견주지 않고 하는 것입니다. 오늘 할 수 있는 것은 좋아하는 것 하나 챙기기, 한 사람에게 한 줄 보내기, 비교가 심해지는 계정 하나 숨기기, 부담되지 않는 크기로 줄이기, 오늘 기분을 판정하지 않기입니다. 다섯 개를 다 할 필요는 없고 하나면 됩니다. 기분이 바닥인 날에는 물 한 잔과 창문 열기만으로도 충분합니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -161,11 +191,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>행복해지려면 오늘 뭘 하면 되나요?</h3><p>하나만 고르는 것이 좋습니다. 좋아하는 것 하나 챙기기, 한 사람에게 한 줄 보내기, 비교가 심해지는 계정 하나 숨기기 중 아무거나요. 여러 개를 계획으로 묶으면 그건 다시 한 번에 크게 하는 일이 됩니다.</p></div>
 <div class="faq"><h3>기분이 너무 안 좋은 날에도 해야 하나요?</h3><p>안 해도 됩니다. 그런 날의 기준은 물 한 잔, 창문 열기 정도면 충분합니다. 힘든 사람에게 숙제를 하나 더 주는 것이 행복에 대한 글들이 가장 자주 하는 실수입니다.</p></div>
 <div class="faq"><h3>울적한 이유를 찾아야 하나요?</h3><p>꼭 그래야 하는 건 아닙니다. 이유 없이 기분이 가라앉는 날이 있고, 이유를 찾는 일 자체가 더 힘들게 만들기도 합니다. 이유를 못 찾았다고 해서 잘못된 것은 아닙니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=happy" data-cta="happy" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=happyf" data-cta="happy" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>

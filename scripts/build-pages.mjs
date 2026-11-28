@@ -160,8 +160,10 @@ function adsAllowed(url) {
   return !/^\/emotion\//.test(url);
 }
 
-// 수익을 가르는 꼬리표. 쿠팡 subId 는 영문·숫자만 안전하게 쓴다.
-function adSubId(url) {
+// 페이지를 묶음으로 가른다. 광고 subId 와 **앱 유입 계측이 같은 이름을 쓴다** —
+// 두 벌로 만들면 한쪽이 썩는다.
+// ⚠️ 영문·숫자만 쓴다(쿠팡 subId 와 GA 파라미터 둘 다 그게 안전하다).
+function pageKind(url) {
   if (/^\/animal\/year\//.test(url)) return 'year';
   if (/^\/animal\/[a-z]+\/lucky\//.test(url)) return 'lucky';
   if (/^\/animal\//.test(url)) return 'animal';
@@ -170,7 +172,15 @@ function adSubId(url) {
   if (/^\/mbti\//.test(url)) return 'mbti';
   if (/^\/match\//.test(url)) return 'match';
   if (/^\/happiness\//.test(url)) return 'happy';
+  // 감정은 광고에서는 안 쓰이지만(adsAllowed 가 거른다) 계측에서는 가장 중요하다.
+  // 2026-11-27 실측에서 CTR 이 연도의 50~100배였다(`배신감` 10.3% vs `2016년 띠` 0.1%).
+  if (/^\/emotion\//.test(url)) return 'emotion';
   return 'etc';
+}
+
+// 수익을 가르는 꼬리표. 분류는 pageKind 와 같은 것을 쓴다.
+function adSubId(url) {
+  return pageKind(url);
 }
 
 // slot: 'mid'(본문 아래) | 'foot'(맨 아래). 한 페이지에 둘뿐이다.
@@ -246,6 +256,36 @@ ${keywords ? `<meta name="keywords" content="${esc(keywords)}" />` : ''}
     window.gtag('config', id, { anonymize_ip: true });
   })();
 </script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
+</script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
 *{box-sizing:border-box}
@@ -301,11 +341,11 @@ ${answer ? `<div class="answer"><p>${esc(answer)}</p></div>` : ''}
 ${body}
 ${adBlock(url, 'mid')}
 ${faq && faq.length ? faqHtml(faq) : ''}
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=${pageKind(url)}" data-cta="${pageKind(url)}" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 ${adBlock(url, 'foot')}
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=${pageKind(url)}f" data-cta="${pageKind(url)}" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>
