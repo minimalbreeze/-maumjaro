@@ -274,7 +274,15 @@ export async function generateImages(prompts, {
       const list = allPhotosOf(p);
       if (name && list.length) {
         photosOf.set(name, list);
-        uniformOf.set(name, uniformClause({ team: p?.team, number: p?.number, role: p?.role }));
+        // ⚠️ `fromPhoto: true` — 이 표는 **사진에서 그리는 샷에만** 쓰인다
+        //    (repaintPrompt). 거기서는 등번호를 요구하지 않는다. "등에 큰
+        //    글씨로 42" 는 색이 아니라 **자세 지시**라, 사진이 정한 자세와
+        //    싸워서 몸을 돌려 놓는다 — 22화에서 투구 사진이 "등은 뒤를 보고
+        //    얼굴은 앞을 보는" 그림이 됐다(운영자: "괴물인가?").
+        uniformOf.set(
+          name,
+          uniformClause({ team: p?.team, number: p?.number, role: p?.role, fromPhoto: true })
+        );
       }
     }
   }
@@ -384,6 +392,13 @@ export async function generateImages(prompts, {
         // 호출이 성공한 시점에 돈이 나갔다. 내려받기가 실패해도 쓴 건 쓴 거다.
         spentUsd += result.usdEstimate ?? shotCost;
 
+        // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+        //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 **내가 만든
+        //    그림을 내가 못 본다.** 규칙 15("55장을 돌리기 전에 몇 장 먼저 보고
+        //    보여 준다")가 사람에게만 기대고 있었다.
+        //    같은 날 미리보기 쪽 네 자리를 고쳤는데 **본편을 빼먹었다** —
+        //    53장을 만드는 자리가 여기다. 19화에서 그래서 한 장도 못 봤다.
+        onProgress?.(`  ${shot.shot_id} — ${result.url}`);
         const bytes = await api.download(result.url);
         if (!looksLikeImage(bytes)) {
           throw new Error(`내려받은 파일이 이미지가 아닙니다 (${bytes?.length ?? 0}바이트)`);

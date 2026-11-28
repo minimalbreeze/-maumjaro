@@ -866,6 +866,12 @@ async function cmdPreview(flags) {
         referenceImage: job.reference || undefined,
       });
       spent += r.usdEstimate ?? modelFor(job.model).usdPerImage;
+      // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
       const bytes = await api.download(r.url);
       fs.writeFileSync(path.join(outDir, job.file), bytes);
       made.push(job.file);
@@ -1179,10 +1185,13 @@ async function cmdRepaint(flags) {
         if (crop && attempt === 1) {
           // 기획 파일이 이 사진의 자르기를 못 박았으면 재지 않는다.
           // 사람이 자른 사진을 보고 적은 값이라 추측보다 정확하다.
-          const 이사진 = job.아래 ? { ...crop, bottom: job.아래 } : crop;
+          // ⚠️ `job.아래 ?` 로 보면 **0 이 안 적은 것과 같아진다**(2026-11-22).
+          //    0 은 "자를 게 없다"는 말이라 그대로 따라야 한다.
+          const 못박음 = job.아래 != null;
+          const 이사진 = 못박음 ? { ...crop, bottom: job.아래 } : crop;
           const c = await cropToDataUri(job.referenceImage, {
             crop: 이사진,
-            measure: !job.아래,
+            measure: !못박음,
           });
           // ⚠️ 깨끗이 못 자르는 사진은 **그리지 않는다.** 반만 잘린
           //    워터마크가 남으면 모델이 그 자리를 글자로 읽고 커다란
@@ -1208,7 +1217,19 @@ async function cmdRepaint(flags) {
           aspectRatio: '16:9',
         });
         spent += r.usdEstimate ?? per;
-        fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
+          // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+          //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+          //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+          //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+          //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+        log.raw(`    ${r.url}`);
+        // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
+      fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
         made.push(job.file);
         break;
       } catch (e) {
@@ -1309,6 +1330,12 @@ async function cmdPortrait(flags) {
         negativePrompt: PORTRAIT_NEGATIVE,
       });
       spent += r.usdEstimate ?? per;
+      // ⚠️ 2026-11-18. **주소를 로그에 찍는다.** 결과물(artifact)은 Azure 에
+      //    있는데 이 컨테이너에서 그 호스트가 막혀 있다 — 그래서 내가 만든
+      //    그림을 내가 못 본다. 규칙 15("55장 전에 몇 장 먼저 보고 보여 준다")가
+      //    사람에게만 기대고 있었는데, 주소만 찍으면 나도 먼저 걸러낼 수 있다.
+      //    로고 모드(logo.mjs)에서 이렇게 해서 네 번 고쳤다.
+      log.raw(`    ${r.url}`);
       fs.writeFileSync(path.join(outDir, job.file), await api.download(r.url));
       made.push(job.file);
     } catch (e) {

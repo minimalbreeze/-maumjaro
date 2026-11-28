@@ -1,0 +1,250 @@
+{
+  "kind": "SPORTS",
+  "title": "최지훈 4년 67억, 그리고 다음 차례 김호령",
+  "premise": "FA 사흘째. 세 번째 계약이 나왔는데 앞의 둘과 등급이 다르다. 최지훈이 SSG 에 4년 67억으로 남았다. 그런데 이 계약은 시장에 나간 적이 없고, SSG 가 FA 형식을 쓴 이유가 따로 있다 — 구자욱을 노리기 위한 보호선수다.",
+  "angle": "18화에서 한 예측의 첫 채점이 여기서 나온다. 최지훈 잔류 55% 는 맞혔지만 근거가 틀렸다. 그리고 이 편에서는 18화에서 하지 않겠다고 한 것을 한다 — 김호령의 금액을 산정한다. 말을 바꾼 것이므로 바꿨다고 먼저 밝히고 들어간다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "세 번째는 달랐다",
+      "value": 100,
+      "note": "사흘째 세 번째 계약. 앞의 둘(양의지·오태곤)은 C등급인데 최지훈은 B등급이다. C→C→B. ⚠️ 셋 다 원소속 잔류라 보상 규정이 직접 작동한 계약은 아직 없다 — 18화에서 단 단서를 유지한다."
+    },
+    {
+      "key": "DEAL",
+      "label": "4년 67억",
+      "value": 90,
+      "note": "SSG 잔류 4년 총액 67억(계약금 38억·연봉 20억·옵션 9억), 보장 58억, 29세. ⚠️ 데일리안만 '2년 55억'으로 적었는데 양의지 계약과 섞인 오기다. 공식 발표 기준으로만. ⚠️ 계약금이 총액 절반이 넘는 이유는 뒤의 WHY 에서 푼다."
+    },
+    {
+      "key": "GRADE",
+      "label": "반쯤 틀렸습니다",
+      "value": 95,
+      "note": "18화 예측 채점 — 잔류 55%는 맞혔으나 근거가 틀렸다. '20대 FA 외야수라 시장 관심이 높을 것'이라 적었는데 시장에 나가지도 않았다. 이적 45%는 과했다. ⚠️ 이것부터 말한다. 18화 마지막에 '틀린 걸 숨기면 다음 예측도 못 믿는다'고 약속했다."
+    },
+    {
+      "key": "WHY",
+      "label": "그런데 왜 FA로 했을까",
+      "value": 85,
+      "note": "비FA 다년계약에는 계약금이 없고 FA는 일시불을 당길 수 있다. 계약금 38억이 그것이다. 선수 쪽 이득."
+    },
+    {
+      "key": "PROTECT",
+      "label": "구단이 얻은 것",
+      "value": 100,
+      "note": "⭐ 이 편의 알맹이. SSG 는 구자욱을 노린다. 최지훈이 FA 를 신청하면 자동보호선수가 돼 보호선수를 한 명 더 묶는다. 18화에서 '보상 규정이 시장을 미리 잘라 놓는다'고 했는데, 이번엔 그 규정이 잔류 계약의 모양까지 정했다."
+    },
+    {
+      "key": "NEXT",
+      "label": "다음 차례",
+      "value": 95,
+      "note": "김호령 34세(내년 35세), C등급, 연봉 2억 5000만원 → 보상 3억 7500만원·보상선수 없음. 최근 2년 타율 0.273·19홈런·107타점·OPS 0.744. 수비·주루 리그 최정상급."
+    },
+    {
+      "key": "REFUSE",
+      "label": "거절했습니다",
+      "value": 90,
+      "note": "KIA 가 시즌 전·후로 비FA 다년계약을 제시했으나 거절. '시장에서 값어치를 평가받겠다'. 김호령도 최지훈 협상 소식을 알고 있었다. 정수빈(두산 의지·36세)·배정대(A등급)가 막혀 중견수 선택지가 사실상 김호령뿐 — 최지훈의 계약이 김호령을 최대어로 만들었다."
+    },
+    {
+      "key": "KIA",
+      "label": "감독이 직접 말했습니다",
+      "value": 85,
+      "note": "이범호 감독(오키나와 캠프): '김호령이 빠져 나가면 올해 1군에서 뛰었던 외야수로는 넷이 남는다.' 원소속팀 감독의 공개 발언은 값을 올리는 쪽으로 작용한다. ⚠️ 관심 구단 실명은 기사에도 없다. 찍지 않는다."
+    },
+    {
+      "key": "MONEY",
+      "label": "이번엔 금액을 해보겠습니다",
+      "value": 100,
+      "note": "⚠️⚠️ 18화에서 '금액은 예측하지 않겠습니다, 근거가 없으니까요'라고 말했다. 바꾼다고 먼저 밝히고 들어간다. 바꿀 수 있게 된 이유 — 최지훈 67억·박해민 65억·김호령 연봉과 보상액이라는 기준점이 생겼다. ⚠️ 모델이나 공식이 아니라 추정이라고 밝힌다."
+    },
+    {
+      "key": "CALC",
+      "label": "3년 30억 안팎",
+      "value": 95,
+      "note": "연 평균으로 자른다. 최지훈 16.8억 / 박해민 16.3억 → 다섯 살 차이와 후반기 부진으로 60~75%인 10~12.5억. 내년 35세라 4년이면 끝날 때 38세여서 3년. 잔류 25~30억 / 이적 32~38억. 행선지는 18화 55% → 60%로 5%만 올린다."
+    },
+    {
+      "key": "CLOSE",
+      "label": "이것도 채점합니다",
+      "value": 80,
+      "note": "최지훈은 맞혔고 근거는 틀렸다. 오늘 숫자를 하나 더 걸었으니(3년 30억) 그것도 채점한다. 싼 쪽은 끝났고 중간이 하나 움직였고 비싼 쪽 여섯은 그대로다."
+    }
+  ],
+  "sources": [
+    "스포티비뉴스 김태우 기자 (2026-11-18 13:33, 오키나와) — 김호령 연봉·보상액·2년 성적, 이범호 감독 발언, FA 신청의 상호 이득",
+    "마이데일리 김진성 기자 (2026-11-18 15:01) — 구단별 온도, 박해민 비교",
+    "마이데일리 (2026-11-16) — 김호령 등급·2026 성적",
+    "SSG 공식 발표 (2026-11-18) — 최지훈 계약 내용"
+  ],
+  "people": [
+    {
+      "name": "최지훈",
+      "role": "SSG 랜더스 중견수, 29세. 이 편의 주인공 — 11월 18일 4년 67억에 잔류했다.",
+      "team": "SSG",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(CLAUDE.md 12번). 글과 사진이 싸운다. ⚠️ 등번호를 확인하지 못했다. **비워 둔다** — 빈 칸을 남기면 모델이 아무 번호나 그린다(규칙 3). ⚠️ 계약 숫자는 4년 67억(계약금 38억·연봉 20억·옵션 9억)이다. 데일리안만 '2년 55억'으로 적었는데 그건 양의지 계약과 섞인 오기다. 공식 발표 기준으로만 쓴다. ⚠️ 타율은 매체마다 0.250/0.25 로 소수점 자리가 달라, 확신이 약하면 아예 안 쓴다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5310%2F2026%2F11%2F18%2F0000065077_001_20261118110617710.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjVfMjQw%2FMDAxNzkyODk0NzE5NzI5.0f57-uN6fSyPNY-VJEHPLvtQt149DPVli8VJHad-7AEg.JSeoVZd0rKZuuzTKNto6MRJzfLa1hWXG6uD-6hLSN1cg.PNG%2F1.png&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMDlfMTk1%2FMDAxNzkxNTM3NjgzNDA1.7VTINRE6ycIuPgDwTGNfUdxSRlfNbK4f9zxJ2nus0oIg.9yIh89rePziTspP0I12R4RHSaL4QlbNo_D5OUCvWvpsg.PNG%2Fimage.png&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F469%2F2026%2F11%2F18%2F0000966256_001_20261118114418682.jpg&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTVfMjIx%2FMDAxNzkyMDMyNTYwMjk2.v2Ir9masw9dLicIdgsYDt6TmJM5PAlRaptPgXRoCwsAg.janULEmU6zsVftxbDCeh9tdhVNGXRdMeSLcy6lhutkUg.PNG%2Fimage.png&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjNfMjMz%2FMDAxNzkyNjkzMzc2NTc2.L2sxzStuXk9Bvku09Lvq8u9tkbBaOc-MQDXfGPOhXZ4g.th69mvj01kG2khTa1fmmYn7ouViIXhd0eDZcoC9hg50g.PNG%2F%25C8%25AD%25B8%25E9_%25C4%25B8%25C3%25B3_2026-10-23_032250.png&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTdfNTEg%2FMDAxNzkyMTg5NDc2Mjc5.UFyzSgx0mGdcAy5BXdDSRM2QyfOnH2uaVm2p1IylpK8g.FVWmeuxfaVc28jOslubLUgPVowCyOGzEo4FE-oPjN4Yg.PNG%2Ffile_00000000d18c82098eb9fe7fb8456460.png&type=a340",
+          "쓰임": "7"
+        }
+      ]
+    },
+    {
+      "name": "김호령",
+      "role": "KIA 타이거즈 중견수, 34세(내년 35세). 이 편의 두 번째 축 — 아직 계약 전이다.",
+      "team": "KIA",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). ⚠️ 등번호를 확인하지 못해 **비워 둔다** — 빈 칸을 남기면 모델이 아무 번호나 그린다(규칙 3). ⚠️ **계약이 안 됐다.** 계약한 것처럼 보이는 장면(계약서·악수·유니폼 전달)을 그리지 않는다. ⚠️ 연봉 2억 5000만원, C등급 보상 3억 7500만원, 최근 2년 타율 0.273·19홈런·107타점·OPS 0.744 는 확인된 값이다. '후반기 부진'의 구체 수치는 못 찾았으니 기사 표현대로만 쓴다. ⚠️ 금액 산정(3년 30억 안팎)은 **내 추정이지 보도가 아니다.** 화면에서 둘을 섞지 않는다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA2MjlfMjYg%2FMDAxNzgyNzAzMjc3OTgy.VOvgBI43Ty6IAGpn5asKW64q_NhRwKJThdoo7usRqvog.HawaTYHIbiJsuhyAG5Ras4kC9Sq7M6arz9sKBeybICgg.JPEG%2F4.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAzMTZfMjA4%2FMDAxNzczNjI1OTE1ODk2.r7G7HTS62TTCKTwTaJFElYBnqOhfxMHIjNP3FAMNTtAg.XmBt_VhCdDY8vquX4t3NaC53nuWc0EKOBRE26A8Ff7Ag.JPEG%2F%25B4%25D9%25BF%25EE%25B7%25CE%25B5%25E5_%252811%2529.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MTJfMjQz%2FMDAxNzg5MTc4MjI0OTI1.OLeDNdDk09CT3P1Q9m-H-aV9eBfrOows2dlciT4Jiykg.08wbJ9mSnBMd0jmp5A8YOLyWtnEOfKLHscd26N6ktNMg.PNG%2Fimage.png&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA3MjFfMTA2%2FMDAxNzg0NjA1NzE4NjI0.BhMCQGJlgdDiDjnADzsqjjfM9phCWYrNG0GbkdiGhd0g.QMVOzpu6THu3fkAORvGpexlHkE_AHTyh5gL1f6bXyvIg.JPEG%2F%25BC%25F6%25BA%25F1.jpeg&type=sc960_832",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMTdfMTA2%2FMDAxNzkyMjQxMDAyNzY5.3b3Kqo5xUC42uYJba7NBNcOLjBjsmtPU99Nd9hYJSMsg.0nEi7gKZlz-iI0DUtxDR_jjsVr968bJbCf02kpTQ7AUg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-10-17_214239.png&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjJfMTUg%2FMDAxNzkyNjAzNjc0Njkz._7DzOTWFcFA3m0yOKTE0yDgFrG2YFHJzVUzc_yVwoZUg.2gcn-uQHo4AgwptHiXgY7y5knfWRyyy-dBrljRg7iJcg.JPEG%2F%25B4%25D9%25BF%25EE%25B7%25CE%25B5%25E5_%25285%2529.jpg&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F05%2F28%2F0005542682_001_20260528211419020.jpg&type=a340",
+          "쓰임": "7"
+        }
+      ]
+    },
+    {
+      "name": "구자욱",
+      "role": "삼성 외야수 · 주장 · 33세 · 좌타",
+      "team": "삼성",
+      "number": "5",
+      "look": "",
+      "tell": "⚠️ 18화에서 그대로 가져온 사진이다. 이 편에서는 **SSG 가 노리는 상대**로 나온다 — SSG 가 최지훈과 FA 계약을 한 이유가 구자욱 영입에 대비해 보호선수를 한 명 더 묶기 위해서다. ⚠️ 금액을 예측하지 않는다. ⚠️ 사진이 있으므로 생김새(look)는 비운다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F421%2F2026%2F11%2F08%2F0009276994_001_20261108150424943.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2025%2F03%2F11%2F0001131305_003_20250311170012085.jpg&type=a340",
+          "쓰임": "타석"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2020%2F10%2F03%2F0000858968_001_20201003182138451.jpg&type=a340",
+          "쓰임": "스윙직후"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F119%2F2026%2F10%2F25%2F0003146643_002_20261025070308111.jpg&type=a340",
+          "쓰임": "수비"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2025%2F06%2F04%2F0003335042_001_20250604205111175.jpg&type=a340",
+          "쓰임": "더그아웃"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDlfMjI1%2FMDAxNzk0MjMyMTM4MTYz.DQMXdqV8Z21ml3MhL3gfrqnUlSwU3iDoYmyY02y3bCwg.hCzG5QmSl2u2H_eGILfbCtcQlYgW52r2Oc20dpf3bw4g.PNG%2Fimage.png&type=a340",
+          "쓰임": "우승 세리머니"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F445%2F2026%2F11%2F13%2F0000490016_003_20261113141217527.jpg&type=a340",
+          "쓰임": "삼성 7 (11-13)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfMTEg%2FMDAxNzk0NDA0OTYwMTYw.rY_lK3GE0paCVXciEkQ7BcEHnfvzBr1X348J6Zp9Qbsg.mEODvzcQlxMZUQho7sJQjYSFtcOCUjf5198bQRkZ08Mg.PNG%2Fimage.png&type=a340",
+          "쓰임": "삼성 8"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTFfOCAg%2FMDAxNzk0Mzg2MTI1MzA3.eD5cVBsTGdBUaPn1N6227Qb-mB_WbxX5__ZQT5Jq3l4g.5rb14h-2PLPf7RyOATKykEHWh_WnoilmV54jXkFThCgg.JPEG%2F3E82588C%25A3%25AD916F%25A3%25AD4313%25A3%25ADBD1D%25A3%25ADA1259D829C6D.jpeg&type=a340",
+          "쓰임": "삼성 9"
+        }
+      ]
+    },
+    {
+      "name": "원태인",
+      "role": "삼성 선발투수 · 26세 · 우완",
+      "team": "삼성",
+      "number": "18",
+      "look": "",
+      "tell": "⚠️ 18화에서 그대로 가져온 사진이다. 이 편에서는 **한 줄만 지나간다** — A등급 6명이 아직 안 움직인다는 대목이다. 샷을 많이 쓰지 않는다. ⚠️ 사진이 있으므로 생김새(look)는 비운다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F11%2F04%2F0005634804_001_20261104213917300.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F144%2F2026%2F11%2F02%2F0001147694_003_20261102155112728.jpg&type=a340",
+          "쓰임": "예전"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA4MDJfMTQ4%2FMDAxNzg1NjQxNjMxNjI0.l-CQB6Q4B89sOtvD1DlFGbUe8qVjbBQ2MOdYB0SHas8g.3xAT4WLQcfzk8jSW5QlmyFPNZOBUlbrkbVgGR2KQ91sg.PNG%2Fimage.png&type=a340",
+          "쓰임": "투구"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F11%2F10%2F0003486292_001_20261110132208993.jpg&type=a340",
+          "쓰임": "우승"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MTVfMjc2%2FMDAxNzg5NDczNDkwMzAw.iwsm7vj663h9qq-_sauvB1PKgUvskcTyXP_dDmGU2Wgg.MC_Zk9EQtbsLXcsiMk-EHSBPMPA-Gkc0yzuFi-rXezAg.PNG%2Fimage.png&type=a340",
+          "쓰임": "세트 포지션"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F014%2F2026%2F11%2F13%2F0005604075_001_20261113165609199.jpg&type=a340",
+          "쓰임": "삼성 6 (11-13 공시일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F472%2F2026%2F11%2F17%2F0000042490_001_20261117064510396.jpg&type=a340",
+          "쓰임": "삼성 7 (11-17 개장일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F014%2F2026%2F11%2F16%2F0005604609_003_20261116091309647.jpg&type=a340",
+          "쓰임": "삼성 8 (11-16 승인일)"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTNfMjM4%2FMDAxNzk0NTA0MjUwNzc0.Z7JOkLt4vJtrzQn9Fs_ZQYXEwc1_rpNyr0YN3L-E47og.nPRlDAR-uGhH9xENlrSsrpNLywNEfCRSmPOEz3_EEUwg.JPEG%2F1794504250450.jpg&type=a340",
+          "쓰임": "삼성 9"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "kind": "SPORTS",
+  "title": "장고의 답은 FA가 아니었다 — 정철원↔임지열 트레이드",
+  "premise": "롯데 이택근 단장의 첫 트레이드. 정철원과 임지열을 1대 1로 맞바꿨다. 정철원은 2년 사이 세 번째 유니폼을 입는다.",
+  "angle": "19화에서 '롯데는 시장 주시, 신임 이택근 단장이 장고'라고 적었는데 그 답이 FA가 아니라 트레이드로 나왔다. 그리고 정철원의 ERA 곡선을 세어 보면 좋은 해 뒤에 남고 나쁜 해 뒤에 간다가 두 번 반복됐다.",
+  "sections": [
+    {
+      "key": "HOOK",
+      "label": "장고의 답",
+      "value": 100,
+      "note": "19화에서 '롯데 이택근 단장이 장고에 들어갔다'고 했는데, 답이 FA가 아니라 트레이드였다. 정철원↔임지열 1대 1. ⚠️ '그래서 롯데가 김호령에서 빠졌다'고 쓰지 않는다 — 그런 보도는 없다."
+    },
+    {
+      "key": "DEAL",
+      "label": "1대 1",
+      "value": 90,
+      "note": "롯데 → 키움 정철원(투수), 키움 → 롯데 임지열(외야수). 11월 20일 양 구단 공식 발표. 이택근 단장 부임 후 첫 트레이드이고 상대가 선수 시절 친정 키움이다. ⚠️ 기사가 '공교롭게도'라고 쓴 그대로만 옮긴다. 의도를 지어내지 않는다."
+    },
+    {
+      "key": "SAW",
+      "label": "톱니 같은 네 해",
+      "value": 100,
+      "note": "⭐ 이 편의 중심. 2022 두산 58경기 23홀드 ERA 3.10 신인왕 → 2023 13세이브 11홀드, WBC → 2024 ERA 6.40 → 트레이드 → 2025 롯데 75경기 ERA 4.24, 21홀드 부활 → 2026 34경기 28이닝 3홀드 ERA 6.75 → 트레이드. **좋으면 남고 나쁘면 간다가 두 번.** 2년 사이 세 번째 유니폼. ⚠️⚠️ 왜 부진했는지는 **말하지 않는다.** 사생활 논란을 쓰지 않는다 — 확인할 수 없고, 야구 밖의 일이고, 한 번 말하면 못 지운다."
+    },
+    {
+      "key": "PRICE",
+      "label": "값이 달라졌다",
+      "value": 85,
+      "note": "2024년에는 3대 2였다 — 두산이 정철원·전민재를 주고 김민석·추재현·최우인을 받았다. 이번은 1대 1이다. ⚠️ 그때와 지금 선수 가치를 직접 비교하지 않는다. 포지션도 상황도 다르다. 통산 270경기 22승 15패 22세이브 59홀드 ERA 4.37."
+    },
+    {
+      "key": "COME",
+      "label": "받아 오는 사람",
+      "value": 90,
+      "note": "임지열, 180cm 94kg 우투우타 외야수. 덕수고 → 2014년 2차 2라운드 넥센 지명. 2026시즌 주장. ⚠️⚠️ **성적이 기사에 하나도 없다.** 타율·홈런·경기 수 어느 것도. 그래서 성적으로 평가하지 않고, 구단이 든 이유(탄탄한 수비 기본기·강한 송구·리더십)를 그대로 옮기며 '숫자는 기사에 없다'고 밝힌다."
+    },
+    {
+      "key": "BYE",
+      "label": "작별 인사",
+      "value": 95,
+      "note": "정철원이 SNS에 남긴 글. '안녕하십니까 키움 정철원입니다' / '롯데 자이언츠 덕분에 즐겁고 행복했습니다' / '롯데 자이언츠 내년엔 꼭 우승으로 증명해라'. 마지막에 잠언 24장 17절을 덧붙였다 — '네 원수가 넘어질 때 즐거워하거나 그가 엎드러질 때 마음에 기뻐하지 말라'. ⚠️⚠️ **해석하지 않는다.** 기사 제목이 '뼈 있는', '무슨 의미일까'라고 쓰지만 기사도 단정하지 않고 본인이 뜻을 밝힌 적이 없다. '이 구절을 덧붙였습니다. 무슨 뜻인지는 본인이 밝히지 않았습니다'까지만. 전망조차 아니고 남의 속마음이다."
+    },
+    {
+      "key": "CLOSE",
+      "label": "판이 어떻게 되나",
+      "value": 80,
+      "note": "롯데는 외야수를 FA가 아니라 트레이드로 데려왔다. 19화에서 롯데를 김호령 영입 후보로 봤는데 그 자리가 메워졌는지는 모른다. ⚠️ 외부 FA는 구단당 세 명까지 가능하고 임지열과 김호령은 유형이 다를 수 있다. **단정하지 않는다.** 다음 움직임을 보고 말한다."
+    }
+  ],
+  "sources": [
+    "엑스포츠뉴스 양정웅 기자 (2026-11-20 16:04) — 트레이드 내용, 통산 성적, 임지열 소개, 구단 코멘트",
+    "스포츠조선 한동훈 기자 (2026-11-20 17:13) — 작별 인사, 연도별 성적, 2024년 트레이드 내역",
+    "19화 자료 (2026-11-18) — 롯데 이택근 단장의 장고"
+  ],
+  "people": [
+    {
+      "name": "이택근",
+      "role": "롯데 자이언츠 단장. 선수 시절 키움(넥센)에서 뛰었다. 이번이 부임 후 첫 트레이드다.",
+      "team": "롯데",
+      "number": "",
+      "look": "",
+      "tell": "⚠️⚠️ **단장은 유니폼을 안 입는다**(규칙 12). 정장이나 구단 재킷이고 **등번호가 없다**. 13화에서 유정근 사장에게 야구 유니폼이 붙은 적이 있다 — 같은 실수를 하지 않는다. ⚠️ **선수 샷을 그리지 않는다.** 투구·타격·수비 자세로 그리면 현역 선수가 된다. 서 있거나 앉아 있거나 이야기하는 모습이다. ⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). ⚠️ 등번호 칸은 비워 둔다 — 단장은 번호가 원래 안 보인다. ⚠️ 이 편에서 맡은 자리는 HOOK 과 DEAL 이다. 'FA 가 아니라 트레이드를 골랐다'는 대목과 '친정 키움이 상대였다'는 대목. **의도를 지어내는 장면을 그리지 않는다** — 회심의 미소, 계산하는 표정 같은 것. 기사는 '공교롭게도'까지만 썼다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfNTIg%2FMDAxNzk0Njc4OTU4ODgx.4to0uVCTMu4vdVXzmw1aaUVN6OYUZpB2FFL0pLnKz3Ug.PdEQbXZ8RWsDGB-REqsLlLowcBffx9dFaJmjw1CRvCAg.PNG%2Fimage.png&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMTVfMTMz%2FMDAxNzk0NzE2ODU2MTQ4.azTljg8-lW58HYfBnvbwn0BrLWaSq_kFGrOG4SNd_Vgg.fkxeXj-Fz7uzhzStL21yNK7IqzwQjzjNks7pZ7P4Byog.PNG%2F20261115_132726.png&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F5003%2F2026%2F10%2F26%2F20261026151535_2407111_875_475_20261026151814568.jpg&type=l340_165",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjEwMjVfMTQx%2FMDAxNzkyOTIwNDIzNTUx.M8kawO3ePTj3c3qUU9vEatmbTOVdbCQgVYCtd_XHtr4g.Ng6boVip1Z5bRsEgWHsadARS5U98VAU8STDxuGgZGCQg.PNG%2Fimage.png&type=a340",
+          "쓰임": "4"
+        }
+      ]
+    },
+    {
+      "name": "정철원",
+      "role": "투수. 2026년 11월 20일 롯데에서 키움으로 트레이드됐다. 이 편의 주인공.",
+      "team": "키움",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). ⚠️ 등번호를 확인하지 못해 **비워 둔다**(규칙 3) — 틀린 번호는 번호가 없는 것보다 나쁘다. ⚠️⚠️ **팀이 방금 바뀌었다.** 받은 사진 대부분이 롯데 시절이지만 유니폼은 코드가 **키움 상징색**으로 다시 칠한다(규칙 12). 사진의 옷을 베끼지 않는다. ⚠️ **투수다.** 던지는 손에 공, 반대 손에 글러브. 멈추는 자리는 와인드업 꼭대기나 공 놓기 직전이다(규칙 18·19). ⚠️⚠️ **사생활 논란을 암시하는 장면을 그리지 않는다.** 휴대폰 화면, SNS, 혼자 고개 숙인 모습 같은 것. 이 편은 그 이야기를 아예 안 한다(21화-자료.md 5번). ⚠️ 작별 인사 대목에서도 **성경책·십자가를 그리지 않는다.** 인용 사실만 말하고 해석하지 않는 것이 이 편의 선이다.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F06%2F21%2F0005558006_001_20260621160110573.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjExMDFfMTQx%2FMDAxNzkzNDk5NjIzNDgx.IVECyRpQL1J1Cp09L6unJ6jZP9NUKTfz4gyYl-QmkEcg.PY3W-y9ovrCyZpOmGxPVmlaRLAMCUhRkIrGsr6-f6j4g.PNG%2Fimage.png&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA5MThfMjc2%2FMDAxNzg5Njg1NjczOTQ5.igbBPmCFnqleD0U-l_-SOn0-_BA4hmLtO9Z0xCZEDoog.AEZJR2Zs9pvhagKBhUOWW2yx4_evXHNWN0ogua_fV8Eg.PNG%2Fimage.png&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F03%2F23%2F0001227521_001_20260323155314191.jpg&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA4MTRfMjU0%2FMDAxNzg2Njg4NDgwNzM0.b-Hu8InKKFh5OETJ7fC0i7M7uawzvBLBt_Zm53WGtDkg.Lhqf9zTSPDRpS7zU1NoTIBqC3X1MW3ZWtbTIsx-A1HYg.PNG%2Fimage.png&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjAxMjdfMTQx%2FMDAxNzY5NTE0OTEyMDM3.iHfJVoBzW1UGtrIFmYIMPf-UoZIZewhTswmVnmiTFAgg.zA7QUC9zmLGD_4g7QxdYV58uNkhwvVJYsJa1oUcz828g.PNG%2Fimage.png&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNjA4MTJfMTc4%2FMDAxNzg2NTQxODYzODQy.na5MksZaeCtx7vcn99BraBd107LGP0-G3S0pmaaYl10g.Loieqs9hmm1wtU7Q32r2W33qOhPLR4sB1nQ1zU9EXDgg.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2026-08-12_%25BF%25C0%25C8%25C4_10.37.09.png&type=a340",
+          "쓰임": "7"
+        }
+      ]
+    },
+    {
+      "name": "임지열",
+      "role": "180cm 94kg 우투우타 외야수. 2026시즌 키움 주장. 롯데로 트레이드됐다.",
+      "team": "롯데",
+      "number": "",
+      "look": "",
+      "tell": "⚠️ **사진이 있으므로 생김새(look)를 글로 적지 않는다**(규칙 12). 체격 180cm 94kg 는 기사에 숫자로 나와 있으므로 role 에만 적었다(규칙 4 — 느낌말을 안 쓴다). ⚠️ 등번호를 확인하지 못해 **비워 둔다**(규칙 3). ⚠️⚠️ **팀이 방금 바뀌었다.** 받은 사진은 키움 시절이지만 유니폼은 코드가 **롯데 상징색**으로 다시 칠한다(규칙 12). 정철원과 **반대 방향**이라 헷갈리지 않게 본다. ⚠️ **외야수다.** 타자 샷이면 오른손 타자(우타) — 왼쪽 어깨가 투수를 향하고 오른손이 위다(규칙 19). 수비 샷이면 글러브와 송구 자세. 구단이 든 장점이 수비 기본기와 송구다. ⚠️⚠️ **성적이 기사에 하나도 없다.** 타율·홈런·경기 수 어느 것도 없다. 숫자로 잘하는 선수처럼 보이게 그리지 않는다 — 홈런 뒤 세리머니, 전광판에 띄운 기록 같은 것.",
+      "photos": [
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F410%2F2026%2F11%2F20%2F0001147846_002_20261120161508482.jpg&type=a340",
+          "쓰임": "1"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F421%2F2025%2F07%2F22%2F0008386181_001_20250722223814566.jpg&type=a340",
+          "쓰임": "2"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F382%2F2025%2F06%2F25%2F0001205880_004_20250625053510593.jpg&type=a340",
+          "쓰임": "3"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNTA4MTBfMjgx%2FMDAxNzU0ODEzNjQ3OTY0.pR0rM1GvfiK5JwRX6WtJVAWcJFKDtvWfmikGrHVx9SMg.5Aq6L1QGlF9Nv0aupaOc63zSFWw-GtFxK2EiXr4ziTUg.JPEG%2F%25B1%25E8%25C5%25C3%25BF%25AC_%25BF%25EF%25B8%25B0_%25C7%25D1_%25B9%25E6_%25C0%25D3%25C1%25F6%25BF%25AD%252C_%25C5%25B0%25BF%25F2%25C0%25C7_%25C0%25E7%25BF%25AA%25C0%25FC_%25B5%25E5%25B6%25F3%25B8%25B6_%25BF%25CF%25BC%25BA_%25286%2529.jpg&type=a340",
+          "쓰임": "4"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F108%2F2026%2F04%2F26%2F0003430368_001_20260426161509051.jpg&type=a340",
+          "쓰임": "5"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F109%2F2026%2F01%2F25%2F0005467977_002_20260125151113633.jpg&type=a340",
+          "쓰임": "6"
+        },
+        {
+          "url": "https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F468%2F2026%2F04%2F22%2F0001235981_001_20260422195819388.jpg&type=a340",
+          "쓰임": "7"
+        }
+      ]
+    }
+  ]
+}

@@ -137,9 +137,29 @@ check('본문이 블록으로 변환된다', () => {
   assert.ok(post.content.includes('<!-- wp:heading -->'));
   assert.ok(post.content.includes('<!-- wp:list -->'));
 });
-check('쿠팡 광고가 들어간다', () => {
-  assert.ok(post.content.includes('ads-partners.coupang.com'), '광고 블록이 없습니다');
-  assert.ok(post.content.includes('쿠팡 파트너스 활동의 일환'), '고지 문구가 없습니다');
+// ⚠️ 2026-11-25 에 뜻이 뒤집힌 검사다.
+//
+// 전에는 "광고가 들어간다"를 확인했다. 그런데 2026-11-19 에 효성님이
+// 실업급여를 신청하면서 **수익이 생기면 안 되는 기간**이 됐고, 사이트
+// 광고를 전부 내렸다. 그때 from-file 만 빠져서 글을 올릴 때마다 하단
+// 고정 바가 자동으로 붙었고, 11/25 에 손으로 빼는 것을 빠뜨려 발행된
+// 글에 바가 나갔다.
+//
+// 그래서 `광고_켬` 스위치를 달았고, 이 검사는 **스위치가 꺼져 있으면
+// 광고가 한 글자도 안 들어가는지**를 본다. 다시 켤 때는 from-file.mjs 의
+// `광고_켬` 을 true 로 바꾸고 이 검사도 같이 뒤집는다.
+check('광고 스위치가 꺼져 있으면 쿠팡 광고가 한 글자도 안 들어간다', () => {
+  const 스위치켬 = /^const 광고_켬 = true;/m.test(
+    fs.readFileSync(new URL('../src/wordpress/from-file.mjs', import.meta.url), 'utf8'),
+  );
+  if (스위치켬) {
+    assert.ok(post.content.includes('ads-partners.coupang.com'), '스위치가 켜졌는데 광고 블록이 없습니다');
+    assert.ok(post.content.includes('쿠팡 파트너스 활동의 일환'), '스위치가 켜졌는데 고지 문구가 없습니다');
+    return;
+  }
+  assert.ok(!post.content.includes('ads-partners.coupang.com'), '광고 블록이 들어갔습니다');
+  assert.ok(!post.content.includes('coupang'), '쿠팡 흔적이 남아 있습니다');
+  assert.ok(!post.content.includes('쿠팡 파트너스 활동의 일환'), '제휴 고지문이 들어갔습니다');
 });
 if (한글가능) {
   check('이미지가 맘운자로로 링크된다', () => {

@@ -3242,6 +3242,77 @@ test('썸네일 지점을 서로 떨어뜨려 고른다', () => {
   assert.ok(picked.some((p) => p.mood === 'twist'), '반전 장면을 하나도 안 집었습니다');
 });
 
+test('⭐ 사람이 있는 샷을 먼저 고른다 (썸네일 CTR 1.2% 를 보고 고침)', () => {
+  // ⚠️ 2026-11-21. 효성님이 보여준 통계에서 본편 썸네일 클릭률이 1.2% 였다
+  //    (노출 3.2만에 클릭 397). 21화 썸네일 세 장을 실제로 받아서 봤더니
+  //    **빈 더그아웃과 빈 라커룸**이었다 — 사람이 아예 없었다.
+  //
+  //    원인이 둘이었다. 분위기(mood)로만 골랐는데 분위기 있는 장면은 대개
+  //    빈 공간이고, 게다가 **장면 한가운데**를 집어서 장면 안의 여러 샷 중
+  //    사람 없는 샷이 걸렸다. 21화는 세 지점이 전부 person 있는 **장면**인데
+  //    집힌 **샷**은 둘이 사람 없는 샷이었다.
+  const scenes = [
+    { duration: 60, mood: 'somber', section: 'A', shots: [
+      { shot_id: 'S1-1', duration: 30, person: '' },       // 빈 더그아웃
+      { shot_id: 'S1-2', duration: 30, person: '' },
+    ] },
+    { duration: 60, mood: 'calm', section: 'B', shots: [
+      { shot_id: 'S2-1', duration: 30, person: '' },
+      { shot_id: 'S2-2', duration: 30, person: '정철원' },
+    ] },
+    { duration: 60, mood: 'calm', section: 'C', shots: [
+      { shot_id: 'S3-1', duration: 30, person: '임지열' },
+      { shot_id: 'S3-2', duration: 30, person: '' },
+    ] },
+    { duration: 60, mood: 'tension', section: 'D', shots: [
+      { shot_id: 'S4-1', duration: 30, person: '이택근' },
+      { shot_id: 'S4-2', duration: 30, person: '' },
+    ] },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  // 셋 다 사람이 있어야 한다. 분위기가 가장 센 somber/tension 쪽이라도
+  // 사람 없는 샷보다 사람 있는 샷이 먼저다.
+  for (const p of picked) {
+    assert.ok(p.person, `${p.at}초가 사람 없는 샷입니다 — 빈 화면은 안 눌립니다`);
+  }
+});
+
+test('사람이 여럿이면 서로 다른 사람으로 고른다', () => {
+  // 같은 사람 얼굴 세 장을 주면 고를 맛이 없다.
+  const scenes = Array.from({ length: 6 }, (_, i) => ({
+    duration: 40, mood: 'calm', section: `S${i}`,
+    shots: [{ shot_id: `S${i}-1`, duration: 40, person: ['가', '나', '다'][i % 3] }],
+  }));
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(new Set(picked.map((p) => p.person)).size, 3, '같은 사람만 골랐습니다');
+});
+
+test('사람 있는 샷이 모자라면 분위기로 채운다 (빈손으로 돌려주지 않는다)', () => {
+  const scenes = [
+    { duration: 60, mood: 'calm', section: 'A', shots: [{ shot_id: 'S1-1', duration: 60, person: '정철원' }] },
+    { duration: 60, mood: 'twist', section: 'B', shots: [{ shot_id: 'S2-1', duration: 60, person: '' }] },
+    { duration: 60, mood: 'mystery', section: 'C', shots: [{ shot_id: 'S3-1', duration: 60, person: '' }] },
+    { duration: 60, mood: 'calm', section: 'D', shots: [{ shot_id: 'S4-1', duration: 60, person: '' }] },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  assert.ok(picked.some((p) => p.person === '정철원'), '사람 있는 샷을 안 집었습니다');
+  // 나머지는 분위기 순서대로 — twist 가 mystery 보다 먼저다.
+  assert.ok(picked.some((p) => p.mood === 'twist'), '남은 자리를 분위기로 안 채웠습니다');
+});
+
+test('shots 가 없는 옛 장면 구조도 그대로 돌아간다', () => {
+  // 동화·전설 쪽은 shots 를 안 만든다. 거기서 죽으면 안 된다.
+  const scenes = [
+    { duration: 40, mood: 'calm' }, { duration: 40, mood: 'twist' },
+    { duration: 40, mood: 'tension' }, { duration: 40, mood: 'mystery' },
+  ];
+  const picked = pickThumbnailMoments(scenes, { count: 3, minGap: 20 });
+  assert.equal(picked.length, 3);
+  for (const p of picked) assert.equal(p.person, '');
+});
+
 test('맨 앞과 맨 끝은 피한다 (어둡거나 비어 있다)', () => {
   const scenes = Array.from({ length: 10 }, (_, i) => ({ duration: 30, mood: i === 0 ? 'twist' : 'mystery' }));
   const total = 300;
@@ -7067,6 +7138,140 @@ test('자르는 식이 비율대로 나온다', () => {
   assert.equal(f, 'crop=iw*0.9200:ih*0.8400:iw*0.0400:ih*0.0400');
   // 아래를 가장 많이 자른다 — 한국 뉴스 사진의 워터마크가 대개 거기다.
   assert.ok(CR.DEFAULT_CROP.bottom > CR.DEFAULT_CROP.top);
+});
+
+test('"아래": 0 은 "자를 게 없다"는 말이다 — 안 적은 것과 다르다', () => {
+  // ⚠️⚠️ 2026-11-22. 전에는 `Number(row.아래) > 0` 이라 **0 이 조용히 버려졌다.**
+  //    그러면 기본 12% 가 잘린다. 구단이 낸 공식 사진처럼 워터마크가 아예
+  //    없는 사진이 있고, 문승원 투구 샷(647x903)에서 12% 면 108px — 발목이
+  //    날아간다. 자를 게 없다고 말할 수 있어야 한다.
+  const jobs = (photos) =>
+    RP.repaintJobs([{ name: '아무개', team: 'SSG', photos }]).jobs;
+
+  const 영 = jobs([{ url: 'https://x/a.jpg', 아래: 0 }]);
+  assert.equal(영[0].아래, 0, '0 을 적었는데 사라졌습니다 — 기본값 12% 가 잘립니다');
+
+  const 없음 = jobs([{ url: 'https://x/b.jpg' }]);
+  assert.equal(없음[0].아래, null, '안 적었으면 null 이어야 재는 쪽이 돕니다');
+
+  const 많이 = jobs([{ url: 'https://x/c.jpg', 아래: 0.22 }]);
+  assert.equal(많이[0].아래, 0.22);
+
+  // 음수나 글자는 안 적은 것으로 본다.
+  assert.equal(jobs([{ url: 'https://x/d.jpg', 아래: -1 }])[0].아래, null);
+  assert.equal(jobs([{ url: 'https://x/e.jpg', 아래: '엉뚱' }])[0].아래, null);
+});
+
+const VS = await import('../src/scenes/visuals.mjs');
+const UNI = await import('../src/scenes/uniforms.mjs');
+
+await asyncTest('앞 편을 끌어오는 말을 잡는다 — 한 편은 그 편만으로 끝난다', async () => {
+  // ⚠️⚠️ 2026-11-22 운영자: "전편과 이어지는 게 아니라 하나하나 독립의
+  //    영상이다. 앞으로 잘 기억해라" / "전에 영상을 인용하려면 '전에 얼마라고
+  //    제가 예측했다'지 '몇 화에 이랬다' 이렇게 넣지 마라"
+  //
+  // 유튜브는 검색·추천으로 한 편만 보고 들어온다. 빼는 것은 **편 번호**이고
+  // 채점(인용) 자체는 그대로 한다.
+  const SP = await import('../src/script/spoken.mjs');
+
+  // 편 번호를 대면 잡는다.
+  for (const 나쁨 of [
+    '18화에서 문승원을 잔류 65%로 봤어요.',
+    '지난 편에서 롯데 이야기를 했습니다.',
+    '전 편에 적어 뒀거든요.',
+    '19화 때 말씀드린 보호선수입니다.',
+    '저번 영상에서 세어 봤습니다.',
+  ]) {
+    assert.ok(SP.priorEpisodeSpots([나쁨]).length, `못 잡았습니다: ${나쁨}`);
+  }
+
+  // "전에"는 운영자가 쓰라고 한 말이다. 잡으면 안 된다.
+  for (const 좋음 of [
+    '전에 제가 문승원은 남는다고 봤습니다.',
+    '전에 걸어 둔 숫자가 하나 있습니다.',
+    '제가 3년 30억으로 봤는데 틀렸습니다.',
+  ]) {
+    assert.equal(SP.priorEpisodeSpots([좋음]).length, 0, `잘못 잡았습니다: ${좋음}`);
+  }
+});
+
+await asyncTest('숫자 뒤 단위가 한글이면 알려 준다 (150퍼센트 → 150%)', async () => {
+  // ⚠️ 2026-11-22 운영자: "150퍼센트 퍼센트를 % 로 적었으면 좋았겠다"
+  //    코드는 이미 % 를 "퍼센트"로 읽는다(numbers.mjs). 대본에 % 로 적으면
+  //    자막은 %, 읽기는 "퍼센트"로 둘 다 맞는다.
+  const SP = await import('../src/script/spoken.mjs');
+  assert.ok(SP.unitSymbolSpots(['직전 연봉의 150퍼센트만 주면 됩니다.']).length);
+  assert.ok(SP.unitSymbolSpots(['잔류 65 퍼센트로 봤어요.']).length);
+  assert.ok(SP.unitSymbolSpots(['확률이 50프로입니다.']).length);
+  // 숫자가 없으면 한글이 맞다.
+  assert.equal(SP.unitSymbolSpots(['퍼센트로 따지면 어떨까요?']).length, 0);
+  assert.equal(SP.unitSymbolSpots(['연봉의 150%만 주면 됩니다.']).length, 0);
+});
+
+test('사진에서 그릴 때는 등번호를 요구하지 않는다 (22화 "괴물인가?")', () => {
+  // ⚠️⚠️ 2026-11-22 운영자: "등이 보이는데 얼굴이 정면이다 괴물인가?"
+  //    "등에 큰 글씨로 42" 는 색이 아니라 **자세 지시**라, 사진이 정한 자세와
+  //    싸워서 모델이 몸을 돌려 놓는다. 목이 180도 꺾이고 등에 없는 글자가 생겼다.
+  const 글로 = UNI.uniformClause({ team: 'SSG', number: '42' });
+  const 사진 = UNI.uniformClause({ team: 'SSG', number: '42', fromPhoto: true });
+
+  // 글로 그리는 샷은 그대로 — 뒷모습은 번호로 사람을 말한다(2026-11-07).
+  assert.ok(/42/.test(글로), '글로 그리는 샷에서 등번호가 사라졌습니다');
+  assert.ok(/across the back/.test(글로));
+
+  // 사진 샷은 번호를 안 적고, 등도 민무늬로 덮는다.
+  assert.ok(!/42/.test(사진), `사진 샷에 등번호가 남았습니다: ${사진}`);
+  assert.ok(/back of the jersey is smooth plain/.test(사진), '등 민무늬가 빠졌습니다');
+  // 색은 그대로 있어야 한다.
+  assert.ok(/red/.test(사진), '팀 색까지 사라졌습니다');
+});
+
+test('번호를 못 적는 샷에서는 "번호가 보인다"를 지운다 (22화 S17-2)', () => {
+  // ⚠️⚠️ 2026-11-22. 22화에서 구자욱 뒷모습에 **등번호 23 이 지어내졌다.**
+  //    설계가 "the back of his head and his number visible" 이라 적고
+  //    person 칸을 비웠다. 등번호는 코드가 사람 기록을 보고 적는데
+  //    이름이 없으면 적을 번호가 없다. 그런데 "번호가 보인다"가 글에
+  //    남아 있으니 모델이 아무 번호나 채웠다. 이 편에 23번은 없다.
+  //
+  // ⚠️ 금지로는 못 막는다(규칙 13). 그 말을 **아예 없앤다.**
+  const 뒷모습 =
+    'A hitter seen from behind, the back of his head and his number visible, no face.';
+  const 걷어낸것 = VS.dropNumberAsk(뒷모습);
+  assert.ok(!/number/i.test(걷어낸것), `번호 이야기가 남았습니다: ${걷어낸것}`);
+  assert.ok(/back of his head/.test(걷어낸것), '뒷모습이라는 말까지 지웠습니다');
+  assert.ok(/no face/.test(걷어낸것), '얼굴 없다는 말까지 지웠습니다');
+  assert.ok(!/,\s*,|\s,|,\s*\./.test(걷어낸것), `쉼표가 엉켰습니다: ${걷어낸것}`);
+
+  // 숫자가 박힌 꼴도 지운다.
+  assert.ok(!/42/.test(VS.dropNumberAsk('back of his head and number 42 visible')));
+
+  // 번호 이야기가 없는 글은 **한 글자도 건드리지 않는다.**
+  const 그냥 = 'An empty bullpen mound at dusk, a single white baseball on the rubber.';
+  assert.equal(VS.dropNumberAsk(그냥), 그냥);
+});
+
+test('번호를 적을 수 있으면 그대로 둔다 — 뒷모습은 번호로 사람을 말한다', () => {
+  // ⚠️ 2026-11-07 운영자: "유니폼과 등번호가 같아야 선수임을 뒤만 봐도
+  //    알 수 있지 않나." 적을 수 있을 때까지 지우면 안 된다.
+  const 사람 = { name: '문승원', team: 'SSG', number: '42', photos: [] };
+  const 설계 = {
+    shots: [{
+      shot_id: 'S1-1',
+      image_prompt: 'A pitcher from behind, the back of his head and his number visible, no face.',
+      person: '문승원',
+      era: 'present',
+      camera: 'hold',
+    }],
+  };
+  const { scene } = VS.mergeVisuals(
+    { shots: [{ shot_id: 'S1-1' }] },
+    설계,
+    { kind: 'SPORTS', photoNames: new Set(), uniforms: new Map([['문승원', UNI.uniformClause(사람)]]) }
+  );
+  const shots = scene.shots;
+  const 글 = shots[0].image_prompt_content;
+  assert.ok(/number/i.test(글), '번호를 적을 수 있는데 지웠습니다');
+  assert.ok(/42/.test(shots[0].image_prompt), '등번호 42 가 프롬프트에 안 붙었습니다');
 });
 
 test('너무 많이 자르지 않는다 — 사람이 잘린다', () => {

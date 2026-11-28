@@ -2812,7 +2812,282 @@ export const 바로잡기 = [
       '<!-- wp:heading -->\n<h2>📊 시즌 초반 성적으로 보는 최민정의 현재</h2>',
     이유: '글 23969. 미디어데이 사진을 넣는다 (미디어 23963)',
     글: [23969],
-  },];
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 세 외국인 선수, 어떤 선수들인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":25516,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2027-1uopvj-mwnd5ayf.png" alt="2027 키움 히어로즈 외국인 선수 맷 데이비슨 라울 알칸타라 케스턴 히우라 후쿠타니 코지" class="wp-image-25516"/></a><figcaption class="wp-element-caption">2027 키움 외국인 선수 네 명 — 맷 데이비슨·라울 알칸타라·케스턴 히우라·후쿠타니 코지 (사진: 스포츠경향) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 세 외국인 선수, 어떤 선수들인가</h2>',
+    이유: '글 25514. 구단이 낸 외국인 선수 네 명 사진을 넣는다 (미디어 25516)',
+    글: [25514],
+  },
+  {
+    틀린: '<!-- wp:heading {"level":3} -->\n<h3>아직 안 풀린 내부 FA — LG와 KIA가 넷</h3>',
+    맞는:
+      '<!-- wp:image {"id":25518,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-hhzqnk-mwndo6bp.jpg" alt="내부 FA 박동원 홍창기 김태군 김호령" class="wp-image-25518"/></a><figcaption class="wp-element-caption">아직 계약이 안 난 내부 FA — 박동원·홍창기·김태군·김호령 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading {"level":3} -->\n<h3>아직 안 풀린 내부 FA — LG와 KIA가 넷</h3>',
+    이유: '글 16558. 내부 FA 넷 사진을 넣는다 (미디어 25518)',
+    글: [16558],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 허구연 총재는 어떤 인물인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":25545,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kbo-12qx4c-mwo43eh1.jpg" alt="허구연 KBO 총재" class="wp-image-25545"/></a><figcaption class="wp-element-caption">3연임에 성공한 허구연 KBO 총재 (사진: 서울신문) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 허구연 총재는 어떤 인물인가</h2>',
+    이유: '글 25543. 허구연 총재 사진을 넣는다 (미디어 25545)',
+    글: [25543],
+  },
+  {
+    틀린: '<h2>🏁 결승 3번기 — 변상일 vs 리친청, 11월 18~20일 낮 12시</h2>',
+    맞는: '<h2>🏆 결승 3번기 결과 — 변상일, 리친청 꺾고 삼성화재배 우승</h2>',
+    이유: '글 17428. 11월 20일 최종국이 끝나 변상일 우승으로 확정됐다. 소제목이 아직 "18~20일" 예고였다',
+    글: [17428],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 정철원 — 신인왕 출신, 통산 59홀드 22세이브</h2>',
+    맞는:
+      '<!-- wp:image {"id":25559,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-1i2fzj-mwox0ewz.jpg" alt="정철원과 임지열" class="wp-image-25559"/></a><figcaption class="wp-element-caption">맞바뀐 두 선수 — 정철원과 임지열 (사진: 롯데 자이언츠·키움 히어로즈) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 정철원 — 신인왕 출신, 통산 59홀드 22세이브</h2>',
+    이유: '글 25557. 맞바뀐 두 선수 사진을 넣는다 (미디어 25559)',
+    글: [25557],
+  },
+  {
+    틀린: '58경기에 나와 4승 3패 23홀드 3세이브를 기록했습니다.',
+    맞는: '58경기에 나와 4승 3패 23홀드 3세이브, 평균자책점 3.10을 기록했습니다.',
+    이유: '글 25557. 신인왕 시즌 평균자책점을 더한다 (한겨레 보도)',
+    글: [25557],
+  },
+  {
+    틀린: '2025시즌 75경기에 등판해 8승 3패 21홀드를 올렸습니다.',
+    맞는: '2025시즌 75경기에 등판해 70이닝을 던지며 8승 3패 21홀드, 평균자책점 4.24를 기록했습니다.',
+    이유: '글 25557. 이닝과 평균자책점을 더한다 (스포티비뉴스 보도)',
+    글: [25557],
+  },
+  {
+    틀린: '1년 만에 숫자가 반으로 깎였습니다. 2026시즌은 34경기 1승 2패 3홀드입니다.',
+    맞는: '1년 만에 숫자가 반으로 깎였습니다. 2026시즌은 34경기 28이닝 1승 2패 3홀드, 평균자책점 6.75입니다. 1군에 있던 날이 87일, 2군에 있던 날이 112일이었습니다.',
+    이유: '글 25557. 이닝·평균자책점과 1군·2군 체류일을 더한다 (스포티비뉴스 보도)',
+    글: [25557],
+  },
+  {
+    틀린: '통산 270경기 59홀드 22세이브에 시속 150㎞ 안팎의 공을 던지는 27세 불펜 투수입니다.',
+    맞는: '통산 270경기 59홀드 22세이브를 기록했고, 키움은 그의 공을 시속 140㎞ 후반대로 소개했습니다. 27세입니다.',
+    이유: '글 25557. 구속을 키움 구단 발표 표현으로 맞춘다',
+    글: [25557],
+  },
+  {
+    틀린: '150㎞ 안팎을 던지면서 셋업맨과 마무리를 다 해 본 20대 투수는',
+    맞는: '140㎞ 후반대를 던지면서 셋업맨과 마무리를 다 해 본 20대 투수는',
+    이유: '글 25557. 같은 이유로 구속 표현을 맞춘다',
+    글: [25557],
+  },
+  {
+    틀린: '시속 150㎞ 안팎의 빠른 공을 던지고, 1군 통산 270경기에서',
+    맞는: '키움이 소개한 구속은 시속 140㎞ 후반대이고 슬라이더와 포크볼을 섞어 던집니다. 1군 통산 270경기에서',
+    이유: '글 25557. 자주 묻는 질문의 구속도 같이 맞춘다',
+    글: [25557],
+  },
+  {
+    틀린: '2025시즌을 앞두고 두산과 트레이드를 하면서 정철원과 내야수 전민재를 받고 김민석·추재현·최우인 세 명을 내줬습니다.',
+    맞는: '2025시즌을 앞두고 두산과 2대3 트레이드를 하면서 정철원과 내야수 전민재를 받고 김민석·추재현·최우인 세 명을 내줬습니다. 김민석은 2023년 신인드래프트 1라운드 전체 3순위, 정철원은 2018년 2차 2라운드 전체 20순위 지명 선수입니다.',
+    이유: '글 25557. 지명 순위를 더해 두 선수의 무게를 숫자로 보여준다 (스포티비뉴스 보도)',
+    글: [25557],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 추성훈 "아저씨 싸움을 보여주는 게 아니다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25646,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/17-1-1yohpp-mwp0t6ak.jpg" alt="추성훈 블랙컴뱃 17" class="wp-image-25646"/></a><figcaption class="wp-element-caption">블랙컴뱃 17: 벤타블랙 (사진: 스포탈코리아) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 추성훈 "아저씨 싸움을 보여주는 게 아니다"</h2>',
+    이유: '글 25640. 추성훈 절 앞에 사진을 넣는다 (미디어 25646)',
+    글: [25640],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 리벤 "누리고 살면 사람이 부드러워진다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25647,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/17-2-1yohpq-mwp0t9jw.jpg" alt="크리스 리벤 블랙컴뱃 17" class="wp-image-25647"/></a><figcaption class="wp-element-caption">블랙컴뱃 17: 벤타블랙 (사진: 스포탈코리아) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 리벤 "누리고 살면 사람이 부드러워진다"</h2>',
+    이유: '글 25640. 리벤 절 앞에 사진을 넣는다 (미디어 25647)',
+    글: [25640],
+  },
+  {
+    틀린: '<h2>🔥 결과가 나오면 확인할 것 세 가지</h2>',
+    맞는: '<h2>🔥 22년이 끝난 자리에 남은 것</h2>',
+    이유: '글 25640. 경기가 끝나 소제목이 "결과가 나오면"으로 남아 있었다',
+    글: [25640],
+  },
+  {
+    틀린: '<h2>👀 11월 21일 고척에서 볼 다섯 가지</h2>',
+    맞는: '<h2>👀 경기 전 짚었던 관전 포인트 다섯 가지</h2>',
+    이유: '글 25640. 경기가 끝났으므로 이 절이 경기 전 이야기임을 소제목이 말해 준다',
+    글: [25640],
+  },
+  {
+    틀린: '2026년 11월 21일 서울 고척스카이돔입니다. 블랙컴뱃 17: 벤타블랙 대회에서 89kg 계약 체중 경기로 치러집니다. 경기 시각과 중계 채널은 이 글을 쓰는 시점에 확인되지 않았습니다.',
+    맞는: '2026년 11월 21일 서울 고척스카이돔에서 열렸습니다. 블랙컴뱃 17 대회의 89kg 계약 체중 경기였고, 크리스 리벤이 1-2 판정승을 거뒀습니다.',
+    이유: '글 25640. 경기가 끝났으므로 자주 묻는 질문의 답을 결과로 바꾼다',
+    글: [25640],
+  },
+  {
+    틀린: 'TV가 없는 곳에서는 채널A 공식 홈페이지의 온에어 메뉴를 통해 볼 수 있습니다.',
+    맞는: 'TV가 없는 곳에서는 <a href="https://ichannela.com/com/cmm/onair.do" rel="nofollow">채널A 온에어</a> 페이지에서 볼 수 있습니다.',
+    이유: '글 25658. 효성님이 확인해 준 채널A 온에어 주소를 링크로 건다',
+    글: [25658],
+  },
+  {
+    틀린: '채널A에서 TV로 생중계합니다. 보도 가운데는 방송이 오전 7시 40분에 시작한다고 적은 매체가 있습니다.',
+    맞는: '채널A에서 TV로 생중계합니다. TV가 없으면 <a href="https://ichannela.com/com/cmm/onair.do" rel="nofollow">채널A 온에어</a> 페이지에서 볼 수 있습니다. 보도 가운데는 방송이 오전 7시 40분에 시작한다고 적은 매체가 있습니다.',
+    이유: '글 25658. 자주 묻는 질문에도 온에어 주소를 넣는다',
+    글: [25658],
+  },
+  {
+    틀린: '✅ <strong>채널A 채널 번호</strong> — 종편이라 통신사·지역마다 번호가 다릅니다. 리모컨 검색이 가장 빠릅니다.',
+    맞는: '✅ <strong>채널A 채널 번호</strong> — 종편이라 통신사·지역마다 번호가 다릅니다. 리모컨 검색이 가장 빠르고, TV가 없으면 <a href="https://ichannela.com/com/cmm/onair.do" rel="nofollow">채널A 온에어</a> 로 바로 갑니다.',
+    이유: '글 25658. 확인할 것 목록에서도 바로 갈 수 있게 한다',
+    글: [25658],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏅 결과 — 국제부 킵코에치, 국내 1위 김홍록</h2>',
+    맞는:
+      '<!-- wp:image {"id":25668,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-11gqgj-mwr75sii.jpg" alt="2026 인천마라톤" class="wp-image-25668"/></a><figcaption class="wp-element-caption">2026 인천마라톤 (사진: SK브로드밴드 뉴스) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏅 결과 — 킵코에치·티루세우 우승, 국내 1위 김홍록·김은미</h2>',
+    이유: '글 25658. 결과 절 앞에 사진을 넣고(미디어 25668), 남자만 적힌 소제목을 네 부문으로 고친다',
+    글: [25658],
+  },
+  {
+    틀린: '<h2>🔥 결과가 나오면 확인할 것</h2>',
+    맞는: '<h2>🔥 남은 것은 완주 기록입니다</h2>',
+    이유: '글 25658. 결과가 나왔으므로 마지막 소제목을 바꾼다',
+    글: [25658],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 김도규 — 54경기 19세이브, 퓨처스 세이브 1위</h2>',
+    맞는:
+      '<!-- wp:image {"id":25689,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-1-ch8wcm-mwrf975j.jpg" alt="울산 웨일즈 김도규" class="wp-image-25689"/></a><figcaption class="wp-element-caption">구단 MVP 김도규 (사진: 울산 웨일즈 제공) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 김도규 — 54경기 19세이브, 퓨처스 세이브 1위</h2>',
+    이유: '글 25679. 김도규 사진 (미디어 25689)',
+    글: [25679],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 숄튼스는 어떤 투수인가</h2>',
+    맞는:
+      '<!-- wp:image {"id":25690,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-2-ch8wdh-mwrf9aum.jpg" alt="한화 제시 숄튼스" class="wp-image-25690"/></a><figcaption class="wp-element-caption">제시 숄튼스 (사진: 한화 이글스 제공) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 숄튼스는 어떤 투수인가</h2>',
+    이유: '글 25682. 숄튼스 사진 (미디어 25690)',
+    글: [25682],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🎯 2027 외국인 선발 셋 — 숄튼스·왓슨·왕옌청</h2>',
+    맞는:
+      '<!-- wp:image {"id":25691,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-3-ch8wec-mwrf9ct1.jpg" alt="한화 이글스 외국인 투수" class="wp-image-25691"/></a><figcaption class="wp-element-caption">한화 이글스 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🎯 2027 외국인 선발 셋 — 숄튼스·왓슨·왕옌청</h2>',
+    이유: '글 25682. 외국인 선발 절 사진 (미디어 25691)',
+    글: [25682],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌟 MVP 2회 이상은 44년 동안 다섯 명뿐입니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25692,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-4-ch8wf7-mwrf9f2u.jpg" alt="KIA 김도영" class="wp-image-25692"/></a><figcaption class="wp-element-caption">김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌟 MVP 2회 이상은 44년 동안 다섯 명뿐입니다</h2>',
+    이유: '글 25685. 김도영 사진 (미디어 25692)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>📌 내년부터 유격수를 봅니다 — 강정호의 40홈런이 기준선</h2>',
+    맞는:
+      '<!-- wp:image {"id":25693,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-5-ch8wg2-mwrf9iby.jpg" alt="KIA 김도영 타격" class="wp-image-25693"/></a><figcaption class="wp-element-caption">김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>📌 내년부터 유격수를 봅니다 — 강정호의 40홈런이 기준선</h2>',
+    이유: '글 25685. 유격수 절 사진 (미디어 25693)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏁 합격선은 상위 25위, 실제로는 27명입니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25743,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/lpga-q-2027-1ddtxj-mwuqvg2d.jpg" alt="LPGA Q시리즈 최종전에서 2027시즌 출전권을 따낸 유현조·이다연·김민선이 합격 피켓을 들고 기념 촬영을 하고 있다" class="wp-image-25743"/></a><figcaption class="wp-element-caption">왼쪽부터 유현조·이다연·김민선 (사진: 넥스트크리에이티브) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏁 합격선은 상위 25위, 실제로는 27명입니다</h2>',
+    이유: '글 25735. 사진을 넣는다 (미디어 25743)',
+    글: [25735],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🧤 "무조건 해야 한다" — 서동욱이 짚은 전환 과제</h2>',
+    맞는:
+      '<!-- wp:image {"id":25744,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-3-1o8bp1-mwuqxre4.jpg" alt="KIA 타이거즈 김도영이 포스트시즌 경기에서 3루 수비를 준비하고 있다" class="wp-image-25744"/></a><figcaption class="wp-element-caption">포스트시즌에서 3루 수비를 준비하는 김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🧤 "무조건 해야 한다" — 서동욱이 짚은 전환 과제</h2>',
+    이유: '글 25685. 사진을 넣는다 (미디어 25744)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🌍 전 세계 유망주 통합 랭킹 1위에 올랐습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25745,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-1f6qbl-mwuqzu9p.jpg" alt="KIA 타이거즈 김도영이 포스트시즌 경기에서 파울 타구를 잡기 위해 전력 질주하고 있다" class="wp-image-25745"/></a><figcaption class="wp-element-caption">파울 타구를 잡으려 전력 질주하는 김도영 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🌍 전 세계 유망주 통합 랭킹 1위에 올랐습니다</h2>',
+    이유: '글 25685. 사진을 넣는다 (미디어 25745)',
+    글: [25685],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🤔 톨허스트는 어떻게 되나 — 12승 투수를 두고 고민합니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25746,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-145jhp-mwur1wzh.jpg" alt="LG 트윈스 선발 톨허스트가 투구를 앞두고 생각에 잠겨 있다" class="wp-image-25746"/></a><figcaption class="wp-element-caption">투구를 앞두고 생각에 잠긴 톨허스트 (사진: 스포츠조선) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🤔 톨허스트는 어떻게 되나 — 12승 투수를 두고 고민합니다</h2>',
+    이유: '글 11834. 사진을 넣는다 (미디어 25746)',
+    글: [11834],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>💬 "스크린골프로 골프를 시작했다" — 윤이나 데뷔전 소감</h2>',
+    맞는:
+      '<!-- wp:image {"id":25742,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/wtgl-s9g7z5-mwuqsowr.jpg" alt="윤이나가 여자 팀 골프 리그 WTGL 데뷔전에 보스턴 커먼 골프 소속으로 출전한다" class="wp-image-25742"/></a><figcaption class="wp-element-caption">WTGL 데뷔전에 나서는 윤이나 (사진: 국민일보) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>💬 "스크린골프로 골프를 시작했다" — 윤이나 데뷔전 소감</h2>',
+    이유: '글 11897. 사진을 넣는다 (미디어 25742)',
+    글: [11897],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🔥 2020년, \'미스터 제로\'라고 불렸습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25814,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/sports-15sevh-mwylcx8x.jpg" alt="현역 은퇴를 발표한 좌완 투수 김사윤(개명 전 김정빈)" class="wp-image-25814"/></a><figcaption class="wp-element-caption">은퇴를 발표한 김사윤 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🔥 2020년, \'미스터 제로\'라고 불렸습니다</h2>',
+    이유: '글 25812. 사진을 넣는다 (미디어 25814)',
+    글: [25812],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🏆 LPBA 결승 — 김가영 vs 정수빈, 20승과 10억이 걸렸습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25829,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/pba-lpba-lpba-1g9p97-mwzri7mx.jpg" alt="휴온스 PBA-LPBA 챔피언십 LPBA 결승에 오른 김가영과 정수빈" class="wp-image-25829"/></a><figcaption class="wp-element-caption">김가영과 정수빈 (사진: 일간스포츠) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🏆 LPBA 결승 — 김가영 vs 정수빈, 20승과 10억이 걸렸습니다</h2>',
+    이유: '글 23755. 사진을 넣는다 (미디어 25829)',
+    글: [23755],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>💬 "사고 친 건 아니다. 다 계획적이었다"</h2>',
+    맞는:
+      '<!-- wp:image {"id":25830,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/2026-kbo-3-1p15sh-mwzrooky.jpg" alt="2026 KBO 시상식에서 3관왕에 오른 두산 베어스 투수 곽빈" class="wp-image-25830"/></a><figcaption class="wp-element-caption">KBO 시상식에서 3관왕에 오른 곽빈 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>💬 "사고 친 건 아니다. 다 계획적이었다"</h2>',
+    이유: '글 25828. 사진을 넣는다 (미디어 25830)',
+    글: [25828],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🔨 타격 자세를 바꿨습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25831,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/kia-flvx3l-mwzrqx9p.jpg" alt="오키나와 마무리훈련을 마치고 돌아온 KIA 타이거즈 외야수 박정우" class="wp-image-25831"/></a><figcaption class="wp-element-caption">마무리훈련을 마치고 돌아온 박정우 (사진: 마이데일리) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🔨 타격 자세를 바꿨습니다</h2>',
+    이유: '글 25825. 사진을 넣는다 (미디어 25831)',
+    글: [25825],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🇰🇷 한국은 조별리그를 3전 전승으로 통과했습니다</h2>',
+    맞는:
+      '<!-- wp:image {"id":25832,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/fifa-u-17-32-u-17-ryqtp7-mwzrsvik.jpg" alt="FIFA U-17 월드컵 32강에 오른 김현준 감독의 대한민국 U-17 대표팀" class="wp-image-25832"/></a><figcaption class="wp-element-caption">U-17 월드컵 32강에 오른 대표팀 (사진: 인터풋볼) · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🇰🇷 한국은 조별리그를 3전 전승으로 통과했습니다</h2>',
+    이유: '글 25821. 사진을 넣는다 (미디어 25832)',
+    글: [25821],
+  },
+  {
+    틀린: '<!-- wp:heading -->\n<h2>🇨🇳 4차 상하이 — 11월 27일 예선도 개인 3종목 조 1위</h2>',
+    맞는:
+      '<!-- wp:image {"id":25837,"sizeSlug":"large","linkDestination":"custom"} -->\n<figure class="wp-block-image size-large"><a href="https://apps.apple.com/kr/app/%ED%8E%98%EC%9D%B4%EB%93%9C%EC%BA%A0/id6818920687?ct=wiki-photo" rel="nofollow"><img src="https://wiki.minimalbreeze.com/wp-content/uploads/2026/11/isu-1cc38r-mwzv6ujg.jpg" alt="ISU 쇼트트랙 월드투어에서 경기하는 최민정과 시상대에 오른 최민정" class="wp-image-25837"/></a><figcaption class="wp-element-caption">월드투어에서 경기하는 최민정과 시상대의 최민정 · 누르면 내가 만든 사진 정리 앱 페이드캠으로 갑니다</figcaption></figure>\n<!-- /wp:image -->\n\n' +
+      '<!-- wp:heading -->\n<h2>🇨🇳 4차 상하이 — 11월 27일 예선도 개인 3종목 조 1위</h2>',
+    이유: '글 10721. 사진을 넣는다 (미디어 25837)',
+    글: [10721],
+  },
+];
 
 // **표에 넣지 않은 것들도 적어 둔다.** 다음에 또 후보로 올라올 때 다시
 // 판단하지 않게 하려고다.

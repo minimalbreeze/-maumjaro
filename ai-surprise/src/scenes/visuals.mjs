@@ -937,6 +937,20 @@ D-2. **자세와 얼굴 방향을 한 문장 안에서 맞춘다.** (2026-11-07)
             → 뒤를 보는 몸에 앞을 보는 얼굴이 붙는다
      좋음: "a pitcher running toward the bullpen seen from behind,
             the back of his head and his number visible, no face"
+            (⚠️ **이 샷의 person 칸에 반드시 이름을 적는다**)
+
+   ⚠️⚠️ **번호를 말하려면 person 칸에 이름이 있어야 한다** (2026-11-22).
+
+   위 "좋음" 보기에 person 이야기를 안 적어 둔 탓에 22화에서 터졌다.
+   설계가 구자욱 뒷모습을 "the back of his head and his number visible"
+   로 적고 person 칸을 비웠다. 등번호는 **코드가** 사람 기록을 보고
+   적는데, 이름이 없으면 적을 번호가 없다. 그런데 글에는 "번호가
+   보인다"가 남아 있으니 모델이 **23 을 지어냈다.** 이 편에 23번은 없다.
+
+   틀린 번호는 번호가 없는 것보다 나쁘다. 그러니 —
+     · 뒷모습·번호 샷은 person 칸을 **반드시** 채운다
+     · 누구인지 말할 수 없는 사람이면 번호 이야기를 **아예 꺼내지 않는다**
+       (멀리서 실루엣으로 잡거나, 사람을 빼고 자리·장비만 그린다)
 
    그리고 **머리부터 발끝까지 그린다**(운영자, 같은 날). 얼굴만 크게
    잡은 샷은 쓰지 않는다. 몸 전체가 보여야 자세가 읽히고, 자세가
@@ -1664,6 +1678,47 @@ export function facesCamera(d) {
   return !/(from behind|seen from the back|back view|rear view|facing away|over the shoulder from behind|뒷모습)/.test(t);
 }
 
+/**
+ * 번호를 **코드가 못 넣는** 샷에서 "번호가 보인다"는 말을 걷어낸다.
+ *
+ * ── 왜 (2026-11-22, 22화) ──
+ *
+ * 등번호는 사람 기록의 `number` 를 보고 `uniformClause` 가 적는다.
+ * 그런데 샷의 `person` 칸이 비면 누구인지 모르니 적을 번호가 없다.
+ * 그 상태로 장면 설명에 "his number visible" 이 남아 있으면 모델이
+ * **아무 번호나 그린다.** 22화 S17-2 에서 구자욱 뒷모습에 23 이 붙었다.
+ *
+ * ⚠️ 금지로는 못 막는다(규칙 13). "번호를 그리지 마라"고 적으면 그린다.
+ *    그래서 **그 말을 아예 없앤다.** 말하지 않은 것은 못 그린다.
+ *
+ * ⚠️ 번호를 적을 수 있을 때는 한 글자도 건드리지 않는다. 뒷모습 샷에서
+ *    사람을 말해 주는 것이 등번호와 유니폼 색뿐이라(2026-11-07 운영자),
+ *    적을 수 있으면 적어야 한다.
+ */
+export function dropNumberAsk(text) {
+  let t = String(text || '');
+  const 지울것 = [
+    // "his number visible" · "number 42 clearly visible" · "the jersey number showing"
+    /(?:\band\s+)?(?:his|her|their|the|a)?\s*(?:jersey\s+|uniform\s+)?numbers?(?:\s+\d+)?\s+(?:is\s+|are\s+|clearly\s+|plainly\s+)*(?:visible|showing|shown|legible|readable|in view)/gi,
+    // "his number across the back" · "the number on the back of the jersey"
+    /(?:\band\s+)?(?:his|her|their|the|a)?\s*(?:jersey\s+|uniform\s+)?numbers?(?:\s+\d+)?\s+(?:across|on)\s+(?:the\s+)?back(?:\s+of\s+(?:the\s+|his\s+|her\s+)?\w+)?/gi,
+    // 홀로 남은 "number 42"
+    /\bnumbers?\s+\d+\b/gi,
+  ];
+  for (const re of 지울것) t = t.replace(re, '');
+  // 지운 자리에 남는 쉼표·접속사를 정리한다.
+  return t
+    .replace(/\s+,/g, ',')
+    .replace(/,\s*(?:and\s+)?(?=,)/g, '')
+    .replace(/,\s*and\s*,/g, ', ')
+    .replace(/\b(?:and|with)\s*,/gi, ',')
+    .replace(/,\s*\./g, '.')
+    .replace(/,\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,])/g, '$1')
+    .trim();
+}
+
 export function personOfShot(d, names) {
   const direct = String(d?.person || '').trim();
   if (direct && names.has(direct)) return direct;
@@ -1673,6 +1728,15 @@ export function personOfShot(d, names) {
     if (n && text.includes(n)) return n;
   }
   return direct;
+}
+
+/**
+ * 그 샷에 넘길 장면 설명. 번호를 적을 수 있으면 그대로, 못 적으면
+ * "번호가 보인다"를 걷어낸 글(dropNumberAsk)을 돌려준다.
+ */
+function 설명(d, 입을것) {
+  const 번호를적는다 = /\bnumbers?\s+\d+\b/i.test(String(입을것 || ''));
+  return 번호를적는다 ? d.image_prompt : dropNumberAsk(d.image_prompt);
 }
 
 export function mergeVisuals(
@@ -1698,13 +1762,14 @@ export function mergeVisuals(
     // **비워 둔다** — 채워 두면 나중에 누가 그걸로 그림을 만들어서 돈이
     // 나가고, 화면에는 카드가 올라가 그림은 버려진다.
     const cardText = String(d.card_text || '').trim();
+    const 입을것 = (uniforms && uniforms.get(who)) || fallbackUniform || '';
     return {
       ...shot,
       era: ERA_TONES[d.era] ? d.era : 'present',
       card_text: cardText,
       image_prompt: cardText
         ? ''
-        : composeImagePrompt(d.image_prompt, ERA_TONES[d.era] ? d.era : 'present', {
+        : composeImagePrompt(설명(d, 입을것), ERA_TONES[d.era] ? d.era : 'present', {
             kind,
             // ⚠️ 뒷모습이면 참조를 쓰지 않는다. 붙잡을 얼굴이 없어서
             //    화풍이 사진 쪽으로 끌려간다(2026-11-11).
@@ -1712,9 +1777,9 @@ export function mergeVisuals(
             // 이 샷에 누가 나오는지는 person 칸을 **먼저** 보고, 비어
             // 있으면 샷의 글에서 이름을 찾는다(personOfShot). 그 이름으로
             // 구단 표를 찾아 유니폼과 등번호를 **코드가** 적는다.
-            uniform: (uniforms && uniforms.get(who)) || fallbackUniform || '',
+            uniform: 입을것,
           }),
-      image_prompt_content: cardText ? '' : d.image_prompt,
+      image_prompt_content: cardText ? '' : 설명(d, 입을것),
       video_prompt: d.video_prompt ? d.video_prompt.trim() : '',
       camera: IMAGE_CAMERA_MOVES.includes(d.camera) ? d.camera : 'zoom in',
       motion_need: clampInt(d.motion_need, 0, 10),
