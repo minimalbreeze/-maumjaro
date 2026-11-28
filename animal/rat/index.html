@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"쥐띠 몇년생? 성격과 띠 궁합 (삼합·육합·충) | 맘운자로","description":"쥐띠 출생연도와 성격, 잘 맞는 띠와 조심할 띠. 삼합·육합·충·원진 전통 규칙 기준. 입춘 경계까지 자동 계산.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/animal/rat/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"쥐띠, 쥐띠 몇년생, 쥐띠 출생연도, 쥐띠 성격, 쥐띠 궁합, 띠 궁합, 띠별 운세, 삼합, 육합, 원진, 무료 운세",
  "abstract":"쥐띠는 십이지의 子에 해당하는 띠로, 핵심 키워드는 기민함입니다. 눈치와 셈이 빠른 사람입니다. 삼합·육합으로 잘 맞는 띠는 소띠, 용띠, 원숭이띠이고, 충·원진에 해당해 부딪히기 쉬운 띠는 말띠, 양띠입니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -173,11 +203,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>띠 궁합과 사주 궁합은 뭐가 다른가요?</h3><p>띠 궁합은 태어난 해만 봅니다. 사주 궁합은 태어난 날까지 봅니다. 맘운자로의 생년월일 궁합은 두 사람의 일간(태어난 날의 천간) 오행 관계를 보고 띠 관계는 보조 점수로만 쓰기 때문에, 서로를 살리는 사이인지 한쪽이 끌고 가는 사이인지까지 방향을 구분해 알려줍니다.</p></div>
 <div class="faq"><h3>쥐띠는 몇년생인가요?</h3><p>1960년, 1972년, 1984년, 1996년, 2008년, 2020년생이 쥐띠입니다. 12년마다 돌아옵니다. 다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, 1~2월 초에 태어났다면 앞 해의 띠가 됩니다. 맘운자로는 이 경계까지 자동으로 맞춰 계산합니다.</p></div>
 <div class="faq"><h3>내 띠는 어떻게 계산하나요?</h3><p>태어난 해의 지지로 정합니다. 맘운자로는 생년월일을 넣으면 자동으로 계산해 주므로 직접 따질 필요가 없습니다. 양력 1~2월에 태어났다면 해가 바뀌는 기준 때문에 앞 해의 띠가 되는 경우가 있는데, 이것도 앱이 알아서 맞춰 줍니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=animal" data-cta="animal" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=animalf" data-cta="animal" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>

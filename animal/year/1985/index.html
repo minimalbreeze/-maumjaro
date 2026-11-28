@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"1985년생은 무슨 띠? 소띠 · 을축년 푸른 소의 해 | 맘운자로","description":"1985년생은 소띠. 을축년(乙丑), 푸른 소의 해입니다. 2026년 기준 만 41세. 1~2월생이 주의해야 할 입춘 기준과 띠 궁합까지 정리했습니다.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/animal/year/1985/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"1985년생, 1985년생 띠, 1985년 띠, 1985년생 무슨 띠, 1985년생 나이, 을축년, 푸른 소의 해, 소띠, 소띠 몇년생, 띠 궁합, 입춘 띠 기준, 무료 운세",
  "abstract":"1985년생은 소띠입니다. 1985년의 간지는 을축년(乙丑)이고, 천간 을의 오행이 목이라 푸른 소의 해라고 부릅니다. 다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, 1985년 1월에서 2월 초에 태어났다면 앞 해 1984년의 쥐띠가 됩니다. 2026년 기준 만 41세입니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -175,11 +205,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>1985년생은 무슨 띠인가요?</h3><p>소띠입니다. 1985년의 간지가 을축년(乙丑)이고 지지가 축(丑)이기 때문입니다. 단 1985년 1월에서 2월 초 사이에 태어났다면 입춘 전이라 1984년의 쥐띠가 됩니다.</p></div>
 <div class="faq"><h3>1985년은 무슨 해인가요?</h3><p>을축년(乙丑), 푸른 소의 해입니다. 천간 을의 오행이 목이라 그 색이 붙습니다. 간지는 60년마다 돌아오므로 1925년과 2045년도 을축년입니다.</p></div>
 <div class="faq"><h3>1985년생은 몇 살인가요?</h3><p>2026년 기준 만 41세, 생일 전이면 40세입니다. 세는 나이로는 42세입니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=year" data-cta="year" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=yearf" data-cta="year" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>

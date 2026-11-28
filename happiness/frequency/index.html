@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"행복은 강도가 아니라 빈도다 — 행복은 아이스크림이다 | 맘운자로","description":"『행복의 기원』 6장이 말하는 것. 큰 기쁨은 녹는다. 하루 안에 들어가는 작은 즐거움 여섯 가지와 그게 왜 더 센지.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/happiness/frequency/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"행복은 빈도, 행복 강도 빈도, 행복은 아이스크림이다, 행복의 기원 6장, 소소한 행복, 작은 행복, 서은국, 행복해지는 법",
  "abstract":"『행복의 기원』은 행복을 기쁨의 강도가 아니라 빈도로 봅니다. 6장 제목이 \"행복은 아이스크림이다\"인 것처럼, 큰 기쁨도 금세 녹아 평소로 돌아오기 때문입니다. 해외여행이나 합격 같은 큰 사건은 1년에 몇 번뿐이지만 좋아하는 커피, 짧은 산책, 아는 사람과의 점심 같은 작은 즐거움은 매일 가능합니다. 그래서 \"이것만 끝나면 행복해질 것\"이라는 계획은 구조상 늘 다음 목적지를 필요로 하게 됩니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -167,11 +197,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>행복은 강도가 아니라 빈도라는 말이 무슨 뜻인가요?</h3><p>한 번의 큰 기쁨보다 작은 즐거움이 얼마나 자주 반복되는지가 더 중요하다는 뜻입니다. 큰 기쁨으로 올라간 기분은 비교적 빨리 평소 수준으로 돌아오는 반면, 작은 즐거움은 매일 다시 만들 수 있기 때문입니다.</p></div>
 <div class="faq"><h3>왜 &quot;행복은 아이스크림이다&quot;라고 하나요?</h3><p>아이스크림의 특징이 맛있다는 것보다 녹는다는 데 있기 때문입니다. 행복도 쥐고 있을 수 있는 것이 아니라 금세 사라지는 것이라는 비유입니다. 사라지는 것을 모아두려 하지 말고 자주 만들라는 쪽으로 이어집니다.</p></div>
 <div class="faq"><h3>큰 목표를 세우면 안 되나요?</h3><p>목표를 세우지 말라는 뜻은 아닙니다. 다만 행복을 전부 그 목표에 걸어두면, 도착한 뒤에 기분이 돌아왔을 때 다음 목표가 또 필요해집니다. 목표는 목표대로 두고, 오늘 안에 들어가는 작은 것을 따로 챙기는 쪽이 낫습니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=happy" data-cta="happy" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=happyf" data-cta="happy" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>

@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"출생연도별 띠 찾기 (1936~2032) | 맘운자로","description":"태어난 해로 내 띠를 찾는 표. 1936년생부터 2032년생까지. 1~2월생이 주의해야 할 입춘 기준까지 정리했습니다.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/animal/years/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"띠 계산, 출생연도 띠, 몇년생 무슨 띠, 띠별 나이, 입춘 띠 기준, 내 띠 찾기, 띠 궁합, 무료 운세",
  "abstract":"띠는 태어난 해의 지지로 정합니다. 다만 띠가 바뀌는 기준은 1월 1일이 아니라 입춘(양력 2월 4일 전후)이라, 1월에서 2월 초에 태어났다면 앞 해의 띠가 됩니다. 1936년생부터 2032년생까지의 띠를 표로 정리했습니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -134,11 +164,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>1998년생은 무슨 띠인가요?</h3><p>호랑이띠입니다. 다만 1998년 1월에서 2월 초 사이에 태어났다면 입춘 전이라 앞 해의 소띠가 됩니다. 맘운자로에 생년월일을 넣으면 이 경계까지 자동으로 계산합니다.</p></div>
 <div class="faq"><h3>띠는 양력 기준인가요, 음력 기준인가요?</h3><p>둘 다 아닙니다. 사주에서 쓰는 한 해의 시작은 입춘(양력 2월 4일 전후)입니다. 음력 설과도 날짜가 다를 수 있습니다. 그래서 1~2월생은 양력 해로만 따지면 틀릴 수 있습니다.</p></div>
 <div class="faq"><h3>1월생인데 어느 띠로 봐야 하나요?</h3><p>태어난 날이 그 해의 입춘보다 앞이면 앞 해의 띠입니다. 입춘 날짜는 해마다 2월 3일에서 5일 사이로 조금씩 다릅니다. 맘운자로는 생년월일을 넣으면 그 해의 실제 입춘을 기준으로 맞춰 줍니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=animal" data-cta="animal" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=animalf" data-cta="animal" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>

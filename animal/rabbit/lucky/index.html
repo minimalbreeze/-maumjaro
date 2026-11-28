@@ -22,7 +22,7 @@
 {"@type":"Article","headline":"토끼띠 행운의 숫자 — 3·4·8·16·28·40 (오행 목, 색은 파랑) | 맘운자로","description":"토끼띠의 행운의 숫자와 색. 십이지 순번 4번, 오행 목의 생성수 3·8, 색은 파랑. 1~45로 펼친 표까지. 당첨 확률과는 무관합니다.",
  "inLanguage":"ko","mainEntityOfPage":{"@type":"WebPage","@id":"https://maumjaro.minimalbreeze.com/animal/rabbit/lucky/"},
  "image":"https://maumjaro.minimalbreeze.com/og-image-v2.jpg",
- "dateModified":"2026-11-19",
+ "dateModified":"2026-11-28",
  "keywords":"토끼띠 행운의 숫자, 토끼띠 행운의 색, 토끼띠 시간, 토끼띠 방위, 묘시, 묘시 몇시, 띠별 행운의 숫자, 띠별 행운의 색, 십이지 卯, 오행 목, 오행 생성수",
  "abstract":"토끼띠의 수는 십이지 순번 4번과 오행 목의 생성수 3·8입니다. 지지 卯의 오행이 목이고, 하도에서 목에 붙는 수가 3과 8이기 때문입니다. 색은 파랑입니다. 1~45로 펼치면 십이지 계열은 4·16·28·40, 오행 계열은 3·8·13·18·23·28·33·38·43입니다. 다만 이 수는 전통 풀이이지 당첨을 예측하는 수가 아닙니다. 로또는 어떤 방법으로 뽑아도 확률이 같습니다.",
  "author":{"@type":"Organization","name":"맘운자로","url":"https://maumjaro.minimalbreeze.com/"},
@@ -56,6 +56,36 @@
     window.gtag('js', new Date());
     window.gtag('config', id, { anonymize_ip: true });
   })();
+</script>
+<script>
+// 앱으로 가는 링크를 눌렀는지 센다 (2026-11-28 효성님 지시).
+//
+// 왜. 네이버 클릭이 30일 560 인데 앱 활성이 안 늘었다. 그런데 **몇 명이 앱까지
+// 넘어오는지 아무도 재고 있지 않았다.** 이걸 모르면 무엇을 고쳐도 효과를 못 잰다.
+//
+// 두 가지를 따로 잰다. 둘이 다른 숫자다.
+//   · 눌렀다 → 여기 보내는 'app_cta_click'
+//   · 도착했다 → 링크에 붙은 '?from=' 이 앱 페이지뷰의 주소에 남는다
+// 누르고 안 기다리는 사람이 있으므로 둘을 갈라 놔야 한다. 그리고 이벤트가
+// 유실돼도 '?from=' 이 남으니 **한쪽이 죽어도 다른 쪽으로 읽을 수 있다.**
+//
+// ⚠️ 링크를 막지 않는다. event_callback 으로 기다리면 그만큼 느려진다.
+//    GA4 는 beacon 으로 보내므로 페이지를 떠나도 대개 도착한다. 못 가면
+//    '?from=' 쪽으로 읽으면 된다 — 사람을 기다리게 하는 것보다 낫다.
+// ⚠️ 개인을 식별하는 값을 담지 않는다. 묶음 이름과 자리뿐이다.
+(function () {
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-cta]') : null;
+    if (!a) return;
+    if (typeof window.gtag !== 'function') return;   // 내 방문 빼기 중이면 조용히 지나간다
+    try {
+      window.gtag('event', 'app_cta_click', {
+        kind: a.getAttribute('data-cta'),            // year · emotion · lucky …
+        spot: a.getAttribute('data-spot'),           // main(본문 끝 큰 버튼) · footer
+      });
+    } catch (err) { /* 재는 것 때문에 링크가 막히면 안 된다 */ }
+  }, true);
+})();
 </script>
 <style>
 :root{--bg:#fff8f3;--card:#fff;--line:#efe2d6;--tx:#3d3324;--dim:#8a7355;--a:#ff9166;--b:#b779ef}
@@ -160,11 +190,11 @@ footer a{color:var(--dim)}
 <div class="faq"><h3>토끼띠의 시간은 몇 시인가요?</h3><p>묘시, 곧 05시~07시입니다. 십이지가 하루 24시간을 두 시간씩 나눠 맡는데 토끼띠의 지지 卯가 그 자리입니다. 방위로는 동입니다.</p></div>
 <div class="faq"><h3>토끼띠 행운의 색은 뭔가요?</h3><p>파랑입니다. 지지 卯의 오행이 목이고, 오행마다 색이 정해져 있기 때문입니다(수는 검정, 화는 빨강, 목은 파랑, 금은 하양, 토는 노랑).</p></div>
 <div class="faq"><h3>이 번호로 로또를 사면 당첨 확률이 올라가나요?</h3><p>아닙니다. 어떤 방법으로 뽑아도 확률이 같습니다. 맘운자로도 번호를 AI로 분석해서 뽑지 않습니다.</p></div>
-<a class="cta" href="/">💉 맘운자로에서 직접 해보기</a>
+<a class="cta" href="/?from=lucky" data-cta="lucky" data-spot="main">💉 맘운자로에서 직접 해보기</a>
 <p class="note">설치도 가입도 없이 30초. 무료입니다.</p>
 
 <footer>
-  <p><a href="/">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
+  <p><a href="/?from=luckyf" data-cta="lucky" data-spot="footer">맘운자로 홈</a> · <a href="/guide/">전체 목록</a></p>
   <p>재미로 보는 콘텐츠입니다. 의학적·심리학적 진단이 아닙니다.</p>
 </footer>
 </div>
