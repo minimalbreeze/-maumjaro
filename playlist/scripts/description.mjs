@@ -62,7 +62,7 @@ if (EN) { out.push(''); out.push(EN); }
 if (REAL) {
   out.push('');
   out.push('🎻 AI가 만든 음악이 아닙니다.');
-  out.push('   실제 연주자가 녹음한 음원만 씁니다. 곡마다 이름을 아래에 적어 두었습니다.');
+  out.push('   사람이 만들고 CC BY 로 공개한 음원만 씁니다. 곡마다 이름을 아래에 적어 두었습니다.');
 }
 out.push('');
 out.push('━━━━━━━━━━━━━━━━');

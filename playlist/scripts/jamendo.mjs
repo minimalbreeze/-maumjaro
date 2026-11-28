@@ -121,6 +121,18 @@ export const JAMENDO_MOODS = {
   재즈퓨전: { groups: ['jazzfusion', 'nujazz', 'smoothjazz'], speed: 'medium' },
   다운템포: { groups: ['downtempo', 'lounge'], speed: 'medium' },
 
+  /* 2026-11-28 효성님 — "조용한 음원이면 EDM·전자 사운드도 된다."
+   * 같은 조건으로 센 곡 수: ambient 200상한 · chillout 200상한 ·
+   * downtempo 200상한 · minimal 173. 지금까지 한 번도 안 쓴 웅덩이다.
+   *
+   * ⚠️ 'electronic' 태그는 넣지 않는다. 장르가 너무 넓어 뭐가 나올지
+   *    모른다(hiphop 과 같은 이유). ambient·chillout·downtempo 로
+   *    들어가면 같은 음악이 훨씬 깨끗하게 걸러진다.
+   * ⚠️ 밝기 거르개를 절대 풀지 않는다. 예전에 무드 몇 개에
+   *    acoustic:true 를 넣은 이유가 "EDM 사운드가 세다" 였다.
+   *    그걸 푸는 대신 밝기로 막는 것이라, 밝기가 유일한 방패다. */
+  조용한전자: { groups: ['ambient', 'chillout', 'downtempo', 'minimal'], speed: 'low' },
+
   남성보컬: { groups: ['soul', 'jazz', 'bossanova', 'singersongwriter'], speed: 'medium', vocal: true, gender: 'male' },
   여성보컬: { groups: ['jazz', 'soul', 'bossanova', 'folk'], speed: 'medium', vocal: true, gender: 'female' },
 };

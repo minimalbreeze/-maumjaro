@@ -65,11 +65,19 @@ const T = LANG === 'en'
   ? { src: 'Music credits', all: 'All tracks are Creative Commons, cleared for commercial use.',
       mod: '⚠️ Tracks were given a vinyl tone (EQ and light compression). The performances and lengths are unchanged.',
       lic: 'Licence: https://creativecommons.org/licenses/by/4.0', tot: 'Total',
-      point: 'Every track is credited with its artist and a direct Jamendo link in the pinned comment.' }
+      point: 'Every track is credited with its artist and a direct Jamendo link in the pinned comment.',
+      ai: ['🎻 This is not AI-generated music.',
+           '   Only music made by people and released under CC BY.'] }
   : { src: '음원 출처 (Creative Commons)', all: '모든 음원은 상업적 이용이 허용된 라이선스로만 골랐습니다.',
       mod: '⚠️ 원곡에 LP 질감(이퀄라이저·약한 압축)을 입혔습니다. 연주와 길이는 그대로입니다.',
       lic: '라이선스 전문: https://creativecommons.org/licenses/by/4.0', tot: '전체',
-      point: '곡마다 아티스트와 Jamendo 링크를 고정 댓글에 적어 두었습니다.' };
+      point: '곡마다 아티스트와 Jamendo 링크를 고정 댓글에 적어 두었습니다.',
+      /* 2026-11-28. 예전 문구는 "실제 연주자가 녹음한 음원만 씁니다" 였다.
+       * 앰비언트·일렉트로닉을 쓰기로 하면서 그 말이 사실과 어긋나게 됐다 —
+       * 전자음악은 연주해서 녹음한 것이 아니다. 우리 차별점은 "연주" 가
+       * 아니라 "AI 가 아니고 출처가 분명하다" 였으므로 그쪽으로 고친다. */
+      ai: ['🎻 AI가 만든 음악이 아닙니다.',
+           '   사람이 만들고 CC BY 로 공개한 음원만 씁니다.'] };
 
 const head = readFileSync(pick('--head', ''), 'utf8').trimEnd();
 
@@ -84,7 +92,7 @@ function chapters(out) {
  * 곡마다 직접 링크를 요구하므로, 지우는 대신 **고정 댓글로 옮긴다**.
  * 댓글 한도는 10000자라 전부 들어간다. 설명란에는 어디 있는지 적는다. */
 function buildDesc() {
-  const out = [head, '', '━━━━━━━━━━━━━━━━', ''];
+  const out = [head, '', ...T.ai, '', '━━━━━━━━━━━━━━━━', ''];
   chapters(out);
   out.push('━━━━━━━━━━━━━━━━', '', `${T.src} — Jamendo · CC BY`, '', T.point, T.all, T.lic, T.mod,
     '', '━━━━━━━━━━━━━━━━', '', 'minimalbreeze', pick('--tags', ''));
@@ -96,6 +104,7 @@ function buildPin() {
   const out = [];
   const pin = pick('--pin', '');
   if (pin) { pin.split('|').forEach((x) => { out.push(x.trim()); out.push(''); }); out.push('━━━━━━━━━━━━━━━━', ''); }
+  if (!pin) { out.push(...T.ai, ''); }
   out.push(`${T.src} — ${rows.length}${LANG === 'en' ? ' tracks' : '곡'}`, '');
   rows.forEach((t) => {
     const jam = /(^|\.)jamendo\.com\//.test(String(t.source || ''));
